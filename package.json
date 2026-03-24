@@ -1,0 +1,31 @@
+{
+  "name": "liquidium-sdk",
+  "version": "0.0.0",
+  "description": "The official SDK for the Liquidium protocol",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=9"
+  },
+  "scripts": {
+    "build": "turbo build",
+    "dev": "turbo watch build",
+    "clean": "rimraf packages/*/dist",
+    "lint": "biome check",
+    "lint:fix": "biome check --write",
+    "test": "vitest run",
+    "typecheck": "turbo typecheck",
+    "release": "pnpm run build && pnpm changeset publish"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.8",
+    "@changesets/cli": "^2.30.0",
+    "rimraf": "^6.1.3",
+    "turbo": "^2.8.20",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.1"
+  },
+  "packageManager": "pnpm@9.15.4"
+}
