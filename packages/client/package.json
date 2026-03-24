@@ -50,17 +50,9 @@
     "@dfinity/candid": "^3.4.3",
     "@dfinity/principal": "^3.4.3"
   },
-  "peerDependencies": {
-    "viem": "^2.47.6"
-  },
-  "peerDependenciesMeta": {
-    "viem": {
-      "optional": true
-    }
-  },
   "devDependencies": {
     "tsup": "^8.5.1",
-    "typescript": "^6.0.2"
+    "typescript": "^5.9.3"
   },
   "license": "MIT"
 }
