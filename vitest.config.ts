@@ -6,7 +6,7 @@ export default defineConfig({
       {
         test: {
           name: "client",
-          include: ["packages/client/src/**/*.test.ts"],
+          include: ["packages/client/src/**/*.{test,spec}.{ts,tsx}"],
         },
       },
     ],
