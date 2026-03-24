@@ -1,0 +1,66 @@
+{
+  "name": "@liquidium/client",
+  "version": "0.1.0",
+  "description": "The official client for the Liquidium protocol",
+  "keywords": [
+    "liquidium",
+    "sdk",
+    "defi",
+    "icp",
+    "lending"
+  ],
+  "homepage": "https://github.com/Liquidium-Inc/liquidium-sdk",
+  "bugs": {
+    "url": "https://github.com/Liquidium-Inc/liquidium-sdk/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Liquidium-Inc/liquidium-sdk.git",
+    "directory": "packages/client"
+  },
+  "author": "Liquidium",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "dev": "tsup --watch",
+    "prepublishOnly": "pnpm run build && pnpm run typecheck"
+  },
+  "dependencies": {
+    "@dfinity/agent": "^3.4.3",
+    "@dfinity/candid": "^3.4.3",
+    "@dfinity/principal": "^3.4.3"
+  },
+  "peerDependencies": {
+    "viem": "^2.47.6"
+  },
+  "peerDependenciesMeta": {
+    "viem": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "tsup": "^8.5.1",
+    "typescript": "^6.0.2"
+  },
+  "license": "MIT"
+}
