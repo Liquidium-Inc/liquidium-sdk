@@ -1,0 +1,70 @@
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { LiquidiumError, LiquidiumErrorCode } from "../errors";
+import { createApiClient } from "../internal/api-client";
+
+describe("ApiClient", () => {
+  const MOCK_BASE_URL = "https://api.example.com";
+  const TIMEOUT_MS = 5_000;
+
+  beforeEach(() => {
+    vi.stubGlobal("fetch", vi.fn());
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  test("returns parsed JSON on success", async () => {
+    // given
+    const expected = { pools: [{ id: "pool-1" }] };
+    vi.mocked(fetch).mockResolvedValueOnce(
+      new Response(JSON.stringify(expected), { status: 200 })
+    );
+    const client = createApiClient({
+      baseUrl: MOCK_BASE_URL,
+      timeoutMs: TIMEOUT_MS,
+    });
+
+    // when
+    const result = await client.get("/v1/markets/pools");
+
+    // then
+    expect(result).toEqual(expected);
+    expect(fetch).toHaveBeenCalledWith(
+      `${MOCK_BASE_URL}/v1/markets/pools`,
+      expect.objectContaining({ signal: expect.any(AbortSignal) })
+    );
+  });
+
+  test("throws SERVICE_UNAVAILABLE on non-200 response", async () => {
+    // given
+    vi.mocked(fetch).mockResolvedValue(
+      new Response("Not Found", { status: 404, statusText: "Not Found" })
+    );
+    const client = createApiClient({
+      baseUrl: MOCK_BASE_URL,
+      timeoutMs: TIMEOUT_MS,
+    });
+
+    // when / then
+    await expect(client.get("/v1/missing")).rejects.toThrow(LiquidiumError);
+    await expect(client.get("/v1/missing")).rejects.toMatchObject({
+      code: LiquidiumErrorCode.SERVICE_UNAVAILABLE,
+    });
+  });
+
+  test("throws NETWORK_ERROR on fetch failure", async () => {
+    // given
+    vi.mocked(fetch).mockRejectedValue(new TypeError("fetch failed"));
+    const client = createApiClient({
+      baseUrl: MOCK_BASE_URL,
+      timeoutMs: TIMEOUT_MS,
+    });
+
+    // when / then
+    await expect(client.get("/v1/test")).rejects.toThrow(LiquidiumError);
+    await expect(client.get("/v1/test")).rejects.toMatchObject({
+      code: LiquidiumErrorCode.NETWORK_ERROR,
+    });
+  });
+});
