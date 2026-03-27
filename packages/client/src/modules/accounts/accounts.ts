@@ -9,7 +9,7 @@ import type { Wallet } from "../../core/types";
 import { mapCreateAccountRequestToRegisterProfileRequest } from "./mappers";
 import type { CreateAccountAction, CreateAccountRequest } from "./types";
 
-const SIGNATURE_VALIDITY_5_MINUTES_SECONDS = 5n * 60n;
+const SIGNATURE_VALIDITY_5_MINUTES_IN_SECONDS = 5n * 60n;
 
 export class AccountsModule {
   constructor(readonly canisterContext: CanisterContext) {}
@@ -67,7 +67,9 @@ export class AccountsModule {
 
   async getNonce(walletAddress: string): Promise<bigint> {
     try {
-      return await createLendingActor(this.canisterContext).get_nonce(walletAddress);
+      return await createLendingActor(this.canisterContext).get_nonce(
+        walletAddress
+      );
     } catch (error) {
       if (error instanceof LiquidiumError) {
         throw error;
@@ -83,7 +85,9 @@ export class AccountsModule {
     try {
       await assertWalletHasNoProfile(this.canisterContext, account);
 
-      const nonce = await createLendingActor(this.canisterContext).get_nonce(account);
+      const nonce = await createLendingActor(this.canisterContext).get_nonce(
+        account
+      );
       const expiryTimestamp = computeExpiryTimestamp();
 
       return {
@@ -118,7 +122,9 @@ export class AccountsModule {
         request.signatureInfo.account
       );
 
-      const result = await createLendingActor(this.canisterContext).register_profile(
+      const result = await createLendingActor(
+        this.canisterContext
+      ).register_profile(
         mapCreateAccountRequestToRegisterProfileRequest(request)
       );
 
@@ -139,7 +145,8 @@ export class AccountsModule {
 
 function computeExpiryTimestamp(): bigint {
   return (
-    BigInt(Math.floor(Date.now() / 1000)) + SIGNATURE_VALIDITY_5_MINUTES_SECONDS
+    BigInt(Math.floor(Date.now() / 1000)) +
+    SIGNATURE_VALIDITY_5_MINUTES_IN_SECONDS
   );
 }
 
