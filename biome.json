@@ -27,6 +27,15 @@
     }
   },
   "files": {
-    "includes": ["packages/**/src/**/*.ts", "*.json", "*.yaml", "*.ts"]
+    "includes": [
+      "**/*.ts",
+      "**/*.tsx",
+      "**/*.js",
+      "**/*.jsx",
+      "**/*.mjs",
+      "**/*.cjs",
+      "**/*.json",
+      "**/*.yaml"
+    ]
   }
 }

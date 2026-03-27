@@ -1,15 +1,15 @@
-import { DEFAULT_TIMEOUT_MS, resolveCanisterIds } from "./config";
-import type { ApiClient } from "./internal/api-client";
-import { createApiClient } from "./internal/api-client";
-import type { InternalProvider } from "./internal/provider";
-import { createProvider } from "./internal/provider";
+import { DEFAULT_TIMEOUT_MS, resolveCanisterIds } from "./core/config";
+import type { ApiClient } from "./core/transports/api-client";
+import { createApiClient } from "./core/transports/api-client";
+import type { InternalProvider } from "./core/transports/provider";
+import { createProvider } from "./core/transports/provider";
+import type { LiquidiumClientConfig } from "./core/types";
 import { AccountsModule } from "./modules/accounts";
 import { HistoryModule } from "./modules/history";
 import { LendingModule } from "./modules/lending";
 import { MarketModule } from "./modules/market";
 import { PendingModule } from "./modules/pending";
 import { PositionsModule } from "./modules/positions";
-import type { LiquidiumClientConfig } from "./types";
 
 export class LiquidiumClient {
   readonly accounts: AccountsModule;
@@ -44,21 +44,6 @@ export class LiquidiumClient {
     this.history = new HistoryModule(this.apiClient);
   }
 
-  /**
-   * Create a new Liquidium protocol client.
-   *
-   * @example
-   * ```ts
-   * // Read-only (anonymous)
-   * const client = LiquidiumClient.create({});
-   * const pools = await client.market.getPools();
-   *
-   * // Create a signable account action
-   * const createAction = await client.accounts.create({ account: walletAddress });
-   * const signature = await wallet.signMessage(createAction.message);
-   * await createAction.submit({ signature, chain: "ETH", account: walletAddress });
-   * ```
-   */
   static create(config: LiquidiumClientConfig = {}): LiquidiumClient {
     return new LiquidiumClient(config);
   }

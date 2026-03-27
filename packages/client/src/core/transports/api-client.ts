@@ -1,8 +1,5 @@
 import { LiquidiumError, LiquidiumErrorCode } from "../errors";
 
-/**
- * Internal HTTP client for API-routed methods. Consumers never see this.
- */
 export interface ApiClient {
   get<T>(path: string): Promise<T>;
 }
@@ -29,7 +26,9 @@ export function createApiClient(opts: {
 
         return (await response.json()) as T;
       } catch (error) {
-        if (error instanceof LiquidiumError) throw error;
+        if (error instanceof LiquidiumError) {
+          throw error;
+        }
 
         if (error instanceof DOMException && error.name === "AbortError") {
           throw new LiquidiumError(

@@ -12,7 +12,9 @@ export function resolveHost(override?: string): string {
   return override ?? MAINNET_HOST;
 }
 
-export function resolveCanisterIds(overrides?: Partial<CanisterIds>): CanisterIds {
+export function resolveCanisterIds(
+  overrides?: Partial<CanisterIds>
+): CanisterIds {
   return { ...MAINNET_CANISTER_IDS, ...overrides };
 }
 
