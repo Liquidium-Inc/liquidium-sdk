@@ -1,0 +1,178 @@
+:root {
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #111827;
+  background: #f7f7fb;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+button,
+select,
+input {
+  font: inherit;
+}
+
+button {
+  padding: 0.7rem 1rem;
+  border: 1px solid #d0d7e2;
+  border-radius: 10px;
+  background: white;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+select {
+  padding: 0.7rem 0.9rem;
+  border: 1px solid #d0d7e2;
+  border-radius: 10px;
+  background: white;
+}
+
+input {
+  width: 100%;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid #d0d7e2;
+  border-radius: 10px;
+  background: white;
+}
+
+.example-page {
+  width: min(900px, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 2rem 0 4rem;
+}
+
+.example-header {
+  margin-bottom: 1.5rem;
+}
+
+.eyebrow {
+  margin: 0 0 0.4rem;
+  color: #4b5563;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.example-header h1,
+.example-card h1,
+.example-card h2 {
+  margin: 0 0 0.6rem;
+}
+
+.subtitle {
+  margin: 0;
+  color: #4b5563;
+}
+
+.example-card {
+  margin-top: 1rem;
+  padding: 1.25rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  background: white;
+}
+
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.active-page-button {
+  border-color: #111827;
+  font-weight: 700;
+}
+
+.raw-input-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+  margin-top: 1rem;
+}
+
+.raw-input-grid label {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  color: #4b5563;
+}
+
+.raw-request-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.error-block {
+  border: 1px solid #fecaca;
+  background: #450a0a;
+}
+
+.details-list {
+  margin: 1rem 0 0;
+}
+
+.details-list div + div {
+  margin-top: 0.75rem;
+}
+
+.details-list dt {
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+.details-list dd {
+  margin: 0.2rem 0 0;
+  word-break: break-word;
+}
+
+.inline-note {
+  margin-top: 0.9rem;
+  color: #4b5563;
+}
+
+.code-block {
+  overflow-x: auto;
+  margin: 1rem 0 0;
+  padding: 1rem;
+  border-radius: 12px;
+  background: #111827;
+  color: #e5eefb;
+  font-size: 0.85rem;
+}
+
+.error-text {
+  color: #b91c1c;
+  font-weight: 600;
+}
+
+@media (max-width: 640px) {
+  .example-page {
+    width: min(100% - 1rem, 900px);
+    padding-top: 1rem;
+  }
+
+  .button-row {
+    flex-direction: column;
+  }
+
+  .raw-input-grid,
+  .raw-request-grid {
+    grid-template-columns: 1fr;
+  }
+}
