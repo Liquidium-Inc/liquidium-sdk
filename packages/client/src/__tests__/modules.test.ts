@@ -1,6 +1,11 @@
 import { Actor } from "@dfinity/agent";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { LiquidiumClient, LiquidiumError, LiquidiumErrorCode } from "../index";
+import {
+  InflowDestinationType,
+  LiquidiumClient,
+  LiquidiumError,
+  LiquidiumErrorCode,
+} from "../index";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -356,6 +361,189 @@ describe("MarketModule", () => {
 });
 
 describe("LendingModule", () => {
+  const BTC_POOL_ID = "hkmli-faaaa-aaaar-qb4ba-cai";
+  const USDT_POOL_ID = "hnnn4-iyaaa-aaaar-qb4bq-cai";
+
+  test("returns a native supply target for the btc pool", async () => {
+    // given
+    vi.spyOn(Actor, "createActor")
+      .mockReturnValueOnce({
+        list_pools: vi.fn().mockResolvedValue([
+          {
+            optimal_utilization_rate: 80n,
+            principal: {
+              toString: () => BTC_POOL_ID,
+              toText: () => BTC_POOL_ID,
+            },
+            total_generated_interest_snapshot: 0n,
+            supply_cap: [],
+            same_asset_borrowing: [],
+            asset: { BTC: null },
+            rate_slope_before: 1n,
+            borrow_cap: [],
+            total_debt_at_last_sync: 0n,
+            chain: { BTC: null },
+            rate_slope_after: 2n,
+            reserve_factor: 100n,
+            last_updated: [],
+            lending_index: 300n,
+            protocol_liquidation_fee: 50n,
+            borrow_index: 400n,
+            base_rate: 5n,
+            frozen: false,
+            liquidation_bonus: 200n,
+            liquidation_threshold: 7_500n,
+            max_ltv: 7_000n,
+            total_supply_at_last_sync: 50_000n,
+          },
+        ]),
+      } as never)
+      .mockReturnValueOnce({
+        get_btc_address: vi.fn().mockResolvedValue("bc1qexampledepositaddress"),
+      } as never);
+    const client = LiquidiumClient.create({});
+
+    // when
+    const supplyInstruction = await client.lending.supply({
+      profileId: "aaaaa-aa",
+      poolId: BTC_POOL_ID,
+      inflowType: "Deposit",
+      destinationType: InflowDestinationType.NATIVE_ADDRESS,
+    });
+
+    // then
+    expect(supplyInstruction).toMatchObject({
+      poolId: BTC_POOL_ID,
+      asset: "BTC",
+      chain: "BTC",
+      inflowType: "Deposit",
+      target: {
+        type: InflowDestinationType.NATIVE_ADDRESS,
+        poolId: BTC_POOL_ID,
+        asset: "BTC",
+        chain: "BTC",
+        inflowType: "Deposit",
+        address: "bc1qexampledepositaddress",
+      },
+    });
+  });
+
+  test("returns an icrc supply target for the usdt pool", async () => {
+    // given
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi.fn().mockResolvedValue([
+        {
+          optimal_utilization_rate: 80n,
+          principal: {
+            toString: () => USDT_POOL_ID,
+            toText: () => USDT_POOL_ID,
+          },
+          total_generated_interest_snapshot: 0n,
+          supply_cap: [],
+          same_asset_borrowing: [],
+          asset: { USDT: null },
+          rate_slope_before: 1n,
+          borrow_cap: [],
+          total_debt_at_last_sync: 0n,
+          chain: { ETH: null },
+          rate_slope_after: 2n,
+          reserve_factor: 100n,
+          last_updated: [],
+          lending_index: 300n,
+          protocol_liquidation_fee: 50n,
+          borrow_index: 400n,
+          base_rate: 5n,
+          frozen: false,
+          liquidation_bonus: 200n,
+          liquidation_threshold: 7_500n,
+          max_ltv: 7_000n,
+          total_supply_at_last_sync: 50_000n,
+        },
+      ]),
+    } as never);
+    const client = LiquidiumClient.create({});
+
+    // when
+    const supplyInstruction = await client.lending.supply({
+      profileId: "aaaaa-aa",
+      poolId: USDT_POOL_ID,
+      inflowType: "Repayment",
+      destinationType: InflowDestinationType.ICRC_ACCOUNT,
+    });
+
+    // then
+    expect(supplyInstruction).toMatchObject({
+      poolId: USDT_POOL_ID,
+      asset: "USDT",
+      chain: "ETH",
+      inflowType: "Repayment",
+      target: {
+        type: InflowDestinationType.ICRC_ACCOUNT,
+        poolId: USDT_POOL_ID,
+        asset: "USDT",
+        chain: "ETH",
+        inflowType: "Repayment",
+        owner: USDT_POOL_ID,
+      },
+    });
+    if (supplyInstruction.target.type !== InflowDestinationType.ICRC_ACCOUNT) {
+      throw new Error("Expected ICRC account inflow target");
+    }
+    expect(supplyInstruction.target.subaccount).toBeInstanceOf(Uint8Array);
+    expect(supplyInstruction.target.subaccount).toHaveLength(32);
+    expect(supplyInstruction.target.account.length).toBeGreaterThan(0);
+  });
+
+  test("rejects native supply targets for unsupported pools", async () => {
+    // given
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi.fn().mockResolvedValue([
+        {
+          optimal_utilization_rate: 80n,
+          principal: {
+            toString: () => USDT_POOL_ID,
+            toText: () => USDT_POOL_ID,
+          },
+          total_generated_interest_snapshot: 0n,
+          supply_cap: [],
+          same_asset_borrowing: [],
+          asset: { USDT: null },
+          rate_slope_before: 1n,
+          borrow_cap: [],
+          total_debt_at_last_sync: 0n,
+          chain: { ETH: null },
+          rate_slope_after: 2n,
+          reserve_factor: 100n,
+          last_updated: [],
+          lending_index: 300n,
+          protocol_liquidation_fee: 50n,
+          borrow_index: 400n,
+          base_rate: 5n,
+          frozen: false,
+          liquidation_bonus: 200n,
+          liquidation_threshold: 7_500n,
+          max_ltv: 7_000n,
+          total_supply_at_last_sync: 50_000n,
+        },
+      ]),
+    } as never);
+    const client = LiquidiumClient.create({});
+
+    // when / then
+    await expect(
+      client.lending.supply({
+        profileId: "aaaaa-aa",
+        poolId: USDT_POOL_ID,
+        inflowType: "Deposit",
+        destinationType: InflowDestinationType.NATIVE_ADDRESS,
+      })
+    ).rejects.toMatchObject({
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message:
+        "Native address inflow targets are not supported for USDT on ETH",
+    });
+  });
+
   test("throws INTERNAL for borrow until implemented", async () => {
     // given
     const client = LiquidiumClient.create({});
