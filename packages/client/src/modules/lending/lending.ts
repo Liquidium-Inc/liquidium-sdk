@@ -1,5 +1,5 @@
 import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
-import type { InternalProvider } from "../../core/transports/provider";
+import type { CanisterContext } from "../../core/transports/canister-context";
 import type { Inflowtype } from "../../core/types";
 import type {
   BtcDepositAddresses,
@@ -8,7 +8,7 @@ import type {
 } from "./types";
 
 export class LendingModule {
-  constructor(readonly provider: InternalProvider) {}
+  constructor(readonly canisterContext: CanisterContext) {}
 
   async withdraw(request: {
     profileId: string;

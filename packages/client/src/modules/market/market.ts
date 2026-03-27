@@ -5,7 +5,7 @@ import {
 } from "../../core/canisters/lending/actor";
 import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
 import type { ApiClient } from "../../core/transports/api-client";
-import type { InternalProvider } from "../../core/transports/provider";
+import type { CanisterContext } from "../../core/transports/canister-context";
 import {
   mapGetPoolRateResponseToPoolRate,
   mapGetPricesResponseToAssetPrices,
@@ -17,7 +17,7 @@ const ZERO_POOL_RATE: PoolRateTuple = [0n, 0n, 0n];
 
 export class MarketModule {
   constructor(
-    readonly provider: InternalProvider,
+    readonly canisterContext: CanisterContext,
     readonly apiClient: ApiClient | undefined
   ) {}
 
@@ -25,7 +25,7 @@ export class MarketModule {
     void this.apiClient;
 
     try {
-      const lendingActor = createLendingActor(this.provider);
+      const lendingActor = createLendingActor(this.canisterContext);
       const lendingPools = await lendingActor.list_pools();
 
       return await Promise.all(
@@ -52,7 +52,7 @@ export class MarketModule {
   async getAssetPrices(): Promise<AssetPrices> {
     try {
       return mapGetPricesResponseToAssetPrices(
-        await createLendingActor(this.provider).get_prices()
+        await createLendingActor(this.canisterContext).get_prices()
       );
     } catch (error) {
       if (error instanceof LiquidiumError) {
@@ -73,7 +73,7 @@ export class MarketModule {
     utilizationRate: bigint;
   }> {
     try {
-      const rate = await createLendingActor(this.provider).get_pool_rate(
+      const rate = await createLendingActor(this.canisterContext).get_pool_rate(
         Principal.fromText(poolId)
       );
 
