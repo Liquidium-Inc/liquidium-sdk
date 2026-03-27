@@ -24,15 +24,14 @@ describe("create account flow example", () => {
 
     const walletClient = {
       getAddresses: vi.fn().mockResolvedValue(["0x123"]),
-      signMessage: vi.fn().mockImplementation(async ({
-        message,
-      }: {
-        account: string;
-        message: string;
-      }) => {
-        void message;
-        return "0xsignature";
-      }),
+      signMessage: vi
+        .fn()
+        .mockImplementation(
+          async ({ message }: { account: string; message: string }) => {
+            void message;
+            return "0xsignature";
+          }
+        ),
     };
 
     const client = LiquidiumClient.create({});

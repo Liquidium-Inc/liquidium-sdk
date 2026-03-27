@@ -1,0 +1,116 @@
+import type {
+  AssetVariant,
+  ChainVariant,
+  LendingPoolRecord,
+  PoolRateTuple,
+  PriceRecord,
+} from "../../core/canisters/lending/actor";
+import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
+import type { AssetPrices, Pool } from "./types";
+
+const DECIMAL_BASE = 10;
+const PAIR_SEPARATOR = "_";
+const USD_QUOTE_ASSET = "USDT";
+
+export function mapLendingPoolRecordToPool(
+  pool: LendingPoolRecord,
+  rate: PoolRateTuple
+): Pool {
+  return {
+    id: pool.principal.toString(),
+    asset: getVariantKey(pool.asset),
+    chain: getVariantKey(pool.chain),
+    frozen: pool.frozen,
+    totalSupply: pool.total_supply_at_last_sync,
+    totalDebt: pool.total_debt_at_last_sync,
+    supplyCap: pool.supply_cap[0],
+    borrowCap: pool.borrow_cap[0],
+    maxLtv: pool.max_ltv || pool.liquidation_threshold,
+    liquidationThreshold: pool.liquidation_threshold,
+    liquidationBonus: pool.liquidation_bonus,
+    protocolLiquidationFee: pool.protocol_liquidation_fee,
+    reserveFactor: pool.reserve_factor,
+    lendingRate: rate[1],
+    borrowingRate: rate[0],
+    utilizationRate: rate[2],
+    baseRate: pool.base_rate,
+    optimalUtilizationRate: pool.optimal_utilization_rate,
+    rateSlopeBefore: pool.rate_slope_before,
+    rateSlopeAfter: pool.rate_slope_after,
+    lendingIndex: pool.lending_index,
+    borrowIndex: pool.borrow_index,
+    sameAssetBorrowing: pool.same_asset_borrowing[0] ?? false,
+    lastUpdated: pool.last_updated[0],
+  };
+}
+
+export function mapGetPricesResponseToAssetPrices(
+  prices: PriceRecord[]
+): AssetPrices {
+  const pairPricesByName = new Map(
+    prices.map(([pair, price, decimals]) => [
+      pair,
+      formatPrice(price, decimals),
+    ])
+  );
+  const usdQuotePricePair = getSelfQuotedPair(USD_QUOTE_ASSET);
+  const quoteAssetUsdPrice = pairPricesByName.get(usdQuotePricePair);
+
+  if (quoteAssetUsdPrice === undefined) {
+    throw new LiquidiumError(
+      LiquidiumErrorCode.INTERNAL,
+      `Missing price pair returned by canister: ${usdQuotePricePair}`
+    );
+  }
+
+  const assetPrices: AssetPrices = {};
+
+  for (const [pairName, pairPrice] of pairPricesByName) {
+    const [baseAsset, quoteAsset] = pairName.split(PAIR_SEPARATOR);
+
+    if (!baseAsset || !quoteAsset || quoteAsset !== USD_QUOTE_ASSET) {
+      continue;
+    }
+
+    assetPrices[baseAsset] = pairPrice * quoteAssetUsdPrice;
+  }
+
+  assetPrices[USD_QUOTE_ASSET] = quoteAssetUsdPrice;
+
+  return assetPrices;
+}
+
+export function mapGetPoolRateResponseToPoolRate(rate: PoolRateTuple): {
+  borrowRate: bigint;
+  lendRate: bigint;
+  utilizationRate: bigint;
+} {
+  return {
+    borrowRate: rate[0],
+    lendRate: rate[1],
+    utilizationRate: rate[2],
+  };
+}
+
+function getSelfQuotedPair(asset: string): string {
+  return `${asset}${PAIR_SEPARATOR}${asset}`;
+}
+
+function formatPrice(price: bigint, decimals: number): number {
+  const decimalScale = DECIMAL_BASE ** decimals;
+
+  return Number(price) / decimalScale;
+}
+
+function getVariantKey(variant: AssetVariant | ChainVariant): string {
+  const [variantKey] = Object.keys(variant);
+
+  if (!variantKey) {
+    throw new LiquidiumError(
+      LiquidiumErrorCode.INTERNAL,
+      "Unexpected empty canister variant"
+    );
+  }
+
+  return variantKey;
+}

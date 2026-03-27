@@ -31,7 +31,6 @@ describe("LiquidiumClient", () => {
     // then
     expect(client).toBeDefined();
   });
-
 });
 
 describe("LiquidiumError", () => {
