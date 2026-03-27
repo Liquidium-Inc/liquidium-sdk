@@ -4,12 +4,11 @@ export type {
   Asset,
   CanisterIds,
   Chain,
-  InflowType,
-  Inflowtype,
   LiquidiumClientConfig,
   MarketAsset,
   MarketChain,
   Outflowtype,
+  SupplyAction,
   Wallet,
 } from "./core/types";
 export type {
@@ -24,14 +23,14 @@ export type {
   PaginatedResponse,
 } from "./modules/history";
 export type {
-  IcrcAccountInflowTarget,
-  InflowTarget,
-  NativeAddressInflowTarget,
+  IcrcAccountSupplyTarget,
+  NativeAddressSupplyTarget,
   OutflowDetails,
+  SupplyDestination,
   SupplyInstruction,
   SupplyRequest,
+  SupplyTarget,
 } from "./modules/lending";
-export { InflowDestinationType, InflowTargetType } from "./modules/lending";
 export type { AssetPrices, Pool } from "./modules/market";
 export type {
   PendingInflow,

@@ -18,8 +18,7 @@ export type Asset = "BTC" | "USDT" | "USDC";
 export type Chain = "BTC" | "ETH";
 export type MarketAsset = string;
 export type MarketChain = string;
-export type InflowType = "Deposit" | "Repayment";
-export type Inflowtype = InflowType;
+export type SupplyAction = "deposit" | "repayment";
 export type Outflowtype = "Withdraw" | "Borrow" | "FeeClaim";
 
 export interface Wallet {

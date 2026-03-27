@@ -1,11 +1,6 @@
 import { Actor } from "@dfinity/agent";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import {
-  InflowDestinationType,
-  LiquidiumClient,
-  LiquidiumError,
-  LiquidiumErrorCode,
-} from "../index";
+import { LiquidiumClient, LiquidiumError, LiquidiumErrorCode } from "../index";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -407,8 +402,8 @@ describe("LendingModule", () => {
     const supplyInstruction = await client.lending.supply({
       profileId: "aaaaa-aa",
       poolId: BTC_POOL_ID,
-      inflowType: "Deposit",
-      destinationType: InflowDestinationType.NATIVE_ADDRESS,
+      action: "deposit",
+      destination: "nativeAddress",
     });
 
     // then
@@ -416,13 +411,13 @@ describe("LendingModule", () => {
       poolId: BTC_POOL_ID,
       asset: "BTC",
       chain: "BTC",
-      inflowType: "Deposit",
+      action: "deposit",
       target: {
-        type: InflowDestinationType.NATIVE_ADDRESS,
+        type: "nativeAddress",
         poolId: BTC_POOL_ID,
         asset: "BTC",
         chain: "BTC",
-        inflowType: "Deposit",
+        action: "deposit",
         address: "bc1qexampledepositaddress",
       },
     });
@@ -467,8 +462,8 @@ describe("LendingModule", () => {
     const supplyInstruction = await client.lending.supply({
       profileId: "aaaaa-aa",
       poolId: USDT_POOL_ID,
-      inflowType: "Repayment",
-      destinationType: InflowDestinationType.ICRC_ACCOUNT,
+      action: "repayment",
+      destination: "icrcAccount",
     });
 
     // then
@@ -476,17 +471,17 @@ describe("LendingModule", () => {
       poolId: USDT_POOL_ID,
       asset: "USDT",
       chain: "ETH",
-      inflowType: "Repayment",
+      action: "repayment",
       target: {
-        type: InflowDestinationType.ICRC_ACCOUNT,
+        type: "icrcAccount",
         poolId: USDT_POOL_ID,
         asset: "USDT",
         chain: "ETH",
-        inflowType: "Repayment",
+        action: "repayment",
         owner: USDT_POOL_ID,
       },
     });
-    if (supplyInstruction.target.type !== InflowDestinationType.ICRC_ACCOUNT) {
+    if (supplyInstruction.target.type !== "icrcAccount") {
       throw new Error("Expected ICRC account inflow target");
     }
     expect(supplyInstruction.target.subaccount).toBeInstanceOf(Uint8Array);
@@ -534,8 +529,8 @@ describe("LendingModule", () => {
       client.lending.supply({
         profileId: "aaaaa-aa",
         poolId: USDT_POOL_ID,
-        inflowType: "Deposit",
-        destinationType: InflowDestinationType.NATIVE_ADDRESS,
+        action: "deposit",
+        destination: "nativeAddress",
       })
     ).rejects.toMatchObject({
       code: LiquidiumErrorCode.VALIDATION_ERROR,

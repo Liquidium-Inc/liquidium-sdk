@@ -8,17 +8,16 @@ import {
 } from "../../core/canisters/lending/actor";
 import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
 import type { CanisterContext } from "../../core/transports/canister-context";
-import type { InflowType } from "../../core/types";
+import type { SupplyAction } from "../../core/types";
 import { encodeInflowSubaccount } from "../../core/utils/inflow-subaccount";
 import type {
-  IcrcAccountInflowTarget,
-  InflowTarget,
-  NativeAddressInflowTarget,
+  IcrcAccountSupplyTarget,
+  NativeAddressSupplyTarget,
   OutflowDetails,
   SupplyInstruction,
   SupplyRequest,
+  SupplyTarget,
 } from "./types";
-import { InflowDestinationType } from "./types";
 
 export class LendingModule {
   constructor(readonly canisterContext: CanisterContext) {}
@@ -50,14 +49,14 @@ export class LendingModule {
   }
 
   async supply(request: SupplyRequest): Promise<SupplyInstruction> {
-    const inflowTarget = await this.resolveInflowTarget(request);
+    const supplyTarget = await this.resolveSupplyTarget(request);
 
     return {
       poolId: request.poolId,
-      asset: inflowTarget.asset,
-      chain: inflowTarget.chain,
-      inflowType: request.inflowType,
-      target: inflowTarget,
+      asset: supplyTarget.asset,
+      chain: supplyTarget.chain,
+      action: request.action,
+      target: supplyTarget,
     };
   }
 
@@ -91,43 +90,42 @@ export class LendingModule {
     return selectedPool;
   }
 
-  private async resolveInflowTarget(
+  private async resolveSupplyTarget(
     request: SupplyRequest
-  ): Promise<InflowTarget> {
+  ): Promise<SupplyTarget> {
     const selectedPool = await this.getPoolById(request.poolId);
-    const destinationType = request.destinationType ?? request.targetType;
 
-    switch (destinationType) {
-      case InflowDestinationType.NATIVE_ADDRESS:
-        return await this.getNativeAddressInflowTarget(request.profileId, {
+    switch (request.destination) {
+      case "nativeAddress":
+        return await this.getNativeAddressSupplyTarget(request.profileId, {
           poolId: request.poolId,
           asset: getVariantKey(selectedPool.asset),
           chain: getVariantKey(selectedPool.chain),
-          inflowType: request.inflowType,
+          action: request.action,
         });
-      case InflowDestinationType.ICRC_ACCOUNT:
-        return this.getIcrcAccountInflowTarget(request.profileId, {
+      case "icrcAccount":
+        return this.getIcrcAccountSupplyTarget(request.profileId, {
           poolId: request.poolId,
           asset: getVariantKey(selectedPool.asset),
           chain: getVariantKey(selectedPool.chain),
-          inflowType: request.inflowType,
+          action: request.action,
         });
     }
   }
 
-  private async getNativeAddressInflowTarget(
+  private async getNativeAddressSupplyTarget(
     profileId: string,
     request: {
       poolId: string;
       asset: string;
       chain: string;
-      inflowType: InflowType;
+      action: SupplyAction;
     }
-  ): Promise<NativeAddressInflowTarget> {
+  ): Promise<NativeAddressSupplyTarget> {
     assertSupportsNativeAddressInflowTarget(request.asset, request.chain);
 
     const subaccount = encodeInflowSubaccount({
-      inflowType: request.inflowType,
+      action: request.action,
       principal: Principal.fromText(profileId),
     });
     const address = await createCkBtcMinterActor(
@@ -138,38 +136,38 @@ export class LendingModule {
     });
 
     return {
-      type: InflowDestinationType.NATIVE_ADDRESS,
+      type: "nativeAddress",
       poolId: request.poolId,
       asset: request.asset,
       chain: request.chain,
-      inflowType: request.inflowType,
+      action: request.action,
       address,
     };
   }
 
-  private getIcrcAccountInflowTarget(
+  private getIcrcAccountSupplyTarget(
     profileId: string,
     request: {
       poolId: string;
       asset: string;
       chain: string;
-      inflowType: InflowType;
+      action: SupplyAction;
     }
-  ): IcrcAccountInflowTarget {
+  ): IcrcAccountSupplyTarget {
     assertSupportsIcrcAccountInflowTarget(request.asset);
 
     const poolPrincipal = Principal.fromText(request.poolId);
     const subaccount = encodeInflowSubaccount({
-      inflowType: request.inflowType,
+      action: request.action,
       principal: Principal.fromText(profileId),
     });
 
     return {
-      type: InflowDestinationType.ICRC_ACCOUNT,
+      type: "icrcAccount",
       poolId: request.poolId,
       asset: request.asset,
       chain: request.chain,
-      inflowType: request.inflowType,
+      action: request.action,
       owner: poolPrincipal.toText(),
       subaccount,
       account: encodeIcrcAccount({
