@@ -3,16 +3,16 @@ import { HttpAgent } from "@dfinity/agent";
 import { resolveHost } from "../config";
 import type { CanisterIds } from "../types";
 
-export interface InternalProvider {
+export interface CanisterContext {
   agent: HttpAgent;
   canisterIds: CanisterIds;
 }
 
-export function createProvider(opts: {
+export function createCanisterContext(opts: {
   host?: string;
   identity?: Identity;
   canisterIds: CanisterIds;
-}): InternalProvider {
+}): CanisterContext {
   const host = resolveHost(opts.host);
 
   const agent = HttpAgent.createSync({

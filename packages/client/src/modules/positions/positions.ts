@@ -1,9 +1,9 @@
 import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
-import type { InternalProvider } from "../../core/transports/provider";
+import type { CanisterContext } from "../../core/transports/canister-context";
 import type { HealthFactor, Position, UserStats } from "./types";
 
 export class PositionsModule {
-  constructor(readonly provider: InternalProvider) {}
+  constructor(readonly canisterContext: CanisterContext) {}
 
   async get(profileId: string, poolId: string): Promise<Position | null> {
     void profileId;

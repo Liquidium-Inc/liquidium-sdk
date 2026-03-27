@@ -1,7 +1,7 @@
 import { Actor } from "@dfinity/agent";
 import type { IDL } from "@dfinity/candid";
 import { LiquidiumError, LiquidiumErrorCode } from "../../errors";
-import type { InternalProvider } from "../../transports/provider";
+import type { CanisterContext } from "../../transports/canister-context";
 
 export type AssetVariant =
   | { BTC: null }
@@ -230,8 +230,8 @@ const lendingIdlFactory: IDL.InterfaceFactory = ({ IDL }) => {
   });
 };
 
-export function createLendingActor(provider: InternalProvider): LendingActor {
-  const canisterId = provider.canisterIds.lending;
+export function createLendingActor(canisterContext: CanisterContext): LendingActor {
+  const canisterId = canisterContext.canisterIds.lending;
 
   if (!canisterId) {
     throw new LiquidiumError(
@@ -241,7 +241,7 @@ export function createLendingActor(provider: InternalProvider): LendingActor {
   }
 
   return Actor.createActor<LendingActor>(lendingIdlFactory, {
-    agent: provider.agent,
+    agent: canisterContext.agent,
     canisterId,
   });
 }
