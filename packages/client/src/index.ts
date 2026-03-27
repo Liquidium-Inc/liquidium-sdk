@@ -4,6 +4,7 @@ export type {
   Asset,
   CanisterIds,
   Chain,
+  InflowType,
   Inflowtype,
   LiquidiumClientConfig,
   MarketAsset,
@@ -23,10 +24,14 @@ export type {
   PaginatedResponse,
 } from "./modules/history";
 export type {
-  BtcDepositAddresses,
-  CkInflowAccount,
+  IcrcAccountInflowTarget,
+  InflowTarget,
+  NativeAddressInflowTarget,
   OutflowDetails,
+  SupplyInstruction,
+  SupplyRequest,
 } from "./modules/lending";
+export { InflowDestinationType, InflowTargetType } from "./modules/lending";
 export type { AssetPrices, Pool } from "./modules/market";
 export type {
   PendingInflow,
