@@ -1,11 +1,10 @@
 export { LendingModule } from "./lending";
 export type {
-  IcrcAccountInflowTarget,
-  InflowTarget,
-  LendingInflowType,
-  NativeAddressInflowTarget,
+  IcrcAccountSupplyTarget,
+  NativeAddressSupplyTarget,
   OutflowDetails,
+  SupplyDestination,
   SupplyInstruction,
   SupplyRequest,
+  SupplyTarget,
 } from "./types";
-export { InflowDestinationType, InflowTargetType } from "./types";

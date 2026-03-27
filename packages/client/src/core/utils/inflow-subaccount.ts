@@ -1,5 +1,5 @@
 import type { Principal } from "@dfinity/principal";
-import type { InflowType } from "../types";
+import type { SupplyAction } from "../types";
 
 const INFLOW_DEPOSIT_PREFIX = 0x1;
 const INFLOW_REPAY_PREFIX = 0x2;
@@ -9,7 +9,7 @@ const PRINCIPAL_LENGTH_OFFSET = 2;
 const PRINCIPAL_START_OFFSET = 3;
 
 export function encodeInflowSubaccount(request: {
-  inflowType: InflowType;
+  action: SupplyAction;
   principal: Principal;
 }): Uint8Array {
   const subaccount = new Uint8Array(SUBACCOUNT_LENGTH);
@@ -20,9 +20,7 @@ export function encodeInflowSubaccount(request: {
   }
 
   subaccount[0] =
-    request.inflowType === "Deposit"
-      ? INFLOW_DEPOSIT_PREFIX
-      : INFLOW_REPAY_PREFIX;
+    request.action === "deposit" ? INFLOW_DEPOSIT_PREFIX : INFLOW_REPAY_PREFIX;
   subaccount[PRINCIPAL_LENGTH_OFFSET] = principalBytes.length;
   subaccount.set(principalBytes, PRINCIPAL_START_OFFSET);
 
