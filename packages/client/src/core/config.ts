@@ -1,6 +1,7 @@
-import type { CanisterIds } from "./types";
+import type { CanisterIds, Environment } from "./types";
 
 const MAINNET_HOST = "https://icp-api.io";
+export const DEFAULT_ENVIRONMENT: Environment = "mainnet";
 
 const MAINNET_CANISTER_IDS: CanisterIds = {
   lending: "hyk4r-jqaaa-aaaar-qb4ca-cai",
@@ -8,17 +9,30 @@ const MAINNET_CANISTER_IDS: CanisterIds = {
   ercPool: "hnnn4-iyaaa-aaaar-qb4bq-cai",
 };
 
+const STAGING_CANISTER_IDS: CanisterIds = {
+  lending: "nja4y-2yaaa-aaaae-qddxa-cai",
+  btcPool: "42svn-2yaaa-aaaae-qfcsq-cai",
+  ercPool: "7dcux-qqaaa-aaaae-qfc3a-cai",
+};
+
+const CANISTER_IDS_BY_ENVIRONMENT: Record<Environment, CanisterIds> = {
+  mainnet: MAINNET_CANISTER_IDS,
+  staging: STAGING_CANISTER_IDS,
+};
+
 export function resolveHost(override?: string): string {
   return override ?? MAINNET_HOST;
 }
 
 export function resolveCanisterIds(
+  environment: Environment = DEFAULT_ENVIRONMENT,
   overrides?: Partial<CanisterIds>
 ): CanisterIds {
-  return { ...MAINNET_CANISTER_IDS, ...overrides };
+  return { ...CANISTER_IDS_BY_ENVIRONMENT[environment], ...overrides };
 }
 
 export const DEFAULT_TIMEOUT_MS = 30_000;
+export const DEFAULT_SUPPLY_STATUS_POLL_INTERVAL_MS = 5_000;
 
 export const CK_CANISTER_IDS = {
   btcMinter: "mqygn-kiaaa-aaaar-qaadq-cai",

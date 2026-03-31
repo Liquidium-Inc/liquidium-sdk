@@ -46,4 +46,12 @@ export default defineConfig({
   optimizeDeps: {
     exclude: ["@liquidium/client"],
   },
+  server: {
+    proxy: {
+      "/api": {
+        target: "http://localhost:3000",
+        changeOrigin: true,
+      },
+    },
+  },
 });

@@ -1,10 +1,20 @@
 export { LendingModule } from "./lending";
 export type {
+  GetInflowStatusRequest,
+  GetInflowStatusResponse,
+  GetSupplyStatusRequest,
+  InflowStatusItem,
   IcrcAccountSupplyTarget,
   NativeAddressSupplyTarget,
   OutflowDetails,
+  SubmitInflowRequest,
+  SubmitInflowResponse,
+  SupplyFlow,
+  SupplyFlowRequest,
   SupplyDestination,
   SupplyInstruction,
   SupplyRequest,
+  SupplyTrackingStatus,
   SupplyTarget,
+  WatchSupplyStatusOptions,
 } from "./types";

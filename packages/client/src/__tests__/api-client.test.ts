@@ -67,4 +67,54 @@ describe("ApiClient", () => {
       code: LiquidiumErrorCode.NETWORK_ERROR,
     });
   });
+
+  test("uses configured default headers", async () => {
+    // given
+    vi.mocked(fetch).mockResolvedValueOnce(
+      new Response(JSON.stringify({ success: true }), { status: 200 })
+    );
+    const client = createApiClient({
+      baseUrl: MOCK_BASE_URL,
+      headers: {
+        authorization: "Bearer token",
+      },
+      timeoutMs: TIMEOUT_MS,
+    });
+
+    // when
+    await client.post("/v1/test", { ok: true });
+
+    // then
+    expect(fetch).toHaveBeenCalledWith(
+      `${MOCK_BASE_URL}/v1/test`,
+      expect.objectContaining({
+        headers: {
+          authorization: "Bearer token",
+          "content-type": "application/json",
+        },
+      })
+    );
+  });
+
+  test("uses configured fetch implementation", async () => {
+    // given
+    const customFetch = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(new Response(JSON.stringify({ ok: true }), { status: 200 }));
+    const client = createApiClient({
+      baseUrl: MOCK_BASE_URL,
+      fetchFn: customFetch,
+      timeoutMs: TIMEOUT_MS,
+    });
+
+    // when
+    const result = await client.get("/v1/custom-fetch");
+
+    // then
+    expect(result).toEqual({ ok: true });
+    expect(customFetch).toHaveBeenCalledWith(
+      `${MOCK_BASE_URL}/v1/custom-fetch`,
+      expect.objectContaining({ method: "GET" })
+    );
+  });
 });

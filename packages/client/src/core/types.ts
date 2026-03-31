@@ -1,11 +1,15 @@
 import type { Identity } from "@dfinity/agent";
 
 export interface LiquidiumClientConfig {
-  host?: string;
+  environment?: Environment;
+  icHost?: string;
   identity?: Identity;
   apiBaseUrl?: string;
+  headers?: Record<string, string>;
   canisterIds?: Partial<CanisterIds>;
+  fetch?: typeof fetch;
   timeoutMs?: number;
+  supplyStatusPollIntervalMs?: number;
 }
 
 export interface CanisterIds {
@@ -13,6 +17,8 @@ export interface CanisterIds {
   btcPool: string;
   ercPool: string;
 }
+
+export type Environment = "mainnet" | "staging";
 
 export type Asset = "BTC" | "USDT" | "USDC";
 export type Chain = "BTC" | "ETH";

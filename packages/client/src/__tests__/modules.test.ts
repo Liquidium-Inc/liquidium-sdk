@@ -4,7 +4,33 @@ import { LiquidiumClient, LiquidiumError, LiquidiumErrorCode } from "../index";
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.useRealTimers();
 });
+
+async function collectWatchUpdates<T>(
+  iterator: AsyncGenerator<T, void, void>,
+  expectedCount: number,
+  pollIntervalMs = 5_000
+): Promise<T[]> {
+  const updates: T[] = [];
+
+  while (updates.length < expectedCount) {
+    const nextResultPromise = iterator.next();
+    await vi.runAllTicks();
+    if (updates.length > 0) {
+      await vi.advanceTimersByTimeAsync(pollIntervalMs);
+    }
+
+    const nextResult = await nextResultPromise;
+    if (nextResult.done) {
+      break;
+    }
+
+    updates.push(nextResult.value);
+  }
+
+  return updates;
+}
 
 describe("AccountsModule", () => {
   test("prepares and submits an account creation request manually", async () => {
@@ -287,6 +313,147 @@ describe("MarketModule", () => {
     });
   });
 
+  test("finds a single pool by asset and chain", async () => {
+    // given
+    const btcPoolPrincipal = "pool-btc";
+    const usdtPoolPrincipal = "pool-usdt";
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi.fn().mockResolvedValue([
+        {
+          optimal_utilization_rate: 80n,
+          principal: {
+            toString: () => btcPoolPrincipal,
+            toText: () => btcPoolPrincipal,
+          },
+          total_generated_interest_snapshot: 0n,
+          supply_cap: [],
+          same_asset_borrowing: [],
+          asset: { BTC: null },
+          rate_slope_before: 1n,
+          borrow_cap: [],
+          total_debt_at_last_sync: 0n,
+          chain: { BTC: null },
+          rate_slope_after: 2n,
+          reserve_factor: 100n,
+          last_updated: [],
+          lending_index: 300n,
+          protocol_liquidation_fee: 50n,
+          borrow_index: 400n,
+          base_rate: 5n,
+          frozen: false,
+          liquidation_bonus: 200n,
+          liquidation_threshold: 7_500n,
+          max_ltv: 7_000n,
+          total_supply_at_last_sync: 50_000n,
+        },
+        {
+          optimal_utilization_rate: 80n,
+          principal: {
+            toString: () => usdtPoolPrincipal,
+            toText: () => usdtPoolPrincipal,
+          },
+          total_generated_interest_snapshot: 0n,
+          supply_cap: [],
+          same_asset_borrowing: [],
+          asset: { USDT: null },
+          rate_slope_before: 1n,
+          borrow_cap: [],
+          total_debt_at_last_sync: 0n,
+          chain: { ETH: null },
+          rate_slope_after: 2n,
+          reserve_factor: 100n,
+          last_updated: [],
+          lending_index: 300n,
+          protocol_liquidation_fee: 50n,
+          borrow_index: 400n,
+          base_rate: 5n,
+          frozen: false,
+          liquidation_bonus: 200n,
+          liquidation_threshold: 7_500n,
+          max_ltv: 7_000n,
+          total_supply_at_last_sync: 50_000n,
+        },
+      ]),
+      get_pool_rate: vi.fn().mockResolvedValue([]),
+    } as never);
+    const client = LiquidiumClient.create({});
+
+    // when
+    const pool = await client.market.findPool({ asset: "BTC", chain: "BTC" });
+
+    // then
+    expect(pool.id).toBe(btcPoolPrincipal);
+    expect(pool.asset).toBe("BTC");
+    expect(pool.chain).toBe("BTC");
+  });
+
+  test("throws VALIDATION_ERROR when multiple pools match the query", async () => {
+    // given
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi.fn().mockResolvedValue([
+        {
+          optimal_utilization_rate: 80n,
+          principal: { toString: () => "pool-btc-1", toText: () => "pool-btc-1" },
+          total_generated_interest_snapshot: 0n,
+          supply_cap: [],
+          same_asset_borrowing: [],
+          asset: { BTC: null },
+          rate_slope_before: 1n,
+          borrow_cap: [],
+          total_debt_at_last_sync: 0n,
+          chain: { BTC: null },
+          rate_slope_after: 2n,
+          reserve_factor: 100n,
+          last_updated: [],
+          lending_index: 300n,
+          protocol_liquidation_fee: 50n,
+          borrow_index: 400n,
+          base_rate: 5n,
+          frozen: false,
+          liquidation_bonus: 200n,
+          liquidation_threshold: 7_500n,
+          max_ltv: 7_000n,
+          total_supply_at_last_sync: 50_000n,
+        },
+        {
+          optimal_utilization_rate: 80n,
+          principal: { toString: () => "pool-btc-2", toText: () => "pool-btc-2" },
+          total_generated_interest_snapshot: 0n,
+          supply_cap: [],
+          same_asset_borrowing: [],
+          asset: { BTC: null },
+          rate_slope_before: 1n,
+          borrow_cap: [],
+          total_debt_at_last_sync: 0n,
+          chain: { BTC: null },
+          rate_slope_after: 2n,
+          reserve_factor: 100n,
+          last_updated: [],
+          lending_index: 300n,
+          protocol_liquidation_fee: 50n,
+          borrow_index: 400n,
+          base_rate: 5n,
+          frozen: false,
+          liquidation_bonus: 200n,
+          liquidation_threshold: 7_500n,
+          max_ltv: 7_000n,
+          total_supply_at_last_sync: 50_000n,
+        },
+      ]),
+      get_pool_rate: vi.fn().mockResolvedValue([]),
+    } as never);
+    const client = LiquidiumClient.create({});
+
+    // when / then
+    await expect(
+      client.market.findPool({ asset: "BTC", chain: "BTC" })
+    ).rejects.toMatchObject({
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message:
+        "Multiple pools found for asset BTC on chain BTC. Select a specific pool id.",
+    });
+  });
+
   test("gets asset prices from the lending canister", async () => {
     // given
     vi.spyOn(Actor, "createActor").mockReturnValue({
@@ -536,6 +703,512 @@ describe("LendingModule", () => {
       code: LiquidiumErrorCode.VALIDATION_ERROR,
       message:
         "Native address inflow targets are not supported for USDT on ETH",
+    });
+  });
+
+  test("rejects native btc supply when pool id is not configured btc pool", async () => {
+    // given
+    const NON_CONFIGURED_BTC_POOL_ID = "ryjl3-tyaaa-aaaaa-aaaba-cai";
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi.fn().mockResolvedValue([
+        {
+          optimal_utilization_rate: 80n,
+          principal: {
+            toString: () => NON_CONFIGURED_BTC_POOL_ID,
+            toText: () => NON_CONFIGURED_BTC_POOL_ID,
+          },
+          total_generated_interest_snapshot: 0n,
+          supply_cap: [],
+          same_asset_borrowing: [],
+          asset: { BTC: null },
+          rate_slope_before: 1n,
+          borrow_cap: [],
+          total_debt_at_last_sync: 0n,
+          chain: { BTC: null },
+          rate_slope_after: 2n,
+          reserve_factor: 100n,
+          last_updated: [],
+          lending_index: 300n,
+          protocol_liquidation_fee: 50n,
+          borrow_index: 400n,
+          base_rate: 5n,
+          frozen: false,
+          liquidation_bonus: 200n,
+          liquidation_threshold: 7_500n,
+          max_ltv: 7_000n,
+          total_supply_at_last_sync: 50_000n,
+        },
+      ]),
+    } as never);
+    const client = LiquidiumClient.create({});
+
+    // when / then
+    await expect(
+      client.lending.supply({
+        profileId: "aaaaa-aa",
+        poolId: NON_CONFIGURED_BTC_POOL_ID,
+        action: "deposit",
+        destination: "nativeAddress",
+      })
+    ).rejects.toMatchObject({
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message:
+        "Native BTC inflow targets require the configured BTC pool hkmli-faaaa-aaaar-qb4ba-cai, received ryjl3-tyaaa-aaaaa-aaaba-cai",
+    });
+  });
+
+  test("submits an inflow transaction id through the sdk api", async () => {
+    // given
+    const txid = "7f4f3c2b1a";
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ success: true, txid }), {
+        status: 200,
+        headers: {
+          "content-type": "application/json",
+        },
+      })
+    );
+    const client = LiquidiumClient.create({
+      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
+    });
+
+    // when
+    const result = await client.lending.submitInflow({ txid });
+
+    // then
+    expect(result).toEqual({ success: true, txid });
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "https://app.liquidium.fi/api/sdk/v1/inflow",
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ txid }),
+        signal: expect.any(AbortSignal),
+      }
+    );
+  });
+
+  test("fetches inflow status entries through the sdk api", async () => {
+    // given
+    const profileId = "h35kd-uaaaa-aaaaa-aaaaa-aaaaa-aaaaa-abai";
+    const responsePayload = {
+      success: true as const,
+      inflows: [
+        {
+          inflowId: "inflow-1",
+          txid: "tx-1",
+          type: "deposit" as const,
+          stage: "CONFIRMED" as const,
+          poolId: "hkmli-faaaa-aaaar-qb4ba-cai",
+          amountSats: "100000",
+          timestampMs: 1_746_400_000_000,
+          confirmations: 3,
+          requiredConfirmations: 4,
+        },
+      ],
+    };
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify(responsePayload), {
+        status: 200,
+        headers: {
+          "content-type": "application/json",
+        },
+      })
+    );
+    const client = LiquidiumClient.create({
+      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
+    });
+
+    // when
+    const result = await client.lending.getInflowStatus({ profileId });
+
+    // then
+    expect(result).toEqual(responsePayload);
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "https://app.liquidium.fi/api/sdk/v1/inflow-status?profileId=h35kd-uaaaa-aaaaa-aaaaa-aaaaa-aaaaa-abai",
+      {
+        method: "GET",
+        headers: undefined,
+        body: undefined,
+        signal: expect.any(AbortSignal),
+      }
+    );
+  });
+
+  test("creates a supply flow that reuses the supply instruction and tracks txid status", async () => {
+    // given
+    const txid = "session-txid-1";
+    vi.spyOn(Actor, "createActor")
+      .mockReturnValueOnce({
+        list_pools: vi.fn().mockResolvedValue([
+          {
+            optimal_utilization_rate: 80n,
+            principal: {
+              toString: () => BTC_POOL_ID,
+              toText: () => BTC_POOL_ID,
+            },
+            total_generated_interest_snapshot: 0n,
+            supply_cap: [],
+            same_asset_borrowing: [],
+            asset: { BTC: null },
+            rate_slope_before: 1n,
+            borrow_cap: [],
+            total_debt_at_last_sync: 0n,
+            chain: { BTC: null },
+            rate_slope_after: 2n,
+            reserve_factor: 100n,
+            last_updated: [],
+            lending_index: 300n,
+            protocol_liquidation_fee: 50n,
+            borrow_index: 400n,
+            base_rate: 5n,
+            frozen: false,
+            liquidation_bonus: 200n,
+            liquidation_threshold: 7_500n,
+            max_ltv: 7_000n,
+            total_supply_at_last_sync: 50_000n,
+          },
+        ]),
+      } as never)
+      .mockReturnValueOnce({
+        get_btc_address: vi.fn().mockResolvedValue("bc1qexampledepositaddress"),
+      } as never);
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      new Response(JSON.stringify({ success: true, txid }), {
+        status: 200,
+        headers: {
+          "content-type": "application/json",
+        },
+      })
+    );
+    fetchSpy.mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          success: true,
+          inflows: [
+            {
+              inflowId: "inflow-1",
+              txid,
+              type: "deposit",
+              stage: "PENDING",
+              poolId: BTC_POOL_ID,
+              amountSats: "100000",
+              timestampMs: 1_746_400_000_000,
+              confirmations: 1,
+              requiredConfirmations: 4,
+            },
+          ],
+        }),
+        {
+          status: 200,
+          headers: {
+            "content-type": "application/json",
+          },
+        }
+      )
+    );
+    const client = LiquidiumClient.create({
+      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
+    });
+
+    // when
+    const flow = await client.lending.createSupplyFlow({
+      profileId: "aaaaa-aa",
+      poolId: BTC_POOL_ID,
+      action: "deposit",
+      destination: "nativeAddress",
+    });
+    await flow.submit({ txid });
+    const status = await flow.getStatus();
+
+    // then
+    expect(flow.instruction.target).toMatchObject({
+      type: "nativeAddress",
+      address: "bc1qexampledepositaddress",
+    });
+    expect(status).toMatchObject({
+      txid,
+      poolId: BTC_POOL_ID,
+      remainingConfirmations: 3,
+      isAvailable: false,
+    });
+    expect(fetchSpy).toHaveBeenNthCalledWith(
+      1,
+      "https://app.liquidium.fi/api/sdk/v1/inflow",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ txid }),
+      })
+    );
+    expect(fetchSpy).toHaveBeenNthCalledWith(
+      2,
+      `https://app.liquidium.fi/api/sdk/v1/inflow-status?profileId=aaaaa-aa&txid=${txid}`,
+      expect.objectContaining({
+        method: "GET",
+      })
+    );
+  });
+
+  test("watches supply status every 5 seconds until available", async () => {
+    // given
+    vi.useFakeTimers();
+    const txid = "session-watch-txid";
+    vi.spyOn(Actor, "createActor")
+      .mockReturnValueOnce({
+        list_pools: vi.fn().mockResolvedValue([
+          {
+            optimal_utilization_rate: 80n,
+            principal: {
+              toString: () => BTC_POOL_ID,
+              toText: () => BTC_POOL_ID,
+            },
+            total_generated_interest_snapshot: 0n,
+            supply_cap: [],
+            same_asset_borrowing: [],
+            asset: { BTC: null },
+            rate_slope_before: 1n,
+            borrow_cap: [],
+            total_debt_at_last_sync: 0n,
+            chain: { BTC: null },
+            rate_slope_after: 2n,
+            reserve_factor: 100n,
+            last_updated: [],
+            lending_index: 300n,
+            protocol_liquidation_fee: 50n,
+            borrow_index: 400n,
+            base_rate: 5n,
+            frozen: false,
+            liquidation_bonus: 200n,
+            liquidation_threshold: 7_500n,
+            max_ltv: 7_000n,
+            total_supply_at_last_sync: 50_000n,
+          },
+        ]),
+      } as never)
+      .mockReturnValueOnce({
+        get_btc_address: vi.fn().mockResolvedValue("bc1qexampledepositaddress"),
+      } as never);
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    fetchSpy.mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          success: true,
+          inflows: [
+            {
+              inflowId: "inflow-1",
+              txid,
+              type: "deposit",
+              stage: "PENDING",
+              poolId: BTC_POOL_ID,
+              amountSats: "100000",
+              timestampMs: 1_746_400_000_000,
+              confirmations: 1,
+              requiredConfirmations: 4,
+            },
+          ],
+        }),
+        {
+          status: 200,
+          headers: {
+            "content-type": "application/json",
+          },
+        }
+      )
+    );
+    fetchSpy.mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          success: true,
+          inflows: [
+            {
+              inflowId: "inflow-1",
+              txid,
+              type: "deposit",
+              stage: "CONFIRMED",
+              poolId: BTC_POOL_ID,
+              amountSats: "100000",
+              timestampMs: 1_746_400_000_000,
+              confirmations: 4,
+              requiredConfirmations: 4,
+            },
+          ],
+        }),
+        {
+          status: 200,
+          headers: {
+            "content-type": "application/json",
+          },
+        }
+      )
+    );
+    const client = LiquidiumClient.create({
+      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
+    });
+    const flow = await client.lending.createSupplyFlow({
+      profileId: "aaaaa-aa",
+      poolId: BTC_POOL_ID,
+      action: "deposit",
+      destination: "nativeAddress",
+    });
+
+    // when
+    const statusUpdates = await collectWatchUpdates(flow.watchStatus({ txid }), 2);
+
+    // then
+    expect(statusUpdates).toHaveLength(2);
+    expect(statusUpdates[0]).toMatchObject({
+      txid,
+      stage: "PENDING",
+      isAvailable: false,
+    });
+    expect(statusUpdates[1]).toMatchObject({
+      txid,
+      stage: "CONFIRMED",
+      isAvailable: true,
+    });
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
+    expect(vi.getTimerCount()).toBe(0);
+    vi.useRealTimers();
+  });
+
+  test("uses the client-configured default supply status poll interval", async () => {
+    // given
+    vi.useFakeTimers();
+    const txid = "configured-poll-txid";
+    const CUSTOM_POLL_INTERVAL_MS = 12_000;
+    vi.spyOn(Actor, "createActor")
+      .mockReturnValueOnce({
+        list_pools: vi.fn().mockResolvedValue([
+          {
+            optimal_utilization_rate: 80n,
+            principal: {
+              toString: () => BTC_POOL_ID,
+              toText: () => BTC_POOL_ID,
+            },
+            total_generated_interest_snapshot: 0n,
+            supply_cap: [],
+            same_asset_borrowing: [],
+            asset: { BTC: null },
+            rate_slope_before: 1n,
+            borrow_cap: [],
+            total_debt_at_last_sync: 0n,
+            chain: { BTC: null },
+            rate_slope_after: 2n,
+            reserve_factor: 100n,
+            last_updated: [],
+            lending_index: 300n,
+            protocol_liquidation_fee: 50n,
+            borrow_index: 400n,
+            base_rate: 5n,
+            frozen: false,
+            liquidation_bonus: 200n,
+            liquidation_threshold: 7_500n,
+            max_ltv: 7_000n,
+            total_supply_at_last_sync: 50_000n,
+          },
+        ]),
+      } as never)
+      .mockReturnValueOnce({
+        get_btc_address: vi.fn().mockResolvedValue("bc1qexampledepositaddress"),
+      } as never);
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    fetchSpy.mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          success: true,
+          inflows: [
+            {
+              inflowId: "inflow-1",
+              txid,
+              type: "deposit",
+              stage: "PENDING",
+              poolId: BTC_POOL_ID,
+              amountSats: "100000",
+              timestampMs: 1_746_400_000_000,
+              confirmations: 1,
+              requiredConfirmations: 4,
+            },
+          ],
+        }),
+        {
+          status: 200,
+          headers: {
+            "content-type": "application/json",
+          },
+        }
+      )
+    );
+    fetchSpy.mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          success: true,
+          inflows: [
+            {
+              inflowId: "inflow-1",
+              txid,
+              type: "deposit",
+              stage: "CONFIRMED",
+              poolId: BTC_POOL_ID,
+              amountSats: "100000",
+              timestampMs: 1_746_400_000_000,
+              confirmations: 4,
+              requiredConfirmations: 4,
+            },
+          ],
+        }),
+        {
+          status: 200,
+          headers: {
+            "content-type": "application/json",
+          },
+        }
+      )
+    );
+    const client = LiquidiumClient.create({
+      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
+      supplyStatusPollIntervalMs: CUSTOM_POLL_INTERVAL_MS,
+    });
+    const flow = await client.lending.createSupplyFlow({
+      profileId: "aaaaa-aa",
+      poolId: BTC_POOL_ID,
+      action: "deposit",
+      destination: "nativeAddress",
+    });
+
+    // when
+    const statusUpdates = await collectWatchUpdates(
+      flow.watchStatus({ txid }),
+      2,
+      CUSTOM_POLL_INTERVAL_MS
+    );
+
+    // then
+    expect(statusUpdates).toHaveLength(2);
+    expect(statusUpdates[0]).toMatchObject({
+      txid,
+      stage: "PENDING",
+      isAvailable: false,
+    });
+    expect(statusUpdates[1]).toMatchObject({
+      txid,
+      stage: "CONFIRMED",
+      isAvailable: true,
+    });
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
+  });
+
+  test("throws SERVICE_UNAVAILABLE for inflow submission without apiBaseUrl", async () => {
+    // given
+    const client = LiquidiumClient.create({});
+
+    // when / then
+    await expect(
+      client.lending.submitInflow({ txid: "abc" })
+    ).rejects.toMatchObject({
+      code: LiquidiumErrorCode.SERVICE_UNAVAILABLE,
+      message: "Lending API actions require an API base URL in client config",
     });
   });
 
