@@ -1,12 +1,16 @@
 import {
+  type GetInflowStatusResponse,
   LiquidiumClient,
   LiquidiumError,
   LiquidiumErrorCode,
   type Pool,
   type SupplyAction,
   type SupplyDestination,
+  type SupplyFlow,
   type SupplyInstruction,
+  type SupplyTrackingStatus,
 } from "@liquidium/client";
+import { resolveLiquidiumClientConfig } from "./liquidium-runtime-config";
 
 const BTC_ASSET = "BTC";
 const BTC_CHAIN = "BTC";
@@ -40,7 +44,7 @@ type PrepareBtcSupplyParams = {
 export const DEFAULT_SUPPLY_ACTION: SupplyAction = "deposit";
 const BTC_ADDRESS_DESTINATION: SupplyDestination = "nativeAddress";
 
-export type { Pool, SupplyAction, SupplyInstruction };
+export type { Pool, SupplyAction, SupplyFlow, SupplyInstruction, SupplyTrackingStatus };
 
 export async function createOrResolveProfileId(
   params: CreateOrResolveProfileParams
@@ -118,7 +122,7 @@ export async function createOrResolveProfileId(
 export async function loadPoolsAndDefaultSelection(): Promise<PoolsResult> {
   const client = createLiquidiumClient();
   const pools = await client.market.getPools();
-  const selectedPoolId = findBtcPool(pools)?.id ?? pools[0]?.id ?? "";
+  const selectedPoolId = await resolveDefaultPoolId(client, pools);
 
   return {
     pools,
@@ -136,6 +140,37 @@ export async function prepareBtcSupplyInstruction(
     poolId: params.poolId,
     action: params.action,
     destination: BTC_ADDRESS_DESTINATION,
+  });
+}
+
+export async function prepareBtcSupplyFlow(
+  params: PrepareBtcSupplyParams
+): Promise<SupplyFlow> {
+  const client = createLiquidiumClient();
+
+  return await client.lending.createSupplyFlow({
+    profileId: params.profileId,
+    poolId: params.poolId,
+    action: params.action,
+    destination: BTC_ADDRESS_DESTINATION,
+  });
+}
+
+export async function submitInflowTxid(txid: string) {
+  const client = createLiquidiumClient();
+
+  return await client.lending.submitInflow({ txid });
+}
+
+export async function getInflowStatus(params: {
+  profileId: string;
+  txid?: string;
+}): Promise<GetInflowStatusResponse> {
+  const client = createLiquidiumClient();
+
+  return await client.lending.getInflowStatus({
+    profileId: params.profileId,
+    txid: params.txid,
   });
 }
 
@@ -174,10 +209,33 @@ export function bigintJsonReplacer(_key: string, value: unknown) {
 }
 
 function createLiquidiumClient() {
-  return LiquidiumClient.create({
-    host: import.meta.env.VITE_LIQUIDIUM_HOST || undefined,
-    apiBaseUrl: import.meta.env.VITE_LIQUIDIUM_API_BASE_URL || undefined,
-  });
+  return LiquidiumClient.create(resolveLiquidiumClientConfig());
+}
+
+async function resolveDefaultPoolId(
+  client: LiquidiumClient,
+  pools: Pool[]
+): Promise<string> {
+  try {
+    const btcPool = await client.market.findPool({
+      asset: BTC_ASSET,
+      chain: BTC_CHAIN,
+    });
+
+    return btcPool.id;
+  } catch (error) {
+    if (error instanceof LiquidiumError) {
+      if (error.code === LiquidiumErrorCode.POOL_NOT_FOUND) {
+        return pools[0]?.id ?? "";
+      }
+
+      if (error.code === LiquidiumErrorCode.VALIDATION_ERROR) {
+        return "";
+      }
+    }
+
+    throw error;
+  }
 }
 
 async function withTimeout<T>(

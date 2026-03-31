@@ -1,4 +1,9 @@
-import { DEFAULT_TIMEOUT_MS, resolveCanisterIds } from "./core/config";
+import {
+  DEFAULT_ENVIRONMENT,
+  DEFAULT_SUPPLY_STATUS_POLL_INTERVAL_MS,
+  DEFAULT_TIMEOUT_MS,
+  resolveCanisterIds,
+} from "./core/config";
 import type { ApiClient } from "./core/transports/api-client";
 import { createApiClient } from "./core/transports/api-client";
 import type { CanisterContext } from "./core/transports/canister-context";
@@ -23,21 +28,32 @@ export class LiquidiumClient {
   private readonly apiClient: ApiClient | undefined;
 
   private constructor(config: LiquidiumClientConfig) {
-    const canisterIds = resolveCanisterIds(config.canisterIds);
+    const environment = config.environment ?? DEFAULT_ENVIRONMENT;
+    const canisterIds = resolveCanisterIds(environment, config.canisterIds);
     const timeoutMs = config.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+    const supplyStatusPollIntervalMs =
+      config.supplyStatusPollIntervalMs ??
+      DEFAULT_SUPPLY_STATUS_POLL_INTERVAL_MS;
 
     this.canisterContext = createCanisterContext({
-      host: config.host,
+      icHost: config.icHost,
       identity: config.identity,
       canisterIds,
     });
 
     this.apiClient = config.apiBaseUrl
-      ? createApiClient({ baseUrl: config.apiBaseUrl, timeoutMs })
+      ? createApiClient({
+          baseUrl: config.apiBaseUrl,
+          headers: config.headers,
+          fetchFn: config.fetch,
+          timeoutMs,
+        })
       : undefined;
 
     this.accounts = new AccountsModule(this.canisterContext);
-    this.lending = new LendingModule(this.canisterContext);
+    this.lending = new LendingModule(this.canisterContext, this.apiClient, {
+      supplyStatusPollIntervalMs,
+    });
     this.positions = new PositionsModule(this.canisterContext);
     this.market = new MarketModule(this.canisterContext, this.apiClient);
     this.pending = new PendingModule(this.canisterContext, this.apiClient);

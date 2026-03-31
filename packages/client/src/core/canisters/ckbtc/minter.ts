@@ -19,8 +19,8 @@ const ckBtcMinterIdlFactory: IDL.InterfaceFactory = ({ IDL }) => {
   });
 
   return IDL.Service({
-    get_btc_address: IDL.Func([account], [IDL.Text], ["query"]),
-    get_deposit_fee: IDL.Func([], [IDL.Nat64], ["query"]),
+    get_btc_address: IDL.Func([account], [IDL.Text], []),
+    get_deposit_fee: IDL.Func([], [IDL.Nat64], []),
   });
 };
 

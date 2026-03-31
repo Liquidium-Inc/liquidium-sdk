@@ -4,6 +4,7 @@ export type {
   Asset,
   CanisterIds,
   Chain,
+  Environment,
   LiquidiumClientConfig,
   MarketAsset,
   MarketChain,
@@ -23,13 +24,23 @@ export type {
   PaginatedResponse,
 } from "./modules/history";
 export type {
+  GetInflowStatusRequest,
+  GetInflowStatusResponse,
+  GetSupplyStatusRequest,
+  InflowStatusItem,
   IcrcAccountSupplyTarget,
   NativeAddressSupplyTarget,
   OutflowDetails,
+  SubmitInflowRequest,
+  SubmitInflowResponse,
+  SupplyFlow,
+  SupplyFlowRequest,
   SupplyDestination,
   SupplyInstruction,
   SupplyRequest,
+  SupplyTrackingStatus,
   SupplyTarget,
+  WatchSupplyStatusOptions,
 } from "./modules/lending";
 export type { AssetPrices, Pool } from "./modules/market";
 export type {

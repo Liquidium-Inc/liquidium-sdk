@@ -7,20 +7,38 @@ import {
   type LendingPoolRecord,
 } from "../../core/canisters/lending/actor";
 import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
+import type { ApiClient } from "../../core/transports/api-client";
 import type { CanisterContext } from "../../core/transports/canister-context";
 import type { SupplyAction } from "../../core/types";
 import { encodeInflowSubaccount } from "../../core/utils/inflow-subaccount";
 import type {
+  GetInflowStatusRequest,
+  GetInflowStatusResponse,
   IcrcAccountSupplyTarget,
   NativeAddressSupplyTarget,
   OutflowDetails,
+  SubmitInflowRequest,
+  SubmitInflowResponse,
+  SupplyFlow,
+  SupplyFlowRequest,
   SupplyInstruction,
   SupplyRequest,
   SupplyTarget,
+  SupplyTrackingStatus,
 } from "./types";
 
+const BITCOIN_BLOCK_TIME_MS = 10 * 60 * 1000;
+
+type LendingModuleOptions = {
+  supplyStatusPollIntervalMs: number;
+};
+
 export class LendingModule {
-  constructor(readonly canisterContext: CanisterContext) {}
+  constructor(
+    readonly canisterContext: CanisterContext,
+    readonly apiClient: ApiClient | undefined,
+    readonly options: LendingModuleOptions
+  ) {}
 
   async withdraw(request: {
     profileId: string;
@@ -60,7 +78,105 @@ export class LendingModule {
     };
   }
 
-  async getBtcDepositFee(): Promise<bigint> {
+  async createSupplyFlow(request: SupplyFlowRequest): Promise<SupplyFlow> {
+    const instruction = await this.supply(request);
+    const defaultPollIntervalMs = this.options.supplyStatusPollIntervalMs;
+    let trackedTxid: string | undefined;
+    const getStatus = async (
+      statusRequest?: SupplyFlow["getStatus"] extends (
+        request?: infer T
+      ) => Promise<unknown>
+        ? T
+        : never
+    ): Promise<SupplyTrackingStatus | null> => {
+      const txid = statusRequest?.txid ?? trackedTxid;
+      const statusResponse = await this.getInflowStatus({
+        profileId: request.profileId,
+        txid,
+      });
+
+      const matchedInflow = txid
+        ? (statusResponse.inflows.find((inflow) => inflow.txid === txid) ??
+          null)
+        : (statusResponse.inflows[0] ?? null);
+
+      if (!matchedInflow) {
+        return null;
+      }
+
+      trackedTxid = matchedInflow.txid;
+
+      return mapBtcInflowToSupplyTrackingStatus(matchedInflow);
+    };
+
+    return {
+      instruction,
+      target: instruction.target,
+      submit: async ({ txid }) => {
+        trackedTxid = txid;
+
+        return await this.submitInflow({ txid });
+      },
+      getStatus,
+      watchStatus: async function* (
+        options?: Parameters<SupplyFlow["watchStatus"]>[0]
+      ) {
+        const pollIntervalMs = options?.pollIntervalMs ?? defaultPollIntervalMs;
+        const signal = options?.signal;
+        let nextTxid = options?.txid ?? trackedTxid;
+
+        while (true) {
+          throwIfAborted(signal);
+
+          const currentStatus = await getStatus({ txid: nextTxid });
+          if (currentStatus) {
+            nextTxid = currentStatus.txid;
+            trackedTxid = currentStatus.txid;
+
+            yield {
+              ...currentStatus,
+            };
+
+            if (currentStatus.isAvailable) {
+              return;
+            }
+          }
+
+          await delay(pollIntervalMs, signal);
+        }
+      },
+    };
+  }
+
+  async submitInflow(
+    request: SubmitInflowRequest
+  ): Promise<SubmitInflowResponse> {
+    const apiClient = this.requireApi();
+
+    return await apiClient.post<SubmitInflowResponse, SubmitInflowRequest>(
+      "/v1/inflow",
+      request
+    );
+  }
+
+  async getInflowStatus(
+    request: GetInflowStatusRequest
+  ): Promise<GetInflowStatusResponse> {
+    const apiClient = this.requireApi();
+    const query = new URLSearchParams({
+      profileId: request.profileId,
+    });
+
+    if (request.txid) {
+      query.set("txid", request.txid);
+    }
+
+    return await apiClient.get<GetInflowStatusResponse>(
+      `/v1/inflow-status?${query.toString()}`
+    );
+  }
+
+  async getDepositFee(): Promise<bigint> {
     throw new LiquidiumError(
       LiquidiumErrorCode.INTERNAL,
       "Not yet implemented"
@@ -72,6 +188,17 @@ export class LendingModule {
       LiquidiumErrorCode.INTERNAL,
       "Not yet implemented"
     );
+  }
+
+  private requireApi(): ApiClient {
+    if (!this.apiClient) {
+      throw new LiquidiumError(
+        LiquidiumErrorCode.SERVICE_UNAVAILABLE,
+        "Lending API actions require an API base URL in client config"
+      );
+    }
+
+    return this.apiClient;
   }
 
   private async getPoolById(poolId: string): Promise<LendingPoolRecord> {
@@ -124,6 +251,14 @@ export class LendingModule {
   ): Promise<NativeAddressSupplyTarget> {
     assertSupportsNativeAddressInflowTarget(request.asset, request.chain);
 
+    const configuredBtcPoolId = this.canisterContext.canisterIds.btcPool;
+    if (request.poolId !== configuredBtcPoolId) {
+      throw new LiquidiumError(
+        LiquidiumErrorCode.VALIDATION_ERROR,
+        `Native BTC inflow targets require the configured BTC pool ${configuredBtcPoolId}, received ${request.poolId}`
+      );
+    }
+
     const subaccount = encodeInflowSubaccount({
       action: request.action,
       principal: Principal.fromText(profileId),
@@ -131,7 +266,7 @@ export class LendingModule {
     const address = await createCkBtcMinterActor(
       this.canisterContext
     ).get_btc_address({
-      owner: [Principal.fromText(request.poolId)],
+      owner: [Principal.fromText(configuredBtcPoolId)],
       subaccount: [subaccount],
     });
 
@@ -175,6 +310,61 @@ export class LendingModule {
         subaccount,
       }),
     };
+  }
+}
+
+function mapBtcInflowToSupplyTrackingStatus(
+  inflow: GetInflowStatusResponse["inflows"][number]
+): SupplyTrackingStatus {
+  const remainingConfirmations =
+    inflow.confirmations === null
+      ? inflow.requiredConfirmations
+      : Math.max(inflow.requiredConfirmations - inflow.confirmations, 0);
+  const estimatedMsUntilAvailable =
+    remainingConfirmations * BITCOIN_BLOCK_TIME_MS;
+
+  return {
+    txid: inflow.txid,
+    inflowId: inflow.inflowId,
+    poolId: inflow.poolId,
+    type: inflow.type,
+    stage: inflow.stage,
+    amountSats: inflow.amountSats,
+    timestampMs: inflow.timestampMs,
+    confirmations: inflow.confirmations,
+    requiredConfirmations: inflow.requiredConfirmations,
+    remainingConfirmations,
+    isDetected: inflow.stage !== "LOGGED",
+    isAvailable: inflow.stage === "CONFIRMED",
+    estimatedMsUntilAvailable,
+    expectedAvailableAtMs: Date.now() + estimatedMsUntilAvailable,
+  };
+}
+
+async function delay(timeoutMs: number, signal?: AbortSignal): Promise<void> {
+  if (signal?.aborted) {
+    throw signal.reason ?? new DOMException("Aborted", "AbortError");
+  }
+
+  await new Promise<void>((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      signal?.removeEventListener("abort", abortListener);
+      resolve();
+    }, timeoutMs);
+
+    function abortListener(): void {
+      clearTimeout(timeout);
+      signal?.removeEventListener("abort", abortListener);
+      reject(signal?.reason ?? new DOMException("Aborted", "AbortError"));
+    }
+
+    signal?.addEventListener("abort", abortListener, { once: true });
+  });
+}
+
+function throwIfAborted(signal?: AbortSignal): void {
+  if (signal?.aborted) {
+    throw signal.reason ?? new DOMException("Aborted", "AbortError");
   }
 }
 

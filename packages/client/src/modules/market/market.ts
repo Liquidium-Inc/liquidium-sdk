@@ -6,6 +6,7 @@ import {
 import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
 import type { ApiClient } from "../../core/transports/api-client";
 import type { CanisterContext } from "../../core/transports/canister-context";
+import type { MarketAsset, MarketChain } from "../../core/types";
 import {
   mapGetPoolRateResponseToPoolRate,
   mapGetPricesResponseToAssetPrices,
@@ -65,6 +66,32 @@ export class MarketModule {
         error
       );
     }
+  }
+
+  async findPool(query: {
+    asset: MarketAsset;
+    chain: MarketChain;
+  }): Promise<Pool> {
+    const pools = await this.getPools();
+    const matchedPools = pools.filter(
+      (pool) => pool.asset === query.asset && pool.chain === query.chain
+    );
+
+    if (matchedPools.length === 0) {
+      throw new LiquidiumError(
+        LiquidiumErrorCode.POOL_NOT_FOUND,
+        `Pool not found for asset ${query.asset} on chain ${query.chain}`
+      );
+    }
+
+    if (matchedPools.length > 1) {
+      throw new LiquidiumError(
+        LiquidiumErrorCode.VALIDATION_ERROR,
+        `Multiple pools found for asset ${query.asset} on chain ${query.chain}. Select a specific pool id.`
+      );
+    }
+
+    return matchedPools[0];
   }
 
   async getPoolRate(poolId: string): Promise<{

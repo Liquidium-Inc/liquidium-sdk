@@ -1,6 +1,7 @@
 import { LiquidiumClient } from "@liquidium/client";
 import { useMemo, useState } from "react";
 import { bigintJsonReplacer } from "./liquidium-client-sdk";
+import { resolveLiquidiumClientConfig } from "./liquidium-runtime-config";
 
 type RawRequestsPageProps = {
   defaultWalletAddress: string;
@@ -23,10 +24,7 @@ export default function RawRequestsPage({
   defaultAccountAddress,
 }: RawRequestsPageProps) {
   const client = useMemo(() => {
-    return LiquidiumClient.create({
-      host: import.meta.env.VITE_LIQUIDIUM_HOST || undefined,
-      apiBaseUrl: import.meta.env.VITE_LIQUIDIUM_API_BASE_URL || undefined,
-    });
+    return LiquidiumClient.create(resolveLiquidiumClientConfig());
   }, []);
 
   const [profileId, setProfileId] = useState("");
@@ -43,6 +41,7 @@ export default function RawRequestsPage({
     "nativeAddress" | "icrcAccount"
   >(DEFAULT_SUPPLY_DESTINATION);
   const [amountInput, setAmountInput] = useState(DEFAULT_AMOUNT_UNITS);
+  const [bitcoinTxid, setBitcoinTxid] = useState("");
   const [isRequestInFlight, setIsRequestInFlight] = useState(false);
   const [requestStatus, setRequestStatus] = useState<RequestStatus | null>(
     null
@@ -149,6 +148,14 @@ export default function RawRequestsPage({
             <input
               value={amountInput}
               onChange={(event) => setAmountInput(event.target.value.trim())}
+            />
+          </label>
+
+          <label>
+            Bitcoin txid
+            <input
+              value={bitcoinTxid}
+              onChange={(event) => setBitcoinTxid(event.target.value.trim())}
             />
           </label>
 
@@ -368,13 +375,13 @@ export default function RawRequestsPage({
           <button
             disabled={isRequestInFlight}
             onClick={() =>
-              void runRawRequest("client.lending.getBtcDepositFee", () =>
-                client.lending.getBtcDepositFee()
+              void runRawRequest("client.lending.getDepositFee", () =>
+                client.lending.getDepositFee()
               )
             }
             type="button"
           >
-            lending.getBtcDepositFee
+            lending.getDepositFee
           </button>
           <button
             disabled={isRequestInFlight}
@@ -386,6 +393,31 @@ export default function RawRequestsPage({
             type="button"
           >
             lending.isBorrowingDisabled
+          </button>
+          <button
+            disabled={isRequestInFlight}
+            onClick={() =>
+              void runRawRequest("client.lending.submitInflow", () =>
+                client.lending.submitInflow({ txid: bitcoinTxid })
+              )
+            }
+            type="button"
+          >
+            lending.submitInflow
+          </button>
+          <button
+            disabled={isRequestInFlight}
+            onClick={() =>
+              void runRawRequest("client.lending.getInflowStatus", () =>
+                client.lending.getInflowStatus({
+                  profileId,
+                  txid: bitcoinTxid || undefined,
+                })
+              )
+            }
+            type="button"
+          >
+            lending.getInflowStatus
           </button>
         </div>
       </section>

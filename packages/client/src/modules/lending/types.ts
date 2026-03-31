@@ -50,3 +50,75 @@ export interface SupplyInstruction {
   action: SupplyAction;
   target: SupplyTarget;
 }
+
+export interface SupplyFlowRequest extends SupplyRequest {}
+
+export interface GetSupplyStatusRequest {
+  txid?: string;
+}
+
+export interface WatchSupplyStatusOptions {
+  txid?: string;
+  signal?: AbortSignal;
+  pollIntervalMs?: number;
+}
+
+export interface SupplyTrackingStatus {
+  txid: string;
+  inflowId: string;
+  poolId: string;
+  type: "deposit" | "repayment";
+  stage: "LOGGED" | "CONFIRMED" | "PENDING" | "FINALISING";
+  amountSats: string;
+  timestampMs: number;
+  confirmations: number | null;
+  requiredConfirmations: number;
+  remainingConfirmations: number | null;
+  isDetected: boolean;
+  isAvailable: boolean;
+  estimatedMsUntilAvailable: number | null;
+  expectedAvailableAtMs: number | null;
+}
+
+export interface SupplyFlow {
+  instruction: SupplyInstruction;
+  target: SupplyTarget;
+  submit(request: { txid: string }): Promise<SubmitInflowResponse>;
+  getStatus(
+    request?: GetSupplyStatusRequest
+  ): Promise<SupplyTrackingStatus | null>;
+  watchStatus(
+    options?: WatchSupplyStatusOptions
+  ): AsyncGenerator<SupplyTrackingStatus, void, void>;
+}
+
+export interface SubmitInflowRequest {
+  txid: string;
+}
+
+export interface SubmitInflowResponse {
+  success: true;
+  txid: string;
+}
+
+export interface GetInflowStatusRequest {
+  profileId: string;
+  txid?: string;
+}
+
+export interface InflowStatusItem {
+  inflowId: string;
+  txid: string;
+  type: "deposit" | "repayment";
+  stage: "LOGGED" | "CONFIRMED" | "PENDING" | "FINALISING";
+  poolId: string;
+  amountSats: string;
+  timestampMs: number;
+  confirmations: number | null;
+  requiredConfirmations: number;
+}
+
+export interface GetInflowStatusResponse {
+  success: true;
+  inflows: InflowStatusItem[];
+}

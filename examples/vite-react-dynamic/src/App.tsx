@@ -8,17 +8,13 @@ import {
 import { useState } from "react";
 import {
   bigintJsonReplacer,
-  createOrResolveProfileId,
-  DEFAULT_SUPPLY_ACTION,
-  findBtcPool,
-  formatLiquidiumError,
   isNativeAddressSupplyInstruction,
-  loadPoolsAndDefaultSelection,
-  type Pool,
-  prepareBtcSupplyInstruction,
-  type SupplyAction,
-  type SupplyInstruction,
 } from "./liquidium-client-sdk";
+import { useCreateOrResolveAccount } from "./hooks/useCreateOrResolveAccount";
+import { useLoadPools } from "./hooks/useLoadPools";
+import { usePrepareBtcSupply } from "./hooks/usePrepareBtcSupply";
+import { useGetBtcInflowStatus } from "./hooks/useGetBtcInflowStatus";
+import { useSubmitBtcInflow } from "./hooks/useSubmitBtcInflow";
 import RawRequestsPage from "./RawRequestsPage";
 
 type DynamicPrimaryWallet = NonNullable<
@@ -29,126 +25,55 @@ export default function App() {
   const isLoggedIn = useIsLoggedIn();
   const { handleLogOut, primaryWallet, setShowAuthFlow } = useDynamicContext();
 
-  const [profileId, setProfileId] = useState<string | null>(null);
-  const [pools, setPools] = useState<Pool[]>([]);
-  const [selectedPoolId, setSelectedPoolId] = useState<string>("");
-  const [supplyAction, setSupplyAction] = useState<SupplyAction>(
-    DEFAULT_SUPPLY_ACTION
-  );
-  const [supplyInstruction, setSupplyInstruction] =
-    useState<SupplyInstruction | null>(null);
   const [statusMessage, setStatusMessage] = useState<string>(
     "Connect a wallet to start."
   );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
   const [activePage, setActivePage] = useState<"guided" | "raw-requests">(
     "guided"
   );
+
+  const createOrResolveAccount = useCreateOrResolveAccount({
+    onStatus: setStatusMessage,
+    onError: setErrorMessage,
+  });
+  const loadPools = useLoadPools({
+    onStatus: setStatusMessage,
+    onError: setErrorMessage,
+  });
+  const prepareBtcSupply = usePrepareBtcSupply({
+    onStatus: setStatusMessage,
+    onError: setErrorMessage,
+  });
+  const submitBtcInflow = useSubmitBtcInflow({
+    onStatus: setStatusMessage,
+    onError: setErrorMessage,
+  });
+  const getBtcInflowStatus = useGetBtcInflowStatus({
+    onStatus: setStatusMessage,
+    onError: setErrorMessage,
+  });
+
+  const isLoading =
+    createOrResolveAccount.isLoading ||
+    loadPools.isLoading ||
+    prepareBtcSupply.isLoading ||
+    submitBtcInflow.isLoading ||
+    getBtcInflowStatus.isLoading;
 
   const connectedWalletAddress = primaryWallet?.address ?? "";
   const liquidiumAccountAddress =
     getLiquidiumAccountAddress(primaryWallet) ?? "";
   const walletChain = getWalletChainLabel(primaryWallet);
-  const btcPool = findBtcPool(pools);
-
-  async function handleCreateOrResolveAccount() {
-    console.log("[dynamic-example] create/resolve clicked", {
-      hasPrimaryWallet: Boolean(primaryWallet),
-      connectedWalletAddress,
-      liquidiumAccountAddress,
-    });
-
-    if (!primaryWallet || !liquidiumAccountAddress) {
-      setErrorMessage("Connect an Ethereum or Bitcoin wallet first.");
-      return;
-    }
-
-    setIsLoading(true);
-    setErrorMessage(null);
-
-    try {
-      const signatureChain = getWalletSignatureChain(primaryWallet);
-      console.log("[dynamic-example] using signature chain", {
-        signatureChain,
-        liquidiumAccountAddress,
-      });
-
-      const profileResult = await createOrResolveProfileId({
-        walletAddress: liquidiumAccountAddress,
-        chain: signatureChain,
-        signMessage: (message) =>
-          signWalletMessage(primaryWallet, message, liquidiumAccountAddress),
-        onStep: (nextStatusMessage) => {
-          setStatusMessage(nextStatusMessage);
-        },
-      });
-
-      setProfileId(profileResult.profileId);
-      setStatusMessage(
-        profileResult.wasCreated
-          ? `Created Liquidium profile ${profileResult.profileId}.`
-          : `Wallet already has Liquidium profile ${profileResult.profileId}.`
-      );
-
-      console.log("[dynamic-example] create/resolve completed", profileResult);
-    } catch (error) {
-      console.error("[dynamic-example] create/resolve failed", error);
-      setErrorMessage(formatLiquidiumError(error));
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  async function handleLoadPools() {
-    setIsLoading(true);
-    setErrorMessage(null);
-
-    try {
-      const { pools: nextPools, selectedPoolId: nextSelectedPoolId } =
-        await loadPoolsAndDefaultSelection();
-
-      setPools(nextPools);
-      setSelectedPoolId(nextSelectedPoolId);
-      setStatusMessage(`Loaded ${nextPools.length} pools.`);
-    } catch (error) {
-      setErrorMessage(formatLiquidiumError(error));
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  async function handlePrepareBtcSupply() {
-    if (!profileId) {
-      setErrorMessage("Create or resolve a Liquidium profile first.");
-      return;
-    }
-
-    if (!selectedPoolId) {
-      setErrorMessage("Load pools and choose a pool first.");
-      return;
-    }
-
-    setIsLoading(true);
-    setErrorMessage(null);
-
-    try {
-      const nextSupplyInstruction = await prepareBtcSupplyInstruction({
-        profileId,
-        poolId: selectedPoolId,
-        action: supplyAction,
-      });
-
-      setSupplyInstruction(nextSupplyInstruction);
-      setStatusMessage(
-        `Prepared BTC ${supplyAction} target for ${selectedPoolId}.`
-      );
-    } catch (error) {
-      setErrorMessage(formatLiquidiumError(error));
-    } finally {
-      setIsLoading(false);
-    }
-  }
+  const profileId = createOrResolveAccount.profileId;
+  const pools = loadPools.pools;
+  const selectedPoolId = loadPools.selectedPoolId;
+  const btcPool = loadPools.btcPool;
+  const supplyAction = prepareBtcSupply.supplyAction;
+  const supplyFlow = prepareBtcSupply.supplyFlow;
+  const supplyInstruction = prepareBtcSupply.supplyInstruction;
+  const btcInflowTxid = submitBtcInflow.btcInflowTxid;
+  const btcInflowStatusResult = getBtcInflowStatus.result;
 
   async function handleCopyAddress() {
     if (!isNativeAddressSupplyInstruction(supplyInstruction)) {
@@ -246,7 +171,12 @@ export default function App() {
             </p>
             <button
               disabled={isLoading || !primaryWallet || !liquidiumAccountAddress}
-              onClick={() => void handleCreateOrResolveAccount()}
+              onClick={() =>
+                void createOrResolveAccount.run(
+                  primaryWallet,
+                  liquidiumAccountAddress
+                )
+              }
               type="button"
             >
               Create or resolve profile
@@ -268,7 +198,7 @@ export default function App() {
             <div className="button-row">
               <button
                 disabled={isLoading}
-                onClick={() => void handleLoadPools()}
+                onClick={() => void loadPools.run()}
                 type="button"
               >
                 Load pools
@@ -276,7 +206,9 @@ export default function App() {
               <select
                 disabled={pools.length === 0}
                 value={selectedPoolId}
-                onChange={(event) => setSelectedPoolId(event.target.value)}
+                onChange={(event) =>
+                  loadPools.setSelectedPoolId(event.target.value)
+                }
               >
                 <option value="">Choose a pool</option>
                 {pools.map((pool) => (
@@ -295,14 +227,17 @@ export default function App() {
           <section className="example-card">
             <h2>4. Get the BTC deposit address</h2>
             <p>
-              This uses `client.lending.supply(...)` with the selected pool as
-              the source of truth and asks for a native BTC address target.
+              This uses `client.lending.createSupplyFlow(...)` with the selected
+              pool as the source of truth and asks for a native BTC address
+              target.
             </p>
             <div className="button-row">
               <select
                 value={supplyAction}
                 onChange={(event) =>
-                  setSupplyAction(event.target.value as SupplyAction)
+                  prepareBtcSupply.setSupplyAction(
+                    event.target.value as typeof supplyAction
+                  )
                 }
               >
                 <option value="deposit">Deposit</option>
@@ -310,10 +245,12 @@ export default function App() {
               </select>
               <button
                 disabled={isLoading || !profileId || !selectedPoolId}
-                onClick={() => void handlePrepareBtcSupply()}
+                onClick={() =>
+                  void prepareBtcSupply.run({ profileId, selectedPoolId })
+                }
                 type="button"
               >
-                Prepare BTC supply
+                Prepare BTC flow
               </button>
             </div>
             <pre className="code-block">
@@ -337,6 +274,85 @@ export default function App() {
                 Try send via bitcoin URI
               </button>
             </div>
+          </section>
+
+          <section className="example-card">
+            <h2>5. Optional: submit your BTC transaction id</h2>
+            <p>
+              This is optional. The backend can detect inflows by watching known
+              deposit addresses; submitting a txid through the prepared flow is
+              just a faster hint path.
+            </p>
+            <div className="button-row">
+              <input
+                placeholder="BTC txid"
+                value={btcInflowTxid}
+                onChange={(event) =>
+                  submitBtcInflow.setBtcInflowTxid(event.target.value.trim())
+                }
+              />
+              <button
+                disabled={isLoading || btcInflowTxid.length === 0}
+                onClick={() => void submitBtcInflow.run({ supplyFlow })}
+                type="button"
+              >
+                Submit optional txid hint
+              </button>
+            </div>
+          </section>
+
+          <section className="example-card">
+            <h2>6. Watch BTC inflow status</h2>
+            <p>
+              Use the prepared BTC flow to poll current deposit or repayment
+              progress every 5 seconds. If a txid is entered, the query narrows
+              to that specific transaction.
+            </p>
+            <div className="button-row">
+              <button
+                disabled={isLoading || !profileId}
+                onClick={() =>
+                  void getBtcInflowStatus.run({
+                    profileId,
+                    txid: btcInflowTxid || undefined,
+                    supplyFlow,
+                  })
+                }
+                type="button"
+              >
+                Refresh BTC inflow status
+              </button>
+              <button
+                disabled={
+                  isLoading ||
+                  getBtcInflowStatus.isWatching ||
+                  !profileId ||
+                  !supplyFlow
+                }
+                onClick={() =>
+                  void getBtcInflowStatus.watch({
+                    profileId,
+                    txid: btcInflowTxid || undefined,
+                    supplyFlow,
+                  })
+                }
+                type="button"
+              >
+                Start 5 second polling
+              </button>
+              <button
+                disabled={!getBtcInflowStatus.isWatching}
+                onClick={getBtcInflowStatus.stopWatching}
+                type="button"
+              >
+                Stop polling
+              </button>
+            </div>
+            <pre className="code-block">
+              {btcInflowStatusResult
+                ? JSON.stringify(btcInflowStatusResult, bigintJsonReplacer, 2)
+                : "No BTC inflow status fetched yet."}
+            </pre>
           </section>
 
           <section className="example-card">
@@ -366,80 +382,6 @@ export function MissingEnvironmentScreen() {
       </section>
     </main>
   );
-}
-
-async function signWalletMessage(
-  primaryWallet: DynamicPrimaryWallet,
-  message: string,
-  liquidiumAccountAddress: string
-): Promise<string> {
-  console.log("[dynamic-example] requesting wallet signature", {
-    messageLength: message.length,
-  });
-
-  if (isEthereumWallet(primaryWallet)) {
-    console.log("[dynamic-example] signing message with ethereum wallet");
-    const rawSignature = await primaryWallet.signMessage(message);
-
-    if (!rawSignature) {
-      throw new Error("Ethereum wallet did not return a signature.");
-    }
-
-    const normalizedSignature = normalizeEthereumSignature(rawSignature);
-
-    console.log("[dynamic-example] ethereum signature received", {
-      rawSignatureLength: rawSignature.length,
-      normalizedSignatureLength: normalizedSignature.length,
-      wasNormalized: normalizedSignature !== rawSignature,
-    });
-
-    return normalizedSignature;
-  }
-
-  if (isBitcoinWallet(primaryWallet)) {
-    const paymentAddress = getBitcoinPaymentAddress(primaryWallet);
-    const isUsingPaymentAddress =
-      Boolean(paymentAddress) && paymentAddress === liquidiumAccountAddress;
-
-    console.log("[dynamic-example] signing message with bitcoin wallet");
-
-    const rawSignature = await primaryWallet.signMessage(message, {
-      addressType: isUsingPaymentAddress ? "payment" : "ordinals",
-      protocol: "ecdsa",
-    });
-
-    if (!rawSignature) {
-      throw new Error("Bitcoin wallet did not return a signature.");
-    }
-
-    const normalizedSignature = normalizeBitcoinSignature(rawSignature);
-
-    console.log("[dynamic-example] bitcoin signature received", {
-      rawSignatureLength: rawSignature.length,
-      normalizedSignatureLength: normalizedSignature.length,
-      wasNormalized: normalizedSignature !== rawSignature,
-      usedAddressType: isUsingPaymentAddress ? "payment" : "ordinals",
-      protocol: "ecdsa",
-    });
-
-    return normalizedSignature;
-  }
-
-  throw new Error("Connected wallet is not supported by this example.");
-}
-
-function getWalletSignatureChain(
-  primaryWallet: DynamicPrimaryWallet
-): "ETH" | "BTC" {
-  if (isEthereumWallet(primaryWallet)) {
-    return "ETH";
-  }
-
-  if (isBitcoinWallet(primaryWallet)) {
-    return "BTC";
-  }
-
-  throw new Error("Connected wallet is not supported by this example.");
 }
 
 function getWalletChainLabel(
@@ -482,40 +424,4 @@ function getBitcoinPaymentAddress(
   )?.address;
 
   return paymentAddress ?? null;
-}
-
-function normalizeBitcoinSignature(signature: string): string {
-  if (isHexSignature(signature)) {
-    return strip0xPrefix(signature);
-  }
-
-  try {
-    const binary = atob(signature);
-    let hexSignature = "";
-
-    for (let index = 0; index < binary.length; index += 1) {
-      const byteAsHex = binary.charCodeAt(index).toString(16).padStart(2, "0");
-      hexSignature += byteAsHex;
-    }
-
-    return hexSignature;
-  } catch {
-    return strip0xPrefix(signature);
-  }
-}
-
-function normalizeEthereumSignature(signature: string): string {
-  return strip0xPrefix(signature);
-}
-
-function strip0xPrefix(signature: string): string {
-  return signature.startsWith("0x") ? signature.slice(2) : signature;
-}
-
-function isHexSignature(signature: string): boolean {
-  const normalizedSignature = signature.startsWith("0x")
-    ? signature.slice(2)
-    : signature;
-
-  return /^[0-9a-fA-F]+$/.test(normalizedSignature);
 }
