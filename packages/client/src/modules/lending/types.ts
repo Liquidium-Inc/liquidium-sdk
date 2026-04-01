@@ -5,11 +5,43 @@ import type {
   SupplyAction,
 } from "../../core/types";
 
+export interface OutflowReceiver {
+  type: "Native" | "External";
+  account: string;
+}
+
 export interface OutflowDetails {
   id: string;
   outflowType: Outflowtype;
   outflowRef?: string;
+  txid?: string;
   amount: bigint;
+  receiver: OutflowReceiver;
+}
+
+export interface BorrowSubmitSignatureInfo {
+  signature: string;
+  chain: "BTC" | "ETH";
+}
+
+export interface CreateBorrowRequest {
+  profileId: string;
+  poolId: string;
+  amount: bigint;
+  account: string;
+  signerAccount: string;
+}
+
+export interface CreateBorrowData extends CreateBorrowRequest {
+  expiryTimestamp: bigint;
+}
+
+export interface BorrowAction {
+  kind: "create-borrow";
+  account: string;
+  message: string;
+  data: CreateBorrowData;
+  submit(signatureInfo: BorrowSubmitSignatureInfo): Promise<OutflowDetails>;
 }
 
 export type SupplyDestination = "nativeAddress" | "icrcAccount";

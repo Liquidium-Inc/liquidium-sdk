@@ -1,4 +1,5 @@
 import {
+  type OutflowDetails,
   type GetInflowStatusResponse,
   LiquidiumClient,
   LiquidiumError,
@@ -41,10 +42,43 @@ type PrepareBtcSupplyParams = {
   action: SupplyAction;
 };
 
+type CreateBorrowParams = {
+  profileId: string;
+  poolId: string;
+  amount: bigint;
+  account: string;
+  signerAccount: string;
+  chain: SignatureChain;
+  signMessage: (message: string) => Promise<string>;
+  onStep?: (statusMessage: string) => void;
+};
+
+type BorrowQuoteParams = {
+  profileId: string;
+  poolId: string;
+  amount: bigint;
+};
+
+export type BorrowQuote = {
+  asset: string;
+  chain: string;
+  amountRaw: bigint;
+  amountDisplay: string;
+  assetPriceUsd: number | null;
+  requestedValueUsd: number | null;
+  collateralUsd: number;
+  debtUsd: number;
+  grossBorrowableUsd: number;
+  availableBorrowableUsd: number;
+  remainingBorrowableUsdAfterRequest: number;
+  exceedsBorrowingPower: boolean;
+};
+
 export const DEFAULT_SUPPLY_ACTION: SupplyAction = "deposit";
 const BTC_ADDRESS_DESTINATION: SupplyDestination = "nativeAddress";
 
 export type { Pool, SupplyAction, SupplyFlow, SupplyInstruction, SupplyTrackingStatus };
+export type { OutflowDetails };
 
 export async function createOrResolveProfileId(
   params: CreateOrResolveProfileParams
@@ -156,6 +190,89 @@ export async function prepareBtcSupplyFlow(
   });
 }
 
+export async function createBorrowOutflow(
+  params: CreateBorrowParams
+): Promise<OutflowDetails> {
+  const client = createLiquidiumClient();
+
+  params.onStep?.("Preparing borrow request...");
+  const borrowAction = await withTimeout(
+    client.lending.createBorrow({
+      profileId: params.profileId,
+      poolId: params.poolId,
+      amount: params.amount,
+      account: params.account,
+      signerAccount: params.signerAccount,
+    }),
+    "Timed out while creating the borrow request."
+  );
+
+  params.onStep?.("Please sign the borrow message to continue...");
+  const signature = await params.signMessage(borrowAction.message);
+
+  params.onStep?.("Submitting signed borrow request to Liquidium...");
+
+  return await withTimeout(
+    borrowAction.submit({
+      signature,
+      chain: params.chain,
+    }),
+    "Timed out while submitting the signed borrow request."
+  );
+}
+
+export async function getBorrowQuote(
+  params: BorrowQuoteParams
+): Promise<BorrowQuote> {
+  const client = createLiquidiumClient();
+  const [pools, assetPrices, userStats] = await Promise.all([
+    client.market.getPools(),
+    client.market.getAssetPrices(),
+    client.positions.getUserStats(params.profileId),
+  ]);
+  const selectedPool = pools.find((pool) => pool.id === params.poolId);
+
+  if (!selectedPool) {
+    throw new Error(`Pool not found: ${params.poolId}`);
+  }
+
+  const assetDecimals = getAssetDecimals(selectedPool.asset);
+  const amountDisplay = formatUnits(params.amount, assetDecimals);
+  const assetPriceUsd = assetPrices[selectedPool.asset] ?? null;
+  const requestedValueUsd =
+    assetPriceUsd === null ? null : Number(amountDisplay) * assetPriceUsd;
+  const collateralUsd = formatScaledUsd(
+    userStats.collateral,
+    userStats.collateralDecimals
+  );
+  const debtUsd = formatScaledUsd(userStats.debt, userStats.debtDecimals);
+  const grossBorrowableUsd = formatScaledUsd(
+    userStats.borrowingPower.maxBorrowableUsd,
+    userStats.borrowingPower.maxBorrowableUsdDecimals
+  );
+  const availableBorrowableUsd = Math.max(grossBorrowableUsd - debtUsd, 0);
+  const remainingBorrowableUsdAfterRequest = Math.max(
+    availableBorrowableUsd - (requestedValueUsd ?? 0),
+    0
+  );
+
+  return {
+    asset: selectedPool.asset,
+    chain: selectedPool.chain,
+    amountRaw: params.amount,
+    amountDisplay,
+    assetPriceUsd,
+    requestedValueUsd,
+    collateralUsd,
+    debtUsd,
+    grossBorrowableUsd,
+    availableBorrowableUsd,
+    remainingBorrowableUsdAfterRequest,
+    exceedsBorrowingPower:
+      requestedValueUsd !== null && requestedValueUsd > availableBorrowableUsd,
+  };
+}
+
 export async function submitInflowTxid(txid: string) {
   const client = createLiquidiumClient();
 
@@ -210,6 +327,40 @@ export function bigintJsonReplacer(_key: string, value: unknown) {
 
 function createLiquidiumClient() {
   return LiquidiumClient.create(resolveLiquidiumClientConfig());
+}
+
+function getAssetDecimals(asset: string): number {
+  switch (asset) {
+    case "BTC":
+      return 8;
+    case "USDT":
+    case "USDC":
+      return 6;
+    case "SOL":
+      return 9;
+    default:
+      return 8;
+  }
+}
+
+function formatUnits(value: bigint, decimals: number): string {
+  if (decimals === 0) {
+    return value.toString();
+  }
+
+  const decimalBase = 10n ** BigInt(decimals);
+  const whole = value / decimalBase;
+  const fraction = value % decimalBase;
+
+  if (fraction === 0n) {
+    return whole.toString();
+  }
+
+  return `${whole}.${fraction.toString().padStart(decimals, "0").replace(/0+$/, "")}`;
+}
+
+function formatScaledUsd(value: bigint, decimals: bigint): number {
+  return Number(value) / 10 ** Number(decimals);
 }
 
 async function resolveDefaultPoolId(

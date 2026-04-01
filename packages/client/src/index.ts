@@ -24,6 +24,10 @@ export type {
   PaginatedResponse,
 } from "./modules/history";
 export type {
+  BorrowAction,
+  BorrowSubmitSignatureInfo,
+  CreateBorrowData,
+  CreateBorrowRequest,
   GetInflowStatusRequest,
   GetInflowStatusResponse,
   GetSupplyStatusRequest,
@@ -31,6 +35,7 @@ export type {
   IcrcAccountSupplyTarget,
   NativeAddressSupplyTarget,
   OutflowDetails,
+  OutflowReceiver,
   SubmitInflowRequest,
   SubmitInflowResponse,
   SupplyFlow,

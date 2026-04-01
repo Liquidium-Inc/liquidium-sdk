@@ -1,4 +1,5 @@
 import { Actor } from "@dfinity/agent";
+import { Principal } from "@dfinity/principal";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { LiquidiumClient, LiquidiumError, LiquidiumErrorCode } from "../index";
 
@@ -1212,20 +1213,149 @@ describe("LendingModule", () => {
     });
   });
 
-  test("throws INTERNAL for borrow until implemented", async () => {
+  test("creates and submits a borrow action with a custom outflow account", async () => {
+    // given
+    vi.setSystemTime(new Date("2026-04-01T00:00:00.000Z"));
+    const getNonce = vi.fn().mockResolvedValue(17n);
+    const borrowAssets = vi.fn().mockResolvedValue({
+      Ok: {
+        id: "outflow-1",
+        txid: ["txid-1"],
+        outflow_type: { Borrow: null },
+        outflow_ref: ["ref-1"],
+        amount: 50_000n,
+        receiver: { External: "bc1qcustomoutflow" },
+      },
+    });
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      get_nonce: getNonce,
+      borrow_assets: borrowAssets,
+    } as never);
+    const client = LiquidiumClient.create({});
+    const profileId = "aaaaa-aa";
+    const poolId = "rrkah-fqaaa-aaaaa-aaaaq-cai";
+
+    // when
+    const borrowAction = await client.lending.createBorrow({
+      profileId,
+      poolId,
+      amount: 50_000n,
+      account: "bc1qcustomoutflow",
+      signerAccount: "0xsigner",
+    });
+    const outflow = await borrowAction.submit({
+      signature: "0xsigned",
+      chain: "ETH",
+    });
+
+    // then
+    expect(getNonce).toHaveBeenCalledWith("0xsigner");
+    expect(borrowAction.kind).toBe("create-borrow");
+    expect(borrowAction.account).toBe("0xsigner");
+    expect(borrowAction.data).toMatchObject({
+      profileId,
+      poolId,
+      amount: 50_000n,
+      account: "bc1qcustomoutflow",
+      signerAccount: "0xsigner",
+    });
+    expect(borrowAction.message).toBe(`Liquidium: Borrow Assets
+
+Action: Borrow from pool
+Pool ID: rrkah-fqaaa-aaaaa-aaaaq-cai
+Amount: 50000
+Address:bc1qcustomoutflow
+Expires: 1775001900
+Nonce: 17`);
+    expect(borrowAssets).toHaveBeenCalledTimes(1);
+    expect(borrowAssets.mock.calls[0]?.[0]).toEqual(Principal.fromText(profileId));
+    expect(borrowAssets.mock.calls[0]?.[1]).toMatchObject({
+      data: {
+        expiry_timestamp: 1775001900n,
+        account: { External: "bc1qcustomoutflow" },
+        pool_id: Principal.fromText(poolId),
+        amount: 50_000n,
+      },
+      signature_info: {
+        Wallet: {
+          signature: "0xsigned",
+          chain: { ETH: null },
+          account: "0xsigner",
+        },
+      },
+    });
+    expect(outflow).toEqual({
+      id: "outflow-1",
+      outflowType: "Borrow",
+      outflowRef: "ref-1",
+      txid: "txid-1",
+      amount: 50_000n,
+      receiver: {
+        type: "External",
+        account: "bc1qcustomoutflow",
+      },
+    });
+  });
+
+  test("maps protocol errors for createBorrow submission", async () => {
+    // given
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      get_nonce: vi.fn().mockResolvedValue(19n),
+      borrow_assets: vi.fn().mockResolvedValue({
+        Err: { BorrowingDisabled: null },
+      }),
+    } as never);
+    const client = LiquidiumClient.create({});
+
+    // when / then
+    await expect(
+      client.lending
+        .createBorrow({
+          profileId: "aaaaa-aa",
+          poolId: "rrkah-fqaaa-aaaaa-aaaaq-cai",
+          amount: 50_000n,
+          account: "bc1qcustomoutflow",
+          signerAccount: "bc1qsigner",
+        })
+        .then((borrowAction) =>
+          borrowAction.submit({
+            signature: "signed",
+            chain: "BTC",
+          })
+        )
+    ).rejects.toMatchObject({
+      code: LiquidiumErrorCode.BORROWING_DISABLED,
+    });
+  });
+
+  test("validates createBorrow inputs", async () => {
     // given
     const client = LiquidiumClient.create({});
 
     // when / then
     await expect(
-      client.lending.borrow({
+      client.lending.createBorrow({
         profileId: "p1",
-        poolId: "pool1",
+        poolId: "aaaaa-aa",
         amount: 50_000n,
-        account: "bc1q...",
+        account: "   ",
+        signerAccount: "0xsigner",
       })
     ).rejects.toMatchObject({
-      code: LiquidiumErrorCode.INTERNAL,
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message: "Borrow requires a custom outflow account",
+    });
+    await expect(
+      client.lending.createBorrow({
+        profileId: "p1",
+        poolId: "aaaaa-aa",
+        amount: 50_000n,
+        account: "bc1qcustomoutflow",
+        signerAccount: "  ",
+      })
+    ).rejects.toMatchObject({
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message: "Borrow requires a signer account",
     });
   });
 

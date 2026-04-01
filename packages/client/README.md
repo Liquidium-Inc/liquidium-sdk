@@ -42,6 +42,22 @@ const profile = await createAction.submit({
 // History (requires apiBaseUrl)
 const history = await client.history.getUser("profile-id");
 
+// Borrow with a required custom outflow account
+const borrowAction = await client.lending.createBorrow({
+  profileId: "<liquidium-profile-id>",
+  poolId: btcPool.id,
+  amount: 50_000n,
+  account: "<custom-outflow-address>",
+  signerAccount: walletAddress,
+});
+
+const borrowSignature = await wallet.signMessage(borrowAction.message);
+
+const outflow = await borrowAction.submit({
+  signature: borrowSignature,
+  chain: "ETH",
+});
+
 // Pending movements
 const pending = await client.pending.getMovements("profile-id");
 
@@ -110,7 +126,7 @@ Environment presets:
 ### Modules
 
 - `client.accounts` - Profile and wallet management
-- `client.lending` - Supply, borrow, repay, withdraw
+- `client.lending` - Supply, create borrow actions, repay, withdraw
 - `client.positions` - Position reads and health factor
 - `client.market` - Dynamic pool data, pool selection, and asset prices
 - `client.pending` - Pending inflows and outflows

@@ -1,5 +1,6 @@
 import { Actor } from "@dfinity/agent";
 import type { IDL } from "@dfinity/candid";
+import type { Principal } from "@dfinity/principal";
 import { LiquidiumError, LiquidiumErrorCode } from "../../errors";
 import type { CanisterContext } from "../../transports/canister-context";
 
@@ -16,6 +17,54 @@ export type SignatureInfoVariant = {
   chain: { BTC: null } | { ETH: null };
   account: string;
 };
+
+export type AccountTypeVariant = { Native: Principal } | { External: string };
+
+export type OutflowTypeVariant =
+  | { Withdraw: null }
+  | { FeeClaim: null }
+  | { Borrow: null };
+
+export interface BorrowAssetsRequest {
+  expiry_timestamp: bigint;
+  account: AccountTypeVariant;
+  pool_id: Principal;
+  amount: bigint;
+}
+
+export interface SignedBorrowAssetsRequest {
+  data: BorrowAssetsRequest;
+  signature_info: {
+    Wallet: SignatureInfoVariant;
+  };
+}
+
+export interface OutflowDetailsRecord {
+  id: string;
+  txid: [] | [string];
+  outflow_type: OutflowTypeVariant;
+  outflow_ref: [] | [string];
+  amount: bigint;
+  receiver: AccountTypeVariant;
+}
+
+export type BorrowAssetsResult =
+  | { Ok: OutflowDetailsRecord }
+  | { Err: ProtocolError };
+
+export interface BorrowingPowerRecord {
+  max_borrowable_usd: bigint;
+  weighted_max_ltv: bigint;
+}
+
+export interface UserStatsRecord {
+  debt: bigint;
+  collateral: bigint;
+  acumulated_interest: bigint;
+  borrowing_power: BorrowingPowerRecord;
+  positions: unknown[];
+  weighted_liquidation_threshold: bigint;
+}
 
 export type SignatureVerificationError =
   | { InvalidEthSignature: null }
@@ -107,6 +156,12 @@ export interface LendingActor {
     principal: LendingPoolRecord["principal"]
   ): Promise<[] | [PoolRateTuple]>;
   get_prices(): Promise<PriceRecord[]>;
+  get_profile_stats(profileId: Principal): Promise<UserStatsRecord>;
+  borrow_assets(
+    profileId: Principal,
+    request: SignedBorrowAssetsRequest
+  ): Promise<BorrowAssetsResult>;
+  get_borrowing_disabled(): Promise<boolean>;
 }
 
 const lendingIdlFactory: IDL.InterfaceFactory = ({ IDL }) => {
@@ -117,9 +172,23 @@ const lendingIdlFactory: IDL.InterfaceFactory = ({ IDL }) => {
     account: IDL.Text,
   });
   const SignatureScheme = IDL.Variant({ Wallet: SignatureInfo });
+  const AccountType = IDL.Variant({
+    Native: IDL.Principal,
+    External: IDL.Text,
+  });
   const InitializeAccountRequest = IDL.Record({ expiry_timestamp: IDL.Nat64 });
   const SignedInitializeAccountRequest = IDL.Record({
     data: InitializeAccountRequest,
+    signature_info: SignatureScheme,
+  });
+  const BorrowAssetRequest = IDL.Record({
+    expiry_timestamp: IDL.Nat64,
+    account: AccountType,
+    pool_id: IDL.Principal,
+    amount: IDL.Nat,
+  });
+  const SignedBorrowAssetRequest = IDL.Record({
+    data: BorrowAssetRequest,
     signature_info: SignatureScheme,
   });
   const SignatureVerificationError = IDL.Variant({
@@ -162,6 +231,27 @@ const lendingIdlFactory: IDL.InterfaceFactory = ({ IDL }) => {
     Ok: IDL.Principal,
     Err: ProtocolError,
   });
+  const OutflowType = IDL.Variant({
+    Withdraw: IDL.Null,
+    FeeClaim: IDL.Null,
+    Borrow: IDL.Null,
+  });
+  const OutflowDetails = IDL.Record({
+    id: IDL.Text,
+    txid: IDL.Opt(IDL.Text),
+    outflow_type: OutflowType,
+    outflow_ref: IDL.Opt(IDL.Text),
+    amount: IDL.Nat,
+    receiver: AccountType,
+  });
+  const BorrowAssetsResult = IDL.Variant({
+    Ok: OutflowDetails,
+    Err: ProtocolError,
+  });
+  const BorrowingPower = IDL.Record({
+    max_borrowable_usd: IDL.Nat,
+    weighted_max_ltv: IDL.Nat,
+  });
   const Assets = IDL.Variant({
     BTC: IDL.Null,
     SOL: IDL.Null,
@@ -203,8 +293,35 @@ const lendingIdlFactory: IDL.InterfaceFactory = ({ IDL }) => {
     pending_service_fees: IDL.Nat,
     total_supply_at_last_sync: IDL.Nat,
   });
+  const Position = IDL.Record({
+    asset: Assets,
+    total_debt_interest: IDL.Nat,
+    borrow_index_snapshot: IDL.Nat,
+    lending_index_snapshot: IDL.Nat,
+    debt_scaled: IDL.Nat,
+    total_earned_interest: IDL.Nat,
+    deposit_scaled: IDL.Nat,
+    pool_id: IDL.Principal,
+    unpaid_debt_interest: IDL.Nat,
+    last_update: IDL.Nat64,
+    user_profile: IDL.Principal,
+  });
+  const UserStats = IDL.Record({
+    debt: IDL.Nat,
+    collateral: IDL.Nat,
+    acumulated_interest: IDL.Nat,
+    borrowing_power: BorrowingPower,
+    positions: IDL.Vec(Position),
+    weighted_liquidation_threshold: IDL.Nat,
+  });
 
   return IDL.Service({
+    borrow_assets: IDL.Func(
+      [IDL.Principal, SignedBorrowAssetRequest],
+      [BorrowAssetsResult],
+      []
+    ),
+    get_borrowing_disabled: IDL.Func([], [IDL.Bool], ["query"]),
     get_nonce: IDL.Func([IDL.Text], [IDL.Nat], ["query"]),
     get_wallet_profile: IDL.Func(
       [IDL.Text],
@@ -227,6 +344,7 @@ const lendingIdlFactory: IDL.InterfaceFactory = ({ IDL }) => {
       [IDL.Vec(IDL.Tuple(IDL.Text, IDL.Nat, IDL.Nat32))],
       ["query"]
     ),
+    get_profile_stats: IDL.Func([IDL.Principal], [UserStats], ["query"]),
   });
 };
 
