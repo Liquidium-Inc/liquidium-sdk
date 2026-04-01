@@ -343,18 +343,26 @@ export default function RawRequestsPage({
           <button
             disabled={isRequestInFlight}
             onClick={() =>
-              void runRawRequest("client.lending.borrow", () =>
-                client.lending.borrow({
-                  profileId,
-                  poolId,
-                  amount: parseAmountToBigInt(),
-                  account: accountAddress,
-                })
+              void runRawRequest("client.lending.createBorrow", () =>
+                client.lending
+                  .createBorrow({
+                    profileId,
+                    poolId,
+                    amount: parseAmountToBigInt(),
+                    account: accountAddress,
+                    signerAccount: walletAddress,
+                  })
+                  .then((borrowAction) =>
+                    borrowAction.submit({
+                      signature: "raw-request-example-signature",
+                      chain,
+                    })
+                  )
               )
             }
             type="button"
           >
-            lending.borrow
+            lending.createBorrow
           </button>
           <button
             disabled={isRequestInFlight}

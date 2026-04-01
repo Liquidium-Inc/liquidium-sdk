@@ -1,5 +1,9 @@
 export { LendingModule } from "./lending";
 export type {
+  BorrowAction,
+  BorrowSubmitSignatureInfo,
+  CreateBorrowData,
+  CreateBorrowRequest,
   GetInflowStatusRequest,
   GetInflowStatusResponse,
   GetSupplyStatusRequest,
@@ -7,6 +11,7 @@ export type {
   IcrcAccountSupplyTarget,
   NativeAddressSupplyTarget,
   OutflowDetails,
+  OutflowReceiver,
   SubmitInflowRequest,
   SubmitInflowResponse,
   SupplyFlow,

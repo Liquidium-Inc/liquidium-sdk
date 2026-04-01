@@ -6,12 +6,19 @@ import {
   createLendingActor,
   type LendingPoolRecord,
 } from "../../core/canisters/lending/actor";
+import {
+  mapCanisterCallErrorToLiquidiumError,
+  mapLendingProtocolErrorToLiquidiumError,
+} from "../../core/canisters/lending/error-mappers";
 import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
 import type { ApiClient } from "../../core/transports/api-client";
 import type { CanisterContext } from "../../core/transports/canister-context";
 import type { SupplyAction } from "../../core/types";
 import { encodeInflowSubaccount } from "../../core/utils/inflow-subaccount";
 import type {
+  BorrowAction,
+  BorrowSubmitSignatureInfo,
+  CreateBorrowRequest,
   GetInflowStatusRequest,
   GetInflowStatusResponse,
   IcrcAccountSupplyTarget,
@@ -28,6 +35,7 @@ import type {
 } from "./types";
 
 const BITCOIN_BLOCK_TIME_MS = 10 * 60 * 1000;
+const SIGNATURE_VALIDITY_5_MINUTES_IN_SECONDS = 5n * 60n;
 
 type LendingModuleOptions = {
   supplyStatusPollIntervalMs: number;
@@ -53,17 +61,60 @@ export class LendingModule {
     );
   }
 
-  async borrow(request: {
-    profileId: string;
-    poolId: string;
-    amount: bigint;
-    account: string;
-  }): Promise<OutflowDetails> {
-    void request;
-    throw new LiquidiumError(
-      LiquidiumErrorCode.INTERNAL,
-      "Not yet implemented"
-    );
+  async createBorrow(request: CreateBorrowRequest): Promise<BorrowAction> {
+    const destinationAccount = request.account.trim();
+    const signerAccount = request.signerAccount.trim();
+    if (!destinationAccount) {
+      throw new LiquidiumError(
+        LiquidiumErrorCode.VALIDATION_ERROR,
+        "Borrow requires a custom outflow account"
+      );
+    }
+    if (!signerAccount) {
+      throw new LiquidiumError(
+        LiquidiumErrorCode.VALIDATION_ERROR,
+        "Borrow requires a signer account"
+      );
+    }
+
+    const lendingActor = createLendingActor(this.canisterContext);
+
+    try {
+      const expiryTimestamp = computeExpiryTimestamp();
+      const nonce = await lendingActor.get_nonce(signerAccount);
+      const borrowRequestData = {
+        profileId: request.profileId,
+        poolId: request.poolId,
+        amount: request.amount,
+        account: destinationAccount,
+        signerAccount,
+        expiryTimestamp,
+      };
+
+      return {
+        kind: "create-borrow",
+        account: signerAccount,
+        message: createBorrowAssetMessage(
+          {
+            pool_id: request.poolId,
+            amount: request.amount.toString(),
+            account: { type: "External", data: destinationAccount },
+            expiry_timestamp: expiryTimestamp,
+          },
+          nonce
+        ),
+        data: borrowRequestData,
+        submit: async (signatureInfo: BorrowSubmitSignatureInfo) => {
+          return await this.submitBorrow(borrowRequestData, signatureInfo);
+        },
+      };
+    } catch (error) {
+      if (error instanceof LiquidiumError) {
+        throw error;
+      }
+
+      throw mapCanisterCallErrorToLiquidiumError("get_nonce", error);
+    }
   }
 
   async supply(request: SupplyRequest): Promise<SupplyInstruction> {
@@ -184,10 +235,20 @@ export class LendingModule {
   }
 
   async isBorrowingDisabled(): Promise<boolean> {
-    throw new LiquidiumError(
-      LiquidiumErrorCode.INTERNAL,
-      "Not yet implemented"
-    );
+    try {
+      return await createLendingActor(
+        this.canisterContext
+      ).get_borrowing_disabled();
+    } catch (error) {
+      if (error instanceof LiquidiumError) {
+        throw error;
+      }
+
+      throw mapCanisterCallErrorToLiquidiumError(
+        "get_borrowing_disabled",
+        error
+      );
+    }
   }
 
   private requireApi(): ApiClient {
@@ -215,6 +276,51 @@ export class LendingModule {
     }
 
     return selectedPool;
+  }
+
+  private async submitBorrow(
+    request: {
+      profileId: string;
+      poolId: string;
+      amount: bigint;
+      account: string;
+      signerAccount: string;
+      expiryTimestamp: bigint;
+    },
+    signatureInfo: BorrowSubmitSignatureInfo
+  ): Promise<OutflowDetails> {
+    try {
+      const result = await createLendingActor(this.canisterContext).borrow_assets(
+        Principal.fromText(request.profileId),
+        {
+          data: {
+            expiry_timestamp: request.expiryTimestamp,
+            account: { External: request.account },
+            pool_id: Principal.fromText(request.poolId),
+            amount: request.amount,
+          },
+          signature_info: {
+            Wallet: {
+              signature: signatureInfo.signature,
+              chain: mapWalletChainToLendingChain(signatureInfo.chain),
+              account: request.signerAccount,
+            },
+          },
+        }
+      );
+
+      if ("Err" in result) {
+        throw mapLendingProtocolErrorToLiquidiumError(result.Err);
+      }
+
+      return mapCanisterOutflowDetails(result.Ok);
+    } catch (error) {
+      if (error instanceof LiquidiumError) {
+        throw error;
+      }
+
+      throw mapCanisterCallErrorToLiquidiumError("borrow_assets", error);
+    }
   }
 
   private async resolveSupplyTarget(
@@ -404,4 +510,94 @@ function getVariantKey(variant: Record<string, null>): string {
   }
 
   return variantKey;
+}
+
+function computeExpiryTimestamp(): bigint {
+  return (
+    BigInt(Math.floor(Date.now() / 1000)) +
+    SIGNATURE_VALIDITY_5_MINUTES_IN_SECONDS
+  );
+}
+
+function createBorrowAssetMessage(
+  request: {
+    pool_id: string;
+    amount: string;
+    account: {
+      type: "Native" | "External";
+      data: string;
+    };
+    expiry_timestamp: bigint;
+  },
+  nonce: bigint
+): string {
+  return `Liquidium: Borrow Assets
+
+Action: Borrow from pool
+Pool ID: ${request.pool_id}
+Amount: ${request.amount}
+${accountTypeToString(request.account)}
+Expires: ${request.expiry_timestamp}
+Nonce: ${nonce}`;
+}
+
+function accountTypeToString(accountType: {
+  type: "Native" | "External";
+  data: string;
+}): string {
+  switch (accountType.type) {
+    case "External":
+      return `Address:${accountType.data}`;
+    case "Native":
+      return `Principal:${accountType.data}`;
+  }
+}
+
+function mapWalletChainToLendingChain(chain: "BTC" | "ETH"): {
+  BTC: null;
+} | {
+  ETH: null;
+} {
+  switch (chain) {
+    case "BTC":
+      return { BTC: null };
+    case "ETH":
+      return { ETH: null };
+  }
+}
+
+function mapCanisterOutflowDetails(outflow: {
+  id: string;
+  txid: [] | [string];
+  outflow_type: Record<string, null>;
+  outflow_ref: [] | [string];
+  amount: bigint;
+  receiver: { Native: Principal } | { External: string };
+}): OutflowDetails {
+  return {
+    id: outflow.id,
+    outflowType: getVariantKey(outflow.outflow_type) as OutflowDetails["outflowType"],
+    outflowRef: outflow.outflow_ref[0],
+    txid: outflow.txid[0],
+    amount: outflow.amount,
+    receiver: mapCanisterAccountType(outflow.receiver),
+  };
+}
+
+function mapCanisterAccountType(receiver: {
+  Native: Principal;
+} | {
+  External: string;
+}): OutflowDetails["receiver"] {
+  if ("Native" in receiver) {
+    return {
+      type: "Native",
+      account: receiver.Native.toText(),
+    };
+  }
+
+  return {
+    type: "External",
+    account: receiver.External,
+  };
 }

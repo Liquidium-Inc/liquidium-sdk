@@ -8,6 +8,8 @@ It walks through:
 - Connecting an Ethereum or Bitcoin wallet with Dynamic
 - Creating or resolving a Liquidium account
 - Fetching live pools from the protocol
+- Creating a borrow request with a required custom outflow address
+- Fetching a simple borrow quote before signing
 - Resolving the BTC pool and generating a tracked BTC supply flow
 - Optionally submitting a BTC inflow txid as a faster indexing hint
 - Polling BTC inflow status every 5 seconds through the flow helper
@@ -38,7 +40,9 @@ pnpm --filter @liquidium/example-vite-react-dynamic dev
 - SDK-specific calls are isolated in `src/liquidium-client-sdk.ts` so the
   Liquidium flow is easy to follow separately from Dynamic UI wiring
 - Guided flow interactions are split into dedicated hooks under `src/hooks/`
-  (create account, load pools, prepare BTC flow, submit BTC inflow, watch BTC inflow)
+  (create account, load pools, create borrow, prepare BTC flow, submit BTC inflow, watch BTC inflow)
+- The borrow quote is an estimate derived from current asset prices plus the
+  profile's collateral, debt, and gross borrowing power reported by the canister
 - BTC inflows are still detectable without txid submission via backend address
   scanning; txid submission is optional and can speed up indexing
 - The guided flow now uses `client.lending.createSupplyFlow(...)` so status
