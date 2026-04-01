@@ -12,6 +12,7 @@ export function resolveLiquidiumClientConfig(): LiquidiumClientConfig {
   );
 
   return {
+    environment: "staging",
     apiBaseUrl:
       configuredApiBaseUrl ??
       `${configuredBaseUrl ?? DEFAULT_LIQUIDIUM_BASE_URL}${SDK_API_PATH}`,
