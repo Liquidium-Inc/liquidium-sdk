@@ -153,6 +153,160 @@ describe("HistoryModule", () => {
       code: LiquidiumErrorCode.SERVICE_UNAVAILABLE,
     });
   });
+
+  test("fetches user history through the sdk api", async () => {
+    // given
+    const responsePayload = {
+      success: true as const,
+      items: [
+        {
+          id: "history-1",
+          type: "supply" as const,
+          amount: "100000",
+          poolId: "pool-1",
+          timestamp: "2026-04-01T00:00:00.000Z",
+          status: "CONFIRMED" as const,
+          txid: "tx-1",
+          txids: ["tx-1"],
+        },
+      ],
+      nextCursor: "2026-04-01T00:00:00.000Z::history-1",
+    };
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify(responsePayload), {
+        status: 200,
+        headers: {
+          "content-type": "application/json",
+        },
+      })
+    );
+    const client = LiquidiumClient.create({
+      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
+    });
+
+    // when
+    const result = await client.history.getUser(
+      "profile-1",
+      "2026-03-31T00:00:00.000Z::history-0"
+    );
+
+    // then
+    expect(result).toEqual({
+      items: [
+        {
+          id: "history-1",
+          type: "supply",
+          amount: 100000n,
+          poolId: "pool-1",
+          timestamp: "2026-04-01T00:00:00.000Z",
+          status: "CONFIRMED",
+          txid: "tx-1",
+          txids: ["tx-1"],
+        },
+      ],
+      nextCursor: "2026-04-01T00:00:00.000Z::history-1",
+    });
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "https://app.liquidium.fi/api/sdk/v1/history/user/profile-1?cursor=2026-03-31T00%3A00%3A00.000Z%3A%3Ahistory-0",
+      {
+        method: "GET",
+        headers: undefined,
+        body: undefined,
+        signal: expect.any(AbortSignal),
+      }
+    );
+  });
+
+  test("fetches pool history through the sdk api", async () => {
+    // given
+    const responsePayload = {
+      success: true as const,
+      items: [
+        {
+          id: "snapshot-1",
+          type: "snapshot" as const,
+          poolId: "pool-1",
+          asset: "BTC",
+          chain: "BTC",
+          timestamp: "2026-04-01T00:00:00.000Z",
+          totalSupply: "1000",
+          totalDebt: "100",
+          supplyCap: "5000",
+          borrowCap: "2000",
+          maxLtv: "7000",
+          liquidationThreshold: "7500",
+          liquidationBonus: "200",
+          protocolLiquidationFee: "50",
+          reserveFactor: "100",
+          baseRate: "5",
+          optimalUtilizationRate: "8000",
+          rateSlopeBefore: "1",
+          rateSlopeAfter: "2",
+          lendingIndex: "300",
+          borrowIndex: "400",
+          sameAssetBorrowing: true,
+          frozen: false,
+          lastUpdated: "123",
+        },
+      ],
+    };
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify(responsePayload), {
+        status: 200,
+        headers: {
+          "content-type": "application/json",
+        },
+      })
+    );
+    const client = LiquidiumClient.create({
+      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
+    });
+
+    // when
+    const result = await client.history.getPool("pool-1");
+
+    // then
+    expect(result).toEqual({
+      items: [
+        {
+          id: "snapshot-1",
+          type: "snapshot",
+          poolId: "pool-1",
+          asset: "BTC",
+          chain: "BTC",
+          timestamp: "2026-04-01T00:00:00.000Z",
+          totalSupply: 1000n,
+          totalDebt: 100n,
+          supplyCap: 5000n,
+          borrowCap: 2000n,
+          maxLtv: 7000n,
+          liquidationThreshold: 7500n,
+          liquidationBonus: 200n,
+          protocolLiquidationFee: 50n,
+          reserveFactor: 100n,
+          baseRate: 5n,
+          optimalUtilizationRate: 8000n,
+          rateSlopeBefore: 1n,
+          rateSlopeAfter: 2n,
+          lendingIndex: 300n,
+          borrowIndex: 400n,
+          sameAssetBorrowing: true,
+          frozen: false,
+          lastUpdated: 123n,
+        },
+      ],
+      nextCursor: undefined,
+    });
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "https://app.liquidium.fi/api/sdk/v1/history/pool/pool-1",
+      {
+        method: "GET",
+        headers: undefined,
+        body: undefined,
+        signal: expect.any(AbortSignal),
+      }
+    );
+  });
 });
 
 describe("MarketModule", () => {
@@ -1359,7 +1513,120 @@ Nonce: 17`);
     });
   });
 
-  test("throws INTERNAL for withdraw until implemented", async () => {
+  test("creates and submits a withdraw action with a custom outflow account", async () => {
+    // given
+    vi.setSystemTime(new Date("2026-04-01T00:00:00.000Z"));
+    const getNonce = vi.fn().mockResolvedValue(23n);
+    const withdraw = vi.fn().mockResolvedValue({
+      Ok: {
+        id: "outflow-2",
+        txid: ["txid-2"],
+        outflow_type: { Withdraw: null },
+        outflow_ref: ["ref-2"],
+        amount: 10_000n,
+        receiver: { External: "bc1qwithdraw" },
+      },
+    });
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      get_nonce: getNonce,
+      withdraw,
+    } as never);
+    const client = LiquidiumClient.create({});
+
+    // when
+    const withdrawAction = await client.lending.withdraw({
+      profileId: "aaaaa-aa",
+      poolId: "rrkah-fqaaa-aaaaa-aaaaq-cai",
+      amount: 10_000n,
+      account: "bc1qwithdraw",
+      signerAccount: "0xsigner",
+    });
+    const outflow = await withdrawAction.submit({
+      signature: "0xsigned",
+      chain: "ETH",
+    });
+
+    // then
+    expect(getNonce).toHaveBeenCalledWith("0xsigner");
+    expect(withdrawAction.kind).toBe("create-withdraw");
+    expect(withdrawAction.account).toBe("0xsigner");
+    expect(withdrawAction.data).toMatchObject({
+      profileId: "aaaaa-aa",
+      poolId: "rrkah-fqaaa-aaaaa-aaaaq-cai",
+      amount: 10_000n,
+      account: "bc1qwithdraw",
+      signerAccount: "0xsigner",
+    });
+    expect(withdrawAction.message).toBe(`Liquidium: Withdraw Assets
+
+Action: Withdraw from pool
+Pool ID: rrkah-fqaaa-aaaaa-aaaaq-cai
+Amount: 10000
+Address:bc1qwithdraw
+Expires: 1775001900
+Nonce: 23`);
+    expect(withdraw).toHaveBeenCalledTimes(1);
+    expect(withdraw.mock.calls[0]?.[0]).toEqual(Principal.fromText("aaaaa-aa"));
+    expect(withdraw.mock.calls[0]?.[1]).toMatchObject({
+      data: {
+        expiry_timestamp: 1775001900n,
+        account: { External: "bc1qwithdraw" },
+        pool_id: Principal.fromText("rrkah-fqaaa-aaaaa-aaaaq-cai"),
+        amount: 10_000n,
+      },
+      signature_info: {
+        Wallet: {
+          signature: "0xsigned",
+          chain: { ETH: null },
+          account: "0xsigner",
+        },
+      },
+    });
+    expect(outflow).toEqual({
+      id: "outflow-2",
+      outflowType: "Withdraw",
+      outflowRef: "ref-2",
+      txid: "txid-2",
+      amount: 10_000n,
+      receiver: {
+        type: "External",
+        account: "bc1qwithdraw",
+      },
+    });
+  });
+
+  test("maps protocol errors for withdraw submission", async () => {
+    // given
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      get_nonce: vi.fn().mockResolvedValue(29n),
+      withdraw: vi.fn().mockResolvedValue({
+        Err: { InsufficientFunds: null },
+      }),
+    } as never);
+    const client = LiquidiumClient.create({});
+
+    // when / then
+    await expect(
+      client.lending
+        .withdraw({
+          profileId: "aaaaa-aa",
+          poolId: "rrkah-fqaaa-aaaaa-aaaaq-cai",
+          amount: 10_000n,
+          account: "bc1qwithdraw",
+          signerAccount: "bc1qsigner",
+        })
+        .then((withdrawAction) =>
+          withdrawAction.submit({
+            signature: "signed",
+            chain: "BTC",
+          })
+        )
+    ).rejects.toMatchObject({
+      code: LiquidiumErrorCode.INSUFFICIENT_FUNDS,
+    });
+  });
+
+  test("validates withdraw inputs", async () => {
     // given
     const client = LiquidiumClient.create({});
 
@@ -1367,12 +1634,26 @@ Nonce: 17`);
     await expect(
       client.lending.withdraw({
         profileId: "p1",
-        poolId: "pool1",
+        poolId: "aaaaa-aa",
         amount: 10_000n,
-        account: "bc1q...",
+        account: "   ",
+        signerAccount: "0xsigner",
       })
     ).rejects.toMatchObject({
-      code: LiquidiumErrorCode.INTERNAL,
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message: "Withdraw requires a custom outflow account",
+    });
+    await expect(
+      client.lending.withdraw({
+        profileId: "p1",
+        poolId: "aaaaa-aa",
+        amount: 10_000n,
+        account: "bc1qwithdraw",
+        signerAccount: "  ",
+      })
+    ).rejects.toMatchObject({
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message: "Withdraw requires a signer account",
     });
   });
 });
