@@ -32,8 +32,22 @@ export interface BorrowAssetsRequest {
   amount: bigint;
 }
 
+export interface WithdrawAssetsRequest {
+  expiry_timestamp: bigint;
+  account: AccountTypeVariant;
+  pool_id: Principal;
+  amount: bigint;
+}
+
 export interface SignedBorrowAssetsRequest {
   data: BorrowAssetsRequest;
+  signature_info: {
+    Wallet: SignatureInfoVariant;
+  };
+}
+
+export interface SignedWithdrawAssetsRequest {
+  data: WithdrawAssetsRequest;
   signature_info: {
     Wallet: SignatureInfoVariant;
   };
@@ -49,6 +63,10 @@ export interface OutflowDetailsRecord {
 }
 
 export type BorrowAssetsResult =
+  | { Ok: OutflowDetailsRecord }
+  | { Err: ProtocolError };
+
+export type WithdrawAssetsResult =
   | { Ok: OutflowDetailsRecord }
   | { Err: ProtocolError };
 
@@ -161,6 +179,10 @@ export interface LendingActor {
     profileId: Principal,
     request: SignedBorrowAssetsRequest
   ): Promise<BorrowAssetsResult>;
+  withdraw(
+    profileId: Principal,
+    request: SignedWithdrawAssetsRequest
+  ): Promise<WithdrawAssetsResult>;
   get_borrowing_disabled(): Promise<boolean>;
 }
 
@@ -189,6 +211,16 @@ const lendingIdlFactory: IDL.InterfaceFactory = ({ IDL }) => {
   });
   const SignedBorrowAssetRequest = IDL.Record({
     data: BorrowAssetRequest,
+    signature_info: SignatureScheme,
+  });
+  const WithdrawRequest = IDL.Record({
+    expiry_timestamp: IDL.Nat64,
+    account: AccountType,
+    pool_id: IDL.Principal,
+    amount: IDL.Nat,
+  });
+  const SignedWithdrawRequest = IDL.Record({
+    data: WithdrawRequest,
     signature_info: SignatureScheme,
   });
   const SignatureVerificationError = IDL.Variant({
@@ -245,6 +277,10 @@ const lendingIdlFactory: IDL.InterfaceFactory = ({ IDL }) => {
     receiver: AccountType,
   });
   const BorrowAssetsResult = IDL.Variant({
+    Ok: OutflowDetails,
+    Err: ProtocolError,
+  });
+  const WithdrawResult = IDL.Variant({
     Ok: OutflowDetails,
     Err: ProtocolError,
   });
@@ -319,6 +355,11 @@ const lendingIdlFactory: IDL.InterfaceFactory = ({ IDL }) => {
     borrow_assets: IDL.Func(
       [IDL.Principal, SignedBorrowAssetRequest],
       [BorrowAssetsResult],
+      []
+    ),
+    withdraw: IDL.Func(
+      [IDL.Principal, SignedWithdrawRequest],
+      [WithdrawResult],
       []
     ),
     get_borrowing_disabled: IDL.Func([], [IDL.Bool], ["query"]),
