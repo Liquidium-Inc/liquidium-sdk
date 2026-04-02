@@ -221,6 +221,37 @@ export async function createBorrowOutflow(
   );
 }
 
+export async function createWithdrawOutflow(
+  params: CreateBorrowParams
+): Promise<OutflowDetails> {
+  const client = createLiquidiumClient();
+
+  params.onStep?.("Preparing withdraw request...");
+  const withdrawAction = await withTimeout(
+    client.lending.withdraw({
+      profileId: params.profileId,
+      poolId: params.poolId,
+      amount: params.amount,
+      account: params.account,
+      signerAccount: params.signerAccount,
+    }),
+    "Timed out while creating the withdraw request."
+  );
+
+  params.onStep?.("Please sign the withdraw message to continue...");
+  const signature = await params.signMessage(withdrawAction.message);
+
+  params.onStep?.("Submitting signed withdraw request to Liquidium...");
+
+  return await withTimeout(
+    withdrawAction.submit({
+      signature,
+      chain: params.chain,
+    }),
+    "Timed out while submitting the signed withdraw request."
+  );
+}
+
 export async function getBorrowQuote(
   params: BorrowQuoteParams
 ): Promise<BorrowQuote> {

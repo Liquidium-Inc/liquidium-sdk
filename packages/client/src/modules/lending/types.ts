@@ -24,6 +24,11 @@ export interface BorrowSubmitSignatureInfo {
   chain: "BTC" | "ETH";
 }
 
+export interface WithdrawSubmitSignatureInfo {
+  signature: string;
+  chain: "BTC" | "ETH";
+}
+
 export interface CreateBorrowRequest {
   profileId: string;
   poolId: string;
@@ -42,6 +47,26 @@ export interface BorrowAction {
   message: string;
   data: CreateBorrowData;
   submit(signatureInfo: BorrowSubmitSignatureInfo): Promise<OutflowDetails>;
+}
+
+export interface CreateWithdrawRequest {
+  profileId: string;
+  poolId: string;
+  amount: bigint;
+  account: string;
+  signerAccount: string;
+}
+
+export interface CreateWithdrawData extends CreateWithdrawRequest {
+  expiryTimestamp: bigint;
+}
+
+export interface WithdrawAction {
+  kind: "create-withdraw";
+  account: string;
+  message: string;
+  data: CreateWithdrawData;
+  submit(signatureInfo: WithdrawSubmitSignatureInfo): Promise<OutflowDetails>;
 }
 
 export type SupplyDestination = "nativeAddress" | "icrcAccount";
