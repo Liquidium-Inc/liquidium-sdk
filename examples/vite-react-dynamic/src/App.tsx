@@ -11,6 +11,7 @@ import {
   isNativeAddressSupplyInstruction,
 } from "./liquidium-client-sdk";
 import { useCreateBorrow } from "./hooks/useCreateBorrow";
+import { useCreateWithdraw } from "./hooks/useCreateWithdraw";
 import { useBorrowQuote } from "./hooks/useBorrowQuote";
 import { useCreateOrResolveAccount } from "./hooks/useCreateOrResolveAccount";
 import { useLoadPools } from "./hooks/useLoadPools";
@@ -51,6 +52,10 @@ export default function App() {
     onStatus: setStatusMessage,
     onError: setErrorMessage,
   });
+  const createWithdraw = useCreateWithdraw({
+    onStatus: setStatusMessage,
+    onError: setErrorMessage,
+  });
   const borrowQuote = useBorrowQuote({
     onStatus: setStatusMessage,
     onError: setErrorMessage,
@@ -69,6 +74,7 @@ export default function App() {
     loadPools.isLoading ||
     prepareBtcSupply.isLoading ||
     createBorrow.isLoading ||
+    createWithdraw.isLoading ||
     borrowQuote.isLoading ||
     submitBtcInflow.isLoading ||
     getBtcInflowStatus.isLoading;
@@ -290,7 +296,69 @@ export default function App() {
           </section>
 
           <section className="example-card">
-            <h2>5. Create a borrow with a custom outflow address</h2>
+            <h2>5. Create a withdraw with a custom outflow address</h2>
+            <p>
+              This uses `client.lending.withdraw(...)`. The destination address
+              is required and can differ from the connected signer wallet.
+              Choose the pool below to control which supplied asset you want to
+              withdraw.
+            </p>
+            <div className="button-row">
+              <select
+                disabled={pools.length === 0}
+                value={selectedPoolId}
+                onChange={(event) =>
+                  loadPools.setSelectedPoolId(event.target.value)
+                }
+              >
+                <option value="">Choose a withdraw pool</option>
+                {pools.map((pool) => (
+                  <option key={pool.id} value={pool.id}>
+                    {pool.asset} on {pool.chain}
+                  </option>
+                ))}
+              </select>
+              <input
+                placeholder="Custom outflow address"
+                value={createWithdraw.outflowAddress}
+                onChange={(event) =>
+                  createWithdraw.setOutflowAddress(event.target.value.trim())
+                }
+              />
+              <input
+                placeholder="Withdraw amount"
+                value={createWithdraw.withdrawAmount}
+                onChange={(event) =>
+                  createWithdraw.setWithdrawAmount(event.target.value.trim())
+                }
+              />
+              <button
+                disabled={isLoading || !primaryWallet || !profileId || !selectedPoolId}
+                onClick={() =>
+                  void createWithdraw.run({
+                    primaryWallet,
+                    profileId,
+                    selectedPoolId,
+                    liquidiumAccountAddress,
+                  })
+                }
+                type="button"
+              >
+                Create withdraw
+              </button>
+            </div>
+            <p className="inline-note">
+              Withdraw asset to receive: {selectedPool ? `${selectedPool.asset} on ${selectedPool.chain}` : "Choose a pool first."}
+            </p>
+            <pre className="code-block">
+              {createWithdraw.withdrawResult
+                ? JSON.stringify(createWithdraw.withdrawResult, bigintJsonReplacer, 2)
+                : "No withdraw outflow created yet."}
+            </pre>
+          </section>
+
+          <section className="example-card">
+            <h2>6. Create a borrow with a custom outflow address</h2>
             <p>
               This uses `client.lending.createBorrow(...)`. The destination
               address is required and can differ from the connected signer
@@ -424,7 +492,7 @@ export default function App() {
           </section>
 
           <section className="example-card">
-            <h2>6. Optional: submit your BTC transaction id</h2>
+            <h2>7. Optional: submit your BTC transaction id</h2>
             <p>
               This is optional. The backend can detect inflows by watching known
               deposit addresses; submitting a txid through the prepared flow is
@@ -449,7 +517,7 @@ export default function App() {
           </section>
 
           <section className="example-card">
-            <h2>7. Watch BTC inflow status</h2>
+            <h2>8. Watch BTC inflow status</h2>
             <p>
               Use the prepared BTC flow to poll current deposit or repayment
               progress every 5 seconds. If a txid is entered, the query narrows

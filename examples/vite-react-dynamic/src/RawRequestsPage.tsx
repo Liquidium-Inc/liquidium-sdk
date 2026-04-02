@@ -328,12 +328,20 @@ export default function RawRequestsPage({
             disabled={isRequestInFlight}
             onClick={() =>
               void runRawRequest("client.lending.withdraw", () =>
-                client.lending.withdraw({
-                  profileId,
-                  poolId,
-                  amount: parseAmountToBigInt(),
-                  account: accountAddress,
-                })
+                client.lending
+                  .withdraw({
+                    profileId,
+                    poolId,
+                    amount: parseAmountToBigInt(),
+                    account: accountAddress,
+                    signerAccount: walletAddress,
+                  })
+                  .then((withdrawAction) =>
+                    withdrawAction.submit({
+                      signature: "raw-request-example-signature",
+                      chain,
+                    })
+                  )
               )
             }
             type="button"

@@ -22,12 +22,16 @@ export type {
 export type {
   HistoryEntry,
   PaginatedResponse,
+  PoolHistoryEntry,
+  UserHistoryEntry,
 } from "./modules/history";
 export type {
   BorrowAction,
   BorrowSubmitSignatureInfo,
   CreateBorrowData,
   CreateBorrowRequest,
+  CreateWithdrawData,
+  CreateWithdrawRequest,
   GetInflowStatusRequest,
   GetInflowStatusResponse,
   GetSupplyStatusRequest,
@@ -45,6 +49,8 @@ export type {
   SupplyRequest,
   SupplyTrackingStatus,
   SupplyTarget,
+  WithdrawAction,
+  WithdrawSubmitSignatureInfo,
   WatchSupplyStatusOptions,
 } from "./modules/lending";
 export type { AssetPrices, Pool } from "./modules/market";

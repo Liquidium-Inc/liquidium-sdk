@@ -4,6 +4,8 @@ export type {
   BorrowSubmitSignatureInfo,
   CreateBorrowData,
   CreateBorrowRequest,
+  CreateWithdrawData,
+  CreateWithdrawRequest,
   GetInflowStatusRequest,
   GetInflowStatusResponse,
   GetSupplyStatusRequest,
@@ -21,5 +23,7 @@ export type {
   SupplyRequest,
   SupplyTrackingStatus,
   SupplyTarget,
+  WithdrawAction,
+  WithdrawSubmitSignatureInfo,
   WatchSupplyStatusOptions,
 } from "./types";

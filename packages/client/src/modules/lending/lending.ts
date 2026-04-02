@@ -19,6 +19,7 @@ import type {
   BorrowAction,
   BorrowSubmitSignatureInfo,
   CreateBorrowRequest,
+  CreateWithdrawRequest,
   GetInflowStatusRequest,
   GetInflowStatusResponse,
   IcrcAccountSupplyTarget,
@@ -32,6 +33,8 @@ import type {
   SupplyRequest,
   SupplyTarget,
   SupplyTrackingStatus,
+  WithdrawAction,
+  WithdrawSubmitSignatureInfo,
 } from "./types";
 
 const BITCOIN_BLOCK_TIME_MS = 10 * 60 * 1000;
@@ -48,17 +51,60 @@ export class LendingModule {
     readonly options: LendingModuleOptions
   ) {}
 
-  async withdraw(request: {
-    profileId: string;
-    poolId: string;
-    amount: bigint;
-    account: string;
-  }): Promise<OutflowDetails> {
-    void request;
-    throw new LiquidiumError(
-      LiquidiumErrorCode.INTERNAL,
-      "Not yet implemented"
-    );
+  async withdraw(request: CreateWithdrawRequest): Promise<WithdrawAction> {
+    const destinationAccount = request.account.trim();
+    const signerAccount = request.signerAccount.trim();
+    if (!destinationAccount) {
+      throw new LiquidiumError(
+        LiquidiumErrorCode.VALIDATION_ERROR,
+        "Withdraw requires a custom outflow account"
+      );
+    }
+    if (!signerAccount) {
+      throw new LiquidiumError(
+        LiquidiumErrorCode.VALIDATION_ERROR,
+        "Withdraw requires a signer account"
+      );
+    }
+
+    const lendingActor = createLendingActor(this.canisterContext);
+
+    try {
+      const expiryTimestamp = computeExpiryTimestamp();
+      const nonce = await lendingActor.get_nonce(signerAccount);
+      const withdrawRequestData = {
+        profileId: request.profileId,
+        poolId: request.poolId,
+        amount: request.amount,
+        account: destinationAccount,
+        signerAccount,
+        expiryTimestamp,
+      };
+
+      return {
+        kind: "create-withdraw",
+        account: signerAccount,
+        message: createWithdrawAssetMessage(
+          {
+            pool_id: request.poolId,
+            amount: request.amount.toString(),
+            account: { type: "External", data: destinationAccount },
+            expiry_timestamp: expiryTimestamp,
+          },
+          nonce
+        ),
+        data: withdrawRequestData,
+        submit: async (signatureInfo: WithdrawSubmitSignatureInfo) => {
+          return await this.submitWithdraw(withdrawRequestData, signatureInfo);
+        },
+      };
+    } catch (error) {
+      if (error instanceof LiquidiumError) {
+        throw error;
+      }
+
+      throw mapCanisterCallErrorToLiquidiumError("get_nonce", error);
+    }
   }
 
   async createBorrow(request: CreateBorrowRequest): Promise<BorrowAction> {
@@ -323,6 +369,51 @@ export class LendingModule {
     }
   }
 
+  private async submitWithdraw(
+    request: {
+      profileId: string;
+      poolId: string;
+      amount: bigint;
+      account: string;
+      signerAccount: string;
+      expiryTimestamp: bigint;
+    },
+    signatureInfo: WithdrawSubmitSignatureInfo
+  ): Promise<OutflowDetails> {
+    try {
+      const result = await createLendingActor(this.canisterContext).withdraw(
+        Principal.fromText(request.profileId),
+        {
+          data: {
+            expiry_timestamp: request.expiryTimestamp,
+            account: { External: request.account },
+            pool_id: Principal.fromText(request.poolId),
+            amount: request.amount,
+          },
+          signature_info: {
+            Wallet: {
+              signature: signatureInfo.signature,
+              chain: mapWalletChainToLendingChain(signatureInfo.chain),
+              account: request.signerAccount,
+            },
+          },
+        }
+      );
+
+      if ("Err" in result) {
+        throw mapLendingProtocolErrorToLiquidiumError(result.Err);
+      }
+
+      return mapCanisterOutflowDetails(result.Ok);
+    } catch (error) {
+      if (error instanceof LiquidiumError) {
+        throw error;
+      }
+
+      throw mapCanisterCallErrorToLiquidiumError("withdraw", error);
+    }
+  }
+
   private async resolveSupplyTarget(
     request: SupplyRequest
   ): Promise<SupplyTarget> {
@@ -534,6 +625,28 @@ function createBorrowAssetMessage(
   return `Liquidium: Borrow Assets
 
 Action: Borrow from pool
+Pool ID: ${request.pool_id}
+Amount: ${request.amount}
+${accountTypeToString(request.account)}
+Expires: ${request.expiry_timestamp}
+Nonce: ${nonce}`;
+}
+
+function createWithdrawAssetMessage(
+  request: {
+    pool_id: string;
+    amount: string;
+    account: {
+      type: "Native" | "External";
+      data: string;
+    };
+    expiry_timestamp: bigint;
+  },
+  nonce: bigint
+): string {
+  return `Liquidium: Withdraw Assets
+
+Action: Withdraw from pool
 Pool ID: ${request.pool_id}
 Amount: ${request.amount}
 ${accountTypeToString(request.account)}
