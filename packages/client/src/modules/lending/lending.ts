@@ -51,7 +51,9 @@ export class LendingModule {
     readonly options: LendingModuleOptions
   ) {}
 
-  async createWithdraw(request: CreateWithdrawRequest): Promise<WithdrawAction> {
+  async createWithdraw(
+    request: CreateWithdrawRequest
+  ): Promise<WithdrawAction> {
     const destinationAccount = request.account.trim();
     const signerAccount = request.signerAccount.trim();
     if (!destinationAccount) {
@@ -336,24 +338,23 @@ export class LendingModule {
     signatureInfo: BorrowSubmitSignatureInfo
   ): Promise<OutflowDetails> {
     try {
-      const result = await createLendingActor(this.canisterContext).borrow_assets(
-        Principal.fromText(request.profileId),
-        {
-          data: {
-            expiry_timestamp: request.expiryTimestamp,
-            account: { External: request.account },
-            pool_id: Principal.fromText(request.poolId),
-            amount: request.amount,
+      const result = await createLendingActor(
+        this.canisterContext
+      ).borrow_assets(Principal.fromText(request.profileId), {
+        data: {
+          expiry_timestamp: request.expiryTimestamp,
+          account: { External: request.account },
+          pool_id: Principal.fromText(request.poolId),
+          amount: request.amount,
+        },
+        signature_info: {
+          Wallet: {
+            signature: signatureInfo.signature,
+            chain: mapWalletChainToLendingChain(signatureInfo.chain),
+            account: request.signerAccount,
           },
-          signature_info: {
-            Wallet: {
-              signature: signatureInfo.signature,
-              chain: mapWalletChainToLendingChain(signatureInfo.chain),
-              account: request.signerAccount,
-            },
-          },
-        }
-      );
+        },
+      });
 
       if ("Err" in result) {
         throw mapLendingProtocolErrorToLiquidiumError(result.Err);
@@ -666,11 +667,13 @@ function accountTypeToString(accountType: {
   }
 }
 
-function mapWalletChainToLendingChain(chain: "BTC" | "ETH"): {
-  BTC: null;
-} | {
-  ETH: null;
-} {
+function mapWalletChainToLendingChain(chain: "BTC" | "ETH"):
+  | {
+      BTC: null;
+    }
+  | {
+      ETH: null;
+    } {
   switch (chain) {
     case "BTC":
       return { BTC: null };
@@ -689,7 +692,9 @@ function mapCanisterOutflowDetails(outflow: {
 }): OutflowDetails {
   return {
     id: outflow.id,
-    outflowType: getVariantKey(outflow.outflow_type) as OutflowDetails["outflowType"],
+    outflowType: getVariantKey(
+      outflow.outflow_type
+    ) as OutflowDetails["outflowType"],
     outflowRef: outflow.outflow_ref[0],
     txid: outflow.txid[0],
     amount: outflow.amount,
@@ -697,11 +702,15 @@ function mapCanisterOutflowDetails(outflow: {
   };
 }
 
-function mapCanisterAccountType(receiver: {
-  Native: Principal;
-} | {
-  External: string;
-}): OutflowDetails["receiver"] {
+function mapCanisterAccountType(
+  receiver:
+    | {
+        Native: Principal;
+      }
+    | {
+        External: string;
+      }
+): OutflowDetails["receiver"] {
   if ("Native" in receiver) {
     return {
       type: "Native",
