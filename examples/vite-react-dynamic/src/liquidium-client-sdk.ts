@@ -182,7 +182,7 @@ export async function prepareBtcSupplyFlow(
 ): Promise<SupplyFlow> {
   const client = createLiquidiumClient();
 
-  return await client.lending.createSupplyFlow({
+  return await client.lending.createSupply({
     profileId: params.profileId,
     poolId: params.poolId,
     action: params.action,
@@ -228,7 +228,7 @@ export async function createWithdrawOutflow(
 
   params.onStep?.("Preparing withdraw request...");
   const withdrawAction = await withTimeout(
-    client.lending.withdraw({
+    client.lending.createWithdraw({
       profileId: params.profileId,
       poolId: params.poolId,
       amount: params.amount,

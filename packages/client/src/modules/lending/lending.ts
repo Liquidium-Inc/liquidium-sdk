@@ -51,7 +51,7 @@ export class LendingModule {
     readonly options: LendingModuleOptions
   ) {}
 
-  async withdraw(request: CreateWithdrawRequest): Promise<WithdrawAction> {
+  async createWithdraw(request: CreateWithdrawRequest): Promise<WithdrawAction> {
     const destinationAccount = request.account.trim();
     const signerAccount = request.signerAccount.trim();
     if (!destinationAccount) {
@@ -175,7 +175,7 @@ export class LendingModule {
     };
   }
 
-  async createSupplyFlow(request: SupplyFlowRequest): Promise<SupplyFlow> {
+  async createSupply(request: SupplyFlowRequest): Promise<SupplyFlow> {
     const instruction = await this.supply(request);
     const defaultPollIntervalMs = this.options.supplyStatusPollIntervalMs;
     let trackedTxid: string | undefined;

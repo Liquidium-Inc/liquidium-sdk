@@ -45,7 +45,7 @@ pnpm --filter @liquidium/example-vite-react-dynamic dev
   profile's collateral, debt, and gross borrowing power reported by the canister
 - BTC inflows are still detectable without txid submission via backend address
   scanning; txid submission is optional and can speed up indexing
-- The guided flow now uses `client.lending.createSupplyFlow(...)` so status
+- The guided flow now uses `client.lending.createSupply(...)` so status
   polling runs through the SDK helper every 5 seconds by default
 - The Vite example now points at `http://localhost:3000/api/sdk` by default,
   which matches a local `apps/pools` dev server
