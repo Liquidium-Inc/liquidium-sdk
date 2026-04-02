@@ -71,7 +71,7 @@ const inflowStatus = await client.lending.getInflowStatus({
 });
 
 // Recommended BTC supply flow with built-in 5 second polling
-const supplyFlow = await client.lending.createSupplyFlow({
+const supplyFlow = await client.lending.createSupply({
   profileId: "<liquidium-profile-id>",
   poolId: btcPool.id,
   action: "deposit",
@@ -134,7 +134,7 @@ Environment presets:
 
 ### Supply tracking flow
 
-- `client.lending.createSupplyFlow(...)` builds a supply instruction and returns helpers to submit a broadcast `txid`, fetch the latest tracking status, and poll every 5 seconds until the inflow is available.
+- `client.lending.createSupply(...)` builds a supply instruction and returns helpers to submit a broadcast `txid`, fetch the latest tracking status, and poll every 5 seconds until the inflow is available.
 
 ## License
 

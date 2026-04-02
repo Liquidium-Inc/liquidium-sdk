@@ -1069,7 +1069,7 @@ describe("LendingModule", () => {
     });
 
     // when
-    const flow = await client.lending.createSupplyFlow({
+    const flow = await client.lending.createSupply({
       profileId: "aaaaa-aa",
       poolId: BTC_POOL_ID,
       action: "deposit",
@@ -1201,7 +1201,7 @@ describe("LendingModule", () => {
     const client = LiquidiumClient.create({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
     });
-    const flow = await client.lending.createSupplyFlow({
+    const flow = await client.lending.createSupply({
       profileId: "aaaaa-aa",
       poolId: BTC_POOL_ID,
       action: "deposit",
@@ -1325,7 +1325,7 @@ describe("LendingModule", () => {
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
       supplyStatusPollIntervalMs: CUSTOM_POLL_INTERVAL_MS,
     });
-    const flow = await client.lending.createSupplyFlow({
+    const flow = await client.lending.createSupply({
       profileId: "aaaaa-aa",
       poolId: BTC_POOL_ID,
       action: "deposit",
@@ -1534,7 +1534,7 @@ Nonce: 17`);
     const client = LiquidiumClient.create({});
 
     // when
-    const withdrawAction = await client.lending.withdraw({
+    const withdrawAction = await client.lending.createWithdraw({
       profileId: "aaaaa-aa",
       poolId: "rrkah-fqaaa-aaaaa-aaaaq-cai",
       amount: 10_000n,
@@ -1608,7 +1608,7 @@ Nonce: 23`);
     // when / then
     await expect(
       client.lending
-        .withdraw({
+        .createWithdraw({
           profileId: "aaaaa-aa",
           poolId: "rrkah-fqaaa-aaaaa-aaaaq-cai",
           amount: 10_000n,
@@ -1632,7 +1632,7 @@ Nonce: 23`);
 
     // when / then
     await expect(
-      client.lending.withdraw({
+      client.lending.createWithdraw({
         profileId: "p1",
         poolId: "aaaaa-aa",
         amount: 10_000n,
@@ -1644,7 +1644,7 @@ Nonce: 23`);
       message: "Withdraw requires a custom outflow account",
     });
     await expect(
-      client.lending.withdraw({
+      client.lending.createWithdraw({
         profileId: "p1",
         poolId: "aaaaa-aa",
         amount: 10_000n,

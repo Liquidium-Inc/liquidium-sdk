@@ -327,9 +327,9 @@ export default function RawRequestsPage({
           <button
             disabled={isRequestInFlight}
             onClick={() =>
-              void runRawRequest("client.lending.withdraw", () =>
+              void runRawRequest("client.lending.createWithdraw", () =>
                 client.lending
-                  .withdraw({
+                  .createWithdraw({
                     profileId,
                     poolId,
                     amount: parseAmountToBigInt(),
@@ -346,7 +346,7 @@ export default function RawRequestsPage({
             }
             type="button"
           >
-            lending.withdraw
+            lending.createWithdraw
           </button>
           <button
             disabled={isRequestInFlight}

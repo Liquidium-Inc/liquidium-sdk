@@ -246,7 +246,7 @@ export default function App() {
           <section className="example-card">
             <h2>4. Get the BTC deposit address</h2>
             <p>
-              This uses `client.lending.createSupplyFlow(...)` with the selected
+              This uses `client.lending.createSupply(...)` with the selected
               pool as the source of truth and asks for a native BTC address
               target.
             </p>
@@ -298,7 +298,7 @@ export default function App() {
           <section className="example-card">
             <h2>5. Create a withdraw with a custom outflow address</h2>
             <p>
-              This uses `client.lending.withdraw(...)`. The destination address
+              This uses `client.lending.createWithdraw(...)`. The destination address
               is required and can differ from the connected signer wallet.
               Choose the pool below to control which supplied asset you want to
               withdraw.
