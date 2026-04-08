@@ -11,6 +11,9 @@ export class PendingModule {
 
   /**
    * Returns the pending inflows and outflows for a profile.
+   *
+   * @param profileId - The Liquidium profile principal text.
+   * @returns The pending movement summary for the requested profile.
    */
   async getMovements(profileId: string): Promise<PendingMovements> {
     void profileId;
@@ -25,6 +28,9 @@ export class PendingModule {
 
   /**
    * Returns pending inflows for a profile.
+   *
+   * @param profileId - The Liquidium profile principal text.
+   * @returns The pending inflows currently associated with the requested profile.
    */
   async getInflows(profileId: string): Promise<PendingInflow[]> {
     void profileId;
@@ -37,6 +43,9 @@ export class PendingModule {
 
   /**
    * Returns pending outflows for a profile.
+   *
+   * @param profileId - The Liquidium profile principal text.
+   * @returns The pending outflows currently associated with the requested profile.
    */
   async getOutflows(profileId: string): Promise<PendingOutflow[]> {
     void profileId;
