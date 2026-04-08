@@ -79,6 +79,14 @@ export type {
   PendingOutflow,
 } from "./modules/pending";
 export type {
+  QuoteRequest,
+  QuoteResult,
+  QuoteValidationError,
+  QuoteWarning,
+  QuoteValidationErrorCode,
+  QuoteWarningCode,
+} from "./modules/quote";
+export type {
   BorrowingPower,
   HealthFactor,
   Position,

@@ -1,6 +1,5 @@
 import { encodeIcrcAccount } from "@dfinity/ledger-icrc";
 import { Principal } from "@dfinity/principal";
-import { Principal as IcpSdkPrincipal } from "@icp-sdk/core/principal";
 import { createCkBtcMinterActor } from "../../core/canisters/ckbtc/minter";
 import {
   createLendingActor,
@@ -585,7 +584,7 @@ export class LendingModule {
       owner: poolPrincipal.toText(),
       subaccount,
       account: encodeIcrcAccount({
-        owner: IcpSdkPrincipal.fromText(poolPrincipal.toText()),
+        owner: Principal.fromText(poolPrincipal.toText()),
         subaccount,
       }),
     };
