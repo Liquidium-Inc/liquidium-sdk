@@ -3,7 +3,9 @@ import type { ApiClient } from "../../core/transports/api-client";
 import type {
   PaginatedResponse,
   PoolHistoryEntry,
+  PoolHistoryResponse,
   UserHistoryEntry,
+  UserHistoryResponse,
 } from "./types";
 
 export class HistoryModule {
@@ -20,6 +22,9 @@ export class HistoryModule {
     return this.apiClient;
   }
 
+  /**
+   * Returns paginated activity for a Liquidium profile.
+   */
   async getUser(
     profileId: string,
     cursor?: string
@@ -29,20 +34,7 @@ export class HistoryModule {
       `/v1/history/user/${encodeURIComponent(profileId)}`,
       cursor
     );
-    const response = await apiClient.get<{
-      success: true;
-      items: Array<{
-        id: string;
-        type: UserHistoryEntry["type"];
-        amount: string;
-        poolId: string;
-        timestamp: string;
-        status: UserHistoryEntry["status"];
-        txid?: string;
-        txids?: string[];
-      }>;
-      nextCursor?: string;
-    }>(requestPath);
+    const response = await apiClient.get<UserHistoryResponse>(requestPath);
 
     return {
       items: response.items.map((item) => ({
@@ -59,6 +51,9 @@ export class HistoryModule {
     };
   }
 
+  /**
+   * Returns paginated history for a pool.
+   */
   async getPool(
     poolId: string,
     cursor?: string
@@ -68,36 +63,7 @@ export class HistoryModule {
       `/v1/history/pool/${encodeURIComponent(poolId)}`,
       cursor
     );
-    const response = await apiClient.get<{
-      success: true;
-      items: Array<{
-        id: string;
-        type: "snapshot";
-        poolId: string;
-        asset: string;
-        chain: string;
-        timestamp: string;
-        totalSupply: string;
-        totalDebt: string;
-        supplyCap?: string;
-        borrowCap?: string;
-        maxLtv: string;
-        liquidationThreshold: string;
-        liquidationBonus: string;
-        protocolLiquidationFee: string;
-        reserveFactor: string;
-        baseRate: string;
-        optimalUtilizationRate: string;
-        rateSlopeBefore: string;
-        rateSlopeAfter: string;
-        lendingIndex: string;
-        borrowIndex: string;
-        sameAssetBorrowing: boolean;
-        frozen: boolean;
-        lastUpdated?: string;
-      }>;
-      nextCursor?: string;
-    }>(requestPath);
+    const response = await apiClient.get<PoolHistoryResponse>(requestPath);
 
     return {
       items: response.items.map((item) => ({
@@ -145,10 +111,7 @@ export class HistoryModule {
           item.lendingIndex,
           "pool history lendingIndex"
         ),
-        borrowIndex: parseBigInt(
-          item.borrowIndex,
-          "pool history borrowIndex"
-        ),
+        borrowIndex: parseBigInt(item.borrowIndex, "pool history borrowIndex"),
         sameAssetBorrowing: item.sameAssetBorrowing,
         frozen: item.frozen,
         lastUpdated: parseOptionalBigInt(item.lastUpdated),

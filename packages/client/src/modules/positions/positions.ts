@@ -9,6 +9,9 @@ const USD_VALUE_SCALE_DECIMALS = 27n;
 export class PositionsModule {
   constructor(readonly canisterContext: CanisterContext) {}
 
+  /**
+   * Returns a single position for a profile and pool.
+   */
   async get(profileId: string, poolId: string): Promise<Position | null> {
     void profileId;
     void poolId;
@@ -19,6 +22,9 @@ export class PositionsModule {
     );
   }
 
+  /**
+   * Lists all positions for a profile.
+   */
   async list(profileId: string): Promise<Position[]> {
     void profileId;
 
@@ -28,6 +34,9 @@ export class PositionsModule {
     );
   }
 
+  /**
+   * Returns the current health factor for a profile.
+   */
   async getHealthFactor(profileId: string): Promise<HealthFactor> {
     void profileId;
 
@@ -37,6 +46,9 @@ export class PositionsModule {
     );
   }
 
+  /**
+   * Returns aggregate borrowing and collateral stats for a profile.
+   */
   async getUserStats(profileId: string): Promise<UserStats> {
     try {
       const result = await createLendingActor(

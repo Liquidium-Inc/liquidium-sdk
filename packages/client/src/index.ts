@@ -38,7 +38,11 @@ export type {
   HistoryEntry,
   PaginatedResponse,
   PoolHistoryEntry,
+  PoolHistoryEntryApiItem,
+  PoolHistoryResponse,
   UserHistoryEntry,
+  UserHistoryEntryApiItem,
+  UserHistoryResponse,
 } from "./modules/history";
 export type {
   BorrowAction,

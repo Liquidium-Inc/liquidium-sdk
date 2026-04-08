@@ -60,6 +60,9 @@ export class LiquidiumClient {
     this.history = new HistoryModule(this.apiClient);
   }
 
+  /**
+   * Creates a client instance with the provided runtime configuration.
+   */
   static create(config: LiquidiumClientConfig = {}): LiquidiumClient {
     return new LiquidiumClient(config);
   }
