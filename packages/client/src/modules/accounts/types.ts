@@ -1,6 +1,6 @@
 import type {
-  SignMessageWalletAction,
   SignatureInfo,
+  SignMessageWalletAction,
 } from "../../core/wallet-actions";
 
 export type { SignatureInfo } from "../../core/wallet-actions";

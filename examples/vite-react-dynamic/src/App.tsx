@@ -10,9 +10,9 @@ import {
   formatLiquidiumError,
   isNativeAddressSupplyInstruction,
   loadPoolsAndDefaultSelection,
-  prepareBtcSupplyFlow,
   type OutflowDetails,
   type Pool,
+  prepareBtcSupplyFlow,
   type SupplyAction,
   type SupplyFlow,
 } from "./liquidium-client-sdk";
@@ -34,7 +34,9 @@ export default function App() {
   const { handleLogOut, primaryWallet, setShowAuthFlow } = useDynamicContext();
 
   const [isBusy, setIsBusy] = useState(false);
-  const [statusMessage, setStatusMessage] = useState("Connect a wallet to start.");
+  const [statusMessage, setStatusMessage] = useState(
+    "Connect a wallet to start."
+  );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [profileId, setProfileId] = useState<string | null>(null);
   const [pools, setPools] = useState<Pool[]>([]);
@@ -42,12 +44,14 @@ export default function App() {
   const [borrowAmount, setBorrowAmount] = useState(DEFAULT_BORROW_AMOUNT);
   const [borrowAddress, setBorrowAddress] = useState("");
   const [borrowResult, setBorrowResult] = useState<OutflowDetails | null>(null);
-  const [supplyAction, setSupplyAction] =
-    useState<SupplyAction>(DEFAULT_SUPPLY_ACTION);
+  const [supplyAction, setSupplyAction] = useState<SupplyAction>(
+    DEFAULT_SUPPLY_ACTION
+  );
   const [supplyFlow, setSupplyFlow] = useState<SupplyFlow | null>(null);
 
   const walletAddress = primaryWallet?.address ?? "";
-  const liquidiumAccountAddress = getLiquidiumAccountAddress(primaryWallet) ?? "";
+  const liquidiumAccountAddress =
+    getLiquidiumAccountAddress(primaryWallet) ?? "";
   const walletChain = getWalletChainLabel(primaryWallet);
   const selectedPool = useMemo(() => {
     return pools.find((pool) => pool.id === selectedPoolId) ?? null;
@@ -233,7 +237,10 @@ const supplyFlow = await client.lending.supply({
 
       <section className="example-card">
         <h2>1. Connect a wallet</h2>
-        <p>Use Dynamic for connection and signing. The SDK handles the protocol calls.</p>
+        <p>
+          Use Dynamic for connection and signing. The SDK handles the protocol
+          calls.
+        </p>
         <div className="button-row">
           {isLoggedIn ? (
             <button onClick={() => void handleLogOut()} type="button">
@@ -263,7 +270,10 @@ const supplyFlow = await client.lending.supply({
 
       <section className="example-card">
         <h2>2. Create or resolve a profile</h2>
-        <p>This calls `client.accounts.create(...)` and falls back to `resolveProfile(...)` if needed.</p>
+        <p>
+          This calls `client.accounts.create(...)` and falls back to
+          `resolveProfile(...)` if needed.
+        </p>
         <div className="button-row">
           <button
             disabled={isBusy || !primaryWallet || !liquidiumAccountAddress}
@@ -283,9 +293,16 @@ const supplyFlow = await client.lending.supply({
 
       <section className="example-card">
         <h2>3. Load pools</h2>
-        <p>Fetch the pool list once, then pick the pool you want to use for the next calls.</p>
+        <p>
+          Fetch the pool list once, then pick the pool you want to use for the
+          next calls.
+        </p>
         <div className="button-row">
-          <button disabled={isBusy} onClick={() => void handleLoadPools()} type="button">
+          <button
+            disabled={isBusy}
+            onClick={() => void handleLoadPools()}
+            type="button"
+          >
             Load pools
           </button>
           <select
@@ -302,13 +319,17 @@ const supplyFlow = await client.lending.supply({
           </select>
         </div>
         <p className="inline-note">
-          Suggested BTC pool: {btcPool?.id ?? "Load pools to detect it automatically."}
+          Suggested BTC pool:{" "}
+          {btcPool?.id ?? "Load pools to detect it automatically."}
         </p>
       </section>
 
       <section className="example-card">
         <h2>4. Borrow from a pool</h2>
-        <p>This is the shortest borrow path: enter an amount and destination address, then call `client.lending.borrow(...)`.</p>
+        <p>
+          This is the shortest borrow path: enter an amount and destination
+          address, then call `client.lending.borrow(...)`.
+        </p>
         <pre className="code-block">{`await client.lending.borrow({
   profileId,
   poolId,
@@ -346,7 +367,10 @@ const supplyFlow = await client.lending.supply({
           </button>
         </div>
         <p className="inline-note">
-          Selected pool: {selectedPool ? `${selectedPool.asset} on ${selectedPool.chain}` : "Choose a pool first."}
+          Selected pool:{" "}
+          {selectedPool
+            ? `${selectedPool.asset} on ${selectedPool.chain}`
+            : "Choose a pool first."}
         </p>
         <pre className="code-block">
           {borrowResult
@@ -357,7 +381,10 @@ const supplyFlow = await client.lending.supply({
 
       <section className="example-card">
         <h2>5. Start a BTC supply flow</h2>
-        <p>Use `client.lending.supply(...)` to get the BTC deposit address and flow metadata.</p>
+        <p>
+          Use `client.lending.supply(...)` to get the BTC deposit address and
+          flow metadata.
+        </p>
         <pre className="code-block">{`const supplyFlow = await client.lending.supply({
   profileId,
   poolId,
@@ -384,14 +411,18 @@ const supplyFlow = await client.lending.supply({
         </div>
         <div className="button-row">
           <button
-            disabled={!isNativeAddressSupplyInstruction(supplyFlow?.instruction ?? null)}
+            disabled={
+              !isNativeAddressSupplyInstruction(supplyFlow?.instruction ?? null)
+            }
             onClick={() => void handleCopyBtcAddress()}
             type="button"
           >
             Copy BTC address
           </button>
           <button
-            disabled={!isNativeAddressSupplyInstruction(supplyFlow?.instruction ?? null)}
+            disabled={
+              !isNativeAddressSupplyInstruction(supplyFlow?.instruction ?? null)
+            }
             onClick={handleOpenBitcoinUri}
             type="button"
           >

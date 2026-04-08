@@ -1,6 +1,6 @@
 import { isBitcoinWallet } from "@dynamic-labs/bitcoin";
 import { isEthereumWallet } from "@dynamic-labs/ethereum";
-import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
+import type { useDynamicContext } from "@dynamic-labs/sdk-react-core";
 
 type DynamicPrimaryWallet = NonNullable<
   ReturnType<typeof useDynamicContext>["primaryWallet"]
