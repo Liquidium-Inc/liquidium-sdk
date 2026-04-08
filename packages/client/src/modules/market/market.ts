@@ -22,6 +22,9 @@ export class MarketModule {
     readonly apiClient: ApiClient | undefined
   ) {}
 
+  /**
+   * Lists all pools with their current rates.
+   */
   async getPools(): Promise<Pool[]> {
     void this.apiClient;
 
@@ -50,6 +53,9 @@ export class MarketModule {
     }
   }
 
+  /**
+   * Returns the latest asset prices reported by the protocol.
+   */
   async getAssetPrices(): Promise<AssetPrices> {
     try {
       return mapGetPricesResponseToAssetPrices(
@@ -68,6 +74,9 @@ export class MarketModule {
     }
   }
 
+  /**
+   * Resolves a single pool for the given asset and chain pair.
+   */
   async findPool(query: {
     asset: MarketAsset;
     chain: MarketChain;
@@ -94,6 +103,9 @@ export class MarketModule {
     return matchedPools[0];
   }
 
+  /**
+   * Returns the current borrow, lend, and utilization rates for a pool.
+   */
   async getPoolRate(poolId: string): Promise<{
     borrowRate: bigint;
     lendRate: bigint;

@@ -9,6 +9,9 @@ export class PendingModule {
     readonly apiClient: ApiClient | undefined
   ) {}
 
+  /**
+   * Returns the pending inflows and outflows for a profile.
+   */
   async getMovements(profileId: string): Promise<PendingMovements> {
     void profileId;
     void this.canisterContext;
@@ -20,6 +23,9 @@ export class PendingModule {
     );
   }
 
+  /**
+   * Returns pending inflows for a profile.
+   */
   async getInflows(profileId: string): Promise<PendingInflow[]> {
     void profileId;
 
@@ -29,6 +35,9 @@ export class PendingModule {
     );
   }
 
+  /**
+   * Returns pending outflows for a profile.
+   */
   async getOutflows(profileId: string): Promise<PendingOutflow[]> {
     void profileId;
 
