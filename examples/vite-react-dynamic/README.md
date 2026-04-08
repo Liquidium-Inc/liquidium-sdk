@@ -1,19 +1,18 @@
 # Vite React Dynamic Example
 
-This example shows how to use `@liquidium/client` in a Vite React app with
-Dynamic wallet connection.
+This example is intentionally small.
 
-It walks through:
+It shows one clear happy path for using `@liquidium/client` in a Vite React app
+with Dynamic:
 
-- Connecting an Ethereum or Bitcoin wallet with Dynamic
-- Creating or resolving a Liquidium account
-- Fetching live pools from the protocol
-- Creating a borrow request with a required custom outflow address
-- Fetching a simple borrow quote before signing
-- Resolving the BTC pool and generating a tracked BTC supply flow
-- Optionally submitting a BTC inflow txid as a faster indexing hint
-- Polling BTC inflow status every 5 seconds through the flow helper
-- Opening a `bitcoin:` URI to try sending funds to the returned address
+- Connect an Ethereum or Bitcoin wallet with Dynamic
+- Create or resolve a Liquidium profile
+- Load pools
+- Borrow from a pool with `client.lending.borrow(...)`
+- Start a BTC supply flow with `client.lending.supply(...)`
+
+The goal is to make the first SDK integration obvious without extra playgrounds,
+page switching, or layered demo flows.
 
 ## Setup
 
@@ -35,23 +34,15 @@ pnpm install
 pnpm --filter @liquidium/example-vite-react-dynamic dev
 ```
 
+## What To Look At
+
+- `src/App.tsx` is the full example UI
+- `src/liquidium-client-sdk.ts` is the thin helper layer around the SDK
+- `src/wallet-signing.ts` adapts Dynamic wallets to the SDK signing flow
+
 ## Notes
 
-- SDK-specific calls are isolated in `src/liquidium-client-sdk.ts` so the
-  Liquidium flow is easy to follow separately from Dynamic UI wiring
-- Guided flow interactions are split into dedicated hooks under `src/hooks/`
-  (create account, load pools, create borrow, prepare BTC flow, submit BTC inflow, watch BTC inflow)
-- The borrow quote is an estimate derived from current asset prices plus the
-  profile's collateral, debt, and gross borrowing power reported by the canister
-- BTC inflows are still detectable without txid submission via backend address
-  scanning; txid submission is optional and can speed up indexing
-- The guided flow now uses `client.lending.createSupply(...)` so status
-  polling runs through the SDK helper every 5 seconds by default
-- The Vite example now points at `http://localhost:3000/api/sdk` by default,
-  which matches a local `apps/pools` dev server
-- BTC pool resolution uses `client.market.findPool({ asset: "BTC", chain: "BTC" })`
-  and only falls back to manual selection when the result is ambiguous
-- `destination: "nativeAddress"` currently works for the BTC pool
-- `destination: "icrcAccount"` currently works for BTC and USDT pools
-- The send step is a best-effort `bitcoin:` URI handoff, which lets you try the
-  returned BTC address in a wallet installed on your machine
+- The example uses direct SDK convenience methods instead of a prepare/execute
+  walkthrough
+- BTC supply currently uses `destination: "nativeAddress"`
+- For Bitcoin wallets, the example prefers the payment address when available

@@ -12,7 +12,7 @@ const client = LiquidiumClient.create({});
 const pools = await client.market.getPools();
 const prices = await client.market.getAssetPrices();
 
-const createAction = await client.accounts.create({
+const createAction = await client.accounts.prepareCreate({
   account: walletAddress,
 });
 const signature = await wallet.signMessage(createAction.message);

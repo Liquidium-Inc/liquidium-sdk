@@ -25,7 +25,7 @@ export type Chain = "BTC" | "ETH";
 export type MarketAsset = string;
 export type MarketChain = string;
 export type SupplyAction = "deposit" | "repayment";
-export type Outflowtype = "Withdraw" | "Borrow" | "FeeClaim";
+export type Outflowtype = "withdraw" | "borrow" | "feeClaim";
 
 export interface Wallet {
   chain: Chain;

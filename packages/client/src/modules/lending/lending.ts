@@ -15,6 +15,8 @@ import type { ApiClient } from "../../core/transports/api-client";
 import type { CanisterContext } from "../../core/transports/canister-context";
 import type { SupplyAction } from "../../core/types";
 import { encodeInflowSubaccount } from "../../core/utils/inflow-subaccount";
+import type { WalletAdapter } from "../../core/wallet-actions";
+import { executeWith } from "../../execute";
 import type {
   BorrowAction,
   BorrowSubmitSignatureInfo,
@@ -51,7 +53,12 @@ export class LendingModule {
     readonly options: LendingModuleOptions
   ) {}
 
-  async createWithdraw(
+  /**
+   * Prepares a withdraw action that can be signed and submitted later.
+   *
+   * Use this when you need explicit control over signing and submission.
+   */
+  async prepareWithdraw(
     request: CreateWithdrawRequest
   ): Promise<WithdrawAction> {
     const destinationAccount = request.account.trim();
@@ -85,6 +92,9 @@ export class LendingModule {
 
       return {
         kind: "create-withdraw",
+        executionKind: "sign-message",
+        actionType: "create-withdraw",
+        transferMode: "native",
         account: signerAccount,
         message: createWithdrawAssetMessage(
           {
@@ -109,7 +119,77 @@ export class LendingModule {
     }
   }
 
-  async createBorrow(request: CreateBorrowRequest): Promise<BorrowAction> {
+  private async submitWithdraw(
+    request: {
+      profileId: string;
+      poolId: string;
+      amount: bigint;
+      account: string;
+      signerAccount: string;
+      expiryTimestamp: bigint;
+    },
+    signatureInfo: WithdrawSubmitSignatureInfo
+  ): Promise<OutflowDetails> {
+    try {
+      const result = await createLendingActor(this.canisterContext).withdraw(
+        Principal.fromText(request.profileId),
+        {
+          data: {
+            expiry_timestamp: request.expiryTimestamp,
+            account: { External: request.account },
+            pool_id: Principal.fromText(request.poolId),
+            amount: request.amount,
+          },
+          signature_info: {
+            Wallet: {
+              signature: signatureInfo.signature,
+              chain: mapWalletChainToLendingChain(signatureInfo.chain),
+              account: request.signerAccount,
+            },
+          },
+        }
+      );
+
+      if ("Err" in result) {
+        throw mapLendingProtocolErrorToLiquidiumError(result.Err);
+      }
+
+      return mapCanisterOutflowDetails(result.Ok);
+    } catch (error) {
+      if (error instanceof LiquidiumError) {
+        throw error;
+      }
+
+      throw mapCanisterCallErrorToLiquidiumError("withdraw", error);
+    }
+  }
+
+  /**
+   * Creates a withdraw outflow using the provided wallet adapter.
+   *
+   * This is the convenience form of `prepareWithdraw(...)` plus execution.
+   */
+  async withdraw(
+    params: CreateWithdrawRequest & {
+      chain: "BTC" | "ETH";
+      walletAdapter: WalletAdapter;
+    }
+  ): Promise<OutflowDetails> {
+    const action = await this.prepareWithdraw(params);
+
+    return await executeWith({
+      walletAdapter: params.walletAdapter,
+      chain: params.chain,
+      account: params.signerAccount,
+    })(action);
+  }
+
+  /**
+   * Prepares a borrow action that can be signed and submitted later.
+   *
+   * Use this when you need explicit control over signing and submission.
+   */
+  async prepareBorrow(request: CreateBorrowRequest): Promise<BorrowAction> {
     const destinationAccount = request.account.trim();
     const signerAccount = request.signerAccount.trim();
     if (!destinationAccount) {
@@ -141,6 +221,9 @@ export class LendingModule {
 
       return {
         kind: "create-borrow",
+        executionKind: "sign-message",
+        actionType: "create-borrow",
+        transferMode: "native",
         account: signerAccount,
         message: createBorrowAssetMessage(
           {
@@ -165,7 +248,76 @@ export class LendingModule {
     }
   }
 
-  async supply(request: SupplyRequest): Promise<SupplyInstruction> {
+  private async submitBorrow(
+    request: {
+      profileId: string;
+      poolId: string;
+      amount: bigint;
+      account: string;
+      signerAccount: string;
+      expiryTimestamp: bigint;
+    },
+    signatureInfo: BorrowSubmitSignatureInfo
+  ): Promise<OutflowDetails> {
+    try {
+      const result = await createLendingActor(
+        this.canisterContext
+      ).borrow_assets(Principal.fromText(request.profileId), {
+        data: {
+          expiry_timestamp: request.expiryTimestamp,
+          account: { External: request.account },
+          pool_id: Principal.fromText(request.poolId),
+          amount: request.amount,
+        },
+        signature_info: {
+          Wallet: {
+            signature: signatureInfo.signature,
+            chain: mapWalletChainToLendingChain(signatureInfo.chain),
+            account: request.signerAccount,
+          },
+        },
+      });
+
+      if ("Err" in result) {
+        throw mapLendingProtocolErrorToLiquidiumError(result.Err);
+      }
+
+      return mapCanisterOutflowDetails(result.Ok);
+    } catch (error) {
+      if (error instanceof LiquidiumError) {
+        throw error;
+      }
+
+      throw mapCanisterCallErrorToLiquidiumError("borrow_assets", error);
+    }
+  }
+
+  /**
+   * Creates a borrow outflow using the provided wallet adapter.
+   *
+   * This is the convenience form of `prepareBorrow(...)` plus execution.
+   */
+  async borrow(
+    params: CreateBorrowRequest & {
+      chain: "BTC" | "ETH";
+      walletAdapter: WalletAdapter;
+    }
+  ): Promise<OutflowDetails> {
+    const action = await this.prepareBorrow(params);
+
+    return await executeWith({
+      walletAdapter: params.walletAdapter,
+      chain: params.chain,
+      account: params.signerAccount,
+    })(action);
+  }
+
+  /**
+   * Prepares supply instructions for a deposit or repayment flow.
+   *
+   * The returned instruction describes where funds should be sent.
+   */
+  async prepareSupply(request: SupplyRequest): Promise<SupplyInstruction> {
     const supplyTarget = await this.resolveSupplyTarget(request);
 
     return {
@@ -177,8 +329,14 @@ export class LendingModule {
     };
   }
 
-  async createSupply(request: SupplyFlowRequest): Promise<SupplyFlow> {
-    const instruction = await this.supply(request);
+  /**
+   * Creates a tracked supply flow for a deposit or repayment.
+   *
+   * This builds the supply instruction and returns helpers for txid submission
+   * and status tracking.
+   */
+  async supply(request: SupplyFlowRequest): Promise<SupplyFlow> {
+    const instruction = await this.prepareSupply(request);
     const defaultPollIntervalMs = this.options.supplyStatusPollIntervalMs;
     let trackedTxid: string | undefined;
     const getStatus = async (
@@ -247,6 +405,9 @@ export class LendingModule {
     };
   }
 
+  /**
+   * Submits a BTC inflow transaction id for faster indexing.
+   */
   async submitInflow(
     request: SubmitInflowRequest
   ): Promise<SubmitInflowResponse> {
@@ -258,6 +419,9 @@ export class LendingModule {
     );
   }
 
+  /**
+   * Returns the current inflow status for a profile, optionally filtered by txid.
+   */
   async getInflowStatus(
     request: GetInflowStatusRequest
   ): Promise<GetInflowStatusResponse> {
@@ -275,6 +439,9 @@ export class LendingModule {
     );
   }
 
+  /**
+   * Returns the configured deposit fee.
+   */
   async getDepositFee(): Promise<bigint> {
     throw new LiquidiumError(
       LiquidiumErrorCode.INTERNAL,
@@ -282,6 +449,9 @@ export class LendingModule {
     );
   }
 
+  /**
+   * Returns whether borrowing is currently disabled by the protocol.
+   */
   async isBorrowingDisabled(): Promise<boolean> {
     try {
       return await createLendingActor(
@@ -324,95 +494,6 @@ export class LendingModule {
     }
 
     return selectedPool;
-  }
-
-  private async submitBorrow(
-    request: {
-      profileId: string;
-      poolId: string;
-      amount: bigint;
-      account: string;
-      signerAccount: string;
-      expiryTimestamp: bigint;
-    },
-    signatureInfo: BorrowSubmitSignatureInfo
-  ): Promise<OutflowDetails> {
-    try {
-      const result = await createLendingActor(
-        this.canisterContext
-      ).borrow_assets(Principal.fromText(request.profileId), {
-        data: {
-          expiry_timestamp: request.expiryTimestamp,
-          account: { External: request.account },
-          pool_id: Principal.fromText(request.poolId),
-          amount: request.amount,
-        },
-        signature_info: {
-          Wallet: {
-            signature: signatureInfo.signature,
-            chain: mapWalletChainToLendingChain(signatureInfo.chain),
-            account: request.signerAccount,
-          },
-        },
-      });
-
-      if ("Err" in result) {
-        throw mapLendingProtocolErrorToLiquidiumError(result.Err);
-      }
-
-      return mapCanisterOutflowDetails(result.Ok);
-    } catch (error) {
-      if (error instanceof LiquidiumError) {
-        throw error;
-      }
-
-      throw mapCanisterCallErrorToLiquidiumError("borrow_assets", error);
-    }
-  }
-
-  private async submitWithdraw(
-    request: {
-      profileId: string;
-      poolId: string;
-      amount: bigint;
-      account: string;
-      signerAccount: string;
-      expiryTimestamp: bigint;
-    },
-    signatureInfo: WithdrawSubmitSignatureInfo
-  ): Promise<OutflowDetails> {
-    try {
-      const result = await createLendingActor(this.canisterContext).withdraw(
-        Principal.fromText(request.profileId),
-        {
-          data: {
-            expiry_timestamp: request.expiryTimestamp,
-            account: { External: request.account },
-            pool_id: Principal.fromText(request.poolId),
-            amount: request.amount,
-          },
-          signature_info: {
-            Wallet: {
-              signature: signatureInfo.signature,
-              chain: mapWalletChainToLendingChain(signatureInfo.chain),
-              account: request.signerAccount,
-            },
-          },
-        }
-      );
-
-      if ("Err" in result) {
-        throw mapLendingProtocolErrorToLiquidiumError(result.Err);
-      }
-
-      return mapCanisterOutflowDetails(result.Ok);
-    } catch (error) {
-      if (error instanceof LiquidiumError) {
-        throw error;
-      }
-
-      throw mapCanisterCallErrorToLiquidiumError("withdraw", error);
-    }
   }
 
   private async resolveSupplyTarget(
@@ -690,16 +771,31 @@ function mapCanisterOutflowDetails(outflow: {
   amount: bigint;
   receiver: { Native: Principal } | { External: string };
 }): OutflowDetails {
+  const rawOutflowType = getVariantKey(outflow.outflow_type);
+
   return {
     id: outflow.id,
-    outflowType: getVariantKey(
-      outflow.outflow_type
-    ) as OutflowDetails["outflowType"],
+    outflowType: normalizeOutflowType(rawOutflowType),
     outflowRef: outflow.outflow_ref[0],
     txid: outflow.txid[0],
     amount: outflow.amount,
     receiver: mapCanisterAccountType(outflow.receiver),
   };
+}
+
+function normalizeOutflowType(
+  rawOutflowType: string
+): OutflowDetails["outflowType"] {
+  switch (rawOutflowType) {
+    case "Withdraw":
+      return "withdraw";
+    case "Borrow":
+      return "borrow";
+    case "FeeClaim":
+      return "feeClaim";
+    default:
+      throw new Error(`Unsupported outflow type: ${rawOutflowType}`);
+  }
 }
 
 function mapCanisterAccountType(

@@ -4,6 +4,10 @@ import type {
   Outflowtype,
   SupplyAction,
 } from "../../core/types";
+import type {
+  SignMessageWalletAction,
+  SignatureInfo,
+} from "../../core/wallet-actions";
 
 export interface OutflowReceiver {
   type: "Native" | "External";
@@ -19,15 +23,9 @@ export interface OutflowDetails {
   receiver: OutflowReceiver;
 }
 
-export interface BorrowSubmitSignatureInfo {
-  signature: string;
-  chain: "BTC" | "ETH";
-}
+export interface BorrowSubmitSignatureInfo extends SignatureInfo {}
 
-export interface WithdrawSubmitSignatureInfo {
-  signature: string;
-  chain: "BTC" | "ETH";
-}
+export interface WithdrawSubmitSignatureInfo extends SignatureInfo {}
 
 export interface CreateBorrowRequest {
   profileId: string;
@@ -41,12 +39,11 @@ export interface CreateBorrowData extends CreateBorrowRequest {
   expiryTimestamp: bigint;
 }
 
-export interface BorrowAction {
+export interface BorrowAction
+  extends SignMessageWalletAction<CreateBorrowData, OutflowDetails> {
   kind: "create-borrow";
-  account: string;
-  message: string;
-  data: CreateBorrowData;
-  submit(signatureInfo: BorrowSubmitSignatureInfo): Promise<OutflowDetails>;
+  executionKind: "sign-message";
+  actionType: "create-borrow";
 }
 
 export interface CreateWithdrawRequest {
@@ -61,12 +58,11 @@ export interface CreateWithdrawData extends CreateWithdrawRequest {
   expiryTimestamp: bigint;
 }
 
-export interface WithdrawAction {
+export interface WithdrawAction
+  extends SignMessageWalletAction<CreateWithdrawData, OutflowDetails> {
   kind: "create-withdraw";
-  account: string;
-  message: string;
-  data: CreateWithdrawData;
-  submit(signatureInfo: WithdrawSubmitSignatureInfo): Promise<OutflowDetails>;
+  executionKind: "sign-message";
+  actionType: "create-withdraw";
 }
 
 export type SupplyDestination = "nativeAddress" | "icrcAccount";

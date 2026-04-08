@@ -1,7 +1,12 @@
 import { Actor } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { LiquidiumClient, LiquidiumError, LiquidiumErrorCode } from "../index";
+import {
+  executeWith,
+  LiquidiumClient,
+  LiquidiumError,
+  LiquidiumErrorCode,
+} from "../index";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -50,7 +55,9 @@ describe("AccountsModule", () => {
     const client = LiquidiumClient.create({});
 
     // when
-    const createAction = await client.accounts.create({ account: "0xabc" });
+    const createAction = await client.accounts.prepareCreate({
+      account: "0xabc",
+    });
     const profileId = await createAction.submit({
       signature: "0xsigned",
       chain: "ETH",
@@ -60,10 +67,77 @@ describe("AccountsModule", () => {
     // then
     expect(getNonce).toHaveBeenCalledWith("0xabc");
     expect(createAction.kind).toBe("create-account");
+    expect(createAction.executionKind).toBe("sign-message");
+    expect(createAction.actionType).toBe("create-account");
+    expect(createAction.transferMode).toBe("native");
     expect(createAction.account).toBe("0xabc");
     expect(createAction.message).toContain("Liquidium: Initialize Account");
     expect(profileId).toBe("ccccc-cc");
     expect(registerProfile).toHaveBeenCalledTimes(1);
+  });
+
+  test("executes an account creation action with a wallet adapter", async () => {
+    // given
+    const registerProfile = vi.fn().mockResolvedValue({
+      Ok: {
+        toText: () => "ccccc-cc",
+      },
+    });
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      get_nonce: vi.fn().mockResolvedValue(11n),
+      get_wallet_profile: vi.fn().mockResolvedValue([]),
+      register_profile: registerProfile,
+    } as never);
+    const signMessage = vi.fn().mockResolvedValue("0xsigned");
+    const client = LiquidiumClient.create({});
+
+    // when
+    const profileId = await client.accounts
+      .prepareCreate({ account: "0xabc" })
+      .then(
+        executeWith({
+          walletAdapter: { signMessage },
+          chain: "ETH",
+          account: "0xabc",
+        })
+      );
+
+    // then
+    expect(profileId).toBe("ccccc-cc");
+    expect(signMessage).toHaveBeenCalledWith({
+      actionType: "create-account",
+      transferMode: "native",
+      chain: "ETH",
+      message: expect.stringContaining("Liquidium: Initialize Account"),
+      account: "0xabc",
+    });
+    expect(registerProfile).toHaveBeenCalledTimes(1);
+  });
+
+  test("creates and executes an account creation request directly", async () => {
+    // given
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      get_nonce: vi.fn().mockResolvedValue(13n),
+      get_wallet_profile: vi.fn().mockResolvedValue([]),
+      register_profile: vi.fn().mockResolvedValue({
+        Ok: {
+          toText: () => "ddddd-dd",
+        },
+      }),
+    } as never);
+    const signMessage = vi.fn().mockResolvedValue("0xsigned");
+    const client = LiquidiumClient.create({});
+
+    // when
+    const profileId = await client.accounts.create({
+      account: "0xabc",
+      chain: "ETH",
+      walletAdapter: { signMessage },
+    });
+
+    // then
+    expect(profileId).toBe("ddddd-dd");
+    expect(signMessage).toHaveBeenCalledTimes(1);
   });
 
   test("maps protocol errors when account creation fails", async () => {
@@ -79,7 +153,7 @@ describe("AccountsModule", () => {
 
     // when / then
     await expect(
-      client.accounts.create({ account: "0x123" }).then((createAction) =>
+      client.accounts.prepareCreate({ account: "0x123" }).then((createAction) =>
         createAction.submit({
           signature: "0xabc",
           chain: "ETH",
@@ -104,7 +178,7 @@ describe("AccountsModule", () => {
 
     // when / then
     await expect(
-      client.accounts.create({ account: "0xabc" })
+      client.accounts.prepareCreate({ account: "0xabc" })
     ).rejects.toMatchObject({
       code: LiquidiumErrorCode.PROFILE_ALREADY_EXISTS,
       message: "Wallet address is already linked to profile aaaaa-aa",
@@ -125,7 +199,7 @@ describe("AccountsModule", () => {
 
     // when / then
     await expect(
-      client.accounts.create({ account: "0xabc" }).then((createAction) =>
+      client.accounts.prepareCreate({ account: "0xabc" }).then((createAction) =>
         createAction.submit({
           signature: "0xsigned",
           chain: "ETH",
@@ -721,7 +795,7 @@ describe("LendingModule", () => {
     const client = LiquidiumClient.create({});
 
     // when
-    const supplyInstruction = await client.lending.supply({
+    const supplyInstruction = await client.lending.prepareSupply({
       profileId: "aaaaa-aa",
       poolId: BTC_POOL_ID,
       action: "deposit",
@@ -781,7 +855,7 @@ describe("LendingModule", () => {
     const client = LiquidiumClient.create({});
 
     // when
-    const supplyInstruction = await client.lending.supply({
+    const supplyInstruction = await client.lending.prepareSupply({
       profileId: "aaaaa-aa",
       poolId: USDT_POOL_ID,
       action: "repayment",
@@ -848,7 +922,7 @@ describe("LendingModule", () => {
 
     // when / then
     await expect(
-      client.lending.supply({
+      client.lending.prepareSupply({
         profileId: "aaaaa-aa",
         poolId: USDT_POOL_ID,
         action: "deposit",
@@ -899,7 +973,7 @@ describe("LendingModule", () => {
 
     // when / then
     await expect(
-      client.lending.supply({
+      client.lending.prepareSupply({
         profileId: "aaaaa-aa",
         poolId: NON_CONFIGURED_BTC_POOL_ID,
         action: "deposit",
@@ -1069,7 +1143,7 @@ describe("LendingModule", () => {
     });
 
     // when
-    const flow = await client.lending.createSupply({
+    const flow = await client.lending.supply({
       profileId: "aaaaa-aa",
       poolId: BTC_POOL_ID,
       action: "deposit",
@@ -1201,7 +1275,7 @@ describe("LendingModule", () => {
     const client = LiquidiumClient.create({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
     });
-    const flow = await client.lending.createSupply({
+    const flow = await client.lending.supply({
       profileId: "aaaaa-aa",
       poolId: BTC_POOL_ID,
       action: "deposit",
@@ -1325,7 +1399,7 @@ describe("LendingModule", () => {
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
       supplyStatusPollIntervalMs: CUSTOM_POLL_INTERVAL_MS,
     });
-    const flow = await client.lending.createSupply({
+    const flow = await client.lending.supply({
       profileId: "aaaaa-aa",
       poolId: BTC_POOL_ID,
       action: "deposit",
@@ -1390,7 +1464,7 @@ describe("LendingModule", () => {
     const poolId = "rrkah-fqaaa-aaaaa-aaaaq-cai";
 
     // when
-    const borrowAction = await client.lending.createBorrow({
+    const borrowAction = await client.lending.prepareBorrow({
       profileId,
       poolId,
       amount: 50_000n,
@@ -1405,6 +1479,9 @@ describe("LendingModule", () => {
     // then
     expect(getNonce).toHaveBeenCalledWith("0xsigner");
     expect(borrowAction.kind).toBe("create-borrow");
+    expect(borrowAction.executionKind).toBe("sign-message");
+    expect(borrowAction.actionType).toBe("create-borrow");
+    expect(borrowAction.transferMode).toBe("native");
     expect(borrowAction.account).toBe("0xsigner");
     expect(borrowAction.data).toMatchObject({
       profileId,
@@ -1440,7 +1517,7 @@ Nonce: 17`);
     });
     expect(outflow).toEqual({
       id: "outflow-1",
-      outflowType: "Borrow",
+      outflowType: "borrow",
       outflowRef: "ref-1",
       txid: "txid-1",
       amount: 50_000n,
@@ -1448,6 +1525,46 @@ Nonce: 17`);
         type: "External",
         account: "bc1qcustomoutflow",
       },
+    });
+  });
+
+  test("creates and executes a borrow request directly", async () => {
+    // given
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      get_nonce: vi.fn().mockResolvedValue(31n),
+      borrow_assets: vi.fn().mockResolvedValue({
+        Ok: {
+          id: "outflow-3",
+          txid: [],
+          outflow_type: { Borrow: null },
+          outflow_ref: [],
+          amount: 12_000n,
+          receiver: { External: "bc1qborrow" },
+        },
+      }),
+    } as never);
+    const signMessage = vi.fn().mockResolvedValue("0xsigned");
+    const client = LiquidiumClient.create({});
+
+    // when
+    const outflow = await client.lending.borrow({
+      profileId: "aaaaa-aa",
+      poolId: "rrkah-fqaaa-aaaaa-aaaaq-cai",
+      amount: 12_000n,
+      account: "bc1qborrow",
+      signerAccount: "0xsigner",
+      chain: "ETH",
+      walletAdapter: { signMessage },
+    });
+
+    // then
+    expect(outflow.outflowType).toBe("borrow");
+    expect(signMessage).toHaveBeenCalledWith({
+      actionType: "create-borrow",
+      transferMode: "native",
+      chain: "ETH",
+      message: expect.stringContaining("Liquidium: Borrow Assets"),
+      account: "0xsigner",
     });
   });
 
@@ -1464,7 +1581,7 @@ Nonce: 17`);
     // when / then
     await expect(
       client.lending
-        .createBorrow({
+        .prepareBorrow({
           profileId: "aaaaa-aa",
           poolId: "rrkah-fqaaa-aaaaa-aaaaq-cai",
           amount: 50_000n,
@@ -1488,7 +1605,7 @@ Nonce: 17`);
 
     // when / then
     await expect(
-      client.lending.createBorrow({
+      client.lending.prepareBorrow({
         profileId: "p1",
         poolId: "aaaaa-aa",
         amount: 50_000n,
@@ -1500,7 +1617,7 @@ Nonce: 17`);
       message: "Borrow requires a custom outflow account",
     });
     await expect(
-      client.lending.createBorrow({
+      client.lending.prepareBorrow({
         profileId: "p1",
         poolId: "aaaaa-aa",
         amount: 50_000n,
@@ -1534,7 +1651,7 @@ Nonce: 17`);
     const client = LiquidiumClient.create({});
 
     // when
-    const withdrawAction = await client.lending.createWithdraw({
+    const withdrawAction = await client.lending.prepareWithdraw({
       profileId: "aaaaa-aa",
       poolId: "rrkah-fqaaa-aaaaa-aaaaq-cai",
       amount: 10_000n,
@@ -1549,6 +1666,9 @@ Nonce: 17`);
     // then
     expect(getNonce).toHaveBeenCalledWith("0xsigner");
     expect(withdrawAction.kind).toBe("create-withdraw");
+    expect(withdrawAction.executionKind).toBe("sign-message");
+    expect(withdrawAction.actionType).toBe("create-withdraw");
+    expect(withdrawAction.transferMode).toBe("native");
     expect(withdrawAction.account).toBe("0xsigner");
     expect(withdrawAction.data).toMatchObject({
       profileId: "aaaaa-aa",
@@ -1584,7 +1704,7 @@ Nonce: 23`);
     });
     expect(outflow).toEqual({
       id: "outflow-2",
-      outflowType: "Withdraw",
+      outflowType: "withdraw",
       outflowRef: "ref-2",
       txid: "txid-2",
       amount: 10_000n,
@@ -1592,6 +1712,46 @@ Nonce: 23`);
         type: "External",
         account: "bc1qwithdraw",
       },
+    });
+  });
+
+  test("creates and executes a withdraw request directly", async () => {
+    // given
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      get_nonce: vi.fn().mockResolvedValue(37n),
+      withdraw: vi.fn().mockResolvedValue({
+        Ok: {
+          id: "outflow-4",
+          txid: [],
+          outflow_type: { Withdraw: null },
+          outflow_ref: [],
+          amount: 8_000n,
+          receiver: { External: "bc1qwithdraw" },
+        },
+      }),
+    } as never);
+    const signMessage = vi.fn().mockResolvedValue("0xsigned");
+    const client = LiquidiumClient.create({});
+
+    // when
+    const outflow = await client.lending.withdraw({
+      profileId: "aaaaa-aa",
+      poolId: "rrkah-fqaaa-aaaaa-aaaaq-cai",
+      amount: 8_000n,
+      account: "bc1qwithdraw",
+      signerAccount: "0xsigner",
+      chain: "ETH",
+      walletAdapter: { signMessage },
+    });
+
+    // then
+    expect(outflow.outflowType).toBe("withdraw");
+    expect(signMessage).toHaveBeenCalledWith({
+      actionType: "create-withdraw",
+      transferMode: "native",
+      chain: "ETH",
+      message: expect.stringContaining("Liquidium: Withdraw Assets"),
+      account: "0xsigner",
     });
   });
 
@@ -1608,7 +1768,7 @@ Nonce: 23`);
     // when / then
     await expect(
       client.lending
-        .createWithdraw({
+        .prepareWithdraw({
           profileId: "aaaaa-aa",
           poolId: "rrkah-fqaaa-aaaaa-aaaaq-cai",
           amount: 10_000n,
@@ -1632,7 +1792,7 @@ Nonce: 23`);
 
     // when / then
     await expect(
-      client.lending.createWithdraw({
+      client.lending.prepareWithdraw({
         profileId: "p1",
         poolId: "aaaaa-aa",
         amount: 10_000n,
@@ -1644,7 +1804,7 @@ Nonce: 23`);
       message: "Withdraw requires a custom outflow account",
     });
     await expect(
-      client.lending.createWithdraw({
+      client.lending.prepareWithdraw({
         profileId: "p1",
         poolId: "aaaaa-aa",
         amount: 10_000n,

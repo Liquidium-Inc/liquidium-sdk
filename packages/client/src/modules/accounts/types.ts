@@ -1,26 +1,22 @@
-import type { Chain } from "../../core/types";
+import type {
+  SignMessageWalletAction,
+  SignatureInfo,
+} from "../../core/wallet-actions";
 
-export interface SignatureInfo {
-  signature: string;
-  chain: Chain;
-  account: string;
-}
+export type { SignatureInfo } from "../../core/wallet-actions";
 
 export interface CreateAccountData {
   expiryTimestamp: bigint;
 }
 
-export interface SignableAction<TData, TResult> {
-  kind: string;
-  account: string;
-  message: string;
-  data: TData;
-  submit(signatureInfo: SignatureInfo): Promise<TResult>;
-}
+export interface SignableAction<TData, TResult>
+  extends SignMessageWalletAction<TData, TResult> {}
 
 export interface CreateAccountAction
   extends SignableAction<CreateAccountData, string> {
   kind: "create-account";
+  executionKind: "sign-message";
+  actionType: "create-account";
 }
 
 export interface CreateAccountRequest {
