@@ -212,6 +212,57 @@ describe("AccountsModule", () => {
     });
     expect(registerProfile).not.toHaveBeenCalled();
   });
+
+  test("returns wallets linked to a profile", async () => {
+    // given
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      get_profile_wallets: vi.fn().mockResolvedValue([
+        {
+          address: "bc1qexample",
+          chain: { Wallet: { BTC: null } },
+        },
+        {
+          address: "0xabc",
+          chain: { Wallet: { ETH: null } },
+        },
+      ]),
+    } as never);
+    const client = LiquidiumClient.create({});
+
+    // when
+    const wallets = await client.accounts.getProfile("aaaaa-aa");
+
+    // then
+    expect(wallets).toEqual([
+      {
+        address: "bc1qexample",
+        chain: "BTC",
+      },
+      {
+        address: "0xabc",
+        chain: "ETH",
+      },
+    ]);
+  });
+
+  test("throws when a profile contains an unsupported wallet chain", async () => {
+    // given
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      get_profile_wallets: vi.fn().mockResolvedValue([
+        {
+          address: "So11111111111111111111111111111111111111112",
+          chain: { Wallet: { SOL: null } },
+        },
+      ]),
+    } as never);
+    const client = LiquidiumClient.create({});
+
+    // when / then
+    await expect(client.accounts.getProfile("aaaaa-aa")).rejects.toMatchObject({
+      code: LiquidiumErrorCode.INTERNAL,
+      message: "Unsupported wallet chain returned for profile wallet: SOL",
+    });
+  });
 });
 
 describe("HistoryModule", () => {
@@ -622,7 +673,10 @@ describe("MarketModule", () => {
       list_pools: vi.fn().mockResolvedValue([
         {
           optimal_utilization_rate: 80n,
-          principal: { toString: () => "pool-btc-1", toText: () => "pool-btc-1" },
+          principal: {
+            toString: () => "pool-btc-1",
+            toText: () => "pool-btc-1",
+          },
           total_generated_interest_snapshot: 0n,
           supply_cap: [],
           same_asset_borrowing: [],
@@ -646,7 +700,10 @@ describe("MarketModule", () => {
         },
         {
           optimal_utilization_rate: 80n,
-          principal: { toString: () => "pool-btc-2", toText: () => "pool-btc-2" },
+          principal: {
+            toString: () => "pool-btc-2",
+            toText: () => "pool-btc-2",
+          },
           total_generated_interest_snapshot: 0n,
           supply_cap: [],
           same_asset_borrowing: [],
@@ -1283,7 +1340,10 @@ describe("LendingModule", () => {
     });
 
     // when
-    const statusUpdates = await collectWatchUpdates(flow.watchStatus({ txid }), 2);
+    const statusUpdates = await collectWatchUpdates(
+      flow.watchStatus({ txid }),
+      2
+    );
 
     // then
     expect(statusUpdates).toHaveLength(2);
@@ -1499,7 +1559,9 @@ Address:bc1qcustomoutflow
 Expires: 1775001900
 Nonce: 17`);
     expect(borrowAssets).toHaveBeenCalledTimes(1);
-    expect(borrowAssets.mock.calls[0]?.[0]).toEqual(Principal.fromText(profileId));
+    expect(borrowAssets.mock.calls[0]?.[0]).toEqual(
+      Principal.fromText(profileId)
+    );
     expect(borrowAssets.mock.calls[0]?.[1]).toMatchObject({
       data: {
         expiry_timestamp: 1775001900n,

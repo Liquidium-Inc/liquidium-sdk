@@ -12,6 +12,15 @@ export type AssetVariant =
 
 export type ChainVariant = { BTC: null } | { ETH: null } | { SOL: null };
 
+export type WalletChainVariant = {
+  Wallet: ChainVariant;
+};
+
+export interface WalletRecord {
+  address: string;
+  chain: WalletChainVariant;
+}
+
 export type SignatureInfoVariant = {
   signature: string;
   chain: { BTC: null } | { ETH: null };
@@ -163,6 +172,7 @@ export type PriceRecord = [string, bigint, number];
 
 export interface LendingActor {
   get_nonce(walletAddress: string): Promise<bigint>;
+  get_profile_wallets(profileId: Principal): Promise<WalletRecord[]>;
   get_wallet_profile(
     walletAddress: string
   ): Promise<[] | [{ toText(): string }]>;
@@ -350,6 +360,11 @@ const lendingIdlFactory: IDL.InterfaceFactory = ({ IDL }) => {
     positions: IDL.Vec(Position),
     weighted_liquidation_threshold: IDL.Nat,
   });
+  const WalletType = IDL.Variant({ Wallet: Chains });
+  const Wallet = IDL.Record({
+    chain: WalletType,
+    address: IDL.Text,
+  });
 
   return IDL.Service({
     borrow_assets: IDL.Func(
@@ -386,10 +401,17 @@ const lendingIdlFactory: IDL.InterfaceFactory = ({ IDL }) => {
       ["query"]
     ),
     get_profile_stats: IDL.Func([IDL.Principal], [UserStats], ["query"]),
+    get_profile_wallets: IDL.Func(
+      [IDL.Principal],
+      [IDL.Vec(Wallet)],
+      ["query"]
+    ),
   });
 };
 
-export function createLendingActor(canisterContext: CanisterContext): LendingActor {
+export function createLendingActor(
+  canisterContext: CanisterContext
+): LendingActor {
   const canisterId = canisterContext.canisterIds.lending;
 
   if (!canisterId) {
