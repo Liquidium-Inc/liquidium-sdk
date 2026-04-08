@@ -1,4 +1,8 @@
-import { createLendingActor } from "../../core/canisters/lending/actor";
+import { Principal } from "@dfinity/principal";
+import {
+  createLendingActor,
+  type WalletRecord,
+} from "../../core/canisters/lending/actor";
 import {
   mapCanisterCallErrorToLiquidiumError,
   mapLendingProtocolErrorToLiquidiumError,
@@ -86,13 +90,24 @@ export class AccountsModule {
 
   /**
    * Returns the wallets currently linked to a profile.
+   *
+   * @param profileId - The Liquidium profile principal text.
+   * @returns The wallets currently linked to the requested profile.
    */
   async getProfile(profileId: string): Promise<Wallet[]> {
-    void profileId;
-    throw new LiquidiumError(
-      LiquidiumErrorCode.INTERNAL,
-      "Not yet implemented"
-    );
+    try {
+      const wallets = await createLendingActor(
+        this.canisterContext
+      ).get_profile_wallets(Principal.fromText(profileId));
+
+      return wallets.map(mapCanisterWalletToWallet);
+    } catch (error) {
+      if (error instanceof LiquidiumError) {
+        throw error;
+      }
+
+      throw mapCanisterCallErrorToLiquidiumError("get_profile_wallets", error);
+    }
   }
 
   /**
@@ -176,10 +191,7 @@ export class AccountsModule {
         );
       }
 
-      await assertWalletHasNoProfile(
-        this.canisterContext,
-        signingAccount
-      );
+      await assertWalletHasNoProfile(this.canisterContext, signingAccount);
 
       const result = await createLendingActor(
         this.canisterContext
@@ -236,4 +248,35 @@ async function assertWalletHasNoProfile(
     LiquidiumErrorCode.PROFILE_ALREADY_EXISTS,
     `Wallet address is already linked to profile ${profileId}`
   );
+}
+
+function mapCanisterWalletToWallet(canisterWallet: WalletRecord): Wallet {
+  const walletChain = getVariantKey(canisterWallet.chain.Wallet);
+
+  switch (walletChain) {
+    case "BTC":
+    case "ETH":
+      return {
+        address: canisterWallet.address,
+        chain: walletChain,
+      };
+    default:
+      throw new LiquidiumError(
+        LiquidiumErrorCode.INTERNAL,
+        `Unsupported wallet chain returned for profile wallet: ${walletChain}`
+      );
+  }
+}
+
+function getVariantKey(variant: Record<string, null>): string {
+  const [variantKey] = Object.keys(variant);
+
+  if (!variantKey) {
+    throw new LiquidiumError(
+      LiquidiumErrorCode.INTERNAL,
+      "Unexpected empty canister variant"
+    );
+  }
+
+  return variantKey;
 }
