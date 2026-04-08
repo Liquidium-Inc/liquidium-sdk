@@ -13,9 +13,16 @@ npm install @liquidium/client @dfinity/agent @dfinity/candid @dfinity/principal
 ## Usage
 
 ```ts
-import { LiquidiumClient } from "@liquidium/client";
+import {
+  executeWith,
+  LiquidiumClient,
+  type WalletAdapter,
+} from "@liquidium/client";
 
 const client = LiquidiumClient.create({});
+const walletAdapter: WalletAdapter = {
+  signMessage: async ({ message }) => wallet.signMessage(message),
+};
 
 // Market data
 const pools = await client.market.getPools();
@@ -29,7 +36,7 @@ const positions = await client.positions.list("profile-id");
 const health = await client.positions.getHealthFactor("profile-id");
 
 // Account creation
-const createAction = await client.accounts.create({
+const createAction = await client.accounts.prepareCreate({
   account: walletAddress,
 });
 const signature = await wallet.signMessage(createAction.message);
@@ -39,11 +46,29 @@ const profile = await createAction.submit({
   account: walletAddress,
 });
 
+// Account creation with executeWith(...)
+const execute = executeWith({
+  walletAdapter,
+  chain: "ETH",
+  account: walletAddress,
+});
+
+const profileWithExecutor = await client.accounts
+  .prepareCreate({ account: walletAddress })
+  .then(execute);
+
+// Account creation with the direct convenience method
+const profileWithConvenience = await client.accounts.create({
+  account: walletAddress,
+  chain: "ETH",
+  walletAdapter,
+});
+
 // History (requires apiBaseUrl)
 const history = await client.history.getUser("profile-id");
 
 // Borrow with a required custom outflow account
-const borrowAction = await client.lending.createBorrow({
+const borrowAction = await client.lending.prepareBorrow({
   profileId: "<liquidium-profile-id>",
   poolId: btcPool.id,
   amount: 50_000n,
@@ -56,6 +81,17 @@ const borrowSignature = await wallet.signMessage(borrowAction.message);
 const outflow = await borrowAction.submit({
   signature: borrowSignature,
   chain: "ETH",
+});
+
+// Borrow with the direct convenience method
+const outflowWithConvenience = await client.lending.borrow({
+  profileId: "<liquidium-profile-id>",
+  poolId: btcPool.id,
+  amount: 50_000n,
+  account: "<custom-outflow-address>",
+  signerAccount: walletAddress,
+  chain: "ETH",
+  walletAdapter,
 });
 
 // Pending movements
@@ -71,7 +107,7 @@ const inflowStatus = await client.lending.getInflowStatus({
 });
 
 // Recommended BTC supply flow with built-in 5 second polling
-const supplyFlow = await client.lending.createSupply({
+const supplyFlow = await client.lending.supply({
   profileId: "<liquidium-profile-id>",
   poolId: btcPool.id,
   action: "deposit",
@@ -120,8 +156,21 @@ Environment presets:
 
 ### Account creation flow
 
-- `client.accounts.create({ account })` - fetch nonce and build a signable account creation action
+- `client.accounts.prepareCreate({ account })` - fetch nonce and build a signable account creation action
 - `createAction.submit({ signature, chain, account })` - submit the signed request tied to that action
+- `executeWith({ walletAdapter, chain, account? })` - compose a wallet adapter with a prepared action
+- `client.accounts.create({ account, chain, walletAdapter })` - run the full account creation flow with a wallet adapter
+
+### Borrow and withdraw execution
+
+- `client.lending.prepareBorrow(...)` / `client.lending.prepareWithdraw(...)` - prepare raw signable actions
+- `client.lending.borrow({ ..., chain, walletAdapter })` - sign and submit a borrow request in one call
+- `client.lending.withdraw({ ..., chain, walletAdapter })` - sign and submit a withdraw request in one call
+
+### Wallet adapters
+
+- `WalletAdapter` currently supports BTC/ETH message signing through `signMessage`
+- Future versions will add native ICP, native Solana, and additional BTC/ETH execution capabilities like PSBT signing, direct ETH transaction sending, and ck-asset execution paths
 
 ### Modules
 
@@ -134,7 +183,8 @@ Environment presets:
 
 ### Supply tracking flow
 
-- `client.lending.createSupply(...)` builds a supply instruction and returns helpers to submit a broadcast `txid`, fetch the latest tracking status, and poll every 5 seconds until the inflow is available.
+- `client.lending.prepareSupply(...)` returns the raw supply instruction for the selected execution path.
+- `client.lending.supply(...)` builds a tracked supply flow and returns helpers to submit a broadcast `txid`, fetch the latest tracking status, and poll every 5 seconds until the inflow is available.
 
 ## License
 

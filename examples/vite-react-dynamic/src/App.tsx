@@ -1,100 +1,174 @@
 import { isBitcoinWallet } from "@dynamic-labs/bitcoin";
 import { isEthereumWallet } from "@dynamic-labs/ethereum";
-import {
-  DynamicWidget,
-  useDynamicContext,
-  useIsLoggedIn,
-} from "@dynamic-labs/sdk-react-core";
-import { useState } from "react";
+import { useDynamicContext, useIsLoggedIn } from "@dynamic-labs/sdk-react-core";
+import { useMemo, useState } from "react";
 import {
   bigintJsonReplacer,
+  createBorrowOutflow,
+  createOrResolveProfileIdSimple,
+  findBtcPool,
+  formatLiquidiumError,
   isNativeAddressSupplyInstruction,
+  loadPoolsAndDefaultSelection,
+  prepareBtcSupplyFlow,
+  type OutflowDetails,
+  type Pool,
+  type SupplyAction,
+  type SupplyFlow,
 } from "./liquidium-client-sdk";
-import { useCreateBorrow } from "./hooks/useCreateBorrow";
-import { useCreateWithdraw } from "./hooks/useCreateWithdraw";
-import { useBorrowQuote } from "./hooks/useBorrowQuote";
-import { useCreateOrResolveAccount } from "./hooks/useCreateOrResolveAccount";
-import { useLoadPools } from "./hooks/useLoadPools";
-import { usePrepareBtcSupply } from "./hooks/usePrepareBtcSupply";
-import { useGetBtcInflowStatus } from "./hooks/useGetBtcInflowStatus";
-import { useSubmitBtcInflow } from "./hooks/useSubmitBtcInflow";
-import RawRequestsPage from "./RawRequestsPage";
+import {
+  getBitcoinPaymentAddress,
+  getWalletSignatureChain,
+  signWalletMessage,
+} from "./wallet-signing";
 
 type DynamicPrimaryWallet = NonNullable<
   ReturnType<typeof useDynamicContext>["primaryWallet"]
 >;
 
+const DEFAULT_BORROW_AMOUNT = "50000";
+const DEFAULT_SUPPLY_ACTION: SupplyAction = "deposit";
+
 export default function App() {
   const isLoggedIn = useIsLoggedIn();
   const { handleLogOut, primaryWallet, setShowAuthFlow } = useDynamicContext();
 
-  const [statusMessage, setStatusMessage] = useState<string>(
-    "Connect a wallet to start."
-  );
+  const [isBusy, setIsBusy] = useState(false);
+  const [statusMessage, setStatusMessage] = useState("Connect a wallet to start.");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [activePage, setActivePage] = useState<"guided" | "raw-requests">(
-    "guided"
-  );
+  const [profileId, setProfileId] = useState<string | null>(null);
+  const [pools, setPools] = useState<Pool[]>([]);
+  const [selectedPoolId, setSelectedPoolId] = useState("");
+  const [borrowAmount, setBorrowAmount] = useState(DEFAULT_BORROW_AMOUNT);
+  const [borrowAddress, setBorrowAddress] = useState("");
+  const [borrowResult, setBorrowResult] = useState<OutflowDetails | null>(null);
+  const [supplyAction, setSupplyAction] =
+    useState<SupplyAction>(DEFAULT_SUPPLY_ACTION);
+  const [supplyFlow, setSupplyFlow] = useState<SupplyFlow | null>(null);
 
-  const createOrResolveAccount = useCreateOrResolveAccount({
-    onStatus: setStatusMessage,
-    onError: setErrorMessage,
-  });
-  const loadPools = useLoadPools({
-    onStatus: setStatusMessage,
-    onError: setErrorMessage,
-  });
-  const prepareBtcSupply = usePrepareBtcSupply({
-    onStatus: setStatusMessage,
-    onError: setErrorMessage,
-  });
-  const createBorrow = useCreateBorrow({
-    onStatus: setStatusMessage,
-    onError: setErrorMessage,
-  });
-  const createWithdraw = useCreateWithdraw({
-    onStatus: setStatusMessage,
-    onError: setErrorMessage,
-  });
-  const borrowQuote = useBorrowQuote({
-    onStatus: setStatusMessage,
-    onError: setErrorMessage,
-  });
-  const submitBtcInflow = useSubmitBtcInflow({
-    onStatus: setStatusMessage,
-    onError: setErrorMessage,
-  });
-  const getBtcInflowStatus = useGetBtcInflowStatus({
-    onStatus: setStatusMessage,
-    onError: setErrorMessage,
-  });
-
-  const isLoading =
-    createOrResolveAccount.isLoading ||
-    loadPools.isLoading ||
-    prepareBtcSupply.isLoading ||
-    createBorrow.isLoading ||
-    createWithdraw.isLoading ||
-    borrowQuote.isLoading ||
-    submitBtcInflow.isLoading ||
-    getBtcInflowStatus.isLoading;
-
-  const connectedWalletAddress = primaryWallet?.address ?? "";
-  const liquidiumAccountAddress =
-    getLiquidiumAccountAddress(primaryWallet) ?? "";
+  const walletAddress = primaryWallet?.address ?? "";
+  const liquidiumAccountAddress = getLiquidiumAccountAddress(primaryWallet) ?? "";
   const walletChain = getWalletChainLabel(primaryWallet);
-  const profileId = createOrResolveAccount.profileId;
-  const pools = loadPools.pools;
-  const selectedPoolId = loadPools.selectedPoolId;
-  const selectedPool = pools.find((pool) => pool.id === selectedPoolId) ?? null;
-  const btcPool = loadPools.btcPool;
-  const supplyAction = prepareBtcSupply.supplyAction;
-  const supplyFlow = prepareBtcSupply.supplyFlow;
-  const supplyInstruction = prepareBtcSupply.supplyInstruction;
-  const btcInflowTxid = submitBtcInflow.btcInflowTxid;
-  const btcInflowStatusResult = getBtcInflowStatus.result;
+  const selectedPool = useMemo(() => {
+    return pools.find((pool) => pool.id === selectedPoolId) ?? null;
+  }, [pools, selectedPoolId]);
+  const btcPool = useMemo(() => {
+    return findBtcPool(pools) ?? null;
+  }, [pools]);
 
-  async function handleCopyAddress() {
+  async function runAction(action: () => Promise<void>) {
+    setIsBusy(true);
+    setErrorMessage(null);
+
+    try {
+      await action();
+    } catch (error) {
+      setErrorMessage(formatLiquidiumError(error));
+    } finally {
+      setIsBusy(false);
+    }
+  }
+
+  async function handleCreateProfile() {
+    await runAction(async () => {
+      if (!primaryWallet || !liquidiumAccountAddress) {
+        throw new Error("Connect an Ethereum or Bitcoin wallet first.");
+      }
+
+      const profileResult = await createOrResolveProfileIdSimple({
+        walletAddress: liquidiumAccountAddress,
+        chain: getWalletSignatureChain(primaryWallet),
+        signMessage: (message) =>
+          signWalletMessage(primaryWallet, message, liquidiumAccountAddress),
+        onStep: setStatusMessage,
+      });
+
+      setProfileId(profileResult.profileId);
+      setStatusMessage(
+        profileResult.wasCreated
+          ? `Created Liquidium profile ${profileResult.profileId}.`
+          : `Resolved Liquidium profile ${profileResult.profileId}.`
+      );
+    });
+  }
+
+  async function handleLoadPools() {
+    await runAction(async () => {
+      setStatusMessage("Loading pools...");
+
+      const nextPoolsResult = await loadPoolsAndDefaultSelection();
+
+      setPools(nextPoolsResult.pools);
+      setSelectedPoolId(nextPoolsResult.selectedPoolId);
+      setStatusMessage(`Loaded ${nextPoolsResult.pools.length} pools.`);
+    });
+  }
+
+  async function handleBorrow() {
+    await runAction(async () => {
+      if (!primaryWallet || !liquidiumAccountAddress) {
+        throw new Error("Connect an Ethereum or Bitcoin wallet first.");
+      }
+
+      if (!profileId) {
+        throw new Error("Create or resolve a Liquidium profile first.");
+      }
+
+      if (!selectedPoolId) {
+        throw new Error("Load pools and choose a pool first.");
+      }
+
+      if (!borrowAddress.trim()) {
+        throw new Error("Enter an outflow address first.");
+      }
+
+      if (!/^\d+$/.test(borrowAmount)) {
+        throw new Error("Borrow amount must be a non-negative integer string.");
+      }
+
+      const nextBorrowResult = await createBorrowOutflow({
+        profileId,
+        poolId: selectedPoolId,
+        amount: BigInt(borrowAmount),
+        account: borrowAddress.trim(),
+        signerAccount: liquidiumAccountAddress,
+        chain: getWalletSignatureChain(primaryWallet),
+        signMessage: (message) =>
+          signWalletMessage(primaryWallet, message, liquidiumAccountAddress),
+        onStep: setStatusMessage,
+      });
+
+      setBorrowResult(nextBorrowResult);
+      setStatusMessage(`Created borrow outflow ${nextBorrowResult.id}.`);
+    });
+  }
+
+  async function handleStartSupplyFlow() {
+    await runAction(async () => {
+      if (!profileId) {
+        throw new Error("Create or resolve a Liquidium profile first.");
+      }
+
+      if (!selectedPoolId) {
+        throw new Error("Load pools and choose a pool first.");
+      }
+
+      setStatusMessage(`Starting BTC ${supplyAction} flow...`);
+
+      const nextSupplyFlow = await prepareBtcSupplyFlow({
+        profileId,
+        poolId: selectedPoolId,
+        action: supplyAction,
+      });
+
+      setSupplyFlow(nextSupplyFlow);
+      setStatusMessage(`Started BTC ${supplyAction} flow.`);
+    });
+  }
+
+  async function handleCopyBtcAddress() {
+    const supplyInstruction = supplyFlow?.instruction ?? null;
+
     if (!isNativeAddressSupplyInstruction(supplyInstruction)) {
       return;
     }
@@ -103,7 +177,9 @@ export default function App() {
     setStatusMessage("Copied the BTC deposit address.");
   }
 
-  function handleTryBitcoinUri() {
+  function handleOpenBitcoinUri() {
+    const supplyInstruction = supplyFlow?.instruction ?? null;
+
     if (!isNativeAddressSupplyInstruction(supplyInstruction)) {
       return;
     }
@@ -113,487 +189,226 @@ export default function App() {
       "_blank",
       "noopener,noreferrer"
     );
-    setStatusMessage("Opened a bitcoin URI with the returned address.");
+    setStatusMessage("Opened a bitcoin URI.");
   }
 
   return (
     <main className="example-page">
       <header className="example-header">
-        <p className="eyebrow">Liquidium SDK basic example</p>
-        <h1>Vite + Dynamic + @liquidium/client</h1>
+        <p className="eyebrow">Liquidium SDK example</p>
+        <h1>Use `@liquidium/client` in a few steps</h1>
         <p className="subtitle">
-          This page keeps Dynamic limited to wallet connection and signing. The
-          main goal is to show the SDK flow clearly.
+          This example keeps the flow intentionally small: connect a wallet,
+          create a profile, load pools, borrow, and start a BTC supply flow.
         </p>
-        <div className="button-row">
-          <button
-            className={activePage === "guided" ? "active-page-button" : ""}
-            onClick={() => setActivePage("guided")}
-            type="button"
-          >
-            Guided flow page
-          </button>
-          <button
-            className={
-              activePage === "raw-requests" ? "active-page-button" : ""
-            }
-            onClick={() => setActivePage("raw-requests")}
-            type="button"
-          >
-            Raw SDK requests page
-          </button>
-        </div>
       </header>
 
-      {activePage === "guided" ? (
-        <>
-          <section className="example-card">
-            <h2>1. Connect a wallet</h2>
-            <p>
-              Use Dynamic to connect an Ethereum or Bitcoin wallet. The SDK
-              examples below will use the connected wallet address and message
-              signature.
-            </p>
-            <div className="button-row">
-              {isLoggedIn ? (
-                <button onClick={() => void handleLogOut()} type="button">
-                  Log out
-                </button>
-              ) : (
-                <button onClick={() => setShowAuthFlow(true)} type="button">
-                  Connect wallet
-                </button>
-              )}
-              <DynamicWidget variant="modal" />
-            </div>
-            <dl className="details-list">
-              <div>
-                <dt>Connected chain</dt>
-                <dd>{walletChain ?? "None"}</dd>
-              </div>
-              <div>
-                <dt>Wallet address</dt>
-                <dd>{connectedWalletAddress || "Not connected"}</dd>
-              </div>
-              <div>
-                <dt>SDK account address</dt>
-                <dd>{liquidiumAccountAddress || "Not connected"}</dd>
-              </div>
-            </dl>
-          </section>
+      <section className="example-card example-card-accent">
+        <h2>The SDK calls you care about</h2>
+        <pre className="code-block">{`const profileId = await client.accounts.create({
+  account: walletAddress,
+  chain,
+  walletAdapter,
+});
 
-          <section className="example-card">
-            <h2>2. Create or resolve a Liquidium account</h2>
-            <p>
-              This uses `client.accounts.create(...)`. If the wallet already has
-              a profile, the example resolves the existing profile instead.
-            </p>
-            <button
-              disabled={isLoading || !primaryWallet || !liquidiumAccountAddress}
-              onClick={() =>
-                void createOrResolveAccount.run(
-                  primaryWallet,
-                  liquidiumAccountAddress
-                )
-              }
-              type="button"
-            >
-              Create or resolve profile
-            </button>
-            <dl className="details-list">
-              <div>
-                <dt>Profile ID</dt>
-                <dd>{profileId ?? "Not created yet"}</dd>
-              </div>
-            </dl>
-          </section>
+const pools = await client.market.getPools();
 
-          <section className="example-card">
-            <h2>3. Query pools and pick the BTC pool</h2>
-            <p>
-              This uses `client.market.getPools()` and stores the BTC pool if it
-              is available.
-            </p>
-            <div className="button-row">
-              <button
-                disabled={isLoading}
-                onClick={() => void loadPools.run()}
-                type="button"
-              >
-                Load pools
-              </button>
-              <select
-                disabled={pools.length === 0}
-                value={selectedPoolId}
-                onChange={(event) =>
-                  loadPools.setSelectedPoolId(event.target.value)
-                }
-              >
-                <option value="">Choose a pool</option>
-                {pools.map((pool) => (
-                  <option key={pool.id} value={pool.id}>
-                    {pool.asset} on {pool.chain}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <p className="inline-note">
-              BTC pool:{" "}
-              {btcPool ? btcPool.id : "Load pools to see if BTC is available."}
-            </p>
-          </section>
+const borrow = await client.lending.borrow({
+  profileId,
+  poolId,
+  amount: 50_000n,
+  account: outflowAddress,
+  signerAccount: walletAddress,
+  chain,
+  walletAdapter,
+});
 
-          <section className="example-card">
-            <h2>4. Get the BTC deposit address</h2>
-            <p>
-              This uses `client.lending.createSupply(...)` with the selected
-              pool as the source of truth and asks for a native BTC address
-              target.
-            </p>
-            <div className="button-row">
-              <select
-                value={supplyAction}
-                onChange={(event) =>
-                  prepareBtcSupply.setSupplyAction(
-                    event.target.value as typeof supplyAction
-                  )
-                }
-              >
-                <option value="deposit">Deposit</option>
-                <option value="repayment">Repayment</option>
-              </select>
-              <button
-                disabled={isLoading || !profileId || !selectedPoolId}
-                onClick={() =>
-                  void prepareBtcSupply.run({ profileId, selectedPoolId })
-                }
-                type="button"
-              >
-                Prepare BTC flow
-              </button>
-            </div>
-            <pre className="code-block">
-              {supplyInstruction
-                ? JSON.stringify(supplyInstruction, bigintJsonReplacer, 2)
-                : "No supply instruction yet."}
-            </pre>
-            <div className="button-row">
-              <button
-                disabled={!isNativeAddressSupplyInstruction(supplyInstruction)}
-                onClick={() => void handleCopyAddress()}
-                type="button"
-              >
-                Copy BTC address
-              </button>
-              <button
-                disabled={!isNativeAddressSupplyInstruction(supplyInstruction)}
-                onClick={handleTryBitcoinUri}
-                type="button"
-              >
-                Try send via bitcoin URI
-              </button>
-            </div>
-          </section>
+const supplyFlow = await client.lending.supply({
+  profileId,
+  poolId,
+  action: "deposit",
+  destination: "nativeAddress",
+});`}</pre>
+      </section>
 
-          <section className="example-card">
-            <h2>5. Create a withdraw with a custom outflow address</h2>
-            <p>
-              This uses `client.lending.createWithdraw(...)`. The destination address
-              is required and can differ from the connected signer wallet.
-              Choose the pool below to control which supplied asset you want to
-              withdraw.
-            </p>
-            <div className="button-row">
-              <select
-                disabled={pools.length === 0}
-                value={selectedPoolId}
-                onChange={(event) =>
-                  loadPools.setSelectedPoolId(event.target.value)
-                }
-              >
-                <option value="">Choose a withdraw pool</option>
-                {pools.map((pool) => (
-                  <option key={pool.id} value={pool.id}>
-                    {pool.asset} on {pool.chain}
-                  </option>
-                ))}
-              </select>
-              <input
-                placeholder="Custom outflow address"
-                value={createWithdraw.outflowAddress}
-                onChange={(event) =>
-                  createWithdraw.setOutflowAddress(event.target.value.trim())
-                }
-              />
-              <input
-                placeholder="Withdraw amount"
-                value={createWithdraw.withdrawAmount}
-                onChange={(event) =>
-                  createWithdraw.setWithdrawAmount(event.target.value.trim())
-                }
-              />
-              <button
-                disabled={isLoading || !primaryWallet || !profileId || !selectedPoolId}
-                onClick={() =>
-                  void createWithdraw.run({
-                    primaryWallet,
-                    profileId,
-                    selectedPoolId,
-                    liquidiumAccountAddress,
-                  })
-                }
-                type="button"
-              >
-                Create withdraw
-              </button>
-            </div>
-            <p className="inline-note">
-              Withdraw asset to receive: {selectedPool ? `${selectedPool.asset} on ${selectedPool.chain}` : "Choose a pool first."}
-            </p>
-            <pre className="code-block">
-              {createWithdraw.withdrawResult
-                ? JSON.stringify(createWithdraw.withdrawResult, bigintJsonReplacer, 2)
-                : "No withdraw outflow created yet."}
-            </pre>
-          </section>
-
-          <section className="example-card">
-            <h2>6. Create a borrow with a custom outflow address</h2>
-            <p>
-              This uses `client.lending.createBorrow(...)`. The destination
-              address is required and can differ from the connected signer
-              wallet. Choose the pool below to control which asset you want to
-              receive from the borrow.
-            </p>
-            <p className="inline-note">
-              Use the quote to estimate how much your existing supplied
-              collateral can support before signing a borrow request.
-            </p>
-            <div className="button-row">
-              <select
-                disabled={pools.length === 0}
-                value={selectedPoolId}
-                onChange={(event) =>
-                  loadPools.setSelectedPoolId(event.target.value)
-                }
-              >
-                <option value="">Choose a borrow pool</option>
-                {pools.map((pool) => (
-                  <option key={pool.id} value={pool.id}>
-                    {pool.asset} on {pool.chain}
-                  </option>
-                ))}
-              </select>
-              <input
-                placeholder="Custom outflow address"
-                value={createBorrow.outflowAddress}
-                onChange={(event) =>
-                  createBorrow.setOutflowAddress(event.target.value.trim())
-                }
-              />
-              <input
-                placeholder="Borrow amount"
-                value={createBorrow.borrowAmount}
-                onChange={(event) =>
-                  createBorrow.setBorrowAmount(event.target.value.trim())
-                }
-              />
-              <button
-                disabled={isLoading || !profileId || !selectedPoolId}
-                onClick={() =>
-                  void borrowQuote.run({
-                    profileId,
-                    selectedPoolId,
-                    borrowAmount: createBorrow.borrowAmount,
-                  })
-                }
-                type="button"
-              >
-                Get quote
-              </button>
-              <button
-                disabled={isLoading || !primaryWallet || !profileId || !selectedPoolId}
-                onClick={() =>
-                  void createBorrow.run({
-                    primaryWallet,
-                    profileId,
-                    selectedPoolId,
-                    liquidiumAccountAddress,
-                  })
-                }
-                type="button"
-              >
-                Create borrow
-              </button>
-            </div>
-            <p className="inline-note">
-              Borrow asset to receive: {selectedPool ? `${selectedPool.asset} on ${selectedPool.chain}` : "Choose a pool first."}
-            </p>
-            {borrowQuote.quote ? (
-              <dl className="details-list">
-                <div>
-                  <dt>Receive asset</dt>
-                  <dd>
-                    {borrowQuote.quote.asset} on {borrowQuote.quote.chain}
-                  </dd>
-                </div>
-                <div>
-                  <dt>Requested receive amount</dt>
-                  <dd>
-                    {borrowQuote.quote.amountDisplay} {borrowQuote.quote.asset} (
-                    {borrowQuote.quote.amountRaw.toString()} raw units)
-                  </dd>
-                </div>
-                <div>
-                  <dt>Estimated receive value</dt>
-                  <dd>
-                    {borrowQuote.quote.requestedValueUsd === null
-                      ? "Price unavailable"
-                      : `$${borrowQuote.quote.requestedValueUsd.toFixed(2)}`}
-                  </dd>
-                </div>
-                <div>
-                  <dt>Current supplied collateral</dt>
-                  <dd>${borrowQuote.quote.collateralUsd.toFixed(2)}</dd>
-                </div>
-                <div>
-                  <dt>Current debt</dt>
-                  <dd>${borrowQuote.quote.debtUsd.toFixed(2)}</dd>
-                </div>
-                <div>
-                  <dt>Available to borrow now</dt>
-                  <dd>${borrowQuote.quote.availableBorrowableUsd.toFixed(2)}</dd>
-                </div>
-                <div>
-                  <dt>Remaining after this borrow</dt>
-                  <dd>
-                    ${borrowQuote.quote.remainingBorrowableUsdAfterRequest.toFixed(2)}
-                  </dd>
-                </div>
-              </dl>
-            ) : (
-              <p className="inline-note">No borrow quote loaded yet.</p>
-            )}
-            {borrowQuote.quote?.exceedsBorrowingPower ? (
-              <p className="error-text">
-                This requested borrow exceeds the current max borrowable USD.
-              </p>
-            ) : null}
-            {borrowQuote.quote ? (
-              <pre className="code-block">
-                {JSON.stringify(borrowQuote.quote, bigintJsonReplacer, 2)}
-              </pre>
-            ) : null}
-            <pre className="code-block">
-              {createBorrow.borrowResult
-                ? JSON.stringify(createBorrow.borrowResult, bigintJsonReplacer, 2)
-                : "No borrow outflow created yet."}
-            </pre>
-          </section>
-
-          <section className="example-card">
-            <h2>7. Optional: submit your BTC transaction id</h2>
-            <p>
-              This is optional. The backend can detect inflows by watching known
-              deposit addresses; submitting a txid through the prepared flow is
-              just a faster hint path.
-            </p>
-            <div className="button-row">
-              <input
-                placeholder="BTC txid"
-                value={btcInflowTxid}
-                onChange={(event) =>
-                  submitBtcInflow.setBtcInflowTxid(event.target.value.trim())
-                }
-              />
-              <button
-                disabled={isLoading || btcInflowTxid.length === 0}
-                onClick={() => void submitBtcInflow.run({ supplyFlow })}
-                type="button"
-              >
-                Submit optional txid hint
-              </button>
-            </div>
-          </section>
-
-          <section className="example-card">
-            <h2>8. Watch BTC inflow status</h2>
-            <p>
-              Use the prepared BTC flow to poll current deposit or repayment
-              progress every 5 seconds. If a txid is entered, the query narrows
-              to that specific transaction.
-            </p>
-            <div className="button-row">
-              <button
-                disabled={isLoading || !profileId}
-                onClick={() =>
-                  void getBtcInflowStatus.run({
-                    profileId,
-                    txid: btcInflowTxid || undefined,
-                    supplyFlow,
-                  })
-                }
-                type="button"
-              >
-                Refresh BTC inflow status
-              </button>
-              <button
-                disabled={
-                  isLoading ||
-                  getBtcInflowStatus.isWatching ||
-                  !profileId ||
-                  !supplyFlow
-                }
-                onClick={() =>
-                  void getBtcInflowStatus.watch({
-                    profileId,
-                    txid: btcInflowTxid || undefined,
-                    supplyFlow,
-                  })
-                }
-                type="button"
-              >
-                Start 5 second polling
-              </button>
-              <button
-                disabled={!getBtcInflowStatus.isWatching}
-                onClick={getBtcInflowStatus.stopWatching}
-                type="button"
-              >
-                Stop polling
-              </button>
-            </div>
-            <pre className="code-block">
-              {btcInflowStatusResult
-                ? JSON.stringify(btcInflowStatusResult, bigintJsonReplacer, 2)
-                : "No BTC inflow status fetched yet."}
-            </pre>
-          </section>
-
-          <section className="example-card">
-            <h2>Status</h2>
-            <p>{statusMessage}</p>
-            {errorMessage ? <p className="error-text">{errorMessage}</p> : null}
-          </section>
-        </>
-      ) : (
-        <RawRequestsPage
-          defaultAccountAddress={liquidiumAccountAddress}
-          defaultWalletAddress={connectedWalletAddress}
-        />
-      )}
-    </main>
-  );
-}
-
-export function MissingEnvironmentScreen() {
-  return (
-    <main className="example-page">
       <section className="example-card">
-        <h1>Set up Dynamic first</h1>
-        <p>
-          Copy `.env.example` to `.env` and set `VITE_DYNAMIC_ENVIRONMENT_ID`.
+        <h2>1. Connect a wallet</h2>
+        <p>Use Dynamic for connection and signing. The SDK handles the protocol calls.</p>
+        <div className="button-row">
+          {isLoggedIn ? (
+            <button onClick={() => void handleLogOut()} type="button">
+              Log out
+            </button>
+          ) : (
+            <button onClick={() => setShowAuthFlow(true)} type="button">
+              Connect wallet
+            </button>
+          )}
+        </div>
+        <dl className="details-list">
+          <div>
+            <dt>Connected chain</dt>
+            <dd>{walletChain ?? "Not connected"}</dd>
+          </div>
+          <div>
+            <dt>Wallet address</dt>
+            <dd>{walletAddress || "Not connected"}</dd>
+          </div>
+          <div>
+            <dt>SDK account address</dt>
+            <dd>{liquidiumAccountAddress || "Not connected"}</dd>
+          </div>
+        </dl>
+      </section>
+
+      <section className="example-card">
+        <h2>2. Create or resolve a profile</h2>
+        <p>This calls `client.accounts.create(...)` and falls back to `resolveProfile(...)` if needed.</p>
+        <div className="button-row">
+          <button
+            disabled={isBusy || !primaryWallet || !liquidiumAccountAddress}
+            onClick={() => void handleCreateProfile()}
+            type="button"
+          >
+            Create or resolve profile
+          </button>
+        </div>
+        <dl className="details-list">
+          <div>
+            <dt>Profile ID</dt>
+            <dd>{profileId ?? "Not created yet"}</dd>
+          </div>
+        </dl>
+      </section>
+
+      <section className="example-card">
+        <h2>3. Load pools</h2>
+        <p>Fetch the pool list once, then pick the pool you want to use for the next calls.</p>
+        <div className="button-row">
+          <button disabled={isBusy} onClick={() => void handleLoadPools()} type="button">
+            Load pools
+          </button>
+          <select
+            disabled={pools.length === 0}
+            value={selectedPoolId}
+            onChange={(event) => setSelectedPoolId(event.target.value)}
+          >
+            <option value="">Choose a pool</option>
+            {pools.map((pool) => (
+              <option key={pool.id} value={pool.id}>
+                {pool.asset} on {pool.chain}
+              </option>
+            ))}
+          </select>
+        </div>
+        <p className="inline-note">
+          Suggested BTC pool: {btcPool?.id ?? "Load pools to detect it automatically."}
         </p>
+      </section>
+
+      <section className="example-card">
+        <h2>4. Borrow from a pool</h2>
+        <p>This is the shortest borrow path: enter an amount and destination address, then call `client.lending.borrow(...)`.</p>
+        <pre className="code-block">{`await client.lending.borrow({
+  profileId,
+  poolId,
+  amount: 50_000n,
+  account: outflowAddress,
+  signerAccount: walletAddress,
+  chain,
+  walletAdapter,
+});`}</pre>
+        <div className="form-grid">
+          <label>
+            Borrow amount
+            <input
+              value={borrowAmount}
+              onChange={(event) => setBorrowAmount(event.target.value.trim())}
+              placeholder="50000"
+            />
+          </label>
+          <label>
+            Outflow address
+            <input
+              value={borrowAddress}
+              onChange={(event) => setBorrowAddress(event.target.value.trim())}
+              placeholder="Address to receive the borrowed asset"
+            />
+          </label>
+        </div>
+        <div className="button-row">
+          <button
+            disabled={isBusy || !primaryWallet || !profileId || !selectedPoolId}
+            onClick={() => void handleBorrow()}
+            type="button"
+          >
+            Borrow
+          </button>
+        </div>
+        <p className="inline-note">
+          Selected pool: {selectedPool ? `${selectedPool.asset} on ${selectedPool.chain}` : "Choose a pool first."}
+        </p>
+        <pre className="code-block">
+          {borrowResult
+            ? JSON.stringify(borrowResult, bigintJsonReplacer, 2)
+            : "No borrow result yet."}
+        </pre>
+      </section>
+
+      <section className="example-card">
+        <h2>5. Start a BTC supply flow</h2>
+        <p>Use `client.lending.supply(...)` to get the BTC deposit address and flow metadata.</p>
+        <pre className="code-block">{`const supplyFlow = await client.lending.supply({
+  profileId,
+  poolId,
+  action: "deposit",
+  destination: "nativeAddress",
+});`}</pre>
+        <div className="button-row">
+          <select
+            value={supplyAction}
+            onChange={(event) =>
+              setSupplyAction(event.target.value as SupplyAction)
+            }
+          >
+            <option value="deposit">Deposit</option>
+            <option value="repayment">Repayment</option>
+          </select>
+          <button
+            disabled={isBusy || !profileId || !selectedPoolId}
+            onClick={() => void handleStartSupplyFlow()}
+            type="button"
+          >
+            Start BTC flow
+          </button>
+        </div>
+        <div className="button-row">
+          <button
+            disabled={!isNativeAddressSupplyInstruction(supplyFlow?.instruction ?? null)}
+            onClick={() => void handleCopyBtcAddress()}
+            type="button"
+          >
+            Copy BTC address
+          </button>
+          <button
+            disabled={!isNativeAddressSupplyInstruction(supplyFlow?.instruction ?? null)}
+            onClick={handleOpenBitcoinUri}
+            type="button"
+          >
+            Open bitcoin URI
+          </button>
+        </div>
+        <pre className="code-block">
+          {supplyFlow
+            ? JSON.stringify(supplyFlow, bigintJsonReplacer, 2)
+            : "No BTC supply flow yet."}
+        </pre>
+      </section>
+
+      <section className="example-card">
+        <h2>Status</h2>
+        <p>{statusMessage}</p>
+        {errorMessage ? <p className="error-text">{errorMessage}</p> : null}
       </section>
     </main>
   );
@@ -629,14 +444,4 @@ function getLiquidiumAccountAddress(
   }
 
   return primaryWallet.address;
-}
-
-function getBitcoinPaymentAddress(
-  primaryWallet: DynamicPrimaryWallet
-): string | null {
-  const paymentAddress = primaryWallet.additionalAddresses?.find(
-    (additionalAddress) => additionalAddress.type === "payment"
-  )?.address;
-
-  return paymentAddress ?? null;
 }

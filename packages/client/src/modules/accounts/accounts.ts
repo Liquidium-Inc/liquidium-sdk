@@ -6,6 +6,8 @@ import {
 import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
 import type { CanisterContext } from "../../core/transports/canister-context";
 import type { Wallet } from "../../core/types";
+import type { WalletAdapter } from "../../core/wallet-actions";
+import { executeWith } from "../../execute";
 import { mapCreateAccountRequestToRegisterProfileRequest } from "./mappers";
 import type { CreateAccountAction, CreateAccountRequest } from "./types";
 
@@ -14,18 +16,39 @@ const SIGNATURE_VALIDITY_5_MINUTES_IN_SECONDS = 5n * 60n;
 export class AccountsModule {
   constructor(readonly canisterContext: CanisterContext) {}
 
-  async create(options: { account: string }): Promise<CreateAccountAction> {
+  /**
+   * Prepares an account-creation action that can be signed and submitted later.
+   *
+   * Use this when you need direct control over the signing flow.
+   */
+  async prepareCreate(options: {
+    account: string;
+  }): Promise<CreateAccountAction> {
     return await this.createAccountAction(options.account);
   }
 
-  async getProfile(profileId: string): Promise<Wallet[]> {
-    void profileId;
-    throw new LiquidiumError(
-      LiquidiumErrorCode.INTERNAL,
-      "Not yet implemented"
-    );
+  /**
+   * Creates a Liquidium profile using the provided wallet adapter.
+   *
+   * This is the convenience form of `prepareCreate(...)` plus execution.
+   */
+  async create(params: {
+    account: string;
+    chain: "BTC" | "ETH";
+    walletAdapter: WalletAdapter;
+  }): Promise<string> {
+    const action = await this.prepareCreate({ account: params.account });
+
+    return await executeWith({
+      walletAdapter: params.walletAdapter,
+      chain: params.chain,
+      account: params.account,
+    })(action);
   }
 
+  /**
+   * Resolves the Liquidium profile linked to a wallet address.
+   */
   async resolveProfile(walletAddress: string): Promise<string | null> {
     try {
       const profile = await createLendingActor(
@@ -42,6 +65,39 @@ export class AccountsModule {
     }
   }
 
+  /**
+   * Returns the current nonce for a wallet address.
+   *
+   * This is mainly useful for custom signing flows built on prepared actions.
+   */
+  async getNonce(walletAddress: string): Promise<bigint> {
+    try {
+      return await createLendingActor(this.canisterContext).get_nonce(
+        walletAddress
+      );
+    } catch (error) {
+      if (error instanceof LiquidiumError) {
+        throw error;
+      }
+
+      throw mapCanisterCallErrorToLiquidiumError("get_nonce", error);
+    }
+  }
+
+  /**
+   * Returns the wallets currently linked to a profile.
+   */
+  async getProfile(profileId: string): Promise<Wallet[]> {
+    void profileId;
+    throw new LiquidiumError(
+      LiquidiumErrorCode.INTERNAL,
+      "Not yet implemented"
+    );
+  }
+
+  /**
+   * Links an additional wallet to an existing profile.
+   */
   async linkWallet(
     profileId: string,
     newWalletAddress: string,
@@ -56,6 +112,9 @@ export class AccountsModule {
     );
   }
 
+  /**
+   * Unlinks a wallet from an existing profile.
+   */
   async unlinkWallet(profileId: string, walletAddress: string): Promise<void> {
     void profileId;
     void walletAddress;
@@ -63,20 +122,6 @@ export class AccountsModule {
       LiquidiumErrorCode.INTERNAL,
       "Not yet implemented"
     );
-  }
-
-  async getNonce(walletAddress: string): Promise<bigint> {
-    try {
-      return await createLendingActor(this.canisterContext).get_nonce(
-        walletAddress
-      );
-    } catch (error) {
-      if (error instanceof LiquidiumError) {
-        throw error;
-      }
-
-      throw mapCanisterCallErrorToLiquidiumError("get_nonce", error);
-    }
   }
 
   private async createAccountAction(
@@ -92,6 +137,9 @@ export class AccountsModule {
 
       return {
         kind: "create-account",
+        executionKind: "sign-message",
+        actionType: "create-account",
+        transferMode: "native",
         account,
         message: createInitializeAccountMessage(expiryTimestamp, nonce),
         data: {
@@ -102,7 +150,10 @@ export class AccountsModule {
             data: {
               expiryTimestamp,
             },
-            signatureInfo,
+            signatureInfo: {
+              ...signatureInfo,
+              account: signatureInfo.account ?? account,
+            },
           });
         },
       };
@@ -117,9 +168,17 @@ export class AccountsModule {
 
   private async submitCreate(request: CreateAccountRequest): Promise<string> {
     try {
+      const signingAccount = request.signatureInfo.account;
+      if (!signingAccount) {
+        throw new LiquidiumError(
+          LiquidiumErrorCode.VALIDATION_ERROR,
+          "Account creation requires the signing account"
+        );
+      }
+
       await assertWalletHasNoProfile(
         this.canisterContext,
-        request.signatureInfo.account
+        signingAccount
       );
 
       const result = await createLendingActor(

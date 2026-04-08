@@ -7,6 +7,11 @@ type AccountChainVariant = { BTC: null } | { ETH: null };
 export function mapCreateAccountRequestToRegisterProfileRequest(
   request: CreateAccountRequest
 ): RegisterProfileRequest {
+  const signingAccount = request.signatureInfo.account;
+  if (!signingAccount) {
+    throw new Error("Account creation requires the signing account");
+  }
+
   return {
     data: {
       expiry_timestamp: request.data.expiryTimestamp,
@@ -17,7 +22,7 @@ export function mapCreateAccountRequestToRegisterProfileRequest(
         chain: mapAccountChainToLendingChainVariant(
           request.signatureInfo.chain
         ),
-        account: request.signatureInfo.account,
+        account: signingAccount,
       },
     },
   };

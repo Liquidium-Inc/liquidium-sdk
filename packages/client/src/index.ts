@@ -1,5 +1,7 @@
 export { LiquidiumClient } from "./client";
+export { executeWith } from "./execute";
 export { LiquidiumError, LiquidiumErrorCode } from "./core/errors";
+export type { ExecuteWithOptions } from "./execute";
 export type {
   Asset,
   CanisterIds,
@@ -12,6 +14,19 @@ export type {
   SupplyAction,
   Wallet,
 } from "./core/types";
+export type {
+  EthTransactionRequest,
+  SendEthTransactionWalletAction,
+  SendEthTransactionRequest,
+  SignMessageRequest,
+  SignMessageWalletAction,
+  SignPsbtRequest,
+  SignPsbtWalletAction,
+  TransferMode,
+  WalletAction,
+  WalletAdapter,
+  WalletExecutionKind,
+} from "./core/wallet-actions";
 export type {
   CreateAccountAction,
   CreateAccountData,
