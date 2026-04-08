@@ -24,6 +24,10 @@ export class HistoryModule {
 
   /**
    * Returns paginated activity for a Liquidium profile.
+   *
+   * @param profileId - The Liquidium profile principal text.
+   * @param cursor - An optional pagination cursor from a previous response.
+   * @returns A page of user history entries and the next cursor when more results are available.
    */
   async getUser(
     profileId: string,
@@ -53,6 +57,10 @@ export class HistoryModule {
 
   /**
    * Returns paginated history for a pool.
+   *
+   * @param poolId - The pool principal text.
+   * @param cursor - An optional pagination cursor from a previous response.
+   * @returns A page of pool history entries and the next cursor when more results are available.
    */
   async getPool(
     poolId: string,

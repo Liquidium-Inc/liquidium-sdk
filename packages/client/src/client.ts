@@ -62,6 +62,9 @@ export class LiquidiumClient {
 
   /**
    * Creates a client instance with the provided runtime configuration.
+   *
+   * @param config - Optional client configuration such as environment, canister ids, and API settings.
+   * @returns A configured `LiquidiumClient` instance.
    */
   static create(config: LiquidiumClientConfig = {}): LiquidiumClient {
     return new LiquidiumClient(config);

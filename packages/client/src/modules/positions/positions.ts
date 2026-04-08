@@ -11,6 +11,10 @@ export class PositionsModule {
 
   /**
    * Returns a single position for a profile and pool.
+   *
+   * @param profileId - The Liquidium profile principal text.
+   * @param poolId - The pool principal text.
+   * @returns The position for the requested profile and pool, or `null` when no position exists.
    */
   async get(profileId: string, poolId: string): Promise<Position | null> {
     void profileId;
@@ -24,6 +28,9 @@ export class PositionsModule {
 
   /**
    * Lists all positions for a profile.
+   *
+   * @param profileId - The Liquidium profile principal text.
+   * @returns All positions currently associated with the requested profile.
    */
   async list(profileId: string): Promise<Position[]> {
     void profileId;
@@ -36,6 +43,9 @@ export class PositionsModule {
 
   /**
    * Returns the current health factor for a profile.
+   *
+   * @param profileId - The Liquidium profile principal text.
+   * @returns The current health factor for the requested profile.
    */
   async getHealthFactor(profileId: string): Promise<HealthFactor> {
     void profileId;
@@ -48,6 +58,9 @@ export class PositionsModule {
 
   /**
    * Returns aggregate borrowing and collateral stats for a profile.
+   *
+   * @param profileId - The Liquidium profile principal text.
+   * @returns Aggregate debt, collateral, and borrowing power metrics for the requested profile.
    */
   async getUserStats(profileId: string): Promise<UserStats> {
     try {
