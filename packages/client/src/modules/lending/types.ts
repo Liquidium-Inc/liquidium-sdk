@@ -5,8 +5,8 @@ import type {
   SupplyAction,
 } from "../../core/types";
 import type {
-  SignMessageWalletAction,
   SignatureInfo,
+  SignMessageWalletAction,
 } from "../../core/wallet-actions";
 
 export interface OutflowReceiver {

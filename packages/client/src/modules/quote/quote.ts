@@ -1,15 +1,11 @@
-import type { Pool } from "../market/types";
-import type { AssetPrices } from "../market/types";
-import {
-  type QuoteRequest,
-  type QuoteResult,
-  type QuoteValidationError,
-  type QuoteWarning,
+import type { AssetPrices, Pool } from "../market/types";
+import type {
+  QuoteRequest,
+  QuoteResult,
+  QuoteValidationError,
+  QuoteWarning,
 } from "./types";
-import {
-  QuoteValidationErrorCode,
-  QuoteWarningCode,
-} from "./types";
+import { QuoteValidationErrorCode, QuoteWarningCode } from "./types";
 
 const BASIS_POINTS = 10000n;
 const MIN_LTV_BPS = 0n;
@@ -29,12 +25,8 @@ export class QuoteModule {
     pools: Pool[],
     prices: AssetPrices
   ): Promise<QuoteResult> {
-    const {
-      borrowAmount,
-      borrowPoolId,
-      collateralPoolId,
-      targetLtvBps,
-    } = request;
+    const { borrowAmount, borrowPoolId, collateralPoolId, targetLtvBps } =
+      request;
 
     const validationErrors: QuoteValidationError[] = [];
     const warnings: QuoteWarning[] = [];
@@ -73,8 +65,8 @@ export class QuoteModule {
       });
     }
 
-    const borrowAsset = borrowPool!.asset;
-    const collateralAsset = collateralPool!.asset;
+    const borrowAsset = borrowPool.asset;
+    const collateralAsset = collateralPool.asset;
     const borrowPrice = prices[borrowAsset];
     const collateralPrice = prices[collateralAsset];
 
@@ -99,7 +91,7 @@ export class QuoteModule {
       });
     }
 
-    const maxAllowedLtvBps = collateralPool!.maxLtv;
+    const maxAllowedLtvBps = collateralPool.maxLtv;
     if (targetLtvBps > maxAllowedLtvBps) {
       validationErrors.push({
         code: QuoteValidationErrorCode.LTV_EXCEEDS_MAX,
@@ -114,14 +106,20 @@ export class QuoteModule {
       });
     }
 
-    if (borrowPoolId === collateralPoolId && !collateralPool!.sameAssetBorrowing) {
+    if (
+      borrowPoolId === collateralPoolId &&
+      !collateralPool.sameAssetBorrowing
+    ) {
       validationErrors.push({
         code: QuoteValidationErrorCode.SAME_ASSET_NOT_ALLOWED,
         message: `Same asset borrowing not allowed for pool ${collateralPoolId}`,
       });
     }
 
-    if (borrowPoolId === collateralPoolId && collateralPool!.sameAssetBorrowing) {
+    if (
+      borrowPoolId === collateralPoolId &&
+      collateralPool.sameAssetBorrowing
+    ) {
       warnings.push({
         code: QuoteWarningCode.SAME_ASSET_BORROWING,
         message: `Using same asset for borrow and collateral`,
@@ -155,7 +153,10 @@ export class QuoteModule {
     const borrowUsd = toUsd(borrowAmount, borrowPrice);
     const targetLtvDecimal = Number(targetLtvBps) / Number(BASIS_POINTS);
     const requiredCollateralUsd = borrowUsd / targetLtvDecimal;
-    const requiredCollateralAmount = fromUsd(requiredCollateralUsd, collateralPrice);
+    const requiredCollateralAmount = fromUsd(
+      requiredCollateralUsd,
+      collateralPrice
+    );
 
     return createQuoteResult({
       borrowAmount,

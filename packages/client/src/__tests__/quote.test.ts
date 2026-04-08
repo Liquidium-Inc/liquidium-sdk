@@ -1,8 +1,10 @@
 import { describe, expect, test } from "vitest";
+import type { AssetPrices, Pool } from "../modules/market/types";
 import { QuoteModule } from "../modules/quote/quote";
-import type { Pool } from "../modules/market/types";
-import type { AssetPrices } from "../modules/market/types";
-import { QuoteValidationErrorCode, QuoteWarningCode } from "../modules/quote/types";
+import {
+  QuoteValidationErrorCode,
+  QuoteWarningCode,
+} from "../modules/quote/types";
 
 describe("QuoteModule", () => {
   const quoteModule = new QuoteModule();
@@ -96,7 +98,9 @@ describe("QuoteModule", () => {
 
     // then
     expect(result.validationErrors).toHaveLength(1);
-    expect(result.validationErrors[0]?.code).toBe(QuoteValidationErrorCode.POOL_NOT_FOUND);
+    expect(result.validationErrors[0]?.code).toBe(
+      QuoteValidationErrorCode.POOL_NOT_FOUND
+    );
   });
 
   test("returns error when LTV exceeds max allowed", async () => {
@@ -113,7 +117,9 @@ describe("QuoteModule", () => {
 
     // then
     expect(result.validationErrors).toHaveLength(1);
-    expect(result.validationErrors[0]?.code).toBe(QuoteValidationErrorCode.LTV_EXCEEDS_MAX);
+    expect(result.validationErrors[0]?.code).toBe(
+      QuoteValidationErrorCode.LTV_EXCEEDS_MAX
+    );
   });
 
   test("returns error when same asset borrowing not allowed", async () => {
@@ -150,7 +156,9 @@ describe("QuoteModule", () => {
     // then
     expect(result.validationErrors).toHaveLength(0);
     expect(result.warnings).toHaveLength(1);
-    expect(result.warnings[0]?.code).toBe(QuoteWarningCode.SAME_ASSET_BORROWING);
+    expect(result.warnings[0]?.code).toBe(
+      QuoteWarningCode.SAME_ASSET_BORROWING
+    );
   });
 
   test("returns high LTV warning when above 80%", async () => {
@@ -167,9 +175,9 @@ describe("QuoteModule", () => {
 
     // then
     expect(result.validationErrors).toHaveLength(0);
-    expect(result.warnings.some((w) => w.code === QuoteWarningCode.HIGH_LTV)).toBe(
-      true
-    );
+    expect(
+      result.warnings.some((w) => w.code === QuoteWarningCode.HIGH_LTV)
+    ).toBe(true);
   });
 
   test("returns error when borrow amount too low", async () => {

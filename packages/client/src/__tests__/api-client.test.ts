@@ -100,7 +100,9 @@ describe("ApiClient", () => {
     // given
     const customFetch = vi
       .fn<typeof fetch>()
-      .mockResolvedValue(new Response(JSON.stringify({ ok: true }), { status: 200 }));
+      .mockResolvedValue(
+        new Response(JSON.stringify({ ok: true }), { status: 200 })
+      );
     const client = createApiClient({
       baseUrl: MOCK_BASE_URL,
       fetchFn: customFetch,
