@@ -15,6 +15,7 @@ import { LendingModule } from "./modules/lending";
 import { MarketModule } from "./modules/market";
 import { PendingModule } from "./modules/pending";
 import { PositionsModule } from "./modules/positions";
+import { QuoteModule } from "./modules/quote";
 
 export class LiquidiumClient {
   readonly accounts: AccountsModule;
@@ -23,6 +24,7 @@ export class LiquidiumClient {
   readonly market: MarketModule;
   readonly pending: PendingModule;
   readonly history: HistoryModule;
+  readonly quote: QuoteModule;
 
   private readonly canisterContext: CanisterContext;
   private readonly apiClient: ApiClient | undefined;
@@ -58,6 +60,7 @@ export class LiquidiumClient {
     this.market = new MarketModule(this.canisterContext, this.apiClient);
     this.pending = new PendingModule(this.canisterContext, this.apiClient);
     this.history = new HistoryModule(this.apiClient);
+    this.quote = new QuoteModule();
   }
 
   /**
