@@ -48,7 +48,7 @@ export class QuoteModule {
       });
     }
 
-    if (validationErrors.length > 0) {
+    if (!borrowPool || !collateralPool) {
       return createQuoteResult({
         borrowAmount,
         borrowPoolId,
