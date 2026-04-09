@@ -136,7 +136,7 @@ export interface SupplyTrackingStatus {
 export interface SupplyFlow {
   instruction: SupplyInstruction;
   target: SupplyTarget;
-  submit(request: { txid: string }): Promise<SubmitInflowResponse>;
+  submit(request: SubmitInflowRequest): Promise<SubmitInflowResponse>;
   getStatus(
     request?: GetSupplyStatusRequest
   ): Promise<SupplyTrackingStatus | null>;

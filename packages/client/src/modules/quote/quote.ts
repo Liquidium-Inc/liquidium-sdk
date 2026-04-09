@@ -11,6 +11,21 @@ const BASIS_POINTS = 10000n;
 const MIN_LTV_BPS = 0n;
 const MIN_BORROW_AMOUNT = 5000n;
 
+type CreateQuoteResultParams = {
+  borrowAmount: bigint;
+  borrowPoolId: string;
+  collateralPoolId: string;
+  borrowUsd: bigint;
+  requiredCollateralAmount: bigint;
+  requiredCollateralUsd: bigint;
+  maxAllowedLtvBps: bigint;
+  targetLtvBps: bigint;
+  borrowAsset: string;
+  collateralAsset: string;
+  validationErrors: QuoteValidationError[];
+  warnings: QuoteWarning[];
+};
+
 export class QuoteModule {
   /**
    * Calculates a loan quote based on borrow amount, LTV, and pool selections.
@@ -175,20 +190,7 @@ export class QuoteModule {
   }
 }
 
-function createQuoteResult(params: {
-  borrowAmount: bigint;
-  borrowPoolId: string;
-  collateralPoolId: string;
-  borrowUsd: bigint;
-  requiredCollateralAmount: bigint;
-  requiredCollateralUsd: bigint;
-  maxAllowedLtvBps: bigint;
-  targetLtvBps: bigint;
-  borrowAsset: string;
-  collateralAsset: string;
-  validationErrors: QuoteValidationError[];
-  warnings: QuoteWarning[];
-}): QuoteResult {
+function createQuoteResult(params: CreateQuoteResultParams): QuoteResult {
   return {
     borrowAmount: params.borrowAmount,
     borrowUsd: params.borrowUsd,

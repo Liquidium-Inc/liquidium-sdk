@@ -6,13 +6,12 @@ import {
 import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
 import type { ApiClient } from "../../core/transports/api-client";
 import type { CanisterContext } from "../../core/transports/canister-context";
-import type { MarketAsset, MarketChain } from "../../core/types";
 import {
   mapGetPoolRateResponseToPoolRate,
   mapGetPricesResponseToAssetPrices,
   mapLendingPoolRecordToPool,
 } from "./mappers";
-import type { AssetPrices, Pool } from "./types";
+import type { AssetPrices, FindPoolQuery, Pool, PoolRate } from "./types";
 
 const ZERO_POOL_RATE: PoolRateTuple = [0n, 0n, 0n];
 
@@ -84,10 +83,7 @@ export class MarketModule {
    * @param query - The market asset and chain pair to match.
    * @returns The single pool that matches the requested asset and chain.
    */
-  async findPool(query: {
-    asset: MarketAsset;
-    chain: MarketChain;
-  }): Promise<Pool> {
+  async findPool(query: FindPoolQuery): Promise<Pool> {
     const pools = await this.getPools();
     const matchedPools = pools.filter(
       (pool) => pool.asset === query.asset && pool.chain === query.chain
@@ -116,11 +112,7 @@ export class MarketModule {
    * @param poolId - The pool principal text.
    * @returns The borrow, lend, and utilization rates for the requested pool.
    */
-  async getPoolRate(poolId: string): Promise<{
-    borrowRate: bigint;
-    lendRate: bigint;
-    utilizationRate: bigint;
-  }> {
+  async getPoolRate(poolId: string): Promise<PoolRate> {
     try {
       const rate = await createLendingActor(this.canisterContext).get_pool_rate(
         Principal.fromText(poolId)

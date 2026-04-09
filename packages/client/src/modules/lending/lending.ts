@@ -46,6 +46,54 @@ type LendingModuleOptions = {
   supplyStatusPollIntervalMs: number;
 };
 
+type WalletChain = "BTC" | "ETH";
+
+type WalletExecutionParams = {
+  chain: WalletChain;
+  walletAdapter: WalletAdapter;
+};
+
+type OutflowRequestData = {
+  profileId: string;
+  poolId: string;
+  amount: bigint;
+  account: string;
+  signerAccount: string;
+  expiryTimestamp: bigint;
+};
+
+type SupplyTargetRequest = {
+  poolId: string;
+  asset: string;
+  chain: string;
+  action: SupplyAction;
+};
+
+type MessageAccount = {
+  type: "Native" | "External";
+  data: string;
+};
+
+type OutflowMessageRequest = {
+  pool_id: string;
+  amount: string;
+  account: MessageAccount;
+  expiry_timestamp: bigint;
+};
+
+type LendingChainVariant = { BTC: null } | { ETH: null };
+
+type CanisterOutflowReceiver = { Native: Principal } | { External: string };
+
+type CanisterOutflowRecord = {
+  id: string;
+  txid: [] | [string];
+  outflow_type: Record<string, null>;
+  outflow_ref: [] | [string];
+  amount: bigint;
+  receiver: CanisterOutflowReceiver;
+};
+
 export class LendingModule {
   constructor(
     readonly canisterContext: CanisterContext,
@@ -120,14 +168,7 @@ export class LendingModule {
   }
 
   private async submitWithdraw(
-    request: {
-      profileId: string;
-      poolId: string;
-      amount: bigint;
-      account: string;
-      signerAccount: string;
-      expiryTimestamp: bigint;
-    },
+    request: OutflowRequestData,
     signatureInfo: WithdrawSubmitSignatureInfo
   ): Promise<OutflowDetails> {
     try {
@@ -170,10 +211,7 @@ export class LendingModule {
    * This is the convenience form of `prepareWithdraw(...)` plus execution.
    */
   async withdraw(
-    params: CreateWithdrawRequest & {
-      chain: "BTC" | "ETH";
-      walletAdapter: WalletAdapter;
-    }
+    params: CreateWithdrawRequest & WalletExecutionParams
   ): Promise<OutflowDetails> {
     const action = await this.prepareWithdraw(params);
 
@@ -249,14 +287,7 @@ export class LendingModule {
   }
 
   private async submitBorrow(
-    request: {
-      profileId: string;
-      poolId: string;
-      amount: bigint;
-      account: string;
-      signerAccount: string;
-      expiryTimestamp: bigint;
-    },
+    request: OutflowRequestData,
     signatureInfo: BorrowSubmitSignatureInfo
   ): Promise<OutflowDetails> {
     try {
@@ -298,10 +329,7 @@ export class LendingModule {
    * This is the convenience form of `prepareBorrow(...)` plus execution.
    */
   async borrow(
-    params: CreateBorrowRequest & {
-      chain: "BTC" | "ETH";
-      walletAdapter: WalletAdapter;
-    }
+    params: CreateBorrowRequest & WalletExecutionParams
   ): Promise<OutflowDetails> {
     const action = await this.prepareBorrow(params);
 
@@ -521,12 +549,7 @@ export class LendingModule {
 
   private async getNativeAddressSupplyTarget(
     profileId: string,
-    request: {
-      poolId: string;
-      asset: string;
-      chain: string;
-      action: SupplyAction;
-    }
+    request: SupplyTargetRequest
   ): Promise<NativeAddressSupplyTarget> {
     assertSupportsNativeAddressInflowTarget(request.asset, request.chain);
 
@@ -561,12 +584,7 @@ export class LendingModule {
 
   private getIcrcAccountSupplyTarget(
     profileId: string,
-    request: {
-      poolId: string;
-      asset: string;
-      chain: string;
-      action: SupplyAction;
-    }
+    request: SupplyTargetRequest
   ): IcrcAccountSupplyTarget {
     assertSupportsIcrcAccountInflowTarget(request.asset);
 
@@ -673,15 +691,7 @@ function assertSupportsIcrcAccountInflowTarget(asset: string): void {
 }
 
 function createBorrowAssetMessage(
-  request: {
-    pool_id: string;
-    amount: string;
-    account: {
-      type: "Native" | "External";
-      data: string;
-    };
-    expiry_timestamp: bigint;
-  },
+  request: OutflowMessageRequest,
   nonce: bigint
 ): string {
   return `Liquidium: Borrow Assets
@@ -695,15 +705,7 @@ Nonce: ${nonce}`;
 }
 
 function createWithdrawAssetMessage(
-  request: {
-    pool_id: string;
-    amount: string;
-    account: {
-      type: "Native" | "External";
-      data: string;
-    };
-    expiry_timestamp: bigint;
-  },
+  request: OutflowMessageRequest,
   nonce: bigint
 ): string {
   return `Liquidium: Withdraw Assets
@@ -716,10 +718,7 @@ Expires: ${request.expiry_timestamp}
 Nonce: ${nonce}`;
 }
 
-function accountTypeToString(accountType: {
-  type: "Native" | "External";
-  data: string;
-}): string {
+function accountTypeToString(accountType: MessageAccount): string {
   switch (accountType.type) {
     case "External":
       return `Address:${accountType.data}`;
@@ -728,13 +727,7 @@ function accountTypeToString(accountType: {
   }
 }
 
-function mapWalletChainToLendingChain(chain: "BTC" | "ETH"):
-  | {
-      BTC: null;
-    }
-  | {
-      ETH: null;
-    } {
+function mapWalletChainToLendingChain(chain: WalletChain): LendingChainVariant {
   switch (chain) {
     case "BTC":
       return { BTC: null };
@@ -743,14 +736,9 @@ function mapWalletChainToLendingChain(chain: "BTC" | "ETH"):
   }
 }
 
-function mapCanisterOutflowDetails(outflow: {
-  id: string;
-  txid: [] | [string];
-  outflow_type: Record<string, null>;
-  outflow_ref: [] | [string];
-  amount: bigint;
-  receiver: { Native: Principal } | { External: string };
-}): OutflowDetails {
+function mapCanisterOutflowDetails(
+  outflow: CanisterOutflowRecord
+): OutflowDetails {
   const rawOutflowType = getVariantKey(outflow.outflow_type);
 
   return {
@@ -779,13 +767,7 @@ function normalizeOutflowType(
 }
 
 function mapCanisterAccountType(
-  receiver:
-    | {
-        Native: Principal;
-      }
-    | {
-        External: string;
-      }
+  receiver: CanisterOutflowReceiver
 ): OutflowDetails["receiver"] {
   if ("Native" in receiver) {
     return {
