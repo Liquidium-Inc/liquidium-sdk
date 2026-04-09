@@ -1,28 +1,11 @@
 import { Actor } from "@dfinity/agent";
-import type { IDL } from "@dfinity/candid";
+import type { _SERVICE } from "../../../generated/canisters/ck-btc-minter/declaration";
+import { idlFactory } from "../../../generated/canisters/ck-btc-minter/declaration.js";
 import { CK_CANISTER_IDS } from "../../config";
 import { LiquidiumError, LiquidiumErrorCode } from "../../errors";
 import type { CanisterContext } from "../../transports/canister-context";
 
-export interface CkBtcMinterActor {
-  get_btc_address(request: {
-    owner: [] | [unknown];
-    subaccount: [] | [Uint8Array];
-  }): Promise<string>;
-  get_deposit_fee(): Promise<bigint>;
-}
-
-const ckBtcMinterIdlFactory: IDL.InterfaceFactory = ({ IDL }) => {
-  const account = IDL.Record({
-    owner: IDL.Opt(IDL.Principal),
-    subaccount: IDL.Opt(IDL.Vec(IDL.Nat8)),
-  });
-
-  return IDL.Service({
-    get_btc_address: IDL.Func([account], [IDL.Text], []),
-    get_deposit_fee: IDL.Func([], [IDL.Nat64], []),
-  });
-};
+export type CkBtcMinterActor = _SERVICE;
 
 export function createCkBtcMinterActor(
   canisterContext: CanisterContext
@@ -36,7 +19,7 @@ export function createCkBtcMinterActor(
     );
   }
 
-  return Actor.createActor<CkBtcMinterActor>(ckBtcMinterIdlFactory, {
+  return Actor.createActor<CkBtcMinterActor>(idlFactory, {
     agent: canisterContext.agent,
     canisterId,
   });
