@@ -9,13 +9,13 @@ import {
 } from "../../core/canisters/lending/error-mappers";
 import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
 import type { CanisterContext } from "../../core/transports/canister-context";
+import { computeExpiryTimestampFromNow } from "../../core/utils/time";
+import { getVariantKey } from "../../core/utils/variant";
 import type { Wallet } from "../../core/types";
 import type { WalletAdapter } from "../../core/wallet-actions";
 import { executeWith } from "../../execute";
 import { mapCreateAccountRequestToRegisterProfileRequest } from "./mappers";
 import type { CreateAccountAction, CreateAccountRequest } from "./types";
-
-const SIGNATURE_VALIDITY_5_MINUTES_IN_SECONDS = 5n * 60n;
 
 export class AccountsModule {
   constructor(readonly canisterContext: CanisterContext) {}
@@ -148,7 +148,7 @@ export class AccountsModule {
       const nonce = await createLendingActor(this.canisterContext).get_nonce(
         account
       );
-      const expiryTimestamp = computeExpiryTimestamp();
+      const expiryTimestamp = computeExpiryTimestampFromNow();
 
       return {
         kind: "create-account",
@@ -214,13 +214,6 @@ export class AccountsModule {
   }
 }
 
-function computeExpiryTimestamp(): bigint {
-  return (
-    BigInt(Math.floor(Date.now() / 1000)) +
-    SIGNATURE_VALIDITY_5_MINUTES_IN_SECONDS
-  );
-}
-
 function createInitializeAccountMessage(
   expiryTimestamp: bigint,
   nonce: bigint
@@ -266,17 +259,4 @@ function mapCanisterWalletToWallet(canisterWallet: WalletRecord): Wallet {
         `Unsupported wallet chain returned for profile wallet: ${walletChain}`
       );
   }
-}
-
-function getVariantKey(variant: Record<string, null>): string {
-  const [variantKey] = Object.keys(variant);
-
-  if (!variantKey) {
-    throw new LiquidiumError(
-      LiquidiumErrorCode.INTERNAL,
-      "Unexpected empty canister variant"
-    );
-  }
-
-  return variantKey;
 }
