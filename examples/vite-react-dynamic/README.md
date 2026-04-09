@@ -7,8 +7,9 @@ with Dynamic:
 
 - Connect an Ethereum or Bitcoin wallet with Dynamic
 - Create or resolve a Liquidium profile
-- Load pools
-- Borrow from a pool with `client.lending.borrow(...)`
+- Load pools and prices
+- Generate a quote with `client.quote.quote(...)`
+- Borrow from the quoted pool with `client.lending.borrow(...)`
 - Start a BTC supply flow with `client.lending.supply(...)`
 
 The goal is to make the first SDK integration obvious without extra playgrounds,
@@ -36,7 +37,7 @@ pnpm --filter @liquidium/example-vite-react-dynamic dev
 
 ## What To Look At
 
-- `src/App.tsx` is the full example UI
+- `src/App.tsx` is the full quote-first example UI
 - `src/liquidium-client-sdk.ts` is the thin helper layer around the SDK
 - `src/wallet-signing.ts` adapts Dynamic wallets to the SDK signing flow
 
@@ -44,5 +45,7 @@ pnpm --filter @liquidium/example-vite-react-dynamic dev
 
 - The example uses direct SDK convenience methods instead of a prepare/execute
   walkthrough
+- The borrow flow is intentionally quote-first so it mirrors the sats terminal
+  interaction model
 - BTC supply currently uses `destination: "nativeAddress"`
 - For Bitcoin wallets, the example prefers the payment address when available

@@ -3,12 +3,15 @@ import {
   LiquidiumError,
   LiquidiumErrorCode,
   type OutflowDetails,
+  type QuoteResult,
   type Pool,
+  type QuoteRequest,
   type SupplyAction,
   type SupplyDestination,
   type SupplyFlow,
   type SupplyInstruction,
   type WalletAdapter,
+  type AssetPrices,
 } from "@liquidium/client";
 import { resolveLiquidiumClientConfig } from "./liquidium-runtime-config";
 
@@ -34,6 +37,10 @@ type CreateOrResolveProfileResult = {
 type PoolsResult = {
   pools: Pool[];
   selectedPoolId: string;
+};
+
+type QuoteContextResult = PoolsResult & {
+  prices: AssetPrices;
 };
 
 type PrepareBtcSupplyParams = {
@@ -119,6 +126,31 @@ export async function loadPoolsAndDefaultSelection(): Promise<PoolsResult> {
     pools,
     selectedPoolId,
   };
+}
+
+export async function loadQuoteContext(): Promise<QuoteContextResult> {
+  const client = createLiquidiumClient();
+  const [pools, prices] = await Promise.all([
+    client.market.getPools(),
+    client.market.getAssetPrices(),
+  ]);
+  const selectedPoolId = await resolveDefaultPoolId(client, pools);
+
+  return {
+    pools,
+    prices,
+    selectedPoolId,
+  };
+}
+
+export async function getLoanQuote(params: {
+  request: QuoteRequest;
+  pools: Pool[];
+  prices: AssetPrices;
+}): Promise<QuoteResult> {
+  const client = createLiquidiumClient();
+
+  return await client.quote.quote(params.request, params.pools, params.prices);
 }
 
 export async function prepareBtcSupplyFlow(

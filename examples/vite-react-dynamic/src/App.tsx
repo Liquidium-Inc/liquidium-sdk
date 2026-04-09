@@ -1,15 +1,17 @@
+import type { AssetPrices, QuoteResult } from "@liquidium/client";
 import { isBitcoinWallet } from "@dynamic-labs/bitcoin";
 import { isEthereumWallet } from "@dynamic-labs/ethereum";
 import { useDynamicContext, useIsLoggedIn } from "@dynamic-labs/sdk-react-core";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   bigintJsonReplacer,
   createBorrowOutflow,
   createOrResolveProfileIdSimple,
   findBtcPool,
   formatLiquidiumError,
+  getLoanQuote,
   isNativeAddressSupplyInstruction,
-  loadPoolsAndDefaultSelection,
+  loadQuoteContext,
   type OutflowDetails,
   type Pool,
   prepareBtcSupplyFlow,
@@ -26,8 +28,17 @@ type DynamicPrimaryWallet = NonNullable<
   ReturnType<typeof useDynamicContext>["primaryWallet"]
 >;
 
-const DEFAULT_BORROW_AMOUNT = "50000";
+const ASSET_DECIMALS: Record<string, number> = {
+  BTC: 8,
+  USDC: 6,
+  USDT: 6,
+};
+const DEFAULT_BORROW_AMOUNT = "2000";
+const DEFAULT_TARGET_LTV_BPS = 3200;
 const DEFAULT_SUPPLY_ACTION: SupplyAction = "deposit";
+const INTERNAL_USD_DECIMALS = 8;
+const MIN_LTV_BPS = 1000;
+const MAX_DECIMAL_PLACES = 8;
 
 export default function App() {
   const isLoggedIn = useIsLoggedIn();
@@ -40,9 +51,17 @@ export default function App() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [profileId, setProfileId] = useState<string | null>(null);
   const [pools, setPools] = useState<Pool[]>([]);
-  const [selectedPoolId, setSelectedPoolId] = useState("");
-  const [borrowAmount, setBorrowAmount] = useState(DEFAULT_BORROW_AMOUNT);
+  const [prices, setPrices] = useState<AssetPrices>({});
+  const [borrowPoolId, setBorrowPoolId] = useState("");
+  const [collateralPoolId, setCollateralPoolId] = useState("");
+  const [borrowAmountInput, setBorrowAmountInput] = useState(
+    DEFAULT_BORROW_AMOUNT
+  );
+  const [targetLtvBps, setTargetLtvBps] = useState(DEFAULT_TARGET_LTV_BPS);
   const [borrowAddress, setBorrowAddress] = useState("");
+  const [quoteResult, setQuoteResult] = useState<QuoteResult | null>(null);
+  const [quoteErrorMessage, setQuoteErrorMessage] = useState<string | null>(null);
+  const [isQuoteLoading, setIsQuoteLoading] = useState(false);
   const [borrowResult, setBorrowResult] = useState<OutflowDetails | null>(null);
   const [supplyAction, setSupplyAction] = useState<SupplyAction>(
     DEFAULT_SUPPLY_ACTION
@@ -53,12 +72,160 @@ export default function App() {
   const liquidiumAccountAddress =
     getLiquidiumAccountAddress(primaryWallet) ?? "";
   const walletChain = getWalletChainLabel(primaryWallet);
-  const selectedPool = useMemo(() => {
-    return pools.find((pool) => pool.id === selectedPoolId) ?? null;
-  }, [pools, selectedPoolId]);
+
+  const selectedBorrowPool = useMemo(() => {
+    return pools.find((pool) => pool.id === borrowPoolId) ?? null;
+  }, [borrowPoolId, pools]);
+  const selectedCollateralPool = useMemo(() => {
+    return pools.find((pool) => pool.id === collateralPoolId) ?? null;
+  }, [collateralPoolId, pools]);
   const btcPool = useMemo(() => {
     return findBtcPool(pools) ?? null;
   }, [pools]);
+  const maxAllowedLtvBps = Number(selectedCollateralPool?.maxLtv ?? 0n);
+  const borrowAmountInBaseUnits = selectedBorrowPool
+    ? parseDecimalToBaseUnits(
+        borrowAmountInput,
+        getAssetDecimals(selectedBorrowPool.asset)
+      )
+    : null;
+  const borrowAmountDisplay = getBorrowAmountDisplay(
+    borrowAmountInput,
+    selectedBorrowPool?.asset
+  );
+  const quoteWarnings = quoteResult?.warnings ?? [];
+  const quoteValidationErrors = quoteResult?.validationErrors ?? [];
+  const hasQuoteBlockingErrors =
+    quoteValidationErrors.length > 0 || quoteErrorMessage !== null;
+  const quoteHealthLabel = hasQuoteBlockingErrors
+    ? "Needs attention"
+    : isQuoteLoading
+      ? "Refreshing"
+      : quoteResult
+        ? "Ready"
+        : "Waiting";
+  const workflowStageLabel = profileId
+    ? pools.length > 0
+      ? "Execution ready"
+      : "Load market data"
+    : "Set up account";
+  const canSubmitBorrow =
+    !isBusy &&
+    !isQuoteLoading &&
+    !hasQuoteBlockingErrors &&
+    primaryWallet !== null &&
+    profileId !== null &&
+    selectedBorrowPool !== null &&
+    selectedCollateralPool !== null &&
+    borrowAmountInBaseUnits !== null &&
+    borrowAmountInBaseUnits > 0n &&
+    borrowAddress.trim().length > 0;
+
+  useEffect(() => {
+    if (pools.length === 0) {
+      return;
+    }
+
+    if (!borrowPoolId) {
+      return;
+    }
+
+    const nextCollateralPool =
+      pools.find((pool) => pool.id !== borrowPoolId) ?? pools[0] ?? null;
+
+    if (!nextCollateralPool) {
+      return;
+    }
+
+    setCollateralPoolId((currentCollateralPoolId) => {
+      if (
+        currentCollateralPoolId !== borrowPoolId &&
+        currentCollateralPoolId &&
+        pools.some((pool) => pool.id === currentCollateralPoolId)
+      ) {
+        return currentCollateralPoolId;
+      }
+
+      return nextCollateralPool.id;
+    });
+  }, [borrowPoolId, pools]);
+
+  useEffect(() => {
+    if (maxAllowedLtvBps === 0) {
+      return;
+    }
+
+    setTargetLtvBps((currentTargetLtvBps) => {
+      if (currentTargetLtvBps > maxAllowedLtvBps) {
+        return maxAllowedLtvBps;
+      }
+
+      if (currentTargetLtvBps < MIN_LTV_BPS) {
+        return MIN_LTV_BPS;
+      }
+
+      return currentTargetLtvBps;
+    });
+  }, [maxAllowedLtvBps]);
+
+  useEffect(() => {
+    let isCancelled = false;
+
+    async function loadQuote() {
+      if (
+        pools.length === 0 ||
+        !selectedBorrowPool ||
+        !selectedCollateralPool ||
+        borrowAmountInBaseUnits === null
+      ) {
+        setQuoteResult(null);
+        setQuoteErrorMessage(null);
+        return;
+      }
+
+      setIsQuoteLoading(true);
+      setQuoteErrorMessage(null);
+
+      try {
+        const nextQuoteResult = await getLoanQuote({
+          request: {
+            borrowAmount: borrowAmountInBaseUnits,
+            borrowPoolId: selectedBorrowPool.id,
+            collateralPoolId: selectedCollateralPool.id,
+            targetLtvBps: BigInt(targetLtvBps),
+          },
+          pools,
+          prices,
+        });
+
+        if (!isCancelled) {
+          setQuoteResult(nextQuoteResult);
+        }
+      } catch (error) {
+        if (!isCancelled) {
+          setQuoteResult(null);
+          setQuoteErrorMessage(formatLiquidiumError(error));
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsQuoteLoading(false);
+        }
+      }
+    }
+
+    void loadQuote();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [
+    borrowAmountInBaseUnits,
+    pools,
+    prices,
+    selectedBorrowPool,
+    selectedCollateralPool,
+    targetLtvBps,
+  ]);
 
   async function runAction(action: () => Promise<void>) {
     setIsBusy(true);
@@ -96,15 +263,27 @@ export default function App() {
     });
   }
 
-  async function handleLoadPools() {
+  async function handleLoadQuoteContext() {
     await runAction(async () => {
-      setStatusMessage("Loading pools...");
+      setStatusMessage("Loading pools and prices...");
 
-      const nextPoolsResult = await loadPoolsAndDefaultSelection();
+      const nextQuoteContext = await loadQuoteContext();
+      const nextBorrowPoolId = resolveDefaultBorrowPoolId(
+        nextQuoteContext.pools,
+        nextQuoteContext.selectedPoolId
+      );
+      const nextCollateralPoolId = resolveDefaultCollateralPoolId(
+        nextQuoteContext.pools,
+        nextBorrowPoolId
+      );
 
-      setPools(nextPoolsResult.pools);
-      setSelectedPoolId(nextPoolsResult.selectedPoolId);
-      setStatusMessage(`Loaded ${nextPoolsResult.pools.length} pools.`);
+      setPools(nextQuoteContext.pools);
+      setPrices(nextQuoteContext.prices);
+      setBorrowPoolId(nextBorrowPoolId);
+      setCollateralPoolId(nextCollateralPoolId);
+      setStatusMessage(
+        `Loaded ${nextQuoteContext.pools.length} pools and live prices.`
+      );
     });
   }
 
@@ -118,22 +297,26 @@ export default function App() {
         throw new Error("Create or resolve a Liquidium profile first.");
       }
 
-      if (!selectedPoolId) {
-        throw new Error("Load pools and choose a pool first.");
+      if (!selectedBorrowPool) {
+        throw new Error("Load pools and choose a borrow asset first.");
       }
 
       if (!borrowAddress.trim()) {
         throw new Error("Enter an outflow address first.");
       }
 
-      if (!/^\d+$/.test(borrowAmount)) {
-        throw new Error("Borrow amount must be a non-negative integer string.");
+      if (!borrowAmountInBaseUnits || borrowAmountInBaseUnits <= 0n) {
+        throw new Error("Enter a valid borrow amount first.");
+      }
+
+      if (quoteValidationErrors.length > 0) {
+        throw new Error(quoteValidationErrors[0]?.message ?? "Quote is invalid.");
       }
 
       const nextBorrowResult = await createBorrowOutflow({
         profileId,
-        poolId: selectedPoolId,
-        amount: BigInt(borrowAmount),
+        poolId: selectedBorrowPool.id,
+        amount: borrowAmountInBaseUnits,
         account: borrowAddress.trim(),
         signerAccount: liquidiumAccountAddress,
         chain: getWalletSignatureChain(primaryWallet),
@@ -153,15 +336,15 @@ export default function App() {
         throw new Error("Create or resolve a Liquidium profile first.");
       }
 
-      if (!selectedPoolId) {
-        throw new Error("Load pools and choose a pool first.");
+      if (!btcPool) {
+        throw new Error("Load pools first so the BTC pool can be resolved.");
       }
 
       setStatusMessage(`Starting BTC ${supplyAction} flow...`);
 
       const nextSupplyFlow = await prepareBtcSupplyFlow({
         profileId,
-        poolId: selectedPoolId,
+        poolId: btcPool.id,
         action: supplyAction,
       });
 
@@ -197,62 +380,46 @@ export default function App() {
   }
 
   return (
-    <main className="example-page">
-      <header className="example-header">
-        <p className="eyebrow">Liquidium SDK example</p>
-        <h1>Use `@liquidium/client` in a few steps</h1>
-        <p className="subtitle">
-          This example keeps the flow intentionally small: connect a wallet,
-          create a profile, load pools, borrow, and start a BTC supply flow.
-        </p>
-      </header>
+    <main className="app">
+      <h1>Liquidium SDK example</h1>
+      <p>Simple example for connect, profile, quote, borrow, and BTC supply.</p>
 
-      <section className="example-card example-card-accent">
-        <h2>The SDK calls you care about</h2>
-        <pre className="code-block">{`const profileId = await client.accounts.create({
-  account: walletAddress,
-  chain,
-  walletAdapter,
-});
-
-const pools = await client.market.getPools();
-
-const borrow = await client.lending.borrow({
-  profileId,
-  poolId,
-  amount: 50_000n,
-  account: outflowAddress,
-  signerAccount: walletAddress,
-  chain,
-  walletAdapter,
-});
-
-const supplyFlow = await client.lending.supply({
-  profileId,
-  poolId,
-  action: "deposit",
-  destination: "nativeAddress",
-});`}</pre>
-      </section>
-
-      <section className="example-card">
-        <h2>1. Connect a wallet</h2>
-        <p>
-          Use Dynamic for connection and signing. The SDK handles the protocol
-          calls.
-        </p>
-        <div className="button-row">
+      <section className="section">
+        <h2>Wallet</h2>
+        <div className="actions">
           {isLoggedIn ? (
             <button onClick={() => void handleLogOut()} type="button">
-              Log out
+              disconnect wallet
             </button>
           ) : (
             <button onClick={() => setShowAuthFlow(true)} type="button">
-              Connect wallet
+              connect wallet
             </button>
           )}
+          <button
+            disabled={isBusy}
+            onClick={() => void handleLoadQuoteContext()}
+            type="button"
+          >
+            load markets
+          </button>
+          <button
+            disabled={isBusy || !primaryWallet || !liquidiumAccountAddress}
+            onClick={() => void handleCreateProfile()}
+            type="button"
+          >
+            create profile
+          </button>
         </div>
-        <dl className="details-list">
+        <dl className="details">
+          <div>
+            <dt>Workflow stage</dt>
+            <dd>{workflowStageLabel}</dd>
+          </div>
+          <div>
+            <dt>Quote status</dt>
+            <dd>{quoteHealthLabel}</dd>
+          </div>
           <div>
             <dt>Connected chain</dt>
             <dd>{walletChain ?? "Not connected"}</dd>
@@ -265,89 +432,66 @@ const supplyFlow = await client.lending.supply({
             <dt>SDK account address</dt>
             <dd>{liquidiumAccountAddress || "Not connected"}</dd>
           </div>
-        </dl>
-      </section>
-
-      <section className="example-card">
-        <h2>2. Create or resolve a profile</h2>
-        <p>
-          This calls `client.accounts.create(...)` and falls back to
-          `resolveProfile(...)` if needed.
-        </p>
-        <div className="button-row">
-          <button
-            disabled={isBusy || !primaryWallet || !liquidiumAccountAddress}
-            onClick={() => void handleCreateProfile()}
-            type="button"
-          >
-            Create or resolve profile
-          </button>
-        </div>
-        <dl className="details-list">
           <div>
             <dt>Profile ID</dt>
             <dd>{profileId ?? "Not created yet"}</dd>
           </div>
+          <div>
+            <dt>Pools loaded</dt>
+            <dd>{pools.length}</dd>
+          </div>
+          <div>
+            <dt>BTC pool ID</dt>
+            <dd>{btcPool?.id ?? "Load pools to detect the BTC pool."}</dd>
+          </div>
         </dl>
       </section>
 
-      <section className="example-card">
-        <h2>3. Load pools</h2>
-        <p>
-          Fetch the pool list once, then pick the pool you want to use for the
-          next calls.
-        </p>
-        <div className="button-row">
-          <button
-            disabled={isBusy}
-            onClick={() => void handleLoadPools()}
-            type="button"
-          >
-            Load pools
-          </button>
-          <select
-            disabled={pools.length === 0}
-            value={selectedPoolId}
-            onChange={(event) => setSelectedPoolId(event.target.value)}
-          >
-            <option value="">Choose a pool</option>
-            {pools.map((pool) => (
-              <option key={pool.id} value={pool.id}>
-                {pool.asset} on {pool.chain}
-              </option>
-            ))}
-          </select>
-        </div>
-        <p className="inline-note">
-          Suggested BTC pool:{" "}
-          {btcPool?.id ?? "Load pools to detect it automatically."}
-        </p>
-      </section>
+      <section className="section">
+        <h2>Borrow quote</h2>
+        <div className="field-grid">
+          <label>
+            Borrow asset
+            <select
+              disabled={pools.length === 0}
+              value={borrowPoolId}
+              onChange={(event) => setBorrowPoolId(event.target.value)}
+            >
+              <option value="">Choose a pool</option>
+              {pools.map((pool) => (
+                <option key={pool.id} value={pool.id}>
+                  {pool.asset} on {pool.chain}
+                </option>
+              ))}
+            </select>
+          </label>
 
-      <section className="example-card">
-        <h2>4. Borrow from a pool</h2>
-        <p>
-          This is the shortest borrow path: enter an amount and destination
-          address, then call `client.lending.borrow(...)`.
-        </p>
-        <pre className="code-block">{`await client.lending.borrow({
-  profileId,
-  poolId,
-  amount: 50_000n,
-  account: outflowAddress,
-  signerAccount: walletAddress,
-  chain,
-  walletAdapter,
-});`}</pre>
-        <div className="form-grid">
+          <label>
+            Collateral asset
+            <select
+              disabled={pools.length === 0}
+              value={collateralPoolId}
+              onChange={(event) => setCollateralPoolId(event.target.value)}
+            >
+              <option value="">Choose a pool</option>
+              {pools.map((pool) => (
+                <option key={pool.id} value={pool.id}>
+                  {pool.asset} on {pool.chain}
+                </option>
+              ))}
+            </select>
+          </label>
+
           <label>
             Borrow amount
             <input
-              value={borrowAmount}
-              onChange={(event) => setBorrowAmount(event.target.value.trim())}
-              placeholder="50000"
+              inputMode="decimal"
+              value={borrowAmountInput}
+              onChange={(event) => setBorrowAmountInput(event.target.value)}
+              placeholder="2000"
             />
           </label>
+
           <label>
             Outflow address
             <input
@@ -356,90 +500,130 @@ const supplyFlow = await client.lending.supply({
               placeholder="Address to receive the borrowed asset"
             />
           </label>
+
+          <label>
+            Target LTV: {formatBpsAsPercent(targetLtvBps)}
+            <input
+              type="range"
+              min={MIN_LTV_BPS}
+              max={Math.max(MIN_LTV_BPS, maxAllowedLtvBps || MIN_LTV_BPS)}
+              value={Math.min(
+                targetLtvBps,
+                Math.max(MIN_LTV_BPS, maxAllowedLtvBps || MIN_LTV_BPS)
+              )}
+              onChange={(event) => setTargetLtvBps(Number(event.target.value))}
+              disabled={maxAllowedLtvBps === 0}
+            />
+          </label>
         </div>
-        <div className="button-row">
+
+        <dl className="details">
+          <div>
+            <dt>Borrow preview</dt>
+            <dd>{borrowAmountDisplay}</dd>
+          </div>
+          <div>
+            <dt>Max LTV</dt>
+            <dd>{formatBpsAsPercent(maxAllowedLtvBps)}</dd>
+          </div>
+          <div>
+            <dt>Required collateral</dt>
+            <dd>
+              {selectedCollateralPool
+                ? formatPoolAmount(
+                    quoteResult?.requiredCollateralAmount ?? 0n,
+                    selectedCollateralPool.asset
+                  )
+                : "Select collateral"}
+            </dd>
+          </div>
+          <div>
+            <dt>Required collateral value</dt>
+            <dd>{formatInternalUsd(quoteResult?.requiredCollateralUsd ?? 0n)}</dd>
+          </div>
+          <div>
+            <dt>Estimated borrow value</dt>
+            <dd>{formatInternalUsd(quoteResult?.borrowUsd ?? 0n)}</dd>
+          </div>
+        </dl>
+
+        <div className="messages">
+          {isQuoteLoading ? <p>Refreshing quote...</p> : null}
+          {quoteErrorMessage ? <p className="error">{quoteErrorMessage}</p> : null}
+          {quoteValidationErrors.map((validationError) => (
+            <p className="error" key={validationError.code}>
+              {validationError.message}
+            </p>
+          ))}
+          {quoteWarnings.map((warning) => (
+            <p className="warning" key={warning.code}>
+              {warning.message}
+            </p>
+          ))}
+        </div>
+
+        <div className="actions">
           <button
-            disabled={isBusy || !primaryWallet || !profileId || !selectedPoolId}
+            disabled={!canSubmitBorrow}
             onClick={() => void handleBorrow()}
             type="button"
           >
-            Borrow
+            submit borrow
           </button>
         </div>
-        <p className="inline-note">
-          Selected pool:{" "}
-          {selectedPool
-            ? `${selectedPool.asset} on ${selectedPool.chain}`
-            : "Choose a pool first."}
-        </p>
-        <pre className="code-block">
+
+        <h3>Borrow result</h3>
+        <pre className="output">
           {borrowResult
             ? JSON.stringify(borrowResult, bigintJsonReplacer, 2)
-            : "No borrow result yet."}
+            : "Borrow result will appear here after submission."}
         </pre>
       </section>
 
-      <section className="example-card">
-        <h2>5. Start a BTC supply flow</h2>
-        <p>
-          Use `client.lending.supply(...)` to get the BTC deposit address and
-          flow metadata.
-        </p>
-        <pre className="code-block">{`const supplyFlow = await client.lending.supply({
-  profileId,
-  poolId,
-  action: "deposit",
-  destination: "nativeAddress",
-});`}</pre>
-        <div className="button-row">
+      <section className="section">
+        <h2>BTC supply flow</h2>
+        <div className="actions">
           <select
             value={supplyAction}
-            onChange={(event) =>
-              setSupplyAction(event.target.value as SupplyAction)
-            }
+            onChange={(event) => setSupplyAction(event.target.value as SupplyAction)}
           >
             <option value="deposit">Deposit</option>
             <option value="repayment">Repayment</option>
           </select>
           <button
-            disabled={isBusy || !profileId || !selectedPoolId}
+            disabled={isBusy || !profileId || !btcPool}
             onClick={() => void handleStartSupplyFlow()}
             type="button"
           >
-            Start BTC flow
+            start btc flow
           </button>
-        </div>
-        <div className="button-row">
           <button
-            disabled={
-              !isNativeAddressSupplyInstruction(supplyFlow?.instruction ?? null)
-            }
+            disabled={!isNativeAddressSupplyInstruction(supplyFlow?.instruction ?? null)}
             onClick={() => void handleCopyBtcAddress()}
             type="button"
           >
-            Copy BTC address
+            copy btc address
           </button>
           <button
-            disabled={
-              !isNativeAddressSupplyInstruction(supplyFlow?.instruction ?? null)
-            }
+            disabled={!isNativeAddressSupplyInstruction(supplyFlow?.instruction ?? null)}
             onClick={handleOpenBitcoinUri}
             type="button"
           >
-            Open bitcoin URI
+            open bitcoin uri
           </button>
         </div>
-        <pre className="code-block">
+
+        <pre className="output">
           {supplyFlow
             ? JSON.stringify(supplyFlow, bigintJsonReplacer, 2)
             : "No BTC supply flow yet."}
         </pre>
       </section>
 
-      <section className="example-card">
+      <section className="section">
         <h2>Status</h2>
         <p>{statusMessage}</p>
-        {errorMessage ? <p className="error-text">{errorMessage}</p> : null}
+        {errorMessage ? <p className="error">{errorMessage}</p> : null}
       </section>
     </main>
   );
@@ -475,4 +659,134 @@ function getLiquidiumAccountAddress(
   }
 
   return primaryWallet.address;
+}
+
+function resolveDefaultCollateralPoolId(
+  pools: Pool[],
+  borrowPoolId: string
+): string {
+  const btcPool = findBtcPool(pools);
+
+  if (btcPool && btcPool.id !== borrowPoolId) {
+    return btcPool.id;
+  }
+
+  return pools.find((pool) => pool.id !== borrowPoolId)?.id ?? borrowPoolId;
+}
+
+function resolveDefaultBorrowPoolId(
+  pools: Pool[],
+  fallbackPoolId: string
+): string {
+  const stablePool = pools.find((pool) => isStablecoinAsset(pool.asset));
+
+  return stablePool?.id ?? fallbackPoolId;
+}
+
+function parseDecimalToBaseUnits(
+  value: string,
+  decimals: number
+): bigint | null {
+  const normalizedValue = value.trim();
+
+  if (!normalizedValue) {
+    return null;
+  }
+
+  if (!/^\d+(\.\d+)?$/.test(normalizedValue)) {
+    return null;
+  }
+
+  const [wholePart, fractionalPart = ""] = normalizedValue.split(".");
+  const paddedFractionalPart = fractionalPart
+    .slice(0, decimals)
+    .padEnd(decimals, "0");
+
+  return BigInt(`${wholePart}${paddedFractionalPart}`);
+}
+
+function getAssetDecimals(asset: string): number {
+  return ASSET_DECIMALS[asset] ?? MAX_DECIMAL_PLACES;
+}
+
+function isStablecoinAsset(asset: string): boolean {
+  return asset === "USDC" || asset === "USDT";
+}
+
+function getBorrowAmountDisplay(
+  value: string,
+  asset: string | undefined
+): string {
+  if (!asset) {
+    return "--";
+  }
+
+  const normalizedValue = value.trim();
+  const isStableAsset = isStablecoinAsset(asset);
+
+  if (!normalizedValue) {
+    return isStableAsset ? "$0" : `0 ${asset}`;
+  }
+
+  if (isStableAsset) {
+    return formatUsdFromDecimalString(normalizedValue);
+  }
+
+  return `${normalizedValue} ${asset}`;
+}
+
+function formatUsdFromDecimalString(value: string): string {
+  const amount = Number(value || "0");
+
+  if (Number.isNaN(amount)) {
+    return "$0";
+  }
+
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 2,
+  }).format(amount);
+}
+
+function formatInternalUsd(value: bigint): string {
+  return formatUsdFromDecimalString(
+    formatBaseUnitsAsDecimal(value, INTERNAL_USD_DECIMALS, 2)
+  );
+}
+
+function formatPoolAmount(value: bigint, asset: string): string {
+  const decimals = getAssetDecimals(asset);
+  const maxFractionDigits = asset === "BTC" ? 8 : 4;
+
+  return `${formatBaseUnitsAsDecimal(value, decimals, maxFractionDigits)} ${asset}`;
+}
+
+function formatBaseUnitsAsDecimal(
+  value: bigint,
+  decimals: number,
+  maxFractionDigits: number
+): string {
+  const isNegative = value < 0n;
+  const normalizedValue = isNegative ? value * -1n : value;
+  const stringValue = normalizedValue.toString().padStart(decimals + 1, "0");
+  const wholePart = stringValue.slice(0, -decimals) || "0";
+  const fractionalPart = stringValue.slice(-decimals);
+  const trimmedFractionalPart = fractionalPart
+    .slice(0, maxFractionDigits)
+    .replace(/0+$/, "");
+  const formattedWholePart = new Intl.NumberFormat("en-US").format(
+    Number(wholePart)
+  );
+  const signPrefix = isNegative ? "-" : "";
+
+  if (!trimmedFractionalPart) {
+    return `${signPrefix}${formattedWholePart}`;
+  }
+
+  return `${signPrefix}${formattedWholePart}.${trimmedFractionalPart}`;
+}
+
+function formatBpsAsPercent(value: number): string {
+  return `${(value / 100).toFixed(0)}%`;
 }
