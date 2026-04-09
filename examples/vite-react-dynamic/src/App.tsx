@@ -12,11 +12,13 @@ import {
   getLoanQuote,
   isNativeAddressSupplyInstruction,
   loadQuoteContext,
+  loadUserPositionSummary,
   type OutflowDetails,
   type Pool,
   prepareBtcSupplyFlow,
   type SupplyAction,
   type SupplyFlow,
+  type UserStats,
 } from "./liquidium-client-sdk";
 import {
   getBitcoinPaymentAddress,
@@ -67,6 +69,10 @@ export default function App() {
     DEFAULT_SUPPLY_ACTION
   );
   const [supplyFlow, setSupplyFlow] = useState<SupplyFlow | null>(null);
+  const [userPositionSummary, setUserPositionSummary] =
+    useState<UserStats | null>(null);
+  const [isPositionSummaryLoading, setIsPositionSummaryLoading] =
+    useState(false);
 
   const walletAddress = primaryWallet?.address ?? "";
   const liquidiumAccountAddress =
@@ -227,6 +233,41 @@ export default function App() {
     targetLtvBps,
   ]);
 
+  useEffect(() => {
+    let isCancelled = false;
+
+    async function loadPositionSummary() {
+      if (!profileId) {
+        setUserPositionSummary(null);
+        return;
+      }
+
+      setIsPositionSummaryLoading(true);
+
+      try {
+        const nextUserPositionSummary = await loadUserPositionSummary(profileId);
+
+        if (!isCancelled) {
+          setUserPositionSummary(nextUserPositionSummary);
+        }
+      } catch {
+        if (!isCancelled) {
+          setUserPositionSummary(null);
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsPositionSummaryLoading(false);
+        }
+      }
+    }
+
+    void loadPositionSummary();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [profileId]);
+
   async function runAction(action: () => Promise<void>) {
     setIsBusy(true);
     setErrorMessage(null);
@@ -377,6 +418,23 @@ export default function App() {
       "noopener,noreferrer"
     );
     setStatusMessage("Opened a bitcoin URI.");
+  }
+
+  async function handleRefreshPositionSummary() {
+    if (!profileId) {
+      return;
+    }
+
+    setIsPositionSummaryLoading(true);
+
+    try {
+      const nextUserPositionSummary = await loadUserPositionSummary(profileId);
+      setUserPositionSummary(nextUserPositionSummary);
+    } catch (error) {
+      setErrorMessage(formatLiquidiumError(error));
+    } finally {
+      setIsPositionSummaryLoading(false);
+    }
   }
 
   return (
@@ -568,7 +626,7 @@ export default function App() {
             onClick={() => void handleBorrow()}
             type="button"
           >
-            submit borrow
+            borrow
           </button>
         </div>
 
@@ -624,6 +682,28 @@ export default function App() {
         <h2>Status</h2>
         <p>{statusMessage}</p>
         {errorMessage ? <p className="error">{errorMessage}</p> : null}
+      </section>
+
+      <section className="section">
+        <h2>Current positions</h2>
+        <div className="actions">
+          <button
+            disabled={!profileId || isPositionSummaryLoading}
+            onClick={() => void handleRefreshPositionSummary()}
+            type="button"
+          >
+            refresh positions
+          </button>
+        </div>
+        {isPositionSummaryLoading ? <p>Loading positions...</p> : null}
+        {!profileId ? <p>Create or resolve a profile to view positions.</p> : null}
+        {profileId && !isPositionSummaryLoading ? (
+          <pre className="output">
+            {userPositionSummary
+              ? JSON.stringify(userPositionSummary, bigintJsonReplacer, 2)
+              : "No position summary available yet."}
+          </pre>
+        ) : null}
       </section>
     </main>
   );
