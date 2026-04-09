@@ -9,13 +9,23 @@ import {
 } from "../../core/canisters/lending/error-mappers";
 import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
 import type { CanisterContext } from "../../core/transports/canister-context";
+import type { Wallet } from "../../core/types";
 import { computeExpiryTimestampFromNow } from "../../core/utils/time";
 import { getVariantKey } from "../../core/utils/variant";
-import type { Wallet } from "../../core/types";
 import type { WalletAdapter } from "../../core/wallet-actions";
 import { executeWith } from "../../execute";
 import { mapCreateAccountRequestToRegisterProfileRequest } from "./mappers";
 import type { CreateAccountAction, CreateAccountRequest } from "./types";
+
+type PrepareCreateOptions = {
+  account: string;
+};
+
+type ExecuteCreateParams = {
+  account: string;
+  chain: "BTC" | "ETH";
+  walletAdapter: WalletAdapter;
+};
 
 export class AccountsModule {
   constructor(readonly canisterContext: CanisterContext) {}
@@ -25,9 +35,9 @@ export class AccountsModule {
    *
    * Use this when you need direct control over the signing flow.
    */
-  async prepareCreate(options: {
-    account: string;
-  }): Promise<CreateAccountAction> {
+  async prepareCreate(
+    options: PrepareCreateOptions
+  ): Promise<CreateAccountAction> {
     return await this.createAccountAction(options.account);
   }
 
@@ -36,11 +46,7 @@ export class AccountsModule {
    *
    * This is the convenience form of `prepareCreate(...)` plus execution.
    */
-  async create(params: {
-    account: string;
-    chain: "BTC" | "ETH";
-    walletAdapter: WalletAdapter;
-  }): Promise<string> {
+  async create(params: ExecuteCreateParams): Promise<string> {
     const action = await this.prepareCreate({ account: params.account });
 
     return await executeWith({

@@ -1,18 +1,18 @@
 import {
+  type AssetPrices,
   LiquidiumClient,
   LiquidiumError,
   LiquidiumErrorCode,
   type OutflowDetails,
-  type QuoteResult,
   type Pool,
   type QuoteRequest,
+  type QuoteResult,
   type SupplyAction,
   type SupplyDestination,
   type SupplyFlow,
   type SupplyInstruction,
-  type WalletAdapter,
-  type AssetPrices,
   type UserStats,
+  type WalletAdapter,
 } from "@liquidium/client";
 import { resolveLiquidiumClientConfig } from "./liquidium-runtime-config";
 

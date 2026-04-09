@@ -1,7 +1,7 @@
-import type { AssetPrices, QuoteResult } from "@liquidium/client";
 import { isBitcoinWallet } from "@dynamic-labs/bitcoin";
 import { isEthereumWallet } from "@dynamic-labs/ethereum";
 import { useDynamicContext, useIsLoggedIn } from "@dynamic-labs/sdk-react-core";
+import type { AssetPrices, QuoteResult } from "@liquidium/client";
 import { useEffect, useMemo, useState } from "react";
 import {
   bigintJsonReplacer,
@@ -62,7 +62,9 @@ export default function App() {
   const [targetLtvBps, setTargetLtvBps] = useState(DEFAULT_TARGET_LTV_BPS);
   const [borrowAddress, setBorrowAddress] = useState("");
   const [quoteResult, setQuoteResult] = useState<QuoteResult | null>(null);
-  const [quoteErrorMessage, setQuoteErrorMessage] = useState<string | null>(null);
+  const [quoteErrorMessage, setQuoteErrorMessage] = useState<string | null>(
+    null
+  );
   const [isQuoteLoading, setIsQuoteLoading] = useState(false);
   const [borrowResult, setBorrowResult] = useState<OutflowDetails | null>(null);
   const [supplyAction, setSupplyAction] = useState<SupplyAction>(
@@ -245,7 +247,8 @@ export default function App() {
       setIsPositionSummaryLoading(true);
 
       try {
-        const nextUserPositionSummary = await loadUserPositionSummary(profileId);
+        const nextUserPositionSummary =
+          await loadUserPositionSummary(profileId);
 
         if (!isCancelled) {
           setUserPositionSummary(nextUserPositionSummary);
@@ -351,7 +354,9 @@ export default function App() {
       }
 
       if (quoteValidationErrors.length > 0) {
-        throw new Error(quoteValidationErrors[0]?.message ?? "Quote is invalid.");
+        throw new Error(
+          quoteValidationErrors[0]?.message ?? "Quote is invalid."
+        );
       }
 
       const nextBorrowResult = await createBorrowOutflow({
@@ -597,7 +602,9 @@ export default function App() {
           </div>
           <div>
             <dt>Required collateral value</dt>
-            <dd>{formatInternalUsd(quoteResult?.requiredCollateralUsd ?? 0n)}</dd>
+            <dd>
+              {formatInternalUsd(quoteResult?.requiredCollateralUsd ?? 0n)}
+            </dd>
           </div>
           <div>
             <dt>Estimated borrow value</dt>
@@ -607,7 +614,9 @@ export default function App() {
 
         <div className="messages">
           {isQuoteLoading ? <p>Refreshing quote...</p> : null}
-          {quoteErrorMessage ? <p className="error">{quoteErrorMessage}</p> : null}
+          {quoteErrorMessage ? (
+            <p className="error">{quoteErrorMessage}</p>
+          ) : null}
           {quoteValidationErrors.map((validationError) => (
             <p className="error" key={validationError.code}>
               {validationError.message}
@@ -643,7 +652,9 @@ export default function App() {
         <div className="actions">
           <select
             value={supplyAction}
-            onChange={(event) => setSupplyAction(event.target.value as SupplyAction)}
+            onChange={(event) =>
+              setSupplyAction(event.target.value as SupplyAction)
+            }
           >
             <option value="deposit">Deposit</option>
             <option value="repayment">Repayment</option>
@@ -656,14 +667,18 @@ export default function App() {
             start btc flow
           </button>
           <button
-            disabled={!isNativeAddressSupplyInstruction(supplyFlow?.instruction ?? null)}
+            disabled={
+              !isNativeAddressSupplyInstruction(supplyFlow?.instruction ?? null)
+            }
             onClick={() => void handleCopyBtcAddress()}
             type="button"
           >
             copy btc address
           </button>
           <button
-            disabled={!isNativeAddressSupplyInstruction(supplyFlow?.instruction ?? null)}
+            disabled={
+              !isNativeAddressSupplyInstruction(supplyFlow?.instruction ?? null)
+            }
             onClick={handleOpenBitcoinUri}
             type="button"
           >
@@ -696,7 +711,9 @@ export default function App() {
           </button>
         </div>
         {isPositionSummaryLoading ? <p>Loading positions...</p> : null}
-        {!profileId ? <p>Create or resolve a profile to view positions.</p> : null}
+        {!profileId ? (
+          <p>Create or resolve a profile to view positions.</p>
+        ) : null}
         {profileId && !isPositionSummaryLoading ? (
           <pre className="output">
             {userPositionSummary

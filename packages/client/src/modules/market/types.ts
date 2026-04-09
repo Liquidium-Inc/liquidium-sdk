@@ -28,3 +28,14 @@ export interface Pool {
 }
 
 export type AssetPrices = Record<string, number>;
+
+export interface FindPoolQuery {
+  asset: MarketAsset;
+  chain: MarketChain;
+}
+
+export interface PoolRate {
+  borrowRate: bigint;
+  lendRate: bigint;
+  utilizationRate: bigint;
+}
