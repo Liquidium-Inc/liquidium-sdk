@@ -14,6 +14,8 @@ import type { ApiClient } from "../../core/transports/api-client";
 import type { CanisterContext } from "../../core/transports/canister-context";
 import type { SupplyAction } from "../../core/types";
 import { encodeInflowSubaccount } from "../../core/utils/inflow-subaccount";
+import { computeExpiryTimestampFromNow } from "../../core/utils/time";
+import { getVariantKey } from "../../core/utils/variant";
 import type { WalletAdapter } from "../../core/wallet-actions";
 import { executeWith } from "../../execute";
 import type {
@@ -39,7 +41,6 @@ import type {
 } from "./types";
 
 const BITCOIN_BLOCK_TIME_MS = 10 * 60 * 1000;
-const SIGNATURE_VALIDITY_5_MINUTES_IN_SECONDS = 5n * 60n;
 
 type LendingModuleOptions = {
   supplyStatusPollIntervalMs: number;
@@ -78,7 +79,7 @@ export class LendingModule {
     const lendingActor = createLendingActor(this.canisterContext);
 
     try {
-      const expiryTimestamp = computeExpiryTimestamp();
+      const expiryTimestamp = computeExpiryTimestampFromNow();
       const nonce = await lendingActor.get_nonce(signerAccount);
       const withdrawRequestData = {
         profileId: request.profileId,
@@ -207,7 +208,7 @@ export class LendingModule {
     const lendingActor = createLendingActor(this.canisterContext);
 
     try {
-      const expiryTimestamp = computeExpiryTimestamp();
+      const expiryTimestamp = computeExpiryTimestampFromNow();
       const nonce = await lendingActor.get_nonce(signerAccount);
       const borrowRequestData = {
         profileId: request.profileId,
@@ -668,26 +669,6 @@ function assertSupportsIcrcAccountInflowTarget(asset: string): void {
   throw new LiquidiumError(
     LiquidiumErrorCode.VALIDATION_ERROR,
     `ICRC account inflow targets are not supported for ${asset}`
-  );
-}
-
-function getVariantKey(variant: Record<string, null>): string {
-  const [variantKey] = Object.keys(variant);
-
-  if (!variantKey) {
-    throw new LiquidiumError(
-      LiquidiumErrorCode.INTERNAL,
-      "Unexpected empty canister variant"
-    );
-  }
-
-  return variantKey;
-}
-
-function computeExpiryTimestamp(): bigint {
-  return (
-    BigInt(Math.floor(Date.now() / 1000)) +
-    SIGNATURE_VALIDITY_5_MINUTES_IN_SECONDS
   );
 }
 

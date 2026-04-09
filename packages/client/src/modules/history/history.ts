@@ -1,5 +1,6 @@
 import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
 import type { ApiClient } from "../../core/transports/api-client";
+import { parseBigInt, parseOptionalBigInt } from "../../core/utils/bigint";
 import type {
   PaginatedResponse,
   PoolHistoryEntry,
@@ -83,8 +84,14 @@ export class HistoryModule {
         timestamp: item.timestamp,
         totalSupply: parseBigInt(item.totalSupply, "pool history totalSupply"),
         totalDebt: parseBigInt(item.totalDebt, "pool history totalDebt"),
-        supplyCap: parseOptionalBigInt(item.supplyCap),
-        borrowCap: parseOptionalBigInt(item.borrowCap),
+        supplyCap: parseOptionalBigInt(
+          item.supplyCap,
+          "pool history supplyCap"
+        ),
+        borrowCap: parseOptionalBigInt(
+          item.borrowCap,
+          "pool history borrowCap"
+        ),
         maxLtv: parseBigInt(item.maxLtv, "pool history maxLtv"),
         liquidationThreshold: parseBigInt(
           item.liquidationThreshold,
@@ -122,7 +129,10 @@ export class HistoryModule {
         borrowIndex: parseBigInt(item.borrowIndex, "pool history borrowIndex"),
         sameAssetBorrowing: item.sameAssetBorrowing,
         frozen: item.frozen,
-        lastUpdated: parseOptionalBigInt(item.lastUpdated),
+        lastUpdated: parseOptionalBigInt(
+          item.lastUpdated,
+          "pool history lastUpdated"
+        ),
       })),
       nextCursor: response.nextCursor,
     };
@@ -136,24 +146,4 @@ function createHistoryPath(basePath: string, cursor?: string): string {
 
   const query = new URLSearchParams({ cursor });
   return `${basePath}?${query.toString()}`;
-}
-
-function parseOptionalBigInt(value?: string): bigint | undefined {
-  if (value === undefined) {
-    return undefined;
-  }
-
-  return parseBigInt(value, "history bigint");
-}
-
-function parseBigInt(value: string, label: string): bigint {
-  try {
-    return BigInt(value);
-  } catch (error) {
-    throw new LiquidiumError(
-      LiquidiumErrorCode.INTERNAL,
-      `Invalid bigint returned for ${label}`,
-      error
-    );
-  }
 }

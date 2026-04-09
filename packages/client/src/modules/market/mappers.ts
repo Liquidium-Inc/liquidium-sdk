@@ -1,11 +1,10 @@
 import type {
-  AssetVariant,
-  ChainVariant,
   LendingPoolRecord,
   PoolRateTuple,
   PriceRecord,
 } from "../../core/canisters/lending/actor";
 import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
+import { getVariantKey } from "../../core/utils/variant";
 import type { AssetPrices, Pool } from "./types";
 
 const DECIMAL_BASE = 10;
@@ -100,17 +99,4 @@ function formatPrice(price: bigint, decimals: number): number {
   const decimalScale = DECIMAL_BASE ** decimals;
 
   return Number(price) / decimalScale;
-}
-
-function getVariantKey(variant: AssetVariant | ChainVariant): string {
-  const [variantKey] = Object.keys(variant);
-
-  if (!variantKey) {
-    throw new LiquidiumError(
-      LiquidiumErrorCode.INTERNAL,
-      "Unexpected empty canister variant"
-    );
-  }
-
-  return variantKey;
 }
