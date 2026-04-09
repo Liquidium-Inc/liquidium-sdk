@@ -40,7 +40,8 @@
       "**/*.mjs",
       "**/*.cjs",
       "**/*.json",
-      "**/*.yaml"
+      "**/*.yaml",
+      "!packages/client/src/generated"
     ]
   }
 }
