@@ -12,6 +12,7 @@ import {
   type SupplyInstruction,
   type WalletAdapter,
   type AssetPrices,
+  type UserStats,
 } from "@liquidium/client";
 import { resolveLiquidiumClientConfig } from "./liquidium-runtime-config";
 
@@ -60,7 +61,7 @@ type CreateBorrowParams = {
   onStep?: (statusMessage: string) => void;
 };
 
-export type { OutflowDetails, Pool, SupplyAction, SupplyFlow };
+export type { OutflowDetails, Pool, SupplyAction, SupplyFlow, UserStats };
 
 function createWalletAdapter(
   signMessage: (message: string) => Promise<string>
@@ -141,6 +142,14 @@ export async function loadQuoteContext(): Promise<QuoteContextResult> {
     prices,
     selectedPoolId,
   };
+}
+
+export async function loadUserPositionSummary(
+  profileId: string
+): Promise<UserStats> {
+  const client = createLiquidiumClient();
+
+  return await client.positions.getUserStats(profileId);
 }
 
 export async function getLoanQuote(params: {
