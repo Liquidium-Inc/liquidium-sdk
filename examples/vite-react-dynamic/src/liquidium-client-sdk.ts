@@ -1,4 +1,5 @@
 import {
+  type ApySample,
   type AssetPrices,
   LiquidiumClient,
   LiquidiumError,
@@ -11,6 +12,7 @@ import {
   type SupplyDestination,
   type SupplyFlow,
   type SupplyInstruction,
+  type UserHistoryEntry,
   type UserStats,
   type WalletAdapter,
 } from "@liquidium/client";
@@ -61,7 +63,14 @@ type CreateBorrowParams = {
   onStep?: (statusMessage: string) => void;
 };
 
-export type { OutflowDetails, Pool, SupplyAction, SupplyFlow, UserStats };
+export type {
+  OutflowDetails,
+  Pool,
+  SupplyAction,
+  SupplyFlow,
+  UserHistoryEntry,
+  UserStats,
+};
 
 function createWalletAdapter(
   signMessage: (message: string) => Promise<string>
@@ -150,6 +159,38 @@ export async function loadUserPositionSummary(
   const client = createLiquidiumClient();
 
   return await client.positions.getUserStats(profileId);
+}
+
+export async function loadUserTransactionHistory(
+  profileId: string,
+  market?: string,
+  filters?: { cursor?: string; from?: string; to?: string; limit?: number }
+): Promise<{ items: UserHistoryEntry[]; nextCursor?: string }> {
+  const client = createLiquidiumClient();
+
+  return await client.history.getUserTransactionHistory(
+    profileId,
+    market,
+    filters
+  );
+}
+
+export async function loadLiquidationActivities(
+  profileId: string,
+  market?: string
+): Promise<{ items: UserHistoryEntry[]; nextCursor?: string }> {
+  const client = createLiquidiumClient();
+
+  return await client.history.getLiquidationHistory(profileId, market);
+}
+
+export async function loadBorrowApyHistory(
+  poolId: string,
+  window?: { cursor?: string; from?: string; to?: string; limit?: number }
+): Promise<{ items: ApySample[]; nextCursor?: string }> {
+  const client = createLiquidiumClient();
+
+  return await client.history.getBorrowRateHistory(poolId, window);
 }
 
 export async function getLoanQuote(params: {

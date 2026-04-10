@@ -271,10 +271,12 @@ describe("HistoryModule", () => {
     const client = LiquidiumClient.create({});
 
     // when / then
-    await expect(client.history.getUser("profile-1")).rejects.toThrow(
-      LiquidiumError
-    );
-    await expect(client.history.getUser("profile-1")).rejects.toMatchObject({
+    await expect(
+      client.history.getUserTransactionHistory("profile-1")
+    ).rejects.toThrow(LiquidiumError);
+    await expect(
+      client.history.getUserTransactionHistory("profile-1")
+    ).rejects.toMatchObject({
       code: LiquidiumErrorCode.SERVICE_UNAVAILABLE,
     });
   });
@@ -310,9 +312,10 @@ describe("HistoryModule", () => {
     });
 
     // when
-    const result = await client.history.getUser(
+    const result = await client.history.getUserTransactionHistory(
       "profile-1",
-      "2026-03-31T00:00:00.000Z::history-0"
+      undefined,
+      { cursor: "2026-03-31T00:00:00.000Z::history-0" }
     );
 
     // then
@@ -332,7 +335,7 @@ describe("HistoryModule", () => {
       nextCursor: "2026-04-01T00:00:00.000Z::history-1",
     });
     expect(fetchSpy).toHaveBeenCalledWith(
-      "https://app.liquidium.fi/api/sdk/v1/history/user/profile-1?cursor=2026-03-31T00%3A00%3A00.000Z%3A%3Ahistory-0",
+      "https://app.liquidium.fi/api/sdk/v1/history/users/profile-1/transactions?cursor=2026-03-31T00%3A00%3A00.000Z%3A%3Ahistory-0",
       {
         method: "GET",
         headers: undefined,
@@ -424,6 +427,184 @@ describe("HistoryModule", () => {
     });
     expect(fetchSpy).toHaveBeenCalledWith(
       "https://app.liquidium.fi/api/sdk/v1/history/pool/pool-1",
+      {
+        method: "GET",
+        headers: undefined,
+        body: undefined,
+        signal: expect.any(AbortSignal),
+      }
+    );
+  });
+
+  test("passes activities filters to the sdk api", async () => {
+    // given
+    const responsePayload = {
+      success: true as const,
+      items: [
+        {
+          id: "history-1",
+          type: "borrow" as const,
+          amount: "50000",
+          poolId: "pool-btc",
+          timestamp: "2026-04-02T00:00:00.000Z",
+          status: "CONFIRMED" as const,
+          txid: "tx-1",
+        },
+      ],
+      nextCursor: "2026-04-02T00:00:00.000Z::history-1",
+    };
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify(responsePayload), {
+        status: 200,
+        headers: {
+          "content-type": "application/json",
+        },
+      })
+    );
+    const client = LiquidiumClient.create({
+      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
+    });
+
+    // when
+    const result = await client.history.getUserTransactionHistory(
+      "profile-1",
+      "pool-btc",
+      {
+        cursor: "2026-03-31T00:00:00.000Z::history-0",
+        from: "2026-04-01T00:00:00.000Z",
+        to: "2026-04-03T00:00:00.000Z",
+        limit: 1,
+      }
+    );
+
+    // then
+    expect(result).toEqual({
+      items: [
+        {
+          id: "history-1",
+          type: "borrow",
+          amount: 50000n,
+          poolId: "pool-btc",
+          timestamp: "2026-04-02T00:00:00.000Z",
+          status: "CONFIRMED",
+          txid: "tx-1",
+          txids: undefined,
+        },
+      ],
+      nextCursor: "2026-04-02T00:00:00.000Z::history-1",
+    });
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "https://app.liquidium.fi/api/sdk/v1/history/users/profile-1/transactions?cursor=2026-03-31T00%3A00%3A00.000Z%3A%3Ahistory-0&market=pool-btc&from=2026-04-01T00%3A00%3A00.000Z&to=2026-04-03T00%3A00%3A00.000Z&limit=1",
+      {
+        method: "GET",
+        headers: undefined,
+        body: undefined,
+        signal: expect.any(AbortSignal),
+      }
+    );
+  });
+
+  test("requests liquidation activities with liquidation type", async () => {
+    // given
+    const responsePayload = {
+      success: true as const,
+      items: [
+        {
+          id: "history-9",
+          type: "liquidation" as const,
+          amount: "12345",
+          poolId: "pool-btc",
+          timestamp: "2026-04-04T00:00:00.000Z",
+          status: "CONFIRMED" as const,
+        },
+      ],
+      nextCursor: "2026-04-04T00:00:00.000Z::history-9",
+    };
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify(responsePayload), {
+        status: 200,
+        headers: {
+          "content-type": "application/json",
+        },
+      })
+    );
+    const client = LiquidiumClient.create({
+      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
+    });
+
+    // when
+    const result = await client.history.getLiquidationHistory(
+      "profile-1",
+      "pool-btc"
+    );
+
+    // then
+    expect(result.items[0]).toMatchObject({
+      type: "liquidation",
+      amount: 12345n,
+      poolId: "pool-btc",
+    });
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "https://app.liquidium.fi/api/sdk/v1/history/users/profile-1/liquidations?market=pool-btc",
+      {
+        method: "GET",
+        headers: undefined,
+        body: undefined,
+        signal: expect.any(AbortSignal),
+      }
+    );
+  });
+
+  test("maps pool snapshots to borrow apy history samples", async () => {
+    // given
+    const responsePayload = {
+      success: true as const,
+      items: [
+        {
+          date: "2026-04-02T00:00:00.000Z",
+          avgRate: "15",
+        },
+        {
+          date: "2026-04-01T00:00:00.000Z",
+          avgRate: "10",
+        },
+      ],
+      nextCursor: "2026-04-01T00:00:00.000Z::snapshot-1",
+    };
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify(responsePayload), {
+        status: 200,
+        headers: {
+          "content-type": "application/json",
+        },
+      })
+    );
+    const client = LiquidiumClient.create({
+      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
+    });
+
+    // when
+    const result = await client.history.getBorrowRateHistory("pool-1", {
+      from: "2026-04-02T00:00:00.000Z",
+      limit: 1,
+    });
+
+    // then
+    expect(result).toEqual({
+      items: [
+        {
+          date: "2026-04-02T00:00:00.000Z",
+          avgRate: 15n,
+        },
+        {
+          date: "2026-04-01T00:00:00.000Z",
+          avgRate: 10n,
+        },
+      ],
+      nextCursor: "2026-04-01T00:00:00.000Z::snapshot-1",
+    });
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "https://app.liquidium.fi/api/sdk/v1/history/rates/pool-1?from=2026-04-02T00%3A00%3A00.000Z&limit=1",
       {
         method: "GET",
         headers: undefined,
