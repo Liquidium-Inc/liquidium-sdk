@@ -4,6 +4,7 @@ import { useDynamicContext, useIsLoggedIn } from "@dynamic-labs/sdk-react-core";
 import type { AssetPrices, QuoteResult } from "@liquidium/client";
 import { useEffect, useMemo, useState } from "react";
 import {
+  type ApySample,
   bigintJsonReplacer,
   createBorrowOutflow,
   createOrResolveProfileIdSimple,
@@ -11,6 +12,8 @@ import {
   formatLiquidiumError,
   getLoanQuote,
   isNativeAddressSupplyInstruction,
+  loadBorrowApyHistory,
+  loadLiquidationActivities,
   loadQuoteContext,
   loadUserPositionSummary,
   loadUserTransactionHistory,
@@ -44,9 +47,6 @@ const INTERNAL_USD_DECIMALS = 8;
 const MIN_LTV_BPS = 1000;
 const MAX_DECIMAL_PLACES = 8;
 const DEFAULT_HISTORY_LIMIT = 20;
-
-type HistoryTypeFilter = UserHistoryEntry["type"] | "all";
-type HistoryStatusFilter = UserHistoryEntry["status"] | "all";
 
 export default function App() {
   const isLoggedIn = useIsLoggedIn();
@@ -90,10 +90,19 @@ export default function App() {
   const [isTransactionHistoryLoading, setIsTransactionHistoryLoading] =
     useState(false);
   const [historyPoolIdFilter, setHistoryPoolIdFilter] = useState("");
-  const [historyTypeFilter, setHistoryTypeFilter] =
-    useState<HistoryTypeFilter>("all");
-  const [historyStatusFilter, setHistoryStatusFilter] =
-    useState<HistoryStatusFilter>("all");
+  const [liquidationHistory, setLiquidationHistory] = useState<
+    UserHistoryEntry[]
+  >([]);
+  const [isLiquidationHistoryLoading, setIsLiquidationHistoryLoading] =
+    useState(false);
+  const [liquidationPoolIdFilter, setLiquidationPoolIdFilter] = useState("");
+  const [borrowRateHistory, setBorrowRateHistory] = useState<ApySample[]>([]);
+  const [borrowRateNextCursor, setBorrowRateNextCursor] = useState<
+    string | null
+  >(null);
+  const [isBorrowRateHistoryLoading, setIsBorrowRateHistoryLoading] =
+    useState(false);
+  const [borrowRatePoolIdFilter, setBorrowRatePoolIdFilter] = useState("");
 
   const walletAddress = primaryWallet?.address ?? "";
   const liquidiumAccountAddress =
@@ -294,11 +303,13 @@ export default function App() {
     if (!profileId) {
       setTransactionHistory([]);
       setHistoryNextCursor(null);
+      setLiquidationHistory([]);
       return;
     }
 
     setTransactionHistory([]);
     setHistoryNextCursor(null);
+    setLiquidationHistory([]);
   }, [profileId]);
 
   async function runAction(action: () => Promise<void>) {
@@ -498,6 +509,56 @@ export default function App() {
       setErrorMessage(formatLiquidiumError(error));
     } finally {
       setIsTransactionHistoryLoading(false);
+    }
+  }
+
+  async function handleLoadLiquidationHistory() {
+    if (!profileId) {
+      return;
+    }
+
+    setIsLiquidationHistoryLoading(true);
+
+    try {
+      const liquidationPage = await loadLiquidationActivities(
+        profileId,
+        liquidationPoolIdFilter || undefined
+      );
+
+      setLiquidationHistory(liquidationPage.items);
+      setStatusMessage(
+        `Loaded ${liquidationPage.items.length} liquidation entries.`
+      );
+    } catch (error) {
+      setErrorMessage(formatLiquidiumError(error));
+    } finally {
+      setIsLiquidationHistoryLoading(false);
+    }
+  }
+
+  async function handleLoadBorrowRateHistory(cursor?: string) {
+    if (!borrowRatePoolIdFilter) {
+      setErrorMessage("Select a pool to load borrow rate history.");
+      return;
+    }
+
+    setIsBorrowRateHistoryLoading(true);
+
+    try {
+      const ratesPage = await loadBorrowApyHistory(borrowRatePoolIdFilter, {
+        cursor,
+        limit: DEFAULT_HISTORY_LIMIT,
+      });
+
+      setBorrowRateHistory((currentItems) =>
+        cursor ? [...currentItems, ...ratesPage.items] : ratesPage.items
+      );
+      setBorrowRateNextCursor(ratesPage.nextCursor ?? null);
+      setStatusMessage(`Loaded ${ratesPage.items.length} borrow rate entries.`);
+    } catch (error) {
+      setErrorMessage(formatLiquidiumError(error));
+    } finally {
+      setIsBorrowRateHistoryLoading(false);
     }
   }
 
@@ -799,41 +860,6 @@ export default function App() {
               ))}
             </select>
           </label>
-
-          <label>
-            Type filter
-            <select
-              value={historyTypeFilter}
-              onChange={(event) =>
-                setHistoryTypeFilter(event.target.value as HistoryTypeFilter)
-              }
-            >
-              <option value="all">All types</option>
-              <option value="supply">Supply</option>
-              <option value="borrow">Borrow</option>
-              <option value="repay">Repay</option>
-              <option value="withdraw">Withdraw</option>
-              <option value="liquidation">Liquidation</option>
-            </select>
-          </label>
-
-          <label>
-            Status filter
-            <select
-              value={historyStatusFilter}
-              onChange={(event) =>
-                setHistoryStatusFilter(
-                  event.target.value as HistoryStatusFilter
-                )
-              }
-            >
-              <option value="all">All statuses</option>
-              <option value="REQUESTED">Requested</option>
-              <option value="PENDING">Pending</option>
-              <option value="CONFIRMED">Confirmed</option>
-              <option value="FAILED">Failed</option>
-            </select>
-          </label>
         </div>
 
         <div className="actions">
@@ -883,6 +909,121 @@ export default function App() {
             </pre>
           </>
         ) : null}
+      </section>
+
+      <section className="section">
+        <h2>User liquidation history</h2>
+        <div className="field-grid">
+          <label>
+            Pool filter
+            <select
+              value={liquidationPoolIdFilter}
+              onChange={(event) =>
+                setLiquidationPoolIdFilter(event.target.value)
+              }
+            >
+              <option value="">All pools</option>
+              {pools.map((pool) => (
+                <option key={pool.id} value={pool.id}>
+                  {pool.asset} on {pool.chain}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        <div className="actions">
+          <button
+            disabled={!profileId || isLiquidationHistoryLoading}
+            onClick={() => void handleLoadLiquidationHistory()}
+            type="button"
+          >
+            load liquidations
+          </button>
+        </div>
+
+        {isLiquidationHistoryLoading ? <p>Loading liquidations...</p> : null}
+
+        {!profileId ? (
+          <p>Create or resolve a profile to load liquidation history.</p>
+        ) : null}
+
+        {profileId ? (
+          <>
+            <p>Loaded liquidations: {liquidationHistory.length}</p>
+            <pre className="output">
+              {liquidationHistory.length > 0
+                ? JSON.stringify(
+                    liquidationHistory.map((entry) => ({
+                      ...entry,
+                      amountDisplay: formatHistoryAmount(entry, pools),
+                    })),
+                    bigintJsonReplacer,
+                    2
+                  )
+                : "No liquidation history loaded yet."}
+            </pre>
+          </>
+        ) : null}
+      </section>
+
+      <section className="section">
+        <h2>Borrow rate history</h2>
+        <div className="field-grid">
+          <label>
+            Pool
+            <select
+              value={borrowRatePoolIdFilter}
+              onChange={(event) =>
+                setBorrowRatePoolIdFilter(event.target.value)
+              }
+            >
+              <option value="">Choose a pool</option>
+              {pools.map((pool) => (
+                <option key={pool.id} value={pool.id}>
+                  {pool.asset} on {pool.chain}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        <div className="actions">
+          <button
+            disabled={!borrowRatePoolIdFilter || isBorrowRateHistoryLoading}
+            onClick={() => void handleLoadBorrowRateHistory()}
+            type="button"
+          >
+            load borrow rates
+          </button>
+          <button
+            disabled={
+              !borrowRatePoolIdFilter ||
+              !borrowRateNextCursor ||
+              isBorrowRateHistoryLoading
+            }
+            onClick={() =>
+              void handleLoadBorrowRateHistory(
+                borrowRateNextCursor ?? undefined
+              )
+            }
+            type="button"
+          >
+            load more
+          </button>
+        </div>
+
+        {isBorrowRateHistoryLoading ? <p>Loading borrow rates...</p> : null}
+
+        <p>
+          Loaded rate entries: {borrowRateHistory.length}
+          {borrowRateNextCursor ? " (more available)" : ""}
+        </p>
+        <pre className="output">
+          {borrowRateHistory.length > 0
+            ? JSON.stringify(borrowRateHistory, bigintJsonReplacer, 2)
+            : "No borrow rate history loaded yet."}
+        </pre>
       </section>
     </main>
   );
