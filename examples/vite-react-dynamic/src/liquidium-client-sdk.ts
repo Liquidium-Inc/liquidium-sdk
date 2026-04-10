@@ -64,6 +64,7 @@ type CreateBorrowParams = {
 };
 
 export type {
+  ApySample,
   OutflowDetails,
   Pool,
   SupplyAction,
