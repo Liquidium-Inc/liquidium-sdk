@@ -9,6 +9,42 @@ export interface UserHistoryEntry {
   txids?: string[];
 }
 
+export interface UserTransactionHistoryFilters {
+  cursor?: string;
+  limit?: number;
+  market?: string;
+  poolId?: string;
+  types?: UserHistoryEntry["type"][];
+  statuses?: UserHistoryEntry["status"][];
+  from?: string;
+  to?: string;
+}
+
+export type ActivitiesRequest = UserTransactionHistoryFilters;
+
+export interface BorrowApyHistoryRequest {
+  cursor?: string;
+  limit?: number;
+  from?: string;
+  to?: string;
+}
+
+export interface ApySample {
+  date: string;
+  avgRate: bigint;
+}
+
+export interface ApySampleApiItem {
+  date: string;
+  avgRate: string;
+}
+
+export interface BorrowRateHistoryResponse {
+  success: true;
+  items: ApySampleApiItem[];
+  nextCursor?: string;
+}
+
 export interface UserHistoryEntryApiItem {
   id: string;
   type: UserHistoryEntry["type"];

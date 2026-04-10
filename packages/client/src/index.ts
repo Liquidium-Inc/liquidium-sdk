@@ -35,6 +35,9 @@ export type {
   SignatureInfo,
 } from "./modules/accounts";
 export type {
+  ActivitiesRequest,
+  ApySample,
+  BorrowApyHistoryRequest,
   HistoryEntry,
   PaginatedResponse,
   PoolHistoryEntry,
@@ -43,6 +46,7 @@ export type {
   UserHistoryEntry,
   UserHistoryEntryApiItem,
   UserHistoryResponse,
+  UserTransactionHistoryFilters,
 } from "./modules/history";
 export type {
   BorrowAction,

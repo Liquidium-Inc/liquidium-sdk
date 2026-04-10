@@ -13,11 +13,13 @@ import {
   isNativeAddressSupplyInstruction,
   loadQuoteContext,
   loadUserPositionSummary,
+  loadUserTransactionHistory,
   type OutflowDetails,
   type Pool,
   prepareBtcSupplyFlow,
   type SupplyAction,
   type SupplyFlow,
+  type UserHistoryEntry,
   type UserStats,
 } from "./liquidium-client-sdk";
 import {
@@ -41,6 +43,10 @@ const DEFAULT_SUPPLY_ACTION: SupplyAction = "deposit";
 const INTERNAL_USD_DECIMALS = 8;
 const MIN_LTV_BPS = 1000;
 const MAX_DECIMAL_PLACES = 8;
+const DEFAULT_HISTORY_LIMIT = 20;
+
+type HistoryTypeFilter = UserHistoryEntry["type"] | "all";
+type HistoryStatusFilter = UserHistoryEntry["status"] | "all";
 
 export default function App() {
   const isLoggedIn = useIsLoggedIn();
@@ -75,6 +81,19 @@ export default function App() {
     useState<UserStats | null>(null);
   const [isPositionSummaryLoading, setIsPositionSummaryLoading] =
     useState(false);
+  const [transactionHistory, setTransactionHistory] = useState<
+    UserHistoryEntry[]
+  >([]);
+  const [historyNextCursor, setHistoryNextCursor] = useState<string | null>(
+    null
+  );
+  const [isTransactionHistoryLoading, setIsTransactionHistoryLoading] =
+    useState(false);
+  const [historyPoolIdFilter, setHistoryPoolIdFilter] = useState("");
+  const [historyTypeFilter, setHistoryTypeFilter] =
+    useState<HistoryTypeFilter>("all");
+  const [historyStatusFilter, setHistoryStatusFilter] =
+    useState<HistoryStatusFilter>("all");
 
   const walletAddress = primaryWallet?.address ?? "";
   const liquidiumAccountAddress =
@@ -271,6 +290,17 @@ export default function App() {
     };
   }, [profileId]);
 
+  useEffect(() => {
+    if (!profileId) {
+      setTransactionHistory([]);
+      setHistoryNextCursor(null);
+      return;
+    }
+
+    setTransactionHistory([]);
+    setHistoryNextCursor(null);
+  }, [profileId]);
+
   async function runAction(action: () => Promise<void>) {
     setIsBusy(true);
     setErrorMessage(null);
@@ -439,6 +469,35 @@ export default function App() {
       setErrorMessage(formatLiquidiumError(error));
     } finally {
       setIsPositionSummaryLoading(false);
+    }
+  }
+
+  async function handleLoadTransactionHistory(cursor?: string) {
+    if (!profileId) {
+      return;
+    }
+
+    setIsTransactionHistoryLoading(true);
+
+    try {
+      const historyPage = await loadUserTransactionHistory(
+        profileId,
+        historyPoolIdFilter || undefined,
+        {
+          cursor,
+          limit: DEFAULT_HISTORY_LIMIT,
+        }
+      );
+
+      setTransactionHistory((currentItems) =>
+        cursor ? [...currentItems, ...historyPage.items] : historyPage.items
+      );
+      setHistoryNextCursor(historyPage.nextCursor ?? null);
+      setStatusMessage(`Loaded ${historyPage.items.length} history entries.`);
+    } catch (error) {
+      setErrorMessage(formatLiquidiumError(error));
+    } finally {
+      setIsTransactionHistoryLoading(false);
     }
   }
 
@@ -722,6 +781,109 @@ export default function App() {
           </pre>
         ) : null}
       </section>
+
+      <section className="section">
+        <h2>User transaction history</h2>
+        <div className="field-grid">
+          <label>
+            Pool filter
+            <select
+              value={historyPoolIdFilter}
+              onChange={(event) => setHistoryPoolIdFilter(event.target.value)}
+            >
+              <option value="">All pools</option>
+              {pools.map((pool) => (
+                <option key={pool.id} value={pool.id}>
+                  {pool.asset} on {pool.chain}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label>
+            Type filter
+            <select
+              value={historyTypeFilter}
+              onChange={(event) =>
+                setHistoryTypeFilter(event.target.value as HistoryTypeFilter)
+              }
+            >
+              <option value="all">All types</option>
+              <option value="supply">Supply</option>
+              <option value="borrow">Borrow</option>
+              <option value="repay">Repay</option>
+              <option value="withdraw">Withdraw</option>
+              <option value="liquidation">Liquidation</option>
+            </select>
+          </label>
+
+          <label>
+            Status filter
+            <select
+              value={historyStatusFilter}
+              onChange={(event) =>
+                setHistoryStatusFilter(
+                  event.target.value as HistoryStatusFilter
+                )
+              }
+            >
+              <option value="all">All statuses</option>
+              <option value="REQUESTED">Requested</option>
+              <option value="PENDING">Pending</option>
+              <option value="CONFIRMED">Confirmed</option>
+              <option value="FAILED">Failed</option>
+            </select>
+          </label>
+        </div>
+
+        <div className="actions">
+          <button
+            disabled={!profileId || isTransactionHistoryLoading}
+            onClick={() => void handleLoadTransactionHistory()}
+            type="button"
+          >
+            load history
+          </button>
+          <button
+            disabled={
+              !profileId || !historyNextCursor || isTransactionHistoryLoading
+            }
+            onClick={() =>
+              void handleLoadTransactionHistory(historyNextCursor ?? undefined)
+            }
+            type="button"
+          >
+            load more
+          </button>
+        </div>
+
+        {isTransactionHistoryLoading ? <p>Loading history...</p> : null}
+
+        {!profileId ? (
+          <p>Create or resolve a profile to load transaction history.</p>
+        ) : null}
+
+        {profileId ? (
+          <>
+            <p>
+              Loaded entries: {transactionHistory.length}
+              {historyNextCursor ? " (more available)" : ""}
+            </p>
+            <pre className="output">
+              {transactionHistory.length > 0
+                ? JSON.stringify(
+                    transactionHistory.map((entry) => ({
+                      ...entry,
+                      amountDisplay: formatHistoryAmount(entry, pools),
+                    })),
+                    bigintJsonReplacer,
+                    2
+                  )
+                : "No history loaded yet."}
+            </pre>
+          </>
+        ) : null}
+      </section>
     </main>
   );
 }
@@ -882,6 +1044,15 @@ function formatBaseUnitsAsDecimal(
   }
 
   return `${signPrefix}${formattedWholePart}.${trimmedFractionalPart}`;
+}
+
+function formatHistoryAmount(entry: UserHistoryEntry, pools: Pool[]): string {
+  const matchingPool = pools.find((pool) => pool.id === entry.poolId);
+  if (!matchingPool) {
+    return entry.amount.toString();
+  }
+
+  return formatPoolAmount(entry.amount, matchingPool.asset);
 }
 
 function formatBpsAsPercent(value: number): string {

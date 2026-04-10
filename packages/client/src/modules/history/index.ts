@@ -1,5 +1,10 @@
 export { HistoryModule } from "./history";
 export type {
+  ActivitiesRequest,
+  ApySample,
+  ApySampleApiItem,
+  BorrowApyHistoryRequest,
+  BorrowRateHistoryResponse,
   HistoryEntry,
   PaginatedResponse,
   PoolHistoryEntry,
@@ -8,4 +13,5 @@ export type {
   UserHistoryEntry,
   UserHistoryEntryApiItem,
   UserHistoryResponse,
+  UserTransactionHistoryFilters,
 } from "./types";
