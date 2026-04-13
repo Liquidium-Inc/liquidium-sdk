@@ -334,17 +334,20 @@ const SDK_METHODS: MethodDefinition[] = [
     id: "lending.prepareWithdraw",
     label: "lending.prepareWithdraw",
     defaultArgs:
-      '{\n  "profileId": "aaaaa-aa",\n  "poolId": "bbbbb-bb",\n  "amount": "10000",\n  "account": "bc1...",\n  "signerAccount": "bc1..."\n}',
+      '{\n  "profileId": "aaaaa-aa",\n  "poolId": "bbbbb-bb",\n  "amount": "10000",\n  "receiverAddress": "bc1...",\n  "signerWalletAddress": "bc1..."\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
       return await client.lending.prepareWithdraw({
         profileId: expectNonEmptyString(args.profileId, "profileId"),
         poolId: expectNonEmptyString(args.poolId, "poolId"),
         amount: expectBigInt(args.amount, "amount"),
-        account: expectNonEmptyString(args.account, "account"),
-        signerAccount: expectNonEmptyString(
-          args.signerAccount,
-          "signerAccount"
+        receiverAddress: expectNonEmptyString(
+          args.receiverAddress,
+          "receiverAddress"
+        ),
+        signerWalletAddress: expectNonEmptyString(
+          args.signerWalletAddress,
+          "signerWalletAddress"
         ),
       });
     },
@@ -353,20 +356,23 @@ const SDK_METHODS: MethodDefinition[] = [
     id: "lending.withdraw",
     label: "lending.withdraw",
     defaultArgs:
-      '{\n  "profileId": "aaaaa-aa",\n  "poolId": "bbbbb-bb",\n  "amount": "10000",\n  "account": "bc1...",\n  "signerAccount": "bc1...",\n  "chain": "BTC",\n  "mockSignature": "replace-with-real-signature"\n}',
+      '{\n  "profileId": "aaaaa-aa",\n  "poolId": "bbbbb-bb",\n  "amount": "10000",\n  "receiverAddress": "bc1...",\n  "signerWalletAddress": "bc1...",\n  "signerChain": "BTC",\n  "mockSignature": "replace-with-real-signature"\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
       return await client.lending.withdraw({
         profileId: expectNonEmptyString(args.profileId, "profileId"),
         poolId: expectNonEmptyString(args.poolId, "poolId"),
         amount: expectBigInt(args.amount, "amount"),
-        account: expectNonEmptyString(args.account, "account"),
-        signerAccount: expectNonEmptyString(
-          args.signerAccount,
-          "signerAccount"
+        receiverAddress: expectNonEmptyString(
+          args.receiverAddress,
+          "receiverAddress"
         ),
-        chain: expectChain(args.chain, "chain"),
-        walletAdapter: createMockWalletAdapter(
+        signerWalletAddress: expectNonEmptyString(
+          args.signerWalletAddress,
+          "signerWalletAddress"
+        ),
+        signerChain: expectChain(args.signerChain, "signerChain"),
+        signerWalletAdapter: createMockWalletAdapter(
           expectNonEmptyString(args.mockSignature, "mockSignature")
         ),
       });
@@ -376,17 +382,20 @@ const SDK_METHODS: MethodDefinition[] = [
     id: "lending.prepareBorrow",
     label: "lending.prepareBorrow",
     defaultArgs:
-      '{\n  "profileId": "aaaaa-aa",\n  "poolId": "bbbbb-bb",\n  "amount": "10000",\n  "account": "bc1...",\n  "signerAccount": "bc1..."\n}',
+      '{\n  "profileId": "aaaaa-aa",\n  "poolId": "bbbbb-bb",\n  "amount": "10000",\n  "receiverAddress": "bc1...",\n  "signerWalletAddress": "bc1..."\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
       return await client.lending.prepareBorrow({
         profileId: expectNonEmptyString(args.profileId, "profileId"),
         poolId: expectNonEmptyString(args.poolId, "poolId"),
         amount: expectBigInt(args.amount, "amount"),
-        account: expectNonEmptyString(args.account, "account"),
-        signerAccount: expectNonEmptyString(
-          args.signerAccount,
-          "signerAccount"
+        receiverAddress: expectNonEmptyString(
+          args.receiverAddress,
+          "receiverAddress"
+        ),
+        signerWalletAddress: expectNonEmptyString(
+          args.signerWalletAddress,
+          "signerWalletAddress"
         ),
       });
     },
@@ -395,20 +404,23 @@ const SDK_METHODS: MethodDefinition[] = [
     id: "lending.borrow",
     label: "lending.borrow",
     defaultArgs:
-      '{\n  "profileId": "aaaaa-aa",\n  "poolId": "bbbbb-bb",\n  "amount": "10000",\n  "account": "bc1...",\n  "signerAccount": "bc1...",\n  "chain": "BTC",\n  "mockSignature": "replace-with-real-signature"\n}',
+      '{\n  "profileId": "aaaaa-aa",\n  "poolId": "bbbbb-bb",\n  "amount": "10000",\n  "receiverAddress": "bc1...",\n  "signerWalletAddress": "bc1...",\n  "signerChain": "BTC",\n  "mockSignature": "replace-with-real-signature"\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
       return await client.lending.borrow({
         profileId: expectNonEmptyString(args.profileId, "profileId"),
         poolId: expectNonEmptyString(args.poolId, "poolId"),
         amount: expectBigInt(args.amount, "amount"),
-        account: expectNonEmptyString(args.account, "account"),
-        signerAccount: expectNonEmptyString(
-          args.signerAccount,
-          "signerAccount"
+        receiverAddress: expectNonEmptyString(
+          args.receiverAddress,
+          "receiverAddress"
         ),
-        chain: expectChain(args.chain, "chain"),
-        walletAdapter: createMockWalletAdapter(
+        signerWalletAddress: expectNonEmptyString(
+          args.signerWalletAddress,
+          "signerWalletAddress"
+        ),
+        signerChain: expectChain(args.signerChain, "signerChain"),
+        signerWalletAdapter: createMockWalletAdapter(
           expectNonEmptyString(args.mockSignature, "mockSignature")
         ),
       });
@@ -583,16 +595,24 @@ export function SdkMethodQueryPage() {
         nextArgs.walletAddress = walletAddress;
       }
 
-      if ("signerAccount" in nextArgs) {
-        nextArgs.signerAccount = walletAddress;
+      if ("signerWalletAddress" in nextArgs) {
+        nextArgs.signerWalletAddress = walletAddress;
       }
 
       if ("newWalletAddress" in nextArgs) {
         nextArgs.newWalletAddress = walletAddress;
       }
 
+      if ("receiverAddress" in nextArgs) {
+        nextArgs.receiverAddress = walletAddress;
+      }
+
       if ("chain" in nextArgs) {
         nextArgs.chain = walletChain;
+      }
+
+      if ("signerChain" in nextArgs) {
+        nextArgs.signerChain = walletChain;
       }
 
       if ("mockSignature" in nextArgs) {

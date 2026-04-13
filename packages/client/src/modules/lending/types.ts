@@ -7,6 +7,7 @@ import type {
 import type {
   SignatureInfo,
   SignMessageWalletAction,
+  WalletAdapter,
 } from "../../core/wallet-actions";
 
 export interface OutflowReceiver {
@@ -31,8 +32,8 @@ export interface CreateBorrowRequest {
   profileId: string;
   poolId: string;
   amount: bigint;
-  account: string;
-  signerAccount: string;
+  receiverAddress: string;
+  signerWalletAddress: string;
 }
 
 export interface CreateBorrowData extends CreateBorrowRequest {
@@ -50,8 +51,8 @@ export interface CreateWithdrawRequest {
   profileId: string;
   poolId: string;
   amount: bigint;
-  account: string;
-  signerAccount: string;
+  receiverAddress: string;
+  signerWalletAddress: string;
 }
 
 export interface CreateWithdrawData extends CreateWithdrawRequest {
@@ -104,7 +105,11 @@ export interface SupplyInstruction {
   target: SupplyTarget;
 }
 
-export interface SupplyFlowRequest extends SupplyRequest {}
+export interface SupplyFlowRequest extends SupplyRequest {
+  btcWalletAdapter?: Pick<WalletAdapter, "sendBtcTransaction">;
+  btcAccount?: string;
+  btcAmountSats?: bigint;
+}
 
 export interface GetSupplyStatusRequest {
   txid?: string;

@@ -38,10 +38,20 @@ export interface SendEthTransactionRequest {
   transferMode: TransferMode;
 }
 
+export interface SendBtcTransactionRequest {
+  chain: "BTC";
+  toAddress: string;
+  amountSats?: bigint;
+  account?: string;
+  actionType: string;
+  transferMode: TransferMode;
+}
+
 export interface WalletAdapter {
   signMessage?: (request: SignMessageRequest) => Promise<string>;
   signPsbt?: (request: SignPsbtRequest) => Promise<string>;
   sendEthTransaction?: (request: SendEthTransactionRequest) => Promise<string>;
+  sendBtcTransaction?: (request: SendBtcTransactionRequest) => Promise<string>;
 }
 
 export interface SignatureInfo {
