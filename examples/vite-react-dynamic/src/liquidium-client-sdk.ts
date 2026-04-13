@@ -50,15 +50,21 @@ type PrepareBtcSupplyParams = {
   profileId: string;
   poolId: string;
   action: SupplyAction;
+  btcAmountSats: bigint;
+  btcAccount: string;
+  sendBtcTransaction: (params: {
+    toAddress: string;
+    amountSats: bigint;
+  }) => Promise<string>;
 };
 
 type CreateBorrowParams = {
   profileId: string;
   poolId: string;
   amount: bigint;
-  account: string;
-  signerAccount: string;
-  chain: SignatureChain;
+  receiverAddress: string;
+  signerWalletAddress: string;
+  signerChain: SignatureChain;
   signMessage: (message: string) => Promise<string>;
   onStep?: (statusMessage: string) => void;
 };
@@ -214,6 +220,15 @@ export async function prepareBtcSupplyFlow(
     poolId: params.poolId,
     action: params.action,
     destination: BTC_ADDRESS_DESTINATION,
+    btcAmountSats: params.btcAmountSats,
+    btcAccount: params.btcAccount,
+    btcWalletAdapter: {
+      sendBtcTransaction: async ({ toAddress, amountSats }) =>
+        await params.sendBtcTransaction({
+          toAddress,
+          amountSats: amountSats ?? params.btcAmountSats,
+        }),
+    },
   });
 }
 
@@ -231,10 +246,10 @@ export async function createBorrowOutflow(
       profileId: params.profileId,
       poolId: params.poolId,
       amount: params.amount,
-      account: params.account,
-      signerAccount: params.signerAccount,
-      chain: params.chain,
-      walletAdapter: createWalletAdapter(params.signMessage),
+      receiverAddress: params.receiverAddress,
+      signerWalletAddress: params.signerWalletAddress,
+      signerChain: params.signerChain,
+      signerWalletAdapter: createWalletAdapter(params.signMessage),
     }),
     "Timed out while submitting the signed borrow request."
   );

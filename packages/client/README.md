@@ -72,8 +72,8 @@ const borrowAction = await client.lending.prepareBorrow({
   profileId: "<liquidium-profile-id>",
   poolId: btcPool.id,
   amount: 50_000n,
-  account: "<custom-outflow-address>",
-  signerAccount: walletAddress,
+  receiverAddress: "<custom-outflow-address>",
+  signerWalletAddress: walletAddress,
 });
 
 const borrowSignature = await wallet.signMessage(borrowAction.message);
@@ -88,10 +88,10 @@ const outflowWithConvenience = await client.lending.borrow({
   profileId: "<liquidium-profile-id>",
   poolId: btcPool.id,
   amount: 50_000n,
-  account: "<custom-outflow-address>",
-  signerAccount: walletAddress,
-  chain: "ETH",
-  walletAdapter,
+  receiverAddress: "<custom-outflow-address>",
+  signerWalletAddress: walletAddress,
+  signerChain: "ETH",
+  signerWalletAdapter: walletAdapter,
 });
 
 // Pending movements
@@ -164,8 +164,8 @@ Environment presets:
 ### Borrow and withdraw execution
 
 - `client.lending.prepareBorrow(...)` / `client.lending.prepareWithdraw(...)` - prepare raw signable actions
-- `client.lending.borrow({ ..., chain, walletAdapter })` - sign and submit a borrow request in one call
-- `client.lending.withdraw({ ..., chain, walletAdapter })` - sign and submit a withdraw request in one call
+- `client.lending.borrow({ ..., signerChain, signerWalletAdapter })` - sign and submit a borrow request in one call
+- `client.lending.withdraw({ ..., signerChain, signerWalletAdapter })` - sign and submit a withdraw request in one call
 
 ### Wallet adapters
 

@@ -1563,6 +1563,176 @@ describe("LendingModule", () => {
     vi.useRealTimers();
   });
 
+  test("auto-submits BTC inflow when supply receives a wallet adapter", async () => {
+    // given
+    const txid = "auto-submit-txid";
+    vi.spyOn(Actor, "createActor")
+      .mockReturnValueOnce({
+        list_pools: vi.fn().mockResolvedValue([
+          {
+            optimal_utilization_rate: 80n,
+            principal: {
+              toString: () => BTC_POOL_ID,
+              toText: () => BTC_POOL_ID,
+            },
+            total_generated_interest_snapshot: 0n,
+            supply_cap: [],
+            same_asset_borrowing: [],
+            asset: { BTC: null },
+            rate_slope_before: 1n,
+            borrow_cap: [],
+            total_debt_at_last_sync: 0n,
+            chain: { BTC: null },
+            rate_slope_after: 2n,
+            reserve_factor: 100n,
+            last_updated: [],
+            lending_index: 300n,
+            protocol_liquidation_fee: 50n,
+            borrow_index: 400n,
+            base_rate: 5n,
+            frozen: false,
+            liquidation_bonus: 200n,
+            liquidation_threshold: 7_500n,
+            max_ltv: 7_000n,
+            total_supply_at_last_sync: 50_000n,
+          },
+        ]),
+      } as never)
+      .mockReturnValueOnce({
+        get_btc_address: vi.fn().mockResolvedValue("bc1qexampledepositaddress"),
+      } as never);
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      new Response(JSON.stringify({ success: true, txid }), {
+        status: 200,
+        headers: {
+          "content-type": "application/json",
+        },
+      })
+    );
+    fetchSpy.mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          success: true,
+          inflows: [
+            {
+              inflowId: "inflow-1",
+              txid,
+              type: "deposit",
+              stage: "PENDING",
+              poolId: BTC_POOL_ID,
+              amountSats: "100000",
+              timestampMs: 1_746_400_000_000,
+              confirmations: 1,
+              requiredConfirmations: 4,
+            },
+          ],
+        }),
+        {
+          status: 200,
+          headers: {
+            "content-type": "application/json",
+          },
+        }
+      )
+    );
+    const sendBtcTransaction = vi.fn().mockResolvedValue(txid);
+    const client = LiquidiumClient.create({
+      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
+    });
+
+    // when
+    const flow = await client.lending.supply({
+      profileId: "aaaaa-aa",
+      poolId: BTC_POOL_ID,
+      action: "deposit",
+      destination: "nativeAddress",
+      btcAmountSats: 100_000n,
+      btcWalletAdapter: {
+        sendBtcTransaction,
+      },
+      btcAccount: "bc1qsender",
+    });
+    const status = await flow.getStatus();
+
+    // then
+    expect(sendBtcTransaction).toHaveBeenCalledWith({
+      chain: "BTC",
+      toAddress: "bc1qexampledepositaddress",
+      amountSats: 100_000n,
+      account: "bc1qsender",
+      actionType: "supply-deposit",
+      transferMode: "native",
+    });
+    expect(fetchSpy).toHaveBeenNthCalledWith(
+      1,
+      "https://app.liquidium.fi/api/sdk/v1/inflow",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ txid }),
+      })
+    );
+    expect(status).toMatchObject({
+      txid,
+      stage: "PENDING",
+    });
+  });
+
+  test("throws when wallet-executed supply adapter cannot send BTC", async () => {
+    // given
+    vi.spyOn(Actor, "createActor")
+      .mockReturnValueOnce({
+        list_pools: vi.fn().mockResolvedValue([
+          {
+            optimal_utilization_rate: 80n,
+            principal: {
+              toString: () => BTC_POOL_ID,
+              toText: () => BTC_POOL_ID,
+            },
+            total_generated_interest_snapshot: 0n,
+            supply_cap: [],
+            same_asset_borrowing: [],
+            asset: { BTC: null },
+            rate_slope_before: 1n,
+            borrow_cap: [],
+            total_debt_at_last_sync: 0n,
+            chain: { BTC: null },
+            rate_slope_after: 2n,
+            reserve_factor: 100n,
+            last_updated: [],
+            lending_index: 300n,
+            protocol_liquidation_fee: 50n,
+            borrow_index: 400n,
+            base_rate: 5n,
+            frozen: false,
+            liquidation_bonus: 200n,
+            liquidation_threshold: 7_500n,
+            max_ltv: 7_000n,
+            total_supply_at_last_sync: 50_000n,
+          },
+        ]),
+      } as never)
+      .mockReturnValueOnce({
+        get_btc_address: vi.fn().mockResolvedValue("bc1qexampledepositaddress"),
+      } as never);
+    const client = LiquidiumClient.create({
+      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
+    });
+
+    // when / then
+    await expect(
+      client.lending.supply({
+        profileId: "aaaaa-aa",
+        poolId: BTC_POOL_ID,
+        action: "deposit",
+        destination: "nativeAddress",
+        btcWalletAdapter: {},
+      })
+    ).rejects.toMatchObject({
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message: "BTC wallet adapter does not support transaction sending",
+    });
+  });
+
   test("uses the client-configured default supply status poll interval", async () => {
     // given
     vi.useFakeTimers();
@@ -1729,8 +1899,8 @@ describe("LendingModule", () => {
       profileId,
       poolId,
       amount: 50_000n,
-      account: "bc1qcustomoutflow",
-      signerAccount: "0xsigner",
+      receiverAddress: "bc1qcustomoutflow",
+      signerWalletAddress: "0xsigner",
     });
     const outflow = await borrowAction.submit({
       signature: "0xsigned",
@@ -1748,8 +1918,8 @@ describe("LendingModule", () => {
       profileId,
       poolId,
       amount: 50_000n,
-      account: "bc1qcustomoutflow",
-      signerAccount: "0xsigner",
+      receiverAddress: "bc1qcustomoutflow",
+      signerWalletAddress: "0xsigner",
     });
     expect(borrowAction.message).toBe(`Liquidium: Borrow Assets
 
@@ -1814,10 +1984,10 @@ Nonce: 17`);
       profileId: "aaaaa-aa",
       poolId: "rrkah-fqaaa-aaaaa-aaaaq-cai",
       amount: 12_000n,
-      account: "bc1qborrow",
-      signerAccount: "0xsigner",
-      chain: "ETH",
-      walletAdapter: { signMessage },
+      receiverAddress: "bc1qborrow",
+      signerWalletAddress: "0xsigner",
+      signerChain: "ETH",
+      signerWalletAdapter: { signMessage },
     });
 
     // then
@@ -1848,8 +2018,8 @@ Nonce: 17`);
           profileId: "aaaaa-aa",
           poolId: "rrkah-fqaaa-aaaaa-aaaaq-cai",
           amount: 50_000n,
-          account: "bc1qcustomoutflow",
-          signerAccount: "bc1qsigner",
+          receiverAddress: "bc1qcustomoutflow",
+          signerWalletAddress: "bc1qsigner",
         })
         .then((borrowAction) =>
           borrowAction.submit({
@@ -1872,8 +2042,8 @@ Nonce: 17`);
         profileId: "p1",
         poolId: "aaaaa-aa",
         amount: 50_000n,
-        account: "   ",
-        signerAccount: "0xsigner",
+        receiverAddress: "   ",
+        signerWalletAddress: "0xsigner",
       })
     ).rejects.toMatchObject({
       code: LiquidiumErrorCode.VALIDATION_ERROR,
@@ -1884,8 +2054,8 @@ Nonce: 17`);
         profileId: "p1",
         poolId: "aaaaa-aa",
         amount: 50_000n,
-        account: "bc1qcustomoutflow",
-        signerAccount: "  ",
+        receiverAddress: "bc1qcustomoutflow",
+        signerWalletAddress: "  ",
       })
     ).rejects.toMatchObject({
       code: LiquidiumErrorCode.VALIDATION_ERROR,
@@ -1918,8 +2088,8 @@ Nonce: 17`);
       profileId: "aaaaa-aa",
       poolId: "rrkah-fqaaa-aaaaa-aaaaq-cai",
       amount: 10_000n,
-      account: "bc1qwithdraw",
-      signerAccount: "0xsigner",
+      receiverAddress: "bc1qwithdraw",
+      signerWalletAddress: "0xsigner",
     });
     const outflow = await withdrawAction.submit({
       signature: "0xsigned",
@@ -1937,8 +2107,8 @@ Nonce: 17`);
       profileId: "aaaaa-aa",
       poolId: "rrkah-fqaaa-aaaaa-aaaaq-cai",
       amount: 10_000n,
-      account: "bc1qwithdraw",
-      signerAccount: "0xsigner",
+      receiverAddress: "bc1qwithdraw",
+      signerWalletAddress: "0xsigner",
     });
     expect(withdrawAction.message).toBe(`Liquidium: Withdraw Assets
 
@@ -2001,10 +2171,10 @@ Nonce: 23`);
       profileId: "aaaaa-aa",
       poolId: "rrkah-fqaaa-aaaaa-aaaaq-cai",
       amount: 8_000n,
-      account: "bc1qwithdraw",
-      signerAccount: "0xsigner",
-      chain: "ETH",
-      walletAdapter: { signMessage },
+      receiverAddress: "bc1qwithdraw",
+      signerWalletAddress: "0xsigner",
+      signerChain: "ETH",
+      signerWalletAdapter: { signMessage },
     });
 
     // then
@@ -2035,8 +2205,8 @@ Nonce: 23`);
           profileId: "aaaaa-aa",
           poolId: "rrkah-fqaaa-aaaaa-aaaaq-cai",
           amount: 10_000n,
-          account: "bc1qwithdraw",
-          signerAccount: "bc1qsigner",
+          receiverAddress: "bc1qwithdraw",
+          signerWalletAddress: "bc1qsigner",
         })
         .then((withdrawAction) =>
           withdrawAction.submit({
@@ -2059,8 +2229,8 @@ Nonce: 23`);
         profileId: "p1",
         poolId: "aaaaa-aa",
         amount: 10_000n,
-        account: "   ",
-        signerAccount: "0xsigner",
+        receiverAddress: "   ",
+        signerWalletAddress: "0xsigner",
       })
     ).rejects.toMatchObject({
       code: LiquidiumErrorCode.VALIDATION_ERROR,
@@ -2071,8 +2241,8 @@ Nonce: 23`);
         profileId: "p1",
         poolId: "aaaaa-aa",
         amount: 10_000n,
-        account: "bc1qwithdraw",
-        signerAccount: "  ",
+        receiverAddress: "bc1qwithdraw",
+        signerWalletAddress: "  ",
       })
     ).rejects.toMatchObject({
       code: LiquidiumErrorCode.VALIDATION_ERROR,

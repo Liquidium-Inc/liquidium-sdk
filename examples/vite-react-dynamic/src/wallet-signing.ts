@@ -6,6 +6,11 @@ type DynamicPrimaryWallet = NonNullable<
   ReturnType<typeof useDynamicContext>["primaryWallet"]
 >;
 
+type SendBitcoinTransactionRequest = {
+  toAddress: string;
+  amountSats: bigint;
+};
+
 export type SignatureChain = "ETH" | "BTC";
 
 export function getWalletSignatureChain(
@@ -65,6 +70,26 @@ export function getBitcoinPaymentAddress(
   )?.address;
 
   return paymentAddress ?? null;
+}
+
+export async function sendBitcoinTransaction(
+  primaryWallet: DynamicPrimaryWallet,
+  request: SendBitcoinTransactionRequest
+): Promise<string> {
+  if (!isBitcoinWallet(primaryWallet)) {
+    throw new Error("Connected wallet does not support BTC transactions.");
+  }
+
+  const txid = await primaryWallet.sendBitcoin({
+    recipientAddress: request.toAddress,
+    amount: request.amountSats,
+  });
+
+  if (!txid) {
+    throw new Error("Bitcoin wallet did not return a transaction id.");
+  }
+
+  return txid;
 }
 
 function normalizeBitcoinSignature(signature: string): string {

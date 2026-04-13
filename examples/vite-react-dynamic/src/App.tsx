@@ -28,6 +28,7 @@ import {
 import {
   getBitcoinPaymentAddress,
   getWalletSignatureChain,
+  sendBitcoinTransaction,
   signWalletMessage,
 } from "./wallet-signing";
 
@@ -43,6 +44,7 @@ const ASSET_DECIMALS: Record<string, number> = {
 const DEFAULT_BORROW_AMOUNT = "2000";
 const DEFAULT_TARGET_LTV_BPS = 3200;
 const DEFAULT_SUPPLY_ACTION: SupplyAction = "deposit";
+const DEFAULT_SUPPLY_AMOUNT_BTC = "0.0001";
 const INTERNAL_USD_DECIMALS = 8;
 const PROFILE_STATS_USD_DECIMALS = 27;
 const MIN_LTV_BPS = 1000;
@@ -78,6 +80,9 @@ export default function App() {
   const [borrowResult, setBorrowResult] = useState<OutflowDetails | null>(null);
   const [supplyAction, setSupplyAction] = useState<SupplyAction>(
     DEFAULT_SUPPLY_ACTION
+  );
+  const [supplyAmountInput, setSupplyAmountInput] = useState(
+    DEFAULT_SUPPLY_AMOUNT_BTC
   );
   const [supplyFlow, setSupplyFlow] = useState<SupplyFlow | null>(null);
   const [userPositionSummary, setUserPositionSummary] =
@@ -165,6 +170,10 @@ export default function App() {
     borrowAmountInBaseUnits !== null &&
     borrowAmountInBaseUnits > 0n &&
     borrowAddress.trim().length > 0;
+  const supplyAmountSats = parseDecimalToBaseUnits(
+    supplyAmountInput,
+    getAssetDecimals("BTC")
+  );
 
   useEffect(() => {
     if (pools.length === 0) {
@@ -417,9 +426,9 @@ export default function App() {
         profileId,
         poolId: selectedBorrowPool.id,
         amount: borrowAmountInBaseUnits,
-        account: borrowAddress.trim(),
-        signerAccount: liquidiumAccountAddress,
-        chain: getWalletSignatureChain(primaryWallet),
+        receiverAddress: borrowAddress.trim(),
+        signerWalletAddress: liquidiumAccountAddress,
+        signerChain: getWalletSignatureChain(primaryWallet),
         signMessage: (message) =>
           signWalletMessage(primaryWallet, message, liquidiumAccountAddress),
         onStep: setStatusMessage,
@@ -440,12 +449,31 @@ export default function App() {
         throw new Error("Load pools first so the BTC pool can be resolved.");
       }
 
+      if (!primaryWallet || !isBitcoinWallet(primaryWallet)) {
+        throw new Error("Connect a Bitcoin wallet first.");
+      }
+
+      if (!liquidiumAccountAddress) {
+        throw new Error("Missing BTC signer account address.");
+      }
+
+      if (!supplyAmountSats || supplyAmountSats <= 0n) {
+        throw new Error("Enter a valid BTC amount to supply.");
+      }
+
       setStatusMessage(`Starting BTC ${supplyAction} flow...`);
 
       const nextSupplyFlow = await prepareBtcSupplyFlow({
         profileId,
         poolId: btcPool.id,
         action: supplyAction,
+        btcAmountSats: supplyAmountSats,
+        btcAccount: liquidiumAccountAddress,
+        sendBtcTransaction: async ({ toAddress, amountSats }) =>
+          await sendBitcoinTransaction(primaryWallet, {
+            toAddress,
+            amountSats,
+          }),
       });
 
       setSupplyFlow(nextSupplyFlow);
@@ -785,6 +813,17 @@ export default function App() {
 
       <section className="section">
         <h2>BTC supply flow</h2>
+        <div className="field-grid">
+          <label>
+            BTC amount
+            <input
+              inputMode="decimal"
+              value={supplyAmountInput}
+              onChange={(event) => setSupplyAmountInput(event.target.value)}
+              placeholder="0.0001"
+            />
+          </label>
+        </div>
         <div className="actions">
           <select
             value={supplyAction}
@@ -796,7 +835,15 @@ export default function App() {
             <option value="repayment">Repayment</option>
           </select>
           <button
-            disabled={isBusy || !profileId || !btcPool}
+            disabled={
+              isBusy ||
+              !profileId ||
+              !btcPool ||
+              !primaryWallet ||
+              !isBitcoinWallet(primaryWallet) ||
+              !supplyAmountSats ||
+              supplyAmountSats <= 0n
+            }
             onClick={() => void handleStartSupplyFlow()}
             type="button"
           >

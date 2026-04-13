@@ -49,16 +49,16 @@ type LendingModuleOptions = {
 type WalletChain = "BTC" | "ETH";
 
 type WalletExecutionParams = {
-  chain: WalletChain;
-  walletAdapter: WalletAdapter;
+  signerChain: WalletChain;
+  signerWalletAdapter: WalletAdapter;
 };
 
 type OutflowRequestData = {
   profileId: string;
   poolId: string;
   amount: bigint;
-  account: string;
-  signerAccount: string;
+  receiverAddress: string;
+  signerWalletAddress: string;
   expiryTimestamp: bigint;
 };
 
@@ -109,8 +109,8 @@ export class LendingModule {
   async prepareWithdraw(
     request: CreateWithdrawRequest
   ): Promise<WithdrawAction> {
-    const destinationAccount = request.account.trim();
-    const signerAccount = request.signerAccount.trim();
+    const destinationAccount = request.receiverAddress.trim();
+    const signerAccount = request.signerWalletAddress.trim();
     if (!destinationAccount) {
       throw new LiquidiumError(
         LiquidiumErrorCode.VALIDATION_ERROR,
@@ -133,8 +133,8 @@ export class LendingModule {
         profileId: request.profileId,
         poolId: request.poolId,
         amount: request.amount,
-        account: destinationAccount,
-        signerAccount,
+        receiverAddress: destinationAccount,
+        signerWalletAddress: signerAccount,
         expiryTimestamp,
       };
 
@@ -177,7 +177,7 @@ export class LendingModule {
         {
           data: {
             expiry_timestamp: request.expiryTimestamp,
-            account: { External: request.account },
+            account: { External: request.receiverAddress },
             pool_id: Principal.fromText(request.poolId),
             amount: request.amount,
           },
@@ -185,7 +185,7 @@ export class LendingModule {
             Wallet: {
               signature: signatureInfo.signature,
               chain: mapWalletChainToLendingChain(signatureInfo.chain),
-              account: request.signerAccount,
+              account: request.signerWalletAddress,
             },
           },
         }
@@ -216,9 +216,9 @@ export class LendingModule {
     const action = await this.prepareWithdraw(params);
 
     return await executeWith({
-      walletAdapter: params.walletAdapter,
-      chain: params.chain,
-      account: params.signerAccount,
+      walletAdapter: params.signerWalletAdapter,
+      chain: params.signerChain,
+      account: params.signerWalletAddress,
     })(action);
   }
 
@@ -228,8 +228,8 @@ export class LendingModule {
    * Use this when you need explicit control over signing and submission.
    */
   async prepareBorrow(request: CreateBorrowRequest): Promise<BorrowAction> {
-    const destinationAccount = request.account.trim();
-    const signerAccount = request.signerAccount.trim();
+    const destinationAccount = request.receiverAddress.trim();
+    const signerAccount = request.signerWalletAddress.trim();
     if (!destinationAccount) {
       throw new LiquidiumError(
         LiquidiumErrorCode.VALIDATION_ERROR,
@@ -252,8 +252,8 @@ export class LendingModule {
         profileId: request.profileId,
         poolId: request.poolId,
         amount: request.amount,
-        account: destinationAccount,
-        signerAccount,
+        receiverAddress: destinationAccount,
+        signerWalletAddress: signerAccount,
         expiryTimestamp,
       };
 
@@ -296,7 +296,7 @@ export class LendingModule {
       ).borrow_assets(Principal.fromText(request.profileId), {
         data: {
           expiry_timestamp: request.expiryTimestamp,
-          account: { External: request.account },
+          account: { External: request.receiverAddress },
           pool_id: Principal.fromText(request.poolId),
           amount: request.amount,
         },
@@ -304,7 +304,7 @@ export class LendingModule {
           Wallet: {
             signature: signatureInfo.signature,
             chain: mapWalletChainToLendingChain(signatureInfo.chain),
-            account: request.signerAccount,
+            account: request.signerWalletAddress,
           },
         },
       });
@@ -334,9 +334,9 @@ export class LendingModule {
     const action = await this.prepareBorrow(params);
 
     return await executeWith({
-      walletAdapter: params.walletAdapter,
-      chain: params.chain,
-      account: params.signerAccount,
+      walletAdapter: params.signerWalletAdapter,
+      chain: params.signerChain,
+      account: params.signerWalletAddress,
     })(action);
   }
 
@@ -361,7 +361,8 @@ export class LendingModule {
    * Creates a tracked supply flow for a deposit or repayment.
    *
    * This builds the supply instruction and returns helpers for txid submission
-   * and status tracking.
+   * and status tracking. When `btcWalletAdapter` is provided, BTC native-address
+   * supplies are auto-broadcast and auto-submitted by this method.
    */
   async supply(request: SupplyFlowRequest): Promise<SupplyFlow> {
     const instruction = await this.prepareSupply(request);
@@ -394,7 +395,7 @@ export class LendingModule {
       return mapBtcInflowToSupplyTrackingStatus(matchedInflow);
     };
 
-    return {
+    const flow: SupplyFlow = {
       instruction,
       target: instruction.target,
       submit: async ({ txid }) => {
@@ -431,6 +432,53 @@ export class LendingModule {
         }
       },
     };
+
+    if (request.btcWalletAdapter) {
+      const autoSubmittedTxid = await this.sendAndSubmitBtcSupplyInflow({
+        request,
+        instruction,
+      });
+      trackedTxid = autoSubmittedTxid;
+    }
+
+    return flow;
+  }
+
+  private async sendAndSubmitBtcSupplyInflow(params: {
+    request: SupplyFlowRequest;
+    instruction: SupplyInstruction;
+  }): Promise<string> {
+    const { request, instruction } = params;
+
+    if (
+      instruction.target.type !== "nativeAddress" ||
+      instruction.chain !== "BTC"
+    ) {
+      throw new LiquidiumError(
+        LiquidiumErrorCode.VALIDATION_ERROR,
+        "Wallet-executed supply is only supported for BTC native-address targets"
+      );
+    }
+
+    if (!request.btcWalletAdapter?.sendBtcTransaction) {
+      throw new LiquidiumError(
+        LiquidiumErrorCode.VALIDATION_ERROR,
+        "BTC wallet adapter does not support transaction sending"
+      );
+    }
+
+    const txid = await request.btcWalletAdapter.sendBtcTransaction({
+      chain: "BTC",
+      toAddress: instruction.target.address,
+      amountSats: request.btcAmountSats,
+      account: request.btcAccount,
+      actionType: `supply-${request.action}`,
+      transferMode: "native",
+    });
+
+    await this.submitInflow({ txid });
+
+    return txid;
   }
 
   /**
