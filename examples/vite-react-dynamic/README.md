@@ -12,8 +12,8 @@ with Dynamic:
 - Borrow from the quoted pool with `client.lending.borrow(...)`
 - Start a BTC supply flow with `client.lending.supply(...)`
 
-The goal is to make the first SDK integration obvious without extra playgrounds,
-page switching, or layered demo flows.
+The goal is to make the first SDK integration obvious, while also including an
+SDK method query page for raw response inspection.
 
 ## Setup
 
@@ -38,6 +38,9 @@ pnpm --filter @liquidium/example-vite-react-dynamic dev
 ## What To Look At
 
 - `src/App.tsx` is the full quote-first example UI
+- `src/SdkMethodQueryPage.tsx` lets you execute every public SDK method by
+  passing JSON args and viewing raw results
+- `src/Root.tsx` handles page switching between the workflow and SDK query page
 - `src/liquidium-client-sdk.ts` is the thin helper layer around the SDK
 - `src/wallet-signing.ts` adapts Dynamic wallets to the SDK signing flow
 
