@@ -44,9 +44,12 @@ const DEFAULT_BORROW_AMOUNT = "2000";
 const DEFAULT_TARGET_LTV_BPS = 3200;
 const DEFAULT_SUPPLY_ACTION: SupplyAction = "deposit";
 const INTERNAL_USD_DECIMALS = 8;
+const PROFILE_STATS_USD_DECIMALS = 27;
 const MIN_LTV_BPS = 1000;
 const MAX_DECIMAL_PLACES = 8;
 const DEFAULT_HISTORY_LIMIT = 20;
+const USD_DECIMAL_SCALE_FACTOR =
+  10n ** BigInt(PROFILE_STATS_USD_DECIMALS - INTERNAL_USD_DECIMALS);
 
 export default function App() {
   const isLoggedIn = useIsLoggedIn();
@@ -131,8 +134,14 @@ export default function App() {
   );
   const quoteWarnings = quoteResult?.warnings ?? [];
   const quoteValidationErrors = quoteResult?.validationErrors ?? [];
+  const borrowCapacityValidationError = getBorrowCapacityValidationError({
+    quoteResult,
+    userPositionSummary,
+  });
   const hasQuoteBlockingErrors =
-    quoteValidationErrors.length > 0 || quoteErrorMessage !== null;
+    quoteValidationErrors.length > 0 ||
+    quoteErrorMessage !== null ||
+    borrowCapacityValidationError !== null;
   const quoteHealthLabel = hasQuoteBlockingErrors
     ? "Needs attention"
     : isQuoteLoading
@@ -398,6 +407,10 @@ export default function App() {
         throw new Error(
           quoteValidationErrors[0]?.message ?? "Quote is invalid."
         );
+      }
+
+      if (borrowCapacityValidationError) {
+        throw new Error(borrowCapacityValidationError);
       }
 
       const nextBorrowResult = await createBorrowOutflow({
@@ -742,6 +755,9 @@ export default function App() {
               {validationError.message}
             </p>
           ))}
+          {borrowCapacityValidationError ? (
+            <p className="error">{borrowCapacityValidationError}</p>
+          ) : null}
           {quoteWarnings.map((warning) => (
             <p className="warning" key={warning.code}>
               {warning.message}
@@ -1194,6 +1210,37 @@ function formatHistoryAmount(entry: UserHistoryEntry, pools: Pool[]): string {
   }
 
   return formatPoolAmount(entry.amount, matchingPool.asset);
+}
+
+function getBorrowCapacityValidationError(params: {
+  quoteResult: QuoteResult | null;
+  userPositionSummary: UserStats | null;
+}): string | null {
+  const { quoteResult, userPositionSummary } = params;
+
+  if (!quoteResult || !userPositionSummary) {
+    return null;
+  }
+
+  const availableBorrowUsd =
+    userPositionSummary.borrowingPower.maxBorrowableUsd;
+
+  if (availableBorrowUsd <= 0n) {
+    return "No collateral available yet. Deposit collateral and wait for confirmations before borrowing.";
+  }
+
+  if (quoteResult.borrowUsd <= 0n) {
+    return null;
+  }
+
+  const requestedBorrowUsdAtProfileScale =
+    quoteResult.borrowUsd * USD_DECIMAL_SCALE_FACTOR;
+
+  if (requestedBorrowUsdAtProfileScale > availableBorrowUsd) {
+    return "Insufficient collateral for this borrow amount. Deposit more collateral or lower the borrow amount/LTV.";
+  }
+
+  return null;
 }
 
 function formatBpsAsPercent(value: number): string {
