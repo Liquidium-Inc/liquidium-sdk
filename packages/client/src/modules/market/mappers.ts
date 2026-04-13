@@ -3,13 +3,12 @@ import type {
   PoolRateTuple,
   PriceRecord,
 } from "../../core/canisters/lending/actor";
-import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
 import { getVariantKey } from "../../core/utils/variant";
 import type { AssetPrices, Pool } from "./types";
 
 const DECIMAL_BASE = 10;
 const PAIR_SEPARATOR = "_";
-const USD_QUOTE_ASSET = "USDT";
+const USD_SYMBOL = "USD";
 
 export function mapLendingPoolRecordToPool(
   pool: LendingPoolRecord,
@@ -52,29 +51,17 @@ export function mapGetPricesResponseToAssetPrices(
       formatPrice(price, decimals),
     ])
   );
-  const usdQuotePricePair = getSelfQuotedPair(USD_QUOTE_ASSET);
-  const quoteAssetUsdPrice = pairPricesByName.get(usdQuotePricePair);
-
-  if (quoteAssetUsdPrice === undefined) {
-    throw new LiquidiumError(
-      LiquidiumErrorCode.INTERNAL,
-      `Missing price pair returned by canister: ${usdQuotePricePair}`
-    );
-  }
-
   const assetPrices: AssetPrices = {};
 
   for (const [pairName, pairPrice] of pairPricesByName) {
     const [baseAsset, quoteAsset] = pairName.split(PAIR_SEPARATOR);
 
-    if (!baseAsset || !quoteAsset || quoteAsset !== USD_QUOTE_ASSET) {
+    if (!baseAsset || !quoteAsset || quoteAsset !== USD_SYMBOL) {
       continue;
     }
 
-    assetPrices[baseAsset] = pairPrice * quoteAssetUsdPrice;
+    assetPrices[baseAsset] = pairPrice;
   }
-
-  assetPrices[USD_QUOTE_ASSET] = quoteAssetUsdPrice;
 
   return assetPrices;
 }
@@ -89,10 +76,6 @@ export function mapGetPoolRateResponseToPoolRate(rate: PoolRateTuple): {
     lendRate: rate[1],
     utilizationRate: rate[2],
   };
-}
-
-function getSelfQuotedPair(asset: string): string {
-  return `${asset}${PAIR_SEPARATOR}${asset}`;
 }
 
 function formatPrice(price: bigint, decimals: number): number {
