@@ -921,13 +921,35 @@ describe("MarketModule", () => {
     });
   });
 
-  test("gets asset prices from the lending canister", async () => {
+  test("gets asset prices from USD-quoted pairs", async () => {
     // given
     vi.spyOn(Actor, "createActor").mockReturnValue({
       get_prices: vi.fn().mockResolvedValue([
+        ["BTC_USD", 72_000_000_000_000_000_000_000_000_000_000n, 27],
+        ["USDC_USD", 999_910_065_000_000_000_000_000_000n, 27],
+        ["USDT_USD", 1_000_018_620_000_000_000_000_000_000n, 27],
+      ]),
+    } as never);
+    const client = LiquidiumClient.create({});
+
+    // when
+    const prices = await client.market.getAssetPrices();
+
+    // then
+    expect(prices.BTC).toBe(72000);
+    expect(prices.USDT).toBe(1.00001862);
+    expect(prices.USDC).toBeCloseTo(0.999910065, 12);
+  });
+
+  test("ignores pairs that are not USD-quoted", async () => {
+    // given
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      get_prices: vi.fn().mockResolvedValue([
+        ["BTC_USD", 68_500_000_000n, 6],
         ["BTC_USDT", 68_500_000_000n, 6],
         ["USDT_USDT", 1_000_000n, 6],
         ["SOL_USDT", 150_000_000n, 6],
+        ["ETH_BTC", 50_000n, 6],
       ]),
     } as never);
     const client = LiquidiumClient.create({});
@@ -938,23 +960,21 @@ describe("MarketModule", () => {
     // then
     expect(prices).toEqual({
       BTC: 68500,
-      SOL: 150,
-      USDT: 1,
     });
   });
 
-  test("throws when the quote anchor price pair is missing", async () => {
+  test("returns an empty price map when USD-quoted pairs are missing", async () => {
     // given
     vi.spyOn(Actor, "createActor").mockReturnValue({
       get_prices: vi.fn().mockResolvedValue([["BTC_USDT", 68_500_000_000n, 6]]),
     } as never);
     const client = LiquidiumClient.create({});
 
-    // when / then
-    await expect(client.market.getAssetPrices()).rejects.toMatchObject({
-      code: LiquidiumErrorCode.INTERNAL,
-      message: "Missing price pair returned by canister: USDT_USDT",
-    });
+    // when
+    const prices = await client.market.getAssetPrices();
+
+    // then
+    expect(prices).toEqual({});
   });
 
   test("gets a pool rate from the lending canister", async () => {
