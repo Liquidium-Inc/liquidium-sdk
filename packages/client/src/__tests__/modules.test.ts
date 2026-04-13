@@ -1677,6 +1677,115 @@ describe("LendingModule", () => {
     });
   });
 
+  test("retries BTC inflow submission when txid is not indexed yet", async () => {
+    // given
+    const txid = "retry-submit-txid";
+    vi.spyOn(Actor, "createActor")
+      .mockReturnValueOnce({
+        list_pools: vi.fn().mockResolvedValue([
+          {
+            optimal_utilization_rate: 80n,
+            principal: {
+              toString: () => BTC_POOL_ID,
+              toText: () => BTC_POOL_ID,
+            },
+            total_generated_interest_snapshot: 0n,
+            supply_cap: [],
+            same_asset_borrowing: [],
+            asset: { BTC: null },
+            rate_slope_before: 1n,
+            borrow_cap: [],
+            total_debt_at_last_sync: 0n,
+            chain: { BTC: null },
+            rate_slope_after: 2n,
+            reserve_factor: 100n,
+            last_updated: [],
+            lending_index: 300n,
+            protocol_liquidation_fee: 50n,
+            borrow_index: 400n,
+            base_rate: 5n,
+            frozen: false,
+            liquidation_bonus: 200n,
+            liquidation_threshold: 7_500n,
+            max_ltv: 7_000n,
+            total_supply_at_last_sync: 50_000n,
+          },
+        ]),
+      } as never)
+      .mockReturnValueOnce({
+        get_btc_address: vi.fn().mockResolvedValue("bc1qexampledepositaddress"),
+      } as never);
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    fetchSpy.mockResolvedValueOnce(
+      new Response(JSON.stringify({ message: "not found" }), {
+        status: 500,
+        headers: {
+          "content-type": "application/json",
+        },
+      })
+    );
+    fetchSpy.mockResolvedValueOnce(
+      new Response(JSON.stringify({ success: true, txid }), {
+        status: 200,
+        headers: {
+          "content-type": "application/json",
+        },
+      })
+    );
+    fetchSpy.mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          success: true,
+          inflows: [
+            {
+              inflowId: "inflow-1",
+              txid,
+              type: "deposit",
+              stage: "PENDING",
+              poolId: BTC_POOL_ID,
+              amountSats: "100000",
+              timestampMs: 1_746_400_000_000,
+              confirmations: 1,
+              requiredConfirmations: 4,
+            },
+          ],
+        }),
+        {
+          status: 200,
+          headers: {
+            "content-type": "application/json",
+          },
+        }
+      )
+    );
+    const sendBtcTransaction = vi.fn().mockResolvedValue(txid);
+    const client = LiquidiumClient.create({
+      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
+    });
+
+    // when
+    const flow = await client.lending.supply({
+      profileId: "aaaaa-aa",
+      poolId: BTC_POOL_ID,
+      action: "deposit",
+      destination: "nativeAddress",
+      btcAmountSats: 100_000n,
+      btcWalletAdapter: {
+        sendBtcTransaction,
+      },
+      btcAccount: "bc1qsender",
+    });
+    const status = await flow.getStatus();
+
+    // then
+    expect(sendBtcTransaction).toHaveBeenCalledTimes(1);
+    expect(fetchSpy).toHaveBeenCalledTimes(3);
+    expect(status).toMatchObject({
+      txid,
+      stage: "PENDING",
+    });
+  });
+
   test("throws when wallet-executed supply adapter cannot send BTC", async () => {
     // given
     vi.spyOn(Actor, "createActor")

@@ -14,6 +14,7 @@ import type { ApiClient } from "../../core/transports/api-client";
 import type { CanisterContext } from "../../core/transports/canister-context";
 import type { SupplyAction } from "../../core/types";
 import { encodeInflowSubaccount } from "../../core/utils/inflow-subaccount";
+import { retryWithBackoff } from "../../core/utils/retry";
 import { computeExpiryTimestampFromNow } from "../../core/utils/time";
 import { getVariantKey } from "../../core/utils/variant";
 import type { WalletAdapter } from "../../core/wallet-actions";
@@ -41,6 +42,9 @@ import type {
 } from "./types";
 
 const BITCOIN_BLOCK_TIME_MS = 10 * 60 * 1000;
+const SUBMIT_INFLOW_MAX_ATTEMPTS = 4;
+const SUBMIT_INFLOW_INITIAL_RETRY_DELAY_MS = 1_500;
+const SUBMIT_INFLOW_RETRY_BACKOFF_MULTIPLIER = 2;
 
 type LendingModuleOptions = {
   supplyStatusPollIntervalMs: number;
@@ -476,9 +480,21 @@ export class LendingModule {
       transferMode: "native",
     });
 
-    await this.submitInflow({ txid });
+    await this.submitInflowWithRetry(txid);
 
     return txid;
+  }
+
+  private async submitInflowWithRetry(txid: string): Promise<void> {
+    await retryWithBackoff({
+      execute: async () => {
+        await this.submitInflow({ txid });
+      },
+      maxAttempts: SUBMIT_INFLOW_MAX_ATTEMPTS,
+      initialRetryDelayMs: SUBMIT_INFLOW_INITIAL_RETRY_DELAY_MS,
+      backoffMultiplier: SUBMIT_INFLOW_RETRY_BACKOFF_MULTIPLIER,
+      shouldRetryError: isRetriableInflowNotFoundError,
+    });
   }
 
   /**
@@ -711,6 +727,18 @@ function throwIfAborted(signal?: AbortSignal): void {
   if (signal?.aborted) {
     throw signal.reason ?? new DOMException("Aborted", "AbortError");
   }
+}
+
+function isRetriableInflowNotFoundError(error: unknown): boolean {
+  if (!(error instanceof LiquidiumError)) {
+    return false;
+  }
+
+  if (error.code !== LiquidiumErrorCode.SERVICE_UNAVAILABLE) {
+    return false;
+  }
+
+  return /not found/i.test(error.message);
 }
 
 function assertSupportsNativeAddressInflowTarget(

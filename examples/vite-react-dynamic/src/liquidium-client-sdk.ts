@@ -52,7 +52,7 @@ type PrepareBtcSupplyParams = {
   action: SupplyAction;
   btcAmountSats: bigint;
   btcAccount: string;
-  sendBtcTransaction: (params: {
+  sendBtcTransaction?: (params: {
     toAddress: string;
     amountSats: bigint;
   }) => Promise<string>;
@@ -215,16 +215,26 @@ export async function prepareBtcSupplyFlow(
 ): Promise<SupplyFlow> {
   const client = createLiquidiumClient();
 
-  return await client.lending.supply({
+  const baseRequest = {
     profileId: params.profileId,
     poolId: params.poolId,
     action: params.action,
     destination: BTC_ADDRESS_DESTINATION,
+  } as const;
+
+  if (!params.sendBtcTransaction) {
+    return await client.lending.supply(baseRequest);
+  }
+
+  const sendBtcTransaction = params.sendBtcTransaction;
+
+  return await client.lending.supply({
+    ...baseRequest,
     btcAmountSats: params.btcAmountSats,
     btcAccount: params.btcAccount,
     btcWalletAdapter: {
       sendBtcTransaction: async ({ toAddress, amountSats }) =>
-        await params.sendBtcTransaction({
+        await sendBtcTransaction({
           toAddress,
           amountSats: amountSats ?? params.btcAmountSats,
         }),
