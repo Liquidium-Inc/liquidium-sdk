@@ -79,9 +79,28 @@ describe("QuoteModule", () => {
     // then
     expect(result.validationErrors).toHaveLength(0);
     expect(result.borrowAmount).toBe(100000000n);
-    expect(result.borrowUsd).toBeGreaterThan(0);
-    expect(result.requiredCollateralAmount).toBeGreaterThan(0n);
-    expect(result.requiredCollateralUsd).toBeGreaterThan(0n);
+    expect(result.borrowUsd).toBe(10_000_000_000n);
+    expect(result.requiredCollateralAmount).toBe(200_000n);
+    expect(result.requiredCollateralUsd).toBe(20_000_000_000n);
+  });
+
+  test("calculates quote values using asset decimals instead of raw base units", async () => {
+    // given
+    const request = {
+      borrowAmount: 1_000_000n,
+      borrowPoolId: "xxxxx-usdt-pool",
+      collateralPoolId: "aaaaa-btc-pool",
+      targetLtvBps: 6500n,
+    };
+
+    // when
+    const result = await quoteModule.quote(request, pools, prices);
+
+    // then
+    expect(result.validationErrors).toHaveLength(0);
+    expect(result.borrowUsd).toBe(100_000_000n);
+    expect(result.requiredCollateralUsd).toBe(153_846_153n);
+    expect(result.requiredCollateralAmount).toBe(1_538n);
   });
 
   test("returns error when borrow pool not found", async () => {

@@ -46,15 +46,33 @@ export async function signWalletMessage(
     const paymentAddress = getBitcoinPaymentAddress(primaryWallet);
     const isUsingPaymentAddress =
       Boolean(paymentAddress) && paymentAddress === liquidiumAccountAddress;
+    const addressType = isUsingPaymentAddress ? "payment" : "ordinals";
+
+    console.debug("[liquidium] BTC signMessage request", {
+      walletAddress: primaryWallet.address,
+      paymentAddress,
+      liquidiumAccountAddress,
+      addressType,
+      protocol: "ecdsa",
+      message,
+    });
 
     const rawSignature = await primaryWallet.signMessage(message, {
-      addressType: isUsingPaymentAddress ? "payment" : "ordinals",
+      addressType,
       protocol: "ecdsa",
     });
 
     if (!rawSignature) {
       throw new Error("Bitcoin wallet did not return a signature.");
     }
+
+    console.debug("[liquidium] BTC signMessage response", {
+      walletAddress: primaryWallet.address,
+      paymentAddress,
+      liquidiumAccountAddress,
+      addressType,
+      rawSignature,
+    });
 
     return normalizeBitcoinSignature(rawSignature);
   }
