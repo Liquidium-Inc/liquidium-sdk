@@ -11,6 +11,12 @@ type SendBitcoinTransactionRequest = {
   amountSats: bigint;
 };
 
+type SendEthereumTransactionRequest = {
+  to: string;
+  data?: string;
+  value?: string;
+};
+
 export type SignatureChain = "ETH" | "BTC";
 
 export function getWalletSignatureChain(
@@ -88,6 +94,28 @@ export async function sendBitcoinTransaction(
 
   if (!txid) {
     throw new Error("Bitcoin wallet did not return a transaction id.");
+  }
+
+  return txid;
+}
+
+export async function sendEthereumTransaction(
+  primaryWallet: DynamicPrimaryWallet,
+  request: SendEthereumTransactionRequest
+): Promise<string> {
+  if (!isEthereumWallet(primaryWallet)) {
+    throw new Error("Connected wallet does not support ETH transactions.");
+  }
+
+  const walletClient = await primaryWallet.getWalletClient();
+  const txid = await walletClient.sendTransaction({
+    to: request.to as `0x${string}`,
+    data: request.data as `0x${string}` | undefined,
+    value: request.value ? BigInt(request.value) : undefined,
+  });
+
+  if (!txid) {
+    throw new Error("Ethereum wallet did not return a transaction hash.");
   }
 
   return txid;

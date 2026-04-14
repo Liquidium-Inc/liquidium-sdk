@@ -5,6 +5,7 @@ import type {
   SupplyAction,
 } from "../../core/types";
 import type {
+  SendEthTransactionRequest,
   SignatureInfo,
   SignMessageWalletAction,
   WalletAdapter,
@@ -109,6 +110,9 @@ export interface SupplyFlowRequest extends SupplyRequest {
   btcWalletAdapter?: Pick<WalletAdapter, "sendBtcTransaction">;
   btcAccount?: string;
   btcAmountSats?: bigint;
+  ethWalletAdapter?: Pick<WalletAdapter, "sendEthTransaction">;
+  ethAccount?: string;
+  ethAmount?: bigint;
 }
 
 export interface GetSupplyStatusRequest {
@@ -152,11 +156,49 @@ export interface SupplyFlow {
 
 export interface SubmitInflowRequest {
   txid: string;
+  chain?: "BTC" | "ETH";
+  type?: "DEPOSIT" | "REPAY";
 }
 
 export interface SubmitInflowResponse {
   success: true;
   txid: string;
+}
+
+export interface GetEvmSupplyContextRequest {
+  profileId: string;
+  poolId: string;
+  walletAddress: string;
+  amount: bigint;
+  action: SupplyAction;
+}
+
+export type EvmSupplyApprovalStrategy =
+  | "none"
+  | "approve-max"
+  | "reset-then-approve-max";
+
+export interface EvmSupplyContext {
+  success: true;
+  profileId: string;
+  poolId: string;
+  walletAddress: string;
+  action: SupplyAction;
+  asset: "USDC" | "USDT";
+  chain: "ETH";
+  amount: string;
+  tokenAddress: string;
+  spenderAddress: string;
+  depositContractAddress: string;
+  balance: string;
+  allowance: string;
+  requiresApproval: boolean;
+  approvalStrategy: EvmSupplyApprovalStrategy;
+}
+
+export interface SendEthContractTransactionRequest {
+  actionType: string;
+  transaction: SendEthTransactionRequest["transaction"];
 }
 
 export interface GetInflowStatusRequest {
