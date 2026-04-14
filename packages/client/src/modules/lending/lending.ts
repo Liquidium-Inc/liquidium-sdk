@@ -13,12 +13,14 @@ import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
 import type { ApiClient } from "../../core/transports/api-client";
 import type { CanisterContext } from "../../core/transports/canister-context";
 import type { SupplyAction } from "../../core/types";
+import { parseBigInt } from "../../core/utils/bigint";
 import { encodeInflowSubaccount } from "../../core/utils/inflow-subaccount";
 import { retryWithBackoff } from "../../core/utils/retry";
 import { computeExpiryTimestampFromNow } from "../../core/utils/time";
 import { getVariantKey } from "../../core/utils/variant";
 import type { WalletAdapter } from "../../core/wallet-actions";
 import { executeWith } from "../../execute";
+import type { UserHistoryEntry, UserHistoryResponse } from "../history/types";
 import type {
   BorrowAction,
   BorrowSubmitSignatureInfo,
@@ -42,6 +44,8 @@ import type {
 } from "./types";
 
 const BITCOIN_BLOCK_TIME_MS = 10 * 60 * 1000;
+const HISTORY_OUTFLOW_LIMIT = 20;
+const HISTORY_OUTFLOW_LOOKBACK_1_MINUTE_MS = 60_000;
 const SUBMIT_INFLOW_MAX_ATTEMPTS = 4;
 const SUBMIT_INFLOW_INITIAL_RETRY_DELAY_MS = 1_500;
 const SUBMIT_INFLOW_RETRY_BACKOFF_MULTIPLIER = 2;
@@ -333,15 +337,33 @@ export class LendingModule {
    * This is the convenience form of `prepareBorrow(...)` plus execution.
    */
   async borrow(
-    params: CreateBorrowRequest & WalletExecutionParams
+    params: CreateBorrowRequest &
+      WalletExecutionParams & { waitForTxid?: boolean }
   ): Promise<OutflowDetails> {
+    const borrowSubmittedAtMs = Date.now();
     const action = await this.prepareBorrow(params);
 
-    return await executeWith({
+    const outflow = await executeWith({
       walletAdapter: params.signerWalletAdapter,
       chain: params.signerChain,
       account: params.signerWalletAddress,
     })(action);
+
+    const shouldWaitForTxid = params.waitForTxid ?? Boolean(this.apiClient);
+
+    if (!shouldWaitForTxid || outflow.txid) {
+      return outflow;
+    }
+
+    return await this.waitForOutflowTxid({
+      profileId: params.profileId,
+      poolId: params.poolId,
+      amount: params.amount,
+      outflow,
+      outflowType: "borrow",
+      submittedAtMs: borrowSubmittedAtMs,
+      pollIntervalMs: this.options.supplyStatusPollIntervalMs,
+    });
   }
 
   /**
@@ -572,6 +594,121 @@ export class LendingModule {
     return this.apiClient;
   }
 
+  private async waitForOutflowTxid(params: {
+    profileId: string;
+    poolId: string;
+    amount: bigint;
+    outflow: OutflowDetails;
+    outflowType: UserHistoryEntry["type"];
+    submittedAtMs: number;
+    pollIntervalMs: number;
+  }): Promise<OutflowDetails> {
+    const historySearchStartMs =
+      params.submittedAtMs - HISTORY_OUTFLOW_LOOKBACK_1_MINUTE_MS;
+
+    while (true) {
+      const historyItems = await this.loadRecentUserOutflowHistory({
+        profileId: params.profileId,
+        poolId: params.poolId,
+      });
+
+      console.debug("[liquidium] borrow txid poll", {
+        profileId: params.profileId,
+        poolId: params.poolId,
+        outflowId: params.outflow.id,
+        amount: params.amount.toString(),
+        historyItemCount: historyItems.length,
+        historyItems: historyItems.map((item) => ({
+          id: item.id,
+          type: item.type,
+          amount: item.amount.toString(),
+          status: item.status,
+          txid: item.txid,
+        })),
+      });
+
+      const matchingHistoryEntry = findMatchingOutflowHistoryEntry({
+        outflow: params.outflow,
+        historyItems,
+        outflowType: params.outflowType,
+        amount: params.amount,
+        historySearchStartMs,
+      });
+
+      if (matchingHistoryEntry?.status === "FAILED") {
+        throw new LiquidiumError(
+          LiquidiumErrorCode.TRANSFER_FAILED,
+          `${params.outflowType} request failed before a txid was assigned`
+        );
+      }
+
+      if (matchingHistoryEntry?.txid) {
+        return {
+          ...params.outflow,
+          txid: matchingHistoryEntry.txid,
+        };
+      }
+
+      await delay(params.pollIntervalMs);
+    }
+  }
+
+  private async loadRecentUserOutflowHistory(params: {
+    profileId: string;
+    poolId: string;
+  }): Promise<UserHistoryEntry[]> {
+    const apiClient = this.requireApi();
+    const query = new URLSearchParams({
+      market: params.poolId,
+      limit: String(HISTORY_OUTFLOW_LIMIT),
+    });
+    const requestPath = `/v1/history/users/${encodeURIComponent(params.profileId)}/transactions?${query.toString()}`;
+
+    console.debug("[liquidium] fetch borrow history", {
+      profileId: params.profileId,
+      poolId: params.poolId,
+      requestPath,
+    });
+
+    try {
+      const response = await apiClient.get<UserHistoryResponse>(requestPath);
+
+      for (let i = 0; i < response.items.length; i++) {
+        const item = response.items[i];
+        console.debug(`[liquidium] history item ${i}`, {
+          id: item.id,
+          type: item.type,
+          amount: item.amount,
+          status: item.status,
+          txid: item.txid,
+          txids: item.txids,
+        });
+      }
+
+      console.debug("[liquidium] fetch borrow history response", {
+        success: response.success,
+        itemCount: response.items.length,
+      });
+
+      return response.items.map((item) => ({
+        id: item.id,
+        type: item.type,
+        amount: parseBigInt(item.amount, "outflow history amount"),
+        poolId: item.poolId,
+        timestamp: item.timestamp,
+        status: item.status,
+        txid: item.txid,
+        txids: item.txids,
+      }));
+    } catch (error) {
+      console.error("[liquidium] fetch borrow history error", {
+        error,
+        requestPath,
+      });
+      throw error;
+    }
+  }
+
   private async getPoolById(poolId: string): Promise<LendingPoolRecord> {
     const pools = await createLendingActor(this.canisterContext).list_pools();
     const selectedPool = pools.find(
@@ -672,6 +809,44 @@ export class LendingModule {
       }),
     };
   }
+}
+
+function findMatchingOutflowHistoryEntry(params: {
+  outflow: OutflowDetails;
+  historyItems: UserHistoryEntry[];
+  outflowType: UserHistoryEntry["type"];
+  amount: bigint;
+  historySearchStartMs: number;
+}): UserHistoryEntry | null {
+  const matchingById = params.historyItems.find(
+    (historyItem) =>
+      historyItem.type === params.outflowType &&
+      historyItem.id === params.outflow.id
+  );
+
+  if (matchingById) {
+    return matchingById;
+  }
+
+  return (
+    params.historyItems.find((historyItem) => {
+      if (historyItem.type !== params.outflowType) {
+        return false;
+      }
+
+      if (historyItem.amount !== params.amount) {
+        return false;
+      }
+
+      const historyTimestampMs = Date.parse(historyItem.timestamp);
+
+      if (Number.isNaN(historyTimestampMs)) {
+        return false;
+      }
+
+      return historyTimestampMs >= params.historySearchStartMs;
+    }) ?? null
+  );
 }
 
 function mapBtcInflowToSupplyTrackingStatus(

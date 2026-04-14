@@ -78,6 +78,9 @@ export default function App() {
   );
   const [isQuoteLoading, setIsQuoteLoading] = useState(false);
   const [borrowResult, setBorrowResult] = useState<OutflowDetails | null>(null);
+  const [borrowResultStatus, setBorrowResultStatus] = useState<string | null>(
+    null
+  );
   const [supplyAction, setSupplyAction] = useState<SupplyAction>(
     DEFAULT_SUPPLY_ACTION
   );
@@ -437,20 +440,33 @@ export default function App() {
         throw new Error(borrowCapacityValidationError);
       }
 
-      const nextBorrowResult = await createBorrowOutflow({
-        profileId,
-        poolId: selectedBorrowPool.id,
-        amount: borrowAmountInBaseUnits,
-        receiverAddress: borrowAddress.trim(),
-        signerWalletAddress: liquidiumAccountAddress,
-        signerChain: getWalletSignatureChain(primaryWallet),
-        signMessage: (message) =>
-          signWalletMessage(primaryWallet, message, liquidiumAccountAddress),
-        onStep: setStatusMessage,
-      });
+      setBorrowResult(null);
+      setBorrowResultStatus("Waiting for BTC txid...");
 
-      setBorrowResult(nextBorrowResult);
-      setStatusMessage(`Created borrow outflow ${nextBorrowResult.id}.`);
+      try {
+        const nextBorrowResult = await createBorrowOutflow({
+          profileId,
+          poolId: selectedBorrowPool.id,
+          amount: borrowAmountInBaseUnits,
+          receiverAddress: borrowAddress.trim(),
+          signerWalletAddress: liquidiumAccountAddress,
+          signerChain: getWalletSignatureChain(primaryWallet),
+          signMessage: (message) =>
+            signWalletMessage(primaryWallet, message, liquidiumAccountAddress),
+          onStep: setStatusMessage,
+        });
+
+        setBorrowResult(nextBorrowResult);
+        setBorrowResultStatus(null);
+        setStatusMessage(
+          nextBorrowResult.txid
+            ? `Created borrow outflow ${nextBorrowResult.id} with txid ${nextBorrowResult.txid}.`
+            : `Created borrow outflow ${nextBorrowResult.id}.`
+        );
+      } catch (error) {
+        setBorrowResultStatus(null);
+        throw error;
+      }
     });
   }
 
@@ -822,7 +838,9 @@ export default function App() {
         <pre className="output">
           {borrowResult
             ? JSON.stringify(borrowResult, bigintJsonReplacer, 2)
-            : "Borrow result will appear here after submission."}
+            : borrowResultStatus
+              ? borrowResultStatus
+              : "Borrow result will appear here after submission."}
         </pre>
       </section>
 
