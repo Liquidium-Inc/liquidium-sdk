@@ -58,6 +58,19 @@ type PrepareBtcSupplyParams = {
   }) => Promise<string>;
 };
 
+type PrepareErc20SupplyParams = {
+  profileId: string;
+  poolId: string;
+  action: SupplyAction;
+  amount: bigint;
+  walletAddress: string;
+  sendEthTransaction: (params: {
+    to: string;
+    data?: string;
+    value?: string;
+  }) => Promise<string>;
+};
+
 type CreateBorrowParams = {
   profileId: string;
   poolId: string;
@@ -238,6 +251,25 @@ export async function prepareBtcSupplyFlow(
           toAddress,
           amountSats: amountSats ?? params.btcAmountSats,
         }),
+    },
+  });
+}
+
+export async function prepareErc20SupplyFlow(
+  params: PrepareErc20SupplyParams
+): Promise<SupplyFlow> {
+  const client = createLiquidiumClient();
+
+  return await client.lending.supply({
+    profileId: params.profileId,
+    poolId: params.poolId,
+    action: params.action,
+    destination: "icrcAccount",
+    ethAmount: params.amount,
+    ethAccount: params.walletAddress,
+    ethWalletAdapter: {
+      sendEthTransaction: async ({ transaction }) =>
+        await params.sendEthTransaction(transaction),
     },
   });
 }

@@ -1,5 +1,6 @@
 import { encodeIcrcAccount } from "@dfinity/ledger-icrc";
 import { Principal } from "@dfinity/principal";
+import { encodeFunctionData } from "viem";
 import { createCkBtcMinterActor } from "../../core/canisters/ckbtc/minter";
 import {
   createLendingActor,
@@ -10,6 +11,12 @@ import {
   mapLendingProtocolErrorToLiquidiumError,
 } from "../../core/canisters/lending/error-mappers";
 import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
+import {
+  CK_DEPOSIT_ABI,
+  CK_DEPOSIT_CONTRACT_ADDRESS,
+  ERC20_ABI,
+  MAX_UINT256,
+} from "../../core/evm";
 import type { ApiClient } from "../../core/transports/api-client";
 import type { CanisterContext } from "../../core/transports/canister-context";
 import type { SupplyAction } from "../../core/types";
@@ -26,6 +33,8 @@ import type {
   BorrowSubmitSignatureInfo,
   CreateBorrowRequest,
   CreateWithdrawRequest,
+  EvmSupplyContext,
+  GetEvmSupplyContextRequest,
   GetInflowStatusRequest,
   GetInflowStatusResponse,
   IcrcAccountSupplyTarget,
@@ -49,6 +58,8 @@ const HISTORY_OUTFLOW_LOOKBACK_1_MINUTE_MS = 60_000;
 const SUBMIT_INFLOW_MAX_ATTEMPTS = 4;
 const SUBMIT_INFLOW_INITIAL_RETRY_DELAY_MS = 1_500;
 const SUBMIT_INFLOW_RETRY_BACKOFF_MULTIPLIER = 2;
+const ETH_APPROVAL_POLL_INTERVAL_MS = 2_000;
+const ETH_APPROVAL_MAX_POLLS = 30;
 
 type LendingModuleOptions = {
   supplyStatusPollIntervalMs: number;
@@ -387,8 +398,8 @@ export class LendingModule {
    * Creates a tracked supply flow for a deposit or repayment.
    *
    * This builds the supply instruction and returns helpers for txid submission
-   * and status tracking. When `btcWalletAdapter` is provided, BTC native-address
-   * supplies are auto-broadcast and auto-submitted by this method.
+   * and status tracking. When a wallet adapter is provided for the selected
+   * chain, supported inflows are auto-broadcast and auto-submitted by this method.
    */
   async supply(request: SupplyFlowRequest): Promise<SupplyFlow> {
     const instruction = await this.prepareSupply(request);
@@ -467,7 +478,32 @@ export class LendingModule {
       trackedTxid = autoSubmittedTxid;
     }
 
+    if (request.ethWalletAdapter) {
+      const autoSubmittedTxid = await this.sendAndSubmitEthSupplyInflow({
+        request,
+        instruction,
+      });
+      trackedTxid = autoSubmittedTxid;
+    }
+
     return flow;
+  }
+
+  async getEvmSupplyContext(
+    request: GetEvmSupplyContextRequest
+  ): Promise<EvmSupplyContext> {
+    const apiClient = this.requireApi();
+    const query = new URLSearchParams({
+      profileId: request.profileId,
+      poolId: request.poolId,
+      walletAddress: request.walletAddress,
+      amount: request.amount.toString(),
+      action: request.action,
+    });
+
+    return await apiClient.get<EvmSupplyContext>(
+      `/v1/evm/supply-context?${query.toString()}`
+    );
   }
 
   private async sendAndSubmitBtcSupplyInflow(params: {
@@ -507,10 +543,133 @@ export class LendingModule {
     return txid;
   }
 
-  private async submitInflowWithRetry(txid: string): Promise<void> {
+  private async sendAndSubmitEthSupplyInflow(params: {
+    request: SupplyFlowRequest;
+    instruction: SupplyInstruction;
+  }): Promise<string> {
+    const { request, instruction } = params;
+
+    if (
+      instruction.target.type !== "icrcAccount" ||
+      instruction.chain !== "ETH"
+    ) {
+      throw new LiquidiumError(
+        LiquidiumErrorCode.VALIDATION_ERROR,
+        "Wallet-executed ETH supply is only supported for ETH ICRC-account targets"
+      );
+    }
+
+    if (!request.ethWalletAdapter?.sendEthTransaction) {
+      throw new LiquidiumError(
+        LiquidiumErrorCode.VALIDATION_ERROR,
+        "ETH wallet adapter does not support transaction sending"
+      );
+    }
+
+    const walletAddress = request.ethAccount?.trim();
+    if (!walletAddress) {
+      throw new LiquidiumError(
+        LiquidiumErrorCode.VALIDATION_ERROR,
+        "ETH wallet-executed supply requires an ETH account"
+      );
+    }
+
+    if (!request.ethAmount || request.ethAmount <= 0n) {
+      throw new LiquidiumError(
+        LiquidiumErrorCode.VALIDATION_ERROR,
+        "ETH wallet-executed supply requires a positive token amount"
+      );
+    }
+
+    const evmSupplyContext = await this.getEvmSupplyContext({
+      profileId: request.profileId,
+      poolId: request.poolId,
+      walletAddress,
+      amount: request.ethAmount,
+      action: request.action,
+    });
+    const amount = BigInt(evmSupplyContext.amount);
+
+    if (BigInt(evmSupplyContext.balance) < amount) {
+      throw new LiquidiumError(
+        LiquidiumErrorCode.INSUFFICIENT_FUNDS,
+        `Insufficient ${evmSupplyContext.asset} balance for ${request.action}`
+      );
+    }
+
+    if (evmSupplyContext.approvalStrategy === "reset-then-approve-max") {
+      await this.sendEthContractTransaction(
+        request.ethWalletAdapter,
+        walletAddress,
+        createApproveTransaction({
+          tokenAddress: evmSupplyContext.tokenAddress,
+          spenderAddress: evmSupplyContext.spenderAddress,
+          amount: 0n,
+        }),
+        `supply-${request.action}-approve-reset`
+      );
+
+      await this.waitForExpectedAllowance({
+        profileId: request.profileId,
+        poolId: request.poolId,
+        walletAddress,
+        amount,
+        action: request.action,
+        expectation: "zero",
+      });
+    }
+
+    if (evmSupplyContext.approvalStrategy !== "none") {
+      await this.sendEthContractTransaction(
+        request.ethWalletAdapter,
+        walletAddress,
+        createApproveTransaction({
+          tokenAddress: evmSupplyContext.tokenAddress,
+          spenderAddress: evmSupplyContext.spenderAddress,
+          amount: MAX_UINT256,
+        }),
+        `supply-${request.action}-approve-max`
+      );
+
+      await this.waitForExpectedAllowance({
+        profileId: request.profileId,
+        poolId: request.poolId,
+        walletAddress,
+        amount,
+        action: request.action,
+        expectation: "sufficient",
+      });
+    }
+
+    const depositTxid = await this.sendEthContractTransaction(
+      request.ethWalletAdapter,
+      walletAddress,
+      createDepositErc20Transaction({
+        tokenAddress: evmSupplyContext.tokenAddress,
+        amount,
+        poolId: request.poolId,
+        profileId: request.profileId,
+        destinationAccount: instruction.target.account,
+        action: request.action,
+      }),
+      `supply-${request.action}-deposit-erc20`
+    );
+
+    await this.submitInflowWithRetry(depositTxid, {
+      chain: "ETH",
+      type: request.action === "repayment" ? "REPAY" : "DEPOSIT",
+    });
+
+    return depositTxid;
+  }
+
+  private async submitInflowWithRetry(
+    txid: string,
+    extraRequest?: Omit<SubmitInflowRequest, "txid">
+  ): Promise<void> {
     await retryWithBackoff({
       execute: async () => {
-        await this.submitInflow({ txid });
+        await this.submitInflow({ txid, ...extraRequest });
       },
       maxAttempts: SUBMIT_INFLOW_MAX_ATTEMPTS,
       initialRetryDelayMs: SUBMIT_INFLOW_INITIAL_RETRY_DELAY_MS,
@@ -763,6 +922,63 @@ export class LendingModule {
       }),
     };
   }
+
+  private async sendEthContractTransaction(
+    walletAdapter: Pick<WalletAdapter, "sendEthTransaction">,
+    walletAddress: string,
+    request: { to: string; data: string },
+    actionType: string
+  ): Promise<string> {
+    if (!walletAdapter.sendEthTransaction) {
+      throw new LiquidiumError(
+        LiquidiumErrorCode.VALIDATION_ERROR,
+        "ETH wallet adapter does not support transaction sending"
+      );
+    }
+
+    return await walletAdapter.sendEthTransaction({
+      chain: "ETH",
+      account: walletAddress,
+      actionType,
+      transferMode: "native",
+      transaction: request,
+    });
+  }
+
+  private async waitForExpectedAllowance(params: {
+    profileId: string;
+    poolId: string;
+    walletAddress: string;
+    amount: bigint;
+    action: SupplyAction;
+    expectation: "zero" | "sufficient";
+  }): Promise<void> {
+    for (let pollIndex = 0; pollIndex < ETH_APPROVAL_MAX_POLLS; pollIndex += 1) {
+      const nextContext = await this.getEvmSupplyContext({
+        profileId: params.profileId,
+        poolId: params.poolId,
+        walletAddress: params.walletAddress,
+        amount: params.amount,
+        action: params.action,
+      });
+      const allowance = BigInt(nextContext.allowance);
+      const matchesExpectation =
+        params.expectation === "zero"
+          ? allowance === 0n
+          : allowance >= params.amount;
+
+      if (matchesExpectation) {
+        return;
+      }
+
+      await delay(ETH_APPROVAL_POLL_INTERVAL_MS);
+    }
+
+    throw new LiquidiumError(
+      LiquidiumErrorCode.SERVICE_UNAVAILABLE,
+      `Timed out waiting for ${params.expectation} ETH allowance update`
+    );
+  }
 }
 
 function findMatchingOutflowHistoryEntry(params: {
@@ -885,7 +1101,7 @@ function assertSupportsNativeAddressInflowTarget(
 }
 
 function assertSupportsIcrcAccountInflowTarget(asset: string): void {
-  if (asset === "BTC" || asset === "USDT") {
+  if (asset === "BTC" || asset === "USDT" || asset === "USDC") {
     return;
   }
 
@@ -893,6 +1109,89 @@ function assertSupportsIcrcAccountInflowTarget(asset: string): void {
     LiquidiumErrorCode.VALIDATION_ERROR,
     `ICRC account inflow targets are not supported for ${asset}`
   );
+}
+
+function createApproveTransaction(params: {
+  tokenAddress: string;
+  spenderAddress: string;
+  amount: bigint;
+}): { to: string; data: string } {
+  return {
+    to: params.tokenAddress,
+    data: encodeFunctionData({
+      abi: ERC20_ABI,
+      functionName: "approve",
+      args: [params.spenderAddress as `0x${string}`, params.amount],
+    }),
+  };
+}
+
+function createDepositErc20Transaction(params: {
+  tokenAddress: string;
+  amount: bigint;
+  poolId: string;
+  profileId: string;
+  destinationAccount: string;
+  action: SupplyAction;
+}): { to: string; data: string } {
+  const expectedDestinationAccount = encodeIcrcAccount({
+    owner: Principal.fromText(params.poolId),
+    subaccount: encodeInflowSubaccount({
+      action: params.action,
+      principal: Principal.fromText(params.profileId),
+    }),
+  });
+
+  if (params.destinationAccount !== expectedDestinationAccount) {
+    throw new LiquidiumError(
+      LiquidiumErrorCode.VALIDATION_ERROR,
+      "ETH supply destination account does not match the expected inflow account"
+    );
+  }
+
+  const principalBytes32 = encodePrincipalToBytes32(Principal.fromText(params.poolId));
+  const subaccountHex = encodeBytes32Hex(
+    encodeInflowSubaccount({
+      action: params.action,
+      principal: Principal.fromText(params.profileId),
+    })
+  );
+
+  return {
+    to: CK_DEPOSIT_CONTRACT_ADDRESS,
+    data: encodeFunctionData({
+      abi: CK_DEPOSIT_ABI,
+      functionName: "depositErc20",
+      args: [
+        params.tokenAddress as `0x${string}`,
+        params.amount,
+        principalBytes32,
+        subaccountHex,
+      ],
+    }),
+  };
+}
+
+function encodePrincipalToBytes32(principal: Principal): `0x${string}` {
+  const principalBytes = principal.toUint8Array();
+  if (principalBytes.length > 29) {
+    throw new LiquidiumError(
+      LiquidiumErrorCode.VALIDATION_ERROR,
+      "Principal length exceeds Ethereum bytes32 capacity"
+    );
+  }
+
+  const fixedBytes = new Uint8Array(32);
+  fixedBytes[0] = principalBytes.length;
+  fixedBytes.set(principalBytes, 1);
+
+  return encodeBytes32Hex(fixedBytes);
+}
+
+function encodeBytes32Hex(bytes: Uint8Array): `0x${string}` {
+  return `0x${Array.from(bytes, (byte) =>
+    byte.toString(16).padStart(2, "0")
+  ).join("")}`;
 }
 
 function createBorrowAssetMessage(

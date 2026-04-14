@@ -20,6 +20,7 @@ import {
   type OutflowDetails,
   type Pool,
   prepareBtcSupplyFlow,
+   prepareErc20SupplyFlow,
   type SupplyAction,
   type SupplyFlow,
   type UserHistoryEntry,
@@ -29,6 +30,7 @@ import {
   getBitcoinPaymentAddress,
   getWalletSignatureChain,
   sendBitcoinTransaction,
+   sendEthereumTransaction,
   signWalletMessage,
 } from "./wallet-signing";
 
@@ -45,6 +47,8 @@ const DEFAULT_BORROW_AMOUNT = "2000";
 const DEFAULT_TARGET_LTV_BPS = 3200;
 const DEFAULT_SUPPLY_ACTION: SupplyAction = "deposit";
 const DEFAULT_SUPPLY_AMOUNT_BTC = "0.0001";
+const DEFAULT_SUPPLY_AMOUNT_STABLE = "10";
+const DEFAULT_INFLOW_CHAIN = "BTC";
 const INTERNAL_USD_DECIMALS = 8;
 const PROFILE_STATS_USD_DECIMALS = 27;
 const MIN_LTV_BPS = 1000;
@@ -88,6 +92,15 @@ export default function App() {
     DEFAULT_SUPPLY_AMOUNT_BTC
   );
   const [supplyFlow, setSupplyFlow] = useState<SupplyFlow | null>(null);
+  const [selectedInflowChain, setSelectedInflowChain] = useState(
+    DEFAULT_INFLOW_CHAIN
+  );
+  const [stableSupplyAmountInput, setStableSupplyAmountInput] = useState(
+    DEFAULT_SUPPLY_AMOUNT_STABLE
+  );
+  const [stableSupplyFlow, setStableSupplyFlow] = useState<SupplyFlow | null>(
+    null
+  );
   const [userPositionSummary, setUserPositionSummary] =
     useState<UserStats | null>(null);
   const [isPositionSummaryLoading, setIsPositionSummaryLoading] =
@@ -128,6 +141,13 @@ export default function App() {
   }, [collateralPoolId, pools]);
   const btcPool = useMemo(() => {
     return findBtcPool(pools) ?? null;
+  }, [pools]);
+  const stablePool = useMemo(() => {
+    return (
+      pools.find(
+        (pool) => pool.chain === "ETH" && isStablecoinAsset(pool.asset)
+      ) ?? null
+    );
   }, [pools]);
   const maxAllowedLtvBps = Number(selectedCollateralPool?.maxLtv ?? 0n);
   const borrowAmountInBaseUnits = selectedBorrowPool
@@ -177,6 +197,23 @@ export default function App() {
     supplyAmountInput,
     getAssetDecimals("BTC")
   );
+  const stableSupplyAmount = stablePool
+    ? parseDecimalToBaseUnits(
+        stableSupplyAmountInput,
+        getAssetDecimals(stablePool.asset)
+      )
+    : null;
+  const isBitcoinInflowSelected = selectedInflowChain === "BTC";
+  const selectedInflowPool = isBitcoinInflowSelected ? btcPool : stablePool;
+  const selectedInflowAmountInput = isBitcoinInflowSelected
+    ? supplyAmountInput
+    : stableSupplyAmountInput;
+  const selectedInflowAmount = isBitcoinInflowSelected
+    ? supplyAmountSats
+    : stableSupplyAmount;
+  const selectedInflowFlow = isBitcoinInflowSelected
+    ? supplyFlow
+    : stableSupplyFlow;
 
   useEffect(() => {
     if (pools.length === 0) {
@@ -497,6 +534,45 @@ export default function App() {
     });
   }
 
+  async function handleStartStableSupplyFlow() {
+    await runAction(async () => {
+      if (!profileId) {
+        throw new Error("Create or resolve a Liquidium profile first.");
+      }
+
+      if (!stablePool) {
+        throw new Error("Load markets first so the ETH stablecoin pool can be resolved.");
+      }
+
+      if (!primaryWallet || !isEthereumWallet(primaryWallet)) {
+        throw new Error("Connect an Ethereum wallet first.");
+      }
+
+      if (!liquidiumAccountAddress) {
+        throw new Error("Missing ETH wallet address.");
+      }
+
+      if (!stableSupplyAmount || stableSupplyAmount <= 0n) {
+        throw new Error(`Enter a valid ${stablePool.asset} amount to ${supplyAction}.`);
+      }
+
+      setStatusMessage(`Starting ${stablePool.asset} ${supplyAction} flow...`);
+
+      const nextSupplyFlow = await prepareErc20SupplyFlow({
+        profileId,
+        poolId: stablePool.id,
+        action: supplyAction,
+        amount: stableSupplyAmount,
+        walletAddress: liquidiumAccountAddress,
+        sendEthTransaction: async (transaction) =>
+          await sendEthereumTransaction(primaryWallet, transaction),
+      });
+
+      setStableSupplyFlow(nextSupplyFlow);
+      setStatusMessage(`Started ${stablePool.asset} ${supplyAction} flow.`);
+    });
+  }
+
   async function handleCopyBtcAddress() {
     const supplyInstruction = supplyFlow?.instruction ?? null;
 
@@ -622,7 +698,10 @@ export default function App() {
   return (
     <main className="app">
       <h1>Liquidium SDK example</h1>
-      <p>Simple example for connect, profile, quote, borrow, and BTC supply.</p>
+      <p>
+        Simple example for connect, profile, quote, borrow, BTC supply, and
+        ETH stablecoin supply.
+      </p>
 
       <section className="section">
         <h2>Wallet</h2>
@@ -830,45 +909,91 @@ export default function App() {
       </section>
 
       <section className="section">
-        <h2>BTC supply flow</h2>
+        <h2>Inflow flow</h2>
         <div className="field-grid">
           <label>
-            BTC amount
+            Inflow chain
+            <select
+              value={selectedInflowChain}
+              onChange={(event) => setSelectedInflowChain(event.target.value)}
+            >
+              <option value="BTC">BTC</option>
+              <option value="ETH">ETH stablecoin</option>
+            </select>
+          </label>
+
+          <label>
+            Pool
+            <input
+              readOnly
+              value={
+                selectedInflowPool
+                  ? `${selectedInflowPool.asset} on ${selectedInflowPool.chain}`
+                  : isBitcoinInflowSelected
+                    ? "Load markets to detect the BTC pool"
+                    : "Load markets to detect a stablecoin pool"
+              }
+            />
+          </label>
+
+          <label>
+            Inflow action
+            <select
+              value={supplyAction}
+              onChange={(event) =>
+                setSupplyAction(event.target.value as SupplyAction)
+              }
+            >
+              <option value="deposit">Deposit</option>
+              <option value="repayment">Repayment</option>
+            </select>
+          </label>
+
+          <label>
+            Amount
             <input
               inputMode="decimal"
-              value={supplyAmountInput}
-              onChange={(event) => setSupplyAmountInput(event.target.value)}
-              placeholder="0.0001"
+              value={selectedInflowAmountInput}
+              onChange={(event) => {
+                if (isBitcoinInflowSelected) {
+                  setSupplyAmountInput(event.target.value);
+                  return;
+                }
+
+                setStableSupplyAmountInput(event.target.value);
+              }}
+              placeholder={isBitcoinInflowSelected ? "0.0001" : "10"}
             />
           </label>
         </div>
         <div className="actions">
-          <select
-            value={supplyAction}
-            onChange={(event) =>
-              setSupplyAction(event.target.value as SupplyAction)
-            }
-          >
-            <option value="deposit">Deposit</option>
-            <option value="repayment">Repayment</option>
-          </select>
           <button
             disabled={
               isBusy ||
               !profileId ||
-              !btcPool ||
               !primaryWallet ||
-              !isBitcoinWallet(primaryWallet) ||
-              !supplyAmountSats ||
-              supplyAmountSats <= 0n
+              !selectedInflowPool ||
+              !selectedInflowAmount ||
+              selectedInflowAmount <= 0n ||
+              (isBitcoinInflowSelected
+                ? !isBitcoinWallet(primaryWallet)
+                : !isEthereumWallet(primaryWallet))
             }
-            onClick={() => void handleStartSupplyFlow()}
+            onClick={() => {
+              if (isBitcoinInflowSelected) {
+                void handleStartSupplyFlow();
+                return;
+              }
+
+              void handleStartStableSupplyFlow();
+            }}
             type="button"
           >
-            start btc flow
+            {isBitcoinInflowSelected ? "start btc flow" : "start stablecoin flow"}
           </button>
           <button
             disabled={
+              !isBitcoinInflowSelected ||
               !isNativeAddressSupplyInstruction(supplyFlow?.instruction ?? null)
             }
             onClick={() => void handleCopyBtcAddress()}
@@ -878,6 +1003,7 @@ export default function App() {
           </button>
           <button
             disabled={
+              !isBitcoinInflowSelected ||
               !isNativeAddressSupplyInstruction(supplyFlow?.instruction ?? null)
             }
             onClick={handleOpenBitcoinUri}
@@ -888,9 +1014,11 @@ export default function App() {
         </div>
 
         <pre className="output">
-          {supplyFlow
-            ? JSON.stringify(supplyFlow, bigintJsonReplacer, 2)
-            : "No BTC supply flow yet."}
+          {selectedInflowFlow
+            ? JSON.stringify(selectedInflowFlow, bigintJsonReplacer, 2)
+            : isBitcoinInflowSelected
+              ? "No BTC inflow flow yet."
+              : "No ETH stablecoin inflow flow yet."}
         </pre>
       </section>
 

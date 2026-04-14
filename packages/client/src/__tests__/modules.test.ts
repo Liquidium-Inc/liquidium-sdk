@@ -1277,6 +1277,212 @@ describe("LendingModule", () => {
     );
   });
 
+  test("fetches evm supply context through the sdk api", async () => {
+    // given
+    const responsePayload = {
+      success: true as const,
+      profileId: "aaaaa-aa",
+      poolId: USDT_POOL_ID,
+      walletAddress: "0x1234567890123456789012345678901234567890",
+      action: "deposit" as const,
+      asset: "USDT" as const,
+      chain: "ETH" as const,
+      amount: "1000000",
+      tokenAddress: "0xdac17f958d2ee523a2206206994597c13d831ec7",
+      spenderAddress: "0x18901044688D3756C35Ed2b36D93e6a5B8e00E68",
+      depositContractAddress: "0x18901044688D3756C35Ed2b36D93e6a5B8e00E68",
+      balance: "2000000",
+      allowance: "0",
+      requiresApproval: true,
+      approvalStrategy: "approve-max" as const,
+    };
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify(responsePayload), {
+        status: 200,
+        headers: {
+          "content-type": "application/json",
+        },
+      })
+    );
+    const client = LiquidiumClient.create({
+      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
+    });
+
+    // when
+    const result = await client.lending.getEvmSupplyContext({
+      profileId: "aaaaa-aa",
+      poolId: USDT_POOL_ID,
+      walletAddress: "0x1234567890123456789012345678901234567890",
+      amount: 1_000_000n,
+      action: "deposit",
+    });
+
+    // then
+    expect(result).toEqual(responsePayload);
+    expect(fetchSpy).toHaveBeenCalledWith(
+      `https://app.liquidium.fi/api/sdk/v1/evm/supply-context?profileId=aaaaa-aa&poolId=${USDT_POOL_ID}&walletAddress=0x1234567890123456789012345678901234567890&amount=1000000&action=deposit`,
+      {
+        method: "GET",
+        headers: undefined,
+        body: undefined,
+        signal: expect.any(AbortSignal),
+      }
+    );
+  });
+
+  test("auto-executes eth usdt supply with approval and inflow submission", async () => {
+    // given
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi.fn().mockResolvedValue([
+        {
+          optimal_utilization_rate: 80n,
+          principal: {
+            toString: () => USDT_POOL_ID,
+            toText: () => USDT_POOL_ID,
+          },
+          total_generated_interest_snapshot: 0n,
+          supply_cap: [],
+          same_asset_borrowing: [],
+          asset: { USDT: null },
+          rate_slope_before: 1n,
+          borrow_cap: [],
+          total_debt_at_last_sync: 0n,
+          chain: { ETH: null },
+          rate_slope_after: 2n,
+          reserve_factor: 100n,
+          last_updated: [],
+          lending_index: 300n,
+          protocol_liquidation_fee: 50n,
+          borrow_index: 400n,
+          base_rate: 5n,
+          frozen: false,
+          liquidation_bonus: 200n,
+          liquidation_threshold: 7_500n,
+          max_ltv: 7_000n,
+          total_supply_at_last_sync: 50_000n,
+        },
+      ]),
+    } as never);
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    fetchSpy
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            success: true,
+            profileId: "aaaaa-aa",
+            poolId: USDT_POOL_ID,
+            walletAddress: "0x1234567890123456789012345678901234567890",
+            action: "deposit",
+            asset: "USDT",
+            chain: "ETH",
+            amount: "1000000",
+            tokenAddress: "0xdac17f958d2ee523a2206206994597c13d831ec7",
+            spenderAddress: "0x18901044688D3756C35Ed2b36D93e6a5B8e00E68",
+            depositContractAddress: "0x18901044688D3756C35Ed2b36D93e6a5B8e00E68",
+            balance: "2000000",
+            allowance: "0",
+            requiresApproval: true,
+            approvalStrategy: "approve-max",
+          }),
+          {
+            status: 200,
+            headers: {
+              "content-type": "application/json",
+            },
+          }
+        )
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            success: true,
+            profileId: "aaaaa-aa",
+            poolId: USDT_POOL_ID,
+            walletAddress: "0x1234567890123456789012345678901234567890",
+            action: "deposit",
+            asset: "USDT",
+            chain: "ETH",
+            amount: "1000000",
+            tokenAddress: "0xdac17f958d2ee523a2206206994597c13d831ec7",
+            spenderAddress: "0x18901044688D3756C35Ed2b36D93e6a5B8e00E68",
+            depositContractAddress: "0x18901044688D3756C35Ed2b36D93e6a5B8e00E68",
+            balance: "2000000",
+            allowance: "1000000",
+            requiresApproval: false,
+            approvalStrategy: "none",
+          }),
+          {
+            status: 200,
+            headers: {
+              "content-type": "application/json",
+            },
+          }
+        )
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ success: true, txid: "0xdeposit" }), {
+          status: 200,
+          headers: {
+            "content-type": "application/json",
+          },
+        })
+      );
+    const sendEthTransaction = vi
+      .fn()
+      .mockResolvedValueOnce("0xapprove")
+      .mockResolvedValueOnce("0xdeposit");
+    const client = LiquidiumClient.create({
+      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
+    });
+
+    // when
+    const flow = await client.lending.supply({
+      profileId: "aaaaa-aa",
+      poolId: USDT_POOL_ID,
+      action: "deposit",
+      destination: "icrcAccount",
+      ethAccount: "0x1234567890123456789012345678901234567890",
+      ethAmount: 1_000_000n,
+      ethWalletAdapter: {
+        sendEthTransaction,
+      },
+    });
+
+    // then
+    expect(flow.target).toMatchObject({
+      type: "icrcAccount",
+      asset: "USDT",
+      chain: "ETH",
+    });
+    expect(sendEthTransaction).toHaveBeenCalledTimes(2);
+    expect(sendEthTransaction).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        chain: "ETH",
+        actionType: "supply-deposit-approve-max",
+      })
+    );
+    expect(sendEthTransaction).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        chain: "ETH",
+        actionType: "supply-deposit-deposit-erc20",
+      })
+    );
+    expect(fetchSpy).toHaveBeenNthCalledWith(
+      3,
+      "https://app.liquidium.fi/api/sdk/v1/inflow",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({
+          txid: "0xdeposit",
+          chain: "ETH",
+          type: "DEPOSIT",
+        }),
+      })
+    );
+  });
+
   test("fetches inflow status entries through the sdk api", async () => {
     // given
     const profileId = "h35kd-uaaaa-aaaaa-aaaaa-aaaaa-aaaaa-abai";

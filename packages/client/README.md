@@ -22,6 +22,8 @@ import {
 const client = LiquidiumClient.create({});
 const walletAdapter: WalletAdapter = {
   signMessage: async ({ message }) => wallet.signMessage(message),
+  sendEthTransaction: async ({ transaction }) =>
+    wallet.sendTransaction(transaction),
 };
 
 // Market data
@@ -125,6 +127,20 @@ for await (const update of supplyFlow.watchStatus()) {
     break;
   }
 }
+
+// ETH stablecoin supply / repay with backend approval planning
+const stablecoinFlow = await client.lending.supply({
+  profileId: "<liquidium-profile-id>",
+  poolId: "<eth-usdt-or-usdc-pool-id>",
+  action: "deposit",
+  destination: "icrcAccount",
+  ethAccount: walletAddress,
+  ethAmount: 10_000_000n,
+  ethWalletAdapter: {
+    sendEthTransaction: async ({ transaction }) =>
+      wallet.sendTransaction(transaction),
+  },
+});
 ```
 
 ## API
@@ -170,7 +186,9 @@ Environment presets:
 ### Wallet adapters
 
 - `WalletAdapter` currently supports BTC/ETH message signing through `signMessage`
-- Future versions will add native ICP, native Solana, and additional BTC/ETH execution capabilities like PSBT signing, direct ETH transaction sending, and ck-asset execution paths
+- BTC native supply automation uses `sendBtcTransaction`
+- ETH USDT/USDC supply and repayment automation uses `sendEthTransaction` together with `apiBaseUrl`
+- Future versions will add native ICP, native Solana, and additional ck-asset execution paths
 
 ### Modules
 
@@ -185,6 +203,8 @@ Environment presets:
 
 - `client.lending.prepareSupply(...)` returns the raw supply instruction for the selected execution path.
 - `client.lending.supply(...)` builds a tracked supply flow and returns helpers to submit a broadcast `txid`, fetch the latest tracking status, and poll every 5 seconds until the inflow is available.
+- BTC native-address inflows can auto-broadcast when `btcWalletAdapter` is provided.
+- ETH USDT/USDC inflows can auto-approve and auto-broadcast when `ethWalletAdapter`, `ethAccount`, `ethAmount`, and `apiBaseUrl` are provided.
 
 ## License
 
