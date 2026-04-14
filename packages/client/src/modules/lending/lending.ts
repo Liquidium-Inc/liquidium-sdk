@@ -612,21 +612,6 @@ export class LendingModule {
         poolId: params.poolId,
       });
 
-      console.debug("[liquidium] borrow txid poll", {
-        profileId: params.profileId,
-        poolId: params.poolId,
-        outflowId: params.outflow.id,
-        amount: params.amount.toString(),
-        historyItemCount: historyItems.length,
-        historyItems: historyItems.map((item) => ({
-          id: item.id,
-          type: item.type,
-          amount: item.amount.toString(),
-          status: item.status,
-          txid: item.txid,
-        })),
-      });
-
       const matchingHistoryEntry = findMatchingOutflowHistoryEntry({
         outflow: params.outflow,
         historyItems,
@@ -662,51 +647,20 @@ export class LendingModule {
       market: params.poolId,
       limit: String(HISTORY_OUTFLOW_LIMIT),
     });
-    const requestPath = `/v1/history/users/${encodeURIComponent(params.profileId)}/transactions?${query.toString()}`;
+    const response = await apiClient.get<UserHistoryResponse>(
+      `/v1/history/users/${encodeURIComponent(params.profileId)}/transactions?${query.toString()}`
+    );
 
-    console.debug("[liquidium] fetch borrow history", {
-      profileId: params.profileId,
-      poolId: params.poolId,
-      requestPath,
-    });
-
-    try {
-      const response = await apiClient.get<UserHistoryResponse>(requestPath);
-
-      for (let i = 0; i < response.items.length; i++) {
-        const item = response.items[i];
-        console.debug(`[liquidium] history item ${i}`, {
-          id: item.id,
-          type: item.type,
-          amount: item.amount,
-          status: item.status,
-          txid: item.txid,
-          txids: item.txids,
-        });
-      }
-
-      console.debug("[liquidium] fetch borrow history response", {
-        success: response.success,
-        itemCount: response.items.length,
-      });
-
-      return response.items.map((item) => ({
-        id: item.id,
-        type: item.type,
-        amount: parseBigInt(item.amount, "outflow history amount"),
-        poolId: item.poolId,
-        timestamp: item.timestamp,
-        status: item.status,
-        txid: item.txid,
-        txids: item.txids,
-      }));
-    } catch (error) {
-      console.error("[liquidium] fetch borrow history error", {
-        error,
-        requestPath,
-      });
-      throw error;
-    }
+    return response.items.map((item) => ({
+      id: item.id,
+      type: item.type,
+      amount: parseBigInt(item.amount, "outflow history amount"),
+      poolId: item.poolId,
+      timestamp: item.timestamp,
+      status: item.status,
+      txid: item.txid,
+      txids: item.txids,
+    }));
   }
 
   private async getPoolById(poolId: string): Promise<LendingPoolRecord> {

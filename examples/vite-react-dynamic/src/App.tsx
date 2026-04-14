@@ -352,12 +352,6 @@ export default function App() {
         throw new Error("Connect an Ethereum or Bitcoin wallet first.");
       }
 
-      console.debug("[liquidium] create profile signer", {
-        walletAddress: primaryWallet.address,
-        liquidiumAccountAddress,
-        signerChain: getWalletSignatureChain(primaryWallet),
-      });
-
       const profileResult = await createOrResolveProfileIdSimple({
         walletAddress: liquidiumAccountAddress,
         chain: getWalletSignatureChain(primaryWallet),
@@ -404,15 +398,6 @@ export default function App() {
       if (!primaryWallet || !liquidiumAccountAddress) {
         throw new Error("Connect an Ethereum or Bitcoin wallet first.");
       }
-
-      console.debug("[liquidium] borrow signer", {
-        walletAddress: primaryWallet.address,
-        liquidiumAccountAddress,
-        signerChain: getWalletSignatureChain(primaryWallet),
-        borrowPoolId: selectedBorrowPool?.id,
-        borrowAmountInBaseUnits: borrowAmountInBaseUnits?.toString(),
-        receiverAddress: borrowAddress.trim(),
-      });
 
       if (!profileId) {
         throw new Error("Create or resolve a Liquidium profile first.");
