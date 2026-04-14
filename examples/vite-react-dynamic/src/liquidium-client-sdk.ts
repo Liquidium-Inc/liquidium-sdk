@@ -21,7 +21,7 @@ import { resolveLiquidiumClientConfig } from "./liquidium-runtime-config";
 const BTC_ASSET = "BTC";
 const BTC_CHAIN = "BTC";
 const BTC_ADDRESS_DESTINATION: SupplyDestination = "nativeAddress";
-const REQUEST_TIMEOUT_45_SECONDS_MS = 45_000;
+const REQUEST_TIMEOUT_5_MINUTES_MS = 300_000;
 
 type SignatureChain = "ETH" | "BTC";
 
@@ -249,9 +249,11 @@ export async function createBorrowOutflow(
 
   params.onStep?.("Preparing borrow request...");
   params.onStep?.("Please sign the borrow message to continue...");
-  params.onStep?.("Submitting signed borrow request...");
+  params.onStep?.(
+    "Submitting signed borrow request and waiting for BTC txid..."
+  );
 
-  return await withTimeout(
+  const borrowOutflow = await withTimeout(
     client.lending.borrow({
       profileId: params.profileId,
       poolId: params.poolId,
@@ -260,9 +262,16 @@ export async function createBorrowOutflow(
       signerWalletAddress: params.signerWalletAddress,
       signerChain: params.signerChain,
       signerWalletAdapter: createWalletAdapter(params.signMessage),
+      waitForTxid: true,
     }),
-    "Timed out while submitting the signed borrow request."
+    "Timed out while waiting for the borrow txid."
   );
+
+  if (borrowOutflow.txid) {
+    params.onStep?.(`Borrow txid assigned: ${borrowOutflow.txid}`);
+  }
+
+  return borrowOutflow;
 }
 
 export function findBtcPool(pools: Pool[]): Pool | undefined {
@@ -331,14 +340,15 @@ async function resolveDefaultPoolId(
 
 async function withTimeout<T>(
   promise: Promise<T>,
-  timeoutMessage: string
+  timeoutMessage: string,
+  timeoutMs: number = REQUEST_TIMEOUT_5_MINUTES_MS
 ): Promise<T> {
   let timeoutId: ReturnType<typeof setTimeout> | undefined;
 
   const timeoutPromise = new Promise<never>((_resolve, reject) => {
     timeoutId = setTimeout(() => {
       reject(new Error(timeoutMessage));
-    }, REQUEST_TIMEOUT_45_SECONDS_MS);
+    }, timeoutMs);
   });
 
   try {

@@ -2110,6 +2110,75 @@ Nonce: 17`);
     });
   });
 
+  test("waits for borrow txid by default", async () => {
+    // given
+    vi.setSystemTime(new Date("2026-04-01T00:00:00.000Z"));
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      get_nonce: vi.fn().mockResolvedValue(31n),
+      borrow_assets: vi.fn().mockResolvedValue({
+        Ok: {
+          id: "outflow-3",
+          txid: [],
+          outflow_type: { Borrow: null },
+          outflow_ref: [],
+          amount: 12_000n,
+          receiver: { External: "bc1qborrow" },
+        },
+      }),
+    } as never);
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          success: true,
+          items: [
+            {
+              id: "outflow-3",
+              type: "borrow",
+              amount: "12000",
+              poolId: "rrkah-fqaaa-aaaaa-aaaaq-cai",
+              timestamp: "2026-04-01T00:00:02.000Z",
+              status: "PENDING",
+              txid: "txid-3",
+            },
+          ],
+        }),
+        {
+          status: 200,
+          headers: {
+            "content-type": "application/json",
+          },
+        }
+      )
+    );
+    const signMessage = vi.fn().mockResolvedValue("0xsigned");
+    const client = LiquidiumClient.create({
+      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
+    });
+
+    // when
+    const outflow = await client.lending.borrow({
+      profileId: "aaaaa-aa",
+      poolId: "rrkah-fqaaa-aaaaa-aaaaq-cai",
+      amount: 12_000n,
+      receiverAddress: "bc1qborrow",
+      signerWalletAddress: "0xsigner",
+      signerChain: "ETH",
+      signerWalletAdapter: { signMessage },
+    });
+
+    // then
+    expect(outflow.txid).toBe("txid-3");
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "https://app.liquidium.fi/api/sdk/v1/history/users/aaaaa-aa/transactions?market=rrkah-fqaaa-aaaaa-aaaaq-cai&limit=20",
+      {
+        method: "GET",
+        headers: undefined,
+        body: undefined,
+        signal: expect.any(AbortSignal),
+      }
+    );
+  });
+
   test("maps protocol errors for createBorrow submission", async () => {
     // given
     vi.spyOn(Actor, "createActor").mockReturnValue({
