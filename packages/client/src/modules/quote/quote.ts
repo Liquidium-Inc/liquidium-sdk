@@ -10,6 +10,12 @@ import { QuoteValidationErrorCode, QuoteWarningCode } from "./types";
 const BASIS_POINTS = 10000n;
 const MIN_LTV_BPS = 0n;
 const MIN_BORROW_AMOUNT = 5000n;
+const INTERNAL_USD_DECIMALS = 8;
+const ASSET_DECIMALS: Record<string, number> = {
+  BTC: 8,
+  USDC: 6,
+  USDT: 6,
+};
 
 type CreateQuoteResultParams = {
   borrowAmount: bigint;
@@ -165,12 +171,15 @@ export class QuoteModule {
       });
     }
 
-    const borrowUsd = toUsd(borrowAmount, borrowPrice);
+    const borrowAssetDecimals = getAssetDecimals(borrowAsset);
+    const collateralAssetDecimals = getAssetDecimals(collateralAsset);
+    const borrowUsd = toUsd(borrowAmount, borrowPrice, borrowAssetDecimals);
     const targetLtvDecimal = Number(targetLtvBps) / Number(BASIS_POINTS);
     const requiredCollateralUsd = borrowUsd / targetLtvDecimal;
     const requiredCollateralAmount = fromUsd(
       requiredCollateralUsd,
-      collateralPrice
+      collateralPrice,
+      collateralAssetDecimals
     );
 
     return createQuoteResult({
@@ -207,14 +216,32 @@ function createQuoteResult(params: CreateQuoteResultParams): QuoteResult {
   };
 }
 
-function toUsd(amount: bigint, price: number): number {
-  return Number(amount) * price;
+function toUsd(amount: bigint, price: number, assetDecimals: number): number {
+  return baseUnitsToDecimalAmount(amount, assetDecimals) * price;
 }
 
-function fromUsd(usd: number, price: number): bigint {
-  return BigInt(Math.floor(usd / price));
+function fromUsd(usd: number, price: number, assetDecimals: number): bigint {
+  return decimalAmountToBaseUnits(usd / price, assetDecimals);
 }
 
 function usdToInternal(usd: number): bigint {
-  return BigInt(Math.floor(usd * 1e8));
+  return BigInt(Math.floor(usd * 10 ** INTERNAL_USD_DECIMALS));
+}
+
+function getAssetDecimals(asset: string): number {
+  return ASSET_DECIMALS[asset] ?? INTERNAL_USD_DECIMALS;
+}
+
+function baseUnitsToDecimalAmount(
+  amount: bigint,
+  assetDecimals: number
+): number {
+  return Number(amount) / 10 ** assetDecimals;
+}
+
+function decimalAmountToBaseUnits(
+  amount: number,
+  assetDecimals: number
+): bigint {
+  return BigInt(Math.floor(amount * 10 ** assetDecimals));
 }
