@@ -1,45 +1,44 @@
 import { useDynamicContext, useIsLoggedIn } from "@dynamic-labs/sdk-react-core";
-import type { AssetPrices, QuoteResult } from "@liquidium/client";
+import type {
+  ApySample,
+  AssetPrices,
+  OutflowDetails,
+  Pool,
+  QuoteResult,
+  UserHistoryEntry,
+  UserStats,
+} from "@liquidium/client";
 import { useEffect, useMemo, useState } from "react";
 import { ExampleWalletSection } from "./ExampleWalletSection";
 import {
   getLiquidiumAccountAddress,
   getWalletChainLabel,
 } from "./example-wallet";
+import { getAssetDecimals } from "./lib/assets";
+import { getBorrowCapacityValidationError } from "./lib/borrow-capacity";
+import { createLiquidiumClient } from "./lib/client";
 import {
-  type ApySample,
   bigintJsonReplacer,
-  createBorrowOutflow,
-  createOrResolveProfileIdSimple,
-  findBtcPool,
+  formatBorrowAmountDisplay,
+  formatBpsAsPercent,
+  formatInternalUsd,
   formatLiquidiumError,
-  getLoanQuote,
-  loadBorrowApyHistory,
-  loadLiquidationActivities,
-  loadQuoteContext,
-  loadUserPositionSummary,
-  loadUserTransactionHistory,
-  type OutflowDetails,
-  type Pool,
-  type UserHistoryEntry,
-  type UserStats,
-} from "./liquidium-client-sdk";
+  formatPoolAmount,
+  parseDecimalToBaseUnits,
+} from "./lib/format";
+import {
+  findBtcPool,
+  formatHistoryAmount,
+  resolveDefaultBorrowPoolId,
+  resolveDefaultCollateralPoolId,
+} from "./lib/pools";
+import { createOrResolveProfile } from "./lib/profile";
 import { getWalletSignatureChain, signWalletMessage } from "./wallet-signing";
 
-const ASSET_DECIMALS: Record<string, number> = {
-  BTC: 8,
-  USDC: 6,
-  USDT: 6,
-};
 const DEFAULT_BORROW_AMOUNT = "2000";
 const DEFAULT_TARGET_LTV_BPS = 3200;
-const INTERNAL_USD_DECIMALS = 8;
-const PROFILE_STATS_USD_DECIMALS = 27;
 const MIN_LTV_BPS = 1000;
-const MAX_DECIMAL_PLACES = 8;
 const DEFAULT_HISTORY_LIMIT = 20;
-const USD_DECIMAL_SCALE_FACTOR =
-  10n ** BigInt(PROFILE_STATS_USD_DECIMALS - INTERNAL_USD_DECIMALS);
 
 export default function App() {
   const isLoggedIn = useIsLoggedIn();
@@ -101,15 +100,15 @@ export default function App() {
     getLiquidiumAccountAddress(primaryWallet) ?? "";
   const walletChain = getWalletChainLabel(primaryWallet);
 
-  const selectedBorrowPool = useMemo(() => {
-    return pools.find((pool) => pool.id === borrowPoolId) ?? null;
-  }, [borrowPoolId, pools]);
-  const selectedCollateralPool = useMemo(() => {
-    return pools.find((pool) => pool.id === collateralPoolId) ?? null;
-  }, [collateralPoolId, pools]);
-  const btcPool = useMemo(() => {
-    return findBtcPool(pools) ?? null;
-  }, [pools]);
+  const selectedBorrowPool = useMemo(
+    () => pools.find((pool) => pool.id === borrowPoolId) ?? null,
+    [borrowPoolId, pools]
+  );
+  const selectedCollateralPool = useMemo(
+    () => pools.find((pool) => pool.id === collateralPoolId) ?? null,
+    [collateralPoolId, pools]
+  );
+  const btcPool = useMemo(() => findBtcPool(pools) ?? null, [pools]);
   const maxAllowedLtvBps = Number(selectedCollateralPool?.maxLtv ?? 0n);
   const borrowAmountInBaseUnits = selectedBorrowPool
     ? parseDecimalToBaseUnits(
@@ -117,7 +116,7 @@ export default function App() {
         getAssetDecimals(selectedBorrowPool.asset)
       )
     : null;
-  const borrowAmountDisplay = getBorrowAmountDisplay(
+  const borrowAmountDisplay = formatBorrowAmountDisplay(
     borrowAmountInput,
     selectedBorrowPool?.asset
   );
@@ -154,12 +153,9 @@ export default function App() {
     borrowAmountInBaseUnits !== null &&
     borrowAmountInBaseUnits > 0n &&
     borrowAddress.trim().length > 0;
-  useEffect(() => {
-    if (pools.length === 0) {
-      return;
-    }
 
-    if (!borrowPoolId) {
+  useEffect(() => {
+    if (pools.length === 0 || !borrowPoolId) {
       return;
     }
 
@@ -220,16 +216,17 @@ export default function App() {
       setQuoteErrorMessage(null);
 
       try {
-        const nextQuoteResult = await getLoanQuote({
-          request: {
+        const client = createLiquidiumClient();
+        const nextQuoteResult = await client.quote.quote(
+          {
             borrowAmount: borrowAmountInBaseUnits,
             borrowPoolId: selectedBorrowPool.id,
             collateralPoolId: selectedCollateralPool.id,
             targetLtvBps: BigInt(targetLtvBps),
           },
           pools,
-          prices,
-        });
+          prices
+        );
 
         if (!isCancelled) {
           setQuoteResult(nextQuoteResult);
@@ -272,8 +269,9 @@ export default function App() {
       setIsPositionSummaryLoading(true);
 
       try {
+        const client = createLiquidiumClient();
         const nextUserPositionSummary =
-          await loadUserPositionSummary(profileId);
+          await client.positions.getUserStats(profileId);
 
         if (!isCancelled) {
           setUserPositionSummary(nextUserPositionSummary);
@@ -297,13 +295,6 @@ export default function App() {
   }, [profileId]);
 
   useEffect(() => {
-    if (!profileId) {
-      setTransactionHistory([]);
-      setHistoryNextCursor(null);
-      setLiquidationHistory([]);
-      return;
-    }
-
     setTransactionHistory([]);
     setHistoryNextCursor(null);
     setLiquidationHistory([]);
@@ -328,43 +319,51 @@ export default function App() {
         throw new Error("Connect an Ethereum or Bitcoin wallet first.");
       }
 
-      const profileResult = await createOrResolveProfileIdSimple({
-        walletAddress: liquidiumAccountAddress,
-        chain: getWalletSignatureChain(primaryWallet),
-        signMessage: (message) =>
-          signWalletMessage(primaryWallet, message, liquidiumAccountAddress),
-        onStep: setStatusMessage,
-      });
+      setStatusMessage("Creating Liquidium account...");
 
-      setProfileId(profileResult.profileId);
+      const { profileId: nextProfileId, wasCreated } =
+        await createOrResolveProfile({
+          client: createLiquidiumClient(),
+          walletAddress: liquidiumAccountAddress,
+          chain: getWalletSignatureChain(primaryWallet),
+          signMessage: (message) =>
+            signWalletMessage(primaryWallet, message, liquidiumAccountAddress),
+        });
+
+      setProfileId(nextProfileId);
       setStatusMessage(
-        profileResult.wasCreated
-          ? `Created Liquidium profile ${profileResult.profileId}.`
-          : `Resolved Liquidium profile ${profileResult.profileId}.`
+        wasCreated
+          ? `Created Liquidium profile ${nextProfileId}.`
+          : `Resolved Liquidium profile ${nextProfileId}.`
       );
     });
   }
 
-  async function handleLoadQuoteContext() {
+  async function handleLoadMarkets() {
     await runAction(async () => {
       setStatusMessage("Loading pools and prices...");
 
-      const nextQuoteContext = await loadQuoteContext();
+      const client = createLiquidiumClient();
+      const [nextPools, nextPrices] = await Promise.all([
+        client.market.getPools(),
+        client.market.getAssetPrices(),
+      ]);
+      const defaultPoolId = findBtcPool(nextPools)?.id ?? nextPools[0]?.id ?? "";
       const nextBorrowPoolId = resolveDefaultBorrowPoolId(
-        nextQuoteContext.pools,
-        nextQuoteContext.selectedPoolId
+        nextPools,
+        defaultPoolId
       );
       const nextCollateralPoolId = resolveDefaultCollateralPoolId(
-        nextQuoteContext.pools,
+        nextPools,
         nextBorrowPoolId
       );
 
-      setPools(nextQuoteContext.pools);
-      setPrices(nextQuoteContext.prices);
+      setPools(nextPools);
+      setPrices(nextPrices);
       setBorrowPoolId(nextBorrowPoolId);
       setCollateralPoolId(nextCollateralPoolId);
       setStatusMessage(
-        `Loaded ${nextQuoteContext.pools.length} pools and live prices.`
+        `Loaded ${nextPools.length} pools and live prices.`
       );
     });
   }
@@ -403,18 +402,25 @@ export default function App() {
 
       setBorrowResult(null);
       setBorrowResultStatus("Submitting borrow request...");
+      setStatusMessage("Please sign the borrow message to continue...");
 
       try {
-        const nextBorrowResult = await createBorrowOutflow({
+        const client = createLiquidiumClient();
+        const nextBorrowResult = await client.lending.borrow({
           profileId,
           poolId: selectedBorrowPool.id,
           amount: borrowAmountInBaseUnits,
           receiverAddress: borrowAddress.trim(),
           signerWalletAddress: liquidiumAccountAddress,
           signerChain: getWalletSignatureChain(primaryWallet),
-          signMessage: (message) =>
-            signWalletMessage(primaryWallet, message, liquidiumAccountAddress),
-          onStep: setStatusMessage,
+          signerWalletAdapter: {
+            signMessage: async ({ message }) =>
+              await signWalletMessage(
+                primaryWallet,
+                message,
+                liquidiumAccountAddress
+              ),
+          },
         });
 
         setBorrowResult(nextBorrowResult);
@@ -439,7 +445,10 @@ export default function App() {
     setIsPositionSummaryLoading(true);
 
     try {
-      const nextUserPositionSummary = await loadUserPositionSummary(profileId);
+      const client = createLiquidiumClient();
+      const nextUserPositionSummary =
+        await client.positions.getUserStats(profileId);
+
       setUserPositionSummary(nextUserPositionSummary);
     } catch (error) {
       setErrorMessage(formatLiquidiumError(error));
@@ -456,7 +465,8 @@ export default function App() {
     setIsTransactionHistoryLoading(true);
 
     try {
-      const historyPage = await loadUserTransactionHistory(
+      const client = createLiquidiumClient();
+      const historyPage = await client.history.getUserTransactionHistory(
         profileId,
         historyPoolIdFilter || undefined,
         {
@@ -485,7 +495,8 @@ export default function App() {
     setIsLiquidationHistoryLoading(true);
 
     try {
-      const liquidationPage = await loadLiquidationActivities(
+      const client = createLiquidiumClient();
+      const liquidationPage = await client.history.getLiquidationHistory(
         profileId,
         liquidationPoolIdFilter || undefined
       );
@@ -510,10 +521,11 @@ export default function App() {
     setIsBorrowRateHistoryLoading(true);
 
     try {
-      const ratesPage = await loadBorrowApyHistory(borrowRatePoolIdFilter, {
-        cursor,
-        limit: DEFAULT_HISTORY_LIMIT,
-      });
+      const client = createLiquidiumClient();
+      const ratesPage = await client.history.getBorrowRateHistory(
+        borrowRatePoolIdFilter,
+        { cursor, limit: DEFAULT_HISTORY_LIMIT }
+      );
 
       setBorrowRateHistory((currentItems) =>
         cursor ? [...currentItems, ...ratesPage.items] : ratesPage.items
@@ -540,37 +552,19 @@ export default function App() {
         canCreateProfile={Boolean(primaryWallet && liquidiumAccountAddress)}
         onConnect={() => setShowAuthFlow(true)}
         onDisconnect={() => void handleLogOut()}
-        onLoadMarkets={() => void handleLoadQuoteContext()}
+        onLoadMarkets={() => void handleLoadMarkets()}
         onCreateProfile={() => void handleCreateProfile()}
         details={[
-          {
-            label: "Workflow stage",
-            value: workflowStageLabel,
-          },
-          {
-            label: "Quote status",
-            value: quoteHealthLabel,
-          },
-          {
-            label: "Connected chain",
-            value: walletChain ?? "Not connected",
-          },
-          {
-            label: "Wallet address",
-            value: walletAddress || "Not connected",
-          },
+          { label: "Workflow stage", value: workflowStageLabel },
+          { label: "Quote status", value: quoteHealthLabel },
+          { label: "Connected chain", value: walletChain ?? "Not connected" },
+          { label: "Wallet address", value: walletAddress || "Not connected" },
           {
             label: "SDK account address",
             value: liquidiumAccountAddress || "Not connected",
           },
-          {
-            label: "Profile ID",
-            value: profileId ?? "Not created yet",
-          },
-          {
-            label: "Pools loaded",
-            value: pools.length,
-          },
+          { label: "Profile ID", value: profileId ?? "Not created yet" },
+          { label: "Pools loaded", value: pools.length },
           {
             label: "BTC pool ID",
             value: btcPool?.id ?? "Load pools to detect the BTC pool.",
@@ -934,174 +928,4 @@ export default function App() {
       </section>
     </main>
   );
-}
-
-function resolveDefaultCollateralPoolId(
-  pools: Pool[],
-  borrowPoolId: string
-): string {
-  const btcPool = findBtcPool(pools);
-
-  if (btcPool && btcPool.id !== borrowPoolId) {
-    return btcPool.id;
-  }
-
-  return pools.find((pool) => pool.id !== borrowPoolId)?.id ?? borrowPoolId;
-}
-
-function resolveDefaultBorrowPoolId(
-  pools: Pool[],
-  fallbackPoolId: string
-): string {
-  const stablePool = pools.find((pool) => isStablecoinAsset(pool.asset));
-
-  return stablePool?.id ?? fallbackPoolId;
-}
-
-function parseDecimalToBaseUnits(
-  value: string,
-  decimals: number
-): bigint | null {
-  const normalizedValue = value.trim();
-
-  if (!normalizedValue) {
-    return null;
-  }
-
-  if (!/^\d+(\.\d+)?$/.test(normalizedValue)) {
-    return null;
-  }
-
-  const [wholePart, fractionalPart = ""] = normalizedValue.split(".");
-  const paddedFractionalPart = fractionalPart
-    .slice(0, decimals)
-    .padEnd(decimals, "0");
-
-  return BigInt(`${wholePart}${paddedFractionalPart}`);
-}
-
-function getAssetDecimals(asset: string): number {
-  return ASSET_DECIMALS[asset] ?? MAX_DECIMAL_PLACES;
-}
-
-function isStablecoinAsset(asset: string): boolean {
-  return asset === "USDC" || asset === "USDT";
-}
-
-function getBorrowAmountDisplay(
-  value: string,
-  asset: string | undefined
-): string {
-  if (!asset) {
-    return "--";
-  }
-
-  const normalizedValue = value.trim();
-  const isStableAsset = isStablecoinAsset(asset);
-
-  if (!normalizedValue) {
-    return isStableAsset ? "$0" : `0 ${asset}`;
-  }
-
-  if (isStableAsset) {
-    return formatUsdFromDecimalString(normalizedValue);
-  }
-
-  return `${normalizedValue} ${asset}`;
-}
-
-function formatUsdFromDecimalString(value: string): string {
-  const amount = Number(value || "0");
-
-  if (Number.isNaN(amount)) {
-    return "$0";
-  }
-
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 2,
-  }).format(amount);
-}
-
-function formatInternalUsd(value: bigint): string {
-  return formatUsdFromDecimalString(
-    formatBaseUnitsAsDecimal(value, INTERNAL_USD_DECIMALS, 2)
-  );
-}
-
-function formatPoolAmount(value: bigint, asset: string): string {
-  const decimals = getAssetDecimals(asset);
-  const maxFractionDigits = asset === "BTC" ? 8 : 4;
-
-  return `${formatBaseUnitsAsDecimal(value, decimals, maxFractionDigits)} ${asset}`;
-}
-
-function formatBaseUnitsAsDecimal(
-  value: bigint,
-  decimals: number,
-  maxFractionDigits: number
-): string {
-  const isNegative = value < 0n;
-  const normalizedValue = isNegative ? value * -1n : value;
-  const stringValue = normalizedValue.toString().padStart(decimals + 1, "0");
-  const wholePart = stringValue.slice(0, -decimals) || "0";
-  const fractionalPart = stringValue.slice(-decimals);
-  const trimmedFractionalPart = fractionalPart
-    .slice(0, maxFractionDigits)
-    .replace(/0+$/, "");
-  const formattedWholePart = new Intl.NumberFormat("en-US").format(
-    Number(wholePart)
-  );
-  const signPrefix = isNegative ? "-" : "";
-
-  if (!trimmedFractionalPart) {
-    return `${signPrefix}${formattedWholePart}`;
-  }
-
-  return `${signPrefix}${formattedWholePart}.${trimmedFractionalPart}`;
-}
-
-function formatHistoryAmount(entry: UserHistoryEntry, pools: Pool[]): string {
-  const matchingPool = pools.find((pool) => pool.id === entry.poolId);
-  if (!matchingPool) {
-    return entry.amount.toString();
-  }
-
-  return formatPoolAmount(entry.amount, matchingPool.asset);
-}
-
-function getBorrowCapacityValidationError(params: {
-  quoteResult: QuoteResult | null;
-  userPositionSummary: UserStats | null;
-}): string | null {
-  const { quoteResult, userPositionSummary } = params;
-
-  if (!quoteResult || !userPositionSummary) {
-    return null;
-  }
-
-  const availableBorrowUsd =
-    userPositionSummary.borrowingPower.maxBorrowableUsd;
-
-  if (availableBorrowUsd <= 0n) {
-    return "No collateral available yet. Deposit collateral and wait for confirmations before borrowing.";
-  }
-
-  if (quoteResult.borrowUsd <= 0n) {
-    return null;
-  }
-
-  const requestedBorrowUsdAtProfileScale =
-    quoteResult.borrowUsd * USD_DECIMAL_SCALE_FACTOR;
-
-  if (requestedBorrowUsdAtProfileScale > availableBorrowUsd) {
-    return "Insufficient collateral for this borrow amount. Deposit more collateral or lower the borrow amount/LTV.";
-  }
-
-  return null;
-}
-
-function formatBpsAsPercent(value: number): string {
-  return `${(value / 100).toFixed(0)}%`;
 }

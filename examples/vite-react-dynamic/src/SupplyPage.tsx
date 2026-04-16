@@ -1,24 +1,32 @@
 import { isBitcoinWallet } from "@dynamic-labs/bitcoin";
 import { isEthereumWallet } from "@dynamic-labs/ethereum";
 import { useDynamicContext, useIsLoggedIn } from "@dynamic-labs/sdk-react-core";
+import type {
+  Pool,
+  SupplyAction,
+  SupplyFlow,
+  SupplyInstruction,
+  WalletAdapter,
+} from "@liquidium/client";
 import { useEffect, useMemo, useState } from "react";
 import { ExampleWalletSection } from "./ExampleWalletSection";
 import {
   getLiquidiumAccountAddress,
   getWalletChainLabel,
 } from "./example-wallet";
+import { getAssetDecimals, isStablecoinAsset } from "./lib/assets";
+import { createLiquidiumClient } from "./lib/client";
 import {
   bigintJsonReplacer,
-  createOrResolveProfileIdSimple,
   formatLiquidiumError,
-  isNativeAddressSupplyInstruction,
-  isStablecoinAsset,
-  loadQuoteContext,
-  type Pool,
-  prepareSupplyFlow,
-  type SupplyAction,
-  type SupplyFlow,
-} from "./liquidium-client-sdk";
+  parseDecimalToBaseUnits,
+} from "./lib/format";
+import {
+  isBtcPool,
+  isEthStablecoinPool,
+  isSupportedSupplyPool,
+} from "./lib/pools";
+import { createOrResolveProfile } from "./lib/profile";
 import {
   getWalletSignatureChain,
   sendBitcoinTransaction,
@@ -28,11 +36,6 @@ import {
 
 const DEFAULT_SUPPLY_ACTION: SupplyAction = "deposit";
 const DEFAULT_SUPPLY_AMOUNT = "10";
-const ASSET_DECIMALS: Record<string, number> = {
-  BTC: 8,
-  USDC: 6,
-  USDT: 6,
-};
 
 export function SupplyPage() {
   const isLoggedIn = useIsLoggedIn();
@@ -58,9 +61,10 @@ export function SupplyPage() {
   const liquidiumAccountAddress =
     getLiquidiumAccountAddress(primaryWallet) ?? "";
   const walletChain = getWalletChainLabel(primaryWallet);
-  const supportedSupplyPools = useMemo(() => {
-    return pools.filter(isSupportedSupplyPool);
-  }, [pools]);
+  const supportedSupplyPools = useMemo(
+    () => pools.filter(isSupportedSupplyPool),
+    [pools]
+  );
   const selectedSupplyPool = useMemo(() => {
     return (
       supportedSupplyPools.find((pool) => pool.id === selectedSupplyPoolId) ??
@@ -120,32 +124,36 @@ export function SupplyPage() {
         throw new Error("Connect an Ethereum or Bitcoin wallet first.");
       }
 
-      const profileResult = await createOrResolveProfileIdSimple({
-        walletAddress: liquidiumAccountAddress,
-        chain: getWalletSignatureChain(primaryWallet),
-        signMessage: (message) =>
-          signWalletMessage(primaryWallet, message, liquidiumAccountAddress),
-        onStep: setStatusMessage,
-      });
+      setStatusMessage("Creating Liquidium account...");
 
-      setProfileId(profileResult.profileId);
+      const { profileId: nextProfileId, wasCreated } =
+        await createOrResolveProfile({
+          client: createLiquidiumClient(),
+          walletAddress: liquidiumAccountAddress,
+          chain: getWalletSignatureChain(primaryWallet),
+          signMessage: (message) =>
+            signWalletMessage(primaryWallet, message, liquidiumAccountAddress),
+        });
+
+      setProfileId(nextProfileId);
       setStatusMessage(
-        profileResult.wasCreated
-          ? `Created Liquidium profile ${profileResult.profileId}.`
-          : `Resolved Liquidium profile ${profileResult.profileId}.`
+        wasCreated
+          ? `Created Liquidium profile ${nextProfileId}.`
+          : `Resolved Liquidium profile ${nextProfileId}.`
       );
     });
   }
 
-  async function handleLoadQuoteContext() {
+  async function handleLoadMarkets() {
     await runAction(async () => {
       setStatusMessage("Loading pools...");
 
-      const nextQuoteContext = await loadQuoteContext();
+      const client = createLiquidiumClient();
+      const nextPools = await client.market.getPools();
 
-      setPools(nextQuoteContext.pools);
+      setPools(nextPools);
       setStatusMessage(
-        `Loaded ${nextQuoteContext.pools.length} pools for the supply page.`
+        `Loaded ${nextPools.length} pools for the supply page.`
       );
     });
   }
@@ -177,56 +185,23 @@ export function SupplyPage() {
         );
       }
 
-      let sendBtcTransactionCallback:
-        | ((params: {
-            toAddress: string;
-            amountSats: bigint;
-          }) => Promise<string>)
-        | undefined;
-      let sendEthTransactionCallback:
-        | ((params: {
-            to: string;
-            data?: string;
-            value?: string;
-          }) => Promise<string>)
-        | undefined;
-
-      if (
-        primaryWallet &&
-        isBitcoinWallet(primaryWallet) &&
-        selectedSupplyPool.asset === "BTC" &&
-        selectedSupplyPool.chain === "BTC"
-      ) {
-        const bitcoinWallet = primaryWallet;
-        sendBtcTransactionCallback = async ({ toAddress, amountSats }) =>
-          await sendBitcoinTransaction(bitcoinWallet, {
-            toAddress,
-            amountSats,
-          });
-      }
-
-      if (
-        primaryWallet &&
-        isEthereumWallet(primaryWallet) &&
-        selectedSupplyPool.chain === "ETH"
-      ) {
-        const ethereumWallet = primaryWallet;
-        sendEthTransactionCallback = async (transaction) =>
-          await sendEthereumTransaction(ethereumWallet, transaction);
-      }
+      const walletAdapter = buildSupplyWalletAdapter({
+        primaryWallet,
+        selectedSupplyPool,
+      });
 
       setStatusMessage(
         `Starting ${selectedSupplyPool.asset} ${supplyAction} flow...`
       );
 
-      const nextSupplyFlow = await prepareSupplyFlow({
+      const client = createLiquidiumClient();
+      const nextSupplyFlow = await client.lending.supply({
         profileId,
-        pool: selectedSupplyPool,
+        poolId: selectedSupplyPool.id,
         action: supplyAction,
         amount: supplyAmount,
         account: liquidiumAccountAddress || undefined,
-        sendBtcTransaction: sendBtcTransactionCallback,
-        sendEthTransaction: sendEthTransactionCallback,
+        walletAdapter,
       });
 
       setSupplyFlow(nextSupplyFlow);
@@ -277,41 +252,23 @@ export function SupplyPage() {
         canCreateProfile={Boolean(primaryWallet && liquidiumAccountAddress)}
         onConnect={() => setShowAuthFlow(true)}
         onDisconnect={() => void handleLogOut()}
-        onLoadMarkets={() => void handleLoadQuoteContext()}
+        onLoadMarkets={() => void handleLoadMarkets()}
         onCreateProfile={() => void handleCreateProfile()}
         details={[
-          {
-            label: "Workflow stage",
-            value: workflowStageLabel,
-          },
-          {
-            label: "Connected chain",
-            value: walletChain ?? "Not connected",
-          },
-          {
-            label: "Wallet address",
-            value: walletAddress || "Not connected",
-          },
+          { label: "Workflow stage", value: workflowStageLabel },
+          { label: "Connected chain", value: walletChain ?? "Not connected" },
+          { label: "Wallet address", value: walletAddress || "Not connected" },
           {
             label: "SDK account address",
             value: liquidiumAccountAddress || "Not connected",
           },
-          {
-            label: "Profile ID",
-            value: profileId ?? "Not created yet",
-          },
-          {
-            label: "Pools loaded",
-            value: pools.length,
-          },
+          { label: "Profile ID", value: profileId ?? "Not created yet" },
+          { label: "Pools loaded", value: pools.length },
           {
             label: "Supported supply pools",
             value: supportedSupplyPools.length,
           },
-          {
-            label: "Resolved mechanism",
-            value: resolvedMechanismLabel,
-          },
+          { label: "Resolved mechanism", value: resolvedMechanismLabel },
         ]}
       />
 
@@ -415,19 +372,61 @@ export function SupplyPage() {
   );
 }
 
-function getAssetDecimals(asset: string): number {
-  return ASSET_DECIMALS[asset] ?? 8;
+type BuildSupplyWalletAdapterParams = {
+  primaryWallet: ReturnType<typeof useDynamicContext>["primaryWallet"];
+  selectedSupplyPool: Pool;
+};
+
+/**
+ * Builds the smallest possible WalletAdapter for the selected supply pool.
+ * Only wires `sendBtcTransaction` for BTC pools and `sendEthTransaction` for
+ * ETH pools so the SDK auto-broadcast path uses the correct signer.
+ */
+function buildSupplyWalletAdapter(
+  params: BuildSupplyWalletAdapterParams
+): WalletAdapter | undefined {
+  const { primaryWallet, selectedSupplyPool } = params;
+
+  if (!primaryWallet) {
+    return undefined;
+  }
+
+  if (isBitcoinWallet(primaryWallet) && isBtcPool(selectedSupplyPool)) {
+    const bitcoinWallet = primaryWallet;
+    return {
+      sendBtcTransaction: async ({ toAddress, amountSats }) =>
+        await sendBitcoinTransaction(bitcoinWallet, {
+          toAddress,
+          amountSats: amountSats ?? 0n,
+        }),
+    };
+  }
+
+  if (isEthereumWallet(primaryWallet) && isEthStablecoinPool(selectedSupplyPool)) {
+    const ethereumWallet = primaryWallet;
+    return {
+      sendEthTransaction: async ({ transaction }) =>
+        await sendEthereumTransaction(ethereumWallet, transaction),
+    };
+  }
+
+  return undefined;
 }
 
-function isSupportedSupplyPool(pool: Pool): boolean {
-  return (
-    (pool.asset === "BTC" && pool.chain === "BTC") ||
-    (pool.chain === "ETH" && isStablecoinAsset(pool.asset))
-  );
+function isNativeAddressSupplyInstruction(
+  supplyInstruction: SupplyInstruction | null
+): supplyInstruction is SupplyInstruction & {
+  target: { type: "nativeAddress"; address: string };
+} {
+  if (!supplyInstruction) {
+    return false;
+  }
+
+  return supplyInstruction.target.type === "nativeAddress";
 }
 
 function formatSupplyMechanismLabel(pool: Pool): string {
-  if (pool.asset === "BTC" && pool.chain === "BTC") {
+  if (isBtcPool(pool)) {
     return "Transfer";
   }
 
@@ -447,26 +446,4 @@ function createSupplyFlowStatusMessage(supplyFlow: SupplyFlow): string {
   }
 
   return `Started ${supplyFlow.type} supply flow.`;
-}
-
-function parseDecimalToBaseUnits(
-  value: string,
-  decimals: number
-): bigint | null {
-  const normalizedValue = value.trim();
-
-  if (!normalizedValue) {
-    return null;
-  }
-
-  if (!/^\d+(\.\d+)?$/.test(normalizedValue)) {
-    return null;
-  }
-
-  const [wholePart, fractionalPart = ""] = normalizedValue.split(".");
-  const paddedFractionalPart = fractionalPart
-    .slice(0, decimals)
-    .padEnd(decimals, "0");
-
-  return BigInt(`${wholePart}${paddedFractionalPart}`);
 }
