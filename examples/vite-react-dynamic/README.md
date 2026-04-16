@@ -9,8 +9,8 @@ with Dynamic:
 - Create or resolve a Liquidium profile
 - Load pools and prices
 - Generate a quote with `client.quote.quote(...)`
-- Borrow from the quoted pool with `client.lending.borrow(...)`
-- Start a BTC supply flow with `client.lending.supply(...)`
+- Borrow from the quoted pool with `client.lending.borrow(...)` and display the instant receipt (txid may resolve later)
+- Start a supply flow with `client.lending.supply(...)` and let the SDK resolve the mechanism
 
 The goal is to make the first SDK integration obvious, while also including an
 SDK method query page for raw response inspection.
@@ -37,10 +37,11 @@ pnpm --filter @liquidium/example-vite-react-dynamic dev
 
 ## What To Look At
 
-- `src/App.tsx` is the full quote-first example UI
+- `src/App.tsx` is the borrow-focused page with quote-first borrow, position reads, and history
+- `src/SupplyPage.tsx` is the unified supply page for supported BTC and ETH supply pools
 - `src/SdkMethodQueryPage.tsx` lets you execute every public SDK method by
   passing JSON args and viewing raw results
-- `src/Root.tsx` handles page switching between the workflow and SDK query page
+- `src/Root.tsx` handles page switching between the borrow, supply, and SDK query pages
 - `src/liquidium-client-sdk.ts` is the thin helper layer around the SDK
 - `src/wallet-signing.ts` adapts Dynamic wallets to the SDK signing flow
 
@@ -50,5 +51,5 @@ pnpm --filter @liquidium/example-vite-react-dynamic dev
   walkthrough
 - The borrow flow is intentionally quote-first so it mirrors the sats terminal
   interaction model
-- BTC supply currently uses `destination: "nativeAddress"`
+- The supply page demonstrates the unified `supply()` API and lets the pool pick the transfer or contract-interaction path
 - For Bitcoin wallets, the example prefers the payment address when available

@@ -20,14 +20,12 @@ import {
 import type { ApiClient } from "../../core/transports/api-client";
 import type { CanisterContext } from "../../core/transports/canister-context";
 import type { SupplyAction } from "../../core/types";
-import { parseBigInt } from "../../core/utils/bigint";
 import { encodeInflowSubaccount } from "../../core/utils/inflow-subaccount";
 import { retryWithBackoff } from "../../core/utils/retry";
 import { computeExpiryTimestampFromNow } from "../../core/utils/time";
 import { getVariantKey } from "../../core/utils/variant";
 import type { WalletAdapter } from "../../core/wallet-actions";
 import { executeWith } from "../../execute";
-import type { UserHistoryEntry, UserHistoryResponse } from "../history/types";
 import type {
   BorrowAction,
   BorrowSubmitSignatureInfo,
@@ -53,8 +51,6 @@ import type {
 } from "./types";
 
 const BITCOIN_BLOCK_TIME_MS = 10 * 60 * 1000;
-const HISTORY_OUTFLOW_LIMIT = 20;
-const HISTORY_OUTFLOW_LOOKBACK_1_MINUTE_MS = 60_000;
 const SUBMIT_INFLOW_MAX_ATTEMPTS = 4;
 const SUBMIT_INFLOW_INITIAL_RETRY_DELAY_MS = 1_500;
 const SUBMIT_INFLOW_RETRY_BACKOFF_MULTIPLIER = 2;
@@ -87,6 +83,8 @@ type SupplyTargetRequest = {
   chain: string;
   action: SupplyAction;
 };
+
+type SupplyMechanism = SupplyFlow["type"];
 
 type MessageAccount = {
   type: "Native" | "External";
@@ -348,33 +346,15 @@ export class LendingModule {
    * This is the convenience form of `prepareBorrow(...)` plus execution.
    */
   async borrow(
-    params: CreateBorrowRequest &
-      WalletExecutionParams & { waitForTxid?: boolean }
+    params: CreateBorrowRequest & WalletExecutionParams
   ): Promise<OutflowDetails> {
-    const borrowSubmittedAtMs = Date.now();
     const action = await this.prepareBorrow(params);
 
-    const outflow = await executeWith({
+    return await executeWith({
       walletAdapter: params.signerWalletAdapter,
       chain: params.signerChain,
       account: params.signerWalletAddress,
     })(action);
-
-    const shouldWaitForTxid = params.waitForTxid ?? Boolean(this.apiClient);
-
-    if (!shouldWaitForTxid || outflow.txid) {
-      return outflow;
-    }
-
-    return await this.waitForOutflowTxid({
-      profileId: params.profileId,
-      poolId: params.poolId,
-      amount: params.amount,
-      outflow,
-      outflowType: "borrow",
-      submittedAtMs: borrowSubmittedAtMs,
-      pollIntervalMs: this.options.supplyStatusPollIntervalMs,
-    });
   }
 
   /**
@@ -397,12 +377,61 @@ export class LendingModule {
   /**
    * Creates a tracked supply flow for a deposit or repayment.
    *
-   * This builds the supply instruction and returns helpers for txid submission
-   * and status tracking. When a wallet adapter is provided for the selected
-   * chain, supported inflows are auto-broadcast and auto-submitted by this method.
+   * This resolves a deposit address target and returns helpers for txid
+   * submission and status tracking. The SDK resolves the pool's supply
+   * mechanism automatically, then either returns a transfer target or executes
+   * the required contract interaction when a wallet adapter is provided.
    */
   async supply(request: SupplyFlowRequest): Promise<SupplyFlow> {
     const instruction = await this.prepareSupply(request);
+    const mechanism = resolveSupplyMechanism({
+      asset: instruction.asset,
+      chain: instruction.chain,
+    });
+    const defaultSubmitInflowRequest = getDefaultSubmitInflowRequest({
+      action: request.action,
+      chain: mechanism === "contractInteraction" ? "ETH" : instruction.chain,
+    });
+    const flow = this.createSupplyFlow({
+      type: mechanism,
+      profileId: request.profileId,
+      instruction,
+      defaultSubmitInflowRequest,
+    });
+
+    switch (mechanism) {
+      case "transfer":
+        if (request.walletAdapter) {
+          flow.setTrackedTxid(
+            await this.sendAndSubmitNativeSupplyInflow({
+              request,
+              instruction,
+              defaultSubmitInflowRequest,
+            })
+          );
+        }
+        break;
+      case "contractInteraction":
+        flow.setTrackedTxid(
+          await this.executeContractSupply({
+            request,
+            instruction,
+            defaultSubmitInflowRequest,
+          })
+        );
+        break;
+    }
+
+    return flow;
+  }
+
+  private createSupplyFlow(params: {
+    type: SupplyFlow["type"];
+    profileId: string;
+    instruction: SupplyInstruction;
+    defaultSubmitInflowRequest?: Omit<SubmitInflowRequest, "txid">;
+  }): SupplyFlow & { setTrackedTxid(txid: string): void } {
+    const { type, profileId, instruction, defaultSubmitInflowRequest } = params;
     const defaultPollIntervalMs = this.options.supplyStatusPollIntervalMs;
     let trackedTxid: string | undefined;
     const getStatus = async (
@@ -414,7 +443,7 @@ export class LendingModule {
     ): Promise<SupplyTrackingStatus | null> => {
       const txid = statusRequest?.txid ?? trackedTxid;
       const statusResponse = await this.getInflowStatus({
-        profileId: request.profileId,
+        profileId,
         txid,
       });
 
@@ -432,13 +461,20 @@ export class LendingModule {
       return mapBtcInflowToSupplyTrackingStatus(matchedInflow);
     };
 
-    const flow: SupplyFlow = {
+    return {
+      type,
       instruction,
       target: instruction.target,
-      submit: async ({ txid }) => {
+      setTrackedTxid(txid: string) {
         trackedTxid = txid;
+      },
+      submit: async (request) => {
+        trackedTxid = request.txid;
 
-        return await this.submitInflow({ txid });
+        return await this.submitInflow({
+          ...defaultSubmitInflowRequest,
+          ...request,
+        });
       },
       getStatus,
       watchStatus: async function* (
@@ -469,24 +505,6 @@ export class LendingModule {
         }
       },
     };
-
-    if (request.btcWalletAdapter) {
-      const autoSubmittedTxid = await this.sendAndSubmitBtcSupplyInflow({
-        request,
-        instruction,
-      });
-      trackedTxid = autoSubmittedTxid;
-    }
-
-    if (request.ethWalletAdapter) {
-      const autoSubmittedTxid = await this.sendAndSubmitEthSupplyInflow({
-        request,
-        instruction,
-      });
-      trackedTxid = autoSubmittedTxid;
-    }
-
-    return flow;
   }
 
   async getEvmSupplyContext(
@@ -506,48 +524,62 @@ export class LendingModule {
     );
   }
 
-  private async sendAndSubmitBtcSupplyInflow(params: {
+  private async sendAndSubmitNativeSupplyInflow(params: {
     request: SupplyFlowRequest;
     instruction: SupplyInstruction;
+    defaultSubmitInflowRequest?: Omit<SubmitInflowRequest, "txid">;
   }): Promise<string> {
-    const { request, instruction } = params;
+    const { request, instruction, defaultSubmitInflowRequest } = params;
 
-    if (
-      instruction.target.type !== "nativeAddress" ||
-      instruction.chain !== "BTC"
-    ) {
+    if (instruction.target.type !== "nativeAddress") {
       throw new LiquidiumError(
         LiquidiumErrorCode.VALIDATION_ERROR,
-        "Wallet-executed supply is only supported for BTC native-address targets"
+        "Wallet-executed supply requires a native-address target"
       );
     }
 
-    if (!request.btcWalletAdapter?.sendBtcTransaction) {
+    if (!request.walletAdapter) {
       throw new LiquidiumError(
         LiquidiumErrorCode.VALIDATION_ERROR,
-        "BTC wallet adapter does not support transaction sending"
+        "Wallet-executed supply requires a wallet adapter"
       );
     }
 
-    const txid = await request.btcWalletAdapter.sendBtcTransaction({
-      chain: "BTC",
+    const account = request.account?.trim();
+    if (!account) {
+      throw new LiquidiumError(
+        LiquidiumErrorCode.VALIDATION_ERROR,
+        "Wallet-executed transfer supply requires an account"
+      );
+    }
+
+    if (!request.amount || request.amount <= 0n) {
+      throw new LiquidiumError(
+        LiquidiumErrorCode.VALIDATION_ERROR,
+        "Wallet-executed supply requires a positive amount"
+      );
+    }
+
+    const txid = await this.sendNativeSupplyTransaction({
+      walletAdapter: request.walletAdapter,
+      chain: instruction.chain,
       toAddress: instruction.target.address,
-      amountSats: request.btcAmountSats,
-      account: request.btcAccount,
-      actionType: `supply-${request.action}`,
-      transferMode: "native",
+      amount: request.amount,
+      senderAccount: account,
+      action: request.action,
     });
 
-    await this.submitInflowWithRetry(txid);
+    await this.submitInflowWithRetry(txid, defaultSubmitInflowRequest);
 
     return txid;
   }
 
-  private async sendAndSubmitEthSupplyInflow(params: {
+  private async executeContractSupply(params: {
     request: SupplyFlowRequest;
     instruction: SupplyInstruction;
+    defaultSubmitInflowRequest?: Omit<SubmitInflowRequest, "txid">;
   }): Promise<string> {
-    const { request, instruction } = params;
+    const { request, instruction, defaultSubmitInflowRequest } = params;
 
     if (
       instruction.target.type !== "icrcAccount" ||
@@ -555,29 +587,30 @@ export class LendingModule {
     ) {
       throw new LiquidiumError(
         LiquidiumErrorCode.VALIDATION_ERROR,
-        "Wallet-executed ETH supply is only supported for ETH ICRC-account targets"
+        "Contract-interaction supply is only supported for ETH ICRC-account targets"
       );
     }
 
-    if (!request.ethWalletAdapter?.sendEthTransaction) {
-      throw new LiquidiumError(
-        LiquidiumErrorCode.VALIDATION_ERROR,
-        "ETH wallet adapter does not support transaction sending"
-      );
-    }
-
-    const walletAddress = request.ethAccount?.trim();
+    const walletAddress = request.account?.trim();
     if (!walletAddress) {
       throw new LiquidiumError(
         LiquidiumErrorCode.VALIDATION_ERROR,
-        "ETH wallet-executed supply requires an ETH account"
+        "Contract-interaction supply requires an account"
       );
     }
 
-    if (!request.ethAmount || request.ethAmount <= 0n) {
+    if (!request.amount || request.amount <= 0n) {
       throw new LiquidiumError(
         LiquidiumErrorCode.VALIDATION_ERROR,
-        "ETH wallet-executed supply requires a positive token amount"
+        "Contract-interaction supply requires a positive amount"
+      );
+    }
+
+    const walletAdapter = request.walletAdapter;
+    if (!walletAdapter?.sendEthTransaction) {
+      throw new LiquidiumError(
+        LiquidiumErrorCode.VALIDATION_ERROR,
+        "Contract-interaction supply requires an ETH wallet adapter"
       );
     }
 
@@ -585,12 +618,12 @@ export class LendingModule {
       profileId: request.profileId,
       poolId: request.poolId,
       walletAddress,
-      amount: request.ethAmount,
+      amount: request.amount,
       action: request.action,
     });
-    const amount = BigInt(evmSupplyContext.amount);
+    const supplyAmount = BigInt(evmSupplyContext.amount);
 
-    if (BigInt(evmSupplyContext.balance) < amount) {
+    if (BigInt(evmSupplyContext.balance) < supplyAmount) {
       throw new LiquidiumError(
         LiquidiumErrorCode.INSUFFICIENT_FUNDS,
         `Insufficient ${evmSupplyContext.asset} balance for ${request.action}`
@@ -599,7 +632,7 @@ export class LendingModule {
 
     if (evmSupplyContext.approvalStrategy === "reset-then-approve-max") {
       await this.sendEthContractTransaction(
-        request.ethWalletAdapter,
+        walletAdapter,
         walletAddress,
         createApproveTransaction({
           tokenAddress: evmSupplyContext.tokenAddress,
@@ -613,7 +646,7 @@ export class LendingModule {
         profileId: request.profileId,
         poolId: request.poolId,
         walletAddress,
-        amount,
+        amount: supplyAmount,
         action: request.action,
         expectation: "zero",
       });
@@ -621,7 +654,7 @@ export class LendingModule {
 
     if (evmSupplyContext.approvalStrategy !== "none") {
       await this.sendEthContractTransaction(
-        request.ethWalletAdapter,
+        walletAdapter,
         walletAddress,
         createApproveTransaction({
           tokenAddress: evmSupplyContext.tokenAddress,
@@ -635,18 +668,18 @@ export class LendingModule {
         profileId: request.profileId,
         poolId: request.poolId,
         walletAddress,
-        amount,
+        amount: supplyAmount,
         action: request.action,
         expectation: "sufficient",
       });
     }
 
     const depositTxid = await this.sendEthContractTransaction(
-      request.ethWalletAdapter,
+      walletAdapter,
       walletAddress,
       createDepositErc20Transaction({
         tokenAddress: evmSupplyContext.tokenAddress,
-        amount,
+        amount: supplyAmount,
         poolId: request.poolId,
         profileId: request.profileId,
         destinationAccount: instruction.target.account,
@@ -655,12 +688,65 @@ export class LendingModule {
       `supply-${request.action}-deposit-erc20`
     );
 
-    await this.submitInflowWithRetry(depositTxid, {
-      chain: "ETH",
-      type: request.action === "repayment" ? "REPAY" : "DEPOSIT",
-    });
+    await this.submitInflowWithRetry(depositTxid, defaultSubmitInflowRequest);
 
     return depositTxid;
+  }
+
+  private async sendNativeSupplyTransaction(params: {
+    walletAdapter: Pick<
+      WalletAdapter,
+      "sendBtcTransaction" | "sendEthTransaction"
+    >;
+    chain: string;
+    toAddress: string;
+    amount: bigint;
+    senderAccount: string;
+    action: SupplyAction;
+  }): Promise<string> {
+    switch (params.chain) {
+      case "BTC": {
+        if (!params.walletAdapter.sendBtcTransaction) {
+          throw new LiquidiumError(
+            LiquidiumErrorCode.VALIDATION_ERROR,
+            "BTC wallet adapter does not support transaction sending"
+          );
+        }
+
+        return await params.walletAdapter.sendBtcTransaction({
+          chain: "BTC",
+          toAddress: params.toAddress,
+          amountSats: params.amount,
+          account: params.senderAccount,
+          actionType: `supply-${params.action}`,
+          transferMode: "native",
+        });
+      }
+      case "ETH": {
+        if (!params.walletAdapter.sendEthTransaction) {
+          throw new LiquidiumError(
+            LiquidiumErrorCode.VALIDATION_ERROR,
+            "ETH wallet adapter does not support transaction sending"
+          );
+        }
+
+        return await params.walletAdapter.sendEthTransaction({
+          chain: "ETH",
+          account: params.senderAccount,
+          actionType: `supply-${params.action}`,
+          transferMode: "native",
+          transaction: {
+            to: params.toAddress,
+            value: params.amount.toString(),
+          },
+        });
+      }
+      default:
+        throw new LiquidiumError(
+          LiquidiumErrorCode.VALIDATION_ERROR,
+          `Native-address wallet execution is not supported for ${params.chain}`
+        );
+    }
   }
 
   private async submitInflowWithRetry(
@@ -679,7 +765,7 @@ export class LendingModule {
   }
 
   /**
-   * Submits a BTC inflow transaction id for faster indexing.
+   * Submits an inflow transaction id for faster indexing.
    */
   async submitInflow(
     request: SubmitInflowRequest
@@ -753,75 +839,6 @@ export class LendingModule {
     return this.apiClient;
   }
 
-  private async waitForOutflowTxid(params: {
-    profileId: string;
-    poolId: string;
-    amount: bigint;
-    outflow: OutflowDetails;
-    outflowType: UserHistoryEntry["type"];
-    submittedAtMs: number;
-    pollIntervalMs: number;
-  }): Promise<OutflowDetails> {
-    const historySearchStartMs =
-      params.submittedAtMs - HISTORY_OUTFLOW_LOOKBACK_1_MINUTE_MS;
-
-    while (true) {
-      const historyItems = await this.loadRecentUserOutflowHistory({
-        profileId: params.profileId,
-        poolId: params.poolId,
-      });
-
-      const matchingHistoryEntry = findMatchingOutflowHistoryEntry({
-        outflow: params.outflow,
-        historyItems,
-        outflowType: params.outflowType,
-        amount: params.amount,
-        historySearchStartMs,
-      });
-
-      if (matchingHistoryEntry?.status === "FAILED") {
-        throw new LiquidiumError(
-          LiquidiumErrorCode.TRANSFER_FAILED,
-          `${params.outflowType} request failed before a txid was assigned`
-        );
-      }
-
-      if (matchingHistoryEntry?.txid) {
-        return {
-          ...params.outflow,
-          txid: matchingHistoryEntry.txid,
-        };
-      }
-
-      await delay(params.pollIntervalMs);
-    }
-  }
-
-  private async loadRecentUserOutflowHistory(params: {
-    profileId: string;
-    poolId: string;
-  }): Promise<UserHistoryEntry[]> {
-    const apiClient = this.requireApi();
-    const query = new URLSearchParams({
-      market: params.poolId,
-      limit: String(HISTORY_OUTFLOW_LIMIT),
-    });
-    const response = await apiClient.get<UserHistoryResponse>(
-      `/v1/history/users/${encodeURIComponent(params.profileId)}/transactions?${query.toString()}`
-    );
-
-    return response.items.map((item) => ({
-      id: item.id,
-      type: item.type,
-      amount: parseBigInt(item.amount, "outflow history amount"),
-      poolId: item.poolId,
-      timestamp: item.timestamp,
-      status: item.status,
-      txid: item.txid,
-      txids: item.txids,
-    }));
-  }
-
   private async getPoolById(poolId: string): Promise<LendingPoolRecord> {
     const pools = await createLendingActor(this.canisterContext).list_pools();
     const selectedPool = pools.find(
@@ -842,20 +859,26 @@ export class LendingModule {
     request: SupplyRequest
   ): Promise<SupplyTarget> {
     const selectedPool = await this.getPoolById(request.poolId);
+    const asset = getVariantKey(selectedPool.asset);
+    const chain = getVariantKey(selectedPool.chain);
+    const mechanism = resolveSupplyMechanism({
+      asset,
+      chain,
+    });
 
-    switch (request.destination) {
-      case "nativeAddress":
+    switch (mechanism) {
+      case "transfer":
         return await this.getNativeAddressSupplyTarget(request.profileId, {
           poolId: request.poolId,
-          asset: getVariantKey(selectedPool.asset),
-          chain: getVariantKey(selectedPool.chain),
+          asset,
+          chain,
           action: request.action,
         });
-      case "icrcAccount":
+      case "contractInteraction":
         return this.getIcrcAccountSupplyTarget(request.profileId, {
           poolId: request.poolId,
-          asset: getVariantKey(selectedPool.asset),
-          chain: getVariantKey(selectedPool.chain),
+          asset,
+          chain,
           action: request.action,
         });
     }
@@ -953,7 +976,11 @@ export class LendingModule {
     action: SupplyAction;
     expectation: "zero" | "sufficient";
   }): Promise<void> {
-    for (let pollIndex = 0; pollIndex < ETH_APPROVAL_MAX_POLLS; pollIndex += 1) {
+    for (
+      let pollIndex = 0;
+      pollIndex < ETH_APPROVAL_MAX_POLLS;
+      pollIndex += 1
+    ) {
       const nextContext = await this.getEvmSupplyContext({
         profileId: params.profileId,
         poolId: params.poolId,
@@ -979,44 +1006,6 @@ export class LendingModule {
       `Timed out waiting for ${params.expectation} ETH allowance update`
     );
   }
-}
-
-function findMatchingOutflowHistoryEntry(params: {
-  outflow: OutflowDetails;
-  historyItems: UserHistoryEntry[];
-  outflowType: UserHistoryEntry["type"];
-  amount: bigint;
-  historySearchStartMs: number;
-}): UserHistoryEntry | null {
-  const matchingById = params.historyItems.find(
-    (historyItem) =>
-      historyItem.type === params.outflowType &&
-      historyItem.id === params.outflow.id
-  );
-
-  if (matchingById) {
-    return matchingById;
-  }
-
-  return (
-    params.historyItems.find((historyItem) => {
-      if (historyItem.type !== params.outflowType) {
-        return false;
-      }
-
-      if (historyItem.amount !== params.amount) {
-        return false;
-      }
-
-      const historyTimestampMs = Date.parse(historyItem.timestamp);
-
-      if (Number.isNaN(historyTimestampMs)) {
-        return false;
-      }
-
-      return historyTimestampMs >= params.historySearchStartMs;
-    }) ?? null
-  );
 }
 
 function mapBtcInflowToSupplyTrackingStatus(
@@ -1086,6 +1075,41 @@ function isRetriableInflowNotFoundError(error: unknown): boolean {
   return /not found/i.test(error.message);
 }
 
+function getDefaultSubmitInflowRequest(params: {
+  action: SupplyAction;
+  chain: string;
+}): Omit<SubmitInflowRequest, "txid"> | undefined {
+  if (params.chain !== "ETH") {
+    return undefined;
+  }
+
+  return {
+    chain: "ETH",
+    type: params.action === "repayment" ? "REPAY" : "DEPOSIT",
+  };
+}
+
+function resolveSupplyMechanism(params: {
+  asset: string;
+  chain: string;
+}): SupplyMechanism {
+  if (params.asset === "BTC" && params.chain === "BTC") {
+    return "transfer";
+  }
+
+  if (
+    (params.asset === "USDC" || params.asset === "USDT") &&
+    params.chain === "ETH"
+  ) {
+    return "contractInteraction";
+  }
+
+  throw new LiquidiumError(
+    LiquidiumErrorCode.VALIDATION_ERROR,
+    `No supply mechanism is configured for ${params.asset} on ${params.chain}`
+  );
+}
+
 function assertSupportsNativeAddressInflowTarget(
   asset: string,
   chain: string
@@ -1149,7 +1173,9 @@ function createDepositErc20Transaction(params: {
     );
   }
 
-  const principalBytes32 = encodePrincipalToBytes32(Principal.fromText(params.poolId));
+  const principalBytes32 = encodePrincipalToBytes32(
+    Principal.fromText(params.poolId)
+  );
   const subaccountHex = encodeBytes32Hex(
     encodeInflowSubaccount({
       action: params.action,

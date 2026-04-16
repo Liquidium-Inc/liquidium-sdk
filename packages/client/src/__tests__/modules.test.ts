@@ -1057,7 +1057,6 @@ describe("LendingModule", () => {
       profileId: "aaaaa-aa",
       poolId: BTC_POOL_ID,
       action: "deposit",
-      destination: "nativeAddress",
     });
 
     // then
@@ -1117,7 +1116,6 @@ describe("LendingModule", () => {
       profileId: "aaaaa-aa",
       poolId: USDT_POOL_ID,
       action: "repayment",
-      destination: "icrcAccount",
     });
 
     // then
@@ -1143,7 +1141,7 @@ describe("LendingModule", () => {
     expect(supplyInstruction.target.account.length).toBeGreaterThan(0);
   });
 
-  test("rejects native supply targets for unsupported pools", async () => {
+  test("rejects prepareSupply when no supply mechanism is configured", async () => {
     // given
     vi.spyOn(Actor, "createActor").mockReturnValue({
       list_pools: vi.fn().mockResolvedValue([
@@ -1156,7 +1154,7 @@ describe("LendingModule", () => {
           total_generated_interest_snapshot: 0n,
           supply_cap: [],
           same_asset_borrowing: [],
-          asset: { USDT: null },
+          asset: { ICP: null },
           rate_slope_before: 1n,
           borrow_cap: [],
           total_debt_at_last_sync: 0n,
@@ -1184,12 +1182,10 @@ describe("LendingModule", () => {
         profileId: "aaaaa-aa",
         poolId: USDT_POOL_ID,
         action: "deposit",
-        destination: "nativeAddress",
       })
     ).rejects.toMatchObject({
       code: LiquidiumErrorCode.VALIDATION_ERROR,
-      message:
-        "Native address inflow targets are not supported for USDT on ETH",
+      message: "No supply mechanism is configured for ICP on ETH",
     });
   });
 
@@ -1235,7 +1231,6 @@ describe("LendingModule", () => {
         profileId: "aaaaa-aa",
         poolId: NON_CONFIGURED_BTC_POOL_ID,
         action: "deposit",
-        destination: "nativeAddress",
       })
     ).rejects.toMatchObject({
       code: LiquidiumErrorCode.VALIDATION_ERROR,
@@ -1378,7 +1373,8 @@ describe("LendingModule", () => {
             amount: "1000000",
             tokenAddress: "0xdac17f958d2ee523a2206206994597c13d831ec7",
             spenderAddress: "0x18901044688D3756C35Ed2b36D93e6a5B8e00E68",
-            depositContractAddress: "0x18901044688D3756C35Ed2b36D93e6a5B8e00E68",
+            depositContractAddress:
+              "0x18901044688D3756C35Ed2b36D93e6a5B8e00E68",
             balance: "2000000",
             allowance: "0",
             requiresApproval: true,
@@ -1405,7 +1401,8 @@ describe("LendingModule", () => {
             amount: "1000000",
             tokenAddress: "0xdac17f958d2ee523a2206206994597c13d831ec7",
             spenderAddress: "0x18901044688D3756C35Ed2b36D93e6a5B8e00E68",
-            depositContractAddress: "0x18901044688D3756C35Ed2b36D93e6a5B8e00E68",
+            depositContractAddress:
+              "0x18901044688D3756C35Ed2b36D93e6a5B8e00E68",
             balance: "2000000",
             allowance: "1000000",
             requiresApproval: false,
@@ -1440,15 +1437,15 @@ describe("LendingModule", () => {
       profileId: "aaaaa-aa",
       poolId: USDT_POOL_ID,
       action: "deposit",
-      destination: "icrcAccount",
-      ethAccount: "0x1234567890123456789012345678901234567890",
-      ethAmount: 1_000_000n,
-      ethWalletAdapter: {
+      account: "0x1234567890123456789012345678901234567890",
+      amount: 1_000_000n,
+      walletAdapter: {
         sendEthTransaction,
       },
     });
 
     // then
+    expect(flow.type).toBe("contractInteraction");
     expect(flow.target).toMatchObject({
       type: "icrcAccount",
       asset: "USDT",
@@ -1611,12 +1608,12 @@ describe("LendingModule", () => {
       profileId: "aaaaa-aa",
       poolId: BTC_POOL_ID,
       action: "deposit",
-      destination: "nativeAddress",
     });
     await flow.submit({ txid });
     const status = await flow.getStatus();
 
     // then
+    expect(flow.type).toBe("transfer");
     expect(flow.instruction.target).toMatchObject({
       type: "nativeAddress",
       address: "bc1qexampledepositaddress",
@@ -1743,7 +1740,6 @@ describe("LendingModule", () => {
       profileId: "aaaaa-aa",
       poolId: BTC_POOL_ID,
       action: "deposit",
-      destination: "nativeAddress",
     });
 
     // when
@@ -1753,6 +1749,7 @@ describe("LendingModule", () => {
     );
 
     // then
+    expect(flow.type).toBe("transfer");
     expect(statusUpdates).toHaveLength(2);
     expect(statusUpdates[0]).toMatchObject({
       txid,
@@ -1851,16 +1848,16 @@ describe("LendingModule", () => {
       profileId: "aaaaa-aa",
       poolId: BTC_POOL_ID,
       action: "deposit",
-      destination: "nativeAddress",
-      btcAmountSats: 100_000n,
-      btcWalletAdapter: {
+      amount: 100_000n,
+      walletAdapter: {
         sendBtcTransaction,
       },
-      btcAccount: "bc1qsender",
+      account: "bc1qsender",
     });
     const status = await flow.getStatus();
 
     // then
+    expect(flow.type).toBe("transfer");
     expect(sendBtcTransaction).toHaveBeenCalledWith({
       chain: "BTC",
       toAddress: "bc1qexampledepositaddress",
@@ -1974,16 +1971,16 @@ describe("LendingModule", () => {
       profileId: "aaaaa-aa",
       poolId: BTC_POOL_ID,
       action: "deposit",
-      destination: "nativeAddress",
-      btcAmountSats: 100_000n,
-      btcWalletAdapter: {
+      amount: 100_000n,
+      walletAdapter: {
         sendBtcTransaction,
       },
-      btcAccount: "bc1qsender",
+      account: "bc1qsender",
     });
     const status = await flow.getStatus();
 
     // then
+    expect(flow.type).toBe("transfer");
     expect(sendBtcTransaction).toHaveBeenCalledTimes(1);
     expect(fetchSpy).toHaveBeenCalledTimes(3);
     expect(status).toMatchObject({
@@ -2039,8 +2036,9 @@ describe("LendingModule", () => {
         profileId: "aaaaa-aa",
         poolId: BTC_POOL_ID,
         action: "deposit",
-        destination: "nativeAddress",
-        btcWalletAdapter: {},
+        amount: 100_000n,
+        account: "bc1qsender",
+        walletAdapter: {},
       })
     ).rejects.toMatchObject({
       code: LiquidiumErrorCode.VALIDATION_ERROR,
@@ -2149,7 +2147,6 @@ describe("LendingModule", () => {
       profileId: "aaaaa-aa",
       poolId: BTC_POOL_ID,
       action: "deposit",
-      destination: "nativeAddress",
     });
 
     // when
@@ -2160,6 +2157,7 @@ describe("LendingModule", () => {
     );
 
     // then
+    expect(flow.type).toBe("transfer");
     expect(statusUpdates).toHaveLength(2);
     expect(statusUpdates[0]).toMatchObject({
       txid,
@@ -2314,75 +2312,6 @@ Nonce: 17`);
       message: expect.stringContaining("Liquidium: Borrow Assets"),
       account: "0xsigner",
     });
-  });
-
-  test("waits for borrow txid by default", async () => {
-    // given
-    vi.setSystemTime(new Date("2026-04-01T00:00:00.000Z"));
-    vi.spyOn(Actor, "createActor").mockReturnValue({
-      get_nonce: vi.fn().mockResolvedValue(31n),
-      borrow_assets: vi.fn().mockResolvedValue({
-        Ok: {
-          id: "outflow-3",
-          txid: [],
-          outflow_type: { Borrow: null },
-          outflow_ref: [],
-          amount: 12_000n,
-          receiver: { External: "bc1qborrow" },
-        },
-      }),
-    } as never);
-    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(
-        JSON.stringify({
-          success: true,
-          items: [
-            {
-              id: "outflow-3",
-              type: "borrow",
-              amount: "12000",
-              poolId: "rrkah-fqaaa-aaaaa-aaaaq-cai",
-              timestamp: "2026-04-01T00:00:02.000Z",
-              status: "PENDING",
-              txid: "txid-3",
-            },
-          ],
-        }),
-        {
-          status: 200,
-          headers: {
-            "content-type": "application/json",
-          },
-        }
-      )
-    );
-    const signMessage = vi.fn().mockResolvedValue("0xsigned");
-    const client = LiquidiumClient.create({
-      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
-    });
-
-    // when
-    const outflow = await client.lending.borrow({
-      profileId: "aaaaa-aa",
-      poolId: "rrkah-fqaaa-aaaaa-aaaaq-cai",
-      amount: 12_000n,
-      receiverAddress: "bc1qborrow",
-      signerWalletAddress: "0xsigner",
-      signerChain: "ETH",
-      signerWalletAdapter: { signMessage },
-    });
-
-    // then
-    expect(outflow.txid).toBe("txid-3");
-    expect(fetchSpy).toHaveBeenCalledWith(
-      "https://app.liquidium.fi/api/sdk/v1/history/users/aaaaa-aa/transactions?market=rrkah-fqaaa-aaaaa-aaaaq-cai&limit=20",
-      {
-        method: "GET",
-        headers: undefined,
-        body: undefined,
-        signal: expect.any(AbortSignal),
-      }
-    );
   });
 
   test("maps protocol errors for createBorrow submission", async () => {

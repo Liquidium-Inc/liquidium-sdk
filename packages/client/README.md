@@ -85,7 +85,9 @@ const outflow = await borrowAction.submit({
   chain: "ETH",
 });
 
-// Borrow with the direct convenience method
+// Borrow with the direct convenience method. Returns the instant receipt
+// from the canister; `txid` may be null initially and can be resolved later
+// via a dedicated polling method (not yet exposed).
 const outflowWithConvenience = await client.lending.borrow({
   profileId: "<liquidium-profile-id>",
   poolId: btcPool.id,
@@ -108,17 +110,16 @@ const inflowStatus = await client.lending.getInflowStatus({
   txid: "<optional-broadcast-txid>",
 });
 
-// Recommended BTC supply flow with built-in 5 second polling
+// Unified supply flow with built-in 5 second polling
 const supplyFlow = await client.lending.supply({
   profileId: "<liquidium-profile-id>",
   poolId: btcPool.id,
   action: "deposit",
-  destination: "nativeAddress",
 });
 
-const depositAddress = supplyFlow.target.type === "nativeAddress"
-  ? supplyFlow.target.address
-  : undefined;
+if (supplyFlow.type === "transfer" && supplyFlow.target.type === "nativeAddress") {
+  const depositAddress = supplyFlow.target.address;
+}
 
 await supplyFlow.submit({ txid: "<broadcast-txid>" });
 
@@ -128,15 +129,14 @@ for await (const update of supplyFlow.watchStatus()) {
   }
 }
 
-// ETH stablecoin supply / repay with backend approval planning
+// ETH stablecoin supply / repay auto-routes to the contract-interaction path
 const stablecoinFlow = await client.lending.supply({
   profileId: "<liquidium-profile-id>",
   poolId: "<eth-usdt-or-usdc-pool-id>",
   action: "deposit",
-  destination: "icrcAccount",
-  ethAccount: walletAddress,
-  ethAmount: 10_000_000n,
-  ethWalletAdapter: {
+  account: walletAddress,
+  amount: 10_000_000n,
+  walletAdapter: {
     sendEthTransaction: async ({ transaction }) =>
       wallet.sendTransaction(transaction),
   },
@@ -180,14 +180,14 @@ Environment presets:
 ### Borrow and withdraw execution
 
 - `client.lending.prepareBorrow(...)` / `client.lending.prepareWithdraw(...)` - prepare raw signable actions
-- `client.lending.borrow({ ..., signerChain, signerWalletAdapter })` - sign and submit a borrow request in one call
+- `client.lending.borrow({ ..., signerChain, signerWalletAdapter })` - sign and submit a borrow request in one call; resolves with the instant receipt (txid may be null until the canister assigns one)
 - `client.lending.withdraw({ ..., signerChain, signerWalletAdapter })` - sign and submit a withdraw request in one call
 
 ### Wallet adapters
 
 - `WalletAdapter` currently supports BTC/ETH message signing through `signMessage`
-- BTC native supply automation uses `sendBtcTransaction`
-- ETH USDT/USDC supply and repayment automation uses `sendEthTransaction` together with `apiBaseUrl`
+- Transfer-path supply automation uses `sendBtcTransaction` or `sendEthTransaction`, depending on the resolved target chain
+- Contract-interaction supply automation uses `sendEthTransaction` together with `apiBaseUrl`
 - Future versions will add native ICP, native Solana, and additional ck-asset execution paths
 
 ### Modules
@@ -201,10 +201,10 @@ Environment presets:
 
 ### Supply tracking flow
 
-- `client.lending.prepareSupply(...)` returns the raw supply instruction for the selected execution path.
-- `client.lending.supply(...)` builds a tracked supply flow and returns helpers to submit a broadcast `txid`, fetch the latest tracking status, and poll every 5 seconds until the inflow is available.
-- BTC native-address inflows can auto-broadcast when `btcWalletAdapter` is provided.
-- ETH USDT/USDC inflows can auto-approve and auto-broadcast when `ethWalletAdapter`, `ethAccount`, `ethAmount`, and `apiBaseUrl` are provided.
+- `client.lending.prepareSupply(...)` auto-resolves the correct target and returns the raw `SupplyInstruction`.
+- `client.lending.supply(...)` returns a tracked `SupplyFlow` with `type: "transfer" | "contractInteraction"`.
+- Transfer-path inflows can auto-broadcast when `walletAdapter`, `account`, and `amount` are provided.
+- Contract-interaction inflows can auto-approve and auto-broadcast when `walletAdapter`, `account`, `amount`, and `apiBaseUrl` are provided.
 
 ## License
 

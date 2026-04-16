@@ -2,8 +2,8 @@ import { isBitcoinWallet } from "@dynamic-labs/bitcoin";
 import { isEthereumWallet } from "@dynamic-labs/ethereum";
 import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import {
-  LiquidiumClient,
   type AssetPrices,
+  LiquidiumClient,
   type Pool,
   type QuoteRequest,
   type WalletAdapter,
@@ -14,6 +14,7 @@ import { resolveLiquidiumClientConfig } from "./liquidium-runtime-config";
 const MIN_LIST_LIMIT = 1;
 const MAX_LIST_LIMIT = 1000;
 const DEFAULT_MOCK_SIGNATURE = "replace-with-real-signature";
+const DEFAULT_MOCK_TX_HASH = "0xmockedtxhash";
 
 type MethodDefinition = {
   id: string;
@@ -430,14 +431,13 @@ const SDK_METHODS: MethodDefinition[] = [
     id: "lending.prepareSupply",
     label: "lending.prepareSupply",
     defaultArgs:
-      '{\n  "profileId": "aaaaa-aa",\n  "poolId": "bbbbb-bb",\n  "action": "deposit",\n  "destination": "nativeAddress"\n}',
+      '{\n  "profileId": "aaaaa-aa",\n  "poolId": "bbbbb-bb",\n  "action": "deposit"\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
       return await client.lending.prepareSupply({
         profileId: expectNonEmptyString(args.profileId, "profileId"),
         poolId: expectNonEmptyString(args.poolId, "poolId"),
         action: expectSupplyAction(args.action, "action"),
-        destination: expectDestination(args.destination, "destination"),
       });
     },
   },
@@ -445,14 +445,29 @@ const SDK_METHODS: MethodDefinition[] = [
     id: "lending.supply",
     label: "lending.supply",
     defaultArgs:
-      '{\n  "profileId": "aaaaa-aa",\n  "poolId": "bbbbb-bb",\n  "action": "deposit",\n  "destination": "nativeAddress"\n}',
+      '{\n  "profileId": "aaaaa-aa",\n  "poolId": "bbbbb-bb",\n  "action": "deposit",\n  "account": "0xYourWalletAddress",\n  "amount": "1000000",\n  "mockTxHash": "0xmockedtxhash"\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
+      const mockTxHash =
+        expectOptionalString(args.mockTxHash, "mockTxHash") ??
+        DEFAULT_MOCK_TX_HASH;
+      const account = expectOptionalString(args.account, "account");
+      const amount =
+        args.amount === undefined
+          ? undefined
+          : expectBigInt(args.amount, "amount");
+      const walletAdapter =
+        account || amount || args.mockTxHash !== undefined
+          ? createMockWalletAdapter(DEFAULT_MOCK_SIGNATURE, mockTxHash)
+          : undefined;
+
       return await client.lending.supply({
         profileId: expectNonEmptyString(args.profileId, "profileId"),
         poolId: expectNonEmptyString(args.poolId, "poolId"),
         action: expectSupplyAction(args.action, "action"),
-        destination: expectDestination(args.destination, "destination"),
+        account,
+        amount,
+        walletAdapter,
       });
     },
   },
@@ -721,9 +736,14 @@ export function SdkMethodQueryPage() {
   );
 }
 
-function createMockWalletAdapter(signature: string): WalletAdapter {
+function createMockWalletAdapter(
+  signature: string,
+  txHash = DEFAULT_MOCK_TX_HASH
+): WalletAdapter {
   return {
     signMessage: async () => signature,
+    sendBtcTransaction: async () => txHash,
+    sendEthTransaction: async () => txHash,
   };
 }
 
@@ -889,19 +909,6 @@ function expectSupplyAction(
   }
 
   throw new Error(`${fieldName} must be deposit or repayment.`);
-}
-
-function expectDestination(
-  value: unknown,
-  fieldName: string
-): "nativeAddress" | "icrcAccount" {
-  const destination = expectNonEmptyString(value, fieldName);
-
-  if (destination === "nativeAddress" || destination === "icrcAccount") {
-    return destination;
-  }
-
-  throw new Error(`${fieldName} must be nativeAddress or icrcAccount.`);
 }
 
 function getWalletChainLabel(

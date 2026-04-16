@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import App from "./App";
 import { SdkMethodQueryPage } from "./SdkMethodQueryPage";
+import { SupplyPage } from "./SupplyPage";
 
-type ExamplePageId = "workflow" | "sdk-methods";
+type ExamplePageId = "borrow" | "supply" | "sdk-methods";
 
-const DEFAULT_PAGE_ID: ExamplePageId = "workflow";
+const DEFAULT_PAGE_ID: ExamplePageId = "borrow";
 const HASH_PREFIX = "#/";
 
 export default function Root() {
@@ -28,10 +29,16 @@ export default function Root() {
     <div>
       <header className="example-nav">
         <a
-          href={`${HASH_PREFIX}workflow`}
-          className={activePageId === "workflow" ? "is-active" : undefined}
+          href={`${HASH_PREFIX}borrow`}
+          className={activePageId === "borrow" ? "is-active" : undefined}
         >
-          Workflow Example
+          Borrow Example
+        </a>
+        <a
+          href={`${HASH_PREFIX}supply`}
+          className={activePageId === "supply" ? "is-active" : undefined}
+        >
+          Supply Example
         </a>
         <a
           href={`${HASH_PREFIX}sdk-methods`}
@@ -41,7 +48,9 @@ export default function Root() {
         </a>
       </header>
 
-      {activePageId === "workflow" ? <App /> : <SdkMethodQueryPage />}
+      {activePageId === "borrow" ? <App /> : null}
+      {activePageId === "supply" ? <SupplyPage /> : null}
+      {activePageId === "sdk-methods" ? <SdkMethodQueryPage /> : null}
     </div>
   );
 }
@@ -51,6 +60,18 @@ function getPageIdFromHash(hash: string): ExamplePageId {
 
   if (normalizedHash === "#/sdk-methods") {
     return "sdk-methods";
+  }
+
+  if (normalizedHash === "#/workflow") {
+    return "borrow";
+  }
+
+  if (normalizedHash === "#/evm-contract-supply") {
+    return "supply";
+  }
+
+  if (normalizedHash === "#/supply") {
+    return "supply";
   }
 
   return DEFAULT_PAGE_ID;
