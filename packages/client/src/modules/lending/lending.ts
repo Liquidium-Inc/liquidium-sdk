@@ -1,6 +1,5 @@
 import { encodeIcrcAccount } from "@dfinity/ledger-icrc";
 import { Principal } from "@dfinity/principal";
-import { encodeFunctionData } from "viem";
 import { createCkBtcMinterActor } from "../../core/canisters/ckbtc/minter";
 import {
   createLendingActor,
@@ -11,12 +10,7 @@ import {
   mapLendingProtocolErrorToLiquidiumError,
 } from "../../core/canisters/lending/error-mappers";
 import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
-import {
-  CK_DEPOSIT_ABI,
-  CK_DEPOSIT_CONTRACT_ADDRESS,
-  ERC20_ABI,
-  MAX_UINT256,
-} from "../../core/evm";
+import { MAX_UINT256 } from "../../core/evm";
 import type { ApiClient } from "../../core/transports/api-client";
 import type { CanisterContext } from "../../core/transports/canister-context";
 import type { SupplyAction } from "../../core/types";
@@ -26,6 +20,19 @@ import { computeExpiryTimestampFromNow } from "../../core/utils/time";
 import { getVariantKey } from "../../core/utils/variant";
 import type { WalletAdapter } from "../../core/wallet-actions";
 import { executeWith } from "../../execute";
+import {
+  createBorrowAssetMessage,
+  createWithdrawAssetMessage,
+} from "../../core/canisters/lending/messages";
+import {
+  createApproveTransaction,
+  createDepositErc20Transaction,
+} from "./evm-transactions";
+import {
+  mapBtcInflowToSupplyTrackingStatus,
+  mapCanisterOutflowDetails,
+  mapWalletChainToLendingChain,
+} from "./mappers";
 import type {
   BorrowAction,
   BorrowSubmitSignatureInfo,
@@ -50,7 +57,6 @@ import type {
   WithdrawSubmitSignatureInfo,
 } from "./types";
 
-const BITCOIN_BLOCK_TIME_MS = 10 * 60 * 1000;
 const SUBMIT_INFLOW_MAX_ATTEMPTS = 4;
 const SUBMIT_INFLOW_INITIAL_RETRY_DELAY_MS = 1_500;
 const SUBMIT_INFLOW_RETRY_BACKOFF_MULTIPLIER = 2;
@@ -61,10 +67,8 @@ type LendingModuleOptions = {
   supplyStatusPollIntervalMs: number;
 };
 
-type WalletChain = "BTC" | "ETH";
-
 type WalletExecutionParams = {
-  signerChain: WalletChain;
+  signerChain: "BTC" | "ETH";
   signerWalletAdapter: WalletAdapter;
 };
 
@@ -85,31 +89,6 @@ type SupplyTargetRequest = {
 };
 
 type SupplyMechanism = SupplyFlow["type"];
-
-type MessageAccount = {
-  type: "Native" | "External";
-  data: string;
-};
-
-type OutflowMessageRequest = {
-  pool_id: string;
-  amount: string;
-  account: MessageAccount;
-  expiry_timestamp: bigint;
-};
-
-type LendingChainVariant = { BTC: null } | { ETH: null };
-
-type CanisterOutflowReceiver = { Native: Principal } | { External: string };
-
-type CanisterOutflowRecord = {
-  id: string;
-  txid: [] | [string];
-  outflow_type: Record<string, null>;
-  outflow_ref: [] | [string];
-  amount: bigint;
-  receiver: CanisterOutflowReceiver;
-};
 
 export class LendingModule {
   constructor(
@@ -1057,34 +1036,6 @@ export class LendingModule {
   }
 }
 
-function mapBtcInflowToSupplyTrackingStatus(
-  inflow: GetInflowStatusResponse["inflows"][number]
-): SupplyTrackingStatus {
-  const remainingConfirmations =
-    inflow.confirmations === null
-      ? inflow.requiredConfirmations
-      : Math.max(inflow.requiredConfirmations - inflow.confirmations, 0);
-  const estimatedMsUntilAvailable =
-    remainingConfirmations * BITCOIN_BLOCK_TIME_MS;
-
-  return {
-    txid: inflow.txid,
-    inflowId: inflow.inflowId,
-    poolId: inflow.poolId,
-    type: inflow.type,
-    stage: inflow.stage,
-    amountSats: inflow.amountSats,
-    timestampMs: inflow.timestampMs,
-    confirmations: inflow.confirmations,
-    requiredConfirmations: inflow.requiredConfirmations,
-    remainingConfirmations,
-    isDetected: inflow.stage !== "LOGGED",
-    isAvailable: inflow.stage === "CONFIRMED",
-    estimatedMsUntilAvailable,
-    expectedAvailableAtMs: Date.now() + estimatedMsUntilAvailable,
-  };
-}
-
 async function delay(timeoutMs: number, signal?: AbortSignal): Promise<void> {
   if (signal?.aborted) {
     throw signal.reason ?? new DOMException("Aborted", "AbortError");
@@ -1122,20 +1073,6 @@ function isRetriableInflowNotFoundError(error: unknown): boolean {
   }
 
   return /not found/i.test(error.message);
-}
-
-function getDefaultSubmitInflowRequest(params: {
-  action: SupplyAction;
-  chain: string;
-}): Omit<SubmitInflowRequest, "txid"> | undefined {
-  if (params.chain !== "ETH") {
-    return undefined;
-  }
-
-  return {
-    chain: "ETH",
-    type: params.action === "repayment" ? "REPAY" : "DEPOSIT",
-  };
 }
 
 function resolveSupplyMechanism(params: {
@@ -1184,179 +1121,16 @@ function assertSupportsIcrcAccountInflowTarget(asset: string): void {
   );
 }
 
-function createApproveTransaction(params: {
-  tokenAddress: string;
-  spenderAddress: string;
-  amount: bigint;
-}): { to: string; data: string } {
-  return {
-    to: params.tokenAddress,
-    data: encodeFunctionData({
-      abi: ERC20_ABI,
-      functionName: "approve",
-      args: [params.spenderAddress as `0x${string}`, params.amount],
-    }),
-  };
-}
-
-function createDepositErc20Transaction(params: {
-  tokenAddress: string;
-  amount: bigint;
-  poolId: string;
-  profileId: string;
-  destinationAccount: string;
+function getDefaultSubmitInflowRequest(params: {
   action: SupplyAction;
-}): { to: string; data: string } {
-  const expectedDestinationAccount = encodeIcrcAccount({
-    owner: Principal.fromText(params.poolId),
-    subaccount: encodeInflowSubaccount({
-      action: params.action,
-      principal: Principal.fromText(params.profileId),
-    }),
-  });
-
-  if (params.destinationAccount !== expectedDestinationAccount) {
-    throw new LiquidiumError(
-      LiquidiumErrorCode.VALIDATION_ERROR,
-      "ETH supply destination account does not match the expected inflow account"
-    );
-  }
-
-  const principalBytes32 = encodePrincipalToBytes32(
-    Principal.fromText(params.poolId)
-  );
-  const subaccountHex = encodeBytes32Hex(
-    encodeInflowSubaccount({
-      action: params.action,
-      principal: Principal.fromText(params.profileId),
-    })
-  );
-
-  return {
-    to: CK_DEPOSIT_CONTRACT_ADDRESS,
-    data: encodeFunctionData({
-      abi: CK_DEPOSIT_ABI,
-      functionName: "depositErc20",
-      args: [
-        params.tokenAddress as `0x${string}`,
-        params.amount,
-        principalBytes32,
-        subaccountHex,
-      ],
-    }),
-  };
-}
-
-function encodePrincipalToBytes32(principal: Principal): `0x${string}` {
-  const principalBytes = principal.toUint8Array();
-  if (principalBytes.length > 29) {
-    throw new LiquidiumError(
-      LiquidiumErrorCode.VALIDATION_ERROR,
-      "Principal length exceeds Ethereum bytes32 capacity"
-    );
-  }
-
-  const fixedBytes = new Uint8Array(32);
-  fixedBytes[0] = principalBytes.length;
-  fixedBytes.set(principalBytes, 1);
-
-  return encodeBytes32Hex(fixedBytes);
-}
-
-function encodeBytes32Hex(bytes: Uint8Array): `0x${string}` {
-  return `0x${Array.from(bytes, (byte) =>
-    byte.toString(16).padStart(2, "0")
-  ).join("")}`;
-}
-
-function createBorrowAssetMessage(
-  request: OutflowMessageRequest,
-  nonce: bigint
-): string {
-  return `Liquidium: Borrow Assets
-
-Action: Borrow from pool
-Pool ID: ${request.pool_id}
-Amount: ${request.amount}
-${accountTypeToString(request.account)}
-Expires: ${request.expiry_timestamp}
-Nonce: ${nonce}`;
-}
-
-function createWithdrawAssetMessage(
-  request: OutflowMessageRequest,
-  nonce: bigint
-): string {
-  return `Liquidium: Withdraw Assets
-
-Action: Withdraw from pool
-Pool ID: ${request.pool_id}
-Amount: ${request.amount}
-${accountTypeToString(request.account)}
-Expires: ${request.expiry_timestamp}
-Nonce: ${nonce}`;
-}
-
-function accountTypeToString(accountType: MessageAccount): string {
-  switch (accountType.type) {
-    case "External":
-      return `Address:${accountType.data}`;
-    case "Native":
-      return `Principal:${accountType.data}`;
-  }
-}
-
-function mapWalletChainToLendingChain(chain: WalletChain): LendingChainVariant {
-  switch (chain) {
-    case "BTC":
-      return { BTC: null };
-    case "ETH":
-      return { ETH: null };
-  }
-}
-
-function mapCanisterOutflowDetails(
-  outflow: CanisterOutflowRecord
-): OutflowDetails {
-  const rawOutflowType = getVariantKey(outflow.outflow_type);
-
-  return {
-    id: outflow.id,
-    outflowType: normalizeOutflowType(rawOutflowType),
-    outflowRef: outflow.outflow_ref[0],
-    txid: outflow.txid[0],
-    amount: outflow.amount,
-    receiver: mapCanisterAccountType(outflow.receiver),
-  };
-}
-
-function normalizeOutflowType(
-  rawOutflowType: string
-): OutflowDetails["outflowType"] {
-  switch (rawOutflowType) {
-    case "Withdraw":
-      return "withdraw";
-    case "Borrow":
-      return "borrow";
-    case "FeeClaim":
-      return "feeClaim";
-    default:
-      throw new Error(`Unsupported outflow type: ${rawOutflowType}`);
-  }
-}
-
-function mapCanisterAccountType(
-  receiver: CanisterOutflowReceiver
-): OutflowDetails["receiver"] {
-  if ("Native" in receiver) {
-    return {
-      type: "Native",
-      account: receiver.Native.toText(),
-    };
+  chain: string;
+}): Omit<SubmitInflowRequest, "txid"> | undefined {
+  if (params.chain !== "ETH") {
+    return undefined;
   }
 
   return {
-    type: "External",
-    account: receiver.External,
+    chain: "ETH",
+    type: params.action === "repayment" ? "REPAY" : "DEPOSIT",
   };
 }
