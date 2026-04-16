@@ -9,7 +9,7 @@ import {
   type WalletAdapter,
 } from "@liquidium/client";
 import { useMemo, useState } from "react";
-import { resolveLiquidiumClientConfig } from "./liquidium-runtime-config";
+import { createLiquidiumClient } from "./lib/client";
 
 const MIN_LIST_LIMIT = 1;
 const MAX_LIST_LIMIT = 1000;
@@ -527,7 +527,7 @@ export function SdkMethodQueryPage() {
 
     try {
       const parsedInput = JSON.parse(argsInput) as unknown;
-      const client = LiquidiumClient.create(resolveLiquidiumClientConfig());
+      const client = createLiquidiumClient();
       const rawResult = await selectedMethod.execute(client, parsedInput);
       const elapsedMs = Date.now() - startedAtMs;
 

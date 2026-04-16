@@ -37,19 +37,34 @@ pnpm --filter @liquidium/example-vite-react-dynamic dev
 
 ## What To Look At
 
-- `src/App.tsx` is the borrow-focused page with quote-first borrow, position reads, and history
-- `src/SupplyPage.tsx` is the unified supply page for supported BTC and ETH supply pools
-- `src/SdkMethodQueryPage.tsx` lets you execute every public SDK method by
-  passing JSON args and viewing raw results
-- `src/Root.tsx` handles page switching between the borrow, supply, and SDK query pages
-- `src/liquidium-client-sdk.ts` is the thin helper layer around the SDK
-- `src/wallet-signing.ts` adapts Dynamic wallets to the SDK signing flow
+The example calls `@liquidium/client` directly from each page. The only
+non-SDK code is small, focused helpers under `src/lib/` and wallet glue for
+Dynamic.
+
+- `src/App.tsx` — borrow page: quote-first borrow, position reads, history
+- `src/SupplyPage.tsx` — unified supply page for BTC and ETH stablecoin pools
+- `src/SdkMethodQueryPage.tsx` — developer tool to run any SDK method with raw
+  JSON args and inspect the raw response
+- `src/Root.tsx` — simple hash-based page switcher
+- `src/lib/client.ts` — one-liner factory that builds a `LiquidiumClient`
+- `src/lib/profile.ts` — `createOrResolveProfile()` helper that handles the
+  "profile already exists" race explicitly
+- `src/lib/pools.ts` — pool predicates and default-selection helpers
+- `src/lib/format.ts` — amount parsing and display helpers (bigint base units,
+  USD, percentages)
+- `src/lib/assets.ts` — asset decimals and stablecoin detection
+- `src/lib/borrow-capacity.ts` — capacity validation that scales quote USD to
+  profile-stats USD before comparing
+- `src/wallet-signing.ts` — adapts Dynamic wallets to the SDK signing flow
+- `src/example-wallet.ts` — Dynamic-specific wallet helpers (chain label,
+  preferred BTC payment address)
 
 ## Notes
 
-- The example uses direct SDK convenience methods instead of a prepare/execute
-  walkthrough
-- The borrow flow is intentionally quote-first so it mirrors the sats terminal
-  interaction model
-- The supply page demonstrates the unified `supply()` API and lets the pool pick the transfer or contract-interaction path
+- Pages call the SDK directly (`client.market.getPools()`,
+  `client.lending.borrow(...)`, etc) so the SDK surface stays visible
+- The borrow flow is quote-first so it mirrors the sats terminal interaction
+  model
+- The supply page uses the unified `supply()` API and lets the pool pick the
+  transfer or contract-interaction path
 - For Bitcoin wallets, the example prefers the payment address when available

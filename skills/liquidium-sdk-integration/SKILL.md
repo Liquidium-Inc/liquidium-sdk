@@ -279,5 +279,6 @@ When unsure, check these first:
 - `packages/client/README.md`
 - `README.md`
 - `examples/vite-react-dynamic/README.md`
-- `examples/vite-react-dynamic/src/liquidium-client-sdk.ts`
+- `examples/vite-react-dynamic/src/lib/client.ts`
+- `examples/vite-react-dynamic/src/lib/profile.ts`
 - `examples/vite-react-dynamic/src/wallet-signing.ts`
