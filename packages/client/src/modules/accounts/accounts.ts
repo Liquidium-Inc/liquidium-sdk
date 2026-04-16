@@ -34,6 +34,9 @@ export class AccountsModule {
    * Prepares an account-creation action that can be signed and submitted later.
    *
    * Use this when you need direct control over the signing flow.
+   *
+   * @param options - `account` is the wallet address that will own the new profile.
+   * @returns A signable {@link CreateAccountAction} with `submit` wired to the canister.
    */
   async prepareCreate(
     options: PrepareCreateOptions
@@ -45,6 +48,9 @@ export class AccountsModule {
    * Creates a Liquidium profile using the provided wallet adapter.
    *
    * This is the convenience form of `prepareCreate(...)` plus execution.
+   *
+   * @param params - Wallet `account`, signing `chain`, and `walletAdapter` with `signMessage`.
+   * @returns The new profile principal as text.
    */
   async create(params: ExecuteCreateParams): Promise<string> {
     const action = await this.prepareCreate({ account: params.account });
@@ -58,6 +64,9 @@ export class AccountsModule {
 
   /**
    * Resolves the Liquidium profile linked to a wallet address.
+   *
+   * @param walletAddress - Wallet address string as registered with the protocol.
+   * @returns Profile principal text, or `null` if none exists.
    */
   async resolveProfile(walletAddress: string): Promise<string | null> {
     try {
@@ -79,6 +88,9 @@ export class AccountsModule {
    * Returns the current nonce for a wallet address.
    *
    * This is mainly useful for custom signing flows built on prepared actions.
+   *
+   * @param walletAddress - Wallet address used in `get_nonce` on the lending canister.
+   * @returns The next signing nonce as a bigint.
    */
   async getNonce(walletAddress: string): Promise<bigint> {
     try {
@@ -118,6 +130,12 @@ export class AccountsModule {
 
   /**
    * Links an additional wallet to an existing profile.
+   *
+   * @param profileId - Profile principal text.
+   * @param newWalletAddress - Address to link.
+   * @param chain - Wallet chain for the new address.
+   *
+   * @remarks Not implemented yet; throws with `LiquidiumErrorCode.INTERNAL`.
    */
   async linkWallet(
     profileId: string,
@@ -135,6 +153,11 @@ export class AccountsModule {
 
   /**
    * Unlinks a wallet from an existing profile.
+   *
+   * @param profileId - Profile principal text.
+   * @param walletAddress - Address to remove from the profile.
+   *
+   * @remarks Not implemented yet; throws with `LiquidiumErrorCode.INTERNAL`.
    */
   async unlinkWallet(profileId: string, walletAddress: string): Promise<void> {
     void profileId;

@@ -17,13 +17,25 @@ import { PendingModule } from "./modules/pending";
 import { PositionsModule } from "./modules/positions";
 import { QuoteModule } from "./modules/quote";
 
+/**
+ * Root client for Liquidium protocol integration (canister + optional HTTP API).
+ *
+ * Construct with {@link LiquidiumClient.create}.
+ */
 export class LiquidiumClient {
+  /** Profile lifecycle: create, resolve, linked wallets. */
   readonly accounts: AccountsModule;
+  /** Borrow, withdraw, supply, inflow reporting and tracking. */
   readonly lending: LendingModule;
+  /** Per-pool positions, health, aggregate stats. */
   readonly positions: PositionsModule;
+  /** Pool list, prices, pool rate lookups. */
   readonly market: MarketModule;
+  /** Pending inflows/outflows (requires `apiBaseUrl` when implemented). */
   readonly pending: PendingModule;
+  /** Pool and user history (requires `apiBaseUrl`). */
   readonly history: HistoryModule;
+  /** Pure quote helpers from market inputs. */
   readonly quote: QuoteModule;
 
   private readonly canisterContext: CanisterContext;

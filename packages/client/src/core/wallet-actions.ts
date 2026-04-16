@@ -47,6 +47,14 @@ export interface SendBtcTransactionRequest {
   transferMode: TransferMode;
 }
 
+/**
+ * Optional wallet capabilities. Implement only what your flow uses:
+ *
+ * - `signMessage` — account creation, borrow, withdraw
+ * - `sendBtcTransaction` / `sendEthTransaction` — automated transfer-path supply
+ * - `sendEthTransaction` — contract-interaction supply and ETH native sends
+ * - `signPsbt` — reserved for PSBT-based actions when exposed
+ */
 export interface WalletAdapter {
   signMessage?: (request: SignMessageRequest) => Promise<string>;
   signPsbt?: (request: SignPsbtRequest) => Promise<string>;

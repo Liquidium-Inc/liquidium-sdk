@@ -122,6 +122,9 @@ export class LendingModule {
    * Prepares a withdraw action that can be signed and submitted later.
    *
    * Use this when you need explicit control over signing and submission.
+   *
+   * @param request - Profile, pool, amount (pool asset base units), outflow address, and signer wallet.
+   * @returns A signable {@link WithdrawAction} with `submit` wired to the canister.
    */
   async prepareWithdraw(
     request: CreateWithdrawRequest
@@ -226,6 +229,9 @@ export class LendingModule {
    * Creates a withdraw outflow using the provided wallet adapter.
    *
    * This is the convenience form of `prepareWithdraw(...)` plus execution.
+   *
+   * @param params - Withdraw request fields plus `signerChain` and `signerWalletAdapter`.
+   * @returns The canister {@link OutflowDetails} for the completed withdraw.
    */
   async withdraw(
     params: CreateWithdrawRequest & WalletExecutionParams
@@ -243,6 +249,9 @@ export class LendingModule {
    * Prepares a borrow action that can be signed and submitted later.
    *
    * Use this when you need explicit control over signing and submission.
+   *
+   * @param request - Profile, pool, amount (borrow asset base units), outflow address, and signer wallet.
+   * @returns A signable {@link BorrowAction} with `submit` wired to the canister.
    */
   async prepareBorrow(request: CreateBorrowRequest): Promise<BorrowAction> {
     const destinationAccount = request.receiverAddress.trim();
@@ -344,6 +353,13 @@ export class LendingModule {
    * Creates a borrow outflow using the provided wallet adapter.
    *
    * This is the convenience form of `prepareBorrow(...)` plus execution.
+   *
+   * @param params - Borrow request fields plus `signerChain` and `signerWalletAdapter`.
+   * @returns The instant canister receipt as {@link OutflowDetails}.
+   *
+   * @remarks
+   * `id` is always present. `txid` may be missing on the first response; the SDK does not
+   * poll for it. Use history or app-level polling if you need the chain transaction id.
    */
   async borrow(
     params: CreateBorrowRequest & WalletExecutionParams
@@ -361,6 +377,9 @@ export class LendingModule {
    * Prepares supply instructions for a deposit or repayment flow.
    *
    * The returned instruction describes where funds should be sent.
+   *
+   * @param request - Profile, pool, and supply action.
+   * @returns Resolved deposit/repay target and metadata for the pool.
    */
   async prepareSupply(request: SupplyRequest): Promise<SupplyInstruction> {
     const supplyTarget = await this.resolveSupplyTarget(request);
@@ -381,6 +400,12 @@ export class LendingModule {
    * submission and status tracking. The SDK resolves the pool's supply
    * mechanism automatically, then either returns a transfer target or executes
    * the required contract interaction when a wallet adapter is provided.
+   *
+   * @param request - When `walletAdapter`, `account`, and `amount` are set, the SDK may
+   *   broadcast the transfer or contract-interaction transactions automatically.
+   *   Contract-interaction paths require `apiBaseUrl` on the client.
+   * @returns A {@link SupplyFlow} with `type` `"transfer"` or `"contractInteraction"`,
+   *   plus `submit`, `getStatus`, and `watchStatus`.
    */
   async supply(request: SupplyFlowRequest): Promise<SupplyFlow> {
     const instruction = await this.prepareSupply(request);
@@ -507,6 +532,14 @@ export class LendingModule {
     };
   }
 
+  /**
+   * Fetches ERC-20 supply planning data from the SDK API (allowance, approval strategy, deposit calldata inputs).
+   *
+   * Requires `apiBaseUrl` on the client. Used internally by contract-interaction `supply`.
+   *
+   * @param request - Profile, pool, wallet, amount (token base units), and action.
+   * @returns Backend-computed {@link EvmSupplyContext} for approvals and deposit.
+   */
   async getEvmSupplyContext(
     request: GetEvmSupplyContextRequest
   ): Promise<EvmSupplyContext> {
@@ -766,6 +799,11 @@ export class LendingModule {
 
   /**
    * Submits an inflow transaction id for faster indexing.
+   *
+   * Requires `apiBaseUrl` on the client.
+   *
+   * @param request - Broadcast `txid` plus optional `chain` and inflow `type`.
+   * @returns Acknowledgement including the submitted `txid`.
    */
   async submitInflow(
     request: SubmitInflowRequest
@@ -780,6 +818,11 @@ export class LendingModule {
 
   /**
    * Returns the current inflow status for a profile, optionally filtered by txid.
+   *
+   * Requires `apiBaseUrl` on the client.
+   *
+   * @param request - `profileId` and optional `txid` filter.
+   * @returns Matching inflow rows from the SDK API.
    */
   async getInflowStatus(
     request: GetInflowStatusRequest
@@ -800,6 +843,10 @@ export class LendingModule {
 
   /**
    * Returns the configured deposit fee.
+   *
+   * @returns Deposit fee in protocol units.
+   *
+   * @remarks Not implemented yet; currently throws with `LiquidiumErrorCode.INTERNAL`.
    */
   async getDepositFee(): Promise<bigint> {
     throw new LiquidiumError(
@@ -810,6 +857,8 @@ export class LendingModule {
 
   /**
    * Returns whether borrowing is currently disabled by the protocol.
+   *
+   * @returns `true` when the lending canister reports borrowing disabled.
    */
   async isBorrowingDisabled(): Promise<boolean> {
     try {
