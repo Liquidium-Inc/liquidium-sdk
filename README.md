@@ -1,6 +1,6 @@
 # Liquidium SDK
 
-TypeScript SDK workspace for Liquidium.
+TypeScript SDK for Liquidium lending market interactions.
 
 ## Quick Start
 
