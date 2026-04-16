@@ -27,8 +27,6 @@ export interface LiquidiumClientConfig {
   fetch?: typeof fetch;
   /** Per-request timeout for SDK API calls in milliseconds. */
   timeoutMs?: number;
-  /** Default interval for `SupplyFlow.watchStatus()` when not overridden per call. */
-  supplyStatusPollIntervalMs?: number;
 }
 
 export interface CanisterIds {

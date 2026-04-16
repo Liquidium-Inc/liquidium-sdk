@@ -29,7 +29,6 @@ import {
   createDepositErc20Transaction,
 } from "./evm-transactions";
 import {
-  mapBtcInflowToSupplyTrackingStatus,
   mapCanisterOutflowDetails,
   mapWalletChainToLendingChain,
 } from "./mappers";
@@ -40,8 +39,6 @@ import type {
   CreateWithdrawRequest,
   EvmSupplyContext,
   GetEvmSupplyContextRequest,
-  GetInflowStatusRequest,
-  GetInflowStatusResponse,
   IcrcAccountSupplyTarget,
   NativeAddressSupplyTarget,
   OutflowDetails,
@@ -52,7 +49,6 @@ import type {
   SupplyInstruction,
   SupplyRequest,
   SupplyTarget,
-  SupplyTrackingStatus,
   WithdrawAction,
   WithdrawSubmitSignatureInfo,
 } from "./types";
@@ -62,10 +58,6 @@ const SUBMIT_INFLOW_INITIAL_RETRY_DELAY_MS = 1_500;
 const SUBMIT_INFLOW_RETRY_BACKOFF_MULTIPLIER = 2;
 const ETH_APPROVAL_POLL_INTERVAL_MS = 2_000;
 const ETH_APPROVAL_MAX_POLLS = 30;
-
-type LendingModuleOptions = {
-  supplyStatusPollIntervalMs: number;
-};
 
 type WalletExecutionParams = {
   signerChain: "BTC" | "ETH";
@@ -93,8 +85,7 @@ type SupplyMechanism = SupplyFlow["type"];
 export class LendingModule {
   constructor(
     readonly canisterContext: CanisterContext,
-    readonly apiClient: ApiClient | undefined,
-    readonly options: LendingModuleOptions
+    readonly apiClient: ApiClient | undefined
   ) {}
 
   /**
@@ -373,18 +364,19 @@ export class LendingModule {
   }
 
   /**
-   * Creates a tracked supply flow for a deposit or repayment.
+   * Resolves a supply target for a deposit or repayment and optionally broadcasts it.
    *
-   * This resolves a deposit address target and returns helpers for txid
-   * submission and status tracking. The SDK resolves the pool's supply
-   * mechanism automatically, then either returns a transfer target or executes
-   * the required contract interaction when a wallet adapter is provided.
+   * When `walletAdapter`, `account`, and `amount` are provided, the SDK broadcasts
+   * the transfer or contract-interaction transactions and returns the resulting
+   * `txid` on the receipt. Otherwise the caller broadcasts themselves and uses
+   * {@link LendingModule.submitInflow} to register the txid. Contract-interaction
+   * paths require `apiBaseUrl` on the client.
    *
-   * @param request - When `walletAdapter`, `account`, and `amount` are set, the SDK may
-   *   broadcast the transfer or contract-interaction transactions automatically.
-   *   Contract-interaction paths require `apiBaseUrl` on the client.
-   * @returns A {@link SupplyFlow} with `type` `"transfer"` or `"contractInteraction"`,
-   *   plus `submit`, `getStatus`, and `watchStatus`.
+   * The SDK does not poll for inflow status. When a `txid` is returned, it is the
+   * caller's responsibility to track confirmation state using their own polling.
+   *
+   * @returns A {@link SupplyFlow} receipt with `type`, `instruction`, `target`,
+   *   `submit`, and an optional `txid` present when the SDK broadcast for you.
    */
   async supply(request: SupplyFlowRequest): Promise<SupplyFlow> {
     const instruction = await this.prepareSupply(request);
@@ -396,117 +388,37 @@ export class LendingModule {
       action: request.action,
       chain: mechanism === "contractInteraction" ? "ETH" : instruction.chain,
     });
-    const flow = this.createSupplyFlow({
-      type: mechanism,
-      profileId: request.profileId,
-      instruction,
-      defaultSubmitInflowRequest,
-    });
 
+    let txid: string | undefined;
     switch (mechanism) {
       case "transfer":
         if (request.walletAdapter) {
-          flow.setTrackedTxid(
-            await this.sendAndSubmitNativeSupplyInflow({
-              request,
-              instruction,
-              defaultSubmitInflowRequest,
-            })
-          );
-        }
-        break;
-      case "contractInteraction":
-        flow.setTrackedTxid(
-          await this.executeContractSupply({
+          txid = await this.sendAndSubmitNativeSupplyInflow({
             request,
             instruction,
             defaultSubmitInflowRequest,
-          })
-        );
+          });
+        }
+        break;
+      case "contractInteraction":
+        txid = await this.executeContractSupply({
+          request,
+          instruction,
+          defaultSubmitInflowRequest,
+        });
         break;
     }
 
-    return flow;
-  }
-
-  private createSupplyFlow(params: {
-    type: SupplyFlow["type"];
-    profileId: string;
-    instruction: SupplyInstruction;
-    defaultSubmitInflowRequest?: Omit<SubmitInflowRequest, "txid">;
-  }): SupplyFlow & { setTrackedTxid(txid: string): void } {
-    const { type, profileId, instruction, defaultSubmitInflowRequest } = params;
-    const defaultPollIntervalMs = this.options.supplyStatusPollIntervalMs;
-    let trackedTxid: string | undefined;
-    const getStatus = async (
-      statusRequest?: SupplyFlow["getStatus"] extends (
-        request?: infer T
-      ) => Promise<unknown>
-        ? T
-        : never
-    ): Promise<SupplyTrackingStatus | null> => {
-      const txid = statusRequest?.txid ?? trackedTxid;
-      const statusResponse = await this.getInflowStatus({
-        profileId,
-        txid,
-      });
-
-      const matchedInflow = txid
-        ? (statusResponse.inflows.find((inflow) => inflow.txid === txid) ??
-          null)
-        : (statusResponse.inflows[0] ?? null);
-
-      if (!matchedInflow) {
-        return null;
-      }
-
-      trackedTxid = matchedInflow.txid;
-
-      return mapBtcInflowToSupplyTrackingStatus(matchedInflow);
-    };
-
     return {
-      type,
+      type: mechanism,
       instruction,
       target: instruction.target,
-      setTrackedTxid(txid: string) {
-        trackedTxid = txid;
-      },
-      submit: async (request) => {
-        trackedTxid = request.txid;
-
+      txid,
+      submit: async (submitRequest) => {
         return await this.submitInflow({
           ...defaultSubmitInflowRequest,
-          ...request,
+          ...submitRequest,
         });
-      },
-      getStatus,
-      watchStatus: async function* (
-        options?: Parameters<SupplyFlow["watchStatus"]>[0]
-      ) {
-        const pollIntervalMs = options?.pollIntervalMs ?? defaultPollIntervalMs;
-        const signal = options?.signal;
-        let nextTxid = options?.txid ?? trackedTxid;
-
-        while (true) {
-          throwIfAborted(signal);
-
-          const currentStatus = await getStatus({ txid: nextTxid });
-          if (currentStatus) {
-            nextTxid = currentStatus.txid;
-            trackedTxid = currentStatus.txid;
-
-            yield {
-              ...currentStatus,
-            };
-
-            if (currentStatus.isAvailable) {
-              return;
-            }
-          }
-
-          await delay(pollIntervalMs, signal);
-        }
       },
     };
   }
@@ -796,31 +708,6 @@ export class LendingModule {
   }
 
   /**
-   * Returns the current inflow status for a profile, optionally filtered by txid.
-   *
-   * Requires `apiBaseUrl` on the client.
-   *
-   * @param request - `profileId` and optional `txid` filter.
-   * @returns Matching inflow rows from the SDK API.
-   */
-  async getInflowStatus(
-    request: GetInflowStatusRequest
-  ): Promise<GetInflowStatusResponse> {
-    const apiClient = this.requireApi();
-    const query = new URLSearchParams({
-      profileId: request.profileId,
-    });
-
-    if (request.txid) {
-      query.set("txid", request.txid);
-    }
-
-    return await apiClient.get<GetInflowStatusResponse>(
-      `/v1/inflow-status?${query.toString()}`
-    );
-  }
-
-  /**
    * Returns the configured deposit fee.
    *
    * @returns Deposit fee in protocol units.
@@ -1036,31 +923,8 @@ export class LendingModule {
   }
 }
 
-async function delay(timeoutMs: number, signal?: AbortSignal): Promise<void> {
-  if (signal?.aborted) {
-    throw signal.reason ?? new DOMException("Aborted", "AbortError");
-  }
-
-  await new Promise<void>((resolve, reject) => {
-    const timeout = setTimeout(() => {
-      signal?.removeEventListener("abort", abortListener);
-      resolve();
-    }, timeoutMs);
-
-    function abortListener(): void {
-      clearTimeout(timeout);
-      signal?.removeEventListener("abort", abortListener);
-      reject(signal?.reason ?? new DOMException("Aborted", "AbortError"));
-    }
-
-    signal?.addEventListener("abort", abortListener, { once: true });
-  });
-}
-
-function throwIfAborted(signal?: AbortSignal): void {
-  if (signal?.aborted) {
-    throw signal.reason ?? new DOMException("Aborted", "AbortError");
-  }
+async function delay(timeoutMs: number): Promise<void> {
+  await new Promise<void>((resolve) => setTimeout(resolve, timeoutMs));
 }
 
 function isRetriableInflowNotFoundError(error: unknown): boolean {

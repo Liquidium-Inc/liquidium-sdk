@@ -39,9 +39,8 @@ const client = LiquidiumClient.create({
 
 **Config requirements:**
 - `environment`: sets the canister preset (`mainnet` or `staging`)
-- `apiBaseUrl`: required for history, pending movements, inflow reporting, inflow status polling, and contract-interaction `supply(...)` (ETH stablecoin pools need backend approval planning). Not required for `borrow(...)` or `withdraw(...)`, which submit through the canister only
+- `apiBaseUrl`: required for history, pending movements, inflow reporting, and contract-interaction `supply(...)` (ETH stablecoin pools need backend approval planning). Not required for `borrow(...)` or `withdraw(...)`, which submit through the canister only
 - `identity` / `icHost`: custom ICP agent configuration
-- `supplyStatusPollIntervalMs`: custom supply polling interval
 
 ## Module Guide
 
@@ -86,7 +85,6 @@ client.lending.borrow(...);
 client.lending.withdraw(...);
 client.lending.supply(...);
 client.lending.submitInflow(...);    // requires apiBaseUrl
-client.lending.getInflowStatus(...); // requires apiBaseUrl
 ```
 
 ### positions
@@ -206,13 +204,11 @@ if (supplyFlow.type === "transfer" && supplyFlow.target.type === "nativeAddress"
 }
 
 await supplyFlow.submit({ txid: "<broadcast-txid>" });
-
-for await (const update of supplyFlow.watchStatus()) {
-  if (update.isAvailable) {
-    break;
-  }
-}
 ```
+
+`supply(...)` returns a receipt. When the SDK broadcast for you (wallet-adapter
+path), `supplyFlow.txid` is populated. The SDK does not poll inflow status;
+when you have a txid, you are responsible for polling confirmation state.
 
 If the app wants the SDK to broadcast the transfer-path transaction, provide
 `walletAdapter`, `account`, and `amount`:

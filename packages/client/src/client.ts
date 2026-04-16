@@ -1,6 +1,5 @@
 import {
   DEFAULT_ENVIRONMENT,
-  DEFAULT_SUPPLY_STATUS_POLL_INTERVAL_MS,
   DEFAULT_TIMEOUT_MS,
   resolveCanisterIds,
 } from "./core/config";
@@ -45,9 +44,6 @@ export class LiquidiumClient {
     const environment = config.environment ?? DEFAULT_ENVIRONMENT;
     const canisterIds = resolveCanisterIds(environment, config.canisterIds);
     const timeoutMs = config.timeoutMs ?? DEFAULT_TIMEOUT_MS;
-    const supplyStatusPollIntervalMs =
-      config.supplyStatusPollIntervalMs ??
-      DEFAULT_SUPPLY_STATUS_POLL_INTERVAL_MS;
 
     this.canisterContext = createCanisterContext({
       icHost: config.icHost,
@@ -65,9 +61,7 @@ export class LiquidiumClient {
       : undefined;
 
     this.accounts = new AccountsModule(this.canisterContext);
-    this.lending = new LendingModule(this.canisterContext, this.apiClient, {
-      supplyStatusPollIntervalMs,
-    });
+    this.lending = new LendingModule(this.canisterContext, this.apiClient);
     this.positions = new PositionsModule(this.canisterContext);
     this.market = new MarketModule(this.canisterContext, this.apiClient);
     this.pending = new PendingModule(this.canisterContext, this.apiClient);
