@@ -13,31 +13,6 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-async function collectWatchUpdates<T>(
-  iterator: AsyncGenerator<T, void, void>,
-  expectedCount: number,
-  pollIntervalMs = 5_000
-): Promise<T[]> {
-  const updates: T[] = [];
-
-  while (updates.length < expectedCount) {
-    const nextResultPromise = iterator.next();
-    await vi.runAllTicks();
-    if (updates.length > 0) {
-      await vi.advanceTimersByTimeAsync(pollIntervalMs);
-    }
-
-    const nextResult = await nextResultPromise;
-    if (nextResult.done) {
-      break;
-    }
-
-    updates.push(nextResult.value);
-  }
-
-  return updates;
-}
-
 describe("AccountsModule", () => {
   test("prepares and submits an account creation request manually", async () => {
     // given
@@ -1480,54 +1455,7 @@ describe("LendingModule", () => {
     );
   });
 
-  test("fetches inflow status entries through the sdk api", async () => {
-    // given
-    const profileId = "h35kd-uaaaa-aaaaa-aaaaa-aaaaa-aaaaa-abai";
-    const responsePayload = {
-      success: true as const,
-      inflows: [
-        {
-          inflowId: "inflow-1",
-          txid: "tx-1",
-          type: "deposit" as const,
-          stage: "CONFIRMED" as const,
-          poolId: "hkmli-faaaa-aaaar-qb4ba-cai",
-          amountSats: "100000",
-          timestampMs: 1_746_400_000_000,
-          confirmations: 3,
-          requiredConfirmations: 4,
-        },
-      ],
-    };
-    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(JSON.stringify(responsePayload), {
-        status: 200,
-        headers: {
-          "content-type": "application/json",
-        },
-      })
-    );
-    const client = LiquidiumClient.create({
-      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
-    });
-
-    // when
-    const result = await client.lending.getInflowStatus({ profileId });
-
-    // then
-    expect(result).toEqual(responsePayload);
-    expect(fetchSpy).toHaveBeenCalledWith(
-      "https://app.liquidium.fi/api/sdk/v1/inflow-status?profileId=h35kd-uaaaa-aaaaa-aaaaa-aaaaa-aaaaa-abai",
-      {
-        method: "GET",
-        headers: undefined,
-        body: undefined,
-        signal: expect.any(AbortSignal),
-      }
-    );
-  });
-
-  test("creates a supply flow that reuses the supply instruction and tracks txid status", async () => {
+  test("creates a supply flow that exposes the instruction and submits a broadcast txid", async () => {
     // given
     const txid = "session-txid-1";
     vi.spyOn(Actor, "createActor")
@@ -1573,32 +1501,6 @@ describe("LendingModule", () => {
         },
       })
     );
-    fetchSpy.mockResolvedValueOnce(
-      new Response(
-        JSON.stringify({
-          success: true,
-          inflows: [
-            {
-              inflowId: "inflow-1",
-              txid,
-              type: "deposit",
-              stage: "PENDING",
-              poolId: BTC_POOL_ID,
-              amountSats: "100000",
-              timestampMs: 1_746_400_000_000,
-              confirmations: 1,
-              requiredConfirmations: 4,
-            },
-          ],
-        }),
-        {
-          status: 200,
-          headers: {
-            "content-type": "application/json",
-          },
-        }
-      )
-    );
     const client = LiquidiumClient.create({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
     });
@@ -1610,7 +1512,6 @@ describe("LendingModule", () => {
       action: "deposit",
     });
     await flow.submit({ txid });
-    const status = await flow.getStatus();
 
     // then
     expect(flow.type).toBe("transfer");
@@ -1618,152 +1519,13 @@ describe("LendingModule", () => {
       type: "nativeAddress",
       address: "bc1qexampledepositaddress",
     });
-    expect(status).toMatchObject({
-      txid,
-      poolId: BTC_POOL_ID,
-      remainingConfirmations: 3,
-      isAvailable: false,
-    });
-    expect(fetchSpy).toHaveBeenNthCalledWith(
-      1,
+    expect(fetchSpy).toHaveBeenCalledWith(
       "https://app.liquidium.fi/api/sdk/v1/inflow",
       expect.objectContaining({
         method: "POST",
         body: JSON.stringify({ txid }),
       })
     );
-    expect(fetchSpy).toHaveBeenNthCalledWith(
-      2,
-      `https://app.liquidium.fi/api/sdk/v1/inflow-status?profileId=aaaaa-aa&txid=${txid}`,
-      expect.objectContaining({
-        method: "GET",
-      })
-    );
-  });
-
-  test("watches supply status every 5 seconds until available", async () => {
-    // given
-    vi.useFakeTimers();
-    const txid = "session-watch-txid";
-    vi.spyOn(Actor, "createActor")
-      .mockReturnValueOnce({
-        list_pools: vi.fn().mockResolvedValue([
-          {
-            optimal_utilization_rate: 80n,
-            principal: {
-              toString: () => BTC_POOL_ID,
-              toText: () => BTC_POOL_ID,
-            },
-            total_generated_interest_snapshot: 0n,
-            supply_cap: [],
-            same_asset_borrowing: [],
-            asset: { BTC: null },
-            rate_slope_before: 1n,
-            borrow_cap: [],
-            total_debt_at_last_sync: 0n,
-            chain: { BTC: null },
-            rate_slope_after: 2n,
-            reserve_factor: 100n,
-            last_updated: [],
-            lending_index: 300n,
-            protocol_liquidation_fee: 50n,
-            borrow_index: 400n,
-            base_rate: 5n,
-            frozen: false,
-            liquidation_bonus: 200n,
-            liquidation_threshold: 7_500n,
-            max_ltv: 7_000n,
-            total_supply_at_last_sync: 50_000n,
-          },
-        ]),
-      } as never)
-      .mockReturnValueOnce({
-        get_btc_address: vi.fn().mockResolvedValue("bc1qexampledepositaddress"),
-      } as never);
-    const fetchSpy = vi.spyOn(globalThis, "fetch");
-    fetchSpy.mockResolvedValueOnce(
-      new Response(
-        JSON.stringify({
-          success: true,
-          inflows: [
-            {
-              inflowId: "inflow-1",
-              txid,
-              type: "deposit",
-              stage: "PENDING",
-              poolId: BTC_POOL_ID,
-              amountSats: "100000",
-              timestampMs: 1_746_400_000_000,
-              confirmations: 1,
-              requiredConfirmations: 4,
-            },
-          ],
-        }),
-        {
-          status: 200,
-          headers: {
-            "content-type": "application/json",
-          },
-        }
-      )
-    );
-    fetchSpy.mockResolvedValueOnce(
-      new Response(
-        JSON.stringify({
-          success: true,
-          inflows: [
-            {
-              inflowId: "inflow-1",
-              txid,
-              type: "deposit",
-              stage: "CONFIRMED",
-              poolId: BTC_POOL_ID,
-              amountSats: "100000",
-              timestampMs: 1_746_400_000_000,
-              confirmations: 4,
-              requiredConfirmations: 4,
-            },
-          ],
-        }),
-        {
-          status: 200,
-          headers: {
-            "content-type": "application/json",
-          },
-        }
-      )
-    );
-    const client = LiquidiumClient.create({
-      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
-    });
-    const flow = await client.lending.supply({
-      profileId: "aaaaa-aa",
-      poolId: BTC_POOL_ID,
-      action: "deposit",
-    });
-
-    // when
-    const statusUpdates = await collectWatchUpdates(
-      flow.watchStatus({ txid }),
-      2
-    );
-
-    // then
-    expect(flow.type).toBe("transfer");
-    expect(statusUpdates).toHaveLength(2);
-    expect(statusUpdates[0]).toMatchObject({
-      txid,
-      stage: "PENDING",
-      isAvailable: false,
-    });
-    expect(statusUpdates[1]).toMatchObject({
-      txid,
-      stage: "CONFIRMED",
-      isAvailable: true,
-    });
-    expect(fetchSpy).toHaveBeenCalledTimes(2);
-    expect(vi.getTimerCount()).toBe(0);
-    vi.useRealTimers();
   });
 
   test("auto-submits BTC inflow when supply receives a wallet adapter", async () => {
@@ -1812,32 +1574,6 @@ describe("LendingModule", () => {
         },
       })
     );
-    fetchSpy.mockResolvedValueOnce(
-      new Response(
-        JSON.stringify({
-          success: true,
-          inflows: [
-            {
-              inflowId: "inflow-1",
-              txid,
-              type: "deposit",
-              stage: "PENDING",
-              poolId: BTC_POOL_ID,
-              amountSats: "100000",
-              timestampMs: 1_746_400_000_000,
-              confirmations: 1,
-              requiredConfirmations: 4,
-            },
-          ],
-        }),
-        {
-          status: 200,
-          headers: {
-            "content-type": "application/json",
-          },
-        }
-      )
-    );
     const sendBtcTransaction = vi.fn().mockResolvedValue(txid);
     const client = LiquidiumClient.create({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
@@ -1854,10 +1590,10 @@ describe("LendingModule", () => {
       },
       account: "bc1qsender",
     });
-    const status = await flow.getStatus();
 
     // then
     expect(flow.type).toBe("transfer");
+    expect(flow.txid).toBe(txid);
     expect(sendBtcTransaction).toHaveBeenCalledWith({
       chain: "BTC",
       toAddress: "bc1qexampledepositaddress",
@@ -1866,18 +1602,13 @@ describe("LendingModule", () => {
       actionType: "supply-deposit",
       transferMode: "native",
     });
-    expect(fetchSpy).toHaveBeenNthCalledWith(
-      1,
+    expect(fetchSpy).toHaveBeenCalledWith(
       "https://app.liquidium.fi/api/sdk/v1/inflow",
       expect.objectContaining({
         method: "POST",
         body: JSON.stringify({ txid }),
       })
     );
-    expect(status).toMatchObject({
-      txid,
-      stage: "PENDING",
-    });
   });
 
   test("retries BTC inflow submission when txid is not indexed yet", async () => {
@@ -1935,32 +1666,6 @@ describe("LendingModule", () => {
         },
       })
     );
-    fetchSpy.mockResolvedValueOnce(
-      new Response(
-        JSON.stringify({
-          success: true,
-          inflows: [
-            {
-              inflowId: "inflow-1",
-              txid,
-              type: "deposit",
-              stage: "PENDING",
-              poolId: BTC_POOL_ID,
-              amountSats: "100000",
-              timestampMs: 1_746_400_000_000,
-              confirmations: 1,
-              requiredConfirmations: 4,
-            },
-          ],
-        }),
-        {
-          status: 200,
-          headers: {
-            "content-type": "application/json",
-          },
-        }
-      )
-    );
     const sendBtcTransaction = vi.fn().mockResolvedValue(txid);
     const client = LiquidiumClient.create({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
@@ -1977,16 +1682,12 @@ describe("LendingModule", () => {
       },
       account: "bc1qsender",
     });
-    const status = await flow.getStatus();
 
     // then
     expect(flow.type).toBe("transfer");
+    expect(flow.txid).toBe(txid);
     expect(sendBtcTransaction).toHaveBeenCalledTimes(1);
-    expect(fetchSpy).toHaveBeenCalledTimes(3);
-    expect(status).toMatchObject({
-      txid,
-      stage: "PENDING",
-    });
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
   });
 
   test("throws when wallet-executed supply adapter cannot send BTC", async () => {
@@ -2044,132 +1745,6 @@ describe("LendingModule", () => {
       code: LiquidiumErrorCode.VALIDATION_ERROR,
       message: "BTC wallet adapter does not support transaction sending",
     });
-  });
-
-  test("uses the client-configured default supply status poll interval", async () => {
-    // given
-    vi.useFakeTimers();
-    const txid = "configured-poll-txid";
-    const CUSTOM_POLL_INTERVAL_MS = 12_000;
-    vi.spyOn(Actor, "createActor")
-      .mockReturnValueOnce({
-        list_pools: vi.fn().mockResolvedValue([
-          {
-            optimal_utilization_rate: 80n,
-            principal: {
-              toString: () => BTC_POOL_ID,
-              toText: () => BTC_POOL_ID,
-            },
-            total_generated_interest_snapshot: 0n,
-            supply_cap: [],
-            same_asset_borrowing: [],
-            asset: { BTC: null },
-            rate_slope_before: 1n,
-            borrow_cap: [],
-            total_debt_at_last_sync: 0n,
-            chain: { BTC: null },
-            rate_slope_after: 2n,
-            reserve_factor: 100n,
-            last_updated: [],
-            lending_index: 300n,
-            protocol_liquidation_fee: 50n,
-            borrow_index: 400n,
-            base_rate: 5n,
-            frozen: false,
-            liquidation_bonus: 200n,
-            liquidation_threshold: 7_500n,
-            max_ltv: 7_000n,
-            total_supply_at_last_sync: 50_000n,
-          },
-        ]),
-      } as never)
-      .mockReturnValueOnce({
-        get_btc_address: vi.fn().mockResolvedValue("bc1qexampledepositaddress"),
-      } as never);
-    const fetchSpy = vi.spyOn(globalThis, "fetch");
-    fetchSpy.mockResolvedValueOnce(
-      new Response(
-        JSON.stringify({
-          success: true,
-          inflows: [
-            {
-              inflowId: "inflow-1",
-              txid,
-              type: "deposit",
-              stage: "PENDING",
-              poolId: BTC_POOL_ID,
-              amountSats: "100000",
-              timestampMs: 1_746_400_000_000,
-              confirmations: 1,
-              requiredConfirmations: 4,
-            },
-          ],
-        }),
-        {
-          status: 200,
-          headers: {
-            "content-type": "application/json",
-          },
-        }
-      )
-    );
-    fetchSpy.mockResolvedValueOnce(
-      new Response(
-        JSON.stringify({
-          success: true,
-          inflows: [
-            {
-              inflowId: "inflow-1",
-              txid,
-              type: "deposit",
-              stage: "CONFIRMED",
-              poolId: BTC_POOL_ID,
-              amountSats: "100000",
-              timestampMs: 1_746_400_000_000,
-              confirmations: 4,
-              requiredConfirmations: 4,
-            },
-          ],
-        }),
-        {
-          status: 200,
-          headers: {
-            "content-type": "application/json",
-          },
-        }
-      )
-    );
-    const client = LiquidiumClient.create({
-      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
-      supplyStatusPollIntervalMs: CUSTOM_POLL_INTERVAL_MS,
-    });
-    const flow = await client.lending.supply({
-      profileId: "aaaaa-aa",
-      poolId: BTC_POOL_ID,
-      action: "deposit",
-    });
-
-    // when
-    const statusUpdates = await collectWatchUpdates(
-      flow.watchStatus({ txid }),
-      2,
-      CUSTOM_POLL_INTERVAL_MS
-    );
-
-    // then
-    expect(flow.type).toBe("transfer");
-    expect(statusUpdates).toHaveLength(2);
-    expect(statusUpdates[0]).toMatchObject({
-      txid,
-      stage: "PENDING",
-      isAvailable: false,
-    });
-    expect(statusUpdates[1]).toMatchObject({
-      txid,
-      stage: "CONFIRMED",
-      isAvailable: true,
-    });
-    expect(fetchSpy).toHaveBeenCalledTimes(2);
   });
 
   test("throws SERVICE_UNAVAILABLE for inflow submission without apiBaseUrl", async () => {

@@ -104,13 +104,7 @@ const pending = await client.pending.getMovements("profile-id");
 // Inflow reporting (requires apiBaseUrl)
 await client.lending.submitInflow({ txid: "<broadcast-txid>" });
 
-// Inflow status polling (requires apiBaseUrl)
-const inflowStatus = await client.lending.getInflowStatus({
-  profileId: "<liquidium-profile-id>",
-  txid: "<optional-broadcast-txid>",
-});
-
-// Unified supply flow with built-in 5 second polling
+// Supply flow: returns a receipt; caller polls confirmation state themselves.
 const supplyFlow = await client.lending.supply({
   profileId: "<liquidium-profile-id>",
   poolId: btcPool.id,
@@ -122,12 +116,6 @@ if (supplyFlow.type === "transfer" && supplyFlow.target.type === "nativeAddress"
 }
 
 await supplyFlow.submit({ txid: "<broadcast-txid>" });
-
-for await (const update of supplyFlow.watchStatus()) {
-  if (update.isAvailable) {
-    break;
-  }
-}
 
 // ETH stablecoin supply / repay auto-routes to the contract-interaction path
 const stablecoinFlow = await client.lending.supply({
@@ -157,7 +145,6 @@ const stablecoinFlow = await client.lending.supply({
 | `canisterIds` | `Partial<CanisterIds>` | No | Override canister IDs |
 | `fetch` | `typeof fetch` | No | Custom fetch implementation for API requests |
 | `timeoutMs` | `number` | No | Request timeout (default: 30000) |
-| `supplyStatusPollIntervalMs` | `number` | No | Default `watchStatus()` polling interval |
 
 Environment presets:
 

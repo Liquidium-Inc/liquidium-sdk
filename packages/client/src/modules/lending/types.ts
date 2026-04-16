@@ -132,54 +132,25 @@ export interface SupplyFlowRequest {
   amount?: bigint;
 }
 
-/** Optional filter for `SupplyFlow.getStatus`. */
-export interface GetSupplyStatusRequest {
-  txid?: string;
-}
-
-/** Options for `SupplyFlow.watchStatus` polling. */
-export interface WatchSupplyStatusOptions {
-  txid?: string;
-  signal?: AbortSignal;
-  pollIntervalMs?: number;
-}
-
-export interface SupplyTrackingStatus {
-  txid: string;
-  inflowId: string;
-  poolId: string;
-  type: "deposit" | "repayment";
-  stage: "LOGGED" | "CONFIRMED" | "PENDING" | "FINALISING";
-  amountSats: string;
-  timestampMs: number;
-  confirmations: number | null;
-  requiredConfirmations: number;
-  remainingConfirmations: number | null;
-  isDetected: boolean;
-  isAvailable: boolean;
-  estimatedMsUntilAvailable: number | null;
-  expectedAvailableAtMs: number | null;
-}
-
 export type SupplyPlanType = "transfer" | "contractInteraction";
 
 /**
- * Unified supply result: manual or wallet-automated, with tracking helpers.
+ * Supply receipt returned by `lending.supply(...)`.
  *
- * - `submit` — register a broadcast txid with the SDK API (also used internally after auto-send).
- * - `getStatus` / `watchStatus` — poll inflow status (requires client `apiBaseUrl`).
+ * - `txid` is populated when the SDK broadcast the transaction on your behalf
+ *   (wallet-adapter path). When undefined, the caller is expected to broadcast
+ *   themselves and register the txid via {@link SupplyFlow.submit}.
+ * - `submit` registers a broadcast txid with the SDK API for faster indexing.
+ *
+ * The SDK does not poll inflow status. When you have a `txid`, it is your
+ * responsibility to track confirmation state with your own polling.
  */
 export interface SupplyFlow {
   type: SupplyPlanType;
   instruction: SupplyInstruction;
   target: SupplyTarget;
+  txid?: string;
   submit(request: SubmitInflowRequest): Promise<SubmitInflowResponse>;
-  getStatus(
-    request?: GetSupplyStatusRequest
-  ): Promise<SupplyTrackingStatus | null>;
-  watchStatus(
-    options?: WatchSupplyStatusOptions
-  ): AsyncGenerator<SupplyTrackingStatus, void, void>;
 }
 
 /** Body for `SupplyFlow.submit` / `lending.submitInflow`. */
@@ -225,24 +196,3 @@ export interface EvmSupplyContext {
   approvalStrategy: EvmSupplyApprovalStrategy;
 }
 
-export interface GetInflowStatusRequest {
-  profileId: string;
-  txid?: string;
-}
-
-export interface InflowStatusItem {
-  inflowId: string;
-  txid: string;
-  type: "deposit" | "repayment";
-  stage: "LOGGED" | "CONFIRMED" | "PENDING" | "FINALISING";
-  poolId: string;
-  amountSats: string;
-  timestampMs: number;
-  confirmations: number | null;
-  requiredConfirmations: number;
-}
-
-export interface GetInflowStatusResponse {
-  success: true;
-  inflows: InflowStatusItem[];
-}

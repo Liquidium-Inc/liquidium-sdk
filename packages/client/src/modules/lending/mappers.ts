@@ -1,12 +1,6 @@
 import type { Principal } from "@dfinity/principal";
 import { getVariantKey } from "../../core/utils/variant";
-import type {
-  GetInflowStatusResponse,
-  OutflowDetails,
-  SupplyTrackingStatus,
-} from "./types";
-
-const BITCOIN_BLOCK_TIME_MS = 10 * 60 * 1000;
+import type { OutflowDetails } from "./types";
 
 export type WalletChain = "BTC" | "ETH";
 
@@ -80,32 +74,4 @@ export function mapWalletChainToLendingChain(
     case "ETH":
       return { ETH: null };
   }
-}
-
-export function mapBtcInflowToSupplyTrackingStatus(
-  inflow: GetInflowStatusResponse["inflows"][number]
-): SupplyTrackingStatus {
-  const remainingConfirmations =
-    inflow.confirmations === null
-      ? inflow.requiredConfirmations
-      : Math.max(inflow.requiredConfirmations - inflow.confirmations, 0);
-  const estimatedMsUntilAvailable =
-    remainingConfirmations * BITCOIN_BLOCK_TIME_MS;
-
-  return {
-    txid: inflow.txid,
-    inflowId: inflow.inflowId,
-    poolId: inflow.poolId,
-    type: inflow.type,
-    stage: inflow.stage,
-    amountSats: inflow.amountSats,
-    timestampMs: inflow.timestampMs,
-    confirmations: inflow.confirmations,
-    requiredConfirmations: inflow.requiredConfirmations,
-    remainingConfirmations,
-    isDetected: inflow.stage !== "LOGGED",
-    isAvailable: inflow.stage === "CONFIRMED",
-    estimatedMsUntilAvailable,
-    expectedAvailableAtMs: Date.now() + estimatedMsUntilAvailable,
-  };
 }

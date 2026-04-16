@@ -483,19 +483,6 @@ const SDK_METHODS: MethodDefinition[] = [
     },
   },
   {
-    id: "lending.getInflowStatus",
-    label: "lending.getInflowStatus",
-    defaultArgs:
-      '{\n  "profileId": "aaaaa-aa",\n  "txid": "replace-with-txid"\n}',
-    execute: async (client, input) => {
-      const args = expectObject(input);
-      return await client.lending.getInflowStatus({
-        profileId: expectNonEmptyString(args.profileId, "profileId"),
-        txid: expectOptionalString(args.txid, "txid"),
-      });
-    },
-  },
-  {
     id: "lending.getDepositFee",
     label: "lending.getDepositFee",
     defaultArgs: "{}",

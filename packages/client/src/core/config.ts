@@ -32,7 +32,6 @@ export function resolveCanisterIds(
 }
 
 export const DEFAULT_TIMEOUT_MS = 30_000;
-export const DEFAULT_SUPPLY_STATUS_POLL_INTERVAL_MS = 5_000;
 
 export const CK_CANISTER_IDS = {
   btcMinter: "mqygn-kiaaa-aaaar-qaadq-cai",
