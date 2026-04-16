@@ -183,6 +183,8 @@ Environment presets:
 - `client.lending.borrow({ ..., signerChain, signerWalletAdapter })` - sign and submit a borrow request in one call; resolves with the instant receipt (txid may be null until the canister assigns one)
 - `client.lending.withdraw({ ..., signerChain, signerWalletAdapter })` - sign and submit a withdraw request in one call
 
+These calls use the lending canister only; they do not require `apiBaseUrl`. To show a chain transaction id once it exists, use `client.history` (which does require `apiBaseUrl`) or your own polling.
+
 ### Wallet adapters
 
 - `WalletAdapter` currently supports BTC/ETH message signing through `signMessage`

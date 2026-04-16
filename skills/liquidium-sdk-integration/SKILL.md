@@ -39,7 +39,7 @@ const client = LiquidiumClient.create({
 
 **Config requirements:**
 - `environment`: sets the canister preset (`mainnet` or `staging`)
-- `apiBaseUrl`: required for history, pending movements, inflow reporting, inflow status polling, and backend-assisted lending flows
+- `apiBaseUrl`: required for history, pending movements, inflow reporting, inflow status polling, and contract-interaction `supply(...)` (ETH stablecoin pools need backend approval planning). Not required for `borrow(...)` or `withdraw(...)`, which submit through the canister only
 - `identity` / `icHost`: custom ICP agent configuration
 - `supplyStatusPollIntervalMs`: custom supply polling interval
 
@@ -251,13 +251,14 @@ This flow requires `apiBaseUrl` because the SDK needs backend approval planning.
 
 ## Common Mistakes
 
-1. `LiquidiumClient.create({})` does not cover every method. History, pending, inflow reporting, inflow status polling, and some lending flows need `apiBaseUrl`.
+1. `LiquidiumClient.create({})` does not cover every method. History, pending, inflow reporting, inflow status polling, and contract-interaction `supply(...)` need `apiBaseUrl`. `borrow(...)` and `withdraw(...)` do not.
 2. Prepare methods return signable actions, not completed actions. `prepareCreate`, `prepareBorrow`, and `prepareWithdraw` still need signing and submission.
 3. Build a wallet adapter with only the methods the selected flow needs. Avoid adding `signMessage`, `sendBtcTransaction`, or `sendEthTransaction` unless the flow uses them.
 4. Skip the quote step in borrow UX only when you explicitly want a lower-level flow.
 5. `client.lending.supply(...)` auto-routes by pool. BTC currently resolves to the transfer path, while ETH stablecoin pools resolve to the contract-interaction path.
 6. Handle existing profiles explicitly when account creation can race with existing state.
 7. Work from the public modules and names exported by `@liquidium/client`. Do not invent SDK methods.
+8. After `borrow(...)`, treat `outflow.id` as the user-visible reference immediately. Do not assume `outflow.txid` is set on the first response; resolve it later via history or a future SDK helper if you need the chain transaction id.
 
 ## Preferred Style
 
