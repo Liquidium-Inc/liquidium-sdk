@@ -1,3 +1,6 @@
+/**
+ * Stable string codes for {@link LiquidiumError}. Use for branching in application code.
+ */
 export const LiquidiumErrorCode = {
   // Protocol errors
   INVALID_TARGET_PRINCIPAL: "INVALID_TARGET_PRINCIPAL",
@@ -49,10 +52,22 @@ export const LiquidiumErrorCode = {
 export type LiquidiumErrorCode =
   (typeof LiquidiumErrorCode)[keyof typeof LiquidiumErrorCode];
 
+/**
+ * Typed error from the SDK or mapped protocol failures.
+ *
+ * Prefer checking `code` over parsing `message`.
+ */
 export class LiquidiumError extends Error {
+  /** Machine-readable reason; compare to {@link LiquidiumErrorCode} values. */
   readonly code: LiquidiumErrorCode;
+  /** Original error when the SDK wraps an underlying failure. */
   override readonly cause?: unknown;
 
+  /**
+   * @param code - Error code from {@link LiquidiumErrorCode}.
+   * @param message - Human-readable detail (defaults to `code` when omitted).
+   * @param cause - Optional underlying error.
+   */
   constructor(code: LiquidiumErrorCode, message?: string, cause?: unknown) {
     super(message ?? code);
     this.name = "LiquidiumError";

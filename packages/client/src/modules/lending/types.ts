@@ -15,6 +15,12 @@ export interface OutflowReceiver {
   account: string;
 }
 
+/**
+ * Receipt for a borrow or withdraw submitted to the lending canister.
+ *
+ * `id` is the outflow reference to show users immediately. `txid` may be unset until
+ * the protocol assigns a chain transaction id. `outflowRef` is an optional protocol reference.
+ */
 export interface OutflowDetails {
   id: string;
   outflowType: Outflowtype;
@@ -28,6 +34,10 @@ export interface BorrowSubmitSignatureInfo extends SignatureInfo {}
 
 export interface WithdrawSubmitSignatureInfo extends SignatureInfo {}
 
+/**
+ * Fields to build a borrow request. `amount` is in the borrow pool asset's base units
+ * (e.g. satoshis, token smallest units).
+ */
 export interface CreateBorrowRequest {
   profileId: string;
   poolId: string;
@@ -47,6 +57,9 @@ export interface BorrowAction
   actionType: "create-borrow";
 }
 
+/**
+ * Fields to build a withdraw request. `amount` is in the pool asset's base units.
+ */
 export interface CreateWithdrawRequest {
   profileId: string;
   poolId: string;
@@ -66,6 +79,7 @@ export interface WithdrawAction
   actionType: "create-withdraw";
 }
 
+/** Minimal input for `prepareSupply` (target resolution only). */
 export interface SupplyRequest {
   profileId: string;
   poolId: string;
@@ -102,6 +116,10 @@ export interface SupplyInstruction {
   target: SupplyTarget;
 }
 
+/**
+ * Input for `lending.supply`. Optional `walletAdapter`, `account`, and `amount` enable
+ * automatic broadcast when the resolved mechanism supports it.
+ */
 export interface SupplyFlowRequest {
   profileId: string;
   poolId: string;
@@ -114,10 +132,12 @@ export interface SupplyFlowRequest {
   amount?: bigint;
 }
 
+/** Optional filter for `SupplyFlow.getStatus`. */
 export interface GetSupplyStatusRequest {
   txid?: string;
 }
 
+/** Options for `SupplyFlow.watchStatus` polling. */
 export interface WatchSupplyStatusOptions {
   txid?: string;
   signal?: AbortSignal;
@@ -143,6 +163,12 @@ export interface SupplyTrackingStatus {
 
 export type SupplyPlanType = "transfer" | "contractInteraction";
 
+/**
+ * Unified supply result: manual or wallet-automated, with tracking helpers.
+ *
+ * - `submit` — register a broadcast txid with the SDK API (also used internally after auto-send).
+ * - `getStatus` / `watchStatus` — poll inflow status (requires client `apiBaseUrl`).
+ */
 export interface SupplyFlow {
   type: SupplyPlanType;
   instruction: SupplyInstruction;
@@ -156,6 +182,7 @@ export interface SupplyFlow {
   ): AsyncGenerator<SupplyTrackingStatus, void, void>;
 }
 
+/** Body for `SupplyFlow.submit` / `lending.submitInflow`. */
 export interface SubmitInflowRequest {
   txid: string;
   chain?: "BTC" | "ETH";
