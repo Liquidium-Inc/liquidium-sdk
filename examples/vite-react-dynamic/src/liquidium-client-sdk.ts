@@ -9,7 +9,6 @@ import {
   type QuoteRequest,
   type QuoteResult,
   type SupplyAction,
-  type SupplyDestination,
   type SupplyFlow,
   type SupplyInstruction,
   type UserHistoryEntry,
@@ -20,7 +19,6 @@ import { resolveLiquidiumClientConfig } from "./liquidium-runtime-config";
 
 const BTC_ASSET = "BTC";
 const BTC_CHAIN = "BTC";
-const BTC_ADDRESS_DESTINATION: SupplyDestination = "nativeAddress";
 const REQUEST_TIMEOUT_5_MINUTES_MS = 300_000;
 
 type SignatureChain = "ETH" | "BTC";
@@ -50,8 +48,8 @@ type PrepareBtcSupplyParams = {
   profileId: string;
   poolId: string;
   action: SupplyAction;
-  btcAmountSats: bigint;
-  btcAccount: string;
+  amount: bigint;
+  account: string;
   sendBtcTransaction?: (params: {
     toAddress: string;
     amountSats: bigint;
@@ -65,6 +63,23 @@ type PrepareErc20SupplyParams = {
   amount: bigint;
   walletAddress: string;
   sendEthTransaction: (params: {
+    to: string;
+    data?: string;
+    value?: string;
+  }) => Promise<string>;
+};
+
+type PrepareSupplyFlowParams = {
+  profileId: string;
+  pool: Pool;
+  action: SupplyAction;
+  amount: bigint;
+  account?: string;
+  sendBtcTransaction?: (params: {
+    toAddress: string;
+    amountSats: bigint;
+  }) => Promise<string>;
+  sendEthTransaction?: (params: {
     to: string;
     data?: string;
     value?: string;
@@ -228,28 +243,27 @@ export async function prepareBtcSupplyFlow(
 ): Promise<SupplyFlow> {
   const client = createLiquidiumClient();
 
-  const baseRequest = {
-    profileId: params.profileId,
-    poolId: params.poolId,
-    action: params.action,
-    destination: BTC_ADDRESS_DESTINATION,
-  } as const;
-
   if (!params.sendBtcTransaction) {
-    return await client.lending.supply(baseRequest);
+    return await client.lending.supply({
+      profileId: params.profileId,
+      poolId: params.poolId,
+      action: params.action,
+    });
   }
 
   const sendBtcTransaction = params.sendBtcTransaction;
 
   return await client.lending.supply({
-    ...baseRequest,
-    btcAmountSats: params.btcAmountSats,
-    btcAccount: params.btcAccount,
-    btcWalletAdapter: {
+    profileId: params.profileId,
+    poolId: params.poolId,
+    action: params.action,
+    amount: params.amount,
+    account: params.account,
+    walletAdapter: {
       sendBtcTransaction: async ({ toAddress, amountSats }) =>
         await sendBtcTransaction({
           toAddress,
-          amountSats: amountSats ?? params.btcAmountSats,
+          amountSats: amountSats ?? params.amount,
         }),
     },
   });
@@ -264,14 +278,51 @@ export async function prepareErc20SupplyFlow(
     profileId: params.profileId,
     poolId: params.poolId,
     action: params.action,
-    destination: "icrcAccount",
-    ethAmount: params.amount,
-    ethAccount: params.walletAddress,
-    ethWalletAdapter: {
+    amount: params.amount,
+    account: params.walletAddress,
+    walletAdapter: {
       sendEthTransaction: async ({ transaction }) =>
         await params.sendEthTransaction(transaction),
     },
   });
+}
+
+export async function prepareSupplyFlow(
+  params: PrepareSupplyFlowParams
+): Promise<SupplyFlow> {
+  if (params.pool.asset === BTC_ASSET && params.pool.chain === BTC_CHAIN) {
+    return await prepareBtcSupplyFlow({
+      profileId: params.profileId,
+      poolId: params.pool.id,
+      action: params.action,
+      amount: params.amount,
+      account: params.account ?? "",
+      sendBtcTransaction: params.sendBtcTransaction,
+    });
+  }
+
+  if (params.pool.chain === "ETH" && isStablecoinAsset(params.pool.asset)) {
+    if (!params.account) {
+      throw new Error("ETH stablecoin supply requires an account.");
+    }
+
+    if (!params.sendEthTransaction) {
+      throw new Error("ETH stablecoin supply requires an Ethereum wallet.");
+    }
+
+    return await prepareErc20SupplyFlow({
+      profileId: params.profileId,
+      poolId: params.pool.id,
+      action: params.action,
+      amount: params.amount,
+      walletAddress: params.account,
+      sendEthTransaction: params.sendEthTransaction,
+    });
+  }
+
+  throw new Error(
+    `Unsupported supply pool in example app: ${params.pool.asset} on ${params.pool.chain}.`
+  );
 }
 
 export async function createBorrowOutflow(
@@ -281,9 +332,7 @@ export async function createBorrowOutflow(
 
   params.onStep?.("Preparing borrow request...");
   params.onStep?.("Please sign the borrow message to continue...");
-  params.onStep?.(
-    "Submitting signed borrow request and waiting for BTC txid..."
-  );
+  params.onStep?.("Submitting signed borrow request...");
 
   const borrowOutflow = await withTimeout(
     client.lending.borrow({
@@ -294,13 +343,14 @@ export async function createBorrowOutflow(
       signerWalletAddress: params.signerWalletAddress,
       signerChain: params.signerChain,
       signerWalletAdapter: createWalletAdapter(params.signMessage),
-      waitForTxid: true,
     }),
-    "Timed out while waiting for the borrow txid."
+    "Timed out while submitting the borrow request."
   );
 
+  params.onStep?.(`Borrow submitted. Reference: ${borrowOutflow.id}`);
+
   if (borrowOutflow.txid) {
-    params.onStep?.(`Borrow txid assigned: ${borrowOutflow.txid}`);
+    params.onStep?.(`Transaction id assigned: ${borrowOutflow.txid}`);
   }
 
   return borrowOutflow;
@@ -312,6 +362,10 @@ export function findBtcPool(pools: Pool[]): Pool | undefined {
   );
 }
 
+export function isStablecoinAsset(asset: string): boolean {
+  return asset === "USDC" || asset === "USDT";
+}
+
 export function isNativeAddressSupplyInstruction(
   supplyInstruction: SupplyInstruction | null
 ): supplyInstruction is SupplyInstruction & {
@@ -321,7 +375,7 @@ export function isNativeAddressSupplyInstruction(
     return false;
   }
 
-  return supplyInstruction.target.type === BTC_ADDRESS_DESTINATION;
+  return supplyInstruction.target.type === "nativeAddress";
 }
 
 export function formatLiquidiumError(error: unknown): string {

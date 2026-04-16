@@ -122,8 +122,8 @@ const walletAdapter: WalletAdapter = {
 
 **Method selection:**
 - `signMessage`: account creation, borrow, and withdraw flows (signs a Liquidium message)
-- `sendBtcTransaction`: BTC native-address supply automation
-- `sendEthTransaction`: ETH stablecoin supply and repayment automation
+- `sendBtcTransaction`: transfer-path supply automation for BTC targets
+- `sendEthTransaction`: transfer-path automation for ETH targets and contract-interaction supply automation
 
 ## Flows
 
@@ -185,24 +185,25 @@ const outflow = await client.lending.borrow({
     signMessage: async ({ message }) => wallet.signMessage(message),
   },
 });
+
+// `outflow.id` is the outflow reference assigned by the canister. `outflow.txid`
+// may be null until the canister broadcasts the on-chain transaction. The SDK
+// does not poll for the txid; consumers should display `outflow.id` immediately
+// and resolve the txid separately if needed.
 ```
 
-### BTC supply
-
-Standard BTC path uses `destination: "nativeAddress"`.
+### Unified supply flow
 
 ```ts
 const supplyFlow = await client.lending.supply({
   profileId,
   poolId,
   action: "deposit",
-  destination: "nativeAddress",
 });
 
-const depositAddress =
-  supplyFlow.target.type === "nativeAddress"
-    ? supplyFlow.target.address
-    : undefined;
+if (supplyFlow.type === "transfer" && supplyFlow.target.type === "nativeAddress") {
+  const depositAddress = supplyFlow.target.address;
+}
 
 await supplyFlow.submit({ txid: "<broadcast-txid>" });
 
@@ -213,21 +214,34 @@ for await (const update of supplyFlow.watchStatus()) {
 }
 ```
 
-If the app broadcasts BTC directly, provide `btcWalletAdapter` with the amount and account fields that path requires.
+If the app wants the SDK to broadcast the transfer-path transaction, provide
+`walletAdapter`, `account`, and `amount`:
 
-### ETH stablecoin supply
+```ts
+const autoBroadcastFlow = await client.lending.supply({
+  profileId,
+  poolId,
+  action: "deposit",
+  amount: 100_000n,
+  account: walletAddress,
+  walletAdapter: {
+    sendBtcTransaction: async ({ toAddress, amountSats }) =>
+      wallet.sendBtcTransaction({ toAddress, amountSats }),
+  },
+});
+```
 
-When the pool is an ETH stablecoin pool and the backend plans approvals and execution.
+When the selected pool resolves to the contract-interaction path, the same
+`supply(...)` call auto-routes there:
 
 ```ts
 const supplyFlow = await client.lending.supply({
   profileId,
   poolId,
   action: "deposit",
-  destination: "icrcAccount",
-  ethAccount: walletAddress,
-  ethAmount: 10_000_000n,
-  ethWalletAdapter: {
+  account: walletAddress,
+  amount: 10_000_000n,
+  walletAdapter: {
     sendEthTransaction: async ({ transaction }) => wallet.sendTransaction(transaction),
   },
 });
@@ -241,7 +255,7 @@ This flow requires `apiBaseUrl` because the SDK needs backend approval planning.
 2. Prepare methods return signable actions, not completed actions. `prepareCreate`, `prepareBorrow`, and `prepareWithdraw` still need signing and submission.
 3. Build a wallet adapter with only the methods the selected flow needs. Avoid adding `signMessage`, `sendBtcTransaction`, or `sendEthTransaction` unless the flow uses them.
 4. Skip the quote step in borrow UX only when you explicitly want a lower-level flow.
-5. BTC and ETH supply paths are not interchangeable. They need different request fields and different wallet execution methods.
+5. `client.lending.supply(...)` auto-routes by pool. BTC currently resolves to the transfer path, while ETH stablecoin pools resolve to the contract-interaction path.
 6. Handle existing profiles explicitly when account creation can race with existing state.
 7. Work from the public modules and names exported by `@liquidium/client`. Do not invent SDK methods.
 

@@ -5,7 +5,6 @@ import type {
   SupplyAction,
 } from "../../core/types";
 import type {
-  SendEthTransactionRequest,
   SignatureInfo,
   SignMessageWalletAction,
   WalletAdapter,
@@ -67,13 +66,10 @@ export interface WithdrawAction
   actionType: "create-withdraw";
 }
 
-export type SupplyDestination = "nativeAddress" | "icrcAccount";
-
 export interface SupplyRequest {
   profileId: string;
   poolId: string;
   action: SupplyAction;
-  destination: SupplyDestination;
 }
 
 export interface NativeAddressSupplyTarget {
@@ -106,13 +102,16 @@ export interface SupplyInstruction {
   target: SupplyTarget;
 }
 
-export interface SupplyFlowRequest extends SupplyRequest {
-  btcWalletAdapter?: Pick<WalletAdapter, "sendBtcTransaction">;
-  btcAccount?: string;
-  btcAmountSats?: bigint;
-  ethWalletAdapter?: Pick<WalletAdapter, "sendEthTransaction">;
-  ethAccount?: string;
-  ethAmount?: bigint;
+export interface SupplyFlowRequest {
+  profileId: string;
+  poolId: string;
+  action: SupplyAction;
+  walletAdapter?: Pick<
+    WalletAdapter,
+    "sendBtcTransaction" | "sendEthTransaction"
+  >;
+  account?: string;
+  amount?: bigint;
 }
 
 export interface GetSupplyStatusRequest {
@@ -142,7 +141,10 @@ export interface SupplyTrackingStatus {
   expectedAvailableAtMs: number | null;
 }
 
+export type SupplyPlanType = "transfer" | "contractInteraction";
+
 export interface SupplyFlow {
+  type: SupplyPlanType;
   instruction: SupplyInstruction;
   target: SupplyTarget;
   submit(request: SubmitInflowRequest): Promise<SubmitInflowResponse>;
@@ -194,11 +196,6 @@ export interface EvmSupplyContext {
   allowance: string;
   requiresApproval: boolean;
   approvalStrategy: EvmSupplyApprovalStrategy;
-}
-
-export interface SendEthContractTransactionRequest {
-  actionType: string;
-  transaction: SendEthTransactionRequest["transaction"];
 }
 
 export interface GetInflowStatusRequest {
