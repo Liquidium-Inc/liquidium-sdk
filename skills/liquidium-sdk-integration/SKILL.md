@@ -9,34 +9,9 @@ metadata:
 
 # Liquidium SDK Integration
 
-## What This Is
+`@liquidium/client` reads Liquidium market and position data, then executes account and lending flows.
 
-`@liquidium/client` is the TypeScript SDK for reading Liquidium market and position data and executing account and lending flows.
-
-The main entry point is `LiquidiumClient.create(config)`. The client exposes these modules:
-
-- `accounts`
-- `lending`
-- `positions`
-- `market`
-- `pending`
-- `history`
-- `quote`
-
-Prefer this skill when the task is about integrating the SDK into app code, wiring wallet execution, or choosing the correct SDK flow.
-
-## How To Work
-
-1. Start by checking whether the project already uses `@liquidium/client`.
-2. Create a client with the smallest config that supports the requested flow.
-3. Use read-only modules first to build context for the user flow.
-4. For signing or transaction execution, determine whether the flow needs a `WalletAdapter`.
-5. Prefer the SDK convenience methods unless the user explicitly wants raw prepare/sign/submit control.
-6. Keep the integration close to the app's existing wallet and state patterns instead of introducing a new abstraction layer.
-
-## Client Setup
-
-Basic setup:
+## Modules
 
 ```ts
 import { LiquidiumClient } from "@liquidium/client";
@@ -44,11 +19,17 @@ import { LiquidiumClient } from "@liquidium/client";
 const client = LiquidiumClient.create({});
 ```
 
-Use richer config only when the flow requires it:
+The client exposes: `accounts`, `lending`, `positions`, `market`, `pending`, `history`, `quote`.
 
+## Setup
+
+Minimal config:
 ```ts
-import { LiquidiumClient } from "@liquidium/client";
+const client = LiquidiumClient.create({});
+```
 
+Richer config when the flow requires it:
+```ts
 const client = LiquidiumClient.create({
   environment: "mainnet",
   apiBaseUrl: "https://your-app.example.com/api/sdk",
@@ -56,28 +37,27 @@ const client = LiquidiumClient.create({
 });
 ```
 
-### When Config Matters
-
-- `environment`: choose the canister preset, usually `mainnet` or `staging`
+**Config requirements:**
+- `environment`: sets the canister preset (`mainnet` or `staging`)
 - `apiBaseUrl`: required for history, pending movements, inflow reporting, inflow status polling, and backend-assisted lending flows
-- `identity` / `icHost`: only needed when the app needs custom ICP agent configuration
-- `supplyStatusPollIntervalMs`: use only when the app needs a different supply polling interval
+- `identity` / `icHost`: custom ICP agent configuration
+- `supplyStatusPollIntervalMs`: custom supply polling interval
 
 ## Module Guide
 
-### `market`
+### market
 
-Use for pool discovery and asset prices.
+Pool discovery and asset prices.
 
-Common methods:
+```ts
+client.market.getPools();
+client.market.findPool({ asset, chain });
+client.market.getAssetPrices();
+```
 
-- `client.market.getPools()`
-- `client.market.findPool({ asset, chain })`
-- `client.market.getAssetPrices()`
+### quote
 
-### `quote`
-
-Use for quote-first UX. In most borrow flows, fetch pools and prices first, then call `quote` before preparing the borrow.
+Quote-first UX. In borrow flows, fetch pools and prices first, then call `quote` before preparing the borrow.
 
 ```ts
 const pools = await client.market.getPools();
@@ -85,44 +65,51 @@ const prices = await client.market.getAssetPrices();
 const quote = await client.quote.quote(request, pools, prices);
 ```
 
-### `accounts`
+### accounts
 
-Use for Liquidium profile creation and resolution.
+Profile creation and resolution.
 
-- `prepareCreate(...)`: returns a signable action
-- `create(...)`: signs and submits through a wallet adapter
-- `resolveProfile(walletAddress)`: find an existing profile id
+```ts
+client.accounts.prepareCreate(...);  // returns a signable action
+client.accounts.create(...);          // signs and submits through a wallet adapter
+client.accounts.resolveProfile(walletAddress);
+```
 
-### `lending`
+### lending
 
-Use for borrow, withdraw, supply, repay, inflow reporting, and supply tracking.
+Borrow, withdraw, supply, repay, inflow reporting, and supply tracking.
 
-- `prepareBorrow(...)` and `prepareWithdraw(...)`: return signable actions
-- `borrow(...)` and `withdraw(...)`: convenience execution methods
-- `supply(...)`: returns a tracked supply flow
-- `submitInflow(...)` and `getInflowStatus(...)`: require `apiBaseUrl`
+```ts
+client.lending.prepareBorrow(...);
+client.lending.prepareWithdraw(...);
+client.lending.borrow(...);
+client.lending.withdraw(...);
+client.lending.supply(...);
+client.lending.submitInflow(...);    // requires apiBaseUrl
+client.lending.getInflowStatus(...); // requires apiBaseUrl
+```
 
-### `positions`
+### positions
 
-Use for existing profile state.
+Existing profile state.
 
-- `client.positions.list(profileId)`
-- `client.positions.getHealthFactor(profileId)`
-- `client.positions.getUserStats(profileId)`
+```ts
+client.positions.list(profileId);
+client.positions.getHealthFactor(profileId);
+client.positions.getUserStats(profileId);
+```
 
-### `pending`
+### pending
 
-Use for pending inflows and outflows. This depends on `apiBaseUrl`.
+Pending inflows and outflows. Requires `apiBaseUrl`.
 
-### `history`
+### history
 
-Use for user or pool history. This depends on `apiBaseUrl`.
+User or pool history. Requires `apiBaseUrl`.
 
-## Wallet Adapter Rules
+## Wallet Adapter
 
-The SDK uses a `WalletAdapter` for signing and transaction execution.
-
-Only implement the methods the selected flow needs.
+The SDK uses a `WalletAdapter` for signing and transaction execution. Implement only the methods the selected flow needs.
 
 ```ts
 import type { WalletAdapter } from "@liquidium/client";
@@ -133,20 +120,16 @@ const walletAdapter: WalletAdapter = {
 };
 ```
 
-### Method Selection
+**Method selection:**
+- `signMessage`: account creation, borrow, and withdraw flows (signs a Liquidium message)
+- `sendBtcTransaction`: BTC native-address supply automation
+- `sendEthTransaction`: ETH stablecoin supply and repayment automation
 
-- `signMessage`: required for account creation, borrow, and withdraw flows that sign a Liquidium message
-- `sendBtcTransaction`: used for BTC native-address supply automation
-- `sendEthTransaction`: used for ETH stablecoin supply and repayment automation
-
-Do not add all adapter methods by default. Add only the methods the requested flow actually needs.
-
-## Common Flows
+## Flows
 
 ### Create a profile
 
-Use the convenience method when the app already has wallet signing wired:
-
+Convenience method when the app already has wallet signing wired:
 ```ts
 const profileId = await client.accounts.create({
   account: walletAddress,
@@ -157,8 +140,7 @@ const profileId = await client.accounts.create({
 });
 ```
 
-Use the prepare flow when the user wants explicit control over signing:
-
+Prepare flow when you want explicit control over signing:
 ```ts
 const createAction = await client.accounts.prepareCreate({
   account: walletAddress,
@@ -173,7 +155,7 @@ const profileId = await createAction.submit({
 });
 ```
 
-If the profile may already exist, resolve it after catching the profile-exists error instead of retrying the create flow blindly.
+Handle existing profiles by catching the profile-exists error and resolving instead of retrying the create flow.
 
 ### Read market data and positions
 
@@ -184,7 +166,7 @@ const positions = await client.positions.list(profileId);
 const healthFactor = await client.positions.getHealthFactor(profileId);
 ```
 
-### Quote-first borrow flow
+### Quote-first borrow
 
 ```ts
 const pools = await client.market.getPools();
@@ -205,11 +187,9 @@ const outflow = await client.lending.borrow({
 });
 ```
 
-When building product UX, prefer quote-first borrowing because it matches how the example app guides the user through pool selection and amount validation.
+### BTC supply
 
-### BTC supply flow
-
-For the standard BTC path, use `destination: "nativeAddress"`.
+Standard BTC path uses `destination: "nativeAddress"`.
 
 ```ts
 const supplyFlow = await client.lending.supply({
@@ -233,11 +213,11 @@ for await (const update of supplyFlow.watchStatus()) {
 }
 ```
 
-If the app can broadcast BTC directly, provide `btcWalletAdapter` and the amount/account fields required by that path.
+If the app broadcasts BTC directly, provide `btcWalletAdapter` with the amount and account fields that path requires.
 
-### ETH stablecoin supply flow
+### ETH stablecoin supply
 
-Use this when the pool is an ETH stablecoin pool and the backend is planning approvals and execution.
+When the pool is an ETH stablecoin pool and the backend plans approvals and execution.
 
 ```ts
 const supplyFlow = await client.lending.supply({
@@ -253,19 +233,19 @@ const supplyFlow = await client.lending.supply({
 });
 ```
 
-This flow depends on `apiBaseUrl` because the SDK needs backend approval planning.
+This flow requires `apiBaseUrl` because the SDK needs backend approval planning.
 
-## Pitfalls
+## Common Mistakes
 
-1. Do not assume `LiquidiumClient.create({})` is enough for every method. `history`, `pending`, inflow reporting, inflow status polling, and some lending flows require `apiBaseUrl`.
-2. Do not confuse prepare methods with completed actions. `prepareCreate`, `prepareBorrow`, and `prepareWithdraw` return signable actions that still need signing and submission.
-3. Do not build a wallet adapter with unrelated methods. Add only `signMessage`, `sendBtcTransaction`, or `sendEthTransaction` when the selected flow needs them.
-4. Do not skip the quote step in borrow UX unless the user explicitly wants a lower-level flow.
-5. Do not treat BTC and ETH supply paths as interchangeable. BTC native supply and ETH stablecoin supply need different request fields and different wallet execution methods.
-6. Do not hide profile resolution edge cases. If account creation can race with existing state, handle the existing-profile path explicitly.
-7. Do not invent SDK methods. Work from the public modules and names exported by `@liquidium/client`.
+1. `LiquidiumClient.create({})` does not cover every method. History, pending, inflow reporting, inflow status polling, and some lending flows need `apiBaseUrl`.
+2. Prepare methods return signable actions, not completed actions. `prepareCreate`, `prepareBorrow`, and `prepareWithdraw` still need signing and submission.
+3. Build a wallet adapter with only the methods the selected flow needs. Avoid adding `signMessage`, `sendBtcTransaction`, or `sendEthTransaction` unless the flow uses them.
+4. Skip the quote step in borrow UX only when you explicitly want a lower-level flow.
+5. BTC and ETH supply paths are not interchangeable. They need different request fields and different wallet execution methods.
+6. Handle existing profiles explicitly when account creation can race with existing state.
+7. Work from the public modules and names exported by `@liquidium/client`. Do not invent SDK methods.
 
-## Preferred Integration Style
+## Preferred Style
 
 - Keep examples minimal and app-shaped
 - Use convenience methods for end-to-end app flows
@@ -273,7 +253,7 @@ This flow depends on `apiBaseUrl` because the SDK needs backend approval plannin
 - Reuse the app's existing wallet provider instead of adding a parallel wallet framework
 - Preserve the app's state management and fetch patterns
 
-## Good Defaults
+## Defaults
 
 - Start with `LiquidiumClient.create({})` for read-only market and position work
 - Add `apiBaseUrl` when the requested flow touches backend-assisted endpoints
@@ -281,14 +261,12 @@ This flow depends on `apiBaseUrl` because the SDK needs backend approval plannin
 - Prefer a quote-first borrow flow
 - Prefer the BTC payment address when the wallet exposes both ordinals and payment addresses
 
-## Source Guidance
+## Source Files
 
-When unsure, ground the implementation in these repo sources first:
+When unsure, check these first:
 
 - `packages/client/README.md`
 - `README.md`
 - `examples/vite-react-dynamic/README.md`
 - `examples/vite-react-dynamic/src/liquidium-client-sdk.ts`
 - `examples/vite-react-dynamic/src/wallet-signing.ts`
-
-Use those files to stay aligned with the current public API and the intended integration patterns.
