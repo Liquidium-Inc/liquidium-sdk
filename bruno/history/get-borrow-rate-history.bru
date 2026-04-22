@@ -1,0 +1,31 @@
+meta {
+  name: Get Borrow Rate History
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/v1/history/rates/{{poolId}}
+  body: none
+  auth: none
+}
+
+params:query {
+  ~cursor: 
+  ~from: 2026-04-01T00:00:00.000Z
+  ~to: 2026-04-22T00:00:00.000Z
+  ~limit: 100
+}
+
+docs {
+  Borrow rate history (APY samples) for a pool.
+
+  Path parameters:
+    - poolId: pool principal text
+
+  Query parameters (all optional):
+    - cursor: pagination cursor
+    - from: ISO timestamp, window start (inclusive)
+    - to: ISO timestamp, window end (exclusive)
+    - limit: max samples per page
+}

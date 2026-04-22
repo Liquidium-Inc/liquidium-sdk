@@ -1,0 +1,33 @@
+meta {
+  name: Get User Transactions
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/v1/history/users/{{profileId}}/transactions
+  body: none
+  auth: none
+}
+
+params:query {
+  ~cursor: 
+  ~market: 
+  ~from: 2026-04-01T00:00:00.000Z
+  ~to: 2026-04-22T00:00:00.000Z
+  ~limit: 100
+}
+
+docs {
+  Paginated transaction history for a user profile.
+
+  Path parameters:
+    - profileId: Liquidium profile principal text
+
+  Query parameters (all optional):
+    - cursor: pagination cursor
+    - market: pool id filter
+    - from: ISO timestamp, window start
+    - to: ISO timestamp, window end
+    - limit: max entries per page
+}

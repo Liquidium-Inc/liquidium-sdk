@@ -1,0 +1,24 @@
+meta {
+  name: List Pending Movements
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/v1/pending?profileId={{profileId}}
+  body: none
+  auth: none
+}
+
+params:query {
+  profileId: {{profileId}}
+}
+
+docs {
+  Lists pending inflows (supplies, repayments) and outflows
+  (borrows, withdrawals) for a profile, enriched with live
+  BTC/ETH confirmation counts and BTC fee rates.
+  
+  Query parameters:
+    - profileId: Liquidium profile principal text
+}

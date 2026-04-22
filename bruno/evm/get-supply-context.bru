@@ -1,0 +1,31 @@
+meta {
+  name: Get EVM Supply Context
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/v1/evm/supply-context?profileId={{profileId}}&poolId={{poolId}}&walletAddress={{walletAddress}}&amount=1000000&action=deposit
+  body: none
+  auth: none
+}
+
+params:query {
+  profileId: {{profileId}}
+  poolId: {{poolId}}
+  walletAddress: {{walletAddress}}
+  amount: 1000000
+  action: deposit
+}
+
+docs {
+  Fetches ERC-20 supply planning data (allowance, approval strategy, deposit
+  calldata inputs) for an EVM pool.
+
+  Query parameters:
+    - profileId: Liquidium profile principal text
+    - poolId: pool principal text
+    - walletAddress: user EVM wallet address (0x...)
+    - amount: token amount in base units (string integer)
+    - action: "deposit" (see SupplyAction type in SDK)
+}

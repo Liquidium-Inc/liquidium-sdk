@@ -1,0 +1,25 @@
+meta {
+  name: Get User Liquidations
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/v1/history/users/{{profileId}}/liquidations
+  body: none
+  auth: none
+}
+
+params:query {
+  ~market: 
+}
+
+docs {
+  Paginated liquidation history for a user profile.
+
+  Path parameters:
+    - profileId: Liquidium profile principal text
+
+  Query parameters (all optional):
+    - market: pool id filter
+}

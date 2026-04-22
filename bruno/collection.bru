@@ -1,0 +1,35 @@
+meta {
+  name: Liquidium SDK API
+}
+
+docs {
+  # Liquidium SDK API
+
+  Bruno collection for the Liquidium SDK HTTP API (v1).
+
+  All requests are prefixed with `{{baseUrl}}/v1`, where `baseUrl` is defined
+  by the active environment (`production` or `staging`).
+
+  ## Endpoints
+
+  - `history/` - pool and user history, borrow APY series
+  - `pending/` - pending inflows and outflows for a profile
+  - `evm/` - EVM supply context for ERC-20 pools
+  - `inflow/` - submit a broadcast inflow txid
+
+  ## Variables
+
+  Per-environment:
+    - `baseUrl` - SDK API base URL (includes `/api/sdk`)
+
+  Collection-level (override per request):
+    - `profileId` - Liquidium profile principal text
+    - `poolId` - pool principal text
+    - `walletAddress` - EVM wallet address for supply context
+}
+
+vars {
+  profileId: aaaaa-aa
+  poolId: hkmli-faaaa-aaaar-qb4ba-cai
+  walletAddress: 0x1234567890123456789012345678901234567890
+}
