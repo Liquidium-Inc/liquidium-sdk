@@ -726,20 +726,6 @@ export class LendingModule {
   }
 
   /**
-   * Returns the configured deposit fee.
-   *
-   * @returns Deposit fee in protocol units.
-   *
-   * @remarks Not implemented yet; currently throws with `LiquidiumErrorCode.INTERNAL`.
-   */
-  async getDepositFee(): Promise<bigint> {
-    throw new LiquidiumError(
-      LiquidiumErrorCode.INTERNAL,
-      "Not yet implemented"
-    );
-  }
-
-  /**
    * Returns whether borrowing is currently disabled by the protocol.
    *
    * @returns `true` when the lending canister reports borrowing disabled.

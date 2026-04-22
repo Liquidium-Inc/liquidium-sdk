@@ -128,13 +128,15 @@ describe("AccountsModule", () => {
 
     // when / then
     await expect(
-      client.accounts.prepareCreateProfile({ account: "0x123" }).then((createAction) =>
-        createAction.submit({
-          signature: "0xabc",
-          chain: "ETH",
-          account: "0x123",
-        })
-      )
+      client.accounts
+        .prepareCreateProfile({ account: "0x123" })
+        .then((createAction) =>
+          createAction.submit({
+            signature: "0xabc",
+            chain: "ETH",
+            account: "0x123",
+          })
+        )
     ).rejects.toMatchObject({
       code: LiquidiumErrorCode.PROFILE_ALREADY_EXISTS,
     });
@@ -174,13 +176,15 @@ describe("AccountsModule", () => {
 
     // when / then
     await expect(
-      client.accounts.prepareCreateProfile({ account: "0xabc" }).then((createAction) =>
-        createAction.submit({
-          signature: "0xsigned",
-          chain: "ETH",
-          account: "0xabc",
-        })
-      )
+      client.accounts
+        .prepareCreateProfile({ account: "0xabc" })
+        .then((createAction) =>
+          createAction.submit({
+            signature: "0xsigned",
+            chain: "ETH",
+            account: "0xabc",
+          })
+        )
     ).rejects.toMatchObject({
       code: LiquidiumErrorCode.PROFILE_ALREADY_EXISTS,
       message: "Wallet address is already linked to profile bbbbb-bb",
@@ -233,7 +237,9 @@ describe("AccountsModule", () => {
     const client = LiquidiumClient.create({});
 
     // when / then
-    await expect(client.accounts.listLinkedWallets("aaaaa-aa")).rejects.toMatchObject({
+    await expect(
+      client.accounts.listLinkedWallets("aaaaa-aa")
+    ).rejects.toMatchObject({
       code: LiquidiumErrorCode.INTERNAL,
       message: "Unsupported wallet chain returned for profile wallet: SOL",
     });
@@ -980,6 +986,244 @@ describe("MarketModule", () => {
     // when / then
     await expect(client.market.getPoolRate("aaaaa-aa")).rejects.toMatchObject({
       code: LiquidiumErrorCode.POOL_NOT_FOUND,
+    });
+  });
+});
+
+describe("PositionsModule", () => {
+  const PROFILE_ID = "aaaaa-aa";
+  const POOL_ID = "rrkah-fqaaa-aaaaa-aaaaq-cai";
+
+  function makePositionView(overrides: Record<string, unknown> = {}) {
+    return {
+      lending_index_now: 0n,
+      interest_since_snapshot: 0n,
+      asset: { BTC: null },
+      total_debt_interest: 0n,
+      borrow_index_snapshot: 0n,
+      debt_native_now: 0n,
+      borrow_index_now: 0n,
+      lending_index_snapshot: 0n,
+      debt_scaled: 0n,
+      total_earned_interest: 0n,
+      deposit_scaled: 0n,
+      earned_since_snapshot: 0n,
+      deposited_native_now: 0n,
+      pool_id: {
+        toText: () => POOL_ID,
+      },
+      last_update: 0n,
+      user_profile: {
+        toText: () => PROFILE_ID,
+      },
+      ...overrides,
+    };
+  }
+
+  test("returns a mapped position when the canister reports one", async () => {
+    // given
+    const getPosition = vi.fn().mockResolvedValue([
+      makePositionView({
+        deposited_native_now: 150_000n,
+        debt_native_now: 25_000n,
+        total_earned_interest: 100n,
+        earned_since_snapshot: 5n,
+        total_debt_interest: 20n,
+        interest_since_snapshot: 1n,
+        last_update: 1_234n,
+      }),
+    ]);
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      get_position: getPosition,
+    } as never);
+    const client = LiquidiumClient.create({});
+
+    // when
+    const position = await client.positions.getPosition(PROFILE_ID, POOL_ID);
+
+    // then
+    expect(position).toEqual({
+      poolId: POOL_ID,
+      asset: "BTC",
+      deposited: 150_000n,
+      depositedDecimals: 8n,
+      borrowed: 25_000n,
+      borrowedDecimals: 8n,
+      earnedInterest: 105n,
+      debtInterest: 21n,
+      lastUpdate: 1_234n,
+    });
+    expect(getPosition).toHaveBeenCalledWith(
+      Principal.fromText(PROFILE_ID),
+      Principal.fromText(POOL_ID)
+    );
+  });
+
+  test("returns null when the canister reports no position", async () => {
+    // given
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      get_position: vi.fn().mockResolvedValue([]),
+    } as never);
+    const client = LiquidiumClient.create({});
+
+    // when
+    const position = await client.positions.getPosition(PROFILE_ID, POOL_ID);
+
+    // then
+    expect(position).toBeNull();
+  });
+
+  test("lists positions by fetching per-pool views from get_profile_stats", async () => {
+    // given
+    const SECOND_POOL_ID = "ryjl3-tyaaa-aaaaa-aaaba-cai";
+    const getProfileStats = vi.fn().mockResolvedValue({
+      debt: 0n,
+      collateral: 0n,
+      acumulated_interest: 0n,
+      borrowing_power: {
+        max_borrowable_usd: 0n,
+        weighted_max_ltv: 0n,
+      },
+      positions: [
+        { pool_id: { toText: () => POOL_ID } },
+        { pool_id: { toText: () => SECOND_POOL_ID } },
+      ],
+      weighted_liquidation_threshold: 0n,
+    });
+    const getPosition = vi
+      .fn()
+      .mockResolvedValueOnce([
+        makePositionView({
+          deposited_native_now: 100n,
+          pool_id: { toText: () => POOL_ID },
+        }),
+      ])
+      .mockResolvedValueOnce([
+        makePositionView({
+          asset: { USDT: null },
+          deposited_native_now: 5_000_000n,
+          debt_native_now: 1_000_000n,
+          pool_id: { toText: () => SECOND_POOL_ID },
+        }),
+      ]);
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      get_profile_stats: getProfileStats,
+      get_position: getPosition,
+    } as never);
+    const client = LiquidiumClient.create({});
+
+    // when
+    const positions = await client.positions.listPositions(PROFILE_ID);
+
+    // then
+    expect(positions).toEqual([
+      {
+        poolId: POOL_ID,
+        asset: "BTC",
+        deposited: 100n,
+        depositedDecimals: 8n,
+        borrowed: 0n,
+        borrowedDecimals: 8n,
+        earnedInterest: 0n,
+        debtInterest: 0n,
+        lastUpdate: 0n,
+      },
+      {
+        poolId: SECOND_POOL_ID,
+        asset: "USDT",
+        deposited: 5_000_000n,
+        depositedDecimals: 6n,
+        borrowed: 1_000_000n,
+        borrowedDecimals: 6n,
+        earnedInterest: 0n,
+        debtInterest: 0n,
+        lastUpdate: 0n,
+      },
+    ]);
+    expect(getPosition).toHaveBeenCalledTimes(2);
+  });
+
+  test("skips positions that the canister no longer returns in list", async () => {
+    // given
+    const getProfileStats = vi.fn().mockResolvedValue({
+      debt: 0n,
+      collateral: 0n,
+      acumulated_interest: 0n,
+      borrowing_power: { max_borrowable_usd: 0n, weighted_max_ltv: 0n },
+      positions: [{ pool_id: { toText: () => POOL_ID } }],
+      weighted_liquidation_threshold: 0n,
+    });
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      get_profile_stats: getProfileStats,
+      get_position: vi.fn().mockResolvedValue([]),
+    } as never);
+    const client = LiquidiumClient.create({});
+
+    // when
+    const positions = await client.positions.listPositions(PROFILE_ID);
+
+    // then
+    expect(positions).toEqual([]);
+  });
+
+  test("returns health factor and mapped user stats", async () => {
+    // given
+    const getHealthFactor = vi.fn().mockResolvedValue([
+      1_500n,
+      {
+        debt: 10n,
+        collateral: 100n,
+        acumulated_interest: 0n,
+        borrowing_power: {
+          max_borrowable_usd: 80n,
+          weighted_max_ltv: 8_000n,
+        },
+        positions: [],
+        weighted_liquidation_threshold: 7_500n,
+      },
+    ]);
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      get_health_factor: getHealthFactor,
+    } as never);
+    const client = LiquidiumClient.create({});
+
+    // when
+    const health = await client.positions.getHealthFactor(PROFILE_ID);
+
+    // then
+    expect(health).toEqual({
+      healthFactor: 1_500n,
+      userStats: {
+        debt: 10n,
+        debtDecimals: 27n,
+        collateral: 100n,
+        collateralDecimals: 27n,
+        weightedLiquidationThreshold: 7_500n,
+        borrowingPower: {
+          weightedMaxLtv: 8_000n,
+          maxBorrowableUsd: 80n,
+          maxBorrowableUsdDecimals: 27n,
+        },
+      },
+    });
+    expect(getHealthFactor).toHaveBeenCalledWith(
+      Principal.fromText(PROFILE_ID)
+    );
+  });
+
+  test("wraps unexpected canister failures with CANISTER_REJECTED", async () => {
+    // given
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      get_position: vi.fn().mockRejectedValue(new Error("boom")),
+    } as never);
+    const client = LiquidiumClient.create({});
+
+    // when / then
+    await expect(
+      client.positions.getPosition(PROFILE_ID, POOL_ID)
+    ).rejects.toMatchObject({
+      code: LiquidiumErrorCode.CANISTER_REJECTED,
+      message: "Canister call failed: get_position",
     });
   });
 });

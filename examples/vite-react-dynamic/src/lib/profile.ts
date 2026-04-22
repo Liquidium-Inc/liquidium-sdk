@@ -31,8 +31,7 @@ export async function createOrResolveProfile(
       account: params.walletAddress,
       chain: params.chain,
       walletAdapter: {
-        signMessage: async ({ message }) =>
-          await params.signMessage(message),
+        signMessage: async ({ message }) => await params.signMessage(message),
       },
     });
 

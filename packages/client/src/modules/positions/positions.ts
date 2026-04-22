@@ -1,10 +1,13 @@
 import { Principal } from "@dfinity/principal";
 import { createLendingActor } from "../../core/canisters/lending/actor";
-import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
+import { mapCanisterCallErrorToLiquidiumError } from "../../core/canisters/lending/error-mappers";
+import { LiquidiumError } from "../../core/errors";
 import type { CanisterContext } from "../../core/transports/canister-context";
+import {
+  mapPositionViewToPosition,
+  mapUserStatsRecordToUserStats,
+} from "./mappers";
 import type { HealthFactor, Position, UserStats } from "./types";
-
-const USD_VALUE_SCALE_DECIMALS = 27n;
 
 export class PositionsModule {
   constructor(readonly canisterContext: CanisterContext) {}
@@ -20,13 +23,24 @@ export class PositionsModule {
     profileId: string,
     poolId: string
   ): Promise<Position | null> {
-    void profileId;
-    void poolId;
+    try {
+      const result = await createLendingActor(
+        this.canisterContext
+      ).get_position(Principal.fromText(profileId), Principal.fromText(poolId));
 
-    throw new LiquidiumError(
-      LiquidiumErrorCode.INTERNAL,
-      "Not yet implemented"
-    );
+      const view = result[0];
+      if (!view) {
+        return null;
+      }
+
+      return mapPositionViewToPosition(view);
+    } catch (error) {
+      if (error instanceof LiquidiumError) {
+        throw error;
+      }
+
+      throw mapCanisterCallErrorToLiquidiumError("get_position", error);
+    }
   }
 
   /**
@@ -36,12 +50,28 @@ export class PositionsModule {
    * @returns All positions currently associated with the requested profile.
    */
   async listPositions(profileId: string): Promise<Position[]> {
-    void profileId;
+    try {
+      const actor = createLendingActor(this.canisterContext);
+      const profilePrincipal = Principal.fromText(profileId);
+      const stats = await actor.get_profile_stats(profilePrincipal);
 
-    throw new LiquidiumError(
-      LiquidiumErrorCode.INTERNAL,
-      "Not yet implemented"
-    );
+      const positionViews = await Promise.all(
+        stats.positions.map((position) =>
+          actor.get_position(profilePrincipal, position.pool_id)
+        )
+      );
+
+      return positionViews
+        .map((result) => result[0])
+        .filter((view): view is NonNullable<typeof view> => view !== undefined)
+        .map(mapPositionViewToPosition);
+    } catch (error) {
+      if (error instanceof LiquidiumError) {
+        throw error;
+      }
+
+      throw mapCanisterCallErrorToLiquidiumError("list_positions", error);
+    }
   }
 
   /**
@@ -51,12 +81,22 @@ export class PositionsModule {
    * @returns The current health factor for the requested profile.
    */
   async getHealthFactor(profileId: string): Promise<HealthFactor> {
-    void profileId;
+    try {
+      const [healthFactor, userStatsRecord] = await createLendingActor(
+        this.canisterContext
+      ).get_health_factor(Principal.fromText(profileId));
 
-    throw new LiquidiumError(
-      LiquidiumErrorCode.INTERNAL,
-      "Not yet implemented"
-    );
+      return {
+        healthFactor,
+        userStats: mapUserStatsRecordToUserStats(userStatsRecord),
+      };
+    } catch (error) {
+      if (error instanceof LiquidiumError) {
+        throw error;
+      }
+
+      throw mapCanisterCallErrorToLiquidiumError("get_health_factor", error);
+    }
   }
 
   /**
@@ -71,28 +111,13 @@ export class PositionsModule {
         this.canisterContext
       ).get_profile_stats(Principal.fromText(profileId));
 
-      return {
-        debt: result.debt,
-        debtDecimals: USD_VALUE_SCALE_DECIMALS,
-        collateral: result.collateral,
-        collateralDecimals: USD_VALUE_SCALE_DECIMALS,
-        weightedLiquidationThreshold: result.weighted_liquidation_threshold,
-        borrowingPower: {
-          weightedMaxLtv: result.borrowing_power.weighted_max_ltv,
-          maxBorrowableUsd: result.borrowing_power.max_borrowable_usd,
-          maxBorrowableUsdDecimals: USD_VALUE_SCALE_DECIMALS,
-        },
-      };
+      return mapUserStatsRecordToUserStats(result);
     } catch (error) {
       if (error instanceof LiquidiumError) {
         throw error;
       }
 
-      throw new LiquidiumError(
-        LiquidiumErrorCode.CANISTER_REJECTED,
-        "Canister call failed: get_profile_stats",
-        error
-      );
+      throw mapCanisterCallErrorToLiquidiumError("get_profile_stats", error);
     }
   }
 }
