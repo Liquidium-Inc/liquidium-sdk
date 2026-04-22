@@ -1,0 +1,74 @@
+/**
+ * Path and query key constants for the Liquidium SDK HTTP API.
+ */
+
+export const SDK_API_V1_PREFIX = "/v1";
+
+export const SdkApiQueryParam = {
+  action: "action",
+  amount: "amount",
+  cursor: "cursor",
+  from: "from",
+  limit: "limit",
+  market: "market",
+  poolId: "poolId",
+  profileId: "profileId",
+  to: "to",
+  walletAddress: "walletAddress",
+} as const;
+
+const HISTORY_POOL = `${SDK_API_V1_PREFIX}/history/pool`;
+const HISTORY_RATES = `${SDK_API_V1_PREFIX}/history/rates`;
+const HISTORY_USERS = `${SDK_API_V1_PREFIX}/history/users`;
+
+export function buildHistoryPoolPath(poolId: string, cursor?: string): string {
+  const base = `${HISTORY_POOL}/${encodeURIComponent(poolId)}`;
+  if (!cursor) {
+    return base;
+  }
+
+  const query = new URLSearchParams({ [SdkApiQueryParam.cursor]: cursor });
+  return `${base}?${query.toString()}`;
+}
+
+export function buildHistoryRatesPath(
+  poolId: string,
+  query: URLSearchParams
+): string {
+  const base = `${HISTORY_RATES}/${encodeURIComponent(poolId)}`;
+  const qs = query.toString();
+  return qs ? `${base}?${qs}` : base;
+}
+
+export function buildHistoryUserTransactionsPath(
+  user: string,
+  query: URLSearchParams
+): string {
+  const base = `${HISTORY_USERS}/${encodeURIComponent(user)}/transactions`;
+  const qs = query.toString();
+  return qs ? `${base}?${qs}` : base;
+}
+
+export function buildHistoryUserLiquidationsPath(
+  user: string,
+  query: URLSearchParams
+): string {
+  const base = `${HISTORY_USERS}/${encodeURIComponent(user)}/liquidations`;
+  const qs = query.toString();
+  return qs ? `${base}?${qs}` : base;
+}
+
+export function buildPendingPath(profileId: string): string {
+  const query = new URLSearchParams({
+    [SdkApiQueryParam.profileId]: profileId,
+  });
+  return `${SDK_API_V1_PREFIX}/pending?${query.toString()}`;
+}
+
+export function buildEvmSupplyContextPath(query: URLSearchParams): string {
+  return `${SDK_API_V1_PREFIX}/evm/supply-context?${query.toString()}`;
+}
+
+export const SdkApiPath = {
+  inflow: `${SDK_API_V1_PREFIX}/inflow`,
+} as const;

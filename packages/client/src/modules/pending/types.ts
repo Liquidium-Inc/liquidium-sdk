@@ -1,23 +1,39 @@
-import type { Asset, Chain } from "../../core/types";
+import type { Chain } from "../../core/types";
 
-export interface PendingInflow {
-  type: "Deposit" | "Repayment";
-  amount: bigint;
-  chain: Chain;
-  asset: Asset;
+export type PendingInflowKind = "Deposit" | "Repayment";
+export type PendingOutflowKind = "Borrow" | "Withdraw";
+
+export type PendingInflowStage =
+  | "Logged"
+  | "Confirmed"
+  | "Pending"
+  | "Finalising";
+
+export type PendingOutflowStatus = "Pending" | "Sent";
+
+interface PendingMovementBase {
+  id: string;
   poolId: string;
-}
-
-export interface PendingOutflow {
-  amount: bigint;
-  account: string;
+  asset: string;
   chain: Chain;
-  asset: Asset;
-  txid?: string;
-  poolId: string;
+  amount: bigint;
+  timestampMs: number;
+  txid: string | null;
+  requiredConfirmations: number;
+  confirmations: number | null;
 }
 
-export interface PendingMovements {
-  inflows: PendingInflow[];
-  outflows: PendingOutflow[];
+export interface PendingInflowMovement extends PendingMovementBase {
+  direction: "inflow";
+  kind: PendingInflowKind;
+  stage: PendingInflowStage;
+  feeRateSatsPerVByte: number | null;
 }
+
+export interface PendingOutflowMovement extends PendingMovementBase {
+  direction: "outflow";
+  kind: PendingOutflowKind;
+  status: PendingOutflowStatus;
+}
+
+export type PendingMovement = PendingInflowMovement | PendingOutflowMovement;

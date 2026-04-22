@@ -1,12 +1,12 @@
 import { isBitcoinWallet } from "@dynamic-labs/bitcoin";
 import { isEthereumWallet } from "@dynamic-labs/ethereum";
 import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
-import {
-  type AssetPrices,
+import type {
+  AssetPrices,
   LiquidiumClient,
-  type Pool,
-  type QuoteRequest,
-  type WalletAdapter,
+  Pool,
+  QuoteRequest,
+  WalletAdapter,
 } from "@liquidium/client";
 import { useMemo, useState } from "react";
 import { createLiquidiumClient } from "./lib/client";
@@ -196,34 +196,12 @@ const SDK_METHODS: MethodDefinition[] = [
     },
   },
   {
-    id: "pending.getMovements",
-    label: "pending.getMovements",
+    id: "pending.list",
+    label: "pending.list",
     defaultArgs: '{\n  "profileId": "aaaaa-aa"\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
-      return await client.pending.getMovements(
-        expectNonEmptyString(args.profileId, "profileId")
-      );
-    },
-  },
-  {
-    id: "pending.getInflows",
-    label: "pending.getInflows",
-    defaultArgs: '{\n  "profileId": "aaaaa-aa"\n}',
-    execute: async (client, input) => {
-      const args = expectObject(input);
-      return await client.pending.getInflows(
-        expectNonEmptyString(args.profileId, "profileId")
-      );
-    },
-  },
-  {
-    id: "pending.getOutflows",
-    label: "pending.getOutflows",
-    defaultArgs: '{\n  "profileId": "aaaaa-aa"\n}',
-    execute: async (client, input) => {
-      const args = expectObject(input);
-      return await client.pending.getOutflows(
+      return await client.pending.list(
         expectNonEmptyString(args.profileId, "profileId")
       );
     },

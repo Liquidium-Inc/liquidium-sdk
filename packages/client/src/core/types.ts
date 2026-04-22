@@ -35,14 +35,47 @@ export interface CanisterIds {
   ercPool: string;
 }
 
-export type Environment = "mainnet" | "staging";
+export const Environment = {
+  mainnet: "mainnet",
+  staging: "staging",
+} as const;
+export type Environment = (typeof Environment)[keyof typeof Environment];
 
-export type Asset = "BTC" | "USDT" | "USDC";
-export type Chain = "BTC" | "ETH";
+export const Asset = {
+  BTC: "BTC",
+  USDC: "USDC",
+  USDT: "USDT",
+} as const;
+export type Asset = (typeof Asset)[keyof typeof Asset];
+
+export const Chain = {
+  BTC: "BTC",
+  ETH: "ETH",
+} as const;
+export type Chain = (typeof Chain)[keyof typeof Chain];
+
 export type MarketAsset = string;
 export type MarketChain = string;
-export type SupplyAction = "deposit" | "repayment";
-export type Outflowtype = "withdraw" | "borrow" | "feeClaim";
+
+export const SupplyAction = {
+  deposit: "deposit",
+  repayment: "repayment",
+} as const;
+export type SupplyAction = (typeof SupplyAction)[keyof typeof SupplyAction];
+
+export const OutflowType = {
+  borrow: "borrow",
+  feeClaim: "feeClaim",
+  withdraw: "withdraw",
+} as const;
+export type Outflowtype = (typeof OutflowType)[keyof typeof OutflowType];
+
+export const InflowSubmitType = {
+  DEPOSIT: "DEPOSIT",
+  REPAY: "REPAY",
+} as const;
+export type InflowSubmitType =
+  (typeof InflowSubmitType)[keyof typeof InflowSubmitType];
 
 export interface Wallet {
   chain: Chain;

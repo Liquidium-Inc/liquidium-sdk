@@ -1,7 +1,7 @@
-import type { CanisterIds, Environment } from "./types";
+import { Environment, type CanisterIds } from "./types";
 
 const MAINNET_HOST = "https://icp-api.io";
-export const DEFAULT_ENVIRONMENT: Environment = "mainnet";
+export const DEFAULT_ENVIRONMENT: Environment = Environment.mainnet;
 
 const MAINNET_CANISTER_IDS: CanisterIds = {
   lending: "hyk4r-jqaaa-aaaar-qb4ca-cai",

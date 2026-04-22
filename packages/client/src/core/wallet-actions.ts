@@ -1,11 +1,26 @@
-import type { Chain } from "./types";
+import { Chain } from "./types";
 
-export type TransferMode = "native" | "ck";
+export const TransferMode = {
+  ck: "ck",
+  native: "native",
+} as const;
+export type TransferMode = (typeof TransferMode)[keyof typeof TransferMode];
 
+export const WalletExecutionKind = {
+  sendEthTransaction: "send-eth-transaction",
+  signMessage: "sign-message",
+  signPsbt: "sign-psbt",
+} as const;
 export type WalletExecutionKind =
-  | "sign-message"
-  | "sign-psbt"
-  | "send-eth-transaction";
+  (typeof WalletExecutionKind)[keyof typeof WalletExecutionKind];
+
+export const WalletActionKind = {
+  createAccount: "create-account",
+  createBorrow: "create-borrow",
+  createWithdraw: "create-withdraw",
+} as const;
+export type WalletActionKind =
+  (typeof WalletActionKind)[keyof typeof WalletActionKind];
 
 export interface EthTransactionRequest {
   to: string;
@@ -23,7 +38,7 @@ export interface SignMessageRequest {
 }
 
 export interface SignPsbtRequest {
-  chain: "BTC";
+  chain: typeof Chain.BTC;
   psbtBase64: string;
   account?: string;
   actionType: string;
@@ -31,7 +46,7 @@ export interface SignPsbtRequest {
 }
 
 export interface SendEthTransactionRequest {
-  chain: "ETH";
+  chain: typeof Chain.ETH;
   transaction: EthTransactionRequest;
   account?: string;
   actionType: string;
