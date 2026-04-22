@@ -1,6 +1,10 @@
 import { LiquidiumError, LiquidiumErrorCode } from "./core/errors";
-import type { Chain } from "./core/types";
-import type { WalletAction, WalletAdapter } from "./core/wallet-actions";
+import { Chain } from "./core/types";
+import {
+  type WalletAction,
+  type WalletAdapter,
+  WalletExecutionKind,
+} from "./core/wallet-actions";
 
 /**
  * Wallet wiring for {@link executeWith}.
@@ -32,7 +36,7 @@ export function executeWith(options: ExecuteWithOptions) {
     action: WalletAction<TResult>
   ): Promise<TResult> {
     switch (action.executionKind) {
-      case "sign-message": {
+      case WalletExecutionKind.signMessage: {
         if (!options.walletAdapter.signMessage) {
           throw new LiquidiumError(
             LiquidiumErrorCode.VALIDATION_ERROR,
@@ -61,7 +65,7 @@ export function executeWith(options: ExecuteWithOptions) {
           account: options.account ?? action.account,
         });
       }
-      case "sign-psbt": {
+      case WalletExecutionKind.signPsbt: {
         if (!options.walletAdapter.signPsbt) {
           throw new LiquidiumError(
             LiquidiumErrorCode.VALIDATION_ERROR,
@@ -70,7 +74,7 @@ export function executeWith(options: ExecuteWithOptions) {
         }
 
         const signedPsbtBase64 = await options.walletAdapter.signPsbt({
-          chain: "BTC",
+          chain: Chain.BTC,
           psbtBase64: action.psbtBase64,
           account: options.account ?? action.account,
           actionType: action.actionType,
@@ -79,7 +83,7 @@ export function executeWith(options: ExecuteWithOptions) {
 
         return action.submit({ signedPsbtBase64 });
       }
-      case "send-eth-transaction": {
+      case WalletExecutionKind.sendEthTransaction: {
         if (!options.walletAdapter.sendEthTransaction) {
           throw new LiquidiumError(
             LiquidiumErrorCode.VALIDATION_ERROR,
@@ -88,7 +92,7 @@ export function executeWith(options: ExecuteWithOptions) {
         }
 
         const txHash = await options.walletAdapter.sendEthTransaction({
-          chain: "ETH",
+          chain: Chain.ETH,
           transaction: action.transaction,
           account: options.account ?? action.account,
           actionType: action.actionType,

@@ -9,10 +9,15 @@ import {
 } from "../../core/canisters/lending/error-mappers";
 import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
 import type { CanisterContext } from "../../core/transports/canister-context";
-import type { Wallet } from "../../core/types";
+import { Chain, type Wallet } from "../../core/types";
 import { computeExpiryTimestampFromNow } from "../../core/utils/time";
 import { getVariantKey } from "../../core/utils/variant";
-import type { WalletAdapter } from "../../core/wallet-actions";
+import {
+  TransferMode,
+  WalletActionKind,
+  type WalletAdapter,
+  WalletExecutionKind,
+} from "../../core/wallet-actions";
 import { executeWith } from "../../execute";
 import { mapCreateAccountRequestToRegisterProfileRequest } from "./mappers";
 import type { CreateAccountAction, CreateAccountRequest } from "./types";
@@ -23,7 +28,7 @@ type PrepareCreateOptions = {
 
 type ExecuteCreateParams = {
   account: string;
-  chain: "BTC" | "ETH";
+  chain: Chain;
   walletAdapter: WalletAdapter;
 };
 
@@ -140,7 +145,7 @@ export class AccountsModule {
   async linkWallet(
     profileId: string,
     newWalletAddress: string,
-    chain: "BTC" | "ETH"
+    chain: Chain
   ): Promise<void> {
     void profileId;
     void newWalletAddress;
@@ -180,10 +185,10 @@ export class AccountsModule {
       const expiryTimestamp = computeExpiryTimestampFromNow();
 
       return {
-        kind: "create-account",
-        executionKind: "sign-message",
-        actionType: "create-account",
-        transferMode: "native",
+        kind: WalletActionKind.createAccount,
+        executionKind: WalletExecutionKind.signMessage,
+        actionType: WalletActionKind.createAccount,
+        transferMode: TransferMode.native,
         account,
         message: createInitializeAccountMessage(expiryTimestamp, nonce),
         data: {
@@ -276,8 +281,8 @@ function mapCanisterWalletToWallet(canisterWallet: WalletRecord): Wallet {
   const walletChain = getVariantKey(canisterWallet.chain.Wallet);
 
   switch (walletChain) {
-    case "BTC":
-    case "ETH":
+    case Chain.BTC:
+    case Chain.ETH:
       return {
         address: canisterWallet.address,
         chain: walletChain,

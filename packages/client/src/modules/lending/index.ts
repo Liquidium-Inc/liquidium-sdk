@@ -6,7 +6,6 @@ export type {
   CreateBorrowRequest,
   CreateWithdrawData,
   CreateWithdrawRequest,
-  EvmSupplyApprovalStrategy,
   EvmSupplyContext,
   GetEvmSupplyContextRequest,
   IcrcAccountSupplyTarget,
@@ -18,9 +17,9 @@ export type {
   SupplyFlow,
   SupplyFlowRequest,
   SupplyInstruction,
-  SupplyPlanType,
   SupplyRequest,
   SupplyTarget,
   WithdrawAction,
   WithdrawSubmitSignatureInfo,
 } from "./types";
+export { EvmSupplyApprovalStrategy, SupplyPlanType } from "./types";

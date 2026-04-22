@@ -1,4 +1,7 @@
 import type {
+  Asset,
+  Chain,
+  InflowSubmitType,
   MarketAsset,
   MarketChain,
   Outflowtype,
@@ -7,7 +10,9 @@ import type {
 import type {
   SignatureInfo,
   SignMessageWalletAction,
+  WalletActionKind,
   WalletAdapter,
+  WalletExecutionKind,
 } from "../../core/wallet-actions";
 
 export interface OutflowReceiver {
@@ -52,9 +57,9 @@ export interface CreateBorrowData extends CreateBorrowRequest {
 
 export interface BorrowAction
   extends SignMessageWalletAction<CreateBorrowData, OutflowDetails> {
-  kind: "create-borrow";
-  executionKind: "sign-message";
-  actionType: "create-borrow";
+  kind: typeof WalletActionKind.createBorrow;
+  executionKind: typeof WalletExecutionKind.signMessage;
+  actionType: typeof WalletActionKind.createBorrow;
 }
 
 /**
@@ -74,9 +79,9 @@ export interface CreateWithdrawData extends CreateWithdrawRequest {
 
 export interface WithdrawAction
   extends SignMessageWalletAction<CreateWithdrawData, OutflowDetails> {
-  kind: "create-withdraw";
-  executionKind: "sign-message";
-  actionType: "create-withdraw";
+  kind: typeof WalletActionKind.createWithdraw;
+  executionKind: typeof WalletExecutionKind.signMessage;
+  actionType: typeof WalletActionKind.createWithdraw;
 }
 
 /** Minimal input for `prepareSupply` (target resolution only). */
@@ -132,7 +137,12 @@ export interface SupplyFlowRequest {
   amount?: bigint;
 }
 
-export type SupplyPlanType = "transfer" | "contractInteraction";
+export const SupplyPlanType = {
+  contractInteraction: "contractInteraction",
+  transfer: "transfer",
+} as const;
+export type SupplyPlanType =
+  (typeof SupplyPlanType)[keyof typeof SupplyPlanType];
 
 /**
  * Supply receipt returned by `lending.supply(...)`.
@@ -156,8 +166,8 @@ export interface SupplyFlow {
 /** Body for `SupplyFlow.submit` / `lending.submitInflow`. */
 export interface SubmitInflowRequest {
   txid: string;
-  chain?: "BTC" | "ETH";
-  type?: "DEPOSIT" | "REPAY";
+  chain?: Chain;
+  type?: InflowSubmitType;
 }
 
 export interface SubmitInflowResponse {
@@ -173,10 +183,13 @@ export interface GetEvmSupplyContextRequest {
   action: SupplyAction;
 }
 
+export const EvmSupplyApprovalStrategy = {
+  approveMax: "approve-max",
+  none: "none",
+  resetThenApproveMax: "reset-then-approve-max",
+} as const;
 export type EvmSupplyApprovalStrategy =
-  | "none"
-  | "approve-max"
-  | "reset-then-approve-max";
+  (typeof EvmSupplyApprovalStrategy)[keyof typeof EvmSupplyApprovalStrategy];
 
 export interface EvmSupplyContext {
   success: true;
@@ -184,8 +197,8 @@ export interface EvmSupplyContext {
   poolId: string;
   walletAddress: string;
   action: SupplyAction;
-  asset: "USDC" | "USDT";
-  chain: "ETH";
+  asset: typeof Asset.USDC | typeof Asset.USDT;
+  chain: typeof Chain.ETH;
   amount: string;
   tokenAddress: string;
   spenderAddress: string;
@@ -195,4 +208,3 @@ export interface EvmSupplyContext {
   requiresApproval: boolean;
   approvalStrategy: EvmSupplyApprovalStrategy;
 }
-

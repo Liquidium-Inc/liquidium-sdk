@@ -1,4 +1,5 @@
 import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
+import { buildPendingPath } from "../../core/sdk-api-paths";
 import type { ApiClient } from "../../core/transports/api-client";
 import type { CanisterContext } from "../../core/transports/canister-context";
 import type { Chain } from "../../core/types";
@@ -8,6 +9,7 @@ import type {
   PendingInflowMovement,
   PendingInflowStage,
   PendingMovement,
+  PendingMovementDirection,
   PendingOutflowKind,
   PendingOutflowMovement,
   PendingOutflowStatus,
@@ -26,16 +28,16 @@ type PendingMovementBaseWire = {
 };
 
 type PendingInflowMovementWire = PendingMovementBaseWire & {
-  direction: "inflow";
-  kind: "deposit" | "repayment";
-  stage: "LOGGED" | "CONFIRMED" | "PENDING" | "FINALISING";
+  direction: typeof PendingMovementDirection.inflow;
+  kind: PendingInflowKind;
+  stage: PendingInflowStage;
   feeRateSatsPerVByte: number | null;
 };
 
 type PendingOutflowMovementWire = PendingMovementBaseWire & {
-  direction: "outflow";
-  kind: "borrow" | "withdraw";
-  status: "PENDING" | "SENT";
+  direction: typeof PendingMovementDirection.outflow;
+  kind: PendingOutflowKind;
+  status: PendingOutflowStatus;
 };
 
 type PendingMovementWire =
@@ -60,15 +62,17 @@ export class PendingModule {
    *
    * Outflows already confirmed on chain are suppressed.
    *
-   * Each movement is discriminated by `direction: "inflow" | "outflow"`.
+   * Each movement is discriminated by
+   * `direction: PendingMovementDirection`.
    *
    * @param profileId - The Liquidium profile principal text.
    * @returns Unified list of pending movements.
    */
   async list(profileId: string): Promise<PendingMovement[]> {
     const apiClient = this.requireApi();
-    const requestPath = `/v1/pending?profileId=${encodeURIComponent(profileId)}`;
-    const response = await apiClient.get<PendingMovementsResponse>(requestPath);
+    const response = await apiClient.get<PendingMovementsResponse>(
+      buildPendingPath(profileId)
+    );
 
     return response.movements.map(mapPendingMovement);
   }
@@ -98,9 +102,9 @@ function mapInflowMovement(
 ): PendingInflowMovement {
   return {
     ...mapBase(wire),
-    direction: "inflow",
-    kind: mapInflowKind(wire.kind),
-    stage: mapInflowStage(wire.stage),
+    direction: wire.direction,
+    kind: wire.kind,
+    stage: wire.stage,
     feeRateSatsPerVByte: wire.feeRateSatsPerVByte,
   };
 }
@@ -110,9 +114,9 @@ function mapOutflowMovement(
 ): PendingOutflowMovement {
   return {
     ...mapBase(wire),
-    direction: "outflow",
-    kind: mapOutflowKind(wire.kind),
-    status: mapOutflowStatus(wire.status),
+    direction: wire.direction,
+    kind: wire.kind,
+    status: wire.status,
   };
 }
 
@@ -128,52 +132,4 @@ function mapBase(wire: PendingMovementBaseWire) {
     requiredConfirmations: wire.requiredConfirmations,
     confirmations: wire.confirmations,
   };
-}
-
-function mapInflowKind(
-  kind: PendingInflowMovementWire["kind"]
-): PendingInflowKind {
-  switch (kind) {
-    case "deposit":
-      return "Deposit";
-    case "repayment":
-      return "Repayment";
-  }
-}
-
-function mapOutflowKind(
-  kind: PendingOutflowMovementWire["kind"]
-): PendingOutflowKind {
-  switch (kind) {
-    case "borrow":
-      return "Borrow";
-    case "withdraw":
-      return "Withdraw";
-  }
-}
-
-function mapInflowStage(
-  stage: PendingInflowMovementWire["stage"]
-): PendingInflowStage {
-  switch (stage) {
-    case "LOGGED":
-      return "Logged";
-    case "CONFIRMED":
-      return "Confirmed";
-    case "PENDING":
-      return "Pending";
-    case "FINALISING":
-      return "Finalising";
-  }
-}
-
-function mapOutflowStatus(
-  status: PendingOutflowMovementWire["status"]
-): PendingOutflowStatus {
-  switch (status) {
-    case "PENDING":
-      return "Pending";
-    case "SENT":
-      return "Sent";
-  }
 }

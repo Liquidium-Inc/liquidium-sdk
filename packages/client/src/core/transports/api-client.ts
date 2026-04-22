@@ -1,5 +1,11 @@
 import { LiquidiumError, LiquidiumErrorCode } from "../errors";
 
+const DOM_EXCEPTION_ABORT_ERROR_NAME = "AbortError";
+const HTTP_HEADER_CONTENT_TYPE = "content-type";
+const HTTP_METHOD_GET = "GET";
+const HTTP_METHOD_POST = "POST";
+const MIME_TYPE_APPLICATION_JSON = "application/json";
+
 export interface ApiClient {
   get<T>(path: string): Promise<T>;
   post<TResponse, TBody>(path: string, body: TBody): Promise<TResponse>;
@@ -15,7 +21,7 @@ export function createApiClient(opts: {
     async get<T>(path: string): Promise<T> {
       return await sendRequest<T>(opts, {
         path,
-        method: "GET",
+        method: HTTP_METHOD_GET,
       });
     },
     async post<TResponse, TBody>(
@@ -24,7 +30,7 @@ export function createApiClient(opts: {
     ): Promise<TResponse> {
       return await sendRequest<TResponse>(opts, {
         path,
-        method: "POST",
+        method: HTTP_METHOD_POST,
         body,
       });
     },
@@ -40,7 +46,7 @@ async function sendRequest<TResponse>(
   },
   request: {
     path: string;
-    method: "GET" | "POST";
+    method: typeof HTTP_METHOD_GET | typeof HTTP_METHOD_POST;
     body?: unknown;
   }
 ): Promise<TResponse> {
@@ -50,9 +56,9 @@ async function sendRequest<TResponse>(
   const fetchFn = opts.fetchFn ?? fetch;
   const requestHeaders = {
     ...opts.headers,
-    ...(request.method === "POST"
+    ...(request.method === HTTP_METHOD_POST
       ? {
-          "content-type": "application/json",
+          [HTTP_HEADER_CONTENT_TYPE]: MIME_TYPE_APPLICATION_JSON,
         }
       : {}),
   };
@@ -63,7 +69,9 @@ async function sendRequest<TResponse>(
       headers:
         Object.keys(requestHeaders).length > 0 ? requestHeaders : undefined,
       body:
-        request.method === "POST" ? JSON.stringify(request.body) : undefined,
+        request.method === HTTP_METHOD_POST
+          ? JSON.stringify(request.body)
+          : undefined,
       signal: controller.signal,
     });
 
@@ -82,7 +90,10 @@ async function sendRequest<TResponse>(
       throw error;
     }
 
-    if (error instanceof DOMException && error.name === "AbortError") {
+    if (
+      error instanceof DOMException &&
+      error.name === DOM_EXCEPTION_ABORT_ERROR_NAME
+    ) {
       throw new LiquidiumError(
         LiquidiumErrorCode.REQUEST_TIMEOUT,
         `Request to ${request.path} timed out after ${opts.timeoutMs}ms`

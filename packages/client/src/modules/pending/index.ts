@@ -1,10 +1,13 @@
 export { PendingModule } from "./pending";
 export type {
-  PendingInflowKind,
   PendingInflowMovement,
-  PendingInflowStage,
   PendingMovement,
-  PendingOutflowKind,
   PendingOutflowMovement,
+} from "./types";
+export {
+  PendingInflowKind,
+  PendingInflowStage,
+  PendingMovementDirection,
+  PendingOutflowKind,
   PendingOutflowStatus,
 } from "./types";

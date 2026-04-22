@@ -1,8 +1,9 @@
 import type { Principal } from "@dfinity/principal";
+import { Chain, OutflowType } from "../../core/types";
 import { getVariantKey } from "../../core/utils/variant";
 import type { OutflowDetails } from "./types";
 
-export type WalletChain = "BTC" | "ETH";
+export type WalletChain = Chain;
 
 export type LendingChainVariant = { BTC: null } | { ETH: null };
 
@@ -55,11 +56,11 @@ export function normalizeOutflowType(
 ): OutflowDetails["outflowType"] {
   switch (rawOutflowType) {
     case "Withdraw":
-      return "withdraw";
+      return OutflowType.withdraw;
     case "Borrow":
-      return "borrow";
+      return OutflowType.borrow;
     case "FeeClaim":
-      return "feeClaim";
+      return OutflowType.feeClaim;
     default:
       throw new Error(`Unsupported outflow type: ${rawOutflowType}`);
   }
@@ -69,9 +70,9 @@ export function mapWalletChainToLendingChain(
   chain: WalletChain
 ): LendingChainVariant {
   switch (chain) {
-    case "BTC":
+    case Chain.BTC:
       return { BTC: null };
-    case "ETH":
+    case Chain.ETH:
       return { ETH: null };
   }
 }
