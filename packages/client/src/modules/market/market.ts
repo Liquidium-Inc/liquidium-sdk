@@ -26,7 +26,7 @@ export class MarketModule {
    *
    * @returns All configured lending pools enriched with their current rate data.
    */
-  async getPools(): Promise<Pool[]> {
+  async listPools(): Promise<Pool[]> {
     void this.apiClient;
 
     try {
@@ -84,7 +84,7 @@ export class MarketModule {
    * @returns The single pool that matches the requested asset and chain.
    */
   async findPool(query: FindPoolQuery): Promise<Pool> {
-    const pools = await this.getPools();
+    const pools = await this.listPools();
     const matchedPools = pools.filter(
       (pool) => pool.asset === query.asset && pool.chain === query.chain
     );

@@ -43,7 +43,7 @@ describe("create account flow example", () => {
       throw new Error("Expected test wallet account");
     }
 
-    const createAction = await client.accounts.prepareCreate({ account });
+    const createAction = await client.accounts.prepareCreateProfile({ account });
     const signature = await walletClient.signMessage({
       account,
       message: createAction.message,

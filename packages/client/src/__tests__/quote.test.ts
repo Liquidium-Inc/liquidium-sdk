@@ -74,7 +74,7 @@ describe("QuoteModule", () => {
     };
 
     // when
-    const result = await quoteModule.quote(request, pools, prices);
+    const result = await quoteModule.getQuote(request, pools, prices);
 
     // then
     expect(result.validationErrors).toHaveLength(0);
@@ -94,7 +94,7 @@ describe("QuoteModule", () => {
     };
 
     // when
-    const result = await quoteModule.quote(request, pools, prices);
+    const result = await quoteModule.getQuote(request, pools, prices);
 
     // then
     expect(result.validationErrors).toHaveLength(0);
@@ -113,7 +113,7 @@ describe("QuoteModule", () => {
     };
 
     // when
-    const result = await quoteModule.quote(request, pools, prices);
+    const result = await quoteModule.getQuote(request, pools, prices);
 
     // then
     expect(result.validationErrors).toHaveLength(1);
@@ -132,7 +132,7 @@ describe("QuoteModule", () => {
     };
 
     // when
-    const result = await quoteModule.quote(request, pools, prices);
+    const result = await quoteModule.getQuote(request, pools, prices);
 
     // then
     expect(result.validationErrors).toHaveLength(1);
@@ -151,7 +151,7 @@ describe("QuoteModule", () => {
     };
 
     // when
-    const result = await quoteModule.quote(request, pools, prices);
+    const result = await quoteModule.getQuote(request, pools, prices);
 
     // then
     expect(result.validationErrors).toHaveLength(1);
@@ -170,7 +170,7 @@ describe("QuoteModule", () => {
     };
 
     // when
-    const result = await quoteModule.quote(request, pools, prices);
+    const result = await quoteModule.getQuote(request, pools, prices);
 
     // then
     expect(result.validationErrors).toHaveLength(0);
@@ -190,7 +190,7 @@ describe("QuoteModule", () => {
     };
 
     // when
-    const result = await quoteModule.quote(request, pools, prices);
+    const result = await quoteModule.getQuote(request, pools, prices);
 
     // then
     expect(result.validationErrors).toHaveLength(0);
@@ -209,7 +209,7 @@ describe("QuoteModule", () => {
     };
 
     // when
-    const result = await quoteModule.quote(request, pools, prices);
+    const result = await quoteModule.getQuote(request, pools, prices);
 
     // then
     expect(result.validationErrors).toHaveLength(1);
@@ -234,7 +234,7 @@ describe("QuoteModule", () => {
     };
 
     // when
-    const result = await quoteModule.quote(request, [btcPool, ethPool], prices);
+    const result = await quoteModule.getQuote(request, [btcPool, ethPool], prices);
 
     // then
     expect(result.validationErrors).toHaveLength(1);

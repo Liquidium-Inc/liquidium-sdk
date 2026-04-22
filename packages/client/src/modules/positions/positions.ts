@@ -16,7 +16,10 @@ export class PositionsModule {
    * @param poolId - The pool principal text.
    * @returns The position for the requested profile and pool, or `null` when no position exists.
    */
-  async get(profileId: string, poolId: string): Promise<Position | null> {
+  async getPosition(
+    profileId: string,
+    poolId: string
+  ): Promise<Position | null> {
     void profileId;
     void poolId;
 
@@ -32,7 +35,7 @@ export class PositionsModule {
    * @param profileId - The Liquidium profile principal text.
    * @returns All positions currently associated with the requested profile.
    */
-  async list(profileId: string): Promise<Position[]> {
+  async listPositions(profileId: string): Promise<Position[]> {
     void profileId;
 
     throw new LiquidiumError(

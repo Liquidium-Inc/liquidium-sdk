@@ -40,7 +40,7 @@ export class HistoryModule {
    * @param cursor - An optional pagination cursor from a previous response.
    * @returns A page of pool history entries and the next cursor when more results are available.
    */
-  async getPool(
+  async getPoolHistory(
     poolId: string,
     cursor?: string
   ): Promise<PaginatedResponse<PoolHistoryEntry>> {

@@ -37,11 +37,11 @@ export class QuoteModule {
    * Calculates a loan quote based on borrow amount, LTV, and pool selections.
    *
    * @param request - Quote request parameters.
-   * @param pools - All available pools (use MarketModule.getPools() to fetch).
+   * @param pools - All available pools (use MarketModule.listPools() to fetch).
    * @param prices - Asset prices in USD (use MarketModule.getAssetPrices() to fetch).
    * @returns Quote result with required collateral and validation state.
    */
-  async quote(
+  async getQuote(
     request: QuoteRequest,
     pools: Pool[],
     prices: AssetPrices

@@ -27,7 +27,7 @@ export async function createOrResolveProfile(
   params: CreateOrResolveProfileParams
 ): Promise<CreateOrResolveProfileResult> {
   try {
-    const profileId = await params.client.accounts.create({
+    const profileId = await params.client.accounts.createProfile({
       account: params.walletAddress,
       chain: params.chain,
       walletAdapter: {
@@ -42,7 +42,7 @@ export async function createOrResolveProfile(
       error instanceof LiquidiumError &&
       error.code === LiquidiumErrorCode.PROFILE_ALREADY_EXISTS
     ) {
-      const existingProfileId = await params.client.accounts.resolveProfile(
+      const existingProfileId = await params.client.accounts.getProfileId(
         params.walletAddress
       );
 
