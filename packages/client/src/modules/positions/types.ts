@@ -1,8 +1,8 @@
-import type { Asset } from "../../core/types";
+import type { MarketAsset } from "../../core/types";
 
 export interface Position {
   poolId: string;
-  asset: Asset;
+  asset: MarketAsset;
   deposited: bigint;
   depositedDecimals: bigint;
   borrowed: bigint;

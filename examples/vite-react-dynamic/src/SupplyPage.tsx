@@ -152,9 +152,7 @@ export function SupplyPage() {
       const nextPools = await client.market.listPools();
 
       setPools(nextPools);
-      setStatusMessage(
-        `Loaded ${nextPools.length} pools for the supply page.`
-      );
+      setStatusMessage(`Loaded ${nextPools.length} pools for the supply page.`);
     });
   }
 
@@ -402,7 +400,10 @@ function buildSupplyWalletAdapter(
     };
   }
 
-  if (isEthereumWallet(primaryWallet) && isEthStablecoinPool(selectedSupplyPool)) {
+  if (
+    isEthereumWallet(primaryWallet) &&
+    isEthStablecoinPool(selectedSupplyPool)
+  ) {
     const ethereumWallet = primaryWallet;
     return {
       sendEthTransaction: async ({ transaction }) =>

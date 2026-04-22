@@ -348,7 +348,8 @@ export default function App() {
         client.market.listPools(),
         client.market.getAssetPrices(),
       ]);
-      const defaultPoolId = findBtcPool(nextPools)?.id ?? nextPools[0]?.id ?? "";
+      const defaultPoolId =
+        findBtcPool(nextPools)?.id ?? nextPools[0]?.id ?? "";
       const nextBorrowPoolId = resolveDefaultBorrowPoolId(
         nextPools,
         defaultPoolId
@@ -362,9 +363,7 @@ export default function App() {
       setPrices(nextPrices);
       setBorrowPoolId(nextBorrowPoolId);
       setCollateralPoolId(nextCollateralPoolId);
-      setStatusMessage(
-        `Loaded ${nextPools.length} pools and live prices.`
-      );
+      setStatusMessage(`Loaded ${nextPools.length} pools and live prices.`);
     });
   }
 

@@ -461,14 +461,6 @@ const SDK_METHODS: MethodDefinition[] = [
     },
   },
   {
-    id: "lending.getDepositFee",
-    label: "lending.getDepositFee",
-    defaultArgs: "{}",
-    execute: async (client) => {
-      return await client.lending.getDepositFee();
-    },
-  },
-  {
     id: "lending.isBorrowingDisabled",
     label: "lending.isBorrowingDisabled",
     defaultArgs: "{}",
