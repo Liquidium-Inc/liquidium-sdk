@@ -1,6 +1,8 @@
 import type {
   SignatureInfo,
   SignMessageWalletAction,
+  WalletActionKind,
+  WalletExecutionKind,
 } from "../../core/wallet-actions";
 
 export type { SignatureInfo } from "../../core/wallet-actions";
@@ -14,9 +16,9 @@ export interface SignableAction<TData, TResult>
 
 export interface CreateAccountAction
   extends SignableAction<CreateAccountData, string> {
-  kind: "create-account";
-  executionKind: "sign-message";
-  actionType: "create-account";
+  kind: typeof WalletActionKind.createAccount;
+  executionKind: typeof WalletExecutionKind.signMessage;
+  actionType: typeof WalletActionKind.createAccount;
 }
 
 export interface CreateAccountRequest {

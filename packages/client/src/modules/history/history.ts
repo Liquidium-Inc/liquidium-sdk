@@ -1,4 +1,11 @@
 import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
+import {
+  buildHistoryPoolPath,
+  buildHistoryRatesPath,
+  buildHistoryUserLiquidationsPath,
+  buildHistoryUserTransactionsPath,
+  SdkApiQueryParam,
+} from "../../core/sdk-api-paths";
 import type { ApiClient } from "../../core/transports/api-client";
 import { parseBigInt, parseOptionalBigInt } from "../../core/utils/bigint";
 import type {
@@ -38,10 +45,7 @@ export class HistoryModule {
     cursor?: string
   ): Promise<PaginatedResponse<PoolHistoryEntry>> {
     const apiClient = this.requireApi();
-    const requestPath = createHistoryPath(
-      `/v1/history/pool/${encodeURIComponent(poolId)}`,
-      cursor
-    );
+    const requestPath = buildHistoryPoolPath(poolId, cursor);
     const response = await apiClient.get<PoolHistoryResponse>(requestPath);
 
     return {
@@ -121,14 +125,14 @@ export class HistoryModule {
   ): Promise<PaginatedResponse<ApySample>> {
     const apiClient = this.requireApi();
     const query = new URLSearchParams();
-    if (window.cursor) query.set("cursor", window.cursor);
-    if (window.from) query.set("from", window.from);
-    if (window.to) query.set("to", window.to);
-    if (window.limit !== undefined) query.set("limit", String(window.limit));
+    if (window.cursor) query.set(SdkApiQueryParam.cursor, window.cursor);
+    if (window.from) query.set(SdkApiQueryParam.from, window.from);
+    if (window.to) query.set(SdkApiQueryParam.to, window.to);
+    if (window.limit !== undefined) {
+      query.set(SdkApiQueryParam.limit, String(window.limit));
+    }
 
-    const requestPath = `/v1/history/rates/${encodeURIComponent(poolId)}${
-      query.toString() ? `?${query}` : ""
-    }`;
+    const requestPath = buildHistoryRatesPath(poolId, query);
     const response =
       await apiClient.get<BorrowRateHistoryResponse>(requestPath);
 
@@ -162,15 +166,15 @@ export class HistoryModule {
     const apiClient = this.requireApi();
     const query = new URLSearchParams();
 
-    if (filters.cursor) query.set("cursor", filters.cursor);
-    if (market) query.set("market", market);
-    if (filters.from) query.set("from", filters.from);
-    if (filters.to) query.set("to", filters.to);
-    if (filters.limit !== undefined) query.set("limit", String(filters.limit));
+    if (filters.cursor) query.set(SdkApiQueryParam.cursor, filters.cursor);
+    if (market) query.set(SdkApiQueryParam.market, market);
+    if (filters.from) query.set(SdkApiQueryParam.from, filters.from);
+    if (filters.to) query.set(SdkApiQueryParam.to, filters.to);
+    if (filters.limit !== undefined) {
+      query.set(SdkApiQueryParam.limit, String(filters.limit));
+    }
 
-    const requestPath = `/v1/history/users/${encodeURIComponent(user)}/transactions${
-      query.toString() ? `?${query}` : ""
-    }`;
+    const requestPath = buildHistoryUserTransactionsPath(user, query);
     const response = await apiClient.get<UserHistoryResponse>(requestPath);
 
     return {
@@ -201,11 +205,9 @@ export class HistoryModule {
   ): Promise<PaginatedResponse<UserHistoryEntry>> {
     const apiClient = this.requireApi();
     const query = new URLSearchParams();
-    if (market) query.set("market", market);
+    if (market) query.set(SdkApiQueryParam.market, market);
 
-    const requestPath = `/v1/history/users/${encodeURIComponent(user)}/liquidations${
-      query.toString() ? `?${query}` : ""
-    }`;
+    const requestPath = buildHistoryUserLiquidationsPath(user, query);
     const response = await apiClient.get<UserHistoryResponse>(requestPath);
 
     return {
@@ -222,13 +224,4 @@ export class HistoryModule {
       nextCursor: response.nextCursor,
     };
   }
-}
-
-function createHistoryPath(basePath: string, cursor?: string): string {
-  if (!cursor) {
-    return basePath;
-  }
-
-  const query = new URLSearchParams({ cursor });
-  return `${basePath}?${query.toString()}`;
 }

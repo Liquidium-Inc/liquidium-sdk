@@ -75,12 +75,15 @@ export type {
 } from "./modules/lending";
 export type { AssetPrices, Pool } from "./modules/market";
 export type {
-  PendingInflowKind,
   PendingInflowMovement,
-  PendingInflowStage,
   PendingMovement,
-  PendingOutflowKind,
   PendingOutflowMovement,
+} from "./modules/pending";
+export {
+  PendingInflowKind,
+  PendingInflowStage,
+  PendingMovementDirection,
+  PendingOutflowKind,
   PendingOutflowStatus,
 } from "./modules/pending";
 export type {

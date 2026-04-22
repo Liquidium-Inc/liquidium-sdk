@@ -1,5 +1,5 @@
 import type { RegisterProfileRequest } from "../../core/canisters/lending/actor";
-import type { Chain } from "../../core/types";
+import { Chain } from "../../core/types";
 import type { CreateAccountRequest } from "./types";
 
 type AccountChainVariant = { BTC: null } | { ETH: null };
@@ -32,9 +32,9 @@ function mapAccountChainToLendingChainVariant(
   chain: Chain
 ): AccountChainVariant {
   switch (chain) {
-    case "BTC":
+    case Chain.BTC:
       return { BTC: null };
-    case "ETH":
+    case Chain.ETH:
       return { ETH: null };
   }
 }

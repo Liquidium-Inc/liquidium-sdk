@@ -1,4 +1,4 @@
-import { Chain } from "./types";
+import type { Chain } from "./types";
 
 export const TransferMode = {
   ck: "ck",
@@ -38,7 +38,7 @@ export interface SignMessageRequest {
 }
 
 export interface SignPsbtRequest {
-  chain: typeof Chain.BTC;
+  chain: Extract<Chain, "BTC">;
   psbtBase64: string;
   account?: string;
   actionType: string;
@@ -46,7 +46,7 @@ export interface SignPsbtRequest {
 }
 
 export interface SendEthTransactionRequest {
-  chain: typeof Chain.ETH;
+  chain: Extract<Chain, "ETH">;
   transaction: EthTransactionRequest;
   account?: string;
   actionType: string;
@@ -54,7 +54,7 @@ export interface SendEthTransactionRequest {
 }
 
 export interface SendBtcTransactionRequest {
-  chain: "BTC";
+  chain: Extract<Chain, "BTC">;
   toAddress: string;
   amountSats?: bigint;
   account?: string;
@@ -85,7 +85,7 @@ export interface SignatureInfo {
 
 export interface SignMessageWalletAction<TData, TResult> {
   kind: string;
-  executionKind: "sign-message";
+  executionKind: typeof WalletExecutionKind.signMessage;
   actionType: string;
   transferMode: TransferMode;
   account: string;
@@ -96,7 +96,7 @@ export interface SignMessageWalletAction<TData, TResult> {
 
 export interface SignPsbtWalletAction<TResult> {
   kind: string;
-  executionKind: "sign-psbt";
+  executionKind: typeof WalletExecutionKind.signPsbt;
   actionType: string;
   transferMode: TransferMode;
   account?: string;
@@ -106,7 +106,7 @@ export interface SignPsbtWalletAction<TResult> {
 
 export interface SendEthTransactionWalletAction<TResult> {
   kind: string;
-  executionKind: "send-eth-transaction";
+  executionKind: typeof WalletExecutionKind.sendEthTransaction;
   actionType: string;
   transferMode: TransferMode;
   account?: string;

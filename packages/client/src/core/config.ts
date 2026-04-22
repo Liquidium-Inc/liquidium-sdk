@@ -1,4 +1,4 @@
-import { Environment, type CanisterIds } from "./types";
+import { type CanisterIds, Environment } from "./types";
 
 const MAINNET_HOST = "https://icp-api.io";
 export const DEFAULT_ENVIRONMENT: Environment = Environment.mainnet;

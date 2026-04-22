@@ -1,15 +1,41 @@
 import type { Chain } from "../../core/types";
 
-export type PendingInflowKind = "Deposit" | "Repayment";
-export type PendingOutflowKind = "Borrow" | "Withdraw";
+export const PendingMovementDirection = {
+  inflow: "inflow",
+  outflow: "outflow",
+} as const;
+export type PendingMovementDirection =
+  (typeof PendingMovementDirection)[keyof typeof PendingMovementDirection];
 
+export const PendingInflowKind = {
+  deposit: "deposit",
+  repayment: "repayment",
+} as const;
+export type PendingInflowKind =
+  (typeof PendingInflowKind)[keyof typeof PendingInflowKind];
+
+export const PendingOutflowKind = {
+  borrow: "borrow",
+  withdraw: "withdraw",
+} as const;
+export type PendingOutflowKind =
+  (typeof PendingOutflowKind)[keyof typeof PendingOutflowKind];
+
+export const PendingInflowStage = {
+  logged: "logged",
+  confirmed: "confirmed",
+  pending: "pending",
+  finalising: "finalising",
+} as const;
 export type PendingInflowStage =
-  | "Logged"
-  | "Confirmed"
-  | "Pending"
-  | "Finalising";
+  (typeof PendingInflowStage)[keyof typeof PendingInflowStage];
 
-export type PendingOutflowStatus = "Pending" | "Sent";
+export const PendingOutflowStatus = {
+  pending: "pending",
+  sent: "sent",
+} as const;
+export type PendingOutflowStatus =
+  (typeof PendingOutflowStatus)[keyof typeof PendingOutflowStatus];
 
 interface PendingMovementBase {
   id: string;
@@ -24,14 +50,14 @@ interface PendingMovementBase {
 }
 
 export interface PendingInflowMovement extends PendingMovementBase {
-  direction: "inflow";
+  direction: typeof PendingMovementDirection.inflow;
   kind: PendingInflowKind;
   stage: PendingInflowStage;
   feeRateSatsPerVByte: number | null;
 }
 
 export interface PendingOutflowMovement extends PendingMovementBase {
-  direction: "outflow";
+  direction: typeof PendingMovementDirection.outflow;
   kind: PendingOutflowKind;
   status: PendingOutflowStatus;
 }

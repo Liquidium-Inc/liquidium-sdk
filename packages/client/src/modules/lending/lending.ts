@@ -9,21 +9,31 @@ import {
   mapCanisterCallErrorToLiquidiumError,
   mapLendingProtocolErrorToLiquidiumError,
 } from "../../core/canisters/lending/error-mappers";
-import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
-import { MAX_UINT256 } from "../../core/evm";
-import type { ApiClient } from "../../core/transports/api-client";
-import type { CanisterContext } from "../../core/transports/canister-context";
-import type { SupplyAction } from "../../core/types";
-import { encodeInflowSubaccount } from "../../core/utils/inflow-subaccount";
-import { retryWithBackoff } from "../../core/utils/retry";
-import { computeExpiryTimestampFromNow } from "../../core/utils/time";
-import { getVariantKey } from "../../core/utils/variant";
-import type { WalletAdapter } from "../../core/wallet-actions";
-import { executeWith } from "../../execute";
 import {
   createBorrowAssetMessage,
   createWithdrawAssetMessage,
 } from "../../core/canisters/lending/messages";
+import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
+import { MAX_UINT256 } from "../../core/evm";
+import {
+  buildEvmSupplyContextPath,
+  SdkApiPath,
+  SdkApiQueryParam,
+} from "../../core/sdk-api-paths";
+import type { ApiClient } from "../../core/transports/api-client";
+import type { CanisterContext } from "../../core/transports/canister-context";
+import { Asset, Chain, InflowSubmitType, SupplyAction } from "../../core/types";
+import { encodeInflowSubaccount } from "../../core/utils/inflow-subaccount";
+import { retryWithBackoff } from "../../core/utils/retry";
+import { computeExpiryTimestampFromNow } from "../../core/utils/time";
+import { getVariantKey } from "../../core/utils/variant";
+import {
+  TransferMode,
+  WalletActionKind,
+  type WalletAdapter,
+  WalletExecutionKind,
+} from "../../core/wallet-actions";
+import { executeWith } from "../../execute";
 import {
   createApproveTransaction,
   createDepositErc20Transaction,
@@ -32,25 +42,27 @@ import {
   mapCanisterOutflowDetails,
   mapWalletChainToLendingChain,
 } from "./mappers";
-import type {
-  BorrowAction,
-  BorrowSubmitSignatureInfo,
-  CreateBorrowRequest,
-  CreateWithdrawRequest,
-  EvmSupplyContext,
-  GetEvmSupplyContextRequest,
-  IcrcAccountSupplyTarget,
-  NativeAddressSupplyTarget,
-  OutflowDetails,
-  SubmitInflowRequest,
-  SubmitInflowResponse,
-  SupplyFlow,
-  SupplyFlowRequest,
-  SupplyInstruction,
-  SupplyRequest,
-  SupplyTarget,
-  WithdrawAction,
-  WithdrawSubmitSignatureInfo,
+import {
+  type BorrowAction,
+  type BorrowSubmitSignatureInfo,
+  type CreateBorrowRequest,
+  type CreateWithdrawRequest,
+  EvmSupplyApprovalStrategy,
+  type EvmSupplyContext,
+  type GetEvmSupplyContextRequest,
+  type IcrcAccountSupplyTarget,
+  type NativeAddressSupplyTarget,
+  type OutflowDetails,
+  type SubmitInflowRequest,
+  type SubmitInflowResponse,
+  type SupplyFlow,
+  type SupplyFlowRequest,
+  type SupplyInstruction,
+  SupplyPlanType,
+  type SupplyRequest,
+  type SupplyTarget,
+  type WithdrawAction,
+  type WithdrawSubmitSignatureInfo,
 } from "./types";
 
 const SUBMIT_INFLOW_MAX_ATTEMPTS = 4;
@@ -60,7 +72,7 @@ const ETH_APPROVAL_POLL_INTERVAL_MS = 2_000;
 const ETH_APPROVAL_MAX_POLLS = 30;
 
 type WalletExecutionParams = {
-  signerChain: "BTC" | "ETH";
+  signerChain: Chain;
   signerWalletAdapter: WalletAdapter;
 };
 
@@ -129,10 +141,10 @@ export class LendingModule {
       };
 
       return {
-        kind: "create-withdraw",
-        executionKind: "sign-message",
-        actionType: "create-withdraw",
-        transferMode: "native",
+        kind: WalletActionKind.createWithdraw,
+        executionKind: WalletExecutionKind.signMessage,
+        actionType: WalletActionKind.createWithdraw,
+        transferMode: TransferMode.native,
         account: signerAccount,
         message: createWithdrawAssetMessage(
           {
@@ -254,10 +266,10 @@ export class LendingModule {
       };
 
       return {
-        kind: "create-borrow",
-        executionKind: "sign-message",
-        actionType: "create-borrow",
-        transferMode: "native",
+        kind: WalletActionKind.createBorrow,
+        executionKind: WalletExecutionKind.signMessage,
+        actionType: WalletActionKind.createBorrow,
+        transferMode: TransferMode.native,
         account: signerAccount,
         message: createBorrowAssetMessage(
           {
@@ -386,12 +398,15 @@ export class LendingModule {
     });
     const defaultSubmitInflowRequest = getDefaultSubmitInflowRequest({
       action: request.action,
-      chain: mechanism === "contractInteraction" ? "ETH" : instruction.chain,
+      chain:
+        mechanism === SupplyPlanType.contractInteraction
+          ? Chain.ETH
+          : instruction.chain,
     });
 
     let txid: string | undefined;
     switch (mechanism) {
-      case "transfer":
+      case SupplyPlanType.transfer:
         if (request.walletAdapter) {
           txid = await this.sendAndSubmitNativeSupplyInflow({
             request,
@@ -400,7 +415,7 @@ export class LendingModule {
           });
         }
         break;
-      case "contractInteraction":
+      case SupplyPlanType.contractInteraction:
         txid = await this.executeContractSupply({
           request,
           instruction,
@@ -436,15 +451,15 @@ export class LendingModule {
   ): Promise<EvmSupplyContext> {
     const apiClient = this.requireApi();
     const query = new URLSearchParams({
-      profileId: request.profileId,
-      poolId: request.poolId,
-      walletAddress: request.walletAddress,
-      amount: request.amount.toString(),
-      action: request.action,
+      [SdkApiQueryParam.profileId]: request.profileId,
+      [SdkApiQueryParam.poolId]: request.poolId,
+      [SdkApiQueryParam.walletAddress]: request.walletAddress,
+      [SdkApiQueryParam.amount]: request.amount.toString(),
+      [SdkApiQueryParam.action]: request.action,
     });
 
     return await apiClient.get<EvmSupplyContext>(
-      `/v1/evm/supply-context?${query.toString()}`
+      buildEvmSupplyContextPath(query)
     );
   }
 
@@ -507,7 +522,7 @@ export class LendingModule {
 
     if (
       instruction.target.type !== "icrcAccount" ||
-      instruction.chain !== "ETH"
+      instruction.chain !== Chain.ETH
     ) {
       throw new LiquidiumError(
         LiquidiumErrorCode.VALIDATION_ERROR,
@@ -554,7 +569,10 @@ export class LendingModule {
       );
     }
 
-    if (evmSupplyContext.approvalStrategy === "reset-then-approve-max") {
+    if (
+      evmSupplyContext.approvalStrategy ===
+      EvmSupplyApprovalStrategy.resetThenApproveMax
+    ) {
       await this.sendEthContractTransaction(
         walletAdapter,
         walletAddress,
@@ -576,7 +594,7 @@ export class LendingModule {
       });
     }
 
-    if (evmSupplyContext.approvalStrategy !== "none") {
+    if (evmSupplyContext.approvalStrategy !== EvmSupplyApprovalStrategy.none) {
       await this.sendEthContractTransaction(
         walletAdapter,
         walletAddress,
@@ -629,7 +647,7 @@ export class LendingModule {
     action: SupplyAction;
   }): Promise<string> {
     switch (params.chain) {
-      case "BTC": {
+      case Chain.BTC: {
         if (!params.walletAdapter.sendBtcTransaction) {
           throw new LiquidiumError(
             LiquidiumErrorCode.VALIDATION_ERROR,
@@ -638,15 +656,15 @@ export class LendingModule {
         }
 
         return await params.walletAdapter.sendBtcTransaction({
-          chain: "BTC",
+          chain: Chain.BTC,
           toAddress: params.toAddress,
           amountSats: params.amount,
           account: params.senderAccount,
           actionType: `supply-${params.action}`,
-          transferMode: "native",
+          transferMode: TransferMode.native,
         });
       }
-      case "ETH": {
+      case Chain.ETH: {
         if (!params.walletAdapter.sendEthTransaction) {
           throw new LiquidiumError(
             LiquidiumErrorCode.VALIDATION_ERROR,
@@ -655,10 +673,10 @@ export class LendingModule {
         }
 
         return await params.walletAdapter.sendEthTransaction({
-          chain: "ETH",
+          chain: Chain.ETH,
           account: params.senderAccount,
           actionType: `supply-${params.action}`,
-          transferMode: "native",
+          transferMode: TransferMode.native,
           transaction: {
             to: params.toAddress,
             value: params.amount.toString(),
@@ -702,7 +720,7 @@ export class LendingModule {
     const apiClient = this.requireApi();
 
     return await apiClient.post<SubmitInflowResponse, SubmitInflowRequest>(
-      "/v1/inflow",
+      SdkApiPath.inflow,
       request
     );
   }
@@ -782,14 +800,14 @@ export class LendingModule {
     });
 
     switch (mechanism) {
-      case "transfer":
+      case SupplyPlanType.transfer:
         return await this.getNativeAddressSupplyTarget(request.profileId, {
           poolId: request.poolId,
           asset,
           chain,
           action: request.action,
         });
-      case "contractInteraction":
+      case SupplyPlanType.contractInteraction:
         return this.getIcrcAccountSupplyTarget(request.profileId, {
           poolId: request.poolId,
           asset,
@@ -875,10 +893,10 @@ export class LendingModule {
     }
 
     return await walletAdapter.sendEthTransaction({
-      chain: "ETH",
+      chain: Chain.ETH,
       account: walletAddress,
       actionType,
-      transferMode: "native",
+      transferMode: TransferMode.native,
       transaction: request,
     });
   }
@@ -943,15 +961,15 @@ function resolveSupplyMechanism(params: {
   asset: string;
   chain: string;
 }): SupplyMechanism {
-  if (params.asset === "BTC" && params.chain === "BTC") {
-    return "transfer";
+  if (params.asset === Asset.BTC && params.chain === Chain.BTC) {
+    return SupplyPlanType.transfer;
   }
 
   if (
-    (params.asset === "USDC" || params.asset === "USDT") &&
-    params.chain === "ETH"
+    (params.asset === Asset.USDC || params.asset === Asset.USDT) &&
+    params.chain === Chain.ETH
   ) {
-    return "contractInteraction";
+    return SupplyPlanType.contractInteraction;
   }
 
   throw new LiquidiumError(
@@ -964,7 +982,7 @@ function assertSupportsNativeAddressInflowTarget(
   asset: string,
   chain: string
 ): void {
-  if (asset === "BTC" && chain === "BTC") {
+  if (asset === Asset.BTC && chain === Chain.BTC) {
     return;
   }
 
@@ -975,7 +993,7 @@ function assertSupportsNativeAddressInflowTarget(
 }
 
 function assertSupportsIcrcAccountInflowTarget(asset: string): void {
-  if (asset === "BTC" || asset === "USDT" || asset === "USDC") {
+  if (asset === Asset.BTC || asset === Asset.USDT || asset === Asset.USDC) {
     return;
   }
 
@@ -989,12 +1007,15 @@ function getDefaultSubmitInflowRequest(params: {
   action: SupplyAction;
   chain: string;
 }): Omit<SubmitInflowRequest, "txid"> | undefined {
-  if (params.chain !== "ETH") {
+  if (params.chain !== Chain.ETH) {
     return undefined;
   }
 
   return {
-    chain: "ETH",
-    type: params.action === "repayment" ? "REPAY" : "DEPOSIT",
+    chain: Chain.ETH,
+    type:
+      params.action === SupplyAction.repayment
+        ? InflowSubmitType.REPAY
+        : InflowSubmitType.DEPOSIT,
   };
 }
