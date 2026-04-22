@@ -27,18 +27,18 @@ const walletAdapter: WalletAdapter = {
 };
 
 // Market data
-const pools = await client.market.getPools();
+const pools = await client.market.listPools();
 const btcPool = await client.market.findPool({ asset: "BTC", chain: "BTC" });
 const prices = await client.market.getAssetPrices();
 const marketAsset = pools[0]?.asset;
 const assetPriceUsd = marketAsset ? prices[marketAsset] : undefined;
 
 // Positions
-const positions = await client.positions.list("profile-id");
+const positions = await client.positions.listPositions("profile-id");
 const health = await client.positions.getHealthFactor("profile-id");
 
 // Account creation
-const createAction = await client.accounts.prepareCreate({
+const createAction = await client.accounts.prepareCreateProfile({
   account: walletAddress,
 });
 const signature = await wallet.signMessage(createAction.message);
@@ -56,11 +56,11 @@ const execute = executeWith({
 });
 
 const profileWithExecutor = await client.accounts
-  .prepareCreate({ account: walletAddress })
+  .prepareCreateProfile({ account: walletAddress })
   .then(execute);
 
 // Account creation with the direct convenience method
-const profileWithConvenience = await client.accounts.create({
+const profileWithConvenience = await client.accounts.createProfile({
   account: walletAddress,
   chain: "ETH",
   walletAdapter,
@@ -99,7 +99,7 @@ const outflowWithConvenience = await client.lending.borrow({
 });
 
 // Pending movements
-const pending = await client.pending.list("profile-id");
+const pending = await client.pending.listPendingMovements("profile-id");
 
 // Inflow reporting (requires apiBaseUrl)
 await client.lending.submitInflow({ txid: "<broadcast-txid>" });
@@ -159,10 +159,10 @@ Environment presets:
 
 ### Account creation flow
 
-- `client.accounts.prepareCreate({ account })` - fetch nonce and build a signable account creation action
+- `client.accounts.prepareCreateProfile({ account })` - fetch nonce and build a signable account creation action
 - `createAction.submit({ signature, chain, account })` - submit the signed request tied to that action
 - `executeWith({ walletAdapter, chain, account? })` - compose a wallet adapter with a prepared action
-- `client.accounts.create({ account, chain, walletAdapter })` - run the full account creation flow with a wallet adapter
+- `client.accounts.createProfile({ account, chain, walletAdapter })` - run the full account creation flow with a wallet adapter
 
 ### Borrow and withdraw execution
 

@@ -22,11 +22,11 @@ import { executeWith } from "../../execute";
 import { mapCreateAccountRequestToRegisterProfileRequest } from "./mappers";
 import type { CreateAccountAction, CreateAccountRequest } from "./types";
 
-type PrepareCreateOptions = {
+type PrepareCreateProfileOptions = {
   account: string;
 };
 
-type ExecuteCreateParams = {
+type CreateProfileParams = {
   account: string;
   chain: Chain;
   walletAdapter: WalletAdapter;
@@ -36,29 +36,31 @@ export class AccountsModule {
   constructor(readonly canisterContext: CanisterContext) {}
 
   /**
-   * Prepares an account-creation action that can be signed and submitted later.
+   * Prepares a profile-creation action that can be signed and submitted later.
    *
    * Use this when you need direct control over the signing flow.
    *
    * @param options - `account` is the wallet address that will own the new profile.
    * @returns A signable {@link CreateAccountAction} with `submit` wired to the canister.
    */
-  async prepareCreate(
-    options: PrepareCreateOptions
+  async prepareCreateProfile(
+    options: PrepareCreateProfileOptions
   ): Promise<CreateAccountAction> {
-    return await this.createAccountAction(options.account);
+    return await this.buildCreateProfileAction(options.account);
   }
 
   /**
    * Creates a Liquidium profile using the provided wallet adapter.
    *
-   * This is the convenience form of `prepareCreate(...)` plus execution.
+   * This is the convenience form of `prepareCreateProfile(...)` plus execution.
    *
    * @param params - Wallet `account`, signing `chain`, and `walletAdapter` with `signMessage`.
    * @returns The new profile principal as text.
    */
-  async create(params: ExecuteCreateParams): Promise<string> {
-    const action = await this.prepareCreate({ account: params.account });
+  async createProfile(params: CreateProfileParams): Promise<string> {
+    const action = await this.prepareCreateProfile({
+      account: params.account,
+    });
 
     return await executeWith({
       walletAdapter: params.walletAdapter,
@@ -68,12 +70,12 @@ export class AccountsModule {
   }
 
   /**
-   * Resolves the Liquidium profile linked to a wallet address.
+   * Resolves the Liquidium profile id linked to a wallet address.
    *
    * @param walletAddress - Wallet address string as registered with the protocol.
    * @returns Profile principal text, or `null` if none exists.
    */
-  async resolveProfile(walletAddress: string): Promise<string | null> {
+  async getProfileId(walletAddress: string): Promise<string | null> {
     try {
       const profile = await createLendingActor(
         this.canisterContext
@@ -97,7 +99,7 @@ export class AccountsModule {
    * @param walletAddress - Wallet address used in `get_nonce` on the lending canister.
    * @returns The next signing nonce as a bigint.
    */
-  async getNonce(walletAddress: string): Promise<bigint> {
+  async getWalletNonce(walletAddress: string): Promise<bigint> {
     try {
       return await createLendingActor(this.canisterContext).get_nonce(
         walletAddress
@@ -112,12 +114,12 @@ export class AccountsModule {
   }
 
   /**
-   * Returns the wallets currently linked to a profile.
+   * Lists the wallets currently linked to a profile.
    *
    * @param profileId - The Liquidium profile principal text.
    * @returns The wallets currently linked to the requested profile.
    */
-  async getProfile(profileId: string): Promise<Wallet[]> {
+  async listLinkedWallets(profileId: string): Promise<Wallet[]> {
     try {
       const wallets = await createLendingActor(
         this.canisterContext
@@ -173,7 +175,7 @@ export class AccountsModule {
     );
   }
 
-  private async createAccountAction(
+  private async buildCreateProfileAction(
     account: string
   ): Promise<CreateAccountAction> {
     try {
@@ -195,7 +197,7 @@ export class AccountsModule {
           expiryTimestamp,
         },
         submit: async (signatureInfo) => {
-          return await this.submitCreate({
+          return await this.submitCreateProfile({
             data: {
               expiryTimestamp,
             },
@@ -215,7 +217,9 @@ export class AccountsModule {
     }
   }
 
-  private async submitCreate(request: CreateAccountRequest): Promise<string> {
+  private async submitCreateProfile(
+    request: CreateAccountRequest
+  ): Promise<string> {
     try {
       const signingAccount = request.signatureInfo.account;
       if (!signingAccount) {

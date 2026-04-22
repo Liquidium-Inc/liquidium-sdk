@@ -8,7 +8,7 @@ with Dynamic:
 - Connect an Ethereum or Bitcoin wallet with Dynamic
 - Create or resolve a Liquidium profile
 - Load pools and prices
-- Generate a quote with `client.quote.quote(...)`
+- Generate a quote with `client.quote.getQuote(...)`
 - Borrow from the quoted pool with `client.lending.borrow(...)` and display the instant receipt (txid may resolve later)
 - Start a supply flow with `client.lending.supply(...)` and let the SDK resolve the mechanism
 
@@ -61,7 +61,7 @@ Dynamic.
 
 ## Notes
 
-- Pages call the SDK directly (`client.market.getPools()`,
+- Pages call the SDK directly (`client.market.listPools()`,
   `client.lending.borrow(...)`, etc) so the SDK surface stays visible
 - The borrow flow is quote-first so it mirrors the sats terminal interaction
   model

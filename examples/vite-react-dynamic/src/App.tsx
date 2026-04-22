@@ -217,7 +217,7 @@ export default function App() {
 
       try {
         const client = createLiquidiumClient();
-        const nextQuoteResult = await client.quote.quote(
+        const nextQuoteResult = await client.quote.getQuote(
           {
             borrowAmount: borrowAmountInBaseUnits,
             borrowPoolId: selectedBorrowPool.id,
@@ -345,7 +345,7 @@ export default function App() {
 
       const client = createLiquidiumClient();
       const [nextPools, nextPrices] = await Promise.all([
-        client.market.getPools(),
+        client.market.listPools(),
         client.market.getAssetPrices(),
       ]);
       const defaultPoolId = findBtcPool(nextPools)?.id ?? nextPools[0]?.id ?? "";

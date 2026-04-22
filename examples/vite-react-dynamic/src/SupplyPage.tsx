@@ -149,7 +149,7 @@ export function SupplyPage() {
       setStatusMessage("Loading pools...");
 
       const client = createLiquidiumClient();
-      const nextPools = await client.market.getPools();
+      const nextPools = await client.market.listPools();
 
       setPools(nextPools);
       setStatusMessage(

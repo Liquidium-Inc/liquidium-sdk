@@ -68,7 +68,7 @@ export class PendingModule {
    * @param profileId - The Liquidium profile principal text.
    * @returns Unified list of pending movements.
    */
-  async list(profileId: string): Promise<PendingMovement[]> {
+  async listPendingMovements(profileId: string): Promise<PendingMovement[]> {
     const apiClient = this.requireApi();
     const response = await apiClient.get<PendingMovementsResponse>(
       buildPendingPath(profileId)

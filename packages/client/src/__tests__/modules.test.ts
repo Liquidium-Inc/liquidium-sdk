@@ -30,7 +30,7 @@ describe("AccountsModule", () => {
     const client = LiquidiumClient.create({});
 
     // when
-    const createAction = await client.accounts.prepareCreate({
+    const createAction = await client.accounts.prepareCreateProfile({
       account: "0xabc",
     });
     const profileId = await createAction.submit({
@@ -68,7 +68,7 @@ describe("AccountsModule", () => {
 
     // when
     const profileId = await client.accounts
-      .prepareCreate({ account: "0xabc" })
+      .prepareCreateProfile({ account: "0xabc" })
       .then(
         executeWith({
           walletAdapter: { signMessage },
@@ -104,7 +104,7 @@ describe("AccountsModule", () => {
     const client = LiquidiumClient.create({});
 
     // when
-    const profileId = await client.accounts.create({
+    const profileId = await client.accounts.createProfile({
       account: "0xabc",
       chain: "ETH",
       walletAdapter: { signMessage },
@@ -128,7 +128,7 @@ describe("AccountsModule", () => {
 
     // when / then
     await expect(
-      client.accounts.prepareCreate({ account: "0x123" }).then((createAction) =>
+      client.accounts.prepareCreateProfile({ account: "0x123" }).then((createAction) =>
         createAction.submit({
           signature: "0xabc",
           chain: "ETH",
@@ -153,7 +153,7 @@ describe("AccountsModule", () => {
 
     // when / then
     await expect(
-      client.accounts.prepareCreate({ account: "0xabc" })
+      client.accounts.prepareCreateProfile({ account: "0xabc" })
     ).rejects.toMatchObject({
       code: LiquidiumErrorCode.PROFILE_ALREADY_EXISTS,
       message: "Wallet address is already linked to profile aaaaa-aa",
@@ -174,7 +174,7 @@ describe("AccountsModule", () => {
 
     // when / then
     await expect(
-      client.accounts.prepareCreate({ account: "0xabc" }).then((createAction) =>
+      client.accounts.prepareCreateProfile({ account: "0xabc" }).then((createAction) =>
         createAction.submit({
           signature: "0xsigned",
           chain: "ETH",
@@ -205,7 +205,7 @@ describe("AccountsModule", () => {
     const client = LiquidiumClient.create({});
 
     // when
-    const wallets = await client.accounts.getProfile("aaaaa-aa");
+    const wallets = await client.accounts.listLinkedWallets("aaaaa-aa");
 
     // then
     expect(wallets).toEqual([
@@ -233,7 +233,7 @@ describe("AccountsModule", () => {
     const client = LiquidiumClient.create({});
 
     // when / then
-    await expect(client.accounts.getProfile("aaaaa-aa")).rejects.toMatchObject({
+    await expect(client.accounts.listLinkedWallets("aaaaa-aa")).rejects.toMatchObject({
       code: LiquidiumErrorCode.INTERNAL,
       message: "Unsupported wallet chain returned for profile wallet: SOL",
     });
@@ -366,7 +366,7 @@ describe("HistoryModule", () => {
     });
 
     // when
-    const result = await client.history.getPool("pool-1");
+    const result = await client.history.getPoolHistory("pool-1");
 
     // then
     expect(result).toEqual({
@@ -625,7 +625,7 @@ describe("MarketModule", () => {
     const client = LiquidiumClient.create({});
 
     // when
-    const pools = await client.market.getPools();
+    const pools = await client.market.listPools();
 
     // then
     expect(pools).toEqual([
@@ -692,7 +692,7 @@ describe("MarketModule", () => {
     const client = LiquidiumClient.create({});
 
     // when
-    const pools = await client.market.getPools();
+    const pools = await client.market.listPools();
 
     // then
     expect(pools[0]).toMatchObject({
@@ -740,7 +740,7 @@ describe("MarketModule", () => {
     const client = LiquidiumClient.create({});
 
     // when
-    const pools = await client.market.getPools();
+    const pools = await client.market.listPools();
 
     // then
     expect(pools[0]).toMatchObject({

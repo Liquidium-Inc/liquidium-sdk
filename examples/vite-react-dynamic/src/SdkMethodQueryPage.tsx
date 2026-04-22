@@ -25,24 +25,24 @@ type MethodDefinition = {
 
 const SDK_METHODS: MethodDefinition[] = [
   {
-    id: "accounts.prepareCreate",
-    label: "accounts.prepareCreate",
+    id: "accounts.prepareCreateProfile",
+    label: "accounts.prepareCreateProfile",
     defaultArgs: '{\n  "account": "0xYourWalletAddress"\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
-      return await client.accounts.prepareCreate({
+      return await client.accounts.prepareCreateProfile({
         account: expectNonEmptyString(args.account, "account"),
       });
     },
   },
   {
-    id: "accounts.create",
-    label: "accounts.create",
+    id: "accounts.createProfile",
+    label: "accounts.createProfile",
     defaultArgs:
       '{\n  "account": "0xYourWalletAddress",\n  "chain": "ETH",\n  "mockSignature": "replace-with-real-signature"\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
-      return await client.accounts.create({
+      return await client.accounts.createProfile({
         account: expectNonEmptyString(args.account, "account"),
         chain: expectChain(args.chain, "chain"),
         walletAdapter: createMockWalletAdapter(
@@ -52,34 +52,34 @@ const SDK_METHODS: MethodDefinition[] = [
     },
   },
   {
-    id: "accounts.resolveProfile",
-    label: "accounts.resolveProfile",
+    id: "accounts.getProfileId",
+    label: "accounts.getProfileId",
     defaultArgs: '{\n  "walletAddress": "0xYourWalletAddress"\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
-      return await client.accounts.resolveProfile(
+      return await client.accounts.getProfileId(
         expectNonEmptyString(args.walletAddress, "walletAddress")
       );
     },
   },
   {
-    id: "accounts.getNonce",
-    label: "accounts.getNonce",
+    id: "accounts.getWalletNonce",
+    label: "accounts.getWalletNonce",
     defaultArgs: '{\n  "walletAddress": "0xYourWalletAddress"\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
-      return await client.accounts.getNonce(
+      return await client.accounts.getWalletNonce(
         expectNonEmptyString(args.walletAddress, "walletAddress")
       );
     },
   },
   {
-    id: "accounts.getProfile",
-    label: "accounts.getProfile",
+    id: "accounts.listLinkedWallets",
+    label: "accounts.listLinkedWallets",
     defaultArgs: '{\n  "profileId": "aaaaa-aa"\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
-      return await client.accounts.getProfile(
+      return await client.accounts.listLinkedWallets(
         expectNonEmptyString(args.profileId, "profileId")
       );
     },
@@ -112,11 +112,11 @@ const SDK_METHODS: MethodDefinition[] = [
     },
   },
   {
-    id: "market.getPools",
-    label: "market.getPools",
+    id: "market.listPools",
+    label: "market.listPools",
     defaultArgs: "{}",
     execute: async (client) => {
-      return await client.market.getPools();
+      return await client.market.listPools();
     },
   },
   {
@@ -151,24 +151,24 @@ const SDK_METHODS: MethodDefinition[] = [
     },
   },
   {
-    id: "positions.get",
-    label: "positions.get",
+    id: "positions.getPosition",
+    label: "positions.getPosition",
     defaultArgs: '{\n  "profileId": "aaaaa-aa",\n  "poolId": "bbbbb-bb"\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
-      return await client.positions.get(
+      return await client.positions.getPosition(
         expectNonEmptyString(args.profileId, "profileId"),
         expectNonEmptyString(args.poolId, "poolId")
       );
     },
   },
   {
-    id: "positions.list",
-    label: "positions.list",
+    id: "positions.listPositions",
+    label: "positions.listPositions",
     defaultArgs: '{\n  "profileId": "aaaaa-aa"\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
-      return await client.positions.list(
+      return await client.positions.listPositions(
         expectNonEmptyString(args.profileId, "profileId")
       );
     },
@@ -196,23 +196,23 @@ const SDK_METHODS: MethodDefinition[] = [
     },
   },
   {
-    id: "pending.list",
-    label: "pending.list",
+    id: "pending.listPendingMovements",
+    label: "pending.listPendingMovements",
     defaultArgs: '{\n  "profileId": "aaaaa-aa"\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
-      return await client.pending.list(
+      return await client.pending.listPendingMovements(
         expectNonEmptyString(args.profileId, "profileId")
       );
     },
   },
   {
-    id: "history.getPool",
-    label: "history.getPool",
+    id: "history.getPoolHistory",
+    label: "history.getPoolHistory",
     defaultArgs: '{\n  "poolId": "aaaaa-aa"\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
-      return await client.history.getPool(
+      return await client.history.getPoolHistory(
         expectNonEmptyString(args.poolId, "poolId"),
         expectOptionalString(args.cursor, "cursor")
       );
@@ -276,8 +276,8 @@ const SDK_METHODS: MethodDefinition[] = [
     },
   },
   {
-    id: "quote.quote",
-    label: "quote.quote",
+    id: "quote.getQuote",
+    label: "quote.getQuote",
     defaultArgs:
       '{\n  "request": {\n    "borrowAmount": "200000000",\n    "borrowPoolId": "aaaaa-aa",\n    "collateralPoolId": "bbbbb-bb",\n    "targetLtvBps": "3200"\n  },\n  "pools": [],\n  "prices": {}\n}',
     execute: async (client, input) => {
@@ -302,7 +302,7 @@ const SDK_METHODS: MethodDefinition[] = [
         ),
       };
 
-      return await client.quote.quote(
+      return await client.quote.getQuote(
         quoteRequest,
         expectArray(args.pools, "pools") as Pool[],
         expectObject(args.prices, "prices") as AssetPrices
@@ -555,10 +555,10 @@ export function SdkMethodQueryPage() {
       if (
         "account" in nextArgs ||
         [
-          "accounts.create",
-          "accounts.prepareCreate",
-          "accounts.resolveProfile",
-          "accounts.getNonce",
+          "accounts.createProfile",
+          "accounts.prepareCreateProfile",
+          "accounts.getProfileId",
+          "accounts.getWalletNonce",
         ].includes(selectedMethod.id)
       ) {
         nextArgs.account = walletAddress;
@@ -567,8 +567,8 @@ export function SdkMethodQueryPage() {
       if (
         "walletAddress" in nextArgs ||
         [
-          "accounts.resolveProfile",
-          "accounts.getNonce",
+          "accounts.getProfileId",
+          "accounts.getWalletNonce",
           "accounts.unlinkWallet",
         ].includes(selectedMethod.id)
       ) {
