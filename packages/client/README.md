@@ -99,7 +99,7 @@ const outflowWithConvenience = await client.lending.borrow({
 });
 
 // Pending movements
-const pending = await client.pending.getMovements("profile-id");
+const pending = await client.pending.list("profile-id");
 
 // Inflow reporting (requires apiBaseUrl)
 await client.lending.submitInflow({ txid: "<broadcast-txid>" });
