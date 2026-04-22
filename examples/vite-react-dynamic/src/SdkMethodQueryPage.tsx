@@ -151,6 +151,18 @@ const SDK_METHODS: MethodDefinition[] = [
     },
   },
   {
+    id: "market.getReserveData",
+    label: "market.getReserveData",
+    defaultArgs: '{\n  "asset": "BTC",\n  "chain": "BTC"\n}',
+    execute: async (client, input) => {
+      const args = expectObject(input);
+      return await client.market.getReserveData({
+        asset: expectNonEmptyString(args.asset, "asset"),
+        chain: expectNonEmptyString(args.chain, "chain"),
+      });
+    },
+  },
+  {
     id: "positions.getPosition",
     label: "positions.getPosition",
     defaultArgs: '{\n  "profileId": "aaaaa-aa",\n  "poolId": "bbbbb-bb"\n}',
@@ -192,6 +204,40 @@ const SDK_METHODS: MethodDefinition[] = [
       const args = expectObject(input);
       return await client.positions.getUserStats(
         expectNonEmptyString(args.profileId, "profileId")
+      );
+    },
+  },
+  {
+    id: "positions.getUserPositionSummary",
+    label: "positions.getUserPositionSummary",
+    defaultArgs: '{\n  "profileId": "aaaaa-aa"\n}',
+    execute: async (client, input) => {
+      const args = expectObject(input);
+      return await client.positions.getUserPositionSummary(
+        expectNonEmptyString(args.profileId, "profileId")
+      );
+    },
+  },
+  {
+    id: "positions.getUserReserves",
+    label: "positions.getUserReserves",
+    defaultArgs: '{\n  "profileId": "aaaaa-aa"\n}',
+    execute: async (client, input) => {
+      const args = expectObject(input);
+      return await client.positions.getUserReserves(
+        expectNonEmptyString(args.profileId, "profileId")
+      );
+    },
+  },
+  {
+    id: "positions.getMaxRepayAmount",
+    label: "positions.getMaxRepayAmount",
+    defaultArgs: '{\n  "profileId": "aaaaa-aa",\n  "poolId": "bbbbb-bb"\n}',
+    execute: async (client, input) => {
+      const args = expectObject(input);
+      return await client.positions.getMaxRepayAmount(
+        expectNonEmptyString(args.profileId, "profileId"),
+        expectNonEmptyString(args.poolId, "poolId")
       );
     },
   },

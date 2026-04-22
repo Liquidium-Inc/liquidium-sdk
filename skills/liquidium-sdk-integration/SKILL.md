@@ -46,20 +46,24 @@ const client = LiquidiumClient.create({
 
 ### market
 
-Pool discovery and asset prices.
+Pool discovery, asset prices, and per-reserve data.
 
 ```ts
-client.market.getPools();
+client.market.listPools();
 client.market.findPool({ asset, chain });
+client.market.getReserveData({ asset, chain });
 client.market.getAssetPrices();
+client.market.getPoolRate(poolId);
 ```
+
+`Pool` includes `decimals`, `availableLiquidity`, caps, rates, and index data.
 
 ### quote
 
 Quote-first UX. In borrow flows, fetch pools and prices first, then call `quote` before preparing the borrow.
 
 ```ts
-const pools = await client.market.getPools();
+const pools = await client.market.listPools();
 const prices = await client.market.getAssetPrices();
 const quote = await client.quote.quote(request, pools, prices);
 ```
@@ -69,9 +73,10 @@ const quote = await client.quote.quote(request, pools, prices);
 Profile creation and resolution.
 
 ```ts
-client.accounts.prepareCreate(...);  // returns a signable action
-client.accounts.create(...);          // signs and submits through a wallet adapter
-client.accounts.resolveProfile(walletAddress);
+client.accounts.prepareCreateProfile(...);  // returns a signable action
+client.accounts.createProfile(...);         // signs and submits through a wallet adapter
+client.accounts.getProfileId(walletAddress);
+client.accounts.listLinkedWallets(profileId);
 ```
 
 ### lending
@@ -89,12 +94,16 @@ client.lending.submitInflow(...);    // requires apiBaseUrl
 
 ### positions
 
-Existing profile state.
+Existing profile state plus Liquidium-style aggregate reads.
 
 ```ts
-client.positions.list(profileId);
+client.positions.getPosition(profileId, poolId);
+client.positions.listPositions(profileId);
 client.positions.getHealthFactor(profileId);
 client.positions.getUserStats(profileId);
+client.positions.getUserPositionSummary(profileId);  // aggregate: collateral, debt, availableBorrows, netWorth, LTV, HF
+client.positions.getUserReserves(profileId);         // per-reserve view joined with pool + price data
+client.positions.getMaxRepayAmount(profileId, poolId, bufferBps?); // full-repay amount with accrual buffer
 ```
 
 ### pending
@@ -129,7 +138,7 @@ const walletAdapter: WalletAdapter = {
 
 Convenience method when the app already has wallet signing wired:
 ```ts
-const profileId = await client.accounts.create({
+const profileId = await client.accounts.createProfile({
   account: walletAddress,
   chain: "ETH",
   walletAdapter: {
@@ -140,7 +149,7 @@ const profileId = await client.accounts.create({
 
 Prepare flow when you want explicit control over signing:
 ```ts
-const createAction = await client.accounts.prepareCreate({
+const createAction = await client.accounts.prepareCreateProfile({
   account: walletAddress,
 });
 
@@ -158,16 +167,24 @@ Handle existing profiles by catching the profile-exists error and resolving inst
 ### Read market data and positions
 
 ```ts
-const pools = await client.market.getPools();
+const pools = await client.market.listPools();
 const prices = await client.market.getAssetPrices();
-const positions = await client.positions.list(profileId);
+const positions = await client.positions.listPositions(profileId);
 const healthFactor = await client.positions.getHealthFactor(profileId);
+```
+
+For an Liquidium-style aggregate (`availableBorrowsUsd`, `netWorthUsd`,
+`currentLtvBps`, `healthFactor`) plus a per-reserve USD breakdown:
+
+```ts
+const summary = await client.positions.getUserPositionSummary(profileId);
+const reserves = await client.positions.getUserReserves(profileId);
 ```
 
 ### Quote-first borrow
 
 ```ts
-const pools = await client.market.getPools();
+const pools = await client.market.listPools();
 const prices = await client.market.getAssetPrices();
 
 const quote = await client.quote.quote(request, pools, prices);
@@ -248,7 +265,7 @@ This flow requires `apiBaseUrl` because the SDK needs backend approval planning.
 ## Common Mistakes
 
 1. `LiquidiumClient.create({})` does not cover every method. History, pending, inflow reporting, inflow status polling, and contract-interaction `supply(...)` need `apiBaseUrl`. `borrow(...)` and `withdraw(...)` do not.
-2. Prepare methods return signable actions, not completed actions. `prepareCreate`, `prepareBorrow`, and `prepareWithdraw` still need signing and submission.
+2. Prepare methods return signable actions, not completed actions. `prepareCreateProfile`, `prepareBorrow`, and `prepareWithdraw` still need signing and submission.
 3. Build a wallet adapter with only the methods the selected flow needs. Avoid adding `signMessage`, `sendBtcTransaction`, or `sendEthTransaction` unless the flow uses them.
 4. Skip the quote step in borrow UX only when you explicitly want a lower-level flow.
 5. `client.lending.supply(...)` auto-routes by pool. BTC currently resolves to the transfer path, while ETH stablecoin pools resolve to the contract-interaction path.
