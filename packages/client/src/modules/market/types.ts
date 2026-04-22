@@ -4,9 +4,11 @@ export interface Pool {
   id: string;
   asset: MarketAsset;
   chain: MarketChain;
+  decimals: bigint;
   frozen: boolean;
   totalSupply: bigint;
   totalDebt: bigint;
+  availableLiquidity: bigint;
   supplyCap?: bigint;
   borrowCap?: bigint;
   maxLtv: bigint;

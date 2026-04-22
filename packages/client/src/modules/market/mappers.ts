@@ -3,6 +3,7 @@ import type {
   PoolRateTuple,
   PriceRecord,
 } from "../../core/canisters/lending/actor";
+import { getAssetNativeDecimals } from "../../core/utils/asset-decimals";
 import { getVariantKey } from "../../core/utils/variant";
 import type { AssetPrices, Pool } from "./types";
 
@@ -14,13 +15,21 @@ export function mapLendingPoolRecordToPool(
   pool: LendingPoolRecord,
   rate: PoolRateTuple
 ): Pool {
+  const asset = getVariantKey(pool.asset);
+  const totalSupply = pool.total_supply_at_last_sync;
+  const totalDebt = pool.total_debt_at_last_sync;
+  const availableLiquidity =
+    totalSupply > totalDebt ? totalSupply - totalDebt : 0n;
+
   return {
     id: pool.principal.toString(),
-    asset: getVariantKey(pool.asset),
+    asset,
     chain: getVariantKey(pool.chain),
+    decimals: getAssetNativeDecimals(asset),
     frozen: pool.frozen,
-    totalSupply: pool.total_supply_at_last_sync,
-    totalDebt: pool.total_debt_at_last_sync,
+    totalSupply,
+    totalDebt,
+    availableLiquidity,
     supplyCap: pool.supply_cap[0],
     borrowCap: pool.borrow_cap[0],
     maxLtv: pool.max_ltv || pool.liquidation_threshold,
