@@ -1,4 +1,5 @@
 import type { MarketAsset } from "../../core/types";
+import type { Pool } from "../market/types";
 
 export interface Position {
   poolId: string;
@@ -30,4 +31,30 @@ export interface UserStats {
 export interface HealthFactor {
   healthFactor: bigint;
   userStats: UserStats;
+}
+
+export interface UserPositionSummary {
+  totalCollateralUsd: bigint;
+  totalDebtUsd: bigint;
+  availableBorrowsUsd: bigint;
+  netWorthUsd: bigint;
+  usdDecimals: bigint;
+  currentLtvBps: bigint;
+  weightedMaxLtvBps: bigint;
+  weightedLiquidationThresholdBps: bigint;
+  healthFactor: bigint;
+}
+
+export interface UserReserve {
+  position: Position;
+  pool: Pool;
+  priceUsd: number;
+  suppliedUsd: bigint;
+  borrowedUsd: bigint;
+  usdDecimals: bigint;
+}
+
+export interface MaxRepayAmount {
+  amount: bigint;
+  decimals: bigint;
 }

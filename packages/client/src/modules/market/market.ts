@@ -107,6 +107,19 @@ export class MarketModule {
   }
 
   /**
+   * Returns the full pool record for the given asset and chain pair.
+   *
+   * Convenience wrapper over {@link MarketModule.findPool}. `listPools()` already
+   * enriches each pool with its current rate data, so no extra canister call is made.
+   *
+   * @param query - The market asset and chain pair to match.
+   * @returns The matching pool enriched with current rate data.
+   */
+  async getReserveData(query: FindPoolQuery): Promise<Pool> {
+    return await this.findPool(query);
+  }
+
+  /**
    * Returns the current borrow, lend, and utilization rates for a pool.
    *
    * @param poolId - The pool principal text.

@@ -2,25 +2,16 @@ import type {
   BorrowingPowerRecord,
   UserStatsRecord,
 } from "../../core/canisters/lending/actor";
+import { getAssetNativeDecimals } from "../../core/utils/asset-decimals";
 import { getVariantKey } from "../../core/utils/variant";
 import type { PositionView } from "../../generated/canisters/lending/lending.did";
 import type { BorrowingPower, Position, UserStats } from "./types";
 
 export const USD_VALUE_SCALE_DECIMALS = 27n;
 
-const ASSET_NATIVE_DECIMALS: Record<string, bigint> = {
-  BTC: 8n,
-  USDC: 6n,
-  USDT: 6n,
-  SOL: 9n,
-};
-
-const FALLBACK_NATIVE_DECIMALS = 8n;
-
 export function mapPositionViewToPosition(view: PositionView): Position {
   const asset = getVariantKey(view.asset);
-  const nativeDecimals =
-    ASSET_NATIVE_DECIMALS[asset] ?? FALLBACK_NATIVE_DECIMALS;
+  const nativeDecimals = getAssetNativeDecimals(asset);
 
   return {
     poolId: view.pool_id.toText(),
