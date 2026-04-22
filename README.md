@@ -9,10 +9,10 @@ import { LiquidiumClient } from "@liquidium/client";
 
 const client = LiquidiumClient.create({});
 
-const pools = await client.market.getPools();
+const pools = await client.market.listPools();
 const prices = await client.market.getAssetPrices();
 
-const createAction = await client.accounts.prepareCreate({
+const createAction = await client.accounts.prepareCreateProfile({
   account: walletAddress,
 });
 const signature = await wallet.signMessage(createAction.message);
