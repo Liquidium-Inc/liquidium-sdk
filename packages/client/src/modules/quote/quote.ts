@@ -1,3 +1,4 @@
+import { ceilDivBigint } from "../../core/utils/bigint";
 import type { AssetPrices, Pool } from "../market/types";
 import type {
   QuoteRequest,
@@ -7,11 +8,14 @@ import type {
 } from "./types";
 import { QuoteValidationErrorCode, QuoteWarningCode } from "./types";
 
-const BASIS_POINTS = 10000n;
+const BASIS_POINTS_DENOMINATOR = 10_000n;
+const BPS_PER_PERCENT = 100n;
 const MIN_LTV_BPS = 0n;
-const MIN_BORROW_AMOUNT = 5000n;
-const INTERNAL_USD_DECIMALS = 8;
-const ASSET_DECIMALS: Record<string, number> = {
+const HIGH_LTV_WARNING_THRESHOLD_BPS = 8_000n;
+const MIN_BORROW_AMOUNT_SATS = 5_000n;
+const INTERNAL_USD_DECIMAL_PLACES = 8;
+const PRICE_SCALE_DECIMAL_PLACES = 8;
+const ASSET_DECIMAL_PLACES: Record<string, number> = {
   BTC: 8,
   USDC: 6,
   USDT: 6,
@@ -35,6 +39,10 @@ type CreateQuoteResultParams = {
 export class QuoteModule {
   /**
    * Calculates a loan quote based on borrow amount, LTV, and pool selections.
+   *
+   * All arithmetic is performed in bigint. `requiredCollateralAmount` and
+   * `requiredCollateralUsd` are rounded UP so the caller never under-collateralizes
+   * due to integer truncation. `borrowUsd` is floored for display.
    *
    * @param request - Quote request parameters.
    * @param pools - All available pools (use MarketModule.listPools() to fetch).
@@ -91,17 +99,32 @@ export class QuoteModule {
     const borrowPrice = prices[borrowAsset];
     const collateralPrice = prices[collateralAsset];
 
-    if (borrowPrice === undefined || borrowPrice === 0) {
+    if (
+      borrowPrice === undefined ||
+      !Number.isFinite(borrowPrice) ||
+      borrowPrice <= 0
+    ) {
       validationErrors.push({
         code: QuoteValidationErrorCode.PRICE_NOT_AVAILABLE,
         message: `Price not available for borrow asset: ${borrowAsset}`,
       });
     }
 
-    if (collateralPrice === undefined || collateralPrice === 0) {
+    if (
+      collateralPrice === undefined ||
+      !Number.isFinite(collateralPrice) ||
+      collateralPrice <= 0
+    ) {
       validationErrors.push({
         code: QuoteValidationErrorCode.PRICE_NOT_AVAILABLE,
         message: `Price not available for collateral asset: ${collateralAsset}`,
+      });
+    }
+
+    if (borrowAmount < 0n) {
+      validationErrors.push({
+        code: QuoteValidationErrorCode.BORROW_AMOUNT_TOO_LOW,
+        message: `Borrow amount must be non-negative`,
       });
     }
 
@@ -112,18 +135,25 @@ export class QuoteModule {
       });
     }
 
+    if (targetLtvBps > BASIS_POINTS_DENOMINATOR) {
+      validationErrors.push({
+        code: QuoteValidationErrorCode.INVALID_LTV,
+        message: `LTV must not exceed ${formatBpsAsPercent(BASIS_POINTS_DENOMINATOR)}%`,
+      });
+    }
+
     const maxAllowedLtvBps = collateralPool.maxLtv;
     if (targetLtvBps > maxAllowedLtvBps) {
       validationErrors.push({
         code: QuoteValidationErrorCode.LTV_EXCEEDS_MAX,
-        message: `Target LTV ${Number(targetLtvBps) / 100}% exceeds max allowed ${Number(maxAllowedLtvBps) / 100}%`,
+        message: `Target LTV ${formatBpsAsPercent(targetLtvBps)}% exceeds max allowed ${formatBpsAsPercent(maxAllowedLtvBps)}%`,
       });
     }
 
-    if (borrowAmount < MIN_BORROW_AMOUNT) {
+    if (borrowAmount < MIN_BORROW_AMOUNT_SATS) {
       validationErrors.push({
         code: QuoteValidationErrorCode.BORROW_AMOUNT_TOO_LOW,
-        message: `Borrow amount must be at least ${MIN_BORROW_AMOUNT} sats`,
+        message: `Borrow amount must be at least ${MIN_BORROW_AMOUNT_SATS} sats`,
       });
     }
 
@@ -147,10 +177,10 @@ export class QuoteModule {
       });
     }
 
-    if (targetLtvBps >= 8000n) {
+    if (targetLtvBps >= HIGH_LTV_WARNING_THRESHOLD_BPS) {
       warnings.push({
         code: QuoteWarningCode.HIGH_LTV,
-        message: `LTV above 80% may put your position at higher risk of liquidation`,
+        message: `LTV above ${formatBpsAsPercent(HIGH_LTV_WARNING_THRESHOLD_BPS)}% may put your position at higher risk of liquidation`,
       });
     }
 
@@ -171,24 +201,37 @@ export class QuoteModule {
       });
     }
 
-    const borrowAssetDecimals = getAssetDecimals(borrowAsset);
-    const collateralAssetDecimals = getAssetDecimals(collateralAsset);
-    const borrowUsd = toUsd(borrowAmount, borrowPrice, borrowAssetDecimals);
-    const targetLtvDecimal = Number(targetLtvBps) / Number(BASIS_POINTS);
-    const requiredCollateralUsd = borrowUsd / targetLtvDecimal;
-    const requiredCollateralAmount = fromUsd(
-      requiredCollateralUsd,
-      collateralPrice,
-      collateralAssetDecimals
+    const borrowAssetDecimals = getAssetDecimalPlaces(borrowAsset);
+    const collateralAssetDecimals = getAssetDecimalPlaces(collateralAsset);
+    const borrowPriceScaled = scalePriceUsdToBigint(borrowPrice as number);
+    const collateralPriceScaled = scalePriceUsdToBigint(
+      collateralPrice as number
     );
+
+    const borrowUsdInternal = computeUsdInternalFromBaseUnits({
+      amountBaseUnits: borrowAmount,
+      priceScaled: borrowPriceScaled,
+      assetDecimalPlaces: borrowAssetDecimals,
+    });
+
+    const requiredCollateralUsdInternal = ceilDivBigint(
+      borrowUsdInternal * BASIS_POINTS_DENOMINATOR,
+      targetLtvBps
+    );
+
+    const requiredCollateralAmount = computeBaseUnitsFromUsdInternalCeil({
+      usdInternal: requiredCollateralUsdInternal,
+      priceScaled: collateralPriceScaled,
+      assetDecimalPlaces: collateralAssetDecimals,
+    });
 
     return createQuoteResult({
       borrowAmount,
       borrowPoolId,
       collateralPoolId,
-      borrowUsd: usdToInternal(borrowUsd),
+      borrowUsd: borrowUsdInternal,
       requiredCollateralAmount,
-      requiredCollateralUsd: usdToInternal(requiredCollateralUsd),
+      requiredCollateralUsd: requiredCollateralUsdInternal,
       maxAllowedLtvBps,
       targetLtvBps,
       borrowAsset,
@@ -216,32 +259,61 @@ function createQuoteResult(params: CreateQuoteResultParams): QuoteResult {
   };
 }
 
-function toUsd(amount: bigint, price: number, assetDecimals: number): number {
-  return baseUnitsToDecimalAmount(amount, assetDecimals) * price;
+function computeUsdInternalFromBaseUnits(params: {
+  amountBaseUnits: bigint;
+  priceScaled: bigint;
+  assetDecimalPlaces: number;
+}): bigint {
+  const { amountBaseUnits, priceScaled, assetDecimalPlaces } = params;
+  const scaleDiff = INTERNAL_USD_DECIMAL_PLACES - PRICE_SCALE_DECIMAL_PLACES;
+  const numerator = amountBaseUnits * priceScaled;
+  const assetDecimalFactor = 10n ** BigInt(assetDecimalPlaces);
+
+  if (scaleDiff >= 0) {
+    return (numerator * 10n ** BigInt(scaleDiff)) / assetDecimalFactor;
+  }
+
+  return numerator / (assetDecimalFactor * 10n ** BigInt(-scaleDiff));
 }
 
-function fromUsd(usd: number, price: number, assetDecimals: number): bigint {
-  return decimalAmountToBaseUnits(usd / price, assetDecimals);
+function computeBaseUnitsFromUsdInternalCeil(params: {
+  usdInternal: bigint;
+  priceScaled: bigint;
+  assetDecimalPlaces: number;
+}): bigint {
+  const { usdInternal, priceScaled, assetDecimalPlaces } = params;
+  const scaleDiff = INTERNAL_USD_DECIMAL_PLACES - PRICE_SCALE_DECIMAL_PLACES;
+  const assetDecimalFactor = 10n ** BigInt(assetDecimalPlaces);
+
+  if (scaleDiff >= 0) {
+    return ceilDivBigint(
+      usdInternal * assetDecimalFactor,
+      priceScaled * 10n ** BigInt(scaleDiff)
+    );
+  }
+
+  return ceilDivBigint(
+    usdInternal * assetDecimalFactor * 10n ** BigInt(-scaleDiff),
+    priceScaled
+  );
 }
 
-function usdToInternal(usd: number): bigint {
-  return BigInt(Math.floor(usd * 10 ** INTERNAL_USD_DECIMALS));
+function scalePriceUsdToBigint(priceUsd: number): bigint {
+  const scaled = Math.round(priceUsd * 10 ** PRICE_SCALE_DECIMAL_PLACES);
+  return BigInt(scaled);
 }
 
-function getAssetDecimals(asset: string): number {
-  return ASSET_DECIMALS[asset] ?? INTERNAL_USD_DECIMALS;
+function getAssetDecimalPlaces(asset: string): number {
+  return ASSET_DECIMAL_PLACES[asset] ?? INTERNAL_USD_DECIMAL_PLACES;
 }
 
-function baseUnitsToDecimalAmount(
-  amount: bigint,
-  assetDecimals: number
-): number {
-  return Number(amount) / 10 ** assetDecimals;
-}
+function formatBpsAsPercent(bps: bigint): string {
+  const whole = bps / BPS_PER_PERCENT;
+  const fractional = bps % BPS_PER_PERCENT;
+  if (fractional === 0n) {
+    return whole.toString();
+  }
 
-function decimalAmountToBaseUnits(
-  amount: number,
-  assetDecimals: number
-): bigint {
-  return BigInt(Math.floor(amount * 10 ** assetDecimals));
+  const padded = fractional.toString().padStart(2, "0").replace(/0+$/, "");
+  return `${whole}.${padded}`;
 }
