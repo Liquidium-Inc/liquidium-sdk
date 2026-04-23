@@ -1,6 +1,6 @@
 import { Actor } from "@dfinity/agent";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { LiquidiumClient } from "../index";
+import { LiquidiumClient } from "../../../index";
 
 afterEach(() => {
   vi.restoreAllMocks();

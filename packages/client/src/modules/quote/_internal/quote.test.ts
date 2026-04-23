@@ -1,10 +1,7 @@
 import { describe, expect, test } from "vitest";
-import type { AssetPrices, Pool } from "../modules/market/types";
-import { QuoteModule } from "../modules/quote/quote";
-import {
-  QuoteValidationErrorCode,
-  QuoteWarningCode,
-} from "../modules/quote/types";
+import type { AssetPrices, Pool } from "../../market/types";
+import { QuoteModule } from "../quote";
+import { QuoteValidationErrorCode, QuoteWarningCode } from "../types";
 
 describe("QuoteModule", () => {
   const quoteModule = new QuoteModule();
@@ -88,7 +85,7 @@ describe("QuoteModule", () => {
     expect(result.requiredCollateralUsd).toBe(20_000_000_000n);
   });
 
-  test("calculates quote values using asset decimals instead of raw base units", async () => {
+  test("rounds required collateral UP when LTV does not divide evenly", async () => {
     // given
     const request = {
       borrowAmount: 1_000_000n,
@@ -103,8 +100,8 @@ describe("QuoteModule", () => {
     // then
     expect(result.validationErrors).toHaveLength(0);
     expect(result.borrowUsd).toBe(100_000_000n);
-    expect(result.requiredCollateralUsd).toBe(153_846_153n);
-    expect(result.requiredCollateralAmount).toBe(1_538n);
+    expect(result.requiredCollateralUsd).toBe(153_846_154n);
+    expect(result.requiredCollateralAmount).toBe(1_539n);
   });
 
   test("returns error when borrow pool not found", async () => {
@@ -143,6 +140,26 @@ describe("QuoteModule", () => {
     expect(result.validationErrors[0]?.code).toBe(
       QuoteValidationErrorCode.LTV_EXCEEDS_MAX
     );
+  });
+
+  test("returns error when LTV exceeds 100%", async () => {
+    // given
+    const request = {
+      borrowAmount: 100000000n,
+      borrowPoolId: "xxxxx-usdt-pool",
+      collateralPoolId: "aaaaa-btc-pool",
+      targetLtvBps: 10_001n,
+    };
+
+    // when
+    const result = await quoteModule.getQuote(request, pools, prices);
+
+    // then
+    expect(
+      result.validationErrors.some(
+        (e) => e.code === QuoteValidationErrorCode.INVALID_LTV
+      )
+    ).toBe(true);
   });
 
   test("returns error when same asset borrowing not allowed", async () => {
@@ -184,8 +201,8 @@ describe("QuoteModule", () => {
     );
   });
 
-  test("returns high LTV warning when above 80%", async () => {
-    // given - use USDT pool as collateral since it has maxLtv 8500, allowing target 8200
+  test("returns high LTV warning when at or above 80%", async () => {
+    // given
     const request = {
       borrowAmount: 100000000n,
       borrowPoolId: "aaaaa-btc-pool",
@@ -249,5 +266,82 @@ describe("QuoteModule", () => {
     expect(result.validationErrors[0]?.code).toBe(
       QuoteValidationErrorCode.PRICE_NOT_AVAILABLE
     );
+  });
+
+  test("returns error when borrow price is zero or negative", async () => {
+    // given
+    const zeroPrices: AssetPrices = { BTC: 100000, USDT: 0 };
+    const request = {
+      borrowAmount: 100000000n,
+      borrowPoolId: "xxxxx-usdt-pool",
+      collateralPoolId: "aaaaa-btc-pool",
+      targetLtvBps: 5000n,
+    };
+
+    // when
+    const result = await quoteModule.getQuote(request, pools, zeroPrices);
+
+    // then
+    expect(
+      result.validationErrors.some(
+        (e) => e.code === QuoteValidationErrorCode.PRICE_NOT_AVAILABLE
+      )
+    ).toBe(true);
+  });
+
+  test("computes exact result when target LTV divides evenly", async () => {
+    // given - 50% LTV with $100 borrow requires exactly $200 collateral
+    const request = {
+      borrowAmount: 100_000_000n,
+      borrowPoolId: "xxxxx-usdt-pool",
+      collateralPoolId: "aaaaa-btc-pool",
+      targetLtvBps: 5_000n,
+    };
+
+    // when
+    const result = await quoteModule.getQuote(request, pools, prices);
+
+    // then
+    expect(result.requiredCollateralUsd).toBe(20_000_000_000n);
+    expect(result.requiredCollateralAmount).toBe(200_000n);
+  });
+
+  test("preserves precision for very large borrow amounts", async () => {
+    // given - 1 million USDT (1e12 base units); float Number would still fit but bigint path must be exact
+    const request = {
+      borrowAmount: 1_000_000_000_000n,
+      borrowPoolId: "xxxxx-usdt-pool",
+      collateralPoolId: "aaaaa-btc-pool",
+      targetLtvBps: 5_000n,
+    };
+
+    // when
+    const result = await quoteModule.getQuote(request, pools, prices);
+
+    // then
+    expect(result.validationErrors).toHaveLength(0);
+    expect(result.borrowUsd).toBe(100_000_000_000_000n);
+    expect(result.requiredCollateralUsd).toBe(200_000_000_000_000n);
+    expect(result.requiredCollateralAmount).toBe(2_000_000_000n);
+  });
+
+  test("returns error when borrow amount is negative", async () => {
+    // given
+    const request = {
+      borrowAmount: -1n,
+      borrowPoolId: "xxxxx-usdt-pool",
+      collateralPoolId: "aaaaa-btc-pool",
+      targetLtvBps: 5_000n,
+    };
+
+    // when
+    const result = await quoteModule.getQuote(request, pools, prices);
+
+    // then
+    expect(
+      result.validationErrors.some(
+        (e) => e.code === QuoteValidationErrorCode.BORROW_AMOUNT_TOO_LOW
+      )
+    ).toBe(true);
   });
 });

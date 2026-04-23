@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
-import { LiquidiumError, LiquidiumErrorCode } from "../core/errors";
-import { createApiClient } from "../core/transports/api-client";
+import { LiquidiumError, LiquidiumErrorCode } from "../../errors";
+import { createApiClient } from "../api-client";
 
 describe("ApiClient", () => {
   const MOCK_BASE_URL = "https://api.example.com";
