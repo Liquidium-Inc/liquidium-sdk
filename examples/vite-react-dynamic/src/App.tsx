@@ -294,6 +294,7 @@ export default function App() {
     };
   }, [profileId]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: reset history when active profile changes
   useEffect(() => {
     setTransactionHistory([]);
     setHistoryNextCursor(null);
