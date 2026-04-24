@@ -19,10 +19,8 @@ SDK method query page for raw response inspection.
 
 1. Copy `.env.example` to `.env`
 2. Set `VITE_DYNAMIC_ENVIRONMENT_ID` from your Dynamic dashboard
-3. Set `VITE_LIQUIDIUM_BASE_URL` to the app host. The example defaults to
-   `http://localhost:3000` and derives the SDK API URL as `/api/sdk` from it.
-   - If you need a fully custom SDK endpoint, set
-     `VITE_LIQUIDIUM_API_BASE_URL` instead.
+3. Set `VITE_LIQUIDIUM_BASE_URL` to the Liquidium SDK API base URL. The example
+   defaults to `https://app.liquidium.fi/api/sdk`.
 4. Install dependencies from the SDK root:
 
 ```bash
