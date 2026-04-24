@@ -135,46 +135,6 @@ export class AccountsModule {
     }
   }
 
-  /**
-   * Links an additional wallet to an existing profile.
-   *
-   * @param profileId - Profile principal text.
-   * @param newWalletAddress - Address to link.
-   * @param chain - Wallet chain for the new address.
-   *
-   * @remarks Not implemented yet; throws with `LiquidiumErrorCode.INTERNAL`.
-   */
-  async linkWallet(
-    profileId: string,
-    newWalletAddress: string,
-    chain: Chain
-  ): Promise<void> {
-    void profileId;
-    void newWalletAddress;
-    void chain;
-    throw new LiquidiumError(
-      LiquidiumErrorCode.INTERNAL,
-      "Not yet implemented"
-    );
-  }
-
-  /**
-   * Unlinks a wallet from an existing profile.
-   *
-   * @param profileId - Profile principal text.
-   * @param walletAddress - Address to remove from the profile.
-   *
-   * @remarks Not implemented yet; throws with `LiquidiumErrorCode.INTERNAL`.
-   */
-  async unlinkWallet(profileId: string, walletAddress: string): Promise<void> {
-    void profileId;
-    void walletAddress;
-    throw new LiquidiumError(
-      LiquidiumErrorCode.INTERNAL,
-      "Not yet implemented"
-    );
-  }
-
   private async buildCreateProfileAction(
     account: string
   ): Promise<CreateAccountAction> {

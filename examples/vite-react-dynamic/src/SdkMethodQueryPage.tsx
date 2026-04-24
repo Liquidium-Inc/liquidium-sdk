@@ -85,33 +85,6 @@ const SDK_METHODS: MethodDefinition[] = [
     },
   },
   {
-    id: "accounts.linkWallet",
-    label: "accounts.linkWallet",
-    defaultArgs:
-      '{\n  "profileId": "aaaaa-aa",\n  "newWalletAddress": "bc1...",\n  "chain": "BTC"\n}',
-    execute: async (client, input) => {
-      const args = expectObject(input);
-      return await client.accounts.linkWallet(
-        expectNonEmptyString(args.profileId, "profileId"),
-        expectNonEmptyString(args.newWalletAddress, "newWalletAddress"),
-        expectChain(args.chain, "chain")
-      );
-    },
-  },
-  {
-    id: "accounts.unlinkWallet",
-    label: "accounts.unlinkWallet",
-    defaultArgs:
-      '{\n  "profileId": "aaaaa-aa",\n  "walletAddress": "bc1..."\n}',
-    execute: async (client, input) => {
-      const args = expectObject(input);
-      return await client.accounts.unlinkWallet(
-        expectNonEmptyString(args.profileId, "profileId"),
-        expectNonEmptyString(args.walletAddress, "walletAddress")
-      );
-    },
-  },
-  {
     id: "market.listPools",
     label: "market.listPools",
     defaultArgs: "{}",
@@ -607,7 +580,6 @@ export function SdkMethodQueryPage() {
         [
           "accounts.getProfileId",
           "accounts.getWalletNonce",
-          "accounts.unlinkWallet",
         ].includes(selectedMethod.id)
       ) {
         nextArgs.walletAddress = walletAddress;
