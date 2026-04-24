@@ -1,3 +1,5 @@
+import { LiquidiumError, LiquidiumErrorCode } from "../errors";
+
 const MIN_ATTEMPTS = 1;
 const MIN_INITIAL_RETRY_DELAY_MS = 0;
 const MIN_BACKOFF_MULTIPLIER = 1;
@@ -33,7 +35,10 @@ export async function retryWithBackoff<T>(
     }
   }
 
-  throw new Error("Retry exhausted unexpectedly");
+  throw new LiquidiumError(
+    LiquidiumErrorCode.INTERNAL,
+    "Retry exhausted unexpectedly"
+  );
 }
 
 async function defaultWaitForDelayMs(delayMs: number): Promise<void> {
@@ -44,17 +49,22 @@ async function defaultWaitForDelayMs(delayMs: number): Promise<void> {
 
 function assertValidRetryOptions<T>(options: RetryWithBackoffOptions<T>): void {
   if (options.maxAttempts < MIN_ATTEMPTS) {
-    throw new Error(
+    throw new LiquidiumError(
+      LiquidiumErrorCode.VALIDATION_ERROR,
       `Retry maxAttempts must be at least ${MIN_ATTEMPTS}, received ${options.maxAttempts}`
     );
   }
 
   if (options.initialRetryDelayMs < MIN_INITIAL_RETRY_DELAY_MS) {
-    throw new Error("Retry initialRetryDelayMs must be a non-negative number");
+    throw new LiquidiumError(
+      LiquidiumErrorCode.VALIDATION_ERROR,
+      "Retry initialRetryDelayMs must be a non-negative number"
+    );
   }
 
   if (options.backoffMultiplier < MIN_BACKOFF_MULTIPLIER) {
-    throw new Error(
+    throw new LiquidiumError(
+      LiquidiumErrorCode.VALIDATION_ERROR,
       `Retry backoffMultiplier must be at least ${MIN_BACKOFF_MULTIPLIER}, received ${options.backoffMultiplier}`
     );
   }

@@ -290,7 +290,7 @@ describe("QuoteModule", () => {
   });
 
   test("computes exact result when target LTV divides evenly", async () => {
-    // given - 50% LTV with $100 borrow requires exactly $200 collateral
+    // given
     const request = {
       borrowAmount: 100_000_000n,
       borrowPoolId: "xxxxx-usdt-pool",
@@ -307,7 +307,7 @@ describe("QuoteModule", () => {
   });
 
   test("preserves precision for very large borrow amounts", async () => {
-    // given - 1 million USDT (1e12 base units); float Number would still fit but bigint path must be exact
+    // given
     const request = {
       borrowAmount: 1_000_000_000_000n,
       borrowPoolId: "xxxxx-usdt-pool",

@@ -48,7 +48,9 @@ describe("retryWithBackoff", () => {
     const waitForDelayMsMock = vi.fn<(delayMs: number) => Promise<void>>();
     waitForDelayMsMock.mockResolvedValue(undefined);
 
-    // when / then
+    // when
+
+    // then
     await expect(
       retryWithBackoff({
         execute: executeMock,
@@ -70,7 +72,9 @@ describe("retryWithBackoff", () => {
     const INVALID_MAX_ATTEMPTS = 0;
     const INVALID_BACKOFF_MULTIPLIER = 0;
 
-    // when / then
+    // when
+
+    // then
     await expect(
       retryWithBackoff({
         execute,

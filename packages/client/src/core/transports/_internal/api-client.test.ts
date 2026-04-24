@@ -46,7 +46,9 @@ describe("ApiClient", () => {
       timeoutMs: TIMEOUT_MS,
     });
 
-    // when / then
+    // when
+
+    // then
     await expect(client.get("/v1/missing")).rejects.toThrow(LiquidiumError);
     await expect(client.get("/v1/missing")).rejects.toMatchObject({
       code: LiquidiumErrorCode.SERVICE_UNAVAILABLE,
@@ -61,7 +63,9 @@ describe("ApiClient", () => {
       timeoutMs: TIMEOUT_MS,
     });
 
-    // when / then
+    // when
+
+    // then
     await expect(client.get("/v1/test")).rejects.toThrow(LiquidiumError);
     await expect(client.get("/v1/test")).rejects.toMatchObject({
       code: LiquidiumErrorCode.NETWORK_ERROR,

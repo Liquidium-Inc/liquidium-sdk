@@ -73,7 +73,9 @@ describe("ceilDivBigint", () => {
     const denominator = 0n;
     const callCeilDivWithZero = () => ceilDivBigint(numerator, denominator);
 
-    // when / then
+    // when
+
+    // then
     expect(callCeilDivWithZero).toThrow(LiquidiumError);
 
     try {
@@ -102,7 +104,9 @@ describe("parseBigInt", () => {
     const invalidValue = "not-a-bigint";
     const parseInvalidBigInt = () => parseBigInt(invalidValue, "test bigint");
 
-    // when / then
+    // when
+
+    // then
     expect(parseInvalidBigInt).toThrow(LiquidiumError);
     expect(parseInvalidBigInt).toThrow(
       "Invalid bigint returned for test bigint"
