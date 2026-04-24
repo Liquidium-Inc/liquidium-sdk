@@ -84,6 +84,12 @@ export function formatInternalUsd(value: bigint): string {
   );
 }
 
+export function formatScaledUsd(value: bigint, decimals: bigint): string {
+  return formatUsdFromDecimalString(
+    formatBaseUnitsAsDecimal(value, Number(decimals), USD_MAX_FRACTION_DIGITS)
+  );
+}
+
 export function formatUsdFromDecimalString(value: string): string {
   const amount = Number(value || "0");
 
