@@ -1,4 +1,5 @@
 import type { Principal } from "@dfinity/principal";
+import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
 import { Chain, OutflowType } from "../../core/types";
 import { getVariantKey } from "../../core/utils/variant";
 import type { OutflowDetails } from "./types";
@@ -62,7 +63,10 @@ export function normalizeOutflowType(
     case "FeeClaim":
       return OutflowType.feeClaim;
     default:
-      throw new Error(`Unsupported outflow type: ${rawOutflowType}`);
+      throw new LiquidiumError(
+        LiquidiumErrorCode.INTERNAL,
+        `Unsupported outflow type: ${rawOutflowType}`
+      );
   }
 }
 

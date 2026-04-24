@@ -126,7 +126,9 @@ describe("AccountsModule", () => {
     } as never);
     const client = LiquidiumClient.create({});
 
-    // when / then
+    // when
+
+    // then
     await expect(
       client.accounts
         .prepareCreateProfile({ account: "0x123" })
@@ -153,7 +155,9 @@ describe("AccountsModule", () => {
     } as never);
     const client = LiquidiumClient.create({});
 
-    // when / then
+    // when
+
+    // then
     await expect(
       client.accounts.prepareCreateProfile({ account: "0xabc" })
     ).rejects.toMatchObject({
@@ -174,7 +178,9 @@ describe("AccountsModule", () => {
     } as never);
     const client = LiquidiumClient.create({});
 
-    // when / then
+    // when
+
+    // then
     await expect(
       client.accounts
         .prepareCreateProfile({ account: "0xabc" })
@@ -236,7 +242,9 @@ describe("AccountsModule", () => {
     } as never);
     const client = LiquidiumClient.create({});
 
-    // when / then
+    // when
+
+    // then
     await expect(
       client.accounts.listLinkedWallets("aaaaa-aa")
     ).rejects.toMatchObject({
@@ -251,7 +259,9 @@ describe("HistoryModule", () => {
     // given
     const client = LiquidiumClient.create({});
 
-    // when / then
+    // when
+
+    // then
     await expect(
       client.history.getUserTransactionHistory("profile-1")
     ).rejects.toThrow(LiquidiumError);
@@ -894,7 +904,9 @@ describe("MarketModule", () => {
     } as never);
     const client = LiquidiumClient.create({});
 
-    // when / then
+    // when
+
+    // then
     await expect(
       client.market.findPool({ asset: "BTC", chain: "BTC" })
     ).rejects.toMatchObject({
@@ -1043,7 +1055,9 @@ describe("MarketModule", () => {
     } as never);
     const client = LiquidiumClient.create({});
 
-    // when / then
+    // when
+
+    // then
     await expect(client.market.getPoolRate("aaaaa-aa")).rejects.toMatchObject({
       code: LiquidiumErrorCode.POOL_NOT_FOUND,
     });
@@ -1278,7 +1292,9 @@ describe("PositionsModule", () => {
     } as never);
     const client = LiquidiumClient.create({});
 
-    // when / then
+    // when
+
+    // then
     await expect(
       client.positions.getPosition(PROFILE_ID, POOL_ID)
     ).rejects.toMatchObject({
@@ -1762,7 +1778,9 @@ describe("LendingModule", () => {
     } as never);
     const client = LiquidiumClient.create({});
 
-    // when / then
+    // when
+
+    // then
     await expect(
       client.lending.prepareSupply({
         profileId: "aaaaa-aa",
@@ -1811,7 +1829,9 @@ describe("LendingModule", () => {
     } as never);
     const client = LiquidiumClient.create({});
 
-    // when / then
+    // when
+
+    // then
     await expect(
       client.lending.prepareSupply({
         profileId: "aaaaa-aa",
@@ -2342,7 +2362,9 @@ describe("LendingModule", () => {
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
     });
 
-    // when / then
+    // when
+
+    // then
     await expect(
       client.lending.supply({
         profileId: "aaaaa-aa",
@@ -2362,7 +2384,9 @@ describe("LendingModule", () => {
     // given
     const client = LiquidiumClient.create({});
 
-    // when / then
+    // when
+
+    // then
     await expect(
       client.lending.submitInflow({ txid: "abc" })
     ).rejects.toMatchObject({
@@ -2510,7 +2534,9 @@ Nonce: 17`);
     } as never);
     const client = LiquidiumClient.create({});
 
-    // when / then
+    // when
+
+    // then
     await expect(
       client.lending
         .prepareBorrow({
@@ -2535,7 +2561,9 @@ Nonce: 17`);
     // given
     const client = LiquidiumClient.create({});
 
-    // when / then
+    // when
+
+    // then
     await expect(
       client.lending.prepareBorrow({
         profileId: "p1",
@@ -2697,7 +2725,9 @@ Nonce: 23`);
     } as never);
     const client = LiquidiumClient.create({});
 
-    // when / then
+    // when
+
+    // then
     await expect(
       client.lending
         .prepareWithdraw({
@@ -2722,7 +2752,9 @@ Nonce: 23`);
     // given
     const client = LiquidiumClient.create({});
 
-    // when / then
+    // when
+
+    // then
     await expect(
       client.lending.prepareWithdraw({
         profileId: "p1",

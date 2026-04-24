@@ -1,4 +1,5 @@
 import type { Principal } from "@dfinity/principal";
+import { LiquidiumError, LiquidiumErrorCode } from "../errors";
 import { SupplyAction } from "../types";
 
 const INFLOW_DEPOSIT_PREFIX = 0x1;
@@ -16,7 +17,10 @@ export function encodeInflowSubaccount(request: {
   const principalBytes = request.principal.toUint8Array();
 
   if (principalBytes.length > MAX_PRINCIPAL_BYTES) {
-    throw new Error("Principal length exceeds inflow subaccount capacity");
+    throw new LiquidiumError(
+      LiquidiumErrorCode.VALIDATION_ERROR,
+      "Principal length exceeds inflow subaccount capacity"
+    );
   }
 
   subaccount[0] =
