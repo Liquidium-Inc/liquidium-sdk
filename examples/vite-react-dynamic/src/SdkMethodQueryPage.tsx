@@ -577,10 +577,9 @@ export function SdkMethodQueryPage() {
 
       if (
         "walletAddress" in nextArgs ||
-        [
-          "accounts.getProfileId",
-          "accounts.getWalletNonce",
-        ].includes(selectedMethod.id)
+        ["accounts.getProfileId", "accounts.getWalletNonce"].includes(
+          selectedMethod.id
+        )
       ) {
         nextArgs.walletAddress = walletAddress;
       }
