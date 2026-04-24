@@ -1,4 +1,4 @@
-import type { QuoteResult, UserStats } from "@liquidium/client";
+import type { QuoteResult, UserPositionSummary } from "@liquidium/client";
 
 const INTERNAL_USD_DECIMALS = 8;
 const PROFILE_STATS_USD_DECIMALS = 27;
@@ -14,7 +14,7 @@ const USD_DECIMAL_SCALE_FACTOR =
  */
 export function getBorrowCapacityValidationError(params: {
   quoteResult: QuoteResult | null;
-  userPositionSummary: UserStats | null;
+  userPositionSummary: UserPositionSummary | null;
 }): string | null {
   const { quoteResult, userPositionSummary } = params;
 
@@ -22,8 +22,7 @@ export function getBorrowCapacityValidationError(params: {
     return null;
   }
 
-  const availableBorrowUsd =
-    userPositionSummary.borrowingPower.maxBorrowableUsd;
+  const availableBorrowUsd = userPositionSummary.availableBorrowsUsd;
 
   if (availableBorrowUsd <= 0n) {
     return "No collateral available yet. Deposit collateral and wait for confirmations before borrowing.";

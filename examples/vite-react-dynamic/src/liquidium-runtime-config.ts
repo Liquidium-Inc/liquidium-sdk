@@ -1,6 +1,7 @@
 import type { LiquidiumClientConfig } from "@liquidium/client";
 
-const DEFAULT_LIQUIDIUM_BASE_URL = "https://app.liquidium.fi/api/sdk";
+const DEFAULT_LIQUIDIUM_BASE_URL =
+  "https://pools-internal-mvp.vercel.app/api/sdk";
 
 export function resolveLiquidiumClientConfig(): LiquidiumClientConfig {
   const configuredBaseUrl = normalizeOptionalValue(
@@ -8,7 +9,7 @@ export function resolveLiquidiumClientConfig(): LiquidiumClientConfig {
   );
 
   return {
-    environment: "mainnet",
+    environment: "staging",
     apiBaseUrl: configuredBaseUrl ?? DEFAULT_LIQUIDIUM_BASE_URL,
   };
 }

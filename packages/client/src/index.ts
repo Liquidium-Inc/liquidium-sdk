@@ -90,6 +90,8 @@ export type {
   BorrowingPower,
   HealthFactor,
   Position,
+  UserPositionSummary,
+  UserReserve,
   UserStats,
 } from "./modules/positions";
 export type {

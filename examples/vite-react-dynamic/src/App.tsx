@@ -6,7 +6,8 @@ import type {
   Pool,
   QuoteResult,
   UserHistoryEntry,
-  UserStats,
+  UserPositionSummary,
+  UserReserve,
 } from "@liquidium/client";
 import { useEffect, useMemo, useState } from "react";
 import { ExampleWalletSection } from "./ExampleWalletSection";
@@ -19,11 +20,13 @@ import { getBorrowCapacityValidationError } from "./lib/borrow-capacity";
 import { createLiquidiumClient } from "./lib/client";
 import {
   bigintJsonReplacer,
+  formatBaseUnitsAsDecimal,
   formatBorrowAmountDisplay,
   formatBpsAsPercent,
   formatInternalUsd,
   formatLiquidiumError,
   formatPoolAmount,
+  formatScaledUsd,
   parseDecimalToBaseUnits,
 } from "./lib/format";
 import {
@@ -69,7 +72,8 @@ export default function App() {
     null
   );
   const [userPositionSummary, setUserPositionSummary] =
-    useState<UserStats | null>(null);
+    useState<UserPositionSummary | null>(null);
+  const [userReserves, setUserReserves] = useState<UserReserve[]>([]);
   const [isPositionSummaryLoading, setIsPositionSummaryLoading] =
     useState(false);
   const [transactionHistory, setTransactionHistory] = useState<
@@ -270,15 +274,19 @@ export default function App() {
 
       try {
         const client = createLiquidiumClient();
-        const nextUserPositionSummary =
-          await client.positions.getUserStats(profileId);
+        const [nextUserPositionSummary, nextUserReserves] = await Promise.all([
+          client.positions.getUserPositionSummary(profileId),
+          client.positions.getUserReserves(profileId),
+        ]);
 
         if (!isCancelled) {
           setUserPositionSummary(nextUserPositionSummary);
+          setUserReserves(nextUserReserves);
         }
       } catch {
         if (!isCancelled) {
           setUserPositionSummary(null);
+          setUserReserves([]);
         }
       } finally {
         if (!isCancelled) {
@@ -446,10 +454,13 @@ export default function App() {
 
     try {
       const client = createLiquidiumClient();
-      const nextUserPositionSummary =
-        await client.positions.getUserStats(profileId);
+      const [nextUserPositionSummary, nextUserReserves] = await Promise.all([
+        client.positions.getUserPositionSummary(profileId),
+        client.positions.getUserReserves(profileId),
+      ]);
 
       setUserPositionSummary(nextUserPositionSummary);
+      setUserReserves(nextUserReserves);
     } catch (error) {
       setErrorMessage(formatLiquidiumError(error));
     } finally {
@@ -736,11 +747,10 @@ export default function App() {
           <p>Create or resolve a profile to view positions.</p>
         ) : null}
         {profileId && !isPositionSummaryLoading ? (
-          <pre className="output">
-            {userPositionSummary
-              ? JSON.stringify(userPositionSummary, bigintJsonReplacer, 2)
-              : "No position summary available yet."}
-          </pre>
+          <PortfolioView
+            reserves={userReserves}
+            summary={userPositionSummary}
+          />
         ) : null}
       </section>
 
@@ -927,5 +937,168 @@ export default function App() {
         </pre>
       </section>
     </main>
+  );
+}
+
+type PortfolioViewProps = {
+  reserves: UserReserve[];
+  summary: UserPositionSummary | null;
+};
+
+function PortfolioView({ reserves, summary }: PortfolioViewProps) {
+  if (!summary) {
+    return <p>No position summary available yet.</p>;
+  }
+
+  const hasPositions = reserves.some(
+    (reserve) =>
+      reserve.position.deposited + reserve.position.earnedInterest > 0n ||
+      reserve.position.borrowed + reserve.position.debtInterest > 0n
+  );
+  const portfolioHealthPercentage = getPortfolioHealthPercentage(
+    summary.healthFactor
+  );
+
+  return (
+    <div className="portfolio-view">
+      <dl className="details">
+        <MetricCard
+          label="Portfolio health"
+          value={`${portfolioHealthPercentage.toFixed(0)}%`}
+        />
+        <MetricCard
+          label="Supplied"
+          value={formatScaledUsd(
+            summary.totalCollateralUsd,
+            summary.usdDecimals
+          )}
+        />
+        <MetricCard
+          label="Borrowed"
+          value={formatScaledUsd(summary.totalDebtUsd, summary.usdDecimals)}
+        />
+        <MetricCard
+          label="Available to borrow"
+          value={formatScaledUsd(
+            summary.availableBorrowsUsd,
+            summary.usdDecimals
+          )}
+        />
+        <MetricCard
+          label="Net worth"
+          value={formatScaledUsd(summary.netWorthUsd, summary.usdDecimals)}
+        />
+        <MetricCard
+          label="Current LTV"
+          value={formatBpsAsPercent(Number(summary.currentLtvBps))}
+        />
+        <MetricCard
+          label="Max LTV"
+          value={formatBpsAsPercent(Number(summary.weightedMaxLtvBps))}
+        />
+        <MetricCard
+          label="Liquidation threshold"
+          value={formatBpsAsPercent(
+            Number(summary.weightedLiquidationThresholdBps)
+          )}
+        />
+      </dl>
+
+      {!hasPositions ? (
+        <p className="empty-state">No active supplied or borrowed positions.</p>
+      ) : (
+        <div className="position-list">
+          {reserves.map((reserve) => (
+            <PositionCard key={reserve.position.poolId} reserve={reserve} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+type MetricCardProps = {
+  label: string;
+  value: string;
+};
+
+function MetricCard({ label, value }: MetricCardProps) {
+  return (
+    <div>
+      <dt>{label}</dt>
+      <dd>{value}</dd>
+    </div>
+  );
+}
+
+type PositionCardProps = {
+  reserve: UserReserve;
+};
+
+function PositionCard({ reserve }: PositionCardProps) {
+  const suppliedAmount =
+    reserve.position.deposited + reserve.position.earnedInterest;
+  const borrowedAmount =
+    reserve.position.borrowed + reserve.position.debtInterest;
+
+  if (suppliedAmount === 0n && borrowedAmount === 0n) {
+    return null;
+  }
+
+  return (
+    <article className="position-card">
+      <div className="position-heading">
+        <div>
+          <strong>{reserve.position.asset}</strong>
+          <span>{reserve.pool.chain}</span>
+        </div>
+        <span>
+          {formatScaledUsd(
+            reserve.suppliedUsd - reserve.borrowedUsd,
+            reserve.usdDecimals
+          )}
+        </span>
+      </div>
+      <dl className="position-details">
+        <MetricCard
+          label="Supplied"
+          value={`${formatBaseUnitsAsDecimal(
+            suppliedAmount,
+            Number(reserve.position.depositedDecimals),
+            reserve.position.asset === "BTC" ? 8 : 4
+          )} ${reserve.position.asset}`}
+        />
+        <MetricCard
+          label="Supplied value"
+          value={formatScaledUsd(reserve.suppliedUsd, reserve.usdDecimals)}
+        />
+        <MetricCard
+          label="Borrowed"
+          value={`${formatBaseUnitsAsDecimal(
+            borrowedAmount,
+            Number(reserve.position.borrowedDecimals),
+            reserve.position.asset === "BTC" ? 8 : 4
+          )} ${reserve.position.asset}`}
+        />
+        <MetricCard
+          label="Borrowed value"
+          value={formatScaledUsd(reserve.borrowedUsd, reserve.usdDecimals)}
+        />
+      </dl>
+    </article>
+  );
+}
+
+function getPortfolioHealthPercentage(value: bigint): number {
+  if (value === 0n) {
+    return 100;
+  }
+
+  const healthFactor = Number(value) / 1_000;
+  const normalizedHealthFactor = Math.max(0, healthFactor - 1);
+
+  return Math.min(
+    100,
+    Math.round((normalizedHealthFactor / (normalizedHealthFactor + 1)) * 100)
   );
 }
