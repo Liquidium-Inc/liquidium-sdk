@@ -13,6 +13,8 @@ get {
 params:query {
   ~cursor: 
   ~market: 
+  ~types: supply,borrow,repay,withdraw
+  ~statuses: PENDING,CONFIRMED
   ~from: 2026-04-01T00:00:00.000Z
   ~to: 2026-04-22T00:00:00.000Z
   ~limit: 100
@@ -27,6 +29,8 @@ docs {
   Query parameters (all optional):
     - cursor: pagination cursor
     - market: pool id filter
+    - types: comma-separated filters: supply, borrow, repay, withdraw, liquidation
+    - statuses: comma-separated filters: REQUESTED, PENDING, CONFIRMED, FAILED
     - from: ISO timestamp, window start
     - to: ISO timestamp, window end
     - limit: max entries per page

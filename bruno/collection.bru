@@ -13,7 +13,8 @@ docs {
   ## Endpoints
 
   - `history/` - pool and user history, borrow APY series
-  - `pending/` - pending inflows and outflows for a profile
+  - `activities/` - receipt status and active/completed activity lists
+  - `pending/` - low-level pending inflows and outflows for a profile
   - `evm/` - EVM supply context for ERC-20 pools
   - `inflow/` - submit a broadcast inflow txid
 
@@ -24,12 +25,16 @@ docs {
 
   Collection-level (override per request):
     - `profileId` - Liquidium profile principal text
+    - `activityId` - receipt id or transaction id for activity status
+    - `activityState` - activity lifecycle filter (`active`, `completed`, or `all`)
     - `poolId` - pool principal text
     - `walletAddress` - EVM wallet address for supply context
 }
 
 vars {
   profileId: aaaaa-aa
+  activityId: receipt-or-txid
+  activityState: active
   poolId: hkmli-faaaa-aaaar-qb4ba-cai
   walletAddress: 0x1234567890123456789012345678901234567890
 }

@@ -18,7 +18,7 @@ body:json {
   {
     "txid": "0000000000000000000000000000000000000000000000000000000000000000",
     "chain": "BTC",
-    "type": "supply"
+    "type": "DEPOSIT"
   }
 }
 
@@ -28,7 +28,7 @@ docs {
   Body:
     - txid (required): broadcast transaction id
     - chain (optional): "BTC" | "ETH"
-    - type (optional): inflow submit type (see InflowSubmitType in SDK)
+    - type (optional): inflow submit type: "DEPOSIT" | "REPAY"
 
   Response: { "success": true, "txid": string }
 }
