@@ -4,6 +4,8 @@ import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import type {
   ActivityState,
   AssetPrices,
+  Chain,
+  InflowSubmitType,
   LiquidiumClient,
   Pool,
   QuoteRequest,
@@ -485,11 +487,14 @@ const SDK_METHODS: MethodDefinition[] = [
   {
     id: "lending.submitInflow",
     label: "lending.submitInflow",
-    defaultArgs: '{\n  "txid": "replace-with-txid"\n}',
+    defaultArgs:
+      '{\n  "txid": "replace-with-txid",\n  "chain": "BTC",\n  "type": "DEPOSIT"\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
       return await client.lending.submitInflow({
         txid: expectNonEmptyString(args.txid, "txid"),
+        chain: expectOptionalChain(args.chain, "chain"),
+        type: expectOptionalInflowSubmitType(args.type, "type"),
       });
     },
   },
@@ -886,6 +891,17 @@ function expectChain(value: unknown, fieldName: string): "BTC" | "ETH" {
   throw new Error(`${fieldName} must be BTC or ETH.`);
 }
 
+function expectOptionalChain(
+  value: unknown,
+  fieldName: string
+): Chain | undefined {
+  if (value === undefined || value === null) {
+    return undefined;
+  }
+
+  return expectChain(value, fieldName);
+}
+
 function expectSupplyAction(
   value: unknown,
   fieldName: string
@@ -897,6 +913,22 @@ function expectSupplyAction(
   }
 
   throw new Error(`${fieldName} must be deposit or repayment.`);
+}
+
+function expectOptionalInflowSubmitType(
+  value: unknown,
+  fieldName: string
+): InflowSubmitType | undefined {
+  const type = expectOptionalString(value, fieldName)?.toUpperCase();
+  if (!type) {
+    return undefined;
+  }
+
+  if (type === "DEPOSIT" || type === "REPAY") {
+    return type;
+  }
+
+  throw new Error(`${fieldName} must be DEPOSIT or REPAY.`);
 }
 
 function expectOptionalActivityState(

@@ -5,6 +5,7 @@ export type {
   CanisterIds,
   Chain,
   Environment,
+  InflowSubmitType,
   LiquidiumClientConfig,
   MarketAsset,
   MarketChain,

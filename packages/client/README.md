@@ -115,7 +115,11 @@ const status = await client.activities.getStatus({
 });
 
 // Inflow reporting (requires apiBaseUrl)
-await client.lending.submitInflow({ txid: "<broadcast-txid>" });
+await client.lending.submitInflow({
+  txid: "<broadcast-txid>",
+  chain: "BTC",
+  type: "DEPOSIT",
+});
 
 // Supply flow: returns a receipt; caller polls confirmation state themselves.
 const supplyFlow = await client.lending.supply({

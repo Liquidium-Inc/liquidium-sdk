@@ -89,7 +89,7 @@ client.lending.prepareWithdraw(...);
 client.lending.borrow(...);
 client.lending.withdraw(...);
 client.lending.supply(...);
-client.lending.submitInflow(...);    // requires apiBaseUrl
+client.lending.submitInflow({ txid, chain: "BTC", type: "DEPOSIT" }); // requires apiBaseUrl
 ```
 
 ### positions
