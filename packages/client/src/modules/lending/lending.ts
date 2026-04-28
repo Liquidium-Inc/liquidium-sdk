@@ -702,7 +702,7 @@ export class LendingModule {
       maxAttempts: SUBMIT_INFLOW_MAX_ATTEMPTS,
       initialRetryDelayMs: SUBMIT_INFLOW_INITIAL_RETRY_DELAY_MS,
       backoffMultiplier: SUBMIT_INFLOW_RETRY_BACKOFF_MULTIPLIER,
-      shouldRetryError: isRetriableInflowNotFoundError,
+      shouldRetryError: isRetriableInflowSubmitError,
     });
   }
 
@@ -931,16 +931,12 @@ async function delay(timeoutMs: number): Promise<void> {
   await new Promise<void>((resolve) => setTimeout(resolve, timeoutMs));
 }
 
-function isRetriableInflowNotFoundError(error: unknown): boolean {
+function isRetriableInflowSubmitError(error: unknown): boolean {
   if (!(error instanceof LiquidiumError)) {
     return false;
   }
 
-  if (error.code !== LiquidiumErrorCode.SERVICE_UNAVAILABLE) {
-    return false;
-  }
-
-  return /not found/i.test(error.message);
+  return error.code === LiquidiumErrorCode.SERVICE_UNAVAILABLE;
 }
 
 function resolveSupplyMechanism(params: {
@@ -993,12 +989,12 @@ function getDefaultSubmitInflowRequest(params: {
   action: SupplyAction;
   chain: string;
 }): Omit<SubmitInflowRequest, "txid"> | undefined {
-  if (params.chain !== Chain.ETH) {
+  if (params.chain !== Chain.BTC && params.chain !== Chain.ETH) {
     return undefined;
   }
 
   return {
-    chain: Chain.ETH,
+    chain: params.chain,
     type:
       params.action === SupplyAction.repayment
         ? InflowSubmitType.REPAY

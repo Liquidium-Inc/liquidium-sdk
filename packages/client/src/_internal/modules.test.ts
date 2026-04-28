@@ -2314,7 +2314,11 @@ describe("LendingModule", () => {
       "https://app.liquidium.fi/api/sdk/v1/inflow",
       expect.objectContaining({
         method: "POST",
-        body: JSON.stringify({ txid }),
+        body: JSON.stringify({
+          chain: "BTC",
+          type: "DEPOSIT",
+          txid,
+        }),
       })
     );
   });
@@ -2397,12 +2401,16 @@ describe("LendingModule", () => {
       "https://app.liquidium.fi/api/sdk/v1/inflow",
       expect.objectContaining({
         method: "POST",
-        body: JSON.stringify({ txid }),
+        body: JSON.stringify({
+          txid,
+          chain: "BTC",
+          type: "DEPOSIT",
+        }),
       })
     );
   });
 
-  test("retries BTC inflow submission when txid is not indexed yet", async () => {
+  test("retries BTC inflow submission when the API temporarily fails", async () => {
     // given
     const txid = "retry-submit-txid";
     vi.spyOn(Actor, "createActor")
@@ -2442,12 +2450,17 @@ describe("LendingModule", () => {
       } as never);
     const fetchSpy = vi.spyOn(globalThis, "fetch");
     fetchSpy.mockResolvedValueOnce(
-      new Response(JSON.stringify({ message: "not found" }), {
-        status: 500,
-        headers: {
-          "content-type": "application/json",
-        },
-      })
+      new Response(
+        JSON.stringify({
+          message: "An internal error occurred. Please contact support.",
+        }),
+        {
+          status: 500,
+          headers: {
+            "content-type": "application/json",
+          },
+        }
+      )
     );
     fetchSpy.mockResolvedValueOnce(
       new Response(JSON.stringify({ success: true, txid }), {
@@ -2479,6 +2492,96 @@ describe("LendingModule", () => {
     expect(flow.txid).toBe(txid);
     expect(sendBtcTransaction).toHaveBeenCalledTimes(1);
     expect(fetchSpy).toHaveBeenCalledTimes(2);
+    expect(fetchSpy).toHaveBeenNthCalledWith(
+      1,
+      "https://app.liquidium.fi/api/sdk/v1/inflow",
+      expect.objectContaining({
+        body: JSON.stringify({
+          txid,
+          chain: "BTC",
+          type: "DEPOSIT",
+        }),
+      })
+    );
+  });
+
+  test("auto-submits BTC repayment inflows with the REPAY submit type", async () => {
+    // given
+    const txid = "auto-repay-txid";
+    vi.spyOn(Actor, "createActor")
+      .mockReturnValueOnce({
+        list_pools: vi.fn().mockResolvedValue([
+          {
+            optimal_utilization_rate: 80n,
+            principal: {
+              toString: () => BTC_POOL_ID,
+              toText: () => BTC_POOL_ID,
+            },
+            total_generated_interest_snapshot: 0n,
+            supply_cap: [],
+            same_asset_borrowing: [],
+            asset: { BTC: null },
+            rate_slope_before: 1n,
+            borrow_cap: [],
+            total_debt_at_last_sync: 0n,
+            chain: { BTC: null },
+            rate_slope_after: 2n,
+            reserve_factor: 100n,
+            last_updated: [],
+            lending_index: 300n,
+            protocol_liquidation_fee: 50n,
+            borrow_index: 400n,
+            base_rate: 5n,
+            frozen: false,
+            liquidation_bonus: 200n,
+            liquidation_threshold: 7_500n,
+            max_ltv: 7_000n,
+            total_supply_at_last_sync: 50_000n,
+          },
+        ]),
+      } as never)
+      .mockReturnValueOnce({
+        get_btc_address: vi.fn().mockResolvedValue("bc1qexamplerepayaddress"),
+      } as never);
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      new Response(JSON.stringify({ success: true, txid }), {
+        status: 200,
+        headers: {
+          "content-type": "application/json",
+        },
+      })
+    );
+    const sendBtcTransaction = vi.fn().mockResolvedValue(txid);
+    const client = LiquidiumClient.create({
+      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
+    });
+
+    // when
+    const flow = await client.lending.supply({
+      profileId: "aaaaa-aa",
+      poolId: BTC_POOL_ID,
+      action: "repayment",
+      amount: 100_000n,
+      walletAdapter: {
+        sendBtcTransaction,
+      },
+      account: "bc1qsender",
+    });
+
+    // then
+    expect(flow.type).toBe("transfer");
+    expect(flow.txid).toBe(txid);
+    expect(sendBtcTransaction).toHaveBeenCalledTimes(1);
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "https://app.liquidium.fi/api/sdk/v1/inflow",
+      expect.objectContaining({
+        body: JSON.stringify({
+          txid,
+          chain: "BTC",
+          type: "REPAY",
+        }),
+      })
+    );
   });
 
   test("throws when wallet-executed supply adapter cannot send BTC", async () => {
