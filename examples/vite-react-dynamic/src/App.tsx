@@ -1,7 +1,10 @@
 import { useDynamicContext, useIsLoggedIn } from "@dynamic-labs/sdk-react-core";
 import type {
+  Activity,
+  ActivityState,
   ApySample,
   AssetPrices,
+  GetActivityStatusResponse,
   OutflowDetails,
   Pool,
   QuoteResult,
@@ -42,6 +45,7 @@ const DEFAULT_BORROW_AMOUNT = "2000";
 const DEFAULT_TARGET_LTV_BPS = 3200;
 const MIN_LTV_BPS = 1000;
 const DEFAULT_HISTORY_LIMIT = 20;
+const DEFAULT_ACTIVITY_STATE: ActivityState = "active";
 
 export default function App() {
   const isLoggedIn = useIsLoggedIn();
@@ -71,6 +75,15 @@ export default function App() {
   const [borrowResultStatus, setBorrowResultStatus] = useState<string | null>(
     null
   );
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [activityStateFilter, setActivityStateFilter] = useState<ActivityState>(
+    DEFAULT_ACTIVITY_STATE
+  );
+  const [activityStatusIdInput, setActivityStatusIdInput] = useState("");
+  const [activityStatusResult, setActivityStatusResult] =
+    useState<GetActivityStatusResponse | null>(null);
+  const [isActivitiesLoading, setIsActivitiesLoading] = useState(false);
+  const [isActivityStatusLoading, setIsActivityStatusLoading] = useState(false);
   const [userPositionSummary, setUserPositionSummary] =
     useState<UserPositionSummary | null>(null);
   const [userReserves, setUserReserves] = useState<UserReserve[]>([]);
@@ -307,6 +320,8 @@ export default function App() {
     setTransactionHistory([]);
     setHistoryNextCursor(null);
     setLiquidationHistory([]);
+    setActivities([]);
+    setActivityStatusResult(null);
   }, [profileId]);
 
   async function runAction(action: () => Promise<void>) {
@@ -433,6 +448,24 @@ export default function App() {
 
         setBorrowResult(nextBorrowResult);
         setBorrowResultStatus(null);
+        setActivityStatusIdInput(nextBorrowResult.id);
+        setActivityStatusResult({
+          found: true,
+          activity: {
+            id: nextBorrowResult.id,
+            direction: "outflow",
+            kind: "borrow",
+            status: nextBorrowResult.txid ? "sent" : "pending",
+            poolId: selectedBorrowPool.id,
+            asset: selectedBorrowPool.asset,
+            chain: selectedBorrowPool.chain === "BTC" ? "BTC" : "ETH",
+            amount: nextBorrowResult.amount,
+            timestampMs: Date.now(),
+            txid: nextBorrowResult.txid ?? null,
+            confirmations: null,
+            requiredConfirmations: null,
+          },
+        });
         setStatusMessage(
           nextBorrowResult.txid
             ? `Created borrow outflow ${nextBorrowResult.id} with transaction id ${nextBorrowResult.txid}.`
@@ -443,6 +476,77 @@ export default function App() {
         throw error;
       }
     });
+  }
+
+  async function handleLoadActivities() {
+    if (!profileId) {
+      return;
+    }
+
+    setIsActivitiesLoading(true);
+
+    try {
+      const client = createLiquidiumClient();
+      const nextActivities = await client.activities.list({
+        profileId,
+        state: activityStateFilter,
+      });
+
+      setActivities(nextActivities);
+      setStatusMessage(
+        `Loaded ${nextActivities.length} ${activityStateFilter} activities.`
+      );
+    } catch (error) {
+      setErrorMessage(formatLiquidiumError(error));
+    } finally {
+      setIsActivitiesLoading(false);
+    }
+  }
+
+  async function handleLoadActivityStatus() {
+    const activityId = activityStatusIdInput.trim();
+    if (!activityId) {
+      setErrorMessage("Enter an activity id or txid first.");
+      return;
+    }
+
+    await handleLoadActivityStatusById(activityId);
+  }
+
+  async function handleLoadBorrowActivityStatus() {
+    if (!borrowResult) {
+      return;
+    }
+
+    setActivityStatusIdInput(borrowResult.id);
+    await handleLoadActivityStatusById(borrowResult.id);
+  }
+
+  async function handleLoadActivityStatusById(activityId: string) {
+    if (!profileId) {
+      return;
+    }
+
+    setIsActivityStatusLoading(true);
+
+    try {
+      const client = createLiquidiumClient();
+      const nextStatus = await client.activities.getStatus({
+        profileId,
+        id: activityId,
+      });
+
+      setActivityStatusResult(nextStatus);
+      setStatusMessage(
+        nextStatus.found
+          ? `Loaded status for ${nextStatus.activity.id}: ${nextStatus.activity.status}.`
+          : `No activity found for ${nextStatus.id}.`
+      );
+    } catch (error) {
+      setErrorMessage(formatLiquidiumError(error));
+    } finally {
+      setIsActivityStatusLoading(false);
+    }
   }
 
   async function handleRefreshPositionSummary() {
@@ -722,6 +826,88 @@ export default function App() {
             : borrowResultStatus
               ? borrowResultStatus
               : "Borrow result will appear here after submission."}
+        </pre>
+      </section>
+
+      <section className="section">
+        <h2>Activity tracking</h2>
+        <p>
+          Query one receipt by id, or list profile activities by lifecycle
+          state. Borrow and withdraw return receipt ids; supply and repay can be
+          queried by txid.
+        </p>
+
+        <div className="field-grid">
+          <label>
+            Activity state
+            <select
+              value={activityStateFilter}
+              onChange={(event) =>
+                setActivityStateFilter(event.target.value as ActivityState)
+              }
+            >
+              <option value="active">Active</option>
+              <option value="completed">Completed</option>
+              <option value="all">All</option>
+            </select>
+          </label>
+
+          <label>
+            Activity id or txid
+            <input
+              value={activityStatusIdInput}
+              onChange={(event) => setActivityStatusIdInput(event.target.value)}
+              placeholder="Receipt id or transaction id"
+            />
+          </label>
+        </div>
+
+        <div className="actions">
+          <button
+            disabled={!profileId || isActivitiesLoading}
+            onClick={() => void handleLoadActivities()}
+            type="button"
+          >
+            load activities
+          </button>
+          <button
+            disabled={
+              !profileId ||
+              !activityStatusIdInput.trim() ||
+              isActivityStatusLoading
+            }
+            onClick={() => void handleLoadActivityStatus()}
+            type="button"
+          >
+            refresh status
+          </button>
+          <button
+            disabled={!profileId || !borrowResult || isActivityStatusLoading}
+            onClick={() => void handleLoadBorrowActivityStatus()}
+            type="button"
+          >
+            refresh borrow status
+          </button>
+        </div>
+
+        {isActivitiesLoading ? <p>Loading activities...</p> : null}
+        {isActivityStatusLoading ? <p>Loading activity status...</p> : null}
+        {!profileId ? (
+          <p>Create or resolve a profile to load activities.</p>
+        ) : null}
+
+        <h3>Activity status</h3>
+        <pre className="output">
+          {activityStatusResult
+            ? JSON.stringify(activityStatusResult, bigintJsonReplacer, 2)
+            : "No activity status loaded yet."}
+        </pre>
+
+        <h3>Activity list</h3>
+        <pre className="output">
+          {activities.length > 0
+            ? JSON.stringify(activities, bigintJsonReplacer, 2)
+            : "No activities loaded yet."}
         </pre>
       </section>
 

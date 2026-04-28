@@ -2,6 +2,7 @@ import { isBitcoinWallet } from "@dynamic-labs/bitcoin";
 import { isEthereumWallet } from "@dynamic-labs/ethereum";
 import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import type {
+  ActivityState,
   AssetPrices,
   LiquidiumClient,
   Pool,
@@ -215,14 +216,27 @@ const SDK_METHODS: MethodDefinition[] = [
     },
   },
   {
-    id: "pending.listPendingMovements",
-    label: "pending.listPendingMovements",
-    defaultArgs: '{\n  "profileId": "aaaaa-aa"\n}',
+    id: "activities.list",
+    label: "activities.list",
+    defaultArgs: '{\n  "profileId": "aaaaa-aa",\n  "state": "active"\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
-      return await client.pending.listPendingMovements(
-        expectNonEmptyString(args.profileId, "profileId")
-      );
+      return await client.activities.list({
+        profileId: expectNonEmptyString(args.profileId, "profileId"),
+        state: expectOptionalActivityState(args.state, "state"),
+      });
+    },
+  },
+  {
+    id: "activities.getStatus",
+    label: "activities.getStatus",
+    defaultArgs: '{\n  "profileId": "aaaaa-aa",\n  "id": "receipt-id"\n}',
+    execute: async (client, input) => {
+      const args = expectObject(input);
+      return await client.activities.getStatus({
+        profileId: expectNonEmptyString(args.profileId, "profileId"),
+        id: expectNonEmptyString(args.id, "id"),
+      });
     },
   },
   {
@@ -883,6 +897,22 @@ function expectSupplyAction(
   }
 
   throw new Error(`${fieldName} must be deposit or repayment.`);
+}
+
+function expectOptionalActivityState(
+  value: unknown,
+  fieldName: string
+): ActivityState | undefined {
+  const state = expectOptionalString(value, fieldName);
+  if (!state) {
+    return undefined;
+  }
+
+  if (state === "active" || state === "completed" || state === "all") {
+    return state;
+  }
+
+  throw new Error(`${fieldName} must be active, completed, or all.`);
 }
 
 function getWalletChainLabel(

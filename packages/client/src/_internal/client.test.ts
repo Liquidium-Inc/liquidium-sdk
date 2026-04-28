@@ -15,7 +15,7 @@ describe("LiquidiumClient", () => {
     expect(client.lending).toBeDefined();
     expect(client.positions).toBeDefined();
     expect(client.market).toBeDefined();
-    expect(client.pending).toBeDefined();
+    expect(client.activities).toBeDefined();
     expect(client.history).toBeDefined();
   });
 

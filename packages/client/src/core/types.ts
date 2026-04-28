@@ -4,8 +4,8 @@ import type { Identity } from "@dfinity/agent";
  * Runtime options for `LiquidiumClient.create`.
  *
  * Canister-backed reads and writes work with `{}` defaults. Set `apiBaseUrl`
- * when using HTTP features: user/pool history, pending movements, inflow
- * reporting, inflow status, and contract-interaction `supply` planning.
+ * when using HTTP features: user/pool history, activities, inflow
+ * reporting, and contract-interaction `supply` planning.
  */
 export interface LiquidiumClientConfig {
   /** Preset canister IDs (`mainnet` or `staging`). */
@@ -16,7 +16,7 @@ export interface LiquidiumClientConfig {
   identity?: Identity;
   /**
    * Base URL for the Liquidium SDK HTTP API (e.g. `https://app.example.com/api/sdk`).
-   * Required for history, pending, inflow endpoints, and ETH stablecoin supply context.
+   * Required for history, activities, inflow endpoints, and ETH stablecoin supply context.
    */
   apiBaseUrl?: string;
   /** Extra headers sent with every SDK API request. */

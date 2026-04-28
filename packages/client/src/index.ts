@@ -35,6 +35,18 @@ export type {
   SignatureInfo,
 } from "./modules/accounts";
 export type {
+  Activity,
+  GetActivityStatusRequest,
+  GetActivityStatusResponse,
+  ListActivitiesRequest,
+} from "./modules/activities";
+export {
+  ActivityDirection,
+  ActivityKind,
+  ActivityState,
+  ActivityStatus,
+} from "./modules/activities";
+export type {
   ActivitiesRequest,
   ApySample,
   BorrowApyHistoryRequest,
@@ -74,18 +86,6 @@ export type {
   WithdrawSubmitSignatureInfo,
 } from "./modules/lending";
 export type { AssetPrices, Pool } from "./modules/market";
-export type {
-  PendingInflowMovement,
-  PendingMovement,
-  PendingOutflowMovement,
-} from "./modules/pending";
-export {
-  PendingInflowKind,
-  PendingInflowStage,
-  PendingMovementDirection,
-  PendingOutflowKind,
-  PendingOutflowStatus,
-} from "./modules/pending";
 export type {
   BorrowingPower,
   HealthFactor,

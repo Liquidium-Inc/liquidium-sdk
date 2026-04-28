@@ -1,6 +1,6 @@
 ---
 name: liquidium-sdk-integration
-description: "Use this skill when working with the Liquidium TypeScript SDK, `@liquidium/client`, `LiquidiumClient`, wallet adapters, Liquidium profile creation, market data, quotes, borrowing, supply flows, positions, pending movements, or history. Use it whenever the user wants to integrate Liquidium into a TypeScript, React, or Vite app, or asks how to call Liquidium SDK methods correctly."
+description: "Use this skill when working with the Liquidium TypeScript SDK, `@liquidium/client`, `LiquidiumClient`, wallet adapters, Liquidium profile creation, market data, quotes, borrowing, supply flows, positions, activities, or history. Use it whenever the user wants to integrate Liquidium into a TypeScript, React, or Vite app, or asks how to call Liquidium SDK methods correctly."
 license: MIT
 metadata:
   title: Liquidium SDK Integration
@@ -19,7 +19,7 @@ import { LiquidiumClient } from "@liquidium/client";
 const client = LiquidiumClient.create({});
 ```
 
-The client exposes: `accounts`, `lending`, `positions`, `market`, `pending`, `history`, `quote`.
+The client exposes: `accounts`, `lending`, `positions`, `market`, `activities`, `history`, `quote`.
 
 ## Setup
 
@@ -39,7 +39,7 @@ const client = LiquidiumClient.create({
 
 **Config requirements:**
 - `environment`: sets the canister preset (`mainnet` or `staging`)
-- `apiBaseUrl`: required for history, pending movements, inflow reporting, and contract-interaction `supply(...)` (ETH stablecoin pools need backend approval planning). Not required for `borrow(...)` or `withdraw(...)`, which submit through the canister only
+- `apiBaseUrl`: required for history, activities, inflow reporting, and contract-interaction `supply(...)` (ETH stablecoin pools need backend approval planning). Not required for `borrow(...)` or `withdraw(...)`, which submit through the canister only
 - `identity` / `icHost`: custom ICP agent configuration
 
 ## Module Guide
@@ -106,9 +106,14 @@ client.positions.getUserReserves(profileId);         // per-reserve view joined 
 client.positions.getMaxRepayAmount(profileId, poolId, bufferBps?); // full-repay amount with accrual buffer
 ```
 
-### pending
+### activities
 
-Pending inflows and outflows. Requires `apiBaseUrl`.
+Receipt status and active/completed activity lists. Requires `apiBaseUrl`.
+
+```ts
+client.activities.list({ profileId, state: "active" });
+client.activities.getStatus({ profileId, id });
+```
 
 ### history
 
@@ -264,7 +269,7 @@ This flow requires `apiBaseUrl` because the SDK needs backend approval planning.
 
 ## Common Mistakes
 
-1. `LiquidiumClient.create({})` does not cover every method. History, pending, inflow reporting, inflow status polling, and contract-interaction `supply(...)` need `apiBaseUrl`. `borrow(...)` and `withdraw(...)` do not.
+1. `LiquidiumClient.create({})` does not cover every method. History, activities, inflow reporting, and contract-interaction `supply(...)` need `apiBaseUrl`. `borrow(...)` and `withdraw(...)` do not.
 2. Prepare methods return signable actions, not completed actions. `prepareCreateProfile`, `prepareBorrow`, and `prepareWithdraw` still need signing and submission.
 3. Build a wallet adapter with only the methods the selected flow needs. Avoid adding `signMessage`, `sendBtcTransaction`, or `sendEthTransaction` unless the flow uses them.
 4. Skip the quote step in borrow UX only when you explicitly want a lower-level flow.
