@@ -96,7 +96,7 @@ const outflow = await borrowAction.submit({
 
 // Borrow with the direct convenience method. Returns the instant receipt
 // from the canister; `txid` may be null initially and can be resolved later
-// via a dedicated polling method (not yet exposed).
+// via activities status reads.
 const outflowWithConvenience = await client.lending.borrow({
   profileId: "<liquidium-profile-id>",
   poolId: btcPool.id,
@@ -107,8 +107,12 @@ const outflowWithConvenience = await client.lending.borrow({
   signerWalletAdapter: walletAdapter,
 });
 
-// Pending movements
-const pending = await client.pending.listPendingMovements("profile-id");
+// Active activities and receipt status
+const activities = await client.activities.list({ profileId: "profile-id" });
+const status = await client.activities.getStatus({
+  profileId: "profile-id",
+  id: outflowWithConvenience.id,
+});
 
 // Inflow reporting (requires apiBaseUrl)
 await client.lending.submitInflow({ txid: "<broadcast-txid>" });
@@ -179,7 +183,7 @@ Environment presets:
 - `client.lending.borrow({ ..., signerChain, signerWalletAdapter })` - sign and submit a borrow request in one call; resolves with the instant receipt (txid may be null until the canister assigns one)
 - `client.lending.withdraw({ ..., signerChain, signerWalletAdapter })` - sign and submit a withdraw request in one call
 
-These calls use the lending canister only; they do not require `apiBaseUrl`. To show a chain transaction id once it exists, use `client.history` (which does require `apiBaseUrl`) or your own polling.
+These calls use the lending canister only; they do not require `apiBaseUrl`. To show status or a chain transaction id once it exists, use `client.activities` (which does require `apiBaseUrl`).
 
 ### Wallet adapters
 
@@ -194,8 +198,13 @@ These calls use the lending canister only; they do not require `apiBaseUrl`. To 
 - `client.lending` - Supply, create borrow actions, repay, withdraw
 - `client.positions` - Position reads and health factor
 - `client.market` - Dynamic pool data, pool selection, and asset prices
-- `client.pending` - Pending inflows and outflows
+- `client.activities` - Receipt status and active/completed activity lists
 - `client.history` - User and pool history
+
+### Activity tracking
+
+- `client.activities.list({ profileId, state: "active" })` - list active, completed, or all activities for a profile
+- `client.activities.getStatus({ profileId, id })` - fetch one receipt by receipt id or txid
 
 ### Supply tracking flow
 

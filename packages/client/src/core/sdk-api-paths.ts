@@ -13,9 +13,20 @@ export const SdkApiQueryParam = {
   market: "market",
   poolId: "poolId",
   profileId: "profileId",
+  state: "state",
   to: "to",
   walletAddress: "walletAddress",
 } as const;
+
+type BuildActivitiesPathRequest = {
+  profileId: string;
+  state?: string;
+};
+
+type BuildActivityStatusPathRequest = {
+  profileId: string;
+  id: string;
+};
 
 const HISTORY_POOL = `${SDK_API_V1_PREFIX}/history/pool`;
 const HISTORY_RATES = `${SDK_API_V1_PREFIX}/history/rates`;
@@ -58,11 +69,29 @@ export function buildHistoryUserLiquidationsPath(
   return qs ? `${base}?${qs}` : base;
 }
 
-export function buildPendingPath(profileId: string): string {
+export function buildActivitiesPath(
+  request: BuildActivitiesPathRequest
+): string {
   const query = new URLSearchParams({
-    [SdkApiQueryParam.profileId]: profileId,
+    [SdkApiQueryParam.profileId]: request.profileId,
   });
-  return `${SDK_API_V1_PREFIX}/pending?${query.toString()}`;
+  if (request.state) {
+    query.set(SdkApiQueryParam.state, request.state);
+  }
+
+  return `${SDK_API_V1_PREFIX}/activities?${query.toString()}`;
+}
+
+export function buildActivityStatusPath(
+  request: BuildActivityStatusPathRequest
+): string {
+  const query = new URLSearchParams({
+    [SdkApiQueryParam.profileId]: request.profileId,
+  });
+
+  return `${SDK_API_V1_PREFIX}/activities/${encodeURIComponent(
+    request.id
+  )}/status?${query.toString()}`;
 }
 
 export function buildEvmSupplyContextPath(query: URLSearchParams): string {

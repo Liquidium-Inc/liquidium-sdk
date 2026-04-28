@@ -9,10 +9,10 @@ import type { CanisterContext } from "./core/transports/canister-context";
 import { createCanisterContext } from "./core/transports/canister-context";
 import type { LiquidiumClientConfig } from "./core/types";
 import { AccountsModule } from "./modules/accounts";
+import { ActivitiesModule } from "./modules/activities";
 import { HistoryModule } from "./modules/history";
 import { LendingModule } from "./modules/lending";
 import { MarketModule } from "./modules/market";
-import { PendingModule } from "./modules/pending";
 import { PositionsModule } from "./modules/positions";
 import { QuoteModule } from "./modules/quote";
 
@@ -30,8 +30,8 @@ export class LiquidiumClient {
   readonly positions: PositionsModule;
   /** Pool list, prices, pool rate lookups. */
   readonly market: MarketModule;
-  /** Pending inflows/outflows (requires `apiBaseUrl` when implemented). */
-  readonly pending: PendingModule;
+  /** Receipt-oriented activity status and activity lists. */
+  readonly activities: ActivitiesModule;
   /** Pool and user history (requires `apiBaseUrl`). */
   readonly history: HistoryModule;
   /** Pure quote helpers from market inputs. */
@@ -64,7 +64,7 @@ export class LiquidiumClient {
     this.lending = new LendingModule(this.canisterContext, this.apiClient);
     this.market = new MarketModule(this.canisterContext, this.apiClient);
     this.positions = new PositionsModule(this.canisterContext, this.market);
-    this.pending = new PendingModule(this.canisterContext, this.apiClient);
+    this.activities = new ActivitiesModule(this.apiClient);
     this.history = new HistoryModule(this.apiClient);
     this.quote = new QuoteModule();
   }

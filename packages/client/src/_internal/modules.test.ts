@@ -606,6 +606,166 @@ describe("HistoryModule", () => {
   });
 });
 
+describe("ActivitiesModule", () => {
+  test("throws SERVICE_UNAVAILABLE when no apiBaseUrl configured", async () => {
+    // given
+    const client = LiquidiumClient.create({});
+
+    // when
+
+    // then
+    await expect(
+      client.activities.list({ profileId: "profile-1" })
+    ).rejects.toMatchObject({
+      code: LiquidiumErrorCode.SERVICE_UNAVAILABLE,
+    });
+  });
+
+  test("lists activities through the sdk api", async () => {
+    // given
+    const ACTIVITY_AMOUNT = "100000";
+    const ACTIVITY_AMOUNT_BASE_UNITS = 100000n;
+    const ACTIVITY_TIMESTAMP_MS = 1775001600000;
+    const ACTIVITY_CONFIRMATIONS = 1;
+    const ACTIVITY_REQUIRED_CONFIRMATIONS = 6;
+    const responsePayload = {
+      success: true as const,
+      activities: [
+        {
+          id: "activity-1",
+          direction: "inflow" as const,
+          kind: "deposit" as const,
+          status: "pending" as const,
+          poolId: "pool-1",
+          asset: "BTC",
+          chain: "BTC" as const,
+          amount: ACTIVITY_AMOUNT,
+          timestampMs: ACTIVITY_TIMESTAMP_MS,
+          txid: "tx-1",
+          confirmations: ACTIVITY_CONFIRMATIONS,
+          requiredConfirmations: ACTIVITY_REQUIRED_CONFIRMATIONS,
+        },
+      ],
+    };
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify(responsePayload), {
+        status: 200,
+        headers: {
+          "content-type": "application/json",
+        },
+      })
+    );
+    const client = LiquidiumClient.create({
+      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
+    });
+
+    // when
+    const result = await client.activities.list({
+      profileId: "profile-1",
+      state: "active",
+    });
+
+    // then
+    expect(result).toEqual([
+      {
+        id: "activity-1",
+        direction: "inflow",
+        kind: "deposit",
+        status: "pending",
+        poolId: "pool-1",
+        asset: "BTC",
+        chain: "BTC",
+        amount: ACTIVITY_AMOUNT_BASE_UNITS,
+        timestampMs: ACTIVITY_TIMESTAMP_MS,
+        txid: "tx-1",
+        confirmations: ACTIVITY_CONFIRMATIONS,
+        requiredConfirmations: ACTIVITY_REQUIRED_CONFIRMATIONS,
+      },
+    ]);
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "https://app.liquidium.fi/api/sdk/v1/activities?profileId=profile-1&state=active",
+      {
+        method: "GET",
+        headers: undefined,
+        body: undefined,
+        signal: expect.any(AbortSignal),
+      }
+    );
+  });
+
+  test("gets activity status by receipt id", async () => {
+    // given
+    const ACTIVITY_AMOUNT = "50000";
+    const ACTIVITY_AMOUNT_BASE_UNITS = 50000n;
+    const ACTIVITY_TIMESTAMP_MS = 1775001600000;
+    const ACTIVITY_CONFIRMATIONS = 0;
+    const ACTIVITY_REQUIRED_CONFIRMATIONS = 1;
+    const responsePayload = {
+      success: true as const,
+      found: true as const,
+      activity: {
+        id: "activity-1",
+        direction: "outflow" as const,
+        kind: "borrow" as const,
+        status: "sent" as const,
+        poolId: "pool-1",
+        asset: "BTC",
+        chain: "BTC" as const,
+        amount: ACTIVITY_AMOUNT,
+        timestampMs: ACTIVITY_TIMESTAMP_MS,
+        txid: "tx-1",
+        confirmations: ACTIVITY_CONFIRMATIONS,
+        requiredConfirmations: ACTIVITY_REQUIRED_CONFIRMATIONS,
+      },
+    };
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify(responsePayload), {
+        status: 200,
+        headers: {
+          "content-type": "application/json",
+        },
+      })
+    );
+    const client = LiquidiumClient.create({
+      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
+    });
+
+    // when
+    const result = await client.activities.getStatus({
+      profileId: "profile-1",
+      id: "activity-1",
+    });
+
+    // then
+    expect(result).toEqual({
+      found: true,
+      activity: {
+        id: "activity-1",
+        direction: "outflow",
+        kind: "borrow",
+        status: "sent",
+        poolId: "pool-1",
+        asset: "BTC",
+        chain: "BTC",
+        amount: ACTIVITY_AMOUNT_BASE_UNITS,
+        timestampMs: ACTIVITY_TIMESTAMP_MS,
+        txid: "tx-1",
+        confirmations: ACTIVITY_CONFIRMATIONS,
+        requiredConfirmations: ACTIVITY_REQUIRED_CONFIRMATIONS,
+      },
+    });
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "https://app.liquidium.fi/api/sdk/v1/activities/activity-1/status?profileId=profile-1",
+      {
+        method: "GET",
+        headers: undefined,
+        body: undefined,
+        signal: expect.any(AbortSignal),
+      }
+    );
+  });
+});
+
 describe("MarketModule", () => {
   test("gets pools from the lending canister", async () => {
     // given
