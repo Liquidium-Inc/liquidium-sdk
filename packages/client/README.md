@@ -121,6 +121,12 @@ await client.lending.submitInflow({
   type: "DEPOSIT",
 });
 
+// Optional fee estimate for ETH stablecoin deposit-address inflows
+const inflowFee = await client.lending.estimateInflowFee({
+  asset: "USDT",
+  chain: "ETH",
+});
+
 // Supply flow: returns a receipt; caller polls confirmation state themselves.
 const supplyFlow = await client.lending.supply({
   profileId: "<liquidium-profile-id>",
@@ -134,10 +140,10 @@ if (supplyFlow.type === "transfer" && supplyFlow.target.type === "nativeAddress"
 
 await supplyFlow.submit({ txid: "<broadcast-txid>" });
 
-// ETH stablecoin supply / repay auto-routes to the contract-interaction path
+// ETH stablecoin supply / repay defaults to the deposit-address transfer path
 const stablecoinFlow = await client.lending.supply({
   profileId: "<liquidium-profile-id>",
-  poolId: "<eth-usdt-or-usdc-pool-id>",
+  poolId: "<eth-usdt-pool-id>",
   action: "deposit",
   account: walletAddress,
   amount: 10_000_000n,
@@ -146,6 +152,13 @@ const stablecoinFlow = await client.lending.supply({
       wallet.sendTransaction(transaction),
   },
 });
+
+if (
+  stablecoinFlow.type === "transfer" &&
+  stablecoinFlow.target.type === "nativeAddress"
+) {
+  const usdtDepositAddress = stablecoinFlow.target.address;
+}
 ```
 
 ## API
@@ -167,10 +180,12 @@ Environment presets:
 
 - `mainnet`
   - `btcPool`: `hkmli-faaaa-aaaar-qb4ba-cai`
+  - `ethDeposit`: `z5jz7-nyaaa-aaaar-qb6pq-cai`
   - `ercPool`: `hnnn4-iyaaa-aaaar-qb4bq-cai`
   - `lending`: `hyk4r-jqaaa-aaaar-qb4ca-cai`
 - `staging`
   - `btcPool`: `42svn-2yaaa-aaaae-qfcsq-cai`
+  - `ethDeposit`: `jncw6-6yaaa-aaaae-qgccq-cai`
   - `ercPool`: `7dcux-qqaaa-aaaae-qfc3a-cai`
   - `lending`: `nja4y-2yaaa-aaaae-qddxa-cai`
 
@@ -215,7 +230,8 @@ These calls use the lending canister only; they do not require `apiBaseUrl`. To 
 - `client.lending.prepareSupply(...)` auto-resolves the correct target and returns the raw `SupplyInstruction`.
 - `client.lending.supply(...)` returns a tracked `SupplyFlow` with `type: "transfer" | "contractInteraction"`.
 - Transfer-path inflows can auto-broadcast when `walletAdapter`, `account`, and `amount` are provided.
-- Contract-interaction inflows can auto-approve and auto-broadcast when `walletAdapter`, `account`, `amount`, and `apiBaseUrl` are provided.
+- ETH stablecoin inflows default to deposit-address transfers and do not need `apiBaseUrl` for target resolution or wallet broadcast.
+- Contract-interaction helpers remain available for lower-level integrations that explicitly call `getEvmSupplyContext(...)`.
 
 ## License
 

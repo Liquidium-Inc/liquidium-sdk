@@ -39,7 +39,7 @@ const client = LiquidiumClient.create({
 
 **Config requirements:**
 - `environment`: sets the canister preset (`mainnet` or `staging`)
-- `apiBaseUrl`: required for history, activities, inflow reporting, and contract-interaction `supply(...)` (ETH stablecoin pools need backend approval planning). Not required for `borrow(...)` or `withdraw(...)`, which submit through the canister only
+- `apiBaseUrl`: required for history, activities, inflow reporting, and lower-level contract-interaction planning. Not required for `borrow(...)`, `withdraw(...)`, or default ETH stablecoin deposit-address supply/repay targets
 - `identity` / `icHost`: custom ICP agent configuration
 
 ## Module Guide
@@ -89,6 +89,7 @@ client.lending.prepareWithdraw(...);
 client.lending.borrow(...);
 client.lending.withdraw(...);
 client.lending.supply(...);
+client.lending.estimateInflowFee({ asset: "USDT", chain: "ETH" });
 client.lending.submitInflow({ txid, chain: "BTC", type: "DEPOSIT" }); // requires apiBaseUrl
 ```
 
@@ -249,8 +250,9 @@ const autoBroadcastFlow = await client.lending.supply({
 });
 ```
 
-When the selected pool resolves to the contract-interaction path, the same
-`supply(...)` call auto-routes there:
+ETH stablecoin pools default to the deposit-address transfer path. With an ETH
+wallet adapter, the SDK sends an ERC-20 transfer directly to the generated
+deposit address:
 
 ```ts
 const supplyFlow = await client.lending.supply({
@@ -265,15 +267,17 @@ const supplyFlow = await client.lending.supply({
 });
 ```
 
-This flow requires `apiBaseUrl` because the SDK needs backend approval planning.
+This default flow does not require `apiBaseUrl`. Use lower-level
+`getEvmSupplyContext(...)` only if you are intentionally building the legacy
+contract-interaction flow.
 
 ## Common Mistakes
 
-1. `LiquidiumClient.create({})` does not cover every method. History, activities, inflow reporting, and contract-interaction `supply(...)` need `apiBaseUrl`. `borrow(...)` and `withdraw(...)` do not.
+1. `LiquidiumClient.create({})` does not cover every method. History, activities, inflow reporting, and lower-level contract-interaction planning need `apiBaseUrl`. Default ETH stablecoin deposit-address supply, `borrow(...)`, and `withdraw(...)` do not.
 2. Prepare methods return signable actions, not completed actions. `prepareCreateProfile`, `prepareBorrow`, and `prepareWithdraw` still need signing and submission.
 3. Build a wallet adapter with only the methods the selected flow needs. Avoid adding `signMessage`, `sendBtcTransaction`, or `sendEthTransaction` unless the flow uses them.
 4. Skip the quote step in borrow UX only when you explicitly want a lower-level flow.
-5. `client.lending.supply(...)` auto-routes by pool. BTC currently resolves to the transfer path, while ETH stablecoin pools resolve to the contract-interaction path.
+5. `client.lending.supply(...)` auto-routes by pool. BTC and ETH USDT pools currently resolve to deposit-address transfer targets by default.
 6. Handle existing profiles explicitly when account creation can race with existing state.
 7. Work from the public modules and names exported by `@liquidium/client`. Do not invent SDK methods.
 8. After `borrow(...)`, treat `outflow.id` as the user-visible reference immediately. Do not assume `outflow.txid` is set on the first response; resolve it later via history or a future SDK helper if you need the chain transaction id.

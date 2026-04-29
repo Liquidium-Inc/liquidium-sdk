@@ -1,0 +1,150 @@
+type Account = record { owner : principal; subaccount : opt blob };
+type AddressBinding = record { token_address : opt text; account : Account };
+type AssetRegisteredEvent = record {
+  decimals : nat32;
+  asset_address : text;
+  updated_existing : bool;
+  timestamp : nat64;
+  caller : principal;
+  symbol : text;
+};
+type BalanceDetectedEvent = record {
+  asset_type : DepositAssetType;
+  address : text;
+  account : Account;
+  timestamp : nat64;
+  queue_job_id : nat64;
+  amount : nat;
+};
+type BroadcastConfirmedEvent = record {
+  broadcast_key : text;
+  timestamp : nat64;
+  queue_job_id : opt nat64;
+  tx_hash : text;
+};
+type BroadcastRejectedEvent = record {
+  broadcast_key : text;
+  timestamp : nat64;
+  queue_job_id : opt nat64;
+  tx_hash : text;
+  reason : text;
+};
+type BroadcastSuccessEvent = record {
+  broadcast_key : text;
+  asset_type : DepositAssetType;
+  address : text;
+  account : Account;
+  timestamp : nat64;
+  queue_job_id : nat64;
+  tx_hash : text;
+  amount : nat;
+};
+type Deposit = record {
+  status : DepositStatus;
+  asset_type : DepositAssetType;
+  account : Account;
+  timestamp : nat64;
+  amount : nat;
+};
+type DepositAccountErrors = variant {
+  Busy;
+  NotFound;
+  Other : text;
+  Cooldown : record { retry_after_secs : nat64 };
+  AddressDerivationFailed;
+  InvalidEvmAddress;
+};
+type DepositAccountEvent = variant {
+  BroadcastSuccess : BroadcastSuccessEvent;
+  BroadcastConfirmed : BroadcastConfirmedEvent;
+  DustCleanupScheduled : DustCleanupScheduledEvent;
+  DustCleanupFailed : DustCleanupFailedEvent;
+  BroadcastRejected : BroadcastRejectedEvent;
+  BalanceDetected : BalanceDetectedEvent;
+  AssetRegistered : AssetRegisteredEvent;
+  QueueJobFailed : QueueJobFailedEvent;
+};
+type DepositAssetType = variant { Native; ERC20 : text };
+type DepositStatus = variant { Failed : text; Success; Pending };
+type DustCleanupFailedEvent = record {
+  attempts : nat8;
+  address : text;
+  timestamp : nat64;
+  reason : text;
+};
+type DustCleanupScheduledEvent = record {
+  address : text;
+  timestamp : nat64;
+  queue_job_id : nat64;
+};
+type QueueJob = record {
+  id : nat64;
+  last_error : opt text;
+  status : QueueJobStatus;
+  updated_at : nat64;
+  asset_type : DepositAssetType;
+  next_attempt_at : nat64;
+  token_address : opt text;
+  attempts : nat32;
+  created_at : nat64;
+  address : text;
+  account : Account;
+  tx_hash : opt text;
+  recovery_context : opt QueueRecoveryContext;
+};
+type QueueJobFailedEvent = record {
+  asset_type : DepositAssetType;
+  attempts : nat32;
+  address : text;
+  account : Account;
+  timestamp : nat64;
+  queue_job_id : nat64;
+  reason : text;
+};
+type QueueJobStatus = variant {
+  Queued;
+  Failed;
+  NoOp;
+  Ready;
+  RetryScheduled;
+  Succeeded;
+  Cancelled;
+  Processing;
+  Broadcasted;
+};
+type QueueRecoveryContext = variant {
+  FundingPending : record {
+    funding_tx_hash : text;
+    native_amount_wei : opt nat;
+  };
+  ReadyNativeAmount : record { native_amount_wei : nat };
+};
+type Result = variant { Ok : nat; Err : DepositAccountErrors };
+type Result_1 = variant {
+  Ok : vec record { text; text; Deposit };
+  Err : DepositAccountErrors;
+};
+type Result_2 = variant { Ok : text; Err : DepositAccountErrors };
+type Result_3 = variant { Ok : AddressBinding; Err : DepositAccountErrors };
+type Result_4 = variant { Ok; Err : DepositAccountErrors };
+type Result_5 = variant { Ok : nat64; Err : DepositAccountErrors };
+type Result_6 = variant { Ok : nat; Err : DepositAccountErrors };
+service : () -> {
+  estimate_deposit_fee : (opt text) -> (Result) query;
+  get_broadcasted_txs : () -> (Result_1) query;
+  get_deposit_address : (Account, opt text) -> (Result_2) query;
+  get_funding_wallet_address : () -> (Result_2) query;
+  get_or_create_deposit_address : (Account, opt text) -> (Result_2);
+  get_queue_job : (nat64) -> (opt QueueJob) query;
+  get_queued_event : (nat) -> (opt DepositAccountEvent) query;
+  get_queued_events : (nat64, nat64) -> (
+      vec record { nat; DepositAccountEvent },
+    ) query;
+  get_supported_assets : () -> (vec record { text; text; nat32 }) query;
+  get_user_by_address : (text) -> (Result_3) query;
+  list_queue_jobs : (nat64, nat32) -> (vec QueueJob) query;
+  register_asset : (text, text, nat32) -> (Result_4);
+  set_proxy_contract_address_override : (text) -> (Result_4);
+  sync_address_nonce : (text) -> (Result_5);
+  update_address : (text) -> (Result_6);
+}

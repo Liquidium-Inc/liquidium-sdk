@@ -7,6 +7,7 @@ import {
   mapCanisterCallErrorToLiquidiumError,
   mapLendingProtocolErrorToLiquidiumError,
 } from "../../core/canisters/lending/error-mappers";
+import { normalizeEvmAddress } from "../../core/evm";
 import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
 import type { CanisterContext } from "../../core/transports/canister-context";
 import { Chain, type Wallet } from "../../core/types";
@@ -58,14 +59,15 @@ export class AccountsModule {
    * @returns The new profile principal as text.
    */
   async createProfile(params: CreateProfileParams): Promise<string> {
+    const account = normalizeProfileAccount(params.account);
     const action = await this.prepareCreateProfile({
-      account: params.account,
+      account,
     });
 
     return await executeWith({
       walletAdapter: params.walletAdapter,
       chain: params.chain,
-      account: params.account,
+      account,
     })(action);
   }
 
@@ -77,9 +79,10 @@ export class AccountsModule {
    */
   async getProfileId(walletAddress: string): Promise<string | null> {
     try {
+      const account = normalizeProfileAccount(walletAddress);
       const profile = await createLendingActor(
         this.canisterContext
-      ).get_wallet_profile(walletAddress);
+      ).get_wallet_profile(account);
 
       return profile[0]?.toText() ?? null;
     } catch (error) {
@@ -101,9 +104,8 @@ export class AccountsModule {
    */
   async getWalletNonce(walletAddress: string): Promise<bigint> {
     try {
-      return await createLendingActor(this.canisterContext).get_nonce(
-        walletAddress
-      );
+      const account = normalizeProfileAccount(walletAddress);
+      return await createLendingActor(this.canisterContext).get_nonce(account);
     } catch (error) {
       if (error instanceof LiquidiumError) {
         throw error;
@@ -139,10 +141,12 @@ export class AccountsModule {
     account: string
   ): Promise<CreateAccountAction> {
     try {
-      await assertWalletHasNoProfile(this.canisterContext, account);
+      const normalizedAccount = normalizeProfileAccount(account);
+
+      await assertWalletHasNoProfile(this.canisterContext, normalizedAccount);
 
       const nonce = await createLendingActor(this.canisterContext).get_nonce(
-        account
+        normalizedAccount
       );
       const expiryTimestamp = computeExpiryTimestampFromNow();
 
@@ -151,7 +155,7 @@ export class AccountsModule {
         executionKind: WalletExecutionKind.signMessage,
         actionType: WalletActionKind.createAccount,
         transferMode: TransferMode.native,
-        account,
+        account: normalizedAccount,
         message: createInitializeAccountMessage(expiryTimestamp, nonce),
         data: {
           expiryTimestamp,
@@ -163,7 +167,9 @@ export class AccountsModule {
             },
             signatureInfo: {
               ...signatureInfo,
-              account: signatureInfo.account ?? account,
+              account: normalizeProfileAccount(
+                signatureInfo.account ?? normalizedAccount
+              ),
             },
           });
         },
@@ -210,6 +216,10 @@ export class AccountsModule {
       throw mapCanisterCallErrorToLiquidiumError("register_profile", error);
     }
   }
+}
+
+function normalizeProfileAccount(account: string): string {
+  return normalizeEvmAddress(account);
 }
 
 function createInitializeAccountMessage(

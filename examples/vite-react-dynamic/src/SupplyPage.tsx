@@ -179,7 +179,7 @@ export function SupplyPage() {
         (!primaryWallet || !isEthereumWallet(primaryWallet))
       ) {
         throw new Error(
-          "Connect an Ethereum wallet to run the contract-interaction supply flow."
+          "Connect an Ethereum wallet to run the USDT deposit-address supply flow."
         );
       }
 
@@ -240,8 +240,8 @@ export function SupplyPage() {
     <main className="app">
       <h1>Liquidium SDK supply example</h1>
       <p>
-        Unified supply example that lets the SDK auto-resolve the transfer or
-        contract-interaction path from the selected pool.
+        Unified supply example that lets the SDK auto-resolve the deposit
+        address transfer target from the selected pool.
       </p>
 
       <ExampleWalletSection
@@ -274,8 +274,8 @@ export function SupplyPage() {
         <h2>Supply</h2>
         <p>
           Pick a supported pool and call the same{" "}
-          <code>client.lending.supply()</code> flow regardless of the underlying
-          mechanism.
+          <code>client.lending.supply()</code> flow for BTC and ETH USDT deposit
+          address targets.
         </p>
         <div className="field-grid">
           <label>
@@ -432,7 +432,7 @@ function formatSupplyMechanismLabel(pool: Pool): string {
   }
 
   if (pool.chain === "ETH" && isStablecoinAsset(pool.asset)) {
-    return "Contract interaction";
+    return "Deposit address transfer";
   }
 
   return "Unsupported";

@@ -10,7 +10,7 @@ with Dynamic:
 - Load pools and prices
 - Generate a quote with `client.quote.getQuote(...)`
 - Borrow from the quoted pool with `client.lending.borrow(...)` and display the instant receipt (txid may resolve later)
-- Start a supply flow with `client.lending.supply(...)` and let the SDK resolve the mechanism
+- Start a supply flow with `client.lending.supply(...)` and let the SDK resolve the deposit-address target
 
 The goal is to make the first SDK integration obvious, while also including an
 SDK method query page for raw response inspection.
@@ -63,6 +63,6 @@ Dynamic.
   `client.lending.borrow(...)`, etc) so the SDK surface stays visible
 - The borrow flow is quote-first so it mirrors the sats terminal interaction
   model
-- The supply page uses the unified `supply()` API and lets the pool pick the
-  transfer or contract-interaction path
+- The supply page uses the unified `supply()` API and lets BTC and ETH USDT
+  pools resolve deposit-address transfer targets by default
 - For Bitcoin wallets, the example prefers the payment address when available

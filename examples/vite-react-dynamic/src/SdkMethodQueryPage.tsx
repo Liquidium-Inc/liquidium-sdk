@@ -3,6 +3,7 @@ import { isEthereumWallet } from "@dynamic-labs/ethereum";
 import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import type {
   ActivityState,
+  Asset,
   AssetPrices,
   Chain,
   InflowSubmitType,
@@ -485,6 +486,18 @@ const SDK_METHODS: MethodDefinition[] = [
     },
   },
   {
+    id: "lending.estimateInflowFee",
+    label: "lending.estimateInflowFee",
+    defaultArgs: '{\n  "asset": "USDT",\n  "chain": "ETH"\n}',
+    execute: async (client, input) => {
+      const args = expectObject(input);
+      return await client.lending.estimateInflowFee({
+        asset: expectAsset(args.asset, "asset"),
+        chain: expectChain(args.chain, "chain"),
+      });
+    },
+  },
+  {
     id: "lending.submitInflow",
     label: "lending.submitInflow",
     defaultArgs:
@@ -889,6 +902,16 @@ function expectChain(value: unknown, fieldName: string): "BTC" | "ETH" {
   }
 
   throw new Error(`${fieldName} must be BTC or ETH.`);
+}
+
+function expectAsset(value: unknown, fieldName: string): Asset {
+  const asset = expectNonEmptyString(value, fieldName).toUpperCase();
+
+  if (asset === "BTC" || asset === "USDC" || asset === "USDT") {
+    return asset;
+  }
+
+  throw new Error(`${fieldName} must be BTC, USDC, or USDT.`);
 }
 
 function expectOptionalChain(
