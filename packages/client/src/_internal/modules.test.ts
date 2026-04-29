@@ -115,6 +115,48 @@ describe("AccountsModule", () => {
     expect(signMessage).toHaveBeenCalledTimes(1);
   });
 
+  test("should canonicalize Ethereum account casing before profile calls", async () => {
+    // given
+    const LOWERCASE_ETH_ADDRESS = "0x0fdc16c8ea36b2ebadcdc31a780759287120a5e5";
+    const CHECKSUM_ETH_ADDRESS = "0x0fDC16C8EA36b2eBadCdC31A780759287120a5e5";
+    const getWalletProfile = vi.fn().mockResolvedValue([]);
+    const getNonce = vi.fn().mockResolvedValue(17n);
+    const registerProfile = vi.fn().mockResolvedValue({
+      Ok: {
+        toText: () => "eeeee-ee",
+      },
+    });
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      get_nonce: getNonce,
+      get_wallet_profile: getWalletProfile,
+      register_profile: registerProfile,
+    } as never);
+    const signMessage = vi.fn().mockResolvedValue("0xsigned");
+    const client = LiquidiumClient.create({});
+
+    // when
+    const profileId = await client.accounts.createProfile({
+      account: LOWERCASE_ETH_ADDRESS,
+      chain: "ETH",
+      walletAdapter: { signMessage },
+    });
+
+    // then
+    expect(profileId).toBe("eeeee-ee");
+    expect(getWalletProfile).toHaveBeenCalledWith(CHECKSUM_ETH_ADDRESS);
+    expect(getNonce).toHaveBeenCalledWith(CHECKSUM_ETH_ADDRESS);
+    expect(signMessage).toHaveBeenCalledWith(
+      expect.objectContaining({ account: CHECKSUM_ETH_ADDRESS })
+    );
+    expect(registerProfile).toHaveBeenCalledWith(
+      expect.objectContaining({
+        signature_info: expect.objectContaining({
+          Wallet: expect.objectContaining({ account: CHECKSUM_ETH_ADDRESS }),
+        }),
+      })
+    );
+  });
+
   test("maps protocol errors when account creation fails", async () => {
     // given
     vi.spyOn(Actor, "createActor").mockReturnValue({
@@ -1838,39 +1880,46 @@ describe("LendingModule", () => {
     });
   });
 
-  test("returns an icrc supply target for the usdt pool", async () => {
+  test("returns a deposit address supply target for the usdt pool", async () => {
     // given
-    vi.spyOn(Actor, "createActor").mockReturnValue({
-      list_pools: vi.fn().mockResolvedValue([
-        {
-          optimal_utilization_rate: 80n,
-          principal: {
-            toString: () => USDT_POOL_ID,
-            toText: () => USDT_POOL_ID,
+    const getOrCreateDepositAddress = vi.fn().mockResolvedValue({
+      Ok: "0x1111111111111111111111111111111111111111",
+    });
+    vi.spyOn(Actor, "createActor")
+      .mockReturnValueOnce({
+        list_pools: vi.fn().mockResolvedValue([
+          {
+            optimal_utilization_rate: 80n,
+            principal: {
+              toString: () => USDT_POOL_ID,
+              toText: () => USDT_POOL_ID,
+            },
+            total_generated_interest_snapshot: 0n,
+            supply_cap: [],
+            same_asset_borrowing: [],
+            asset: { USDT: null },
+            rate_slope_before: 1n,
+            borrow_cap: [],
+            total_debt_at_last_sync: 0n,
+            chain: { ETH: null },
+            rate_slope_after: 2n,
+            reserve_factor: 100n,
+            last_updated: [],
+            lending_index: 300n,
+            protocol_liquidation_fee: 50n,
+            borrow_index: 400n,
+            base_rate: 5n,
+            frozen: false,
+            liquidation_bonus: 200n,
+            liquidation_threshold: 7_500n,
+            max_ltv: 7_000n,
+            total_supply_at_last_sync: 50_000n,
           },
-          total_generated_interest_snapshot: 0n,
-          supply_cap: [],
-          same_asset_borrowing: [],
-          asset: { USDT: null },
-          rate_slope_before: 1n,
-          borrow_cap: [],
-          total_debt_at_last_sync: 0n,
-          chain: { ETH: null },
-          rate_slope_after: 2n,
-          reserve_factor: 100n,
-          last_updated: [],
-          lending_index: 300n,
-          protocol_liquidation_fee: 50n,
-          borrow_index: 400n,
-          base_rate: 5n,
-          frozen: false,
-          liquidation_bonus: 200n,
-          liquidation_threshold: 7_500n,
-          max_ltv: 7_000n,
-          total_supply_at_last_sync: 50_000n,
-        },
-      ]),
-    } as never);
+        ]),
+      } as never)
+      .mockReturnValueOnce({
+        get_or_create_deposit_address: getOrCreateDepositAddress,
+      } as never);
     const client = LiquidiumClient.create({});
 
     // when
@@ -1887,20 +1936,23 @@ describe("LendingModule", () => {
       chain: "ETH",
       action: "repayment",
       target: {
-        type: "icrcAccount",
+        type: "nativeAddress",
         poolId: USDT_POOL_ID,
         asset: "USDT",
         chain: "ETH",
         action: "repayment",
-        owner: USDT_POOL_ID,
+        address: "0x1111111111111111111111111111111111111111",
       },
     });
-    if (supplyInstruction.target.type !== "icrcAccount") {
-      throw new Error("Expected ICRC account inflow target");
-    }
-    expect(supplyInstruction.target.subaccount).toBeInstanceOf(Uint8Array);
-    expect(supplyInstruction.target.subaccount).toHaveLength(32);
-    expect(supplyInstruction.target.account.length).toBeGreaterThan(0);
+    expect(getOrCreateDepositAddress).toHaveBeenCalledWith(
+      expect.objectContaining({
+        owner: expect.objectContaining({
+          toText: expect.any(Function),
+        }),
+        subaccount: [expect.any(Uint8Array)],
+      }),
+      ["0xdac17f958d2ee523a2206206994597c13d831ec7"]
+    );
   });
 
   test("rejects prepareSupply when no supply mechanism is configured", async () => {
@@ -2091,112 +2143,69 @@ describe("LendingModule", () => {
     );
   });
 
-  test("auto-executes eth usdt supply with approval and inflow submission", async () => {
+  test("estimates eth usdt inflow fee from the deposit canister", async () => {
     // given
+    const estimateDepositFee = vi.fn().mockResolvedValue({ Ok: 12_345n });
     vi.spyOn(Actor, "createActor").mockReturnValue({
-      list_pools: vi.fn().mockResolvedValue([
-        {
-          optimal_utilization_rate: 80n,
-          principal: {
-            toString: () => USDT_POOL_ID,
-            toText: () => USDT_POOL_ID,
-          },
-          total_generated_interest_snapshot: 0n,
-          supply_cap: [],
-          same_asset_borrowing: [],
-          asset: { USDT: null },
-          rate_slope_before: 1n,
-          borrow_cap: [],
-          total_debt_at_last_sync: 0n,
-          chain: { ETH: null },
-          rate_slope_after: 2n,
-          reserve_factor: 100n,
-          last_updated: [],
-          lending_index: 300n,
-          protocol_liquidation_fee: 50n,
-          borrow_index: 400n,
-          base_rate: 5n,
-          frozen: false,
-          liquidation_bonus: 200n,
-          liquidation_threshold: 7_500n,
-          max_ltv: 7_000n,
-          total_supply_at_last_sync: 50_000n,
-        },
-      ]),
+      estimate_deposit_fee: estimateDepositFee,
     } as never);
-    const fetchSpy = vi.spyOn(globalThis, "fetch");
-    fetchSpy
-      .mockResolvedValueOnce(
-        new Response(
-          JSON.stringify({
-            success: true,
-            profileId: "aaaaa-aa",
-            poolId: USDT_POOL_ID,
-            walletAddress: "0x1234567890123456789012345678901234567890",
-            action: "deposit",
-            asset: "USDT",
-            chain: "ETH",
-            amount: "1000000",
-            tokenAddress: "0xdac17f958d2ee523a2206206994597c13d831ec7",
-            spenderAddress: "0x18901044688D3756C35Ed2b36D93e6a5B8e00E68",
-            depositContractAddress:
-              "0x18901044688D3756C35Ed2b36D93e6a5B8e00E68",
-            balance: "2000000",
-            allowance: "0",
-            requiresApproval: true,
-            approvalStrategy: "approve-max",
-          }),
-          {
-            status: 200,
-            headers: {
-              "content-type": "application/json",
-            },
-          }
-        )
-      )
-      .mockResolvedValueOnce(
-        new Response(
-          JSON.stringify({
-            success: true,
-            profileId: "aaaaa-aa",
-            poolId: USDT_POOL_ID,
-            walletAddress: "0x1234567890123456789012345678901234567890",
-            action: "deposit",
-            asset: "USDT",
-            chain: "ETH",
-            amount: "1000000",
-            tokenAddress: "0xdac17f958d2ee523a2206206994597c13d831ec7",
-            spenderAddress: "0x18901044688D3756C35Ed2b36D93e6a5B8e00E68",
-            depositContractAddress:
-              "0x18901044688D3756C35Ed2b36D93e6a5B8e00E68",
-            balance: "2000000",
-            allowance: "1000000",
-            requiresApproval: false,
-            approvalStrategy: "none",
-          }),
-          {
-            status: 200,
-            headers: {
-              "content-type": "application/json",
-            },
-          }
-        )
-      )
-      .mockResolvedValueOnce(
-        new Response(JSON.stringify({ success: true, txid: "0xdeposit" }), {
-          status: 200,
-          headers: {
-            "content-type": "application/json",
-          },
-        })
-      );
-    const sendEthTransaction = vi
-      .fn()
-      .mockResolvedValueOnce("0xapprove")
-      .mockResolvedValueOnce("0xdeposit");
-    const client = LiquidiumClient.create({
-      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
+    const client = LiquidiumClient.create({});
+
+    // when
+    const estimate = await client.lending.estimateInflowFee({
+      asset: "USDT",
+      chain: "ETH",
     });
+
+    // then
+    expect(estimate.totalFee).toBe(12_345n);
+    expect(estimateDepositFee).toHaveBeenCalledWith([
+      "0xdac17f958d2ee523a2206206994597c13d831ec7",
+    ]);
+  });
+
+  test("auto-executes eth usdt supply with a deposit address transfer", async () => {
+    // given
+    vi.spyOn(Actor, "createActor")
+      .mockReturnValueOnce({
+        list_pools: vi.fn().mockResolvedValue([
+          {
+            optimal_utilization_rate: 80n,
+            principal: {
+              toString: () => USDT_POOL_ID,
+              toText: () => USDT_POOL_ID,
+            },
+            total_generated_interest_snapshot: 0n,
+            supply_cap: [],
+            same_asset_borrowing: [],
+            asset: { USDT: null },
+            rate_slope_before: 1n,
+            borrow_cap: [],
+            total_debt_at_last_sync: 0n,
+            chain: { ETH: null },
+            rate_slope_after: 2n,
+            reserve_factor: 100n,
+            last_updated: [],
+            lending_index: 300n,
+            protocol_liquidation_fee: 50n,
+            borrow_index: 400n,
+            base_rate: 5n,
+            frozen: false,
+            liquidation_bonus: 200n,
+            liquidation_threshold: 7_500n,
+            max_ltv: 7_000n,
+            total_supply_at_last_sync: 50_000n,
+          },
+        ]),
+      } as never)
+      .mockReturnValueOnce({
+        get_or_create_deposit_address: vi.fn().mockResolvedValue({
+          Ok: "0x1111111111111111111111111111111111111111",
+        }),
+      } as never);
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    const sendEthTransaction = vi.fn().mockResolvedValueOnce("0xdeposit");
+    const client = LiquidiumClient.create({});
 
     // when
     const flow = await client.lending.supply({
@@ -2211,39 +2220,26 @@ describe("LendingModule", () => {
     });
 
     // then
-    expect(flow.type).toBe("contractInteraction");
+    expect(flow.type).toBe("transfer");
     expect(flow.target).toMatchObject({
-      type: "icrcAccount",
+      type: "nativeAddress",
       asset: "USDT",
       chain: "ETH",
+      address: "0x1111111111111111111111111111111111111111",
     });
-    expect(sendEthTransaction).toHaveBeenCalledTimes(2);
-    expect(sendEthTransaction).toHaveBeenNthCalledWith(
-      1,
+    expect(flow.txid).toBe("0xdeposit");
+    expect(sendEthTransaction).toHaveBeenCalledTimes(1);
+    expect(sendEthTransaction).toHaveBeenCalledWith(
       expect.objectContaining({
         chain: "ETH",
-        actionType: "supply-deposit-approve-max",
-      })
-    );
-    expect(sendEthTransaction).toHaveBeenNthCalledWith(
-      2,
-      expect.objectContaining({
-        chain: "ETH",
-        actionType: "supply-deposit-deposit-erc20",
-      })
-    );
-    expect(fetchSpy).toHaveBeenNthCalledWith(
-      3,
-      "https://app.liquidium.fi/api/sdk/v1/inflow",
-      expect.objectContaining({
-        method: "POST",
-        body: JSON.stringify({
-          txid: "0xdeposit",
-          chain: "ETH",
-          type: "DEPOSIT",
+        actionType: "supply-deposit",
+        transaction: expect.objectContaining({
+          to: "0xdac17f958d2ee523a2206206994597c13d831ec7",
+          data: expect.stringMatching(/^0xa9059cbb/),
         }),
       })
     );
+    expect(fetchSpy).not.toHaveBeenCalled();
   });
 
   test("creates a supply flow that exposes the instruction and submits a broadcast txid", async () => {

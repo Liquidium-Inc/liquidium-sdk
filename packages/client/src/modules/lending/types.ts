@@ -175,6 +175,15 @@ export interface SubmitInflowResponse {
   txid: string;
 }
 
+export interface EstimateInflowFeeRequest {
+  asset: Asset;
+  chain: Chain;
+}
+
+export interface InflowFeeEstimate {
+  totalFee: bigint;
+}
+
 export interface GetEvmSupplyContextRequest {
   profileId: string;
   poolId: string;

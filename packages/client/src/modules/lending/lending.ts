@@ -2,6 +2,10 @@ import { encodeIcrcAccount } from "@dfinity/ledger-icrc";
 import { Principal } from "@dfinity/principal";
 import { createCkBtcMinterActor } from "../../core/canisters/ckbtc/minter";
 import {
+  createDepositAccountsActor,
+  type DepositAccountErrors,
+} from "../../core/canisters/deposit-accounts/actor";
+import {
   createLendingActor,
   type LendingPoolRecord,
 } from "../../core/canisters/lending/actor";
@@ -14,7 +18,7 @@ import {
   createWithdrawAssetMessage,
 } from "../../core/canisters/lending/messages";
 import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
-import { MAX_UINT256 } from "../../core/evm";
+import { MAX_UINT256, USDT_CONTRACT_ADDRESS } from "../../core/evm";
 import {
   buildEvmSupplyContextPath,
   SdkApiPath,
@@ -37,6 +41,7 @@ import { executeWith } from "../../execute";
 import {
   createApproveTransaction,
   createDepositErc20Transaction,
+  createTransferErc20Transaction,
 } from "./evm-transactions";
 import {
   mapCanisterOutflowDetails,
@@ -47,10 +52,12 @@ import {
   type BorrowSubmitSignatureInfo,
   type CreateBorrowRequest,
   type CreateWithdrawRequest,
+  type EstimateInflowFeeRequest,
   EvmSupplyApprovalStrategy,
   type EvmSupplyContext,
   type GetEvmSupplyContextRequest,
   type IcrcAccountSupplyTarget,
+  type InflowFeeEstimate,
   type NativeAddressSupplyTarget,
   type OutflowDetails,
   type SubmitInflowRequest,
@@ -463,6 +470,37 @@ export class LendingModule {
     );
   }
 
+  /**
+   * Estimates the network/deposit fee for an inflow target.
+   *
+   * ETH stablecoin deposit-address estimates are served by the deposit-address
+   * canister. BTC estimates are not exposed by this SDK yet and return zero.
+   */
+  async estimateInflowFee(
+    request: EstimateInflowFeeRequest
+  ): Promise<InflowFeeEstimate> {
+    if (request.asset === Asset.USDT && request.chain === Chain.ETH) {
+      const result = await createDepositAccountsActor(
+        this.canisterContext
+      ).estimate_deposit_fee([USDT_CONTRACT_ADDRESS]);
+
+      if ("Err" in result) {
+        throw mapDepositAccountErrorToLiquidiumError(result.Err);
+      }
+
+      return { totalFee: result.Ok };
+    }
+
+    if (request.asset === Asset.BTC && request.chain === Chain.BTC) {
+      return { totalFee: 0n };
+    }
+
+    throw new LiquidiumError(
+      LiquidiumErrorCode.VALIDATION_ERROR,
+      `Inflow fee estimates are not supported for ${request.asset} on ${request.chain}`
+    );
+  }
+
   private async sendAndSubmitNativeSupplyInflow(params: {
     request: SupplyFlowRequest;
     instruction: SupplyInstruction;
@@ -505,10 +543,15 @@ export class LendingModule {
       toAddress: instruction.target.address,
       amount: request.amount,
       senderAccount: account,
+      asset: instruction.asset,
       action: request.action,
     });
 
-    await this.submitInflowWithRetry(txid, defaultSubmitInflowRequest);
+    if (
+      !(instruction.asset === Asset.USDT && instruction.chain === Chain.ETH)
+    ) {
+      await this.submitInflowWithRetry(txid, defaultSubmitInflowRequest);
+    }
 
     return txid;
   }
@@ -641,6 +684,7 @@ export class LendingModule {
       "sendBtcTransaction" | "sendEthTransaction"
     >;
     chain: string;
+    asset: string;
     toAddress: string;
     amount: bigint;
     senderAccount: string;
@@ -670,6 +714,20 @@ export class LendingModule {
             LiquidiumErrorCode.VALIDATION_ERROR,
             "ETH wallet adapter does not support transaction sending"
           );
+        }
+
+        if (params.asset === Asset.USDT) {
+          return await params.walletAdapter.sendEthTransaction({
+            chain: Chain.ETH,
+            account: params.senderAccount,
+            actionType: `supply-${params.action}`,
+            transferMode: TransferMode.native,
+            transaction: createTransferErc20Transaction({
+              tokenAddress: USDT_CONTRACT_ADDRESS,
+              recipientAddress: params.toAddress,
+              amount: params.amount,
+            }),
+          });
         }
 
         return await params.walletAdapter.sendEthTransaction({
@@ -809,6 +867,35 @@ export class LendingModule {
   ): Promise<NativeAddressSupplyTarget> {
     assertSupportsNativeAddressInflowTarget(request.asset, request.chain);
 
+    if (request.asset === Asset.USDT && request.chain === Chain.ETH) {
+      const subaccount = encodeInflowSubaccount({
+        action: request.action,
+        principal: Principal.fromText(profileId),
+      });
+      const result = await createDepositAccountsActor(
+        this.canisterContext
+      ).get_or_create_deposit_address(
+        {
+          owner: Principal.fromText(request.poolId),
+          subaccount: [subaccount],
+        },
+        [USDT_CONTRACT_ADDRESS]
+      );
+
+      if ("Err" in result) {
+        throw mapDepositAccountErrorToLiquidiumError(result.Err);
+      }
+
+      return {
+        type: "nativeAddress",
+        poolId: request.poolId,
+        asset: request.asset,
+        chain: request.chain,
+        action: request.action,
+        address: result.Ok,
+      };
+    }
+
     const configuredBtcPoolId = this.canisterContext.canisterIds.btcPool;
     if (request.poolId !== configuredBtcPoolId) {
       throw new LiquidiumError(
@@ -947,11 +1034,12 @@ function resolveSupplyMechanism(params: {
     return SupplyPlanType.transfer;
   }
 
-  if (
-    (params.asset === Asset.USDC || params.asset === Asset.USDT) &&
-    params.chain === Chain.ETH
-  ) {
+  if (params.asset === Asset.USDC && params.chain === Chain.ETH) {
     return SupplyPlanType.contractInteraction;
+  }
+
+  if (params.asset === Asset.USDT && params.chain === Chain.ETH) {
+    return SupplyPlanType.transfer;
   }
 
   throw new LiquidiumError(
@@ -968,9 +1056,64 @@ function assertSupportsNativeAddressInflowTarget(
     return;
   }
 
+  if (asset === Asset.USDT && chain === Chain.ETH) {
+    return;
+  }
+
   throw new LiquidiumError(
     LiquidiumErrorCode.VALIDATION_ERROR,
     `Native address inflow targets are not supported for ${asset} on ${chain}`
+  );
+}
+
+function mapDepositAccountErrorToLiquidiumError(
+  error: DepositAccountErrors
+): LiquidiumError {
+  if ("InvalidEvmAddress" in error) {
+    return new LiquidiumError(
+      LiquidiumErrorCode.INVALID_ADDRESS,
+      "Invalid EVM deposit address"
+    );
+  }
+
+  if ("Busy" in error) {
+    return new LiquidiumError(
+      LiquidiumErrorCode.SERVICE_UNAVAILABLE,
+      "Deposit address service is busy"
+    );
+  }
+
+  if ("Cooldown" in error) {
+    return new LiquidiumError(
+      LiquidiumErrorCode.SERVICE_UNAVAILABLE,
+      `Deposit address service is cooling down for ${error.Cooldown.retry_after_secs.toString()} seconds`
+    );
+  }
+
+  if ("Other" in error) {
+    return new LiquidiumError(
+      LiquidiumErrorCode.DEPOSIT_ADDRESS_ERROR,
+      error.Other
+    );
+  }
+
+  if ("AddressDerivationFailed" in error) {
+    return new LiquidiumError(
+      LiquidiumErrorCode.DEPOSIT_ADDRESS_ERROR,
+      "Deposit address derivation failed"
+    );
+  }
+
+  if ("NotFound" in error) {
+    return new LiquidiumError(
+      LiquidiumErrorCode.DEPOSIT_ADDRESS_ERROR,
+      "Deposit address not found"
+    );
+  }
+
+  return new LiquidiumError(
+    LiquidiumErrorCode.DEPOSIT_ADDRESS_ERROR,
+    "Deposit address canister returned an unknown error"
   );
 }
 

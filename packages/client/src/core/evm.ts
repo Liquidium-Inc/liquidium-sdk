@@ -1,3 +1,5 @@
+import { getAddress, isAddress } from "viem";
+
 export const USDC_CONTRACT_ADDRESS =
   "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48";
 export const USDT_CONTRACT_ADDRESS =
@@ -19,6 +21,16 @@ export const ERC20_ABI = [
     outputs: [{ name: "", type: "bool" }],
     stateMutability: "nonpayable",
   },
+  {
+    name: "transfer",
+    type: "function",
+    inputs: [
+      { name: "to", type: "address" },
+      { name: "value", type: "uint256" },
+    ],
+    outputs: [{ name: "", type: "bool" }],
+    stateMutability: "nonpayable",
+  },
 ] as const;
 
 export const CK_DEPOSIT_ABI = [
@@ -35,3 +47,11 @@ export const CK_DEPOSIT_ABI = [
     type: "function",
   },
 ] as const;
+
+export function normalizeEvmAddress(address: string): string {
+  if (!isAddress(address)) {
+    return address;
+  }
+
+  return getAddress(address);
+}

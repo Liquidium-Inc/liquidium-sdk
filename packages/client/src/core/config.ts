@@ -7,12 +7,14 @@ const MAINNET_CANISTER_IDS: CanisterIds = {
   lending: "hyk4r-jqaaa-aaaar-qb4ca-cai",
   btcPool: "hkmli-faaaa-aaaar-qb4ba-cai",
   ercPool: "hnnn4-iyaaa-aaaar-qb4bq-cai",
+  ethDeposit: "z5jz7-nyaaa-aaaar-qb6pq-cai",
 };
 
 const STAGING_CANISTER_IDS: CanisterIds = {
   lending: "<lending-canister-id>",
   btcPool: "<btc-pool-canister-id>",
   ercPool: "<erc-pool-canister-id>",
+  ethDeposit: "<eth-deposit-canister-id>",
 };
 
 const CANISTER_IDS_BY_ENVIRONMENT: Record<Environment, CanisterIds> = {

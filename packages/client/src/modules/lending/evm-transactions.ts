@@ -25,6 +25,21 @@ export function createApproveTransaction(params: {
   };
 }
 
+export function createTransferErc20Transaction(params: {
+  tokenAddress: string;
+  recipientAddress: string;
+  amount: bigint;
+}): { to: string; data: string } {
+  return {
+    to: params.tokenAddress,
+    data: encodeFunctionData({
+      abi: ERC20_ABI,
+      functionName: "transfer",
+      args: [params.recipientAddress as `0x${string}`, params.amount],
+    }),
+  };
+}
+
 export function createDepositErc20Transaction(params: {
   tokenAddress: string;
   amount: bigint;

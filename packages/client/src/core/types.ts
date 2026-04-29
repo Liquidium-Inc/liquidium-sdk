@@ -33,6 +33,7 @@ export interface CanisterIds {
   lending: string;
   btcPool: string;
   ercPool: string;
+  ethDeposit: string;
 }
 
 export const Environment = {
