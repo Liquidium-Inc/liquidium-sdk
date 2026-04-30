@@ -95,7 +95,7 @@ client.lending.submitInflow({ txid, chain: "BTC", type: "DEPOSIT" }); // require
 
 ### positions
 
-Existing profile state plus Aave-style aggregate reads.
+Existing profile state plus aggregate position reads.
 
 ```ts
 client.positions.getPosition(profileId, poolId);
@@ -179,7 +179,7 @@ const positions = await client.positions.listPositions(profileId);
 const healthFactor = await client.positions.getHealthFactor(profileId);
 ```
 
-For an Aave-style aggregate (`availableBorrowsUsd`, `netWorthUsd`,
+For an aggregate position summary (`availableBorrowsUsd`, `netWorthUsd`,
 `currentLtvBps`, `healthFactor`) plus a per-reserve USD breakdown:
 
 ```ts

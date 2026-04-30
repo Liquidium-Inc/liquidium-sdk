@@ -37,7 +37,7 @@ const assetPriceUsd = marketAsset ? prices[marketAsset] : undefined;
 const positions = await client.positions.listPositions("profile-id");
 const health = await client.positions.getHealthFactor("profile-id");
 
-// Aave-style reads (aggregate + per-reserve + full-repay helpers)
+// Position reads (aggregate + per-reserve + full-repay helpers)
 const summary = await client.positions.getUserPositionSummary("profile-id");
 const reserves = await client.positions.getUserReserves("profile-id");
 const repay = await client.positions.getMaxRepayAmount("profile-id", "pool-id");
