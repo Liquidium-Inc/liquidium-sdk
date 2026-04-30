@@ -138,7 +138,7 @@ export class PositionsModule {
   }
 
   /**
-   * Returns an aggregate Liquidium-style summary of a profile's position.
+   * Returns an aggregate summary of a profile's position.
    *
    * Single canister round-trip (`get_health_factor`). Derived fields:
    * `availableBorrowsUsd = max(0, maxBorrowableUsd - debt)`,

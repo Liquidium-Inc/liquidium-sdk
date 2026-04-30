@@ -7,8 +7,8 @@ import {
   mapCanisterCallErrorToLiquidiumError,
   mapLendingProtocolErrorToLiquidiumError,
 } from "../../core/canisters/lending/error-mappers";
-import { normalizeEvmAddress } from "../../core/evm";
 import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
+import { normalizeEvmAddress } from "../../core/evm";
 import type { CanisterContext } from "../../core/transports/canister-context";
 import { Chain, type Wallet } from "../../core/types";
 import { computeExpiryTimestampFromNow } from "../../core/utils/time";

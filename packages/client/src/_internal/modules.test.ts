@@ -1510,7 +1510,7 @@ describe("PositionsModule", () => {
     });
   });
 
-  test("returns an liquidium-shaped user position summary with derived fields", async () => {
+  test("returns a user position summary with derived fields", async () => {
     // given
     const COLLATERAL_USD = 100n;
     const DEBT_USD = 40n;
