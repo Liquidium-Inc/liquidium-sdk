@@ -14,7 +14,9 @@ export const SdkApiQueryParam = {
   poolId: "poolId",
   profileId: "profileId",
   state: "state",
+  statuses: "statuses",
   to: "to",
+  types: "types",
   walletAddress: "walletAddress",
 } as const;
 

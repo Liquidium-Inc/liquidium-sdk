@@ -499,16 +499,16 @@ describe("HistoryModule", () => {
     });
 
     // when
-    const result = await client.history.getUserTransactionHistory(
-      "profile-1",
-      "pool-btc",
-      {
-        cursor: "2026-03-31T00:00:00.000Z::history-0",
-        from: "2026-04-01T00:00:00.000Z",
-        to: "2026-04-03T00:00:00.000Z",
-        limit: 1,
-      }
-    );
+    const result = await client.history.getUserTransactionHistory("profile-1", {
+      cursor: "2026-03-31T00:00:00.000Z::history-0",
+      market: "pool-btc",
+      poolId: "pool-btc",
+      types: ["borrow"],
+      statuses: ["CONFIRMED"],
+      from: "2026-04-01T00:00:00.000Z",
+      to: "2026-04-03T00:00:00.000Z",
+      limit: 1,
+    });
 
     // then
     expect(result).toEqual({
@@ -527,7 +527,7 @@ describe("HistoryModule", () => {
       nextCursor: "2026-04-02T00:00:00.000Z::history-1",
     });
     expect(fetchSpy).toHaveBeenCalledWith(
-      "https://app.liquidium.fi/api/sdk/v1/history/users/profile-1/transactions?cursor=2026-03-31T00%3A00%3A00.000Z%3A%3Ahistory-0&market=pool-btc&from=2026-04-01T00%3A00%3A00.000Z&to=2026-04-03T00%3A00%3A00.000Z&limit=1",
+      "https://app.liquidium.fi/api/sdk/v1/history/users/profile-1/transactions?cursor=2026-03-31T00%3A00%3A00.000Z%3A%3Ahistory-0&market=pool-btc&poolId=pool-btc&types=borrow&statuses=CONFIRMED&from=2026-04-01T00%3A00%3A00.000Z&to=2026-04-03T00%3A00%3A00.000Z&limit=1",
       {
         method: "GET",
         headers: undefined,
@@ -566,10 +566,13 @@ describe("HistoryModule", () => {
     });
 
     // when
-    const result = await client.history.getLiquidationHistory(
-      "profile-1",
-      "pool-btc"
-    );
+    const result = await client.history.getLiquidationHistory("profile-1", {
+      cursor: "2026-04-03T00:00:00.000Z::history-8",
+      market: "pool-btc",
+      from: "2026-04-01T00:00:00.000Z",
+      to: "2026-04-05T00:00:00.000Z",
+      limit: 1,
+    });
 
     // then
     expect(result.items[0]).toMatchObject({
@@ -578,7 +581,7 @@ describe("HistoryModule", () => {
       poolId: "pool-btc",
     });
     expect(fetchSpy).toHaveBeenCalledWith(
-      "https://app.liquidium.fi/api/sdk/v1/history/users/profile-1/liquidations?market=pool-btc",
+      "https://app.liquidium.fi/api/sdk/v1/history/users/profile-1/liquidations?cursor=2026-04-03T00%3A00%3A00.000Z%3A%3Ahistory-8&market=pool-btc&from=2026-04-01T00%3A00%3A00.000Z&to=2026-04-05T00%3A00%3A00.000Z&limit=1",
       {
         method: "GET",
         headers: undefined,
@@ -678,6 +681,7 @@ describe("ActivitiesModule", () => {
           direction: "inflow" as const,
           kind: "deposit" as const,
           status: "pending" as const,
+          stage: "logged" as const,
           poolId: "pool-1",
           asset: "BTC",
           chain: "BTC" as const,
@@ -714,6 +718,7 @@ describe("ActivitiesModule", () => {
         direction: "inflow",
         kind: "deposit",
         status: "pending",
+        stage: "logged",
         poolId: "pool-1",
         asset: "BTC",
         chain: "BTC",

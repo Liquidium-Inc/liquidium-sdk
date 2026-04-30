@@ -2,6 +2,8 @@ import { LiquidiumError, LiquidiumErrorCode } from "../errors";
 
 const DOM_EXCEPTION_ABORT_ERROR_NAME = "AbortError";
 const HTTP_HEADER_CONTENT_TYPE = "content-type";
+const HTTP_HEADER_REQUEST_ID = "x-request-id";
+const HTTP_HEADER_TRACE_ID = "x-trace-id";
 const HTTP_METHOD_GET = "GET";
 const HTTP_METHOD_POST = "POST";
 const MIME_TYPE_APPLICATION_JSON = "application/json";
@@ -77,11 +79,17 @@ async function sendRequest<TResponse>(
 
     if (!response.ok) {
       const payload = await tryParseJson(response);
+      const errorContext = getResponseErrorContext(response);
       const message =
         getErrorMessage(payload) ??
         `API request failed: ${response.status} ${response.statusText}`;
 
-      throw new LiquidiumError(LiquidiumErrorCode.SERVICE_UNAVAILABLE, message);
+      throw new LiquidiumError(
+        LiquidiumErrorCode.SERVICE_UNAVAILABLE,
+        appendErrorContext(message, errorContext),
+        undefined,
+        errorContext
+      );
     }
 
     return (await response.json()) as TResponse;
@@ -125,4 +133,30 @@ function getErrorMessage(payload: unknown): string | null {
 
   const message = (payload as { message?: unknown }).message;
   return typeof message === "string" && message.length > 0 ? message : null;
+}
+
+function getResponseErrorContext(response: Response): {
+  traceId?: string;
+  requestId?: string;
+} {
+  return {
+    traceId: response.headers.get(HTTP_HEADER_TRACE_ID) ?? undefined,
+    requestId: response.headers.get(HTTP_HEADER_REQUEST_ID) ?? undefined,
+  };
+}
+
+function appendErrorContext(
+  message: string,
+  context: { traceId?: string; requestId?: string }
+): string {
+  if (!context.traceId && !context.requestId) {
+    return message;
+  }
+
+  const details = [
+    context.traceId ? `traceId=${context.traceId}` : undefined,
+    context.requestId ? `requestId=${context.requestId}` : undefined,
+  ].filter((value): value is string => Boolean(value));
+
+  return `${message} (${details.join(", ")})`;
 }

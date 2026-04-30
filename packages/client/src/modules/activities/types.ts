@@ -32,11 +32,21 @@ export const ActivityStatus = {
 export type ActivityStatus =
   (typeof ActivityStatus)[keyof typeof ActivityStatus];
 
+export const ActivityStage = {
+  logged: "logged",
+  deposited: "deposited",
+  confirmed: "confirmed",
+  pending: "pending",
+  finalising: "finalising",
+} as const;
+export type ActivityStage = (typeof ActivityStage)[keyof typeof ActivityStage];
+
 export interface Activity {
   id: string;
   direction: ActivityDirection;
   kind: ActivityKind;
   status: ActivityStatus;
+  stage?: ActivityStage;
   poolId: string;
   asset: string | null;
   chain: Chain | null;

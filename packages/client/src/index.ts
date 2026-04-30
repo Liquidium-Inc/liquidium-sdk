@@ -44,6 +44,7 @@ export type {
 export {
   ActivityDirection,
   ActivityKind,
+  ActivityStage,
   ActivityState,
   ActivityStatus,
 } from "./modules/activities";
@@ -59,6 +60,7 @@ export type {
   UserHistoryEntry,
   UserHistoryEntryApiItem,
   UserHistoryResponse,
+  UserLiquidationHistoryFilters,
   UserTransactionHistoryFilters,
 } from "./modules/history";
 export type {

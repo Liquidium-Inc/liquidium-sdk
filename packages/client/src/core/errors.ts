@@ -53,6 +53,11 @@ export const LiquidiumErrorCode = {
 export type LiquidiumErrorCode =
   (typeof LiquidiumErrorCode)[keyof typeof LiquidiumErrorCode];
 
+export interface LiquidiumErrorContext {
+  traceId?: string;
+  requestId?: string;
+}
+
 /**
  * Typed error from the SDK or mapped protocol failures.
  *
@@ -63,16 +68,28 @@ export class LiquidiumError extends Error {
   readonly code: LiquidiumErrorCode;
   /** Original error when the SDK wraps an underlying failure. */
   override readonly cause?: unknown;
+  /** Backend trace id for support/debugging when available. */
+  readonly traceId?: string;
+  /** SDK API request id for support/debugging when available. */
+  readonly requestId?: string;
 
   /**
    * @param code - Error code from {@link LiquidiumErrorCode}.
    * @param message - Human-readable detail (defaults to `code` when omitted).
    * @param cause - Optional underlying error.
+   * @param context - Optional backend debug identifiers.
    */
-  constructor(code: LiquidiumErrorCode, message?: string, cause?: unknown) {
+  constructor(
+    code: LiquidiumErrorCode,
+    message?: string,
+    cause?: unknown,
+    context?: LiquidiumErrorContext
+  ) {
     super(message ?? code);
     this.name = "LiquidiumError";
     this.code = code;
     this.cause = cause;
+    this.traceId = context?.traceId;
+    this.requestId = context?.requestId;
   }
 }
