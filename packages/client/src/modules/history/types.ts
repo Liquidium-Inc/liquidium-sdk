@@ -20,6 +20,15 @@ export interface UserTransactionHistoryFilters {
   to?: string;
 }
 
+export interface UserLiquidationHistoryFilters {
+  cursor?: string;
+  limit?: number;
+  market?: string;
+  poolId?: string;
+  from?: string;
+  to?: string;
+}
+
 export type ActivitiesRequest = UserTransactionHistoryFilters;
 
 export interface BorrowApyHistoryRequest {

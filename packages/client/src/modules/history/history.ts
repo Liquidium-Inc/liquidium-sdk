@@ -17,6 +17,8 @@ import type {
   PoolHistoryResponse,
   UserHistoryEntry,
   UserHistoryResponse,
+  UserLiquidationHistoryFilters,
+  UserTransactionHistoryFilters,
 } from "./types";
 
 export class HistoryModule {
@@ -149,29 +151,56 @@ export class HistoryModule {
    * Returns transaction history for a user.
    *
    * @param user - The Liquidium profile principal text.
-   * @param market - Optional pool identifier to filter by.
-   * @param filters - Optional filters for time range and pagination.
+   * @param filters - Optional pool, type, status, time range, and pagination filters.
    * @returns Paginated user history entries.
    */
   async getUserTransactionHistory(
     user: string,
+    filters?: UserTransactionHistoryFilters
+  ): Promise<PaginatedResponse<UserHistoryEntry>>;
+  async getUserTransactionHistory(
+    user: string,
     market?: string,
-    filters: {
-      cursor?: string;
-      from?: string;
-      to?: string;
-      limit?: number;
-    } = {}
+    filters?: UserTransactionHistoryFilters
+  ): Promise<PaginatedResponse<UserHistoryEntry>>;
+  async getUserTransactionHistory(
+    user: string,
+    marketOrFilters?: string | UserTransactionHistoryFilters,
+    filters: UserTransactionHistoryFilters = {}
   ): Promise<PaginatedResponse<UserHistoryEntry>> {
     const apiClient = this.requireApi();
+    const normalizedFilters = normalizeTransactionHistoryFilters(
+      marketOrFilters,
+      filters
+    );
     const query = new URLSearchParams();
 
-    if (filters.cursor) query.set(SdkApiQueryParam.cursor, filters.cursor);
-    if (market) query.set(SdkApiQueryParam.market, market);
-    if (filters.from) query.set(SdkApiQueryParam.from, filters.from);
-    if (filters.to) query.set(SdkApiQueryParam.to, filters.to);
-    if (filters.limit !== undefined) {
-      query.set(SdkApiQueryParam.limit, String(filters.limit));
+    if (normalizedFilters.cursor) {
+      query.set(SdkApiQueryParam.cursor, normalizedFilters.cursor);
+    }
+    if (normalizedFilters.market) {
+      query.set(SdkApiQueryParam.market, normalizedFilters.market);
+    }
+    if (normalizedFilters.poolId) {
+      query.set(SdkApiQueryParam.poolId, normalizedFilters.poolId);
+    }
+    if (normalizedFilters.types?.length) {
+      query.set(SdkApiQueryParam.types, normalizedFilters.types.join(","));
+    }
+    if (normalizedFilters.statuses?.length) {
+      query.set(
+        SdkApiQueryParam.statuses,
+        normalizedFilters.statuses.join(",")
+      );
+    }
+    if (normalizedFilters.from) {
+      query.set(SdkApiQueryParam.from, normalizedFilters.from);
+    }
+    if (normalizedFilters.to) {
+      query.set(SdkApiQueryParam.to, normalizedFilters.to);
+    }
+    if (normalizedFilters.limit !== undefined) {
+      query.set(SdkApiQueryParam.limit, String(normalizedFilters.limit));
     }
 
     const requestPath = buildHistoryUserTransactionsPath(user, query);
@@ -196,16 +225,47 @@ export class HistoryModule {
    * Returns liquidation history for a user.
    *
    * @param user - The Liquidium profile principal text.
-   * @param market - Optional pool identifier to filter by.
+   * @param filters - Optional pool, time range, and pagination filters.
    * @returns Paginated liquidation history entries.
    */
   async getLiquidationHistory(
     user: string,
-    market?: string
+    filters?: UserLiquidationHistoryFilters
+  ): Promise<PaginatedResponse<UserHistoryEntry>>;
+  async getLiquidationHistory(
+    user: string,
+    market?: string,
+    filters?: UserLiquidationHistoryFilters
+  ): Promise<PaginatedResponse<UserHistoryEntry>>;
+  async getLiquidationHistory(
+    user: string,
+    marketOrFilters?: string | UserLiquidationHistoryFilters,
+    filters: UserLiquidationHistoryFilters = {}
   ): Promise<PaginatedResponse<UserHistoryEntry>> {
     const apiClient = this.requireApi();
+    const normalizedFilters = normalizeLiquidationHistoryFilters(
+      marketOrFilters,
+      filters
+    );
     const query = new URLSearchParams();
-    if (market) query.set(SdkApiQueryParam.market, market);
+    if (normalizedFilters.cursor) {
+      query.set(SdkApiQueryParam.cursor, normalizedFilters.cursor);
+    }
+    if (normalizedFilters.market) {
+      query.set(SdkApiQueryParam.market, normalizedFilters.market);
+    }
+    if (normalizedFilters.poolId) {
+      query.set(SdkApiQueryParam.poolId, normalizedFilters.poolId);
+    }
+    if (normalizedFilters.from) {
+      query.set(SdkApiQueryParam.from, normalizedFilters.from);
+    }
+    if (normalizedFilters.to) {
+      query.set(SdkApiQueryParam.to, normalizedFilters.to);
+    }
+    if (normalizedFilters.limit !== undefined) {
+      query.set(SdkApiQueryParam.limit, String(normalizedFilters.limit));
+    }
 
     const requestPath = buildHistoryUserLiquidationsPath(user, query);
     const response = await apiClient.get<UserHistoryResponse>(requestPath);
@@ -224,4 +284,26 @@ export class HistoryModule {
       nextCursor: response.nextCursor,
     };
   }
+}
+
+function normalizeTransactionHistoryFilters(
+  marketOrFilters: string | UserTransactionHistoryFilters | undefined,
+  filters: UserTransactionHistoryFilters
+): UserTransactionHistoryFilters {
+  if (typeof marketOrFilters === "string") {
+    return { ...filters, market: marketOrFilters };
+  }
+
+  return { ...(marketOrFilters ?? {}), ...filters };
+}
+
+function normalizeLiquidationHistoryFilters(
+  marketOrFilters: string | UserLiquidationHistoryFilters | undefined,
+  filters: UserLiquidationHistoryFilters
+): UserLiquidationHistoryFilters {
+  if (typeof marketOrFilters === "string") {
+    return { ...filters, market: marketOrFilters };
+  }
+
+  return { ...(marketOrFilters ?? {}), ...filters };
 }

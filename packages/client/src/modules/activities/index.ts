@@ -8,6 +8,7 @@ export type {
 export {
   ActivityDirection,
   ActivityKind,
+  ActivityStage,
   ActivityState,
   ActivityStatus,
 } from "./types";

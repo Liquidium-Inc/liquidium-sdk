@@ -55,6 +55,35 @@ describe("ApiClient", () => {
     });
   });
 
+  test("includes trace identifiers on api errors", async () => {
+    // given
+    const TRACE_ID = "trace-1";
+    const REQUEST_ID = "request-1";
+    vi.mocked(fetch).mockResolvedValueOnce(
+      new Response(JSON.stringify({ message: "Invalid request" }), {
+        status: 400,
+        headers: {
+          "x-request-id": REQUEST_ID,
+          "x-trace-id": TRACE_ID,
+        },
+      })
+    );
+    const client = createApiClient({
+      baseUrl: MOCK_BASE_URL,
+      timeoutMs: TIMEOUT_MS,
+    });
+
+    // when
+
+    // then
+    await expect(client.get("/v1/test")).rejects.toMatchObject({
+      code: LiquidiumErrorCode.SERVICE_UNAVAILABLE,
+      message: `Invalid request (traceId=${TRACE_ID}, requestId=${REQUEST_ID})`,
+      requestId: REQUEST_ID,
+      traceId: TRACE_ID,
+    });
+  });
+
   test("throws NETWORK_ERROR on fetch failure", async () => {
     // given
     vi.mocked(fetch).mockRejectedValue(new TypeError("fetch failed"));
