@@ -167,27 +167,35 @@ if (
 
 | Option | Type | Required | Description |
 |--------|------|----------|-------------|
-| `environment` | `"mainnet" \| "staging"` | No | Canister ID preset to use |
+| `environment` | `"mainnet"` | No | Canister ID preset to use |
 | `icHost` | `string` | No | ICP replica host override |
 | `identity` | `Identity` | No | `@dfinity/agent` identity |
 | `apiBaseUrl` | `string` | No | Liquidium API base URL |
 | `headers` | `Record<string, string>` | No | Default HTTP headers for API requests |
-| `canisterIds` | `Partial<CanisterIds>` | No | Override canister IDs |
+| `canisterIds` | `Partial<CanisterIds>` | No | Override canister IDs for staging or custom deployments |
 | `fetch` | `typeof fetch` | No | Custom fetch implementation for API requests |
 | `timeoutMs` | `number` | No | Request timeout (default: 30000) |
 
-Environment presets:
+Environment preset:
 
 - `mainnet`
   - `btcPool`: `hkmli-faaaa-aaaar-qb4ba-cai`
   - `ethDeposit`: `z5jz7-nyaaa-aaaar-qb6pq-cai`
   - `ercPool`: `hnnn4-iyaaa-aaaar-qb4bq-cai`
   - `lending`: `hyk4r-jqaaa-aaaar-qb4ca-cai`
-- `staging`
-  - `btcPool`: `42svn-2yaaa-aaaae-qfcsq-cai`
-  - `ethDeposit`: `jncw6-6yaaa-aaaae-qgccq-cai`
-  - `ercPool`: `7dcux-qqaaa-aaaae-qfc3a-cai`
-  - `lending`: `nja4y-2yaaa-aaaae-qddxa-cai`
+
+For staging or custom deployments, pass explicit canister ID overrides:
+
+```ts
+const client = LiquidiumClient.create({
+  canisterIds: {
+    btcPool: "42svn-2yaaa-aaaae-qfcsq-cai",
+    ethDeposit: "jncw6-6yaaa-aaaae-qgccq-cai",
+    ercPool: "7dcux-qqaaa-aaaae-qfc3a-cai",
+    lending: "nja4y-2yaaa-aaaae-qddxa-cai",
+  },
+});
+```
 
 ### Account creation flow
 

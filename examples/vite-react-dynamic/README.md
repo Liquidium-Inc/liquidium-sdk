@@ -39,6 +39,9 @@ The example calls `@liquidium/client` directly from each page. The only
 non-SDK code is small, focused helpers under `src/lib/` and wallet glue for
 Dynamic.
 
+For now, `src/liquidium-runtime-config.ts` passes staging canister IDs
+explicitly through `canisterIds`; the SDK itself only bundles mainnet defaults.
+
 - `src/App.tsx` — borrow page: quote-first borrow, position reads, history
 - `src/SupplyPage.tsx` — unified supply page for BTC and ETH stablecoin pools
 - `src/SdkMethodQueryPage.tsx` — developer tool to run any SDK method with raw

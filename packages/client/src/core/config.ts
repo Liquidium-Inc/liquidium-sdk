@@ -10,16 +10,8 @@ const MAINNET_CANISTER_IDS: CanisterIds = {
   ethDeposit: "z5jz7-nyaaa-aaaar-qb6pq-cai",
 };
 
-const STAGING_CANISTER_IDS: CanisterIds = {
-  lending: "nja4y-2yaaa-aaaae-qddxa-cai",
-  btcPool: "42svn-2yaaa-aaaae-qfcsq-cai",
-  ercPool: "7dcux-qqaaa-aaaae-qfc3a-cai",
-  ethDeposit: "jncw6-6yaaa-aaaae-qgccq-cai",
-};
-
 const CANISTER_IDS_BY_ENVIRONMENT: Record<Environment, CanisterIds> = {
   mainnet: MAINNET_CANISTER_IDS,
-  staging: STAGING_CANISTER_IDS,
 };
 
 export function resolveHost(override?: string): string {
