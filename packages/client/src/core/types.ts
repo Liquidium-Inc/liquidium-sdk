@@ -8,7 +8,7 @@ import type { Identity } from "@dfinity/agent";
  * reporting, and contract-interaction `supply` planning.
  */
 export interface LiquidiumClientConfig {
-  /** Preset canister IDs (`mainnet` or `staging`). */
+  /** Preset canister IDs. Only `mainnet` is bundled. */
   environment?: Environment;
   /** ICP replica host override (defaults follow `@dfinity/agent`). */
   icHost?: string;
@@ -21,7 +21,7 @@ export interface LiquidiumClientConfig {
   apiBaseUrl?: string;
   /** Extra headers sent with every SDK API request. */
   headers?: Record<string, string>;
-  /** Override individual canister principals; merges with `environment` preset. */
+  /** Override individual canister principals for custom deployments. */
   canisterIds?: Partial<CanisterIds>;
   /** Custom `fetch` implementation for SDK API requests. */
   fetch?: typeof fetch;
@@ -38,7 +38,6 @@ export interface CanisterIds {
 
 export const Environment = {
   mainnet: "mainnet",
-  staging: "staging",
 } as const;
 export type Environment = (typeof Environment)[keyof typeof Environment];
 

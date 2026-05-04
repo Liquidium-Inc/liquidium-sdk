@@ -167,27 +167,35 @@ if (
 
 | Option | Type | Required | Description |
 |--------|------|----------|-------------|
-| `environment` | `"mainnet" \| "staging"` | No | Canister ID preset to use |
+| `environment` | `"mainnet"` | No | Canister ID preset to use |
 | `icHost` | `string` | No | ICP replica host override |
 | `identity` | `Identity` | No | `@dfinity/agent` identity |
 | `apiBaseUrl` | `string` | No | Liquidium API base URL |
 | `headers` | `Record<string, string>` | No | Default HTTP headers for API requests |
-| `canisterIds` | `Partial<CanisterIds>` | No | Override canister IDs |
+| `canisterIds` | `Partial<CanisterIds>` | No | Override canister IDs for custom deployments |
 | `fetch` | `typeof fetch` | No | Custom fetch implementation for API requests |
 | `timeoutMs` | `number` | No | Request timeout (default: 30000) |
 
-Environment presets:
+Environment preset:
 
 - `mainnet`
   - `btcPool`: `hkmli-faaaa-aaaar-qb4ba-cai`
   - `ethDeposit`: `z5jz7-nyaaa-aaaar-qb6pq-cai`
   - `ercPool`: `hnnn4-iyaaa-aaaar-qb4bq-cai`
   - `lending`: `hyk4r-jqaaa-aaaar-qb4ca-cai`
-- `staging`
-  - `btcPool`: `<btc-pool-canister-id>`
-  - `ethDeposit`: `<eth-deposit-canister-id>`
-  - `ercPool`: `<erc-pool-canister-id>`
-  - `lending`: `<lending-canister-id>`
+
+For custom deployments, pass explicit canister ID overrides:
+
+```ts
+const client = LiquidiumClient.create({
+  canisterIds: {
+    btcPool: "<btc-pool-canister-id>",
+    ethDeposit: "<eth-deposit-canister-id>",
+    ercPool: "<erc-pool-canister-id>",
+    lending: "<lending-canister-id>",
+  },
+});
+```
 
 ### Account creation flow
 

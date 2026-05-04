@@ -38,7 +38,7 @@ const client = LiquidiumClient.create({
 ```
 
 **Config requirements:**
-- `environment`: sets the canister preset (`mainnet` or `staging`)
+- `environment`: sets the canister preset. Only `mainnet` is bundled; pass `canisterIds` explicitly for custom deployments
 - `apiBaseUrl`: required for history, activities, inflow reporting, and lower-level contract-interaction planning. Not required for `borrow(...)`, `withdraw(...)`, or default ETH stablecoin deposit-address supply/repay targets
 - `identity` / `icHost`: custom ICP agent configuration
 
