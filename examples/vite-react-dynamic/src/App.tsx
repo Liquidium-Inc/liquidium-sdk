@@ -3,10 +3,8 @@ import type {
   Activity,
   ActivityState,
   ApySample,
-  AssetPrices,
   GetActivityStatusResponse,
   OutflowDetails,
-  Pool,
   QuoteResult,
   UserHistoryEntry,
   UserPositionSummary,
@@ -14,6 +12,7 @@ import type {
 } from "@liquidium/client";
 import { useEffect, useMemo, useState } from "react";
 import { ExampleWalletSection } from "./ExampleWalletSection";
+import type { SharedExampleState } from "./example-state";
 import {
   getLiquidiumAccountAddress,
   getWalletChainLabel,
@@ -47,7 +46,14 @@ const MIN_LTV_BPS = 1000;
 const DEFAULT_HISTORY_LIMIT = 20;
 const DEFAULT_ACTIVITY_STATE: ActivityState = "active";
 
-export default function App() {
+export default function App({
+  profileId,
+  setProfileId,
+  pools,
+  setPools,
+  prices,
+  setPrices,
+}: SharedExampleState) {
   const isLoggedIn = useIsLoggedIn();
   const { handleLogOut, primaryWallet, setShowAuthFlow } = useDynamicContext();
 
@@ -56,9 +62,6 @@ export default function App() {
     "Connect a wallet to start."
   );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [profileId, setProfileId] = useState<string | null>(null);
-  const [pools, setPools] = useState<Pool[]>([]);
-  const [prices, setPrices] = useState<AssetPrices>({});
   const [borrowPoolId, setBorrowPoolId] = useState("");
   const [collateralPoolId, setCollateralPoolId] = useState("");
   const [borrowAmountInput, setBorrowAmountInput] = useState(
@@ -361,6 +364,11 @@ export default function App() {
           : `Resolved Liquidium profile ${nextProfileId}.`
       );
     });
+  }
+
+  async function handleDisconnect() {
+    setProfileId(null);
+    await handleLogOut();
   }
 
   async function handleLoadMarkets() {
@@ -666,7 +674,7 @@ export default function App() {
         isBusy={isBusy}
         canCreateProfile={Boolean(primaryWallet && liquidiumAccountAddress)}
         onConnect={() => setShowAuthFlow(true)}
-        onDisconnect={() => void handleLogOut()}
+        onDisconnect={() => void handleDisconnect()}
         onLoadMarkets={() => void handleLoadMarkets()}
         onCreateProfile={() => void handleCreateProfile()}
         details={[

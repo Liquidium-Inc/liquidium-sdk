@@ -18,7 +18,11 @@ import {
   createWithdrawAssetMessage,
 } from "../../core/canisters/lending/messages";
 import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
-import { MAX_UINT256, USDT_CONTRACT_ADDRESS } from "../../core/evm";
+import {
+  MAX_UINT256,
+  USDC_CONTRACT_ADDRESS,
+  USDT_CONTRACT_ADDRESS,
+} from "../../core/evm";
 import {
   buildEvmSupplyContextPath,
   SdkApiPath,
@@ -97,6 +101,7 @@ type SupplyTargetRequest = {
   asset: string;
   chain: string;
   action: SupplyAction;
+  mechanism?: SupplyMechanism;
 };
 
 type SupplyMechanism = SupplyFlow["type"];
@@ -402,6 +407,7 @@ export class LendingModule {
     const mechanism = resolveSupplyMechanism({
       asset: instruction.asset,
       chain: instruction.chain,
+      requestedMechanism: request.mechanism,
     });
     const defaultSubmitInflowRequest = getDefaultSubmitInflowRequest({
       action: request.action,
@@ -479,10 +485,10 @@ export class LendingModule {
   async estimateInflowFee(
     request: EstimateInflowFeeRequest
   ): Promise<InflowFeeEstimate> {
-    if (request.asset === Asset.USDT && request.chain === Chain.ETH) {
+    if (isEthStablecoin(request.asset, request.chain)) {
       const result = await createDepositAccountsActor(
         this.canisterContext
-      ).estimate_deposit_fee([USDT_CONTRACT_ADDRESS]);
+      ).estimate_deposit_fee([getEthStablecoinContractAddress(request.asset)]);
 
       if ("Err" in result) {
         throw mapDepositAccountErrorToLiquidiumError(result.Err);
@@ -716,14 +722,14 @@ export class LendingModule {
           );
         }
 
-        if (params.asset === Asset.USDT) {
+        if (isEthStablecoin(params.asset, params.chain)) {
           return await params.walletAdapter.sendEthTransaction({
             chain: Chain.ETH,
             account: params.senderAccount,
             actionType: `supply-${params.action}`,
             transferMode: TransferMode.native,
             transaction: createTransferErc20Transaction({
-              tokenAddress: USDT_CONTRACT_ADDRESS,
+              tokenAddress: getEthStablecoinContractAddress(params.asset),
               recipientAddress: params.toAddress,
               amount: params.amount,
             }),
@@ -841,6 +847,7 @@ export class LendingModule {
     const mechanism = resolveSupplyMechanism({
       asset,
       chain,
+      requestedMechanism: request.mechanism,
     });
 
     switch (mechanism) {
@@ -867,7 +874,8 @@ export class LendingModule {
   ): Promise<NativeAddressSupplyTarget> {
     assertSupportsNativeAddressInflowTarget(request.asset, request.chain);
 
-    if (request.asset === Asset.USDT && request.chain === Chain.ETH) {
+    if (isEthStablecoin(request.asset, request.chain)) {
+      const tokenAddress = getEthStablecoinContractAddress(request.asset);
       const subaccount = encodeInflowSubaccount({
         action: request.action,
         principal: Principal.fromText(profileId),
@@ -879,7 +887,7 @@ export class LendingModule {
           owner: Principal.fromText(request.poolId),
           subaccount: [subaccount],
         },
-        [USDT_CONTRACT_ADDRESS]
+        [tokenAddress]
       );
 
       if ("Err" in result) {
@@ -1029,17 +1037,27 @@ function isRetriableInflowSubmitError(error: unknown): boolean {
 function resolveSupplyMechanism(params: {
   asset: string;
   chain: string;
+  requestedMechanism?: SupplyMechanism;
 }): SupplyMechanism {
   if (params.asset === Asset.BTC && params.chain === Chain.BTC) {
+    if (params.requestedMechanism === SupplyPlanType.contractInteraction) {
+      throw new LiquidiumError(
+        LiquidiumErrorCode.VALIDATION_ERROR,
+        "Contract-interaction supply is not supported for BTC on BTC"
+      );
+    }
+
     return SupplyPlanType.transfer;
   }
 
-  if (params.asset === Asset.USDC && params.chain === Chain.ETH) {
-    return SupplyPlanType.contractInteraction;
-  }
+  if (isEthStablecoin(params.asset, params.chain)) {
+    if (params.requestedMechanism) {
+      return params.requestedMechanism;
+    }
 
-  if (params.asset === Asset.USDT && params.chain === Chain.ETH) {
-    return SupplyPlanType.transfer;
+    return params.asset === Asset.USDC
+      ? SupplyPlanType.contractInteraction
+      : SupplyPlanType.transfer;
   }
 
   throw new LiquidiumError(
@@ -1056,7 +1074,7 @@ function assertSupportsNativeAddressInflowTarget(
     return;
   }
 
-  if (asset === Asset.USDT && chain === Chain.ETH) {
+  if (isEthStablecoin(asset, chain)) {
     return;
   }
 
@@ -1114,6 +1132,25 @@ function mapDepositAccountErrorToLiquidiumError(
   return new LiquidiumError(
     LiquidiumErrorCode.DEPOSIT_ADDRESS_ERROR,
     "Deposit address canister returned an unknown error"
+  );
+}
+
+function isEthStablecoin(asset: string, chain: string): boolean {
+  return chain === Chain.ETH && (asset === Asset.USDC || asset === Asset.USDT);
+}
+
+function getEthStablecoinContractAddress(asset: string): string {
+  if (asset === Asset.USDC) {
+    return USDC_CONTRACT_ADDRESS;
+  }
+
+  if (asset === Asset.USDT) {
+    return USDT_CONTRACT_ADDRESS;
+  }
+
+  throw new LiquidiumError(
+    LiquidiumErrorCode.VALIDATION_ERROR,
+    `ETH stablecoin contract address is not configured for ${asset}`
   );
 }
 

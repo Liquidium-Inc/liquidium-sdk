@@ -4,16 +4,31 @@ import {
   buildActivityStatusPath,
 } from "../../core/sdk-api-paths";
 import type { ApiClient } from "../../core/transports/api-client";
+import { Chain } from "../../core/types";
 import { parseBigInt } from "../../core/utils/bigint";
 import type {
   Activity,
+  ActivityTopUp,
   GetActivityStatusRequest,
   GetActivityStatusResponse,
   ListActivitiesRequest,
 } from "./types";
+import { ActivityDirection, ActivityStage } from "./types";
 
-type ActivityWire = Omit<Activity, "amount"> & {
+const PRE_TERMINAL_ETH_ACTIVITY_ID_PREFIX = "pre_terminal_eth_";
+
+type ActivityTopUpWire = Omit<
+  ActivityTopUp,
+  "depositedAmount" | "feeAmount" | "shortfallAmount"
+> & {
+  depositedAmount: string;
+  feeAmount: string;
+  shortfallAmount: string;
+};
+
+type ActivityWire = Omit<Activity, "amount" | "topUp"> & {
   amount: string;
+  topUp?: ActivityTopUpWire;
 };
 
 type ListActivitiesResponseWire = {
@@ -86,8 +101,41 @@ export class ActivitiesModule {
 }
 
 function mapActivity(wire: ActivityWire): Activity {
+  const { amount, topUp: topUpWire, ...activity } = wire;
+  const stage = wire.stage ?? deriveActivityStage(wire);
+  const topUp = topUpWire ? mapActivityTopUp(topUpWire) : undefined;
+
   return {
-    ...wire,
-    amount: parseBigInt(wire.amount, "activity amount"),
+    ...activity,
+    ...(stage ? { stage } : {}),
+    ...(topUp ? { topUp } : {}),
+    amount: parseBigInt(amount, "activity amount"),
   };
+}
+
+function mapActivityTopUp(wire: ActivityTopUpWire): ActivityTopUp {
+  return {
+    required: wire.required,
+    depositedAmount: parseBigInt(
+      wire.depositedAmount,
+      "activity top-up deposited amount"
+    ),
+    feeAmount: parseBigInt(wire.feeAmount, "activity top-up fee amount"),
+    shortfallAmount: parseBigInt(
+      wire.shortfallAmount,
+      "activity top-up shortfall amount"
+    ),
+  };
+}
+
+function deriveActivityStage(wire: ActivityWire): Activity["stage"] {
+  if (
+    wire.id.startsWith(PRE_TERMINAL_ETH_ACTIVITY_ID_PREFIX) &&
+    wire.direction === ActivityDirection.inflow &&
+    wire.chain === Chain.ETH
+  ) {
+    return ActivityStage.deposited;
+  }
+
+  return undefined;
 }

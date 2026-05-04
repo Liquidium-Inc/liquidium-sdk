@@ -1,6 +1,14 @@
 import type { LiquidiumClientConfig } from "@liquidium/client";
 
-const DEFAULT_LIQUIDIUM_BASE_URL = "https://app.liquidium.fi/api/sdk";
+const DEFAULT_LIQUIDIUM_BASE_URL =
+  "https://pools-internal-mvp.vercel.app/api/sdk";
+
+const STAGING_CANISTER_IDS = {
+  lending: "nja4y-2yaaa-aaaae-qddxa-cai",
+  btcPool: "42svn-2yaaa-aaaae-qfcsq-cai",
+  ercPool: "7dcux-qqaaa-aaaae-qfc3a-cai",
+  ethDeposit: "jncw6-6yaaa-aaaae-qgccq-cai",
+} satisfies LiquidiumClientConfig["canisterIds"];
 
 export function resolveLiquidiumClientConfig(): LiquidiumClientConfig {
   const configuredBaseUrl = normalizeOptionalValue(
@@ -9,6 +17,7 @@ export function resolveLiquidiumClientConfig(): LiquidiumClientConfig {
 
   return {
     apiBaseUrl: configuredBaseUrl ?? DEFAULT_LIQUIDIUM_BASE_URL,
+    canisterIds: STAGING_CANISTER_IDS,
   };
 }
 

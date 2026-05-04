@@ -232,6 +232,8 @@ These calls use the lending canister only; they do not require `apiBaseUrl`. To 
 
 - `client.activities.list({ profileId, state: "active" })` - list active, completed, or all activities for a profile
 - `client.activities.getStatus({ profileId, id })` - fetch one receipt by receipt id or txid
+- Active inflows use `status: "pending"` as the coarse lifecycle state. Check `activity.stage` for processing detail; ETH deposit-address transfers that are detected but not yet processed return `stage: "deposited"`.
+- Underfunded ETH deposit-address inflows include `activity.topUp` with `depositedAmount`, `feeAmount`, and `shortfallAmount` in base units.
 
 ### Supply tracking flow
 

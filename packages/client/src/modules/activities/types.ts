@@ -41,11 +41,23 @@ export const ActivityStage = {
 } as const;
 export type ActivityStage = (typeof ActivityStage)[keyof typeof ActivityStage];
 
+export interface ActivityTopUp {
+  required: boolean;
+  /** Total same-token deposited amount counted toward the current fee. */
+  depositedAmount: bigint;
+  /** Current deposit-address processing fee. */
+  feeAmount: bigint;
+  /** Additional amount needed before processing can start. */
+  shortfallAmount: bigint;
+}
+
 export interface Activity {
   id: string;
   direction: ActivityDirection;
   kind: ActivityKind;
+  /** Coarse lifecycle status. Active inflows stay pending until completed. */
   status: ActivityStatus;
+  /** Inflow processing stage, e.g. deposited for detected ETH deposits. */
   stage?: ActivityStage;
   poolId: string;
   asset: string | null;
@@ -56,6 +68,7 @@ export interface Activity {
   txids?: string[];
   confirmations: number | null;
   requiredConfirmations: number | null;
+  topUp?: ActivityTopUp;
 }
 
 export interface ListActivitiesRequest {

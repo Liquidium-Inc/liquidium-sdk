@@ -84,11 +84,19 @@ export interface WithdrawAction
   actionType: typeof WalletActionKind.createWithdraw;
 }
 
+export const SupplyPlanType = {
+  contractInteraction: "contractInteraction",
+  transfer: "transfer",
+} as const;
+export type SupplyPlanType =
+  (typeof SupplyPlanType)[keyof typeof SupplyPlanType];
+
 /** Minimal input for `prepareSupply` (target resolution only). */
 export interface SupplyRequest {
   profileId: string;
   poolId: string;
   action: SupplyAction;
+  mechanism?: SupplyPlanType;
 }
 
 export interface NativeAddressSupplyTarget {
@@ -135,14 +143,8 @@ export interface SupplyFlowRequest {
   >;
   account?: string;
   amount?: bigint;
+  mechanism?: SupplyPlanType;
 }
-
-export const SupplyPlanType = {
-  contractInteraction: "contractInteraction",
-  transfer: "transfer",
-} as const;
-export type SupplyPlanType =
-  (typeof SupplyPlanType)[keyof typeof SupplyPlanType];
 
 /**
  * Supply receipt returned by `lending.supply(...)`.

@@ -17,6 +17,8 @@ type SendEthereumTransactionRequest = {
   value?: string;
 };
 
+const ETHEREUM_MAINNET_CHAIN_ID = 1;
+
 export type SignatureChain = "ETH" | "BTC";
 
 export function getWalletSignatureChain(
@@ -108,11 +110,27 @@ export async function sendEthereumTransaction(
   }
 
   const walletClient = await primaryWallet.getWalletClient();
-  const txid = await walletClient.sendTransaction({
-    to: request.to as `0x${string}`,
-    data: request.data as `0x${string}` | undefined,
-    value: request.value ? BigInt(request.value) : undefined,
-  });
+  const chainId = await walletClient.getChainId();
+
+  if (chainId !== ETHEREUM_MAINNET_CHAIN_ID) {
+    throw new Error(
+      "Switch your Ethereum wallet to mainnet before sending this transaction."
+    );
+  }
+
+  let txid: string;
+  try {
+    txid = await walletClient.sendTransaction({
+      to: request.to as `0x${string}`,
+      data: request.data as `0x${string}` | undefined,
+      value: request.value ? BigInt(request.value) : undefined,
+    });
+  } catch (error) {
+    throw new Error(
+      "Ethereum transaction failed. Check that your wallet has enough mainnet token balance and ETH for gas.",
+      { cause: error }
+    );
+  }
 
   if (!txid) {
     throw new Error("Ethereum wallet did not return a transaction hash.");

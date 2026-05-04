@@ -6,10 +6,12 @@ import type {
   SupplyAction,
   SupplyFlow,
   SupplyInstruction,
+  SupplyPlanType,
   WalletAdapter,
 } from "@liquidium/client";
 import { useEffect, useMemo, useState } from "react";
 import { ExampleWalletSection } from "./ExampleWalletSection";
+import type { SharedExampleState } from "./example-state";
 import {
   getLiquidiumAccountAddress,
   getWalletChainLabel,
@@ -36,8 +38,15 @@ import {
 
 const DEFAULT_SUPPLY_ACTION: SupplyAction = "deposit";
 const DEFAULT_SUPPLY_AMOUNT = "10";
+const DEFAULT_SUPPLY_MECHANISM: SupplyPlanType = "transfer";
 
-export function SupplyPage() {
+export function SupplyPage({
+  profileId,
+  setProfileId,
+  pools,
+  setPools,
+  setPrices,
+}: SharedExampleState) {
   const isLoggedIn = useIsLoggedIn();
   const { handleLogOut, primaryWallet, setShowAuthFlow } = useDynamicContext();
 
@@ -46,11 +55,12 @@ export function SupplyPage() {
     "Connect a wallet to start."
   );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [profileId, setProfileId] = useState<string | null>(null);
-  const [pools, setPools] = useState<Pool[]>([]);
   const [selectedSupplyPoolId, setSelectedSupplyPoolId] = useState("");
   const [supplyAction, setSupplyAction] = useState<SupplyAction>(
     DEFAULT_SUPPLY_ACTION
+  );
+  const [supplyMechanism, setSupplyMechanism] = useState<SupplyPlanType>(
+    DEFAULT_SUPPLY_MECHANISM
   );
   const [supplyAmountInput, setSupplyAmountInput] = useState(
     DEFAULT_SUPPLY_AMOUNT
@@ -76,8 +86,14 @@ export function SupplyPage() {
     supplyAmountInput,
     getAssetDecimals(selectedSupplyPool?.asset ?? "BTC")
   );
+  const canChooseSupplyMechanism = selectedSupplyPool
+    ? isEthStablecoinPool(selectedSupplyPool)
+    : false;
+  const selectedSupplyMechanism = canChooseSupplyMechanism
+    ? supplyMechanism
+    : DEFAULT_SUPPLY_MECHANISM;
   const resolvedMechanismLabel = selectedSupplyPool
-    ? formatSupplyMechanismLabel(selectedSupplyPool)
+    ? formatSupplyMechanismLabel(selectedSupplyPool, selectedSupplyMechanism)
     : "Load markets to resolve a supported pool.";
   const workflowStageLabel = profileId
     ? selectedSupplyPool
@@ -104,6 +120,12 @@ export function SupplyPage() {
       return supportedSupplyPools[0]?.id ?? "";
     });
   }, [supportedSupplyPools]);
+
+  useEffect(() => {
+    if (selectedSupplyPool && !isEthStablecoinPool(selectedSupplyPool)) {
+      setSupplyMechanism(DEFAULT_SUPPLY_MECHANISM);
+    }
+  }, [selectedSupplyPool]);
 
   async function runAction(action: () => Promise<void>) {
     setIsBusy(true);
@@ -144,15 +166,24 @@ export function SupplyPage() {
     });
   }
 
+  async function handleDisconnect() {
+    setProfileId(null);
+    await handleLogOut();
+  }
+
   async function handleLoadMarkets() {
     await runAction(async () => {
-      setStatusMessage("Loading pools...");
+      setStatusMessage("Loading pools and prices...");
 
       const client = createLiquidiumClient();
-      const nextPools = await client.market.listPools();
+      const [nextPools, nextPrices] = await Promise.all([
+        client.market.listPools(),
+        client.market.getAssetPrices(),
+      ]);
 
       setPools(nextPools);
-      setStatusMessage(`Loaded ${nextPools.length} pools for the supply page.`);
+      setPrices(nextPrices);
+      setStatusMessage(`Loaded ${nextPools.length} pools and live prices.`);
     });
   }
 
@@ -200,6 +231,7 @@ export function SupplyPage() {
         amount: supplyAmount,
         account: liquidiumAccountAddress || undefined,
         walletAdapter,
+        mechanism: selectedSupplyMechanism,
       });
 
       setSupplyFlow(nextSupplyFlow);
@@ -249,7 +281,7 @@ export function SupplyPage() {
         isBusy={isBusy}
         canCreateProfile={Boolean(primaryWallet && liquidiumAccountAddress)}
         onConnect={() => setShowAuthFlow(true)}
-        onDisconnect={() => void handleLogOut()}
+        onDisconnect={() => void handleDisconnect()}
         onLoadMarkets={() => void handleLoadMarkets()}
         onCreateProfile={() => void handleCreateProfile()}
         details={[
@@ -274,8 +306,8 @@ export function SupplyPage() {
         <h2>Supply</h2>
         <p>
           Pick a supported pool and call the same{" "}
-          <code>client.lending.supply()</code> flow for BTC and ETH USDT deposit
-          address targets.
+          <code>client.lending.supply()</code> flow for BTC and ETH stablecoin
+          supply targets.
         </p>
         <div className="field-grid">
           <label>
@@ -304,6 +336,20 @@ export function SupplyPage() {
             >
               <option value="deposit">Deposit</option>
               <option value="repayment">Repayment</option>
+            </select>
+          </label>
+
+          <label>
+            Supply method
+            <select
+              disabled={!canChooseSupplyMechanism}
+              value={selectedSupplyMechanism}
+              onChange={(event) =>
+                setSupplyMechanism(event.target.value as SupplyPlanType)
+              }
+            >
+              <option value="transfer">Deposit address transfer</option>
+              <option value="contractInteraction">Contract interaction</option>
             </select>
           </label>
 
@@ -426,13 +472,18 @@ function isNativeAddressSupplyInstruction(
   return supplyInstruction.target.type === "nativeAddress";
 }
 
-function formatSupplyMechanismLabel(pool: Pool): string {
+function formatSupplyMechanismLabel(
+  pool: Pool,
+  supplyMechanism: SupplyPlanType
+): string {
   if (isBtcPool(pool)) {
     return "Transfer";
   }
 
   if (pool.chain === "ETH" && isStablecoinAsset(pool.asset)) {
-    return "Deposit address transfer";
+    return supplyMechanism === "contractInteraction"
+      ? "Contract interaction"
+      : "Deposit address transfer";
   }
 
   return "Unsupported";

@@ -1,3 +1,4 @@
+import type { AssetPrices, Pool } from "@liquidium/client";
 import { useEffect, useState } from "react";
 import App from "./App";
 import { SdkMethodQueryPage } from "./SdkMethodQueryPage";
@@ -12,6 +13,18 @@ export default function Root() {
   const [activePageId, setActivePageId] = useState<ExamplePageId>(() => {
     return getPageIdFromHash(window.location.hash);
   });
+  const [profileId, setProfileId] = useState<string | null>(null);
+  const [pools, setPools] = useState<Pool[]>([]);
+  const [prices, setPrices] = useState<AssetPrices>({});
+
+  const sharedExampleState = {
+    profileId,
+    setProfileId,
+    pools,
+    setPools,
+    prices,
+    setPrices,
+  };
 
   useEffect(() => {
     const onHashChange = () => {
@@ -48,9 +61,13 @@ export default function Root() {
         </a>
       </header>
 
-      {activePageId === "borrow" ? <App /> : null}
-      {activePageId === "supply" ? <SupplyPage /> : null}
-      {activePageId === "sdk-methods" ? <SdkMethodQueryPage /> : null}
+      {activePageId === "borrow" ? <App {...sharedExampleState} /> : null}
+      {activePageId === "supply" ? (
+        <SupplyPage {...sharedExampleState} />
+      ) : null}
+      {activePageId === "sdk-methods" ? (
+        <SdkMethodQueryPage {...sharedExampleState} />
+      ) : null}
     </div>
   );
 }

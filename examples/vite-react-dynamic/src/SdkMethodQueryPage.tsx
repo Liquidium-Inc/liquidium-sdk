@@ -10,9 +10,11 @@ import type {
   LiquidiumClient,
   Pool,
   QuoteRequest,
+  SupplyPlanType,
   WalletAdapter,
 } from "@liquidium/client";
 import { useMemo, useState } from "react";
+import type { SharedExampleState } from "./example-state";
 import { createLiquidiumClient } from "./lib/client";
 
 const MIN_LIST_LIMIT = 1;
@@ -445,13 +447,14 @@ const SDK_METHODS: MethodDefinition[] = [
     id: "lending.prepareSupply",
     label: "lending.prepareSupply",
     defaultArgs:
-      '{\n  "profileId": "aaaaa-aa",\n  "poolId": "bbbbb-bb",\n  "action": "deposit"\n}',
+      '{\n  "profileId": "aaaaa-aa",\n  "poolId": "bbbbb-bb",\n  "action": "deposit",\n  "mechanism": "transfer"\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
       return await client.lending.prepareSupply({
         profileId: expectNonEmptyString(args.profileId, "profileId"),
         poolId: expectNonEmptyString(args.poolId, "poolId"),
         action: expectSupplyAction(args.action, "action"),
+        mechanism: expectOptionalSupplyMechanism(args.mechanism, "mechanism"),
       });
     },
   },
@@ -459,7 +462,7 @@ const SDK_METHODS: MethodDefinition[] = [
     id: "lending.supply",
     label: "lending.supply",
     defaultArgs:
-      '{\n  "profileId": "aaaaa-aa",\n  "poolId": "bbbbb-bb",\n  "action": "deposit",\n  "account": "0xYourWalletAddress",\n  "amount": "1000000",\n  "mockTxHash": "0xmockedtxhash"\n}',
+      '{\n  "profileId": "aaaaa-aa",\n  "poolId": "bbbbb-bb",\n  "action": "deposit",\n  "mechanism": "transfer",\n  "account": "0xYourWalletAddress",\n  "amount": "1000000",\n  "mockTxHash": "0xmockedtxhash"\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
       const mockTxHash =
@@ -479,6 +482,7 @@ const SDK_METHODS: MethodDefinition[] = [
         profileId: expectNonEmptyString(args.profileId, "profileId"),
         poolId: expectNonEmptyString(args.poolId, "poolId"),
         action: expectSupplyAction(args.action, "action"),
+        mechanism: expectOptionalSupplyMechanism(args.mechanism, "mechanism"),
         account,
         amount,
         walletAdapter,
@@ -521,7 +525,16 @@ const SDK_METHODS: MethodDefinition[] = [
   },
 ];
 
-export function SdkMethodQueryPage() {
+type SdkMethodQueryPageProps = Pick<
+  SharedExampleState,
+  "profileId" | "pools" | "prices"
+>;
+
+export function SdkMethodQueryPage({
+  profileId,
+  pools,
+  prices,
+}: SdkMethodQueryPageProps) {
   const { primaryWallet } = useDynamicContext();
   const [selectedMethodId, setSelectedMethodId] = useState(SDK_METHODS[0].id);
   const [argsInput, setArgsInput] = useState(SDK_METHODS[0].defaultArgs);
@@ -636,11 +649,39 @@ export function SdkMethodQueryPage() {
         nextArgs.signerChain = walletChain;
       }
 
+      if (profileId && "profileId" in nextArgs) {
+        nextArgs.profileId = profileId;
+      }
+
+      if (pools.length > 0 && "poolId" in nextArgs) {
+        nextArgs.poolId = pools[0]?.id;
+      }
+
+      if (pools.length > 0 && "request" in nextArgs) {
+        const requestArgs = expectObject(nextArgs.request, "request");
+
+        if ("borrowPoolId" in requestArgs) {
+          requestArgs.borrowPoolId = pools[0]?.id;
+        }
+
+        if ("collateralPoolId" in requestArgs) {
+          requestArgs.collateralPoolId = pools[1]?.id ?? pools[0]?.id;
+        }
+      }
+
+      if (pools.length > 0 && "pools" in nextArgs) {
+        nextArgs.pools = pools;
+      }
+
+      if (Object.keys(prices).length > 0 && "prices" in nextArgs) {
+        nextArgs.prices = prices;
+      }
+
       if ("mockSignature" in nextArgs) {
         nextArgs.mockSignature = DEFAULT_MOCK_SIGNATURE;
       }
 
-      setArgsInput(JSON.stringify(nextArgs, null, 2));
+      setArgsInput(JSON.stringify(nextArgs, jsonReplacer, 2));
       setErrorMessage(null);
     } catch {
       setErrorMessage("The current JSON is invalid. Reset template first.");
@@ -664,6 +705,14 @@ export function SdkMethodQueryPage() {
           <div>
             <dt>Wallet chain</dt>
             <dd>{walletChain || "Unknown"}</dd>
+          </div>
+          <div>
+            <dt>Profile ID</dt>
+            <dd>{profileId ?? "Not created yet"}</dd>
+          </div>
+          <div>
+            <dt>Pools loaded</dt>
+            <dd>{pools.length}</dd>
           </div>
           <div>
             <dt>SDK config</dt>
@@ -936,6 +985,22 @@ function expectSupplyAction(
   }
 
   throw new Error(`${fieldName} must be deposit or repayment.`);
+}
+
+function expectOptionalSupplyMechanism(
+  value: unknown,
+  fieldName: string
+): SupplyPlanType | undefined {
+  const mechanism = expectOptionalString(value, fieldName);
+  if (!mechanism) {
+    return undefined;
+  }
+
+  if (mechanism === "transfer" || mechanism === "contractInteraction") {
+    return mechanism;
+  }
+
+  throw new Error(`${fieldName} must be transfer or contractInteraction.`);
 }
 
 function expectOptionalInflowSubmitType(
