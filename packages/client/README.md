@@ -33,6 +33,18 @@ const prices = await client.market.getAssetPrices();
 const marketAsset = pools[0]?.asset;
 const assetPriceUsd = marketAsset ? prices[marketAsset] : undefined;
 
+// Quote-first borrow planning
+const quote = await client.quote.getQuote(
+  {
+    borrowAmount: 50_000n,
+    borrowPoolId: pools[0].id,
+    collateralPoolId: pools[1].id,
+    targetLtvBps: 5_000n,
+  },
+  pools,
+  prices
+);
+
 // Positions
 const positions = await client.positions.listPositions("profile-id");
 const health = await client.positions.getHealthFactor("profile-id");
@@ -76,7 +88,12 @@ const profileWithConvenience = await client.accounts.createProfile({
 });
 
 // History (requires apiBaseUrl)
-const history = await client.history.getUser("profile-id");
+const userHistory = await client.history.getUserTransactionHistory(
+  "profile-id"
+);
+const liquidations = await client.history.getLiquidationHistory("profile-id");
+const poolHistory = await client.history.getPoolHistory("pool-id");
+const borrowRates = await client.history.getBorrowRateHistory("pool-id");
 
 // Borrow with a required custom outflow account
 const borrowAction = await client.lending.prepareBorrow({
@@ -134,7 +151,10 @@ const supplyFlow = await client.lending.supply({
   action: "deposit",
 });
 
-if (supplyFlow.type === "transfer" && supplyFlow.target.type === "nativeAddress") {
+if (
+  supplyFlow.type === "transfer" &&
+  supplyFlow.target.type === "nativeAddress"
+) {
   const depositAddress = supplyFlow.target.address;
 }
 
@@ -159,22 +179,34 @@ if (
 ) {
   const usdtDepositAddress = stablecoinFlow.target.address;
 }
+
+// Force the lower-level ETH contract-interaction path when needed.
+// This requires apiBaseUrl plus account, amount, and sendEthTransaction.
+const contractInteractionFlow = await client.lending.supply({
+  profileId: "<liquidium-profile-id>",
+  poolId: "<eth-usdt-pool-id>",
+  action: "deposit",
+  mechanism: "contractInteraction",
+  account: walletAddress,
+  amount: 10_000_000n,
+  walletAdapter,
+});
 ```
 
 ## API
 
 ### `LiquidiumClient.create(config)`
 
-| Option | Type | Required | Description |
-|--------|------|----------|-------------|
-| `environment` | `"mainnet"` | No | Canister ID preset to use |
-| `icHost` | `string` | No | ICP replica host override |
-| `identity` | `Identity` | No | `@dfinity/agent` identity |
-| `apiBaseUrl` | `string` | No | Liquidium API base URL |
-| `headers` | `Record<string, string>` | No | Default HTTP headers for API requests |
-| `canisterIds` | `Partial<CanisterIds>` | No | Override canister IDs for custom deployments |
-| `fetch` | `typeof fetch` | No | Custom fetch implementation for API requests |
-| `timeoutMs` | `number` | No | Request timeout (default: 30000) |
+| Option        | Type                     | Required | Description                                  |
+| ------------- | ------------------------ | -------- | -------------------------------------------- |
+| `environment` | `"mainnet"`              | No       | Canister ID preset to use                    |
+| `icHost`      | `string`                 | No       | ICP replica host override                    |
+| `identity`    | `Identity`               | No       | `@dfinity/agent` identity                    |
+| `apiBaseUrl`  | `string`                 | No       | Liquidium API base URL                       |
+| `headers`     | `Record<string, string>` | No       | Default HTTP headers for API requests        |
+| `canisterIds` | `Partial<CanisterIds>`   | No       | Override canister IDs for custom deployments |
+| `fetch`       | `typeof fetch`           | No       | Custom fetch implementation for API requests |
+| `timeoutMs`   | `number`                 | No       | Request timeout (default: 30000)             |
 
 Environment preset:
 
@@ -204,6 +236,10 @@ const client = LiquidiumClient.create({
 - `executeWith({ walletAdapter, chain, account? })` - compose a wallet adapter with a prepared action
 - `client.accounts.createProfile({ account, chain, walletAdapter })` - run the full account creation flow with a wallet adapter
 
+### Quote flow
+
+- `client.quote.getQuote(request, pools, prices)` - calculate borrow USD value, required collateral, validation errors, and warnings from caller-supplied market data
+
 ### Borrow and withdraw execution
 
 - `client.lending.prepareBorrow(...)` / `client.lending.prepareWithdraw(...)` - prepare raw signable actions
@@ -225,8 +261,16 @@ These calls use the lending canister only; they do not require `apiBaseUrl`. To 
 - `client.lending` - Supply, create borrow actions, repay, withdraw
 - `client.positions` - Position reads and health factor
 - `client.market` - Dynamic pool data, pool selection, and asset prices
+- `client.quote` - Quote calculation from market pools and prices
 - `client.activities` - Receipt status and active/completed activity lists
 - `client.history` - User and pool history
+
+### History
+
+- `client.history.getUserTransactionHistory(profileId, filters?)` - paginated profile transaction history
+- `client.history.getLiquidationHistory(profileId, filters?)` - paginated profile liquidation history
+- `client.history.getPoolHistory(poolId, cursor?)` - paginated reserve snapshots
+- `client.history.getBorrowRateHistory(poolId, window?)` - paginated borrow-rate samples
 
 ### Activity tracking
 
@@ -241,6 +285,7 @@ These calls use the lending canister only; they do not require `apiBaseUrl`. To 
 - `client.lending.supply(...)` returns a tracked `SupplyFlow` with `type: "transfer" | "contractInteraction"`.
 - Transfer-path inflows can auto-broadcast when `walletAdapter`, `account`, and `amount` are provided.
 - ETH stablecoin inflows default to deposit-address transfers and do not need `apiBaseUrl` for target resolution or wallet broadcast.
+- Pass `mechanism: "transfer"` or `mechanism: "contractInteraction"` to override the default route when a pool supports that path.
 - Contract-interaction helpers remain available for lower-level integrations that explicitly call `getEvmSupplyContext(...)`.
 
 ## License

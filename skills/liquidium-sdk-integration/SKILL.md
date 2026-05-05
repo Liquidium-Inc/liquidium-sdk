@@ -24,11 +24,13 @@ The client exposes: `accounts`, `lending`, `positions`, `market`, `activities`, 
 ## Setup
 
 Minimal config:
+
 ```ts
 const client = LiquidiumClient.create({});
 ```
 
 Richer config when the flow requires it:
+
 ```ts
 const client = LiquidiumClient.create({
   environment: "mainnet",
@@ -38,6 +40,7 @@ const client = LiquidiumClient.create({
 ```
 
 **Config requirements:**
+
 - `environment`: sets the canister preset. Only `mainnet` is bundled; pass `canisterIds` explicitly for custom deployments
 - `apiBaseUrl`: required for history, activities, inflow reporting, and lower-level contract-interaction planning. Not required for `borrow(...)`, `withdraw(...)`, or default ETH stablecoin deposit-address supply/repay targets
 - `identity` / `icHost`: custom ICP agent configuration
@@ -65,7 +68,7 @@ Quote-first UX. In borrow flows, fetch pools and prices first, then call `quote`
 ```ts
 const pools = await client.market.listPools();
 const prices = await client.market.getAssetPrices();
-const quote = await client.quote.quote(request, pools, prices);
+const quote = await client.quote.getQuote(request, pools, prices);
 ```
 
 ### accounts
@@ -120,6 +123,13 @@ client.activities.getStatus({ profileId, id });
 
 User or pool history. Requires `apiBaseUrl`.
 
+```ts
+client.history.getUserTransactionHistory(profileId, filters?);
+client.history.getLiquidationHistory(profileId, filters?);
+client.history.getPoolHistory(poolId, cursor?);
+client.history.getBorrowRateHistory(poolId, window?);
+```
+
 ## Wallet Adapter
 
 The SDK uses a `WalletAdapter` for signing and transaction execution. Implement only the methods the selected flow needs.
@@ -129,11 +139,13 @@ import type { WalletAdapter } from "@liquidium/client";
 
 const walletAdapter: WalletAdapter = {
   signMessage: async ({ message }) => wallet.signMessage(message),
-  sendEthTransaction: async ({ transaction }) => wallet.sendTransaction(transaction),
+  sendEthTransaction: async ({ transaction }) =>
+    wallet.sendTransaction(transaction),
 };
 ```
 
 **Method selection:**
+
 - `signMessage`: account creation, borrow, and withdraw flows (signs a Liquidium message)
 - `sendBtcTransaction`: transfer-path supply automation for BTC targets
 - `sendEthTransaction`: transfer-path automation for ETH targets and contract-interaction supply automation
@@ -143,6 +155,7 @@ const walletAdapter: WalletAdapter = {
 ### Create a profile
 
 Convenience method when the app already has wallet signing wired:
+
 ```ts
 const profileId = await client.accounts.createProfile({
   account: walletAddress,
@@ -154,6 +167,7 @@ const profileId = await client.accounts.createProfile({
 ```
 
 Prepare flow when you want explicit control over signing:
+
 ```ts
 const createAction = await client.accounts.prepareCreateProfile({
   account: walletAddress,
@@ -193,12 +207,12 @@ const reserves = await client.positions.getUserReserves(profileId);
 const pools = await client.market.listPools();
 const prices = await client.market.getAssetPrices();
 
-const quote = await client.quote.quote(request, pools, prices);
+const quote = await client.quote.getQuote(request, pools, prices);
 
 const outflow = await client.lending.borrow({
   profileId,
-  poolId: quote.poolId,
-  amount: quote.amount,
+  poolId: quote.borrowPoolId,
+  amount: quote.borrowAmount,
   receiverAddress,
   signerWalletAddress: walletAddress,
   signerChain: "ETH",
@@ -222,7 +236,10 @@ const supplyFlow = await client.lending.supply({
   action: "deposit",
 });
 
-if (supplyFlow.type === "transfer" && supplyFlow.target.type === "nativeAddress") {
+if (
+  supplyFlow.type === "transfer" &&
+  supplyFlow.target.type === "nativeAddress"
+) {
   const depositAddress = supplyFlow.target.address;
 }
 
@@ -262,7 +279,8 @@ const supplyFlow = await client.lending.supply({
   account: walletAddress,
   amount: 10_000_000n,
   walletAdapter: {
-    sendEthTransaction: async ({ transaction }) => wallet.sendTransaction(transaction),
+    sendEthTransaction: async ({ transaction }) =>
+      wallet.sendTransaction(transaction),
   },
 });
 ```
@@ -271,13 +289,33 @@ This default flow does not require `apiBaseUrl`. Use lower-level
 `getEvmSupplyContext(...)` only if you are intentionally building the legacy
 contract-interaction flow.
 
+Override the default route only when the app intentionally needs a specific
+mechanism:
+
+```ts
+const contractInteractionFlow = await client.lending.supply({
+  profileId,
+  poolId,
+  action: "deposit",
+  mechanism: "contractInteraction",
+  account: walletAddress,
+  amount: 10_000_000n,
+  walletAdapter: {
+    sendEthTransaction: async ({ transaction }) =>
+      wallet.sendTransaction(transaction),
+  },
+});
+```
+
+`mechanism: "transfer"` keeps the deposit-address path explicit. `mechanism: "contractInteraction"` requires `apiBaseUrl`, `account`, `amount`, and `sendEthTransaction`.
+
 ## Common Mistakes
 
 1. `LiquidiumClient.create({})` does not cover every method. History, activities, inflow reporting, and lower-level contract-interaction planning need `apiBaseUrl`. Default ETH stablecoin deposit-address supply, `borrow(...)`, and `withdraw(...)` do not.
 2. Prepare methods return signable actions, not completed actions. `prepareCreateProfile`, `prepareBorrow`, and `prepareWithdraw` still need signing and submission.
 3. Build a wallet adapter with only the methods the selected flow needs. Avoid adding `signMessage`, `sendBtcTransaction`, or `sendEthTransaction` unless the flow uses them.
 4. Skip the quote step in borrow UX only when you explicitly want a lower-level flow.
-5. `client.lending.supply(...)` auto-routes by pool. BTC and ETH USDT pools currently resolve to deposit-address transfer targets by default.
+5. `client.lending.supply(...)` auto-routes by pool. BTC and ETH USDT pools currently resolve to deposit-address transfer targets by default; use `mechanism` only when intentionally overriding that route.
 6. Handle existing profiles explicitly when account creation can race with existing state.
 7. Work from the public modules and names exported by `@liquidium/client`. Do not invent SDK methods.
 8. After `borrow(...)`, treat `outflow.id` as the user-visible reference immediately. Do not assume `outflow.txid` is set on the first response; resolve it later via history or a future SDK helper if you need the chain transaction id.
