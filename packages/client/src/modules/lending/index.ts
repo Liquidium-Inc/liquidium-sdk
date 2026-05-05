@@ -27,3 +27,4 @@ export type {
   WithdrawSubmitSignatureInfo,
 } from "./types";
 export { EvmSupplyApprovalStrategy, SupplyPlanType } from "./types";
+export { createTransferErc20Transaction } from "./evm-transactions";

@@ -26,6 +26,10 @@ export type {
   WalletAction,
   WalletAdapter,
 } from "./core/wallet-actions";
+export {
+  USDC_CONTRACT_ADDRESS,
+  USDT_CONTRACT_ADDRESS,
+} from "./core/evm";
 export { TransferMode, WalletExecutionKind } from "./core/wallet-actions";
 export type { ExecuteWithOptions } from "./execute";
 export { executeWith } from "./execute";
@@ -91,7 +95,11 @@ export type {
   WithdrawAction,
   WithdrawSubmitSignatureInfo,
 } from "./modules/lending";
-export { EvmSupplyApprovalStrategy, SupplyPlanType } from "./modules/lending";
+export {
+  createTransferErc20Transaction,
+  EvmSupplyApprovalStrategy,
+  SupplyPlanType,
+} from "./modules/lending";
 export type { AssetPrices, Pool } from "./modules/market";
 export type {
   BorrowingPower,

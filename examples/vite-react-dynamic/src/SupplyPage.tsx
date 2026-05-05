@@ -1,13 +1,17 @@
 import { isBitcoinWallet } from "@dynamic-labs/bitcoin";
 import { isEthereumWallet } from "@dynamic-labs/ethereum";
 import { useDynamicContext, useIsLoggedIn } from "@dynamic-labs/sdk-react-core";
-import type {
-  Pool,
-  SupplyAction,
-  SupplyFlow,
-  SupplyInstruction,
-  SupplyPlanType,
-  WalletAdapter,
+import {
+  createTransferErc20Transaction,
+  InflowSubmitType,
+  type Pool,
+  type SupplyAction,
+  type SupplyFlow,
+  type SupplyInstruction,
+  type SupplyPlanType,
+  type WalletAdapter,
+  USDC_CONTRACT_ADDRESS,
+  USDT_CONTRACT_ADDRESS,
 } from "@liquidium/client";
 import { useEffect, useMemo, useState } from "react";
 import { ExampleWalletSection } from "./ExampleWalletSection";
@@ -234,26 +238,89 @@ export function SupplyPage({
       );
 
       const client = createLiquidiumClient();
-      const nextSupplyFlow =
-        selectedSupplyMechanism === "contractInteraction"
-          ? await client.lending.supply({
-              profileId,
-              poolId: selectedSupplyPool.id,
-              action: supplyAction,
-              amount: supplyAmount,
-              account: liquidiumAccountAddress,
-              walletAdapter: expectEthSupplyWalletAdapter(walletAdapter),
-              mechanism: "contractInteraction",
-            })
-          : await client.lending.supply({
-              profileId,
-              poolId: selectedSupplyPool.id,
-              action: supplyAction,
-              amount: supplyAmount,
-              account: liquidiumAccountAddress || undefined,
-              walletAdapter,
-              mechanism: "transfer",
-            });
+      let nextSupplyFlow: SupplyFlow;
+
+      if (selectedSupplyMechanism === "contractInteraction") {
+        nextSupplyFlow = await client.lending.supply({
+          profileId,
+          poolId: selectedSupplyPool.id,
+          action: supplyAction,
+          amount: supplyAmount,
+          account: liquidiumAccountAddress,
+          walletAdapter: expectEthSupplyWalletAdapter(walletAdapter),
+          mechanism: "contractInteraction",
+        });
+      } else if (isEthStablecoinPool(selectedSupplyPool)) {
+        const depositAddress = await client.lending.getDepositAddress({
+          profileId,
+          poolId: selectedSupplyPool.id,
+          asset: selectedSupplyPool.asset,
+          action: supplyAction,
+        });
+
+        const instruction: SupplyInstruction = {
+          poolId: selectedSupplyPool.id,
+          asset: selectedSupplyPool.asset,
+          chain: selectedSupplyPool.chain,
+          action: supplyAction,
+          target: {
+            type: "nativeAddress",
+            poolId: selectedSupplyPool.id,
+            asset: selectedSupplyPool.asset,
+            chain: selectedSupplyPool.chain,
+            action: supplyAction,
+            address: depositAddress,
+          },
+        };
+
+        if (!walletAdapter?.sendEthTransaction) {
+          throw new Error(
+            "Connect an Ethereum wallet to send a stablecoin transfer."
+          );
+        }
+
+        const txid = await walletAdapter.sendEthTransaction({
+          chain: "ETH",
+          account: liquidiumAccountAddress,
+          actionType: `supply-${supplyAction}`,
+          transferMode: "native",
+          transaction: createTransferErc20Transaction({
+            tokenAddress:
+              selectedSupplyPool.asset === "USDC"
+                ? USDC_CONTRACT_ADDRESS
+                : USDT_CONTRACT_ADDRESS,
+            recipientAddress: depositAddress,
+            amount: supplyAmount,
+          }),
+        });
+
+        await client.lending.submitInflow({
+          txid,
+          chain: "ETH",
+          type:
+            supplyAction === "repayment"
+              ? InflowSubmitType.REPAY
+              : InflowSubmitType.DEPOSIT,
+        });
+
+        nextSupplyFlow = {
+          type: "transfer",
+          instruction,
+          target: instruction.target,
+          txid,
+          submit: async (request) => client.lending.submitInflow(request),
+        };
+      } else {
+        nextSupplyFlow = await client.lending.supply({
+          profileId,
+          poolId: selectedSupplyPool.id,
+          action: supplyAction,
+          amount: supplyAmount,
+          account: liquidiumAccountAddress || undefined,
+          walletAdapter,
+          mechanism: "transfer",
+        });
+      }
 
       setSupplyFlow(nextSupplyFlow);
       setStatusMessage(createSupplyFlowStatusMessage(nextSupplyFlow));

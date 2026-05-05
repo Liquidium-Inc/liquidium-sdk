@@ -475,6 +475,51 @@ export class LendingModule {
   }
 
   /**
+   * Returns the read-only deposit address for an ETH stablecoin inflow target.
+   *
+   * This is a query call that does not create or mutate state. Use it when you
+   * need the deposit address without hitting the authorization-gated update path.
+   *
+   * @param request - Profile, pool, asset, and supply action.
+   * @returns The EVM deposit address for the derived account.
+   */
+  async getDepositAddress(request: {
+    profileId: string;
+    poolId: string;
+    asset: string;
+    action: SupplyAction;
+  }): Promise<string> {
+    if (!isEthStablecoin(request.asset, Chain.ETH)) {
+      throw new LiquidiumError(
+        LiquidiumErrorCode.VALIDATION_ERROR,
+        "getDepositAddress is only supported for ETH stablecoins"
+      );
+    }
+
+    const tokenAddress = getEthStablecoinContractAddress(request.asset);
+    const subaccount = encodeInflowSubaccount({
+      action: request.action,
+      principal: Principal.fromText(request.profileId),
+    });
+
+    const result = await createDepositAccountsActor(
+      this.canisterContext
+    ).get_deposit_address(
+      {
+        owner: Principal.fromText(request.poolId),
+        subaccount: [subaccount],
+      },
+      [tokenAddress]
+    );
+
+    if ("Err" in result) {
+      throw mapDepositAccountErrorToLiquidiumError(result.Err);
+    }
+
+    return result.Ok;
+  }
+
+  /**
    * Estimates the network/deposit fee for an inflow target.
    *
    * ETH stablecoin deposit-address estimates are served by the deposit-address
@@ -881,7 +926,7 @@ export class LendingModule {
       });
       const result = await createDepositAccountsActor(
         this.canisterContext
-      ).get_or_create_deposit_address(
+      ).get_deposit_address(
         {
           owner: Principal.fromText(request.poolId),
           subaccount: [subaccount],

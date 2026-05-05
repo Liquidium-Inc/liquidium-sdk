@@ -1984,7 +1984,7 @@ describe("LendingModule", () => {
 
   test("returns a deposit address supply target for the usdt pool", async () => {
     // given
-    const getOrCreateDepositAddress = vi.fn().mockResolvedValue({
+    const getDepositAddress = vi.fn().mockResolvedValue({
       Ok: "0x1111111111111111111111111111111111111111",
     });
     vi.spyOn(Actor, "createActor")
@@ -2020,7 +2020,7 @@ describe("LendingModule", () => {
         ]),
       } as never)
       .mockReturnValueOnce({
-        get_or_create_deposit_address: getOrCreateDepositAddress,
+        get_deposit_address: getDepositAddress,
       } as never);
     const client = LiquidiumClient.create({});
 
@@ -2046,7 +2046,7 @@ describe("LendingModule", () => {
         address: "0x1111111111111111111111111111111111111111",
       },
     });
-    expect(getOrCreateDepositAddress).toHaveBeenCalledWith(
+    expect(getDepositAddress).toHaveBeenCalledWith(
       expect.objectContaining({
         owner: expect.objectContaining({
           toText: expect.any(Function),
@@ -2059,7 +2059,7 @@ describe("LendingModule", () => {
 
   test("returns a deposit address supply target for the usdc pool when transfer is requested", async () => {
     // given
-    const getOrCreateDepositAddress = vi.fn().mockResolvedValue({
+    const getDepositAddress = vi.fn().mockResolvedValue({
       Ok: "0x2222222222222222222222222222222222222222",
     });
     vi.spyOn(Actor, "createActor")
@@ -2095,7 +2095,7 @@ describe("LendingModule", () => {
         ]),
       } as never)
       .mockReturnValueOnce({
-        get_or_create_deposit_address: getOrCreateDepositAddress,
+        get_deposit_address: getDepositAddress,
       } as never);
     const client = LiquidiumClient.create({});
 
@@ -2122,7 +2122,7 @@ describe("LendingModule", () => {
         address: "0x2222222222222222222222222222222222222222",
       },
     });
-    expect(getOrCreateDepositAddress).toHaveBeenCalledWith(
+    expect(getDepositAddress).toHaveBeenCalledWith(
       expect.objectContaining({
         owner: expect.objectContaining({
           toText: expect.any(Function),
@@ -2428,7 +2428,7 @@ describe("LendingModule", () => {
         ]),
       } as never)
       .mockReturnValueOnce({
-        get_or_create_deposit_address: vi.fn().mockResolvedValue({
+        get_deposit_address: vi.fn().mockResolvedValue({
           Ok: "0x1111111111111111111111111111111111111111",
         }),
       } as never);
