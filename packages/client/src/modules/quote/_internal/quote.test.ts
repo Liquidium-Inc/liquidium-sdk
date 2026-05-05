@@ -85,6 +85,48 @@ describe("QuoteModule", () => {
     expect(result.requiredCollateralUsd).toBe(20_000_000_000n);
   });
 
+  test("should use pool decimals for quote calculations", async () => {
+    // given
+    const ETH_BASE_UNITS_PER_TOKEN = 1_000_000_000_000_000_000n;
+    const ethPool: Pool = {
+      ...usdtPool,
+      id: "eeee-eth-pool",
+      asset: "ETH",
+      decimals: 18n,
+    };
+    const request = {
+      borrowAmount: ETH_BASE_UNITS_PER_TOKEN,
+      borrowPoolId: ethPool.id,
+      collateralPoolId: btcPool.id,
+      targetLtvBps: 5_000n,
+    };
+    const pricesWithEth: AssetPrices = {
+      ...prices,
+      ETH: 2_500,
+    };
+
+    // when
+    const result = await quoteModule.getQuote(
+      request,
+      [btcPool, ethPool],
+      pricesWithEth
+    );
+
+    // then
+    const EXPECTED_BORROW_USD_INTERNAL = 250_000_000_000n;
+    const EXPECTED_REQUIRED_COLLATERAL_USD_INTERNAL = 500_000_000_000n;
+    const EXPECTED_REQUIRED_COLLATERAL_SATS = 5_000_000n;
+
+    expect(result.validationErrors).toHaveLength(0);
+    expect(result.borrowUsd).toBe(EXPECTED_BORROW_USD_INTERNAL);
+    expect(result.requiredCollateralUsd).toBe(
+      EXPECTED_REQUIRED_COLLATERAL_USD_INTERNAL
+    );
+    expect(result.requiredCollateralAmount).toBe(
+      EXPECTED_REQUIRED_COLLATERAL_SATS
+    );
+  });
+
   test("rounds required collateral UP when LTV does not divide evenly", async () => {
     // given
     const request = {

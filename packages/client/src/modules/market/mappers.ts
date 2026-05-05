@@ -32,7 +32,7 @@ export function mapLendingPoolRecordToPool(
     availableLiquidity,
     supplyCap: pool.supply_cap[0],
     borrowCap: pool.borrow_cap[0],
-    maxLtv: pool.max_ltv || pool.liquidation_threshold,
+    maxLtv: pool.max_ltv,
     liquidationThreshold: pool.liquidation_threshold,
     liquidationBonus: pool.liquidation_bonus,
     protocolLiquidationFee: pool.protocol_liquidation_fee,

@@ -129,22 +129,38 @@ export interface SupplyInstruction {
   target: SupplyTarget;
 }
 
-/**
- * Input for `lending.supply`. Optional `walletAdapter`, `account`, and `amount` enable
- * automatic broadcast when the resolved mechanism supports it.
- */
-export interface SupplyFlowRequest {
+interface BaseSupplyFlowRequest {
   profileId: string;
   poolId: string;
   action: SupplyAction;
+}
+
+/**
+ * Input for transfer-based `lending.supply`. Omitting wallet fields returns
+ * instructions so the caller can broadcast manually and call `SupplyFlow.submit`.
+ */
+export interface TransferSupplyFlowRequest extends BaseSupplyFlowRequest {
+  mechanism?: typeof SupplyPlanType.transfer;
   walletAdapter?: Pick<
     WalletAdapter,
     "sendBtcTransaction" | "sendEthTransaction"
   >;
   account?: string;
   amount?: bigint;
-  mechanism?: SupplyPlanType;
 }
+
+/** Input for contract-interaction `lending.supply`, which always executes now. */
+export interface ContractInteractionSupplyFlowRequest
+  extends BaseSupplyFlowRequest {
+  mechanism: typeof SupplyPlanType.contractInteraction;
+  walletAdapter: Pick<WalletAdapter, "sendEthTransaction">;
+  account: string;
+  amount: bigint;
+}
+
+export type SupplyFlowRequest =
+  | TransferSupplyFlowRequest
+  | ContractInteractionSupplyFlowRequest;
 
 /**
  * Supply receipt returned by `lending.supply(...)`.

@@ -12,14 +12,9 @@ const BASIS_POINTS_DENOMINATOR = 10_000n;
 const BPS_PER_PERCENT = 100n;
 const MIN_LTV_BPS = 0n;
 const HIGH_LTV_WARNING_THRESHOLD_BPS = 8_000n;
-const MIN_BORROW_AMOUNT_SATS = 5_000n;
+const MIN_BORROW_AMOUNT_BASE_UNITS = 5_000n;
 const INTERNAL_USD_DECIMAL_PLACES = 8;
 const PRICE_SCALE_DECIMAL_PLACES = 8;
-const ASSET_DECIMAL_PLACES: Record<string, number> = {
-  BTC: 8,
-  USDC: 6,
-  USDT: 6,
-};
 
 type CreateQuoteResultParams = {
   borrowAmount: bigint;
@@ -150,10 +145,10 @@ export class QuoteModule {
       });
     }
 
-    if (borrowAmount < MIN_BORROW_AMOUNT_SATS) {
+    if (borrowAmount < MIN_BORROW_AMOUNT_BASE_UNITS) {
       validationErrors.push({
         code: QuoteValidationErrorCode.BORROW_AMOUNT_TOO_LOW,
-        message: `Borrow amount must be at least ${MIN_BORROW_AMOUNT_SATS} sats`,
+        message: `Borrow amount must be at least ${MIN_BORROW_AMOUNT_BASE_UNITS} base units`,
       });
     }
 
@@ -201,8 +196,8 @@ export class QuoteModule {
       });
     }
 
-    const borrowAssetDecimals = getAssetDecimalPlaces(borrowAsset);
-    const collateralAssetDecimals = getAssetDecimalPlaces(collateralAsset);
+    const borrowAssetDecimals = getPoolDecimalPlaces(borrowPool);
+    const collateralAssetDecimals = getPoolDecimalPlaces(collateralPool);
     const borrowPriceScaled = scalePriceUsdToBigint(borrowPrice as number);
     const collateralPriceScaled = scalePriceUsdToBigint(
       collateralPrice as number
@@ -303,8 +298,8 @@ function scalePriceUsdToBigint(priceUsd: number): bigint {
   return BigInt(scaled);
 }
 
-function getAssetDecimalPlaces(asset: string): number {
-  return ASSET_DECIMAL_PLACES[asset] ?? INTERNAL_USD_DECIMAL_PLACES;
+function getPoolDecimalPlaces(pool: Pool): number {
+  return Number(pool.decimals);
 }
 
 function formatBpsAsPercent(bps: bigint): string {

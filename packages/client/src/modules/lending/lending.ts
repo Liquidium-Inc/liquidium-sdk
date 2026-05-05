@@ -390,11 +390,9 @@ export class LendingModule {
   /**
    * Resolves a supply target for a deposit or repayment and optionally broadcasts it.
    *
-   * When `walletAdapter`, `account`, and `amount` are provided, the SDK broadcasts
-   * the transfer or contract-interaction transactions and returns the resulting
-   * `txid` on the receipt. Otherwise the caller broadcasts themselves and uses
-   * {@link LendingModule.submitInflow} to register the txid. Contract-interaction
-   * paths require `apiBaseUrl` on the client.
+   * Transfer mode can return manual broadcast instructions when wallet fields are
+   * omitted. Contract-interaction mode always requires `walletAdapter`, `account`,
+   * and `amount` because it must prepare and submit approval/deposit calls.
    *
    * The SDK does not poll for inflow status. When a `txid` is returned, it is the
    * caller's responsibility to track confirmation state using their own polling.
@@ -990,34 +988,43 @@ export class LendingModule {
     action: SupplyAction;
     expectation: "zero" | "sufficient";
   }): Promise<void> {
+    let lastPollingError: unknown;
+
     for (
       let pollIndex = 0;
       pollIndex < ETH_APPROVAL_MAX_POLLS;
       pollIndex += 1
     ) {
-      const nextContext = await this.getEvmSupplyContext({
-        profileId: params.profileId,
-        poolId: params.poolId,
-        walletAddress: params.walletAddress,
-        amount: params.amount,
-        action: params.action,
-      });
-      const allowance = BigInt(nextContext.allowance);
-      const matchesExpectation =
-        params.expectation === "zero"
-          ? allowance === 0n
-          : allowance >= params.amount;
+      try {
+        const nextContext = await this.getEvmSupplyContext({
+          profileId: params.profileId,
+          poolId: params.poolId,
+          walletAddress: params.walletAddress,
+          amount: params.amount,
+          action: params.action,
+        });
+        const allowance = BigInt(nextContext.allowance);
+        const matchesExpectation =
+          params.expectation === "zero"
+            ? allowance === 0n
+            : allowance >= params.amount;
 
-      if (matchesExpectation) {
-        return;
+        if (matchesExpectation) {
+          return;
+        }
+      } catch (error) {
+        lastPollingError = error;
       }
 
       await delay(ETH_APPROVAL_POLL_INTERVAL_MS);
     }
 
+    const lastPollingErrorMessage = getUnknownErrorMessage(lastPollingError);
     throw new LiquidiumError(
       LiquidiumErrorCode.SERVICE_UNAVAILABLE,
-      `Timed out waiting for ${params.expectation} ETH allowance update`
+      lastPollingErrorMessage
+        ? `Timed out waiting for ${params.expectation} ETH allowance update. Last polling error: ${lastPollingErrorMessage}`
+        : `Timed out waiting for ${params.expectation} ETH allowance update`
     );
   }
 }
@@ -1032,6 +1039,18 @@ function isRetriableInflowSubmitError(error: unknown): boolean {
   }
 
   return error.code === LiquidiumErrorCode.SERVICE_UNAVAILABLE;
+}
+
+function getUnknownErrorMessage(error: unknown): string | null {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  if (typeof error === "string") {
+    return error;
+  }
+
+  return null;
 }
 
 function resolveSupplyMechanism(params: {
@@ -1055,9 +1074,7 @@ function resolveSupplyMechanism(params: {
       return params.requestedMechanism;
     }
 
-    return params.asset === Asset.USDC
-      ? SupplyPlanType.contractInteraction
-      : SupplyPlanType.transfer;
+    return SupplyPlanType.transfer;
   }
 
   throw new LiquidiumError(

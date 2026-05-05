@@ -13,6 +13,22 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
+describe("executeWith", () => {
+  test("should throw a validation error for unsupported execution kinds", async () => {
+    // given
+    const action = { executionKind: "unsupported" } as never;
+    const execute = executeWith({ walletAdapter: {} });
+
+    // when
+    const result = execute(action);
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+    });
+  });
+});
+
 describe("AccountsModule", () => {
   test("prepares and submits an account creation request manually", async () => {
     // given
@@ -1006,7 +1022,7 @@ describe("MarketModule", () => {
       borrowingRate: 0n,
       lendingRate: 0n,
       utilizationRate: 0n,
-      maxLtv: 7_500n,
+      maxLtv: 0n,
       sameAssetBorrowing: false,
     });
   });

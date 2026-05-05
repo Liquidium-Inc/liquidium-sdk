@@ -206,11 +206,21 @@ export function SupplyPage({
       }
 
       if (
+        selectedSupplyMechanism === "contractInteraction" &&
         selectedSupplyPool.chain === "ETH" &&
         (!primaryWallet || !isEthereumWallet(primaryWallet))
       ) {
         throw new Error(
-          "Connect an Ethereum wallet to run the USDT deposit-address supply flow."
+          "Connect an Ethereum wallet to run the contract-interaction supply flow."
+        );
+      }
+
+      if (
+        selectedSupplyMechanism === "contractInteraction" &&
+        !liquidiumAccountAddress
+      ) {
+        throw new Error(
+          "Resolve an Ethereum account before running contract interaction."
         );
       }
 
@@ -224,15 +234,26 @@ export function SupplyPage({
       );
 
       const client = createLiquidiumClient();
-      const nextSupplyFlow = await client.lending.supply({
-        profileId,
-        poolId: selectedSupplyPool.id,
-        action: supplyAction,
-        amount: supplyAmount,
-        account: liquidiumAccountAddress || undefined,
-        walletAdapter,
-        mechanism: selectedSupplyMechanism,
-      });
+      const nextSupplyFlow =
+        selectedSupplyMechanism === "contractInteraction"
+          ? await client.lending.supply({
+              profileId,
+              poolId: selectedSupplyPool.id,
+              action: supplyAction,
+              amount: supplyAmount,
+              account: liquidiumAccountAddress,
+              walletAdapter: expectEthSupplyWalletAdapter(walletAdapter),
+              mechanism: "contractInteraction",
+            })
+          : await client.lending.supply({
+              profileId,
+              poolId: selectedSupplyPool.id,
+              action: supplyAction,
+              amount: supplyAmount,
+              account: liquidiumAccountAddress || undefined,
+              walletAdapter,
+              mechanism: "transfer",
+            });
 
       setSupplyFlow(nextSupplyFlow);
       setStatusMessage(createSupplyFlowStatusMessage(nextSupplyFlow));
@@ -458,6 +479,16 @@ function buildSupplyWalletAdapter(
   }
 
   return undefined;
+}
+
+function expectEthSupplyWalletAdapter(
+  walletAdapter: WalletAdapter | undefined
+): Pick<WalletAdapter, "sendEthTransaction"> {
+  if (!walletAdapter?.sendEthTransaction) {
+    throw new Error("Connect an Ethereum wallet to run contract interaction.");
+  }
+
+  return walletAdapter;
 }
 
 function isNativeAddressSupplyInstruction(

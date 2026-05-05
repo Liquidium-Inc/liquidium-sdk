@@ -14,11 +14,24 @@ export function resolveLiquidiumClientConfig(): LiquidiumClientConfig {
   const configuredBaseUrl = normalizeOptionalValue(
     import.meta.env.VITE_LIQUIDIUM_BASE_URL
   );
+  const apiBaseUrl = resolveValidBaseUrl(configuredBaseUrl);
 
   return {
-    apiBaseUrl: configuredBaseUrl ?? DEFAULT_LIQUIDIUM_BASE_URL,
+    apiBaseUrl,
     canisterIds: STAGING_CANISTER_IDS,
   };
+}
+
+function resolveValidBaseUrl(value: string | undefined): string {
+  if (!value) {
+    return DEFAULT_LIQUIDIUM_BASE_URL;
+  }
+
+  try {
+    return new URL(value).toString().replace(/\/$/, "");
+  } catch {
+    return DEFAULT_LIQUIDIUM_BASE_URL;
+  }
 }
 
 function normalizeOptionalValue(value: string | undefined): string | undefined {

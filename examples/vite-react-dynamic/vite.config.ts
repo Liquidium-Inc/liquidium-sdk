@@ -1,3 +1,5 @@
+import { createRequire } from "node:module";
+import { dirname } from "node:path";
 import { fileURLToPath, URL } from "node:url";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
@@ -6,8 +8,22 @@ import { nodePolyfills } from "vite-plugin-node-polyfills";
 const resolveProjectPath = (path: string) =>
   fileURLToPath(new URL(path, import.meta.url));
 
-const turnkeyApiKeyStamperDistPath =
-  "../../node_modules/.pnpm/@turnkey+api-key-stamper@0.4.7/node_modules/@turnkey/api-key-stamper/dist";
+const requireFromExample = createRequire(import.meta.url);
+const requireFromClient = createRequire(
+  resolveProjectPath("../../packages/client/package.json")
+);
+const requireFromDynamicEthereum = createRequire(
+  requireFromExample.resolve("@dynamic-labs/ethereum/package.json")
+);
+const requireFromDynamicEmbeddedWallet = createRequire(
+  requireFromDynamicEthereum.resolve(
+    "@dynamic-labs/embedded-wallet-evm/package.json"
+  )
+);
+const nobleHashesUtilsPath = requireFromClient.resolve("@noble/hashes/utils");
+const turnkeyApiKeyStamperDistPath = dirname(
+  requireFromDynamicEmbeddedWallet.resolve("@turnkey/api-key-stamper")
+);
 const WALLET_STACK_CHUNK_SIZE_WARNING_LIMIT_KB = 6_000;
 
 export default defineConfig({
@@ -36,15 +52,9 @@ export default defineConfig({
       "@liquidium/client": resolveProjectPath(
         "../../packages/client/src/index.ts"
       ),
-      "@noble/hashes": resolveProjectPath(
-        "../../node_modules/.pnpm/@noble+hashes@1.8.0/node_modules/@noble/hashes"
-      ),
-      "@noble/hashes/utils": resolveProjectPath(
-        "../../node_modules/.pnpm/@noble+hashes@1.8.0/node_modules/@noble/hashes/utils.js"
-      ),
-      "./nodecrypto.mjs": resolveProjectPath(
-        `${turnkeyApiKeyStamperDistPath}/webcrypto.mjs`
-      ),
+      "@noble/hashes": dirname(nobleHashesUtilsPath),
+      "@noble/hashes/utils": nobleHashesUtilsPath,
+      "./nodecrypto.mjs": `${turnkeyApiKeyStamperDistPath}/webcrypto.mjs`,
     },
   },
   build: {

@@ -477,12 +477,31 @@ const SDK_METHODS: MethodDefinition[] = [
         account || amount || args.mockTxHash !== undefined
           ? createMockWalletAdapter(DEFAULT_MOCK_SIGNATURE, mockTxHash)
           : undefined;
+      const mechanism = expectOptionalSupplyMechanism(
+        args.mechanism,
+        "mechanism"
+      );
+
+      if (mechanism === "contractInteraction") {
+        return await client.lending.supply({
+          profileId: expectNonEmptyString(args.profileId, "profileId"),
+          poolId: expectNonEmptyString(args.poolId, "poolId"),
+          action: expectSupplyAction(args.action, "action"),
+          mechanism,
+          account: expectNonEmptyString(args.account, "account"),
+          amount: expectBigInt(args.amount, "amount"),
+          walletAdapter: createMockWalletAdapter(
+            DEFAULT_MOCK_SIGNATURE,
+            mockTxHash
+          ),
+        });
+      }
 
       return await client.lending.supply({
         profileId: expectNonEmptyString(args.profileId, "profileId"),
         poolId: expectNonEmptyString(args.poolId, "poolId"),
         action: expectSupplyAction(args.action, "action"),
-        mechanism: expectOptionalSupplyMechanism(args.mechanism, "mechanism"),
+        mechanism: "transfer",
         account,
         amount,
         walletAdapter,

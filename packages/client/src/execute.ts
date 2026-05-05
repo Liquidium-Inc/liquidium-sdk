@@ -101,6 +101,13 @@ export function executeWith(options: ExecuteWithOptions) {
 
         return action.submit({ txHash });
       }
+      default:
+        throw new LiquidiumError(
+          LiquidiumErrorCode.VALIDATION_ERROR,
+          `Unsupported wallet execution kind: ${String(
+            (action as { executionKind?: unknown }).executionKind
+          )}`
+        );
     }
   };
 }

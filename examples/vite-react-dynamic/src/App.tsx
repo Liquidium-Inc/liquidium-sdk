@@ -492,6 +492,7 @@ export default function App({
     }
 
     setIsActivitiesLoading(true);
+    setErrorMessage(null);
 
     try {
       const client = createLiquidiumClient();
@@ -536,6 +537,7 @@ export default function App({
     }
 
     setIsActivityStatusLoading(true);
+    setErrorMessage(null);
 
     try {
       const client = createLiquidiumClient();
@@ -563,6 +565,7 @@ export default function App({
     }
 
     setIsPositionSummaryLoading(true);
+    setErrorMessage(null);
 
     try {
       const client = createLiquidiumClient();
@@ -586,6 +589,7 @@ export default function App({
     }
 
     setIsTransactionHistoryLoading(true);
+    setErrorMessage(null);
 
     try {
       const client = createLiquidiumClient();
@@ -616,6 +620,7 @@ export default function App({
     }
 
     setIsLiquidationHistoryLoading(true);
+    setErrorMessage(null);
 
     try {
       const client = createLiquidiumClient();
@@ -642,6 +647,7 @@ export default function App({
     }
 
     setIsBorrowRateHistoryLoading(true);
+    setErrorMessage(null);
 
     try {
       const client = createLiquidiumClient();

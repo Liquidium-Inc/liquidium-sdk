@@ -46,6 +46,16 @@ export function formatBaseUnitsAsDecimal(
 ): string {
   const isNegative = value < 0n;
   const normalizedValue = isNegative ? value * -1n : value;
+
+  if (decimals === 0) {
+    const formattedWholeValue = new Intl.NumberFormat("en-US").format(
+      Number(normalizedValue)
+    );
+    const signPrefix = isNegative ? "-" : "";
+
+    return `${signPrefix}${formattedWholeValue}`;
+  }
+
   const stringValue = normalizedValue.toString().padStart(decimals + 1, "0");
   const wholePart = stringValue.slice(0, -decimals) || "0";
   const fractionalPart = stringValue.slice(-decimals);

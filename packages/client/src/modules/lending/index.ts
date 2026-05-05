@@ -2,6 +2,7 @@ export { LendingModule } from "./lending";
 export type {
   BorrowAction,
   BorrowSubmitSignatureInfo,
+  ContractInteractionSupplyFlowRequest,
   CreateBorrowData,
   CreateBorrowRequest,
   CreateWithdrawData,
@@ -21,6 +22,7 @@ export type {
   SupplyInstruction,
   SupplyRequest,
   SupplyTarget,
+  TransferSupplyFlowRequest,
   WithdrawAction,
   WithdrawSubmitSignatureInfo,
 } from "./types";

@@ -27,7 +27,7 @@ export function resolveDefaultBorrowPoolId(
   pools: Pool[],
   fallbackPoolId: string
 ): string {
-  const stablePool = pools.find((pool) => isStablecoinAsset(pool.asset));
+  const stablePool = pools.find(isEthStablecoinPool);
 
   return stablePool?.id ?? fallbackPoolId;
 }

@@ -21,11 +21,10 @@ export type {
   SignMessageWalletAction,
   SignPsbtRequest,
   SignPsbtWalletAction,
-  TransferMode,
   WalletAction,
   WalletAdapter,
-  WalletExecutionKind,
 } from "./core/wallet-actions";
+export { TransferMode, WalletExecutionKind } from "./core/wallet-actions";
 export type { ExecuteWithOptions } from "./execute";
 export { executeWith } from "./execute";
 export type {
@@ -66,6 +65,7 @@ export type {
 export type {
   BorrowAction,
   BorrowSubmitSignatureInfo,
+  ContractInteractionSupplyFlowRequest,
   CreateBorrowData,
   CreateBorrowRequest,
   CreateWithdrawData,
@@ -87,6 +87,7 @@ export type {
   SupplyPlanType,
   SupplyRequest,
   SupplyTarget,
+  TransferSupplyFlowRequest,
   WithdrawAction,
   WithdrawSubmitSignatureInfo,
 } from "./modules/lending";
