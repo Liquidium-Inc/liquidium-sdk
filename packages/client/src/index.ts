@@ -5,7 +5,6 @@ export type {
   LiquidiumClientConfig,
   MarketAsset,
   MarketChain,
-  Outflowtype,
   Wallet,
 } from "./core/types";
 export {

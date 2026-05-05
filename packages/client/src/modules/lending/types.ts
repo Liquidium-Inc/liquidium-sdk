@@ -4,7 +4,7 @@ import type {
   InflowSubmitType,
   MarketAsset,
   MarketChain,
-  Outflowtype,
+  OutflowType,
   SupplyAction,
 } from "../../core/types";
 import type {
@@ -28,7 +28,7 @@ export interface OutflowReceiver {
  */
 export interface OutflowDetails {
   id: string;
-  outflowType: Outflowtype;
+  outflowType: OutflowType;
   outflowRef?: string;
   txid?: string;
   amount: bigint;

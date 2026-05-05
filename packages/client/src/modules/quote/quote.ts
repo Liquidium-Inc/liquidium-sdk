@@ -121,6 +121,11 @@ export class QuoteModule {
         code: QuoteValidationErrorCode.BORROW_AMOUNT_TOO_LOW,
         message: `Borrow amount must be non-negative`,
       });
+    } else if (borrowAmount < MIN_BORROW_AMOUNT_BASE_UNITS) {
+      validationErrors.push({
+        code: QuoteValidationErrorCode.BORROW_AMOUNT_TOO_LOW,
+        message: `Borrow amount must be at least ${MIN_BORROW_AMOUNT_BASE_UNITS} base units`,
+      });
     }
 
     if (targetLtvBps <= MIN_LTV_BPS) {
@@ -145,27 +150,15 @@ export class QuoteModule {
       });
     }
 
-    if (borrowAmount < MIN_BORROW_AMOUNT_BASE_UNITS) {
-      validationErrors.push({
-        code: QuoteValidationErrorCode.BORROW_AMOUNT_TOO_LOW,
-        message: `Borrow amount must be at least ${MIN_BORROW_AMOUNT_BASE_UNITS} base units`,
-      });
-    }
-
-    if (
-      borrowPoolId === collateralPoolId &&
-      !collateralPool.sameAssetBorrowing
-    ) {
+    const isSameAssetBorrowingRequest = borrowAsset === collateralAsset;
+    if (isSameAssetBorrowingRequest && !collateralPool.sameAssetBorrowing) {
       validationErrors.push({
         code: QuoteValidationErrorCode.SAME_ASSET_NOT_ALLOWED,
         message: `Same asset borrowing not allowed for pool ${collateralPoolId}`,
       });
     }
 
-    if (
-      borrowPoolId === collateralPoolId &&
-      collateralPool.sameAssetBorrowing
-    ) {
+    if (isSameAssetBorrowingRequest && collateralPool.sameAssetBorrowing) {
       warnings.push({
         code: QuoteWarningCode.SAME_ASSET_BORROWING,
         message: `Using same asset for borrow and collateral`,

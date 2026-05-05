@@ -223,6 +223,33 @@ describe("QuoteModule", () => {
     );
   });
 
+  test("returns error when same asset borrowing uses different pool ids", async () => {
+    // given
+    const secondBtcPool: Pool = {
+      ...btcPool,
+      id: "bbbbb-btc-pool",
+    };
+    const request = {
+      borrowAmount: 100000000n,
+      borrowPoolId: "bbbbb-btc-pool",
+      collateralPoolId: "aaaaa-btc-pool",
+      targetLtvBps: 5000n,
+    };
+
+    // when
+    const result = await quoteModule.getQuote(
+      request,
+      [btcPool, secondBtcPool, usdtPool],
+      prices
+    );
+
+    // then
+    expect(result.validationErrors).toHaveLength(1);
+    expect(result.validationErrors[0]?.code).toBe(
+      QuoteValidationErrorCode.SAME_ASSET_NOT_ALLOWED
+    );
+  });
+
   test("allows same asset borrowing when enabled on pool", async () => {
     // given
     const request = {
@@ -234,6 +261,34 @@ describe("QuoteModule", () => {
 
     // when
     const result = await quoteModule.getQuote(request, pools, prices);
+
+    // then
+    expect(result.validationErrors).toHaveLength(0);
+    expect(result.warnings).toHaveLength(1);
+    expect(result.warnings[0]?.code).toBe(
+      QuoteWarningCode.SAME_ASSET_BORROWING
+    );
+  });
+
+  test("warns when same asset borrowing uses different pool ids and is enabled", async () => {
+    // given
+    const secondUsdtPool: Pool = {
+      ...usdtPool,
+      id: "yyyyy-usdt-pool",
+    };
+    const request = {
+      borrowAmount: 100000000n,
+      borrowPoolId: "yyyyy-usdt-pool",
+      collateralPoolId: "xxxxx-usdt-pool",
+      targetLtvBps: 5000n,
+    };
+
+    // when
+    const result = await quoteModule.getQuote(
+      request,
+      [btcPool, usdtPool, secondUsdtPool],
+      prices
+    );
 
     // then
     expect(result.validationErrors).toHaveLength(0);
@@ -380,10 +435,12 @@ describe("QuoteModule", () => {
     const result = await quoteModule.getQuote(request, pools, prices);
 
     // then
-    expect(
-      result.validationErrors.some(
-        (e) => e.code === QuoteValidationErrorCode.BORROW_AMOUNT_TOO_LOW
-      )
-    ).toBe(true);
+    expect(result.validationErrors).toHaveLength(1);
+    expect(result.validationErrors[0]?.code).toBe(
+      QuoteValidationErrorCode.BORROW_AMOUNT_TOO_LOW
+    );
+    expect(result.validationErrors[0]?.message).toBe(
+      "Borrow amount must be non-negative"
+    );
   });
 });

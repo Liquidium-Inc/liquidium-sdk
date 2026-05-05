@@ -68,7 +68,7 @@ export const OutflowType = {
   feeClaim: "feeClaim",
   withdraw: "withdraw",
 } as const;
-export type Outflowtype = (typeof OutflowType)[keyof typeof OutflowType];
+export type OutflowType = (typeof OutflowType)[keyof typeof OutflowType];
 
 export const InflowSubmitType = {
   DEPOSIT: "DEPOSIT",
