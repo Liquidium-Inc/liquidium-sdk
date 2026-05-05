@@ -1,17 +1,20 @@
 export { LiquidiumClient } from "./client";
 export { LiquidiumError, LiquidiumErrorCode } from "./core/errors";
 export type {
-  Asset,
   CanisterIds,
-  Chain,
-  Environment,
-  InflowSubmitType,
   LiquidiumClientConfig,
   MarketAsset,
   MarketChain,
   Outflowtype,
-  SupplyAction,
   Wallet,
+} from "./core/types";
+export {
+  Asset,
+  Chain,
+  Environment,
+  InflowSubmitType,
+  OutflowType,
+  SupplyAction,
 } from "./core/types";
 export type {
   EthTransactionRequest,
@@ -71,7 +74,6 @@ export type {
   CreateWithdrawData,
   CreateWithdrawRequest,
   EstimateInflowFeeRequest,
-  EvmSupplyApprovalStrategy,
   EvmSupplyContext,
   GetEvmSupplyContextRequest,
   IcrcAccountSupplyTarget,
@@ -84,13 +86,13 @@ export type {
   SupplyFlow,
   SupplyFlowRequest,
   SupplyInstruction,
-  SupplyPlanType,
   SupplyRequest,
   SupplyTarget,
   TransferSupplyFlowRequest,
   WithdrawAction,
   WithdrawSubmitSignatureInfo,
 } from "./modules/lending";
+export { EvmSupplyApprovalStrategy, SupplyPlanType } from "./modules/lending";
 export type { AssetPrices, Pool } from "./modules/market";
 export type {
   BorrowingPower,
@@ -104,7 +106,6 @@ export type {
   QuoteRequest,
   QuoteResult,
   QuoteValidationError,
-  QuoteValidationErrorCode,
   QuoteWarning,
-  QuoteWarningCode,
 } from "./modules/quote";
+export { QuoteValidationErrorCode, QuoteWarningCode } from "./modules/quote";
