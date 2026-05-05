@@ -289,6 +289,47 @@ This default flow does not require `apiBaseUrl`. Use lower-level
 `getEvmSupplyContext(...)` only if you are intentionally building the legacy
 contract-interaction flow.
 
+#### ETH Stablecoin Deposit Addresses
+
+ETH USDT/USDC deposit-address supply uses the ETH deposit-address canister
+directly. It does not require `apiBaseUrl` for target resolution.
+
+For `mechanism: "transfer"`, the SDK resolves the deposit address by calling:
+
+```ts
+get_or_create_deposit_address(
+  {
+    owner: Principal.fromText(poolId),
+    subaccount: [
+      encodeInflowSubaccount({
+        action,
+        principal: Principal.fromText(profileId),
+      }),
+    ],
+  },
+  [tokenContractAddress]
+);
+```
+
+Important details:
+
+- `owner` is the selected pool principal (`poolId`)
+- `subaccount` is encoded from the Liquidium `profileId` and inflow `action`
+- `tokenContractAddress` is the ETH token contract address for USDT or USDC
+- The SDK calls `get_or_create_deposit_address`, not `get_deposit_address`
+- The user's EVM wallet address is not used to derive the deposit address
+- `apiBaseUrl` is not involved in this deposit-address lookup
+
+If this returns `DEPOSIT_ADDRESS_ERROR: unauthorized`, do not diagnose it as a
+missing API URL. Check that the selected pool principal is authorized by the ETH
+deposit-address canister for the same deployment/environment.
+
+For prod/mainnet, the SDK default ETH deposit-address canister is:
+`z5jz7-nyaaa-aaaar-qb6pq-cai`.
+
+When testing manually in the IC dashboard, use a pool principal from the same
+deployment as the deposit-address canister.
+
 Override the default route only when the app intentionally needs a specific
 mechanism:
 
@@ -319,6 +360,7 @@ const contractInteractionFlow = await client.lending.supply({
 6. Handle existing profiles explicitly when account creation can race with existing state.
 7. Work from the public modules and names exported by `@liquidium/client`. Do not invent SDK methods.
 8. After `borrow(...)`, treat `outflow.id` as the user-visible reference immediately. Do not assume `outflow.txid` is set on the first response; resolve it later via history or a future SDK helper if you need the chain transaction id.
+9. ETH deposit-address `unauthorized` is usually not an `apiBaseUrl` problem. The deposit-address lookup is a direct canister call. Check the `poolId`, `ethDeposit` canister ID, token address, and deployment/environment alignment first.
 
 ## Preferred Style
 

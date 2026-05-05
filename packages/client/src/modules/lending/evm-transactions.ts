@@ -2,11 +2,7 @@ import { encodeIcrcAccount } from "@dfinity/ledger-icrc";
 import { Principal } from "@dfinity/principal";
 import { encodeFunctionData } from "viem";
 import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
-import {
-  CK_DEPOSIT_ABI,
-  CK_DEPOSIT_CONTRACT_ADDRESS,
-  ERC20_ABI,
-} from "../../core/evm";
+import { CK_DEPOSIT_ABI, ERC20_ABI } from "../../core/evm";
 import type { SupplyAction } from "../../core/types";
 import { encodeInflowSubaccount } from "../../core/utils/inflow-subaccount";
 
@@ -41,6 +37,7 @@ export function createTransferErc20Transaction(params: {
 }
 
 export function createDepositErc20Transaction(params: {
+  depositContractAddress: string;
   tokenAddress: string;
   amount: bigint;
   poolId: string;
@@ -74,7 +71,7 @@ export function createDepositErc20Transaction(params: {
   );
 
   return {
-    to: CK_DEPOSIT_CONTRACT_ADDRESS,
+    to: params.depositContractAddress,
     data: encodeFunctionData({
       abi: CK_DEPOSIT_ABI,
       functionName: "depositErc20",

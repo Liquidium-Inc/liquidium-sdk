@@ -667,6 +667,7 @@ export class LendingModule {
       walletAdapter,
       walletAddress,
       createDepositErc20Transaction({
+        depositContractAddress: evmSupplyContext.depositContractAddress,
         tokenAddress: evmSupplyContext.tokenAddress,
         amount: supplyAmount,
         poolId: request.poolId,

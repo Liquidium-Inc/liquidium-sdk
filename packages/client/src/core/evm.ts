@@ -4,8 +4,6 @@ export const USDC_CONTRACT_ADDRESS =
   "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48";
 export const USDT_CONTRACT_ADDRESS =
   "0xdac17f958d2ee523a2206206994597c13d831ec7";
-export const CK_DEPOSIT_CONTRACT_ADDRESS =
-  "0x18901044688D3756C35Ed2b36D93e6a5B8e00E68";
 
 export const MAX_UINT256 =
   0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffn;
