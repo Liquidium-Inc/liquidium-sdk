@@ -71,6 +71,11 @@ const prices = await client.market.getAssetPrices();
 const quote = await client.quote.getQuote(request, pools, prices);
 ```
 
+`getQuote(...)` returns `validationErrors` and `warnings`; it does not throw for
+normal quote validation failures such as missing pools, missing prices, invalid
+LTV, too-small borrow amounts, or disallowed same-asset borrowing. Treat a quote
+with validation errors as non-executable.
+
 ### accounts
 
 Profile creation and resolution.
@@ -129,6 +134,11 @@ client.history.getLiquidationHistory(profileId, filters?);
 client.history.getPoolHistory(poolId, cursor?);
 client.history.getBorrowRateHistory(poolId, window?);
 ```
+
+User history entries expose `txids?: string[]`; do not expect separate inbound
+or outbound txid fields. Pool history entries are reserve configuration-change
+snapshots (`type: "configuration_change"`) with pool config, caps, indexes,
+liquidity, debt, and `sameAssetBorrowing` fields.
 
 ## Wallet Adapter
 
@@ -356,11 +366,13 @@ const contractInteractionFlow = await client.lending.supply({
 2. Prepare methods return signable actions, not completed actions. `prepareCreateProfile`, `prepareBorrow`, and `prepareWithdraw` still need signing and submission.
 3. Build a wallet adapter with only the methods the selected flow needs. Avoid adding `signMessage`, `sendBtcTransaction`, or `sendEthTransaction` unless the flow uses them.
 4. Skip the quote step in borrow UX only when you explicitly want a lower-level flow.
-5. `client.lending.supply(...)` auto-routes by pool. BTC and ETH USDT pools currently resolve to deposit-address transfer targets by default; use `mechanism` only when intentionally overriding that route.
-6. Handle existing profiles explicitly when account creation can race with existing state.
-7. Work from the public modules and names exported by `@liquidium/client`. Do not invent SDK methods.
-8. After `borrow(...)`, treat `outflow.id` as the user-visible reference immediately. Do not assume `outflow.txid` is set on the first response; resolve it later via history or a future SDK helper if you need the chain transaction id.
-9. ETH deposit-address `unauthorized` is usually not an `apiBaseUrl` problem. The deposit-address lookup is a direct canister call. Check the `poolId`, `ethDeposit` canister ID, token address, and deployment/environment alignment first.
+5. Check `quote.validationErrors` before enabling borrow execution. Quote validation failures are returned in-band rather than thrown.
+6. `client.lending.supply(...)` auto-routes by pool. BTC and ETH USDT pools currently resolve to deposit-address transfer targets by default; use `mechanism` only when intentionally overriding that route.
+7. Handle existing profiles explicitly when account creation can race with existing state.
+8. Work from the public modules and names exported by `@liquidium/client`. Do not invent SDK methods.
+9. After `borrow(...)`, treat `outflow.id` as the user-visible reference immediately. Do not assume `outflow.txid` is set on the first response; resolve it later via activities or history if you need the chain transaction id.
+10. History entries use `txids?: string[]`; do not look for legacy direction-specific txid fields.
+11. ETH deposit-address `unauthorized` is usually not an `apiBaseUrl` problem. The deposit-address lookup is a direct canister call. Check the `poolId`, `ethDeposit` canister ID, token address, and deployment/environment alignment first.
 
 ## Preferred Style
 
@@ -384,6 +396,9 @@ When unsure, check these first:
 
 - `packages/client/README.md`
 - `README.md`
+- `packages/client/src/modules/history/types.ts`
+- `packages/client/src/modules/lending/types.ts`
+- `packages/client/src/modules/quote/types.ts`
 - `examples/vite-react-dynamic/README.md`
 - `examples/vite-react-dynamic/src/lib/client.ts`
 - `examples/vite-react-dynamic/src/lib/profile.ts`
