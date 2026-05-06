@@ -5,7 +5,6 @@ export interface UserHistoryEntry {
   poolId: string;
   timestamp: string;
   status: "REQUESTED" | "PENDING" | "CONFIRMED" | "FAILED";
-  txid?: string;
   txids?: string[];
 }
 
@@ -61,7 +60,6 @@ export interface UserHistoryEntryApiItem {
   poolId: string;
   timestamp: string;
   status: UserHistoryEntry["status"];
-  txid?: string;
   txids?: string[];
 }
 
