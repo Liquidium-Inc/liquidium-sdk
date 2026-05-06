@@ -71,7 +71,7 @@ export interface UserHistoryResponse {
 
 export interface PoolHistoryEntry {
   id: string;
-  type: "snapshot";
+  type: "configuration_change";
   poolId: string;
   asset: string;
   chain: string;
@@ -98,7 +98,7 @@ export interface PoolHistoryEntry {
 
 export interface PoolHistoryEntryApiItem {
   id: string;
-  type: "snapshot";
+  type: "configuration_change";
   poolId: string;
   asset: string;
   chain: string;

@@ -269,7 +269,7 @@ These calls use the lending canister only; they do not require `apiBaseUrl`. To 
 
 - `client.history.getUserTransactionHistory(profileId, filters?)` - paginated profile transaction history
 - `client.history.getLiquidationHistory(profileId, filters?)` - paginated profile liquidation history
-- `client.history.getPoolHistory(poolId, cursor?)` - paginated reserve snapshots
+- `client.history.getPoolHistory(poolId, cursor?)` - paginated reserve configuration changes
 - `client.history.getBorrowRateHistory(poolId, window?)` - paginated borrow-rate samples
 
 ### Activity tracking

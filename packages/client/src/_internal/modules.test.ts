@@ -399,7 +399,7 @@ describe("HistoryModule", () => {
       items: [
         {
           id: "snapshot-1",
-          type: "snapshot" as const,
+          type: "configuration_change" as const,
           poolId: "pool-1",
           asset: "BTC",
           chain: "BTC",
@@ -445,7 +445,7 @@ describe("HistoryModule", () => {
       items: [
         {
           id: "snapshot-1",
-          type: "snapshot",
+          type: "configuration_change",
           poolId: "pool-1",
           asset: "BTC",
           chain: "BTC",
