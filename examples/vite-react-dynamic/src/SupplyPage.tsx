@@ -9,9 +9,9 @@ import {
   type SupplyFlow,
   type SupplyInstruction,
   type SupplyPlanType,
-  type WalletAdapter,
   USDC_CONTRACT_ADDRESS,
   USDT_CONTRACT_ADDRESS,
+  type WalletAdapter,
 } from "@liquidium/client";
 import { useEffect, useMemo, useState } from "react";
 import { ExampleWalletSection } from "./ExampleWalletSection";

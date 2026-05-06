@@ -1,5 +1,9 @@
 export { LiquidiumClient } from "./client";
 export { LiquidiumError, LiquidiumErrorCode } from "./core/errors";
+export {
+  USDC_CONTRACT_ADDRESS,
+  USDT_CONTRACT_ADDRESS,
+} from "./core/evm";
 export type {
   CanisterIds,
   LiquidiumClientConfig,
@@ -26,10 +30,6 @@ export type {
   WalletAction,
   WalletAdapter,
 } from "./core/wallet-actions";
-export {
-  USDC_CONTRACT_ADDRESS,
-  USDT_CONTRACT_ADDRESS,
-} from "./core/evm";
 export { TransferMode, WalletExecutionKind } from "./core/wallet-actions";
 export type { ExecuteWithOptions } from "./execute";
 export { executeWith } from "./execute";
