@@ -73,7 +73,6 @@ export default function App({
   const [quoteErrorMessage, setQuoteErrorMessage] = useState<string | null>(
     null
   );
-  const [isQuoteLoading, setIsQuoteLoading] = useState(false);
   const [borrowResult, setBorrowResult] = useState<OutflowDetails | null>(null);
   const [borrowResultStatus, setBorrowResultStatus] = useState<string | null>(
     null
@@ -152,11 +151,9 @@ export default function App({
     borrowCapacityValidationError !== null;
   const quoteHealthLabel = hasQuoteBlockingErrors
     ? "Needs attention"
-    : isQuoteLoading
-      ? "Refreshing"
-      : quoteResult
-        ? "Ready"
-        : "Waiting";
+    : quoteResult
+      ? "Ready"
+      : "Waiting";
   const workflowStageLabel = profileId
     ? pools.length > 0
       ? "Execution ready"
@@ -164,7 +161,6 @@ export default function App({
     : "Set up account";
   const canSubmitBorrow =
     !isBusy &&
-    !isQuoteLoading &&
     !hasQuoteBlockingErrors &&
     primaryWallet !== null &&
     profileId !== null &&
@@ -218,56 +214,36 @@ export default function App({
   }, [maxAllowedLtvBps]);
 
   useEffect(() => {
-    let isCancelled = false;
-
-    async function loadQuote() {
-      if (
-        pools.length === 0 ||
-        !selectedBorrowPool ||
-        !selectedCollateralPool ||
-        borrowAmountInBaseUnits === null
-      ) {
-        setQuoteResult(null);
-        setQuoteErrorMessage(null);
-        return;
-      }
-
-      setIsQuoteLoading(true);
+    if (
+      pools.length === 0 ||
+      !selectedBorrowPool ||
+      !selectedCollateralPool ||
+      borrowAmountInBaseUnits === null
+    ) {
+      setQuoteResult(null);
       setQuoteErrorMessage(null);
-
-      try {
-        const client = createLiquidiumClient();
-        const nextQuoteResult = await client.quote.getQuote(
-          {
-            borrowAmount: borrowAmountInBaseUnits,
-            borrowPoolId: selectedBorrowPool.id,
-            collateralPoolId: selectedCollateralPool.id,
-            targetLtvBps: BigInt(targetLtvBps),
-          },
-          pools,
-          prices
-        );
-
-        if (!isCancelled) {
-          setQuoteResult(nextQuoteResult);
-        }
-      } catch (error) {
-        if (!isCancelled) {
-          setQuoteResult(null);
-          setQuoteErrorMessage(formatLiquidiumError(error));
-        }
-      } finally {
-        if (!isCancelled) {
-          setIsQuoteLoading(false);
-        }
-      }
+      return;
     }
 
-    void loadQuote();
+    try {
+      const client = createLiquidiumClient();
+      const nextQuoteResult = client.quote.getQuote(
+        {
+          borrowAmount: borrowAmountInBaseUnits,
+          borrowPoolId: selectedBorrowPool.id,
+          collateralPoolId: selectedCollateralPool.id,
+          targetLtvBps: BigInt(targetLtvBps),
+        },
+        pools,
+        prices
+      );
 
-    return () => {
-      isCancelled = true;
-    };
+      setQuoteResult(nextQuoteResult);
+      setQuoteErrorMessage(null);
+    } catch (error) {
+      setQuoteResult(null);
+      setQuoteErrorMessage(formatLiquidiumError(error));
+    }
   }, [
     borrowAmountInBaseUnits,
     pools,
@@ -804,7 +780,6 @@ export default function App({
         </dl>
 
         <div className="messages">
-          {isQuoteLoading ? <p>Refreshing quote...</p> : null}
           {quoteErrorMessage ? (
             <p className="error">{quoteErrorMessage}</p>
           ) : null}

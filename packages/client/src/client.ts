@@ -1,3 +1,5 @@
+import { createPublicClient, http } from "viem";
+import { mainnet } from "viem/chains";
 import {
   DEFAULT_ENVIRONMENT,
   DEFAULT_TIMEOUT_MS,
@@ -7,7 +9,7 @@ import type { ApiClient } from "./core/transports/api-client";
 import { createApiClient } from "./core/transports/api-client";
 import type { CanisterContext } from "./core/transports/canister-context";
 import { createCanisterContext } from "./core/transports/canister-context";
-import type { LiquidiumClientConfig } from "./core/types";
+import type { EvmReadClient, LiquidiumClientConfig } from "./core/types";
 import { AccountsModule } from "./modules/accounts";
 import { ActivitiesModule } from "./modules/activities";
 import { HistoryModule } from "./modules/history";
@@ -39,6 +41,7 @@ export class LiquidiumClient {
 
   private readonly canisterContext: CanisterContext;
   private readonly apiClient: ApiClient | undefined;
+  private readonly evmReadClient: EvmReadClient | undefined;
 
   private constructor(config: LiquidiumClientConfig) {
     const environment = config.environment ?? DEFAULT_ENVIRONMENT;
@@ -60,8 +63,14 @@ export class LiquidiumClient {
         })
       : undefined;
 
+    this.evmReadClient = resolveEvmReadClient(config);
+
     this.accounts = new AccountsModule(this.canisterContext);
-    this.lending = new LendingModule(this.canisterContext, this.apiClient);
+    this.lending = new LendingModule(
+      this.canisterContext,
+      this.apiClient,
+      this.evmReadClient
+    );
     this.market = new MarketModule(this.canisterContext, this.apiClient);
     this.positions = new PositionsModule(this.canisterContext, this.market);
     this.activities = new ActivitiesModule(this.apiClient);
@@ -78,4 +87,25 @@ export class LiquidiumClient {
   static create(config: LiquidiumClientConfig = {}): LiquidiumClient {
     return new LiquidiumClient(config);
   }
+}
+
+function resolveEvmReadClient(
+  config: LiquidiumClientConfig
+): EvmReadClient | undefined {
+  if (config.evmPublicClient) {
+    return config.evmPublicClient;
+  }
+
+  if (!config.evmRpcUrl) {
+    return undefined;
+  }
+
+  return createPublicClient({
+    chain: mainnet,
+    transport: http(config.evmRpcUrl, {
+      fetchOptions: config.evmRpcHeaders
+        ? { headers: config.evmRpcHeaders }
+        : undefined,
+    }),
+  });
 }

@@ -35,6 +35,7 @@ Richer config when the flow requires it:
 const client = LiquidiumClient.create({
   environment: "mainnet",
   apiBaseUrl: "https://your-app.example.com/api/sdk",
+  evmRpcUrl: "https://mainnet.infura.io/v3/<key>",
   timeoutMs: 30_000,
 });
 ```
@@ -42,8 +43,24 @@ const client = LiquidiumClient.create({
 **Config requirements:**
 
 - `environment`: sets the canister preset. Only `mainnet` is bundled; pass `canisterIds` explicitly for custom deployments
-- `apiBaseUrl`: required for history, activities, inflow reporting, and lower-level contract-interaction planning. Not required for `borrow(...)`, `withdraw(...)`, or default ETH stablecoin deposit-address supply/repay targets
+- `apiBaseUrl`: required for history, activities, and inflow reporting. Not required for `borrow(...)`, `withdraw(...)`, or default ETH stablecoin deposit-address supply/repay targets
+- `evmRpcUrl` / `evmPublicClient`: required for lower-level ETH contract-interaction supply planning and allowance polling. Use `evmRpcHeaders` when the RPC provider authenticates with HTTP headers
 - `identity` / `icHost`: custom ICP agent configuration
+
+Missing `apiBaseUrl` is a client configuration problem. Methods that require it
+throw `LiquidiumErrorCode.VALIDATION_ERROR`, not `SERVICE_UNAVAILABLE`.
+
+For Vite example apps, expose the RPC URL through a `VITE_` variable. If using
+Infura, prefer `VITE_INFURA_API_KEY` and derive the URL in app config:
+
+```ts
+const evmRpcUrl = import.meta.env.VITE_INFURA_API_KEY
+  ? `https://mainnet.infura.io/v3/${import.meta.env.VITE_INFURA_API_KEY}`
+  : import.meta.env.VITE_EVM_RPC_URL;
+```
+
+Vite env vars are bundled client-side. Treat Infura browser keys as publishable
+or route RPC calls through a server if the key must remain private.
 
 ## Module Guide
 
@@ -68,10 +85,11 @@ Quote-first UX. In borrow flows, fetch pools and prices first, then call `quote`
 ```ts
 const pools = await client.market.listPools();
 const prices = await client.market.getAssetPrices();
-const quote = await client.quote.getQuote(request, pools, prices);
+const quote = client.quote.getQuote(request, pools, prices);
 ```
 
-`getQuote(...)` returns `validationErrors` and `warnings`; it does not throw for
+`getQuote(...)` is synchronous and pure after the app has already fetched pools
+and prices. It returns `validationErrors` and `warnings`; it does not throw for
 normal quote validation failures such as missing pools, missing prices, invalid
 LTV, too-small borrow amounts, or disallowed same-asset borrowing. Treat a quote
 with validation errors as non-executable.
@@ -192,7 +210,10 @@ const profileId = await createAction.submit({
 });
 ```
 
-Handle existing profiles by catching the profile-exists error and resolving instead of retrying the create flow.
+`prepareCreateProfile(...)` normalizes the account and fetches the signing nonce;
+it does not pre-check profile uniqueness. Handle existing profiles by catching
+`PROFILE_ALREADY_EXISTS` from submission/canister validation and resolving the
+profile instead of retrying the create flow.
 
 ### Read market data and positions
 
@@ -217,7 +238,7 @@ const reserves = await client.positions.getUserReserves(profileId);
 const pools = await client.market.listPools();
 const prices = await client.market.getAssetPrices();
 
-const quote = await client.quote.getQuote(request, pools, prices);
+const quote = client.quote.getQuote(request, pools, prices);
 
 const outflow = await client.lending.borrow({
   profileId,
@@ -295,8 +316,8 @@ const supplyFlow = await client.lending.supply({
 });
 ```
 
-This default flow does not require `apiBaseUrl`. Use lower-level
-`getEvmSupplyContext(...)` only if you are intentionally building the legacy
+This default flow does not require `apiBaseUrl` or an EVM RPC. Use lower-level
+`getEvmSupplyContext(...)` only if you are intentionally building the
 contract-interaction flow.
 
 #### ETH Stablecoin Deposit Addresses
@@ -358,21 +379,22 @@ const contractInteractionFlow = await client.lending.supply({
 });
 ```
 
-`mechanism: "transfer"` keeps the deposit-address path explicit. `mechanism: "contractInteraction"` requires `apiBaseUrl`, `account`, `amount`, and `sendEthTransaction`.
+`mechanism: "transfer"` keeps the deposit-address path explicit. `mechanism: "contractInteraction"` requires `apiBaseUrl`, `evmRpcUrl` or `evmPublicClient`, `account`, `amount`, and `sendEthTransaction`.
 
 ## Common Mistakes
 
-1. `LiquidiumClient.create({})` does not cover every method. History, activities, inflow reporting, and lower-level contract-interaction planning need `apiBaseUrl`. Default ETH stablecoin deposit-address supply, `borrow(...)`, and `withdraw(...)` do not.
+1. `LiquidiumClient.create({})` does not cover every method. History, activities, and inflow reporting need `apiBaseUrl`; lower-level contract-interaction planning also needs `evmRpcUrl` or `evmPublicClient`. Default ETH stablecoin deposit-address supply, `borrow(...)`, and `withdraw(...)` do not.
 2. Prepare methods return signable actions, not completed actions. `prepareCreateProfile`, `prepareBorrow`, and `prepareWithdraw` still need signing and submission.
 3. Build a wallet adapter with only the methods the selected flow needs. Avoid adding `signMessage`, `sendBtcTransaction`, or `sendEthTransaction` unless the flow uses them.
 4. Skip the quote step in borrow UX only when you explicitly want a lower-level flow.
-5. Check `quote.validationErrors` before enabling borrow execution. Quote validation failures are returned in-band rather than thrown.
-6. `client.lending.supply(...)` auto-routes by pool. BTC and ETH USDT pools currently resolve to deposit-address transfer targets by default; use `mechanism` only when intentionally overriding that route.
-7. Handle existing profiles explicitly when account creation can race with existing state.
-8. Work from the public modules and names exported by `@liquidium/client`. Do not invent SDK methods.
-9. After `borrow(...)`, treat `outflow.id` as the user-visible reference immediately. Do not assume `outflow.txid` is set on the first response; resolve it later via activities or history if you need the chain transaction id.
-10. History entries use `txids?: string[]`; do not look for legacy direction-specific txid fields.
-11. ETH deposit-address `unauthorized` is usually not an `apiBaseUrl` problem. The deposit-address lookup is a direct canister call. Check the `poolId`, `ethDeposit` canister ID, token address, and deployment/environment alignment first.
+5. Do not `await client.quote.getQuote(...)`; it is synchronous once pools and prices are available.
+6. Check `quote.validationErrors` before enabling borrow execution. Quote validation failures are returned in-band rather than thrown.
+7. `client.lending.supply(...)` auto-routes by pool. BTC and ETH USDT pools currently resolve to deposit-address transfer targets by default; use `mechanism` only when intentionally overriding that route.
+8. Handle existing profiles explicitly when account creation can race with existing state. Do not rely on `prepareCreateProfile(...)` to reject an existing profile before signing.
+9. Work from the public modules and names exported by `@liquidium/client`. Do not invent SDK methods.
+10. After `borrow(...)`, treat `outflow.id` as the user-visible reference immediately. Do not assume `outflow.txid` is set on the first response; resolve it later via activities or history if you need the chain transaction id.
+11. History entries use `txids?: string[]`; do not look for legacy direction-specific txid fields.
+12. ETH deposit-address `unauthorized` is usually not an `apiBaseUrl` problem. The deposit-address lookup is a direct canister call. Check the `poolId`, `ethDeposit` canister ID, token address, and deployment/environment alignment first.
 
 ## Preferred Style
 
@@ -386,6 +408,7 @@ const contractInteractionFlow = await client.lending.supply({
 
 - Start with `LiquidiumClient.create({})` for read-only market and position work
 - Add `apiBaseUrl` when the requested flow touches backend-assisted endpoints
+- Add `evmRpcUrl` or `evmPublicClient` when the requested flow reads Ethereum chain state
 - Use `chain: "ETH"` or `chain: "BTC"` exactly as required by the SDK
 - Prefer a quote-first borrow flow
 - Prefer the BTC payment address when the wallet exposes both ordinals and payment addresses

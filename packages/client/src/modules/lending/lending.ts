@@ -1,5 +1,6 @@
 import { encodeIcrcAccount } from "@dfinity/ledger-icrc";
 import { Principal } from "@dfinity/principal";
+import { getAddress, isAddress } from "viem";
 import { createCkBtcMinterActor } from "../../core/canisters/ckbtc/minter";
 import {
   createDepositAccountsActor,
@@ -19,18 +20,22 @@ import {
 } from "../../core/canisters/lending/messages";
 import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
 import {
+  CK_ETH_DEPOSIT_CONTRACT_ADDRESS,
+  ERC20_ABI,
   MAX_UINT256,
   USDC_CONTRACT_ADDRESS,
   USDT_CONTRACT_ADDRESS,
 } from "../../core/evm";
-import {
-  buildEvmSupplyContextPath,
-  SdkApiPath,
-  SdkApiQueryParam,
-} from "../../core/sdk-api-paths";
+import { SdkApiPath } from "../../core/sdk-api-paths";
 import type { ApiClient } from "../../core/transports/api-client";
 import type { CanisterContext } from "../../core/transports/canister-context";
-import { Asset, Chain, InflowSubmitType, SupplyAction } from "../../core/types";
+import {
+  Asset,
+  Chain,
+  type EvmReadClient,
+  InflowSubmitType,
+  SupplyAction,
+} from "../../core/types";
 import { encodeInflowSubaccount } from "../../core/utils/inflow-subaccount";
 import { retryWithBackoff } from "../../core/utils/retry";
 import { computeExpiryTimestampFromNow } from "../../core/utils/time";
@@ -105,11 +110,13 @@ type SupplyTargetRequest = {
 };
 
 type SupplyMechanism = SupplyFlow["type"];
+type EvmAddress = `0x${string}`;
 
 export class LendingModule {
   constructor(
     readonly canisterContext: CanisterContext,
-    readonly apiClient: ApiClient | undefined
+    readonly apiClient: ApiClient | undefined,
+    readonly evmReadClient: EvmReadClient | undefined
   ) {}
 
   /**
@@ -450,28 +457,91 @@ export class LendingModule {
   }
 
   /**
-   * Fetches ERC-20 supply planning data from the SDK API (allowance, approval strategy, deposit calldata inputs).
+   * Fetches ERC-20 supply planning data with the configured EVM read client.
    *
-   * Requires `apiBaseUrl` on the client. Used internally by contract-interaction `supply`.
+   * Requires `evmRpcUrl` or `evmPublicClient` on the client. Used internally by
+   * contract-interaction `supply`.
    *
    * @param request - Profile, pool, wallet, amount (token base units), and action.
-   * @returns Backend-computed {@link EvmSupplyContext} for approvals and deposit.
+   * @returns Locally computed {@link EvmSupplyContext} for approvals and deposit.
    */
   async getEvmSupplyContext(
     request: GetEvmSupplyContextRequest
   ): Promise<EvmSupplyContext> {
-    const apiClient = this.requireApi();
-    const query = new URLSearchParams({
-      [SdkApiQueryParam.profileId]: request.profileId,
-      [SdkApiQueryParam.poolId]: request.poolId,
-      [SdkApiQueryParam.walletAddress]: request.walletAddress,
-      [SdkApiQueryParam.amount]: request.amount.toString(),
-      [SdkApiQueryParam.action]: request.action,
+    const selectedPool = await this.getPoolById(request.poolId);
+
+    return await this.getEvmSupplyContextForPool({
+      request,
+      asset: getVariantKey(selectedPool.asset),
+      chain: getVariantKey(selectedPool.chain),
+    });
+  }
+
+  private async getEvmSupplyContextForPool(params: {
+    request: GetEvmSupplyContextRequest;
+    asset: string;
+    chain: string;
+  }): Promise<EvmSupplyContext> {
+    const { request, asset, chain } = params;
+    const evmReadClient = this.requireEvmReadClient(
+      "EVM supply context requires an EVM RPC URL or public client"
+    );
+    const walletAddress = normalizeAndValidateEvmAddress(
+      request.walletAddress,
+      "Invalid EVM wallet address"
+    );
+
+    if (request.amount <= 0n) {
+      throw new LiquidiumError(
+        LiquidiumErrorCode.VALIDATION_ERROR,
+        "EVM supply context requires a positive amount"
+      );
+    }
+
+    if (!isEthStablecoin(asset, chain)) {
+      throw new LiquidiumError(
+        LiquidiumErrorCode.VALIDATION_ERROR,
+        `EVM supply context only supports ETH stablecoin pools, received ${asset} on ${chain}`
+      );
+    }
+
+    const tokenAddress = getEthStablecoinContractAddress(asset);
+    const spenderAddress = CK_ETH_DEPOSIT_CONTRACT_ADDRESS;
+    const [allowance, balance] = await Promise.all([
+      readErc20Allowance({
+        evmReadClient,
+        tokenAddress,
+        ownerAddress: walletAddress,
+        spenderAddress,
+      }),
+      readErc20Balance({
+        evmReadClient,
+        tokenAddress,
+        ownerAddress: walletAddress,
+      }),
+    ]);
+    const approvalStrategy = getApprovalStrategy({
+      allowance,
+      amount: request.amount,
     });
 
-    return await apiClient.get<EvmSupplyContext>(
-      buildEvmSupplyContextPath(query)
-    );
+    return {
+      success: true,
+      profileId: request.profileId,
+      poolId: request.poolId,
+      walletAddress,
+      action: request.action,
+      asset: asset as typeof Asset.USDC | typeof Asset.USDT,
+      chain: Chain.ETH,
+      amount: request.amount.toString(),
+      tokenAddress,
+      spenderAddress,
+      depositContractAddress: CK_ETH_DEPOSIT_CONTRACT_ADDRESS,
+      balance: balance.toString(),
+      allowance: allowance.toString(),
+      requiresApproval: approvalStrategy !== EvmSupplyApprovalStrategy.none,
+      approvalStrategy,
+    };
   }
 
   /**
@@ -622,13 +692,17 @@ export class LendingModule {
       );
     }
 
-    const walletAddress = request.account?.trim();
-    if (!walletAddress) {
+    const walletAddressInput = request.account?.trim();
+    if (!walletAddressInput) {
       throw new LiquidiumError(
         LiquidiumErrorCode.VALIDATION_ERROR,
         "Contract-interaction supply requires an account"
       );
     }
+    const walletAddress = normalizeAndValidateEvmAddress(
+      walletAddressInput,
+      "Invalid EVM wallet address"
+    );
 
     if (!request.amount || request.amount <= 0n) {
       throw new LiquidiumError(
@@ -645,12 +719,21 @@ export class LendingModule {
       );
     }
 
-    const evmSupplyContext = await this.getEvmSupplyContext({
-      profileId: request.profileId,
-      poolId: request.poolId,
-      walletAddress,
-      amount: request.amount,
-      action: request.action,
+    this.requireApi();
+    this.requireEvmReadClient(
+      "Contract-interaction supply requires an EVM RPC URL or public client"
+    );
+
+    const evmSupplyContext = await this.getEvmSupplyContextForPool({
+      request: {
+        profileId: request.profileId,
+        poolId: request.poolId,
+        walletAddress,
+        amount: request.amount,
+        action: request.action,
+      },
+      asset: instruction.asset,
+      chain: instruction.chain,
     });
     const supplyAmount = BigInt(evmSupplyContext.amount);
 
@@ -677,11 +760,10 @@ export class LendingModule {
       );
 
       await this.waitForExpectedAllowance({
-        profileId: request.profileId,
-        poolId: request.poolId,
         walletAddress,
+        tokenAddress: evmSupplyContext.tokenAddress,
+        spenderAddress: evmSupplyContext.spenderAddress,
         amount: supplyAmount,
-        action: request.action,
         expectation: "zero",
       });
     }
@@ -699,11 +781,10 @@ export class LendingModule {
       );
 
       await this.waitForExpectedAllowance({
-        profileId: request.profileId,
-        poolId: request.poolId,
         walletAddress,
+        tokenAddress: evmSupplyContext.tokenAddress,
+        spenderAddress: evmSupplyContext.spenderAddress,
         amount: supplyAmount,
-        action: request.action,
         expectation: "sufficient",
       });
     }
@@ -864,6 +945,14 @@ export class LendingModule {
     }
 
     return this.apiClient;
+  }
+
+  private requireEvmReadClient(message: string): EvmReadClient {
+    if (!this.evmReadClient) {
+      throw new LiquidiumError(LiquidiumErrorCode.VALIDATION_ERROR, message);
+    }
+
+    return this.evmReadClient;
   }
 
   private async getPoolById(poolId: string): Promise<LendingPoolRecord> {
@@ -1027,13 +1116,15 @@ export class LendingModule {
   }
 
   private async waitForExpectedAllowance(params: {
-    profileId: string;
-    poolId: string;
     walletAddress: string;
+    tokenAddress: string;
+    spenderAddress: string;
     amount: bigint;
-    action: SupplyAction;
     expectation: "zero" | "sufficient";
   }): Promise<void> {
+    const evmReadClient = this.requireEvmReadClient(
+      "Contract-interaction supply requires an EVM RPC URL or public client"
+    );
     let lastPollingError: unknown;
 
     for (
@@ -1042,14 +1133,12 @@ export class LendingModule {
       pollIndex += 1
     ) {
       try {
-        const nextContext = await this.getEvmSupplyContext({
-          profileId: params.profileId,
-          poolId: params.poolId,
-          walletAddress: params.walletAddress,
-          amount: params.amount,
-          action: params.action,
+        const allowance = await readErc20Allowance({
+          evmReadClient,
+          tokenAddress: params.tokenAddress,
+          ownerAddress: params.walletAddress,
+          spenderAddress: params.spenderAddress,
         });
-        const allowance = BigInt(nextContext.allowance);
         const matchesExpectation =
           params.expectation === "zero"
             ? allowance === 0n
@@ -1073,6 +1162,66 @@ export class LendingModule {
         : `Timed out waiting for ${params.expectation} ETH allowance update`
     );
   }
+}
+
+async function readErc20Allowance(params: {
+  evmReadClient: EvmReadClient;
+  tokenAddress: string;
+  ownerAddress: string;
+  spenderAddress: string;
+}): Promise<bigint> {
+  const allowance = await params.evmReadClient.readContract({
+    address: params.tokenAddress as EvmAddress,
+    abi: ERC20_ABI,
+    functionName: "allowance",
+    args: [
+      params.ownerAddress as EvmAddress,
+      params.spenderAddress as EvmAddress,
+    ],
+  });
+
+  return BigInt(allowance);
+}
+
+async function readErc20Balance(params: {
+  evmReadClient: EvmReadClient;
+  tokenAddress: string;
+  ownerAddress: string;
+}): Promise<bigint> {
+  const balance = await params.evmReadClient.readContract({
+    address: params.tokenAddress as EvmAddress,
+    abi: ERC20_ABI,
+    functionName: "balanceOf",
+    args: [params.ownerAddress as EvmAddress],
+  });
+
+  return BigInt(balance);
+}
+
+function getApprovalStrategy(params: {
+  allowance: bigint;
+  amount: bigint;
+}): EvmSupplyApprovalStrategy {
+  if (params.allowance >= params.amount) {
+    return EvmSupplyApprovalStrategy.none;
+  }
+
+  if (params.allowance === 0n) {
+    return EvmSupplyApprovalStrategy.approveMax;
+  }
+
+  return EvmSupplyApprovalStrategy.resetThenApproveMax;
+}
+
+function normalizeAndValidateEvmAddress(
+  address: string,
+  errorMessage: string
+): EvmAddress {
+  if (!isAddress(address)) {
+    throw new LiquidiumError(LiquidiumErrorCode.INVALID_ADDRESS, errorMessage);
+  }
+
+  return getAddress(address) as EvmAddress;
 }
 
 async function delay(timeoutMs: number): Promise<void> {

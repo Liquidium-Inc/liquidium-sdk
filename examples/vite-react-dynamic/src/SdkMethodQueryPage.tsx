@@ -26,7 +26,10 @@ type MethodDefinition = {
   id: string;
   label: string;
   defaultArgs: string;
-  execute: (client: LiquidiumClient, input: unknown) => Promise<unknown>;
+  execute: (
+    client: LiquidiumClient,
+    input: unknown
+  ) => unknown | Promise<unknown>;
 };
 
 const SDK_METHODS: MethodDefinition[] = [
@@ -318,7 +321,7 @@ const SDK_METHODS: MethodDefinition[] = [
     label: "quote.getQuote",
     defaultArgs:
       '{\n  "request": {\n    "borrowAmount": "200000000",\n    "borrowPoolId": "aaaaa-aa",\n    "collateralPoolId": "bbbbb-bb",\n    "targetLtvBps": "3200"\n  },\n  "pools": [],\n  "prices": {}\n}',
-    execute: async (client, input) => {
+    execute: (client, input) => {
       const args = expectObject(input);
       const requestValue = expectObject(args.request, "request");
       const quoteRequest: QuoteRequest = {
@@ -340,7 +343,7 @@ const SDK_METHODS: MethodDefinition[] = [
         ),
       };
 
-      return await client.quote.getQuote(
+      return client.quote.getQuote(
         quoteRequest,
         expectArray(args.pools, "pools") as Pool[],
         expectObject(args.prices, "prices") as AssetPrices

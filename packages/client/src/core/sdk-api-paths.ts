@@ -5,8 +5,6 @@
 export const SDK_API_V1_PREFIX = "/v1";
 
 export const SdkApiQueryParam = {
-  action: "action",
-  amount: "amount",
   cursor: "cursor",
   from: "from",
   limit: "limit",
@@ -17,7 +15,6 @@ export const SdkApiQueryParam = {
   statuses: "statuses",
   to: "to",
   types: "types",
-  walletAddress: "walletAddress",
 } as const;
 
 type BuildActivitiesPathRequest = {
@@ -94,10 +91,6 @@ export function buildActivityStatusPath(
   return `${SDK_API_V1_PREFIX}/activities/${encodeURIComponent(
     request.id
   )}/status?${query.toString()}`;
-}
-
-export function buildEvmSupplyContextPath(query: URLSearchParams): string {
-  return `${SDK_API_V1_PREFIX}/evm/supply-context?${query.toString()}`;
 }
 
 export const SdkApiPath = {

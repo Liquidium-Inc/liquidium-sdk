@@ -1,11 +1,14 @@
 import type { Identity } from "@dfinity/agent";
+import type { PublicClient } from "viem";
+
+export type EvmReadClient = Pick<PublicClient, "readContract">;
 
 /**
  * Runtime options for `LiquidiumClient.create`.
  *
  * Canister-backed reads and writes work with `{}` defaults. Set `apiBaseUrl`
- * when using HTTP features: user/pool history, activities, inflow
- * reporting, and contract-interaction `supply` planning.
+ * when using HTTP features: user/pool history, activities, and inflow
+ * reporting.
  */
 export interface LiquidiumClientConfig {
   /** Preset canister IDs. Only `mainnet` is bundled. */
@@ -16,7 +19,7 @@ export interface LiquidiumClientConfig {
   identity?: Identity;
   /**
    * Base URL for the Liquidium SDK HTTP API (e.g. `https://app.example.com/api/sdk`).
-   * Required for history, activities, inflow endpoints, and ETH stablecoin supply context.
+   * Required for history, activities, inflow endpoints, and automated inflow reporting.
    */
   apiBaseUrl?: string;
   /** Extra headers sent with every SDK API request. */
@@ -27,6 +30,12 @@ export interface LiquidiumClientConfig {
   fetch?: typeof fetch;
   /** Per-request timeout for SDK API calls in milliseconds. */
   timeoutMs?: number;
+  /** Ethereum RPC URL used for public ERC-20 reads in EVM supply flows. */
+  evmRpcUrl?: string;
+  /** Optional headers for RPC providers that authenticate via HTTP headers. */
+  evmRpcHeaders?: Record<string, string>;
+  /** Existing viem public client or compatible read client for EVM reads. */
+  evmPublicClient?: EvmReadClient;
 }
 
 export interface CanisterIds {

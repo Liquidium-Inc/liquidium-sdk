@@ -1,11 +1,13 @@
 export { LiquidiumClient } from "./client";
 export { LiquidiumError, LiquidiumErrorCode } from "./core/errors";
 export {
+  CK_ETH_DEPOSIT_CONTRACT_ADDRESS,
   USDC_CONTRACT_ADDRESS,
   USDT_CONTRACT_ADDRESS,
 } from "./core/evm";
 export type {
   CanisterIds,
+  EvmReadClient,
   LiquidiumClientConfig,
   MarketAsset,
   MarketChain,

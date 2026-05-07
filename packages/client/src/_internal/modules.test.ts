@@ -1918,6 +1918,42 @@ describe("LendingModule", () => {
   const USDT_POOL_ID = "hnnn4-iyaaa-aaaar-qb4bq-cai";
   const USDC_POOL_ID = "ryjl3-tyaaa-aaaaa-aaaba-cai";
 
+  function mockUsdtPoolList(): void {
+    vi.spyOn(Actor, "createActor").mockReturnValueOnce({
+      list_pools: vi.fn().mockResolvedValue([createUsdtPoolRecord()]),
+    } as never);
+  }
+
+  function createUsdtPoolRecord() {
+    return {
+      optimal_utilization_rate: 80n,
+      principal: {
+        toString: () => USDT_POOL_ID,
+        toText: () => USDT_POOL_ID,
+      },
+      total_generated_interest_snapshot: 0n,
+      supply_cap: [],
+      same_asset_borrowing: [],
+      asset: { USDT: null },
+      rate_slope_before: 1n,
+      borrow_cap: [],
+      total_debt_at_last_sync: 0n,
+      chain: { ETH: null },
+      rate_slope_after: 2n,
+      reserve_factor: 100n,
+      last_updated: [],
+      lending_index: 300n,
+      protocol_liquidation_fee: 50n,
+      borrow_index: 400n,
+      base_rate: 5n,
+      frozen: false,
+      liquidation_bonus: 200n,
+      liquidation_threshold: 7_500n,
+      max_ltv: 7_000n,
+      total_supply_at_last_sync: 50_000n,
+    };
+  }
+
   test("returns a native supply target for the btc pool", async () => {
     // given
     vi.spyOn(Actor, "createActor")
@@ -2318,35 +2354,15 @@ describe("LendingModule", () => {
     );
   });
 
-  test("fetches evm supply context through the sdk api", async () => {
+  test("computes evm supply context with the configured EVM read client", async () => {
     // given
-    const responsePayload = {
-      success: true as const,
-      profileId: "aaaaa-aa",
-      poolId: USDT_POOL_ID,
-      walletAddress: "0x1234567890123456789012345678901234567890",
-      action: "deposit" as const,
-      asset: "USDT" as const,
-      chain: "ETH" as const,
-      amount: "1000000",
-      tokenAddress: "0xdac17f958d2ee523a2206206994597c13d831ec7",
-      spenderAddress: "0x72831acbfdb0ac4bf229fc2097d73ef9e944d1c0",
-      depositContractAddress: "0x72831acbfdb0ac4bf229fc2097d73ef9e944d1c0",
-      balance: "2000000",
-      allowance: "0",
-      requiresApproval: true,
-      approvalStrategy: "approve-max" as const,
-    };
-    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(JSON.stringify(responsePayload), {
-        status: 200,
-        headers: {
-          "content-type": "application/json",
-        },
-      })
-    );
+    mockUsdtPoolList();
+    const readContract = vi
+      .fn()
+      .mockResolvedValueOnce(0n)
+      .mockResolvedValueOnce(2_000_000n);
     const client = LiquidiumClient.create({
-      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
+      evmPublicClient: { readContract } as never,
     });
 
     // when
@@ -2359,16 +2375,67 @@ describe("LendingModule", () => {
     });
 
     // then
-    expect(result).toEqual(responsePayload);
-    expect(fetchSpy).toHaveBeenCalledWith(
-      `https://app.liquidium.fi/api/sdk/v1/evm/supply-context?profileId=aaaaa-aa&poolId=${USDT_POOL_ID}&walletAddress=0x1234567890123456789012345678901234567890&amount=1000000&action=deposit`,
-      {
-        method: "GET",
-        headers: undefined,
-        body: undefined,
-        signal: expect.any(AbortSignal),
-      }
+    expect(result).toMatchObject({
+      success: true,
+      profileId: "aaaaa-aa",
+      poolId: USDT_POOL_ID,
+      walletAddress: "0x1234567890123456789012345678901234567890",
+      action: "deposit",
+      asset: "USDT",
+      chain: "ETH",
+      amount: "1000000",
+      tokenAddress: "0xdac17f958d2ee523a2206206994597c13d831ec7",
+      spenderAddress: "0x18901044688D3756C35Ed2b36D93e6a5B8e00E68",
+      depositContractAddress: "0x18901044688D3756C35Ed2b36D93e6a5B8e00E68",
+      balance: "2000000",
+      allowance: "0",
+      requiresApproval: true,
+      approvalStrategy: "approve-max",
+    });
+    expect(readContract).toHaveBeenCalledTimes(2);
+    expect(readContract).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        functionName: "allowance",
+        args: [
+          "0x1234567890123456789012345678901234567890",
+          "0x18901044688D3756C35Ed2b36D93e6a5B8e00E68",
+        ],
+      })
     );
+    expect(readContract).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        functionName: "balanceOf",
+        args: ["0x1234567890123456789012345678901234567890"],
+      })
+    );
+  });
+
+  test("should return reset approval strategy for partial EVM allowance", async () => {
+    // given
+    mockUsdtPoolList();
+    const readContract = vi
+      .fn()
+      .mockResolvedValueOnce(500_000n)
+      .mockResolvedValueOnce(2_000_000n);
+    const client = LiquidiumClient.create({
+      evmPublicClient: { readContract } as never,
+    });
+
+    // when
+    const result = await client.lending.getEvmSupplyContext({
+      profileId: "aaaaa-aa",
+      poolId: USDT_POOL_ID,
+      walletAddress: "0x1234567890123456789012345678901234567890",
+      amount: 1_000_000n,
+      action: "deposit",
+    });
+
+    // then
+    expect(result.allowance).toBe("500000");
+    expect(result.requiresApproval).toBe(true);
+    expect(result.approvalStrategy).toBe("reset-then-approve-max");
   });
 
   test("estimates eth usdt inflow fee from the deposit canister", async () => {
@@ -2473,65 +2540,8 @@ describe("LendingModule", () => {
   test("auto-executes eth usdt supply with contract interaction when requested", async () => {
     // given
     const depositTxid = "0xcontractdeposit";
-    vi.spyOn(Actor, "createActor").mockReturnValueOnce({
-      list_pools: vi.fn().mockResolvedValue([
-        {
-          optimal_utilization_rate: 80n,
-          principal: {
-            toString: () => USDT_POOL_ID,
-            toText: () => USDT_POOL_ID,
-          },
-          total_generated_interest_snapshot: 0n,
-          supply_cap: [],
-          same_asset_borrowing: [],
-          asset: { USDT: null },
-          rate_slope_before: 1n,
-          borrow_cap: [],
-          total_debt_at_last_sync: 0n,
-          chain: { ETH: null },
-          rate_slope_after: 2n,
-          reserve_factor: 100n,
-          last_updated: [],
-          lending_index: 300n,
-          protocol_liquidation_fee: 50n,
-          borrow_index: 400n,
-          base_rate: 5n,
-          frozen: false,
-          liquidation_bonus: 200n,
-          liquidation_threshold: 7_500n,
-          max_ltv: 7_000n,
-          total_supply_at_last_sync: 50_000n,
-        },
-      ]),
-    } as never);
+    mockUsdtPoolList();
     const fetchSpy = vi.spyOn(globalThis, "fetch");
-    fetchSpy.mockResolvedValueOnce(
-      new Response(
-        JSON.stringify({
-          success: true,
-          profileId: "aaaaa-aa",
-          poolId: USDT_POOL_ID,
-          walletAddress: "0x1234567890123456789012345678901234567890",
-          action: "deposit",
-          asset: "USDT",
-          chain: "ETH",
-          amount: "1000000",
-          tokenAddress: "0xdac17f958d2ee523a2206206994597c13d831ec7",
-          spenderAddress: "0x72831acbfdb0ac4bf229fc2097d73ef9e944d1c0",
-          depositContractAddress: "0x72831acbfdb0ac4bf229fc2097d73ef9e944d1c0",
-          balance: "2000000",
-          allowance: "1000000",
-          requiresApproval: false,
-          approvalStrategy: "none",
-        }),
-        {
-          status: 200,
-          headers: {
-            "content-type": "application/json",
-          },
-        }
-      )
-    );
     fetchSpy.mockResolvedValueOnce(
       new Response(JSON.stringify({ success: true, txid: depositTxid }), {
         status: 200,
@@ -2540,9 +2550,14 @@ describe("LendingModule", () => {
         },
       })
     );
+    const readContract = vi
+      .fn()
+      .mockResolvedValueOnce(1_000_000n)
+      .mockResolvedValueOnce(2_000_000n);
     const sendEthTransaction = vi.fn().mockResolvedValueOnce(depositTxid);
     const client = LiquidiumClient.create({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
+      evmPublicClient: { readContract } as never,
     });
 
     // when
@@ -2572,18 +2587,14 @@ describe("LendingModule", () => {
         chain: "ETH",
         actionType: "supply-deposit-deposit-erc20",
         transaction: expect.objectContaining({
-          to: "0x72831acbfdb0ac4bf229fc2097d73ef9e944d1c0",
+          to: "0x18901044688D3756C35Ed2b36D93e6a5B8e00E68",
           data: expect.stringMatching(/^0xdb9751af/),
         }),
       })
     );
+    expect(readContract).toHaveBeenCalledTimes(2);
     expect(fetchSpy).toHaveBeenNthCalledWith(
       1,
-      `https://app.liquidium.fi/api/sdk/v1/evm/supply-context?profileId=aaaaa-aa&poolId=${USDT_POOL_ID}&walletAddress=0x1234567890123456789012345678901234567890&amount=1000000&action=deposit`,
-      expect.objectContaining({ method: "GET" })
-    );
-    expect(fetchSpy).toHaveBeenNthCalledWith(
-      2,
       "https://app.liquidium.fi/api/sdk/v1/inflow",
       expect.objectContaining({
         method: "POST",
@@ -2594,6 +2605,36 @@ describe("LendingModule", () => {
         }),
       })
     );
+  });
+
+  test("should require an EVM read client for contract-interaction supply", async () => {
+    // given
+    mockUsdtPoolList();
+    const sendEthTransaction = vi.fn();
+    const client = LiquidiumClient.create({
+      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
+    });
+
+    // when
+    const result = client.lending.supply({
+      profileId: "aaaaa-aa",
+      poolId: USDT_POOL_ID,
+      action: "deposit",
+      account: "0x1234567890123456789012345678901234567890",
+      amount: 1_000_000n,
+      mechanism: "contractInteraction",
+      walletAdapter: {
+        sendEthTransaction,
+      },
+    });
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message:
+        "Contract-interaction supply requires an EVM RPC URL or public client",
+    });
+    expect(sendEthTransaction).not.toHaveBeenCalled();
   });
 
   test("creates a supply flow that exposes the instruction and submits a broadcast txid", async () => {

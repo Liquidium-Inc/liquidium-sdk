@@ -181,7 +181,8 @@ if (
 }
 
 // Force the lower-level ETH contract-interaction path when needed.
-// This requires apiBaseUrl plus account, amount, and sendEthTransaction.
+// This requires apiBaseUrl, an EVM RPC/read client, account, amount, and
+// sendEthTransaction.
 const contractInteractionFlow = await client.lending.supply({
   profileId: "<liquidium-profile-id>",
   poolId: "<eth-usdt-pool-id>",
@@ -197,16 +198,19 @@ const contractInteractionFlow = await client.lending.supply({
 
 ### `LiquidiumClient.create(config)`
 
-| Option        | Type                     | Required | Description                                  |
-| ------------- | ------------------------ | -------- | -------------------------------------------- |
-| `environment` | `"mainnet"`              | No       | Canister ID preset to use                    |
-| `icHost`      | `string`                 | No       | ICP replica host override                    |
-| `identity`    | `Identity`               | No       | `@dfinity/agent` identity                    |
-| `apiBaseUrl`  | `string`                 | No       | Liquidium API base URL                       |
-| `headers`     | `Record<string, string>` | No       | Default HTTP headers for API requests        |
-| `canisterIds` | `Partial<CanisterIds>`   | No       | Override canister IDs for custom deployments |
-| `fetch`       | `typeof fetch`           | No       | Custom fetch implementation for API requests |
-| `timeoutMs`   | `number`                 | No       | Request timeout (default: 30000)             |
+| Option            | Type                     | Required | Description                                  |
+| ----------------- | ------------------------ | -------- | -------------------------------------------- |
+| `environment`     | `"mainnet"`              | No       | Canister ID preset to use                    |
+| `icHost`          | `string`                 | No       | ICP replica host override                    |
+| `identity`        | `Identity`               | No       | `@dfinity/agent` identity                    |
+| `apiBaseUrl`      | `string`                 | No       | Liquidium API base URL                       |
+| `headers`         | `Record<string, string>` | No       | Default HTTP headers for API requests        |
+| `canisterIds`     | `Partial<CanisterIds>`   | No       | Override canister IDs for custom deployments |
+| `fetch`           | `typeof fetch`           | No       | Custom fetch implementation for API requests |
+| `timeoutMs`       | `number`                 | No       | Request timeout (default: 30000)             |
+| `evmRpcUrl`       | `string`                 | No       | Ethereum RPC URL for public ERC-20 reads     |
+| `evmRpcHeaders`   | `Record<string, string>` | No       | HTTP headers for authenticated EVM RPCs      |
+| `evmPublicClient` | `EvmReadClient`          | No       | Existing viem-compatible read client         |
 
 Environment preset:
 
@@ -252,7 +256,7 @@ These calls use the lending canister only; they do not require `apiBaseUrl`. To 
 
 - `WalletAdapter` currently supports BTC/ETH message signing through `signMessage`
 - Transfer-path supply automation uses `sendBtcTransaction` or `sendEthTransaction`, depending on the resolved target chain
-- Contract-interaction supply automation uses `sendEthTransaction` together with `apiBaseUrl`
+- Contract-interaction supply automation uses `sendEthTransaction` together with `apiBaseUrl` and an EVM RPC/read client
 - Future versions will add native ICP, native Solana, and additional ck-asset execution paths
 
 ### Modules
@@ -286,7 +290,7 @@ These calls use the lending canister only; they do not require `apiBaseUrl`. To 
 - Transfer-path inflows can auto-broadcast when `walletAdapter`, `account`, and `amount` are provided.
 - ETH stablecoin inflows default to deposit-address transfers and do not need `apiBaseUrl` for target resolution or wallet broadcast.
 - Pass `mechanism: "transfer"` or `mechanism: "contractInteraction"` to override the default route when a pool supports that path.
-- Contract-interaction helpers remain available for lower-level integrations that explicitly call `getEvmSupplyContext(...)`.
+- Contract-interaction helpers remain available for lower-level integrations that explicitly call `getEvmSupplyContext(...)`; these helpers require `evmRpcUrl` or `evmPublicClient`.
 
 ## License
 
