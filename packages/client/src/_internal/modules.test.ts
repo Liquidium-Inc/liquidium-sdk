@@ -202,26 +202,28 @@ describe("AccountsModule", () => {
     });
   });
 
-  test("blocks create action when wallet already has a profile", async () => {
+  test("prepares create action without checking for an existing profile", async () => {
     // given
+    const getWalletProfile = vi
+      .fn()
+      .mockResolvedValue([{ toText: () => "aaaaa-aa" }]);
+    const getNonce = vi.fn().mockResolvedValue(23n);
     vi.spyOn(Actor, "createActor").mockReturnValue({
-      get_wallet_profile: vi
-        .fn()
-        .mockResolvedValue([{ toText: () => "aaaaa-aa" }]),
-      get_nonce: vi.fn(),
+      get_wallet_profile: getWalletProfile,
+      get_nonce: getNonce,
       register_profile: vi.fn(),
     } as never);
     const client = LiquidiumClient.create({});
 
     // when
+    const createAction = await client.accounts.prepareCreateProfile({
+      account: "0xabc",
+    });
 
     // then
-    await expect(
-      client.accounts.prepareCreateProfile({ account: "0xabc" })
-    ).rejects.toMatchObject({
-      code: LiquidiumErrorCode.PROFILE_ALREADY_EXISTS,
-      message: "Wallet address is already linked to profile aaaaa-aa",
-    });
+    expect(createAction.message).toContain("Nonce: 23");
+    expect(getNonce).toHaveBeenCalledWith("0xabc");
+    expect(getWalletProfile).not.toHaveBeenCalled();
   });
 
   test("blocks action submission when wallet already has a profile", async () => {
@@ -231,7 +233,7 @@ describe("AccountsModule", () => {
       get_wallet_profile: vi
         .fn()
         .mockResolvedValue([{ toText: () => "bbbbb-bb" }]),
-      get_nonce: vi.fn(),
+      get_nonce: vi.fn().mockResolvedValue(29n),
       register_profile: registerProfile,
     } as never);
     const client = LiquidiumClient.create({});
@@ -313,7 +315,7 @@ describe("AccountsModule", () => {
 });
 
 describe("HistoryModule", () => {
-  test("throws SERVICE_UNAVAILABLE when no apiBaseUrl configured", async () => {
+  test("throws VALIDATION_ERROR when no apiBaseUrl configured", async () => {
     // given
     const client = LiquidiumClient.create({});
 
@@ -326,7 +328,7 @@ describe("HistoryModule", () => {
     await expect(
       client.history.getUserTransactionHistory("profile-1")
     ).rejects.toMatchObject({
-      code: LiquidiumErrorCode.SERVICE_UNAVAILABLE,
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
     });
   });
 
@@ -665,7 +667,7 @@ describe("HistoryModule", () => {
 });
 
 describe("ActivitiesModule", () => {
-  test("throws SERVICE_UNAVAILABLE when no apiBaseUrl configured", async () => {
+  test("throws VALIDATION_ERROR when no apiBaseUrl configured", async () => {
     // given
     const client = LiquidiumClient.create({});
 
@@ -675,7 +677,7 @@ describe("ActivitiesModule", () => {
     await expect(
       client.activities.list({ profileId: "profile-1" })
     ).rejects.toMatchObject({
-      code: LiquidiumErrorCode.SERVICE_UNAVAILABLE,
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
     });
   });
 
@@ -2991,7 +2993,7 @@ describe("LendingModule", () => {
     });
   });
 
-  test("throws SERVICE_UNAVAILABLE for inflow submission without apiBaseUrl", async () => {
+  test("throws VALIDATION_ERROR for inflow submission without apiBaseUrl", async () => {
     // given
     const client = LiquidiumClient.create({});
 
@@ -3001,7 +3003,7 @@ describe("LendingModule", () => {
     await expect(
       client.lending.submitInflow({ txid: "abc" })
     ).rejects.toMatchObject({
-      code: LiquidiumErrorCode.SERVICE_UNAVAILABLE,
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
       message: "Lending API actions require an API base URL in client config",
     });
   });

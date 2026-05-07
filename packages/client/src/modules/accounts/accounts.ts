@@ -143,8 +143,6 @@ export class AccountsModule {
     try {
       const normalizedAccount = normalizeProfileAccount(account);
 
-      await assertWalletHasNoProfile(this.canisterContext, normalizedAccount);
-
       const nonce = await createLendingActor(this.canisterContext).get_nonce(
         normalizedAccount
       );

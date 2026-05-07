@@ -27,7 +27,7 @@ export class HistoryModule {
   private requireApi(): ApiClient {
     if (!this.apiClient) {
       throw new LiquidiumError(
-        LiquidiumErrorCode.SERVICE_UNAVAILABLE,
+        LiquidiumErrorCode.VALIDATION_ERROR,
         "History requires an API base URL in client config"
       );
     }

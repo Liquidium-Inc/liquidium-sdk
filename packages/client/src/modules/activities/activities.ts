@@ -91,7 +91,7 @@ export class ActivitiesModule {
   private requireApi(): ApiClient {
     if (!this.apiClient) {
       throw new LiquidiumError(
-        LiquidiumErrorCode.SERVICE_UNAVAILABLE,
+        LiquidiumErrorCode.VALIDATION_ERROR,
         "Activities require an API base URL in client config"
       );
     }

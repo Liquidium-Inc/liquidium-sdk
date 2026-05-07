@@ -858,7 +858,7 @@ export class LendingModule {
   private requireApi(): ApiClient {
     if (!this.apiClient) {
       throw new LiquidiumError(
-        LiquidiumErrorCode.SERVICE_UNAVAILABLE,
+        LiquidiumErrorCode.VALIDATION_ERROR,
         "Lending API actions require an API base URL in client config"
       );
     }
