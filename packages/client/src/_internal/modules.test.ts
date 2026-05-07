@@ -1,6 +1,9 @@
 import { Actor } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
+import { decodeFunctionData } from "viem";
 import { afterEach, describe, expect, test, vi } from "vitest";
+import { CK_DEPOSIT_ABI, ERC20_ABI } from "../core/evm";
+import { encodeInflowSubaccount } from "../core/utils/inflow-subaccount";
 import {
   executeWith,
   LiquidiumClient,
@@ -1918,6 +1921,21 @@ describe("LendingModule", () => {
   const USDT_POOL_ID = "hnnn4-iyaaa-aaaar-qb4bq-cai";
   const USDC_POOL_ID = "ryjl3-tyaaa-aaaaa-aaaba-cai";
 
+  function encodeBytes32Hex(bytes: Uint8Array): `0x${string}` {
+    return `0x${Array.from(bytes, (byte) =>
+      byte.toString(16).padStart(2, "0")
+    ).join("")}`;
+  }
+
+  function encodePrincipalToBytes32(principal: Principal): `0x${string}` {
+    const principalBytes = principal.toUint8Array();
+    const fixedBytes = new Uint8Array(32);
+    fixedBytes[0] = principalBytes.length;
+    fixedBytes.set(principalBytes, 1);
+
+    return encodeBytes32Hex(fixedBytes);
+  }
+
   function mockUsdtPoolList(): void {
     vi.spyOn(Actor, "createActor").mockReturnValueOnce({
       list_pools: vi.fn().mockResolvedValue([createUsdtPoolRecord()]),
@@ -1956,6 +1974,10 @@ describe("LendingModule", () => {
 
   test("returns a native supply target for the btc pool", async () => {
     // given
+    const profileId = "aaaaa-aa";
+    const getBtcAddress = vi
+      .fn()
+      .mockResolvedValue("bc1qexampledepositaddress");
     vi.spyOn(Actor, "createActor")
       .mockReturnValueOnce({
         list_pools: vi.fn().mockResolvedValue([
@@ -1989,13 +2011,13 @@ describe("LendingModule", () => {
         ]),
       } as never)
       .mockReturnValueOnce({
-        get_btc_address: vi.fn().mockResolvedValue("bc1qexampledepositaddress"),
+        get_btc_address: getBtcAddress,
       } as never);
     const client = LiquidiumClient.create({});
 
     // when
     const supplyInstruction = await client.lending.prepareSupply({
-      profileId: "aaaaa-aa",
+      profileId,
       poolId: BTC_POOL_ID,
       action: "deposit",
     });
@@ -2015,10 +2037,22 @@ describe("LendingModule", () => {
         address: "bc1qexampledepositaddress",
       },
     });
+    expect(getBtcAddress).toHaveBeenCalledTimes(1);
+    const getBtcAddressRequest = getBtcAddress.mock.calls[0]?.[0];
+    expect(getBtcAddressRequest?.owner[0]?.toText()).toBe(BTC_POOL_ID);
+    expect(Array.from(getBtcAddressRequest?.subaccount[0] ?? [])).toEqual(
+      Array.from(
+        encodeInflowSubaccount({
+          action: "deposit",
+          principal: Principal.fromText(profileId),
+        })
+      )
+    );
   });
 
   test("returns a deposit address supply target for the usdt pool", async () => {
     // given
+    const profileId = "aaaaa-aa";
     const getDepositAddress = vi.fn().mockResolvedValue({
       Ok: "0x1111111111111111111111111111111111111111",
     });
@@ -2061,7 +2095,7 @@ describe("LendingModule", () => {
 
     // when
     const supplyInstruction = await client.lending.prepareSupply({
-      profileId: "aaaaa-aa",
+      profileId,
       poolId: USDT_POOL_ID,
       action: "repayment",
     });
@@ -2081,19 +2115,25 @@ describe("LendingModule", () => {
         address: "0x1111111111111111111111111111111111111111",
       },
     });
-    expect(getDepositAddress).toHaveBeenCalledWith(
-      expect.objectContaining({
-        owner: expect.objectContaining({
-          toText: expect.any(Function),
-        }),
-        subaccount: [expect.any(Uint8Array)],
-      }),
-      ["0xdac17f958d2ee523a2206206994597c13d831ec7"]
+    expect(getDepositAddress).toHaveBeenCalledTimes(1);
+    const depositAddressRequest = getDepositAddress.mock.calls[0]?.[0];
+    expect(depositAddressRequest?.owner.toText()).toBe(USDT_POOL_ID);
+    expect(Array.from(depositAddressRequest?.subaccount[0] ?? [])).toEqual(
+      Array.from(
+        encodeInflowSubaccount({
+          action: "repayment",
+          principal: Principal.fromText(profileId),
+        })
+      )
     );
+    expect(getDepositAddress.mock.calls[0]?.[1]).toEqual([
+      "0xdac17f958d2ee523a2206206994597c13d831ec7",
+    ]);
   });
 
   test("returns a deposit address supply target for the usdc pool when transfer is requested", async () => {
     // given
+    const profileId = "aaaaa-aa";
     const getDepositAddress = vi.fn().mockResolvedValue({
       Ok: "0x2222222222222222222222222222222222222222",
     });
@@ -2136,7 +2176,7 @@ describe("LendingModule", () => {
 
     // when
     const supplyInstruction = await client.lending.prepareSupply({
-      profileId: "aaaaa-aa",
+      profileId,
       poolId: USDC_POOL_ID,
       action: "deposit",
       mechanism: "transfer",
@@ -2157,15 +2197,20 @@ describe("LendingModule", () => {
         address: "0x2222222222222222222222222222222222222222",
       },
     });
-    expect(getDepositAddress).toHaveBeenCalledWith(
-      expect.objectContaining({
-        owner: expect.objectContaining({
-          toText: expect.any(Function),
-        }),
-        subaccount: [expect.any(Uint8Array)],
-      }),
-      ["0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48"]
+    expect(getDepositAddress).toHaveBeenCalledTimes(1);
+    const depositAddressRequest = getDepositAddress.mock.calls[0]?.[0];
+    expect(depositAddressRequest?.owner.toText()).toBe(USDC_POOL_ID);
+    expect(Array.from(depositAddressRequest?.subaccount[0] ?? [])).toEqual(
+      Array.from(
+        encodeInflowSubaccount({
+          action: "deposit",
+          principal: Principal.fromText(profileId),
+        })
+      )
     );
+    expect(getDepositAddress.mock.calls[0]?.[1]).toEqual([
+      "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+    ]);
   });
 
   test("rejects prepareSupply when no supply mechanism is configured", async () => {
@@ -2534,11 +2579,22 @@ describe("LendingModule", () => {
         }),
       })
     );
+    const sentEthTransaction = sendEthTransaction.mock.calls[0]?.[0];
+    const decodedTransfer = decodeFunctionData({
+      abi: ERC20_ABI,
+      data: sentEthTransaction?.transaction.data as `0x${string}`,
+    });
+    expect(decodedTransfer.functionName).toBe("transfer");
+    expect(decodedTransfer.args).toEqual([
+      "0x1111111111111111111111111111111111111111",
+      1_000_000n,
+    ]);
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
   test("auto-executes eth usdt supply with contract interaction when requested", async () => {
     // given
+    const profileId = "aaaaa-aa";
     const depositTxid = "0xcontractdeposit";
     mockUsdtPoolList();
     const fetchSpy = vi.spyOn(globalThis, "fetch");
@@ -2562,7 +2618,7 @@ describe("LendingModule", () => {
 
     // when
     const flow = await client.lending.supply({
-      profileId: "aaaaa-aa",
+      profileId,
       poolId: USDT_POOL_ID,
       action: "deposit",
       account: "0x1234567890123456789012345678901234567890",
@@ -2591,6 +2647,27 @@ describe("LendingModule", () => {
           data: expect.stringMatching(/^0xdb9751af/),
         }),
       })
+    );
+    const sentEthTransaction = sendEthTransaction.mock.calls[0]?.[0];
+    const decodedDeposit = decodeFunctionData({
+      abi: CK_DEPOSIT_ABI,
+      data: sentEthTransaction?.transaction.data as `0x${string}`,
+    });
+    expect(decodedDeposit.functionName).toBe("depositErc20");
+    expect(decodedDeposit.args[0].toLowerCase()).toBe(
+      "0xdac17f958d2ee523a2206206994597c13d831ec7"
+    );
+    expect(decodedDeposit.args[1]).toBe(1_000_000n);
+    expect(decodedDeposit.args[2]).toBe(
+      encodePrincipalToBytes32(Principal.fromText(USDT_POOL_ID))
+    );
+    expect(decodedDeposit.args[3]).toBe(
+      encodeBytes32Hex(
+        encodeInflowSubaccount({
+          action: "deposit",
+          principal: Principal.fromText(profileId),
+        })
+      )
     );
     expect(readContract).toHaveBeenCalledTimes(2);
     expect(fetchSpy).toHaveBeenNthCalledWith(
@@ -2963,6 +3040,14 @@ describe("LendingModule", () => {
     expect(flow.type).toBe("transfer");
     expect(flow.txid).toBe(txid);
     expect(sendBtcTransaction).toHaveBeenCalledTimes(1);
+    expect(sendBtcTransaction).toHaveBeenCalledWith({
+      chain: "BTC",
+      toAddress: "bc1qexamplerepayaddress",
+      amountSats: 100_000n,
+      account: "bc1qsender",
+      actionType: "supply-repayment",
+      transferMode: "native",
+    });
     expect(fetchSpy).toHaveBeenCalledWith(
       "https://app.liquidium.fi/api/sdk/v1/inflow",
       expect.objectContaining({
