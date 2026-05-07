@@ -352,11 +352,7 @@ describe("QuoteModule", () => {
     };
 
     // when
-    const result = quoteModule.getQuote(
-      request,
-      [btcPool, ethPool],
-      prices
-    );
+    const result = quoteModule.getQuote(request, [btcPool, ethPool], prices);
 
     // then
     expect(result.validationErrors).toHaveLength(1);
