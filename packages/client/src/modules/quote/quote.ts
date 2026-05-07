@@ -44,11 +44,11 @@ export class QuoteModule {
    * @param prices - Asset prices in USD (use MarketModule.getAssetPrices() to fetch).
    * @returns Quote result with required collateral and validation state.
    */
-  async getQuote(
+  getQuote(
     request: QuoteRequest,
     pools: Pool[],
     prices: AssetPrices
-  ): Promise<QuoteResult> {
+  ): QuoteResult {
     const { borrowAmount, borrowPoolId, collateralPoolId, targetLtvBps } =
       request;
 

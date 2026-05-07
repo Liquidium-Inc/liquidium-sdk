@@ -65,7 +65,7 @@ describe("QuoteModule", () => {
     USDT: 1,
   };
 
-  test("calculates required collateral for valid cross-asset quote", async () => {
+  test("calculates required collateral for valid cross-asset quote", () => {
     // given
     const request = {
       borrowAmount: 100000000n,
@@ -75,7 +75,7 @@ describe("QuoteModule", () => {
     };
 
     // when
-    const result = await quoteModule.getQuote(request, pools, prices);
+    const result = quoteModule.getQuote(request, pools, prices);
 
     // then
     expect(result.validationErrors).toHaveLength(0);
@@ -85,7 +85,7 @@ describe("QuoteModule", () => {
     expect(result.requiredCollateralUsd).toBe(20_000_000_000n);
   });
 
-  test("should use pool decimals for quote calculations", async () => {
+  test("should use pool decimals for quote calculations", () => {
     // given
     const ETH_BASE_UNITS_PER_TOKEN = 1_000_000_000_000_000_000n;
     const ethPool: Pool = {
@@ -106,7 +106,7 @@ describe("QuoteModule", () => {
     };
 
     // when
-    const result = await quoteModule.getQuote(
+    const result = quoteModule.getQuote(
       request,
       [btcPool, ethPool],
       pricesWithEth
@@ -127,7 +127,7 @@ describe("QuoteModule", () => {
     );
   });
 
-  test("rounds required collateral UP when LTV does not divide evenly", async () => {
+  test("rounds required collateral UP when LTV does not divide evenly", () => {
     // given
     const request = {
       borrowAmount: 1_000_000n,
@@ -137,7 +137,7 @@ describe("QuoteModule", () => {
     };
 
     // when
-    const result = await quoteModule.getQuote(request, pools, prices);
+    const result = quoteModule.getQuote(request, pools, prices);
 
     // then
     expect(result.validationErrors).toHaveLength(0);
@@ -146,7 +146,7 @@ describe("QuoteModule", () => {
     expect(result.requiredCollateralAmount).toBe(1_539n);
   });
 
-  test("returns error when borrow pool not found", async () => {
+  test("returns error when borrow pool not found", () => {
     // given
     const request = {
       borrowAmount: 100000000n,
@@ -156,7 +156,7 @@ describe("QuoteModule", () => {
     };
 
     // when
-    const result = await quoteModule.getQuote(request, pools, prices);
+    const result = quoteModule.getQuote(request, pools, prices);
 
     // then
     expect(result.validationErrors).toHaveLength(1);
@@ -165,7 +165,7 @@ describe("QuoteModule", () => {
     );
   });
 
-  test("returns error when LTV exceeds max allowed", async () => {
+  test("returns error when LTV exceeds max allowed", () => {
     // given
     const request = {
       borrowAmount: 100000000n,
@@ -175,7 +175,7 @@ describe("QuoteModule", () => {
     };
 
     // when
-    const result = await quoteModule.getQuote(request, pools, prices);
+    const result = quoteModule.getQuote(request, pools, prices);
 
     // then
     expect(result.validationErrors).toHaveLength(1);
@@ -184,7 +184,7 @@ describe("QuoteModule", () => {
     );
   });
 
-  test("returns error when LTV exceeds 100%", async () => {
+  test("returns error when LTV exceeds 100%", () => {
     // given
     const request = {
       borrowAmount: 100000000n,
@@ -194,7 +194,7 @@ describe("QuoteModule", () => {
     };
 
     // when
-    const result = await quoteModule.getQuote(request, pools, prices);
+    const result = quoteModule.getQuote(request, pools, prices);
 
     // then
     expect(
@@ -204,7 +204,7 @@ describe("QuoteModule", () => {
     ).toBe(true);
   });
 
-  test("returns error when same asset borrowing not allowed", async () => {
+  test("returns error when same asset borrowing not allowed", () => {
     // given
     const request = {
       borrowAmount: 100000000n,
@@ -214,7 +214,7 @@ describe("QuoteModule", () => {
     };
 
     // when
-    const result = await quoteModule.getQuote(request, pools, prices);
+    const result = quoteModule.getQuote(request, pools, prices);
 
     // then
     expect(result.validationErrors).toHaveLength(1);
@@ -223,7 +223,7 @@ describe("QuoteModule", () => {
     );
   });
 
-  test("returns error when same asset borrowing uses different pool ids", async () => {
+  test("returns error when same asset borrowing uses different pool ids", () => {
     // given
     const secondBtcPool: Pool = {
       ...btcPool,
@@ -237,7 +237,7 @@ describe("QuoteModule", () => {
     };
 
     // when
-    const result = await quoteModule.getQuote(
+    const result = quoteModule.getQuote(
       request,
       [btcPool, secondBtcPool, usdtPool],
       prices
@@ -250,7 +250,7 @@ describe("QuoteModule", () => {
     );
   });
 
-  test("allows same asset borrowing when enabled on pool", async () => {
+  test("allows same asset borrowing when enabled on pool", () => {
     // given
     const request = {
       borrowAmount: 100000000n,
@@ -260,7 +260,7 @@ describe("QuoteModule", () => {
     };
 
     // when
-    const result = await quoteModule.getQuote(request, pools, prices);
+    const result = quoteModule.getQuote(request, pools, prices);
 
     // then
     expect(result.validationErrors).toHaveLength(0);
@@ -270,7 +270,7 @@ describe("QuoteModule", () => {
     );
   });
 
-  test("warns when same asset borrowing uses different pool ids and is enabled", async () => {
+  test("warns when same asset borrowing uses different pool ids and is enabled", () => {
     // given
     const secondUsdtPool: Pool = {
       ...usdtPool,
@@ -284,7 +284,7 @@ describe("QuoteModule", () => {
     };
 
     // when
-    const result = await quoteModule.getQuote(
+    const result = quoteModule.getQuote(
       request,
       [btcPool, usdtPool, secondUsdtPool],
       prices
@@ -298,7 +298,7 @@ describe("QuoteModule", () => {
     );
   });
 
-  test("returns high LTV warning when at or above 80%", async () => {
+  test("returns high LTV warning when at or above 80%", () => {
     // given
     const request = {
       borrowAmount: 100000000n,
@@ -308,7 +308,7 @@ describe("QuoteModule", () => {
     };
 
     // when
-    const result = await quoteModule.getQuote(request, pools, prices);
+    const result = quoteModule.getQuote(request, pools, prices);
 
     // then
     expect(result.validationErrors).toHaveLength(0);
@@ -317,7 +317,7 @@ describe("QuoteModule", () => {
     ).toBe(true);
   });
 
-  test("returns error when borrow amount too low", async () => {
+  test("returns error when borrow amount too low", () => {
     // given
     const request = {
       borrowAmount: 1000n,
@@ -327,7 +327,7 @@ describe("QuoteModule", () => {
     };
 
     // when
-    const result = await quoteModule.getQuote(request, pools, prices);
+    const result = quoteModule.getQuote(request, pools, prices);
 
     // then
     expect(result.validationErrors).toHaveLength(1);
@@ -336,7 +336,7 @@ describe("QuoteModule", () => {
     );
   });
 
-  test("returns error when price not available", async () => {
+  test("returns error when price not available", () => {
     // given
     const ethPool: Pool = {
       ...usdtPool,
@@ -352,7 +352,7 @@ describe("QuoteModule", () => {
     };
 
     // when
-    const result = await quoteModule.getQuote(
+    const result = quoteModule.getQuote(
       request,
       [btcPool, ethPool],
       prices
@@ -365,7 +365,7 @@ describe("QuoteModule", () => {
     );
   });
 
-  test("returns error when borrow price is zero or negative", async () => {
+  test("returns error when borrow price is zero or negative", () => {
     // given
     const zeroPrices: AssetPrices = { BTC: 100000, USDT: 0 };
     const request = {
@@ -376,7 +376,7 @@ describe("QuoteModule", () => {
     };
 
     // when
-    const result = await quoteModule.getQuote(request, pools, zeroPrices);
+    const result = quoteModule.getQuote(request, pools, zeroPrices);
 
     // then
     expect(
@@ -386,7 +386,7 @@ describe("QuoteModule", () => {
     ).toBe(true);
   });
 
-  test("computes exact result when target LTV divides evenly", async () => {
+  test("computes exact result when target LTV divides evenly", () => {
     // given
     const request = {
       borrowAmount: 100_000_000n,
@@ -396,14 +396,14 @@ describe("QuoteModule", () => {
     };
 
     // when
-    const result = await quoteModule.getQuote(request, pools, prices);
+    const result = quoteModule.getQuote(request, pools, prices);
 
     // then
     expect(result.requiredCollateralUsd).toBe(20_000_000_000n);
     expect(result.requiredCollateralAmount).toBe(200_000n);
   });
 
-  test("preserves precision for very large borrow amounts", async () => {
+  test("preserves precision for very large borrow amounts", () => {
     // given
     const request = {
       borrowAmount: 1_000_000_000_000n,
@@ -413,7 +413,7 @@ describe("QuoteModule", () => {
     };
 
     // when
-    const result = await quoteModule.getQuote(request, pools, prices);
+    const result = quoteModule.getQuote(request, pools, prices);
 
     // then
     expect(result.validationErrors).toHaveLength(0);
@@ -422,7 +422,7 @@ describe("QuoteModule", () => {
     expect(result.requiredCollateralAmount).toBe(2_000_000_000n);
   });
 
-  test("returns error when borrow amount is negative", async () => {
+  test("returns error when borrow amount is negative", () => {
     // given
     const request = {
       borrowAmount: -1n,
@@ -432,7 +432,7 @@ describe("QuoteModule", () => {
     };
 
     // when
-    const result = await quoteModule.getQuote(request, pools, prices);
+    const result = quoteModule.getQuote(request, pools, prices);
 
     // then
     expect(result.validationErrors).toHaveLength(1);
