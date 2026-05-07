@@ -16,6 +16,7 @@ npm install @liquidium/client @dfinity/agent @dfinity/candid @dfinity/principal
 import {
   executeWith,
   LiquidiumClient,
+  RATE_SCALE,
   type WalletAdapter,
 } from "@liquidium/client";
 
@@ -32,6 +33,8 @@ const btcPool = await client.market.findPool({ asset: "BTC", chain: "BTC" });
 const prices = await client.market.getAssetPrices();
 const marketAsset = pools[0]?.asset;
 const assetPriceUsd = marketAsset ? prices[marketAsset] : undefined;
+const borrowApyPercent =
+  pools[0] ? (Number(pools[0].borrowingRate) * 100) / Number(RATE_SCALE) : undefined;
 
 // Quote-first borrow planning
 const quote = await client.quote.getQuote(

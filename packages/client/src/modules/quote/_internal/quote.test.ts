@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+import { RATE_DECIMALS } from "../../../core/rates";
 import type { AssetPrices, Pool } from "../../market/types";
 import { QuoteModule } from "../quote";
 import { QuoteValidationErrorCode, QuoteWarningCode } from "../types";
@@ -20,6 +21,7 @@ describe("QuoteModule", () => {
     liquidationBonus: 500n,
     protocolLiquidationFee: 1000n,
     reserveFactor: 2000n,
+    rateDecimals: RATE_DECIMALS,
     lendingRate: 0n,
     borrowingRate: 0n,
     utilizationRate: 0n,
@@ -46,6 +48,7 @@ describe("QuoteModule", () => {
     liquidationBonus: 500n,
     protocolLiquidationFee: 1000n,
     reserveFactor: 1000n,
+    rateDecimals: RATE_DECIMALS,
     lendingRate: 0n,
     borrowingRate: 0n,
     utilizationRate: 0n,

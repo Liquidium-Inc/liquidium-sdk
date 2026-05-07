@@ -3,6 +3,7 @@ import type {
   PoolRateTuple,
   PriceRecord,
 } from "../../core/canisters/lending/actor";
+import { RATE_DECIMALS } from "../../core/rates";
 import { getAssetNativeDecimals } from "../../core/utils/asset-decimals";
 import { getVariantKey } from "../../core/utils/variant";
 import type { AssetPrices, Pool } from "./types";
@@ -37,6 +38,7 @@ export function mapLendingPoolRecordToPool(
     liquidationBonus: pool.liquidation_bonus,
     protocolLiquidationFee: pool.protocol_liquidation_fee,
     reserveFactor: pool.reserve_factor,
+    rateDecimals: RATE_DECIMALS,
     lendingRate: rate[1],
     borrowingRate: rate[0],
     utilizationRate: rate[2],
@@ -76,11 +78,13 @@ export function mapGetPricesResponseToAssetPrices(
 }
 
 export function mapGetPoolRateResponseToPoolRate(rate: PoolRateTuple): {
+  rateDecimals: bigint;
   borrowRate: bigint;
   lendRate: bigint;
   utilizationRate: bigint;
 } {
   return {
+    rateDecimals: RATE_DECIMALS,
     borrowRate: rate[0],
     lendRate: rate[1],
     utilizationRate: rate[2],

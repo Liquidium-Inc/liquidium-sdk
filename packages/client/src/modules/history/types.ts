@@ -39,11 +39,13 @@ export interface BorrowApyHistoryRequest {
 
 export interface ApySample {
   date: string;
+  rateDecimals: bigint;
   avgRate: bigint;
 }
 
 export interface ApySampleApiItem {
   date: string;
+  rateDecimals: number;
   avgRate: string;
 }
 

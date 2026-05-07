@@ -1,4 +1,5 @@
 import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
+import { RATE_DECIMALS } from "../../core/rates";
 import {
   buildHistoryPoolPath,
   buildHistoryRatesPath,
@@ -141,6 +142,7 @@ export class HistoryModule {
     return {
       items: response.items.map((item) => ({
         date: item.date,
+        rateDecimals: RATE_DECIMALS,
         avgRate: parseBigInt(item.avgRate, "borrow rate"),
       })),
       nextCursor: response.nextCursor,

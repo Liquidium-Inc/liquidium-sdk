@@ -9,6 +9,8 @@ import {
   LiquidiumClient,
   LiquidiumError,
   LiquidiumErrorCode,
+  RATE_DECIMALS,
+  RATE_SCALE,
 } from "../index";
 
 afterEach(() => {
@@ -17,6 +19,18 @@ afterEach(() => {
 });
 
 describe("executeWith", () => {
+  test("exports fixed-point rate scale metadata", () => {
+    // given
+    const expectedRateDecimals = 27n;
+    const expectedRateScale = 10n ** expectedRateDecimals;
+
+    // when
+
+    // then
+    expect(RATE_DECIMALS).toBe(expectedRateDecimals);
+    expect(RATE_SCALE).toBe(expectedRateScale);
+  });
+
   test("should throw a validation error for unsupported execution kinds", async () => {
     // given
     const action = { executionKind: "unsupported" } as never;
@@ -611,15 +625,18 @@ describe("HistoryModule", () => {
 
   test("maps pool snapshots to borrow apy history samples", async () => {
     // given
+    const apiRateDecimals = Number(RATE_DECIMALS);
     const responsePayload = {
       success: true as const,
       items: [
         {
           date: "2026-04-02T00:00:00.000Z",
+          rateDecimals: apiRateDecimals,
           avgRate: "15",
         },
         {
           date: "2026-04-01T00:00:00.000Z",
+          rateDecimals: apiRateDecimals,
           avgRate: "10",
         },
       ],
@@ -648,10 +665,12 @@ describe("HistoryModule", () => {
       items: [
         {
           date: "2026-04-02T00:00:00.000Z",
+          rateDecimals: RATE_DECIMALS,
           avgRate: 15n,
         },
         {
           date: "2026-04-01T00:00:00.000Z",
+          rateDecimals: RATE_DECIMALS,
           avgRate: 10n,
         },
       ],
@@ -966,6 +985,7 @@ describe("MarketModule", () => {
         liquidationBonus: 200n,
         protocolLiquidationFee: 50n,
         reserveFactor: 100n,
+        rateDecimals: RATE_DECIMALS,
         lendingRate: 20n,
         borrowingRate: 10n,
         utilizationRate: 30n,
@@ -1021,6 +1041,7 @@ describe("MarketModule", () => {
     expect(pools[0]).toMatchObject({
       asset: "USDT",
       chain: "ETH",
+      rateDecimals: RATE_DECIMALS,
       borrowingRate: 0n,
       lendingRate: 0n,
       utilizationRate: 0n,
@@ -1289,6 +1310,7 @@ describe("MarketModule", () => {
 
     // then
     expect(rate).toEqual({
+      rateDecimals: RATE_DECIMALS,
       borrowRate: 10n,
       lendRate: 20n,
       utilizationRate: 30n,
@@ -1347,6 +1369,7 @@ describe("MarketModule", () => {
       totalSupply: 100_000n,
       totalDebt: 10_000n,
       availableLiquidity: 90_000n,
+      rateDecimals: RATE_DECIMALS,
       borrowingRate: 10n,
       lendingRate: 20n,
       utilizationRate: 30n,

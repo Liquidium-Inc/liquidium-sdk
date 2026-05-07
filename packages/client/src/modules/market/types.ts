@@ -16,6 +16,7 @@ export interface Pool {
   liquidationBonus: bigint;
   protocolLiquidationFee: bigint;
   reserveFactor: bigint;
+  rateDecimals: bigint;
   lendingRate: bigint;
   borrowingRate: bigint;
   utilizationRate: bigint;
@@ -37,6 +38,7 @@ export interface FindPoolQuery {
 }
 
 export interface PoolRate {
+  rateDecimals: bigint;
   borrowRate: bigint;
   lendRate: bigint;
   utilizationRate: bigint;

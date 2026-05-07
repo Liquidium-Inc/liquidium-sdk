@@ -5,6 +5,7 @@ export {
   USDC_CONTRACT_ADDRESS,
   USDT_CONTRACT_ADDRESS,
 } from "./core/evm";
+export { RATE_DECIMALS, RATE_SCALE } from "./core/rates";
 export type {
   CanisterIds,
   EvmReadClient,
@@ -102,7 +103,7 @@ export {
   EvmSupplyApprovalStrategy,
   SupplyPlanType,
 } from "./modules/lending";
-export type { AssetPrices, Pool } from "./modules/market";
+export type { AssetPrices, Pool, PoolRate } from "./modules/market";
 export type {
   BorrowingPower,
   HealthFactor,
