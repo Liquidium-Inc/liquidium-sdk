@@ -29,11 +29,11 @@ export interface CreateInstantLoanRequest {
   refundDestination: string | ExternalAccount;
 }
 
-export type InstantLoanGetRequest = { loanId: bigint } | { shortRef: string };
+export type InstantLoanGetRequest = { loanId: bigint } | { ref: string };
 
 export interface InstantLoan {
   loanId: bigint;
-  shortRef: string;
+  ref: string;
   profileId: string;
   started: boolean;
   depositDetectedTimestamp?: bigint;
@@ -59,7 +59,7 @@ export interface InstantLoan {
 
 export interface InstantLoanCandidate {
   loanId: bigint;
-  shortRef: string;
+  ref: string;
   profileId: string;
   createdAt?: Date;
   collateralPoolId: string;

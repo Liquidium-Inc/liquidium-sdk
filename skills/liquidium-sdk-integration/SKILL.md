@@ -131,7 +131,7 @@ borrow to the selected destination after the deposit confirms.
 
 ```ts
 client.instantLoans.create(...);
-client.instantLoans.get({ shortRef });
+client.instantLoans.get({ ref });
 client.instantLoans.get({ loanId });
 client.instantLoans.findByAddress(address); // requires apiBaseUrl
 ```
@@ -222,7 +222,7 @@ const loan = await client.instantLoans.create({
   refundDestination: "bc1qrefunddestination",
 });
 
-const shortRef = loan.shortRef;
+const ref = loan.ref;
 const depositTarget = loan.depositTarget;
 const repayTarget = loan.repayTarget;
 ```
@@ -237,13 +237,13 @@ const depositAddress =
     : depositTarget.account;
 ```
 
-Restore a loan by `shortRef` whenever possible:
+Restore a loan by `ref` whenever possible:
 
 ```ts
-const loan = await client.instantLoans.get({ shortRef: "8Y9AQQ" });
+const loan = await client.instantLoans.get({ ref: "8Y9AQQ" });
 ```
 
-Use address lookup only as recovery when the user lost the short ref:
+Use address lookup only as recovery when the user lost the loan reference:
 
 ```ts
 const candidates = await client.instantLoans.findByAddress(
@@ -255,10 +255,10 @@ const loan = await client.instantLoans.get({
 });
 ```
 
-Short ref lookup is canonical: the SDK decodes the short ref locally and queries
+Reference lookup is canonical: the SDK decodes the ref locally and queries
 the instant-loans canister. Address lookup is discovery only: it requires
 `apiBaseUrl`, may return multiple candidates, and should be followed by
-`get({ loanId })` or `get({ shortRef })`.
+`get({ loanId })` or `get({ ref })`.
 
 Do not use `client.lending.borrow(...)` for this flow. `lending.borrow(...)` is
 the profile-based signed borrow primitive. Instant loans automate the borrow

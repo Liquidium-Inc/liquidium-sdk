@@ -3547,7 +3547,7 @@ describe("InstantLoansModule", () => {
   const USDT_POOL_ID = "hnnn4-iyaaa-aaaar-qb4bq-cai";
   const LOAN_ID = 42n;
 
-  test("gets canonical loan state by short ref and derives flow targets", async () => {
+  test("gets canonical loan state by ref and derives flow targets", async () => {
     // given
     const getLoan = vi.fn().mockResolvedValue({ Ok: createInstantLoan() });
     const getBtcAddress = vi.fn().mockResolvedValue("bc1qinstantdeposit");
@@ -3571,13 +3571,13 @@ describe("InstantLoansModule", () => {
 
     // when
     const loan = await client.instantLoans.get({
-      shortRef: publicIdFromInt(LOAN_ID),
+      ref: publicIdFromInt(LOAN_ID),
     });
 
     // then
     expect(getLoan).toHaveBeenCalledWith(LOAN_ID);
     expect(loan.loanId).toBe(LOAN_ID);
-    expect(loan.shortRef).toBe(publicIdFromInt(LOAN_ID));
+    expect(loan.ref).toBe(publicIdFromInt(LOAN_ID));
     expect(loan.profileId).toBe(PROFILE_ID);
     expect(loan.depositTarget).toMatchObject({
       type: "nativeAddress",
@@ -3689,7 +3689,7 @@ describe("InstantLoansModule", () => {
     expect(candidates).toEqual([
       expect.objectContaining({
         loanId: LOAN_ID,
-        shortRef: publicIdFromInt(LOAN_ID),
+        ref: publicIdFromInt(LOAN_ID),
         profileId: PROFILE_ID,
         collateralAsset: "BTC",
         borrowAsset: "USDT",

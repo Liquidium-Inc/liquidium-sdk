@@ -77,14 +77,14 @@ const instantLoan = await client.instantLoans.create({
   refundDestination: "bc1qrefunddestination",
 });
 
-const loanId = instantLoan.shortRef;
+const loanRef = instantLoan.ref;
 const collateralDepositAddress =
   instantLoan.depositTarget.type === "nativeAddress"
     ? instantLoan.depositTarget.address
     : instantLoan.depositTarget.account;
 
-// Preferred restore path: shortRef is decoded locally and loaded from canister.
-await client.instantLoans.get({ shortRef: loanId });
+// Preferred restore path: ref is decoded locally and loaded from canister.
+await client.instantLoans.get({ ref: loanRef });
 
 // Recovery path: requires apiBaseUrl and returns candidates only.
 const candidates = await client.instantLoans.findByAddress(
@@ -273,7 +273,7 @@ const client = LiquidiumClient.create({
 Most integrations should start with `client.instantLoans`. It creates an accountless loan and returns the canonical loan plus generated deposit/repay targets.
 
 - `client.instantLoans.create(...)` - create the instant loan and return its generated targets
-- `client.instantLoans.get({ shortRef })` - restore canonical loan state from the short user-facing reference
+- `client.instantLoans.get({ ref })` - restore canonical loan state from the user-facing loan reference
 - `client.instantLoans.get({ loanId })` - restore canonical loan state from the numeric canister loan ID
 - `client.instantLoans.findByAddress(address)` - recovery helper that requires `apiBaseUrl` and returns candidates only
 

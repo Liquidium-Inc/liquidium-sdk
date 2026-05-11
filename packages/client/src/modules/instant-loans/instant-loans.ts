@@ -15,7 +15,7 @@ import { SupplyAction } from "../../core/types";
 import { getVariantKey } from "../../core/utils/variant";
 import { resolveSupplyTarget } from "../lending/_internal/supply-targets";
 import { SupplyPlanType } from "../lending/types";
-import { intFromPublicId, publicIdFromInt } from "./short-ref";
+import { intFromPublicId, publicIdFromInt } from "./ref-code";
 import type {
   CreateInstantLoanRequest,
   ExternalAccount,
@@ -29,7 +29,7 @@ import type {
 type InstantLoanCandidateWire = {
   loanId?: string | bigint;
   loan_id?: string | bigint;
-  shortRef?: string;
+  ref?: string;
   short_ref?: string;
   profileId?: string;
   lending_profile?: string;
@@ -90,10 +90,10 @@ export class InstantLoansModule {
     }
   }
 
-  /** Resolves a loan from canonical canister state by loan ID or short ref. */
+  /** Resolves a loan from canonical canister state by loan ID or reference. */
   async get(request: InstantLoanGetRequest): Promise<InstantLoan> {
     const loanId =
-      "loanId" in request ? request.loanId : decodeShortRef(request.shortRef);
+      "loanId" in request ? request.loanId : decodeRef(request.ref);
 
     try {
       const result = await createInstantLoansActor(
@@ -163,7 +163,7 @@ export class InstantLoansModule {
 
     return {
       loanId: record.id,
-      shortRef: publicIdFromInt(record.id),
+      ref: publicIdFromInt(record.id),
       profileId,
       started: record.started,
       depositDetectedTimestamp: record.deposit_detected_ts[0],
@@ -250,13 +250,13 @@ function assetVariant(asset: InstantLoanAsset): InstantLoanAssetVariant {
   return { [asset]: null } as InstantLoanAssetVariant;
 }
 
-function decodeShortRef(shortRef: string): bigint {
+function decodeRef(ref: string): bigint {
   try {
-    return intFromPublicId(shortRef.trim());
+    return intFromPublicId(ref.trim());
   } catch (error) {
     throw new LiquidiumError(
       LiquidiumErrorCode.VALIDATION_ERROR,
-      "Invalid instant loan short ref",
+      "Invalid instant loan reference",
       error
     );
   }
@@ -266,12 +266,12 @@ function mapCandidateWire(
   wire: InstantLoanCandidateWire
 ): InstantLoanCandidate {
   const loanId = parseBigintWire(wire.loanId ?? wire.loan_id, "loan ID");
-  const shortRef = wire.shortRef ?? wire.short_ref ?? publicIdFromInt(loanId);
+  const ref = wire.ref ?? wire.short_ref ?? publicIdFromInt(loanId);
   const createdAt = wire.createdAt ?? wire.created_at;
 
   return {
     loanId,
-    shortRef,
+    ref,
     profileId: requiredString(
       wire.profileId ?? wire.lending_profile,
       "profile ID"

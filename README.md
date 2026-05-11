@@ -44,4 +44,4 @@ const depositAddress =
     : instantLoan.depositTarget.account;
 ```
 
-See `packages/client/README.md` for the full API guide, including instant loans, shortRef/address recovery, default deposit-address supply flows, explicit supply mechanism selection, activities, and history.
+See `packages/client/README.md` for the full API guide, including instant loans, reference/address recovery, default deposit-address supply flows, explicit supply mechanism selection, activities, and history.

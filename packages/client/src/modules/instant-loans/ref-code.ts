@@ -1,13 +1,13 @@
-export const SHORT_REF_LENGTH = 6;
-export const SHORT_REF_ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
+export const REF_LENGTH = 6;
+export const REF_ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
 
 const BASE = 32n;
-const MOD = BASE ** BigInt(SHORT_REF_LENGTH);
+const MOD = BASE ** BigInt(REF_LENGTH);
 const A = 1_103_515_245n;
 const B = 123_456_789n;
 const A_INVERSE = modInverse(A, MOD);
 const ALPHABET_INDEX = new Map(
-  [...SHORT_REF_ALPHABET].map((character, index) => [character, BigInt(index)])
+  [...REF_ALPHABET].map((character, index) => [character, BigInt(index)])
 );
 
 export function publicIdFromInt(id: bigint): string {
@@ -15,8 +15,8 @@ export function publicIdFromInt(id: bigint): string {
   return toBase32Fixed((id * A + B) % MOD);
 }
 
-export function intFromPublicId(shortRef: string): bigint {
-  const encodedId = fromBase32Fixed(shortRef.toUpperCase());
+export function intFromPublicId(ref: string): bigint {
+  const encodedId = fromBase32Fixed(ref.toUpperCase());
   const id = ((encodedId - B) * A_INVERSE) % MOD;
   return (id + MOD) % MOD;
 }
@@ -48,23 +48,23 @@ function modInverse(value: bigint, modulo: bigint): bigint {
 function toBase32Fixed(value: bigint): string {
   let encoded = "";
   let remaining = value;
-  for (let i = 0; i < SHORT_REF_LENGTH; i++) {
-    encoded = SHORT_REF_ALPHABET[Number(remaining % BASE)] + encoded;
+  for (let i = 0; i < REF_LENGTH; i++) {
+    encoded = REF_ALPHABET[Number(remaining % BASE)] + encoded;
     remaining /= BASE;
   }
   return encoded;
 }
 
-function fromBase32Fixed(shortRef: string): bigint {
-  if (shortRef.length !== SHORT_REF_LENGTH) {
-    throw new Error(`short ref must be ${SHORT_REF_LENGTH} characters`);
+function fromBase32Fixed(ref: string): bigint {
+  if (ref.length !== REF_LENGTH) {
+    throw new Error(`ref must be ${REF_LENGTH} characters`);
   }
 
   let decoded = 0n;
-  for (const character of shortRef) {
+  for (const character of ref) {
     const value = ALPHABET_INDEX.get(character);
     if (value === undefined) {
-      throw new Error("short ref contains invalid character");
+      throw new Error("ref contains invalid character");
     }
 
     decoded = decoded * BASE + value;
