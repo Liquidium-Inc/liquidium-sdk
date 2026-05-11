@@ -3,9 +3,9 @@ export { intFromPublicId, publicIdFromInt } from "./short-ref";
 export type {
   CreateInstantLoanRequest,
   ExternalAccount,
-  HeadlessLoanAsset,
   InstantLoan,
   InstantLoanAccount,
+  InstantLoanAsset,
   InstantLoanCandidate,
   InstantLoanGetRequest,
   NativeAccount,

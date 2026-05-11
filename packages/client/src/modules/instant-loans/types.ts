@@ -1,7 +1,7 @@
 import type { Chain, MarketAsset, MarketChain } from "../../core/types";
 import type { SupplyTarget } from "../lending";
 
-export type HeadlessLoanAsset = "BTC" | "SOL" | "USDC" | "USDT";
+export type InstantLoanAsset = "BTC" | "SOL" | "USDC" | "USDT";
 
 export interface ExternalAccount {
   type: "External";
@@ -19,8 +19,8 @@ export type InstantLoanAccount = ExternalAccount | NativeAccount;
 export interface CreateInstantLoanRequest {
   collateralPoolId: string;
   borrowPoolId: string;
-  collateralAsset: HeadlessLoanAsset;
-  borrowAsset: HeadlessLoanAsset;
+  collateralAsset: InstantLoanAsset;
+  borrowAsset: InstantLoanAsset;
   collateralAmount: bigint;
   minBorrowAmount: bigint;
   targetLtvBps: bigint;

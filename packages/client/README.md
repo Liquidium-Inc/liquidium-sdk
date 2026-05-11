@@ -251,7 +251,7 @@ Environment preset:
   - `btcPool`: `hkmli-faaaa-aaaar-qb4ba-cai`
   - `ethDeposit`: `z5jz7-nyaaa-aaaar-qb6pq-cai`
   - `ercPool`: `hnnn4-iyaaa-aaaar-qb4bq-cai`
-  - `headlessLoans`: `qdt2k-xqaaa-aaaae-qkapq-cai`
+  - `instantLoans`: `qdt2k-xqaaa-aaaae-qkapq-cai`
   - `lending`: `hyk4r-jqaaa-aaaar-qb4ca-cai`
 
 For custom deployments, pass explicit canister ID overrides:
@@ -262,7 +262,7 @@ const client = LiquidiumClient.create({
     btcPool: "<btc-pool-canister-id>",
     ethDeposit: "<eth-deposit-canister-id>",
     ercPool: "<erc-pool-canister-id>",
-    headlessLoans: "<headless-loans-canister-id>",
+    instantLoans: "<instant-loans-canister-id>",
     lending: "<lending-canister-id>",
   },
 });

@@ -5,52 +5,52 @@ import type { Principal } from "@dfinity/principal";
 import { LiquidiumError, LiquidiumErrorCode } from "../../errors";
 import type { CanisterContext } from "../../transports/canister-context";
 
-export type HeadlessLoanAccountType =
+export type InstantLoanAccountType =
   | { Native: Principal }
   | { External: string };
-export type HeadlessLoanAsset =
+export type InstantLoanAsset =
   | { BTC: null }
   | { SOL: null }
   | { USDC: null }
   | { USDT: null };
-export type HeadlessLoanLeg = { Lend: null } | { Borrow: null };
+export type InstantLoanLeg = { Lend: null } | { Borrow: null };
 
-export interface CreateHeadlessLoanRequest {
-  borrow_destination: HeadlessLoanAccountType;
+export interface CreateInstantLoanCanisterRequest {
+  borrow_destination: InstantLoanAccountType;
   min_borrow_amount: bigint;
-  lend_asset: HeadlessLoanAsset;
+  lend_asset: InstantLoanAsset;
   ltv_target_bps: bigint;
   lend_pool_id: Principal;
   min_deposit_hint: bigint;
-  refund_destination: HeadlessLoanAccountType;
+  refund_destination: InstantLoanAccountType;
   borrow_pool_id: Principal;
-  borrow_asset: HeadlessLoanAsset;
+  borrow_asset: InstantLoanAsset;
   ltv_timer_min: bigint;
 }
 
-export interface CreateHeadlessLoanResponse {
+export interface CreateInstantLoanCanisterResponse {
   loan_id: bigint;
   lending_profile: Principal;
 }
 
-export interface HeadlessLoanRecord {
+export interface InstantLoanCanisterRecord {
   id: bigint;
-  borrow_destination: HeadlessLoanAccountType;
+  borrow_destination: InstantLoanAccountType;
   started: boolean;
   min_borrow_amount: bigint;
-  lend_asset: HeadlessLoanAsset;
+  lend_asset: InstantLoanAsset;
   ltv_target_bps: bigint;
   lend_pool_id: Principal;
   min_deposit_hint: bigint;
-  refund_destination: HeadlessLoanAccountType;
+  refund_destination: InstantLoanAccountType;
   ltv_timer_s: bigint;
   lending_profile: Principal;
   borrow_pool_id: Principal;
-  borrow_asset: HeadlessLoanAsset;
+  borrow_asset: InstantLoanAsset;
   deposit_detected_ts: [] | [bigint];
 }
 
-export type HeadlessLoansError =
+export type InstantLoansCanisterError =
   | { NoCollateralPosition: { loan_id: bigint } }
   | { MemoryLockFailed: { reason: string } }
   | { UnauthorizedAccessListCaller: { caller: Principal } }
@@ -70,14 +70,14 @@ export type HeadlessLoansError =
   | { EmptyCollateralPosition: null }
   | { SigningFailed: { reason: string } };
 
-type Result<T> = { Ok: T } | { Err: HeadlessLoansError };
+type Result<T> = { Ok: T } | { Err: InstantLoansCanisterError };
 
-export interface HeadlessLoansActor {
+export interface InstantLoansActor {
   create_loan: ActorMethod<
-    [CreateHeadlessLoanRequest],
-    Result<CreateHeadlessLoanResponse>
+    [CreateInstantLoanCanisterRequest],
+    Result<CreateInstantLoanCanisterResponse>
   >;
-  get_loan: ActorMethod<[bigint], Result<HeadlessLoanRecord>>;
+  get_loan: ActorMethod<[bigint], Result<InstantLoanCanisterRecord>>;
 }
 
 const idlFactory: IDL.InterfaceFactory = ({ IDL }) => {
@@ -128,7 +128,7 @@ const idlFactory: IDL.InterfaceFactory = ({ IDL }) => {
     CannotRemoveSoleAccount: IDL.Null,
     InsufficientFunds: IDL.Null,
   });
-  const HeadlessLoansError = IDL.Variant({
+  const InstantLoansError = IDL.Variant({
     NoCollateralPosition: IDL.Record({ loan_id: IDL.Nat }),
     MemoryLockFailed: IDL.Record({ reason: IDL.Text }),
     UnauthorizedAccessListCaller: IDL.Record({ caller: IDL.Principal }),
@@ -172,7 +172,7 @@ const idlFactory: IDL.InterfaceFactory = ({ IDL }) => {
   });
   const CreateLoanResult = IDL.Variant({
     Ok: CreateLoanResponse,
-    Err: HeadlessLoansError,
+    Err: InstantLoansError,
   });
   const AuthorisationType = IDL.Variant({
     EthSignature: IDL.Record({
@@ -198,7 +198,7 @@ const idlFactory: IDL.InterfaceFactory = ({ IDL }) => {
     borrow_asset: Assets,
     deposit_detected_ts: IDL.Opt(IDL.Nat64),
   });
-  const LoanResult = IDL.Variant({ Ok: Loan, Err: HeadlessLoansError });
+  const LoanResult = IDL.Variant({ Ok: Loan, Err: InstantLoansError });
 
   return IDL.Service({
     create_loan: IDL.Func([CreateLoanRequest], [CreateLoanResult], []),
@@ -206,19 +206,19 @@ const idlFactory: IDL.InterfaceFactory = ({ IDL }) => {
   });
 };
 
-export function createHeadlessLoansActor(
+export function createInstantLoansActor(
   canisterContext: CanisterContext
-): HeadlessLoansActor {
-  const canisterId = canisterContext.canisterIds.headlessLoans;
+): InstantLoansActor {
+  const canisterId = canisterContext.canisterIds.instantLoans;
 
   if (!canisterId) {
     throw new LiquidiumError(
       LiquidiumErrorCode.SERVICE_UNAVAILABLE,
-      "Headless loans canister ID is not configured"
+      "Instant loans canister ID is not configured"
     );
   }
 
-  return Actor.createActor<HeadlessLoansActor>(idlFactory, {
+  return Actor.createActor<InstantLoansActor>(idlFactory, {
     agent: canisterContext.agent,
     canisterId,
   });

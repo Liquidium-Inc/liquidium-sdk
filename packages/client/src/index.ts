@@ -74,9 +74,9 @@ export type {
 export type {
   CreateInstantLoanRequest,
   ExternalAccount,
-  HeadlessLoanAsset,
   InstantLoan,
   InstantLoanAccount,
+  InstantLoanAsset,
   InstantLoanCandidate,
   InstantLoanGetRequest,
   NativeAccount,

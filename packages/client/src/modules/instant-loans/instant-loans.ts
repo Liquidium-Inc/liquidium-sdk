@@ -1,11 +1,11 @@
 import { Principal } from "@dfinity/principal";
 import {
-  createHeadlessLoansActor,
-  type HeadlessLoanAccountType,
-  type HeadlessLoanAsset as HeadlessLoanAssetVariant,
-  type HeadlessLoanRecord,
-  type HeadlessLoansError,
-} from "../../core/canisters/headless-loans/actor";
+  createInstantLoansActor,
+  type InstantLoanAccountType,
+  type InstantLoanAsset as InstantLoanAssetVariant,
+  type InstantLoanCanisterRecord,
+  type InstantLoansCanisterError,
+} from "../../core/canisters/instant-loans/actor";
 import { mapCanisterCallErrorToLiquidiumError } from "../../core/canisters/lending/error-mappers";
 import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
 import { buildInstantLoanAddressLookupPath } from "../../core/sdk-api-paths";
@@ -19,9 +19,9 @@ import { intFromPublicId, publicIdFromInt } from "./short-ref";
 import type {
   CreateInstantLoanRequest,
   ExternalAccount,
-  HeadlessLoanAsset,
   InstantLoan,
   InstantLoanAccount,
+  InstantLoanAsset,
   InstantLoanCandidate,
   InstantLoanGetRequest,
 } from "./types";
@@ -61,7 +61,7 @@ export class InstantLoansModule {
     validateCreateRequest(request);
 
     try {
-      const result = await createHeadlessLoansActor(
+      const result = await createInstantLoansActor(
         this.canisterContext
       ).create_loan({
         borrow_destination: externalAccountFromInput(request.borrowDestination),
@@ -77,7 +77,7 @@ export class InstantLoansModule {
       });
 
       if ("Err" in result) {
-        throw mapHeadlessLoansErrorToLiquidiumError(result.Err);
+        throw mapInstantLoansErrorToLiquidiumError(result.Err);
       }
 
       return await this.get({ loanId: result.Ok.loan_id });
@@ -96,12 +96,12 @@ export class InstantLoansModule {
       "loanId" in request ? request.loanId : decodeShortRef(request.shortRef);
 
     try {
-      const result = await createHeadlessLoansActor(
+      const result = await createInstantLoansActor(
         this.canisterContext
       ).get_loan(loanId);
 
       if ("Err" in result) {
-        throw mapHeadlessLoansErrorToLiquidiumError(result.Err);
+        throw mapInstantLoansErrorToLiquidiumError(result.Err);
       }
 
       return await this.mapLoanRecord(result.Ok);
@@ -138,7 +138,7 @@ export class InstantLoansModule {
   }
 
   private async mapLoanRecord(
-    record: HeadlessLoanRecord
+    record: InstantLoanCanisterRecord
   ): Promise<InstantLoan> {
     const profileId = record.lending_profile.toText();
     const collateralPoolId = record.lend_pool_id.toText();
@@ -223,7 +223,7 @@ function validateCreateRequest(request: CreateInstantLoanRequest): void {
 
 function externalAccountFromInput(
   account: string | ExternalAccount
-): HeadlessLoanAccountType {
+): InstantLoanAccountType {
   const address =
     typeof account === "string" ? account.trim() : account.address.trim();
   if (!address) {
@@ -237,7 +237,7 @@ function externalAccountFromInput(
 }
 
 function accountFromCanister(
-  account: HeadlessLoanAccountType
+  account: InstantLoanAccountType
 ): InstantLoanAccount {
   if ("Native" in account) {
     return { type: "Native", principal: account.Native.toText() };
@@ -246,8 +246,8 @@ function accountFromCanister(
   return { type: "External", address: account.External };
 }
 
-function assetVariant(asset: HeadlessLoanAsset): HeadlessLoanAssetVariant {
-  return { [asset]: null } as HeadlessLoanAssetVariant;
+function assetVariant(asset: InstantLoanAsset): InstantLoanAssetVariant {
+  return { [asset]: null } as InstantLoanAssetVariant;
 }
 
 function decodeShortRef(shortRef: string): bigint {
@@ -322,8 +322,8 @@ function requiredString(value: string | undefined, label: string): string {
   );
 }
 
-function mapHeadlessLoansErrorToLiquidiumError(
-  error: HeadlessLoansError
+function mapInstantLoansErrorToLiquidiumError(
+  error: InstantLoansCanisterError
 ): LiquidiumError {
   const [key, payload] = Object.entries(error)[0] as [string, unknown];
 

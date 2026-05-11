@@ -3549,8 +3549,8 @@ describe("InstantLoansModule", () => {
 
   test("gets canonical loan state by short ref and derives flow targets", async () => {
     // given
-    const getLoan = vi.fn().mockResolvedValue({ Ok: createHeadlessLoan() });
-    const getBtcAddress = vi.fn().mockResolvedValue("bc1qheadlessdeposit");
+    const getLoan = vi.fn().mockResolvedValue({ Ok: createInstantLoan() });
+    const getBtcAddress = vi.fn().mockResolvedValue("bc1qinstantdeposit");
     const getDepositAddress = vi.fn().mockResolvedValue({
       Ok: "0x1111111111111111111111111111111111111111",
     });
@@ -3566,7 +3566,7 @@ describe("InstantLoansModule", () => {
       .mockReturnValueOnce({ get_btc_address: getBtcAddress } as never)
       .mockReturnValueOnce({ get_deposit_address: getDepositAddress } as never);
     const client = LiquidiumClient.create({
-      canisterIds: { headlessLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
+      canisterIds: { instantLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
     });
 
     // when
@@ -3583,7 +3583,7 @@ describe("InstantLoansModule", () => {
       type: "nativeAddress",
       asset: "BTC",
       chain: "BTC",
-      address: "bc1qheadlessdeposit",
+      address: "bc1qinstantdeposit",
     });
     expect(loan.repayTarget).toMatchObject({
       type: "nativeAddress",
@@ -3601,7 +3601,7 @@ describe("InstantLoansModule", () => {
         lending_profile: Principal.fromText(PROFILE_ID),
       },
     });
-    const getLoan = vi.fn().mockResolvedValue({ Ok: createHeadlessLoan() });
+    const getLoan = vi.fn().mockResolvedValue({ Ok: createInstantLoan() });
 
     vi.spyOn(Actor, "createActor")
       .mockReturnValueOnce({ create_loan: createLoan } as never)
@@ -3613,7 +3613,7 @@ describe("InstantLoansModule", () => {
         list_pools: vi.fn().mockResolvedValue([createUsdtPoolRecord()]),
       } as never)
       .mockReturnValueOnce({
-        get_btc_address: vi.fn().mockResolvedValue("bc1qheadlessdeposit"),
+        get_btc_address: vi.fn().mockResolvedValue("bc1qinstantdeposit"),
       } as never)
       .mockReturnValueOnce({
         get_deposit_address: vi.fn().mockResolvedValue({
@@ -3621,7 +3621,7 @@ describe("InstantLoansModule", () => {
         }),
       } as never);
     const client = LiquidiumClient.create({
-      canisterIds: { headlessLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
+      canisterIds: { instantLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
     });
 
     // when
@@ -3701,7 +3701,7 @@ describe("InstantLoansModule", () => {
     );
   });
 
-  function createHeadlessLoan() {
+  function createInstantLoan() {
     return {
       id: LOAN_ID,
       borrow_destination: {

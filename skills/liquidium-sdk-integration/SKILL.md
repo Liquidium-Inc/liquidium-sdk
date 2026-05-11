@@ -1,6 +1,6 @@
 ---
 name: liquidium-sdk-integration
-description: "Use this skill when working with the Liquidium TypeScript SDK, `@liquidium/client`, `LiquidiumClient`, wallet adapters, headless/instant loans, Liquidium profile creation, market data, quotes, borrowing, supply flows, positions, activities, or history. Use it whenever the user wants to integrate Liquidium into a TypeScript, React, or Vite app, or asks how to call Liquidium SDK methods correctly."
+description: "Use this skill when working with the Liquidium TypeScript SDK, `@liquidium/client`, `LiquidiumClient`, wallet adapters, instant loans, Liquidium profile creation, market data, quotes, borrowing, supply flows, positions, activities, or history. Use it whenever the user wants to integrate Liquidium into a TypeScript, React, or Vite app, or asks how to call Liquidium SDK methods correctly."
 license: MIT
 metadata:
   title: Liquidium SDK Integration
@@ -49,7 +49,7 @@ const client = LiquidiumClient.create({
 - `apiBaseUrl`: also required for `instantLoans.findByAddress(...)`. It is not required for `instantLoans.create(...)` or `instantLoans.get(...)`
 - `evmRpcUrl` / `evmPublicClient`: required for lower-level ETH contract-interaction supply planning and allowance polling. Use `evmRpcHeaders` when the RPC provider authenticates with HTTP headers
 - `identity` / `icHost`: custom ICP agent configuration
-- `canisterIds.headlessLoans`: defaults to mainnet `qdt2k-xqaaa-aaaae-qkapq-cai`; override it for custom deployments
+- `canisterIds.instantLoans`: defaults to mainnet `qdt2k-xqaaa-aaaae-qkapq-cai`; override it for custom deployments
 
 Missing `apiBaseUrl` is a client configuration problem. Methods that require it
 throw `LiquidiumErrorCode.VALIDATION_ERROR`, not `SERVICE_UNAVAILABLE`.
@@ -256,7 +256,7 @@ const loan = await client.instantLoans.get({
 ```
 
 Short ref lookup is canonical: the SDK decodes the short ref locally and queries
-the headless-loans canister. Address lookup is discovery only: it requires
+the instant-loans canister. Address lookup is discovery only: it requires
 `apiBaseUrl`, may return multiple candidates, and should be followed by
 `get({ loanId })` or `get({ shortRef })`.
 
