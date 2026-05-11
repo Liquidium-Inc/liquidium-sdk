@@ -91,14 +91,6 @@ export const SupplyPlanType = {
 export type SupplyPlanType =
   (typeof SupplyPlanType)[keyof typeof SupplyPlanType];
 
-/** Minimal input for `prepareSupply` (target resolution only). */
-export interface SupplyRequest {
-  profileId: string;
-  poolId: string;
-  action: SupplyAction;
-  mechanism?: SupplyPlanType;
-}
-
 export interface NativeAddressSupplyTarget {
   type: "nativeAddress";
   poolId: string;
@@ -120,14 +112,6 @@ export interface IcrcAccountSupplyTarget {
 }
 
 export type SupplyTarget = NativeAddressSupplyTarget | IcrcAccountSupplyTarget;
-
-export interface SupplyInstruction {
-  poolId: string;
-  asset: MarketAsset;
-  chain: MarketChain;
-  action: SupplyAction;
-  target: SupplyTarget;
-}
 
 interface BaseSupplyFlowRequest {
   profileId: string;
@@ -175,7 +159,6 @@ export type SupplyFlowRequest =
  */
 export interface SupplyFlow {
   type: SupplyPlanType;
-  instruction: SupplyInstruction;
   target: SupplyTarget;
   txid?: string;
   submit(request: SubmitInflowRequest): Promise<SubmitInflowResponse>;

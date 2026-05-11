@@ -4,6 +4,8 @@ The official TypeScript client for the Liquidium protocol.
 
 Current wallet/signing support: BTC and ETH.
 
+Recommended order: use `client.instantLoans` first, deposit-address profile flows second, and ETH contract interaction only when explicitly needed.
+
 ## Installation
 
 ```bash
@@ -60,6 +62,34 @@ const reserve = await client.market.getReserveData({
   asset: "USDC",
   chain: "ETH",
 });
+
+// Default borrow flow: accountless instant loan with deposit/repay targets.
+const instantLoan = await client.instantLoans.create({
+  collateralPoolId: btcPool.id,
+  borrowPoolId: "<eth-usdt-pool-id>",
+  collateralAsset: "BTC",
+  borrowAsset: "USDT",
+  collateralAmount: 10_000_000n,
+  minBorrowAmount: 2_000_000n,
+  targetLtvBps: 3_000n,
+  depositWindowSeconds: 3_600n,
+  borrowDestination: "0x2222222222222222222222222222222222222222",
+  refundDestination: "bc1qrefunddestination",
+});
+
+const loanId = instantLoan.shortRef;
+const collateralDepositAddress =
+  instantLoan.depositTarget.type === "nativeAddress"
+    ? instantLoan.depositTarget.address
+    : instantLoan.depositTarget.account;
+
+// Preferred restore path: shortRef is decoded locally and loaded from canister.
+await client.instantLoans.get({ shortRef: loanId });
+
+// Recovery path: requires apiBaseUrl and returns candidates only.
+const candidates = await client.instantLoans.findByAddress(
+  "bc1qrefunddestination"
+);
 
 // Account creation
 const createAction = await client.accounts.prepareCreateProfile({
@@ -221,6 +251,7 @@ Environment preset:
   - `btcPool`: `hkmli-faaaa-aaaar-qb4ba-cai`
   - `ethDeposit`: `z5jz7-nyaaa-aaaar-qb6pq-cai`
   - `ercPool`: `hnnn4-iyaaa-aaaar-qb4bq-cai`
+  - `headlessLoans`: `qdt2k-xqaaa-aaaae-qkapq-cai`
   - `lending`: `hyk4r-jqaaa-aaaar-qb4ca-cai`
 
 For custom deployments, pass explicit canister ID overrides:
@@ -231,10 +262,20 @@ const client = LiquidiumClient.create({
     btcPool: "<btc-pool-canister-id>",
     ethDeposit: "<eth-deposit-canister-id>",
     ercPool: "<erc-pool-canister-id>",
+    headlessLoans: "<headless-loans-canister-id>",
     lending: "<lending-canister-id>",
   },
 });
 ```
+
+### Instant loan flow
+
+Most integrations should start with `client.instantLoans`. It creates an accountless loan and returns the canonical loan plus generated deposit/repay targets.
+
+- `client.instantLoans.create(...)` - create the instant loan and return its generated targets
+- `client.instantLoans.get({ shortRef })` - restore canonical loan state from the short user-facing reference
+- `client.instantLoans.get({ loanId })` - restore canonical loan state from the numeric canister loan ID
+- `client.instantLoans.findByAddress(address)` - recovery helper that requires `apiBaseUrl` and returns candidates only
 
 ### Account creation flow
 
@@ -247,13 +288,13 @@ const client = LiquidiumClient.create({
 
 - `client.quote.getQuote(request, pools, prices)` - calculate borrow USD value, required collateral, validation errors, and warnings from caller-supplied market data
 
-### Borrow and withdraw execution
+### Advanced profile-based execution
 
 - `client.lending.prepareBorrow(...)` / `client.lending.prepareWithdraw(...)` - prepare raw signable actions
 - `client.lending.borrow({ ..., signerChain, signerWalletAdapter })` - sign and submit a borrow request in one call; resolves with the instant receipt (txid may be null until the canister assigns one)
 - `client.lending.withdraw({ ..., signerChain, signerWalletAdapter })` - sign and submit a withdraw request in one call
 
-These calls use the lending canister only; they do not require `apiBaseUrl`. To show status or a chain transaction id once it exists, use `client.activities` (which does require `apiBaseUrl`).
+Use these calls only when building a profile-based Liquidium app that manages explicit profile/account state. They use the lending canister only and do not require `apiBaseUrl`. To show status or a chain transaction id once it exists, use `client.activities`.
 
 ### Wallet adapters
 
@@ -264,8 +305,9 @@ These calls use the lending canister only; they do not require `apiBaseUrl`. To 
 
 ### Modules
 
-- `client.accounts` - Profile and wallet management
-- `client.lending` - Supply, create borrow actions, repay, withdraw
+- `client.instantLoans` - Default accountless borrow flow with generated deposit and repay targets
+- `client.accounts` - Profile and wallet management for advanced integrations
+- `client.lending` - Advanced profile-based supply, borrow, repay, and withdraw primitives
 - `client.positions` - Position reads and health factor
 - `client.market` - Dynamic pool data, pool selection, and asset prices
 - `client.quote` - Quote calculation from market pools and prices
@@ -288,12 +330,11 @@ These calls use the lending canister only; they do not require `apiBaseUrl`. To 
 
 ### Supply tracking flow
 
-- `client.lending.prepareSupply(...)` auto-resolves the correct target and returns the raw `SupplyInstruction`.
-- `client.lending.supply(...)` returns a tracked `SupplyFlow` with `type: "transfer" | "contractInteraction"`.
+- `client.lending.supply(...)` resolves the target internally and returns a tracked `SupplyFlow` with `type: "transfer" | "contractInteraction"`.
 - Transfer-path inflows can auto-broadcast when `walletAdapter`, `account`, and `amount` are provided.
 - ETH stablecoin inflows default to deposit-address transfers and do not need `apiBaseUrl` for target resolution or wallet broadcast.
-- Pass `mechanism: "transfer"` or `mechanism: "contractInteraction"` to override the default route when a pool supports that path.
-- Contract-interaction helpers remain available for lower-level integrations that explicitly call `getEvmSupplyContext(...)`; these helpers require `evmRpcUrl` or `evmPublicClient`.
+- Use `mechanism: "contractInteraction"` only when explicitly opting into the lower-level ETH contract route.
+- Supply flows are for profile-based integrations. Use `client.instantLoans` for the default accountless borrow UX.
 
 ## License
 

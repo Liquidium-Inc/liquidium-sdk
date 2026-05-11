@@ -8,6 +8,7 @@ const MAINNET_CANISTER_IDS: CanisterIds = {
   btcPool: "hkmli-faaaa-aaaar-qb4ba-cai",
   ercPool: "hnnn4-iyaaa-aaaar-qb4bq-cai",
   ethDeposit: "z5jz7-nyaaa-aaaar-qb6pq-cai",
+  headlessLoans: "qdt2k-xqaaa-aaaae-qkapq-cai",
 };
 
 const CANISTER_IDS_BY_ENVIRONMENT: Record<Environment, CanisterIds> = {

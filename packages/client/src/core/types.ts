@@ -43,6 +43,7 @@ export interface CanisterIds {
   btcPool: string;
   ercPool: string;
   ethDeposit: string;
+  headlessLoans: string;
 }
 
 export const Environment = {
@@ -52,6 +53,7 @@ export type Environment = (typeof Environment)[keyof typeof Environment];
 
 export const Asset = {
   BTC: "BTC",
+  SOL: "SOL",
   USDC: "USDC",
   USDT: "USDT",
 } as const;

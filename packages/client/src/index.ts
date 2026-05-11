@@ -72,6 +72,17 @@ export type {
   UserTransactionHistoryFilters,
 } from "./modules/history";
 export type {
+  CreateInstantLoanRequest,
+  ExternalAccount,
+  HeadlessLoanAsset,
+  InstantLoan,
+  InstantLoanAccount,
+  InstantLoanCandidate,
+  InstantLoanGetRequest,
+  NativeAccount,
+} from "./modules/instant-loans";
+export { intFromPublicId, publicIdFromInt } from "./modules/instant-loans";
+export type {
   BorrowAction,
   BorrowSubmitSignatureInfo,
   ContractInteractionSupplyFlowRequest,
@@ -91,8 +102,6 @@ export type {
   SubmitInflowResponse,
   SupplyFlow,
   SupplyFlowRequest,
-  SupplyInstruction,
-  SupplyRequest,
   SupplyTarget,
   TransferSupplyFlowRequest,
   WithdrawAction,

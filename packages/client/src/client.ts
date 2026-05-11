@@ -13,6 +13,7 @@ import type { EvmReadClient, LiquidiumClientConfig } from "./core/types";
 import { AccountsModule } from "./modules/accounts";
 import { ActivitiesModule } from "./modules/activities";
 import { HistoryModule } from "./modules/history";
+import { InstantLoansModule } from "./modules/instant-loans";
 import { LendingModule } from "./modules/lending";
 import { MarketModule } from "./modules/market";
 import { PositionsModule } from "./modules/positions";
@@ -36,6 +37,8 @@ export class LiquidiumClient {
   readonly activities: ActivitiesModule;
   /** Pool and user history (requires `apiBaseUrl`). */
   readonly history: HistoryModule;
+  /** Accountless instant loans backed by generated deposit/repay targets. */
+  readonly instantLoans: InstantLoansModule;
   /** Pure quote helpers from market inputs. */
   readonly quote: QuoteModule;
 
@@ -75,6 +78,10 @@ export class LiquidiumClient {
     this.positions = new PositionsModule(this.canisterContext, this.market);
     this.activities = new ActivitiesModule(this.apiClient);
     this.history = new HistoryModule(this.apiClient);
+    this.instantLoans = new InstantLoansModule(
+      this.canisterContext,
+      this.apiClient
+    );
     this.quote = new QuoteModule();
   }
 

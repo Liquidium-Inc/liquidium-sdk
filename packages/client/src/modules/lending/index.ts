@@ -20,8 +20,6 @@ export type {
   SubmitInflowResponse,
   SupplyFlow,
   SupplyFlowRequest,
-  SupplyInstruction,
-  SupplyRequest,
   SupplyTarget,
   TransferSupplyFlowRequest,
   WithdrawAction,

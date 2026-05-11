@@ -1,6 +1,8 @@
 # Liquidium SDK
 
-TypeScript SDK for Liquidium market data, profile, quote, lending, activity, and history flows.
+TypeScript SDK for Liquidium market data, instant loans, profile, quote, lending, activity, and history flows.
+
+Recommended order: use `client.instantLoans` first, deposit-address profile flows second, and ETH contract interaction only when explicitly needed.
 
 ## Quick Start
 
@@ -23,16 +25,23 @@ const quote = await client.quote.getQuote(
   prices
 );
 
-const createAction = await client.accounts.prepareCreateProfile({
-  account: walletAddress,
+const instantLoan = await client.instantLoans.create({
+  collateralPoolId: pools[0].id,
+  borrowPoolId: pools[1].id,
+  collateralAsset: "BTC",
+  borrowAsset: "USDT",
+  collateralAmount: 10_000_000n,
+  minBorrowAmount: 2_000_000n,
+  targetLtvBps: 3_000n,
+  depositWindowSeconds: 3_600n,
+  borrowDestination: "0x2222222222222222222222222222222222222222",
+  refundDestination: "bc1qrefunddestination",
 });
-const signature = await wallet.signMessage(createAction.message);
 
-const profileId = await createAction.submit({
-  signature,
-  chain: "ETH",
-  account: walletAddress,
-});
+const depositAddress =
+  instantLoan.depositTarget.type === "nativeAddress"
+    ? instantLoan.depositTarget.address
+    : instantLoan.depositTarget.account;
 ```
 
-See `packages/client/README.md` for the full API guide, including default deposit-address supply flows, explicit supply mechanism selection, activities, and history.
+See `packages/client/README.md` for the full API guide, including instant loans, shortRef/address recovery, default deposit-address supply flows, explicit supply mechanism selection, activities, and history.

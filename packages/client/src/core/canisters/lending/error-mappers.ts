@@ -4,7 +4,9 @@ import type { ProtocolError, SignatureVerificationError } from "./actor";
 type VariantKey<T> = keyof UnionToIntersection<T> & string;
 
 type UnionToIntersection<T> = (
-  T extends unknown ? (value: T) => void : never
+  T extends unknown
+    ? (value: T) => void
+    : never
 ) extends (value: infer Intersection) => void
   ? Intersection
   : never;
@@ -17,8 +19,9 @@ type ErrorMapping = {
 const LENDING_CANISTER_PROTOCOL_RESULT_ERROR_MAP = {
   InvalidTargetPrincipal: { code: LiquidiumErrorCode.INVALID_TARGET_PRINCIPAL },
   InsufficientCollateral: { code: LiquidiumErrorCode.INSUFFICIENT_COLLATERAL },
-  SignatureExpiryTooFarInFuture:
-    { code: LiquidiumErrorCode.SIGNATURE_EXPIRY_TOO_FAR_IN_FUTURE },
+  SignatureExpiryTooFarInFuture: {
+    code: LiquidiumErrorCode.SIGNATURE_EXPIRY_TOO_FAR_IN_FUTURE,
+  },
   MaxLtvExceeded: { code: LiquidiumErrorCode.MAX_LTV_EXCEEDED },
   SignatureExpired: { code: LiquidiumErrorCode.SIGNATURE_EXPIRED },
   AccountAlreadyLinked: { code: LiquidiumErrorCode.ACCOUNT_ALREADY_LINKED },
@@ -81,7 +84,10 @@ const LENDING_CANISTER_SIGNATURE_VERIFICATION_ERROR_MAP = {
     code: LiquidiumErrorCode.SIGNATURE_ERROR,
     fallbackMessage: "Invalid SOL signature",
   },
-} as const satisfies Record<VariantKey<SignatureVerificationError>, ErrorMapping>;
+} as const satisfies Record<
+  VariantKey<SignatureVerificationError>,
+  ErrorMapping
+>;
 
 /** Maps lending canister `Result.Err(ProtocolError)` responses. */
 export function mapLendingProtocolErrorToLiquidiumError(
@@ -143,7 +149,7 @@ function mapVariantToLiquidiumError(
   const message =
     typeof payload === "string"
       ? payload
-      : mapping.fallbackMessage ?? humanizeErrorCode(mapping.code);
+      : (mapping.fallbackMessage ?? humanizeErrorCode(mapping.code));
 
   return new LiquidiumError(mapping.code, message);
 }

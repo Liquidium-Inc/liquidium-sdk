@@ -9,6 +9,7 @@ import {
   LiquidiumClient,
   LiquidiumError,
   LiquidiumErrorCode,
+  publicIdFromInt,
   RATE_DECIMALS,
   RATE_SCALE,
 } from "../index";
@@ -2039,18 +2040,15 @@ describe("LendingModule", () => {
     const client = LiquidiumClient.create({});
 
     // when
-    const supplyInstruction = await client.lending.prepareSupply({
+    const supplyFlow = await client.lending.supply({
       profileId,
       poolId: BTC_POOL_ID,
       action: "deposit",
     });
 
     // then
-    expect(supplyInstruction).toMatchObject({
-      poolId: BTC_POOL_ID,
-      asset: "BTC",
-      chain: "BTC",
-      action: "deposit",
+    expect(supplyFlow).toMatchObject({
+      type: "transfer",
       target: {
         type: "nativeAddress",
         poolId: BTC_POOL_ID,
@@ -2117,18 +2115,15 @@ describe("LendingModule", () => {
     const client = LiquidiumClient.create({});
 
     // when
-    const supplyInstruction = await client.lending.prepareSupply({
+    const supplyFlow = await client.lending.supply({
       profileId,
       poolId: USDT_POOL_ID,
       action: "repayment",
     });
 
     // then
-    expect(supplyInstruction).toMatchObject({
-      poolId: USDT_POOL_ID,
-      asset: "USDT",
-      chain: "ETH",
-      action: "repayment",
+    expect(supplyFlow).toMatchObject({
+      type: "transfer",
       target: {
         type: "nativeAddress",
         poolId: USDT_POOL_ID,
@@ -2198,7 +2193,7 @@ describe("LendingModule", () => {
     const client = LiquidiumClient.create({});
 
     // when
-    const supplyInstruction = await client.lending.prepareSupply({
+    const supplyFlow = await client.lending.supply({
       profileId,
       poolId: USDC_POOL_ID,
       action: "deposit",
@@ -2206,11 +2201,8 @@ describe("LendingModule", () => {
     });
 
     // then
-    expect(supplyInstruction).toMatchObject({
-      poolId: USDC_POOL_ID,
-      asset: "USDC",
-      chain: "ETH",
-      action: "deposit",
+    expect(supplyFlow).toMatchObject({
+      type: "transfer",
       target: {
         type: "nativeAddress",
         poolId: USDC_POOL_ID,
@@ -2236,7 +2228,7 @@ describe("LendingModule", () => {
     ]);
   });
 
-  test("rejects prepareSupply when no supply mechanism is configured", async () => {
+  test("rejects supply when no supply mechanism is configured", async () => {
     // given
     vi.spyOn(Actor, "createActor").mockReturnValue({
       list_pools: vi.fn().mockResolvedValue([
@@ -2275,7 +2267,7 @@ describe("LendingModule", () => {
 
     // then
     await expect(
-      client.lending.prepareSupply({
+      client.lending.supply({
         profileId: "aaaaa-aa",
         poolId: USDT_POOL_ID,
         action: "deposit",
@@ -2326,7 +2318,7 @@ describe("LendingModule", () => {
 
     // then
     await expect(
-      client.lending.prepareSupply({
+      client.lending.supply({
         profileId: "aaaaa-aa",
         poolId: NON_CONFIGURED_BTC_POOL_ID,
         action: "deposit",
@@ -2377,11 +2369,16 @@ describe("LendingModule", () => {
 
     // then
     await expect(
-      client.lending.prepareSupply({
+      client.lending.supply({
         profileId: "aaaaa-aa",
         poolId: BTC_POOL_ID,
         action: "deposit",
         mechanism: "contractInteraction",
+        walletAdapter: {
+          sendEthTransaction: vi.fn(),
+        },
+        account: "0x1234567890123456789012345678901234567890",
+        amount: 1_000_000n,
       })
     ).rejects.toMatchObject({
       code: LiquidiumErrorCode.VALIDATION_ERROR,
@@ -2737,7 +2734,7 @@ describe("LendingModule", () => {
     expect(sendEthTransaction).not.toHaveBeenCalled();
   });
 
-  test("creates a supply flow that exposes the instruction and submits a broadcast txid", async () => {
+  test("creates a supply flow that exposes the target and submits a broadcast txid", async () => {
     // given
     const txid = "session-txid-1";
     vi.spyOn(Actor, "createActor")
@@ -2797,7 +2794,7 @@ describe("LendingModule", () => {
 
     // then
     expect(flow.type).toBe("transfer");
-    expect(flow.instruction.target).toMatchObject({
+    expect(flow.target).toMatchObject({
       type: "nativeAddress",
       address: "bc1qexampledepositaddress",
     });
@@ -3542,4 +3539,246 @@ Nonce: 23`);
       message: "Withdraw requires a signer account",
     });
   });
+});
+
+describe("InstantLoansModule", () => {
+  const PROFILE_ID = "aaaaa-aa";
+  const BTC_POOL_ID = "hkmli-faaaa-aaaar-qb4ba-cai";
+  const USDT_POOL_ID = "hnnn4-iyaaa-aaaar-qb4bq-cai";
+  const LOAN_ID = 42n;
+
+  test("gets canonical loan state by short ref and derives flow targets", async () => {
+    // given
+    const getLoan = vi.fn().mockResolvedValue({ Ok: createHeadlessLoan() });
+    const getBtcAddress = vi.fn().mockResolvedValue("bc1qheadlessdeposit");
+    const getDepositAddress = vi.fn().mockResolvedValue({
+      Ok: "0x1111111111111111111111111111111111111111",
+    });
+
+    vi.spyOn(Actor, "createActor")
+      .mockReturnValueOnce({ get_loan: getLoan } as never)
+      .mockReturnValueOnce({
+        list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord()]),
+      } as never)
+      .mockReturnValueOnce({
+        list_pools: vi.fn().mockResolvedValue([createUsdtPoolRecord()]),
+      } as never)
+      .mockReturnValueOnce({ get_btc_address: getBtcAddress } as never)
+      .mockReturnValueOnce({ get_deposit_address: getDepositAddress } as never);
+    const client = LiquidiumClient.create({
+      canisterIds: { headlessLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
+    });
+
+    // when
+    const loan = await client.instantLoans.get({
+      shortRef: publicIdFromInt(LOAN_ID),
+    });
+
+    // then
+    expect(getLoan).toHaveBeenCalledWith(LOAN_ID);
+    expect(loan.loanId).toBe(LOAN_ID);
+    expect(loan.shortRef).toBe(publicIdFromInt(LOAN_ID));
+    expect(loan.profileId).toBe(PROFILE_ID);
+    expect(loan.depositTarget).toMatchObject({
+      type: "nativeAddress",
+      asset: "BTC",
+      chain: "BTC",
+      address: "bc1qheadlessdeposit",
+    });
+    expect(loan.repayTarget).toMatchObject({
+      type: "nativeAddress",
+      asset: "USDT",
+      chain: "ETH",
+      address: "0x1111111111111111111111111111111111111111",
+    });
+  });
+
+  test("creates a loan then hydrates canonical loan state", async () => {
+    // given
+    const createLoan = vi.fn().mockResolvedValue({
+      Ok: {
+        loan_id: LOAN_ID,
+        lending_profile: Principal.fromText(PROFILE_ID),
+      },
+    });
+    const getLoan = vi.fn().mockResolvedValue({ Ok: createHeadlessLoan() });
+
+    vi.spyOn(Actor, "createActor")
+      .mockReturnValueOnce({ create_loan: createLoan } as never)
+      .mockReturnValueOnce({ get_loan: getLoan } as never)
+      .mockReturnValueOnce({
+        list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord()]),
+      } as never)
+      .mockReturnValueOnce({
+        list_pools: vi.fn().mockResolvedValue([createUsdtPoolRecord()]),
+      } as never)
+      .mockReturnValueOnce({
+        get_btc_address: vi.fn().mockResolvedValue("bc1qheadlessdeposit"),
+      } as never)
+      .mockReturnValueOnce({
+        get_deposit_address: vi.fn().mockResolvedValue({
+          Ok: "0x1111111111111111111111111111111111111111",
+        }),
+      } as never);
+    const client = LiquidiumClient.create({
+      canisterIds: { headlessLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
+    });
+
+    // when
+    const loan = await client.instantLoans.create({
+      collateralPoolId: BTC_POOL_ID,
+      borrowPoolId: USDT_POOL_ID,
+      collateralAsset: "BTC",
+      borrowAsset: "USDT",
+      collateralAmount: 10_000_000n,
+      minBorrowAmount: 2_000_000n,
+      targetLtvBps: 3_000n,
+      depositWindowSeconds: 3_600n,
+      borrowDestination: "0x2222222222222222222222222222222222222222",
+      refundDestination: "bc1qrefunddestination",
+    });
+
+    // then
+    expect(createLoan).toHaveBeenCalledWith(
+      expect.objectContaining({
+        lend_asset: { BTC: null },
+        borrow_asset: { USDT: null },
+        min_deposit_hint: 10_000_000n,
+        min_borrow_amount: 2_000_000n,
+        ltv_target_bps: 3_000n,
+        ltv_timer_min: 3_600n,
+        borrow_destination: {
+          External: "0x2222222222222222222222222222222222222222",
+        },
+        refund_destination: { External: "bc1qrefunddestination" },
+      })
+    );
+    expect(loan.loanId).toBe(LOAN_ID);
+  });
+
+  test("finds loan candidates by address through the SDK API", async () => {
+    // given
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          success: true,
+          candidates: [
+            {
+              loan_id: LOAN_ID.toString(),
+              short_ref: publicIdFromInt(LOAN_ID),
+              lending_profile: PROFILE_ID,
+              lend_pool_ic_id: BTC_POOL_ID,
+              borrow_pool_ic_id: USDT_POOL_ID,
+              lend_asset: "BTC",
+              borrow_asset: "USDT",
+              min_deposit_hint: "10000000",
+            },
+          ],
+        }),
+        { status: 200, headers: { "content-type": "application/json" } }
+      )
+    );
+    const client = LiquidiumClient.create({
+      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
+    });
+
+    // when
+    const candidates = await client.instantLoans.findByAddress("bc1qrecover");
+
+    // then
+    expect(candidates).toEqual([
+      expect.objectContaining({
+        loanId: LOAN_ID,
+        shortRef: publicIdFromInt(LOAN_ID),
+        profileId: PROFILE_ID,
+        collateralAsset: "BTC",
+        borrowAsset: "USDT",
+      }),
+    ]);
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "https://app.liquidium.fi/api/sdk/v1/instant-loans/address?address=bc1qrecover",
+      expect.objectContaining({ method: "GET" })
+    );
+  });
+
+  function createHeadlessLoan() {
+    return {
+      id: LOAN_ID,
+      borrow_destination: {
+        External: "0x2222222222222222222222222222222222222222",
+      },
+      started: false,
+      min_borrow_amount: 2_000_000n,
+      lend_asset: { BTC: null },
+      ltv_target_bps: 3_000n,
+      lend_pool_id: Principal.fromText(BTC_POOL_ID),
+      min_deposit_hint: 10_000_000n,
+      refund_destination: { External: "bc1qrefunddestination" },
+      ltv_timer_s: 3_600n,
+      lending_profile: Principal.fromText(PROFILE_ID),
+      borrow_pool_id: Principal.fromText(USDT_POOL_ID),
+      borrow_asset: { USDT: null },
+      deposit_detected_ts: [],
+    };
+  }
+
+  function createBtcPoolRecord() {
+    return {
+      optimal_utilization_rate: 80n,
+      principal: {
+        toString: () => BTC_POOL_ID,
+        toText: () => BTC_POOL_ID,
+      },
+      total_generated_interest_snapshot: 0n,
+      supply_cap: [],
+      same_asset_borrowing: [],
+      asset: { BTC: null },
+      rate_slope_before: 1n,
+      borrow_cap: [],
+      total_debt_at_last_sync: 0n,
+      chain: { BTC: null },
+      rate_slope_after: 2n,
+      reserve_factor: 100n,
+      last_updated: [],
+      lending_index: 300n,
+      protocol_liquidation_fee: 50n,
+      borrow_index: 400n,
+      base_rate: 5n,
+      frozen: false,
+      liquidation_bonus: 200n,
+      liquidation_threshold: 7_500n,
+      max_ltv: 7_000n,
+      total_supply_at_last_sync: 50_000n,
+    };
+  }
+
+  function createUsdtPoolRecord() {
+    return {
+      optimal_utilization_rate: 80n,
+      principal: {
+        toString: () => USDT_POOL_ID,
+        toText: () => USDT_POOL_ID,
+      },
+      total_generated_interest_snapshot: 0n,
+      supply_cap: [],
+      same_asset_borrowing: [],
+      asset: { USDT: null },
+      rate_slope_before: 1n,
+      borrow_cap: [],
+      total_debt_at_last_sync: 0n,
+      chain: { ETH: null },
+      rate_slope_after: 2n,
+      reserve_factor: 100n,
+      last_updated: [],
+      lending_index: 300n,
+      protocol_liquidation_fee: 50n,
+      borrow_index: 400n,
+      base_rate: 5n,
+      frozen: false,
+      liquidation_bonus: 200n,
+      liquidation_threshold: 7_500n,
+      max_ltv: 7_000n,
+      total_supply_at_last_sync: 50_000n,
+    };
+  }
 });

@@ -1,11 +1,6 @@
-import { encodeIcrcAccount } from "@dfinity/ledger-icrc";
 import { Principal } from "@dfinity/principal";
 import { getAddress, isAddress } from "viem";
-import { createCkBtcMinterActor } from "../../core/canisters/ckbtc/minter";
-import {
-  createDepositAccountsActor,
-  type DepositAccountErrors,
-} from "../../core/canisters/deposit-accounts/actor";
+import { createDepositAccountsActor } from "../../core/canisters/deposit-accounts/actor";
 import {
   createLendingActor,
   type LendingPoolRecord,
@@ -23,8 +18,6 @@ import {
   CK_ETH_DEPOSIT_CONTRACT_ADDRESS,
   ERC20_ABI,
   MAX_UINT256,
-  USDC_CONTRACT_ADDRESS,
-  USDT_CONTRACT_ADDRESS,
 } from "../../core/evm";
 import { SdkApiPath } from "../../core/sdk-api-paths";
 import type { ApiClient } from "../../core/transports/api-client";
@@ -48,6 +41,13 @@ import {
 } from "../../core/wallet-actions";
 import { executeWith } from "../../execute";
 import {
+  getEthStablecoinContractAddress,
+  isEthStablecoin,
+  mapDepositAccountErrorToLiquidiumError,
+  resolveSupplyMechanism,
+  resolveSupplyTarget,
+} from "./_internal/supply-targets";
+import {
   createApproveTransaction,
   createDepositErc20Transaction,
   createTransferErc20Transaction,
@@ -65,17 +65,13 @@ import {
   EvmSupplyApprovalStrategy,
   type EvmSupplyContext,
   type GetEvmSupplyContextRequest,
-  type IcrcAccountSupplyTarget,
   type InflowFeeEstimate,
-  type NativeAddressSupplyTarget,
   type OutflowDetails,
   type SubmitInflowRequest,
   type SubmitInflowResponse,
   type SupplyFlow,
   type SupplyFlowRequest,
-  type SupplyInstruction,
   SupplyPlanType,
-  type SupplyRequest,
   type SupplyTarget,
   type WithdrawAction,
   type WithdrawSubmitSignatureInfo,
@@ -101,15 +97,14 @@ type OutflowRequestData = {
   expiryTimestamp: bigint;
 };
 
-type SupplyTargetRequest = {
+type SupplyInstruction = {
   poolId: string;
   asset: string;
   chain: string;
   action: SupplyAction;
-  mechanism?: SupplyMechanism;
+  target: SupplyTarget;
 };
 
-type SupplyMechanism = SupplyFlow["type"];
 type EvmAddress = `0x${string}`;
 
 export class LendingModule {
@@ -375,26 +370,6 @@ export class LendingModule {
   }
 
   /**
-   * Prepares supply instructions for a deposit or repayment flow.
-   *
-   * The returned instruction describes where funds should be sent.
-   *
-   * @param request - Profile, pool, and supply action.
-   * @returns Resolved deposit/repay target and metadata for the pool.
-   */
-  async prepareSupply(request: SupplyRequest): Promise<SupplyInstruction> {
-    const supplyTarget = await this.resolveSupplyTarget(request);
-
-    return {
-      poolId: request.poolId,
-      asset: supplyTarget.asset,
-      chain: supplyTarget.chain,
-      action: request.action,
-      target: supplyTarget,
-    };
-  }
-
-  /**
    * Resolves a supply target for a deposit or repayment and optionally broadcasts it.
    *
    * Transfer mode can return manual broadcast instructions when wallet fields are
@@ -404,11 +379,18 @@ export class LendingModule {
    * The SDK does not poll for inflow status. When a `txid` is returned, it is the
    * caller's responsibility to track confirmation state using their own polling.
    *
-   * @returns A {@link SupplyFlow} receipt with `type`, `instruction`, `target`,
-   *   `submit`, and an optional `txid` present when the SDK broadcast for you.
+   * @returns A {@link SupplyFlow} receipt with `type`, `target`, `submit`, and
+   *   an optional `txid` present when the SDK broadcast for you.
    */
   async supply(request: SupplyFlowRequest): Promise<SupplyFlow> {
-    const instruction = await this.prepareSupply(request);
+    const target = await resolveSupplyTarget(this.canisterContext, request);
+    const instruction: SupplyInstruction = {
+      poolId: request.poolId,
+      asset: target.asset,
+      chain: target.chain,
+      action: request.action,
+      target,
+    };
     const mechanism = resolveSupplyMechanism({
       asset: instruction.asset,
       chain: instruction.chain,
@@ -444,7 +426,6 @@ export class LendingModule {
 
     return {
       type: mechanism,
-      instruction,
       target: instruction.target,
       txid,
       submit: async (submitRequest) => {
@@ -971,128 +952,6 @@ export class LendingModule {
     return selectedPool;
   }
 
-  private async resolveSupplyTarget(
-    request: SupplyRequest
-  ): Promise<SupplyTarget> {
-    const selectedPool = await this.getPoolById(request.poolId);
-    const asset = getVariantKey(selectedPool.asset);
-    const chain = getVariantKey(selectedPool.chain);
-    const mechanism = resolveSupplyMechanism({
-      asset,
-      chain,
-      requestedMechanism: request.mechanism,
-    });
-
-    switch (mechanism) {
-      case SupplyPlanType.transfer:
-        return await this.getNativeAddressSupplyTarget(request.profileId, {
-          poolId: request.poolId,
-          asset,
-          chain,
-          action: request.action,
-        });
-      case SupplyPlanType.contractInteraction:
-        return this.getIcrcAccountSupplyTarget(request.profileId, {
-          poolId: request.poolId,
-          asset,
-          chain,
-          action: request.action,
-        });
-    }
-  }
-
-  private async getNativeAddressSupplyTarget(
-    profileId: string,
-    request: SupplyTargetRequest
-  ): Promise<NativeAddressSupplyTarget> {
-    assertSupportsNativeAddressInflowTarget(request.asset, request.chain);
-
-    if (isEthStablecoin(request.asset, request.chain)) {
-      const tokenAddress = getEthStablecoinContractAddress(request.asset);
-      const subaccount = encodeInflowSubaccount({
-        action: request.action,
-        principal: Principal.fromText(profileId),
-      });
-      const result = await createDepositAccountsActor(
-        this.canisterContext
-      ).get_deposit_address(
-        {
-          owner: Principal.fromText(request.poolId),
-          subaccount: [subaccount],
-        },
-        [tokenAddress]
-      );
-
-      if ("Err" in result) {
-        throw mapDepositAccountErrorToLiquidiumError(result.Err);
-      }
-
-      return {
-        type: "nativeAddress",
-        poolId: request.poolId,
-        asset: request.asset,
-        chain: request.chain,
-        action: request.action,
-        address: result.Ok,
-      };
-    }
-
-    const configuredBtcPoolId = this.canisterContext.canisterIds.btcPool;
-    if (request.poolId !== configuredBtcPoolId) {
-      throw new LiquidiumError(
-        LiquidiumErrorCode.VALIDATION_ERROR,
-        `Native BTC inflow targets require the configured BTC pool ${configuredBtcPoolId}, received ${request.poolId}`
-      );
-    }
-
-    const subaccount = encodeInflowSubaccount({
-      action: request.action,
-      principal: Principal.fromText(profileId),
-    });
-    const address = await createCkBtcMinterActor(
-      this.canisterContext
-    ).get_btc_address({
-      owner: [Principal.fromText(configuredBtcPoolId)],
-      subaccount: [subaccount],
-    });
-
-    return {
-      type: "nativeAddress",
-      poolId: request.poolId,
-      asset: request.asset,
-      chain: request.chain,
-      action: request.action,
-      address,
-    };
-  }
-
-  private getIcrcAccountSupplyTarget(
-    profileId: string,
-    request: SupplyTargetRequest
-  ): IcrcAccountSupplyTarget {
-    assertSupportsIcrcAccountInflowTarget(request.asset);
-
-    const poolPrincipal = Principal.fromText(request.poolId);
-    const subaccount = encodeInflowSubaccount({
-      action: request.action,
-      principal: Principal.fromText(profileId),
-    });
-
-    return {
-      type: "icrcAccount",
-      poolId: request.poolId,
-      asset: request.asset,
-      chain: request.chain,
-      action: request.action,
-      owner: poolPrincipal.toText(),
-      subaccount,
-      account: encodeIcrcAccount({
-        owner: Principal.fromText(poolPrincipal.toText()),
-        subaccount,
-      }),
-    };
-  }
-
   private async sendEthContractTransaction(
     walletAdapter: Pick<WalletAdapter, "sendEthTransaction">,
     walletAddress: string,
@@ -1246,135 +1105,6 @@ function getUnknownErrorMessage(error: unknown): string | null {
   }
 
   return null;
-}
-
-function resolveSupplyMechanism(params: {
-  asset: string;
-  chain: string;
-  requestedMechanism?: SupplyMechanism;
-}): SupplyMechanism {
-  if (params.asset === Asset.BTC && params.chain === Chain.BTC) {
-    if (params.requestedMechanism === SupplyPlanType.contractInteraction) {
-      throw new LiquidiumError(
-        LiquidiumErrorCode.VALIDATION_ERROR,
-        "Contract-interaction supply is not supported for BTC on BTC"
-      );
-    }
-
-    return SupplyPlanType.transfer;
-  }
-
-  if (isEthStablecoin(params.asset, params.chain)) {
-    if (params.requestedMechanism) {
-      return params.requestedMechanism;
-    }
-
-    return SupplyPlanType.transfer;
-  }
-
-  throw new LiquidiumError(
-    LiquidiumErrorCode.VALIDATION_ERROR,
-    `No supply mechanism is configured for ${params.asset} on ${params.chain}`
-  );
-}
-
-function assertSupportsNativeAddressInflowTarget(
-  asset: string,
-  chain: string
-): void {
-  if (asset === Asset.BTC && chain === Chain.BTC) {
-    return;
-  }
-
-  if (isEthStablecoin(asset, chain)) {
-    return;
-  }
-
-  throw new LiquidiumError(
-    LiquidiumErrorCode.VALIDATION_ERROR,
-    `Native address inflow targets are not supported for ${asset} on ${chain}`
-  );
-}
-
-function mapDepositAccountErrorToLiquidiumError(
-  error: DepositAccountErrors
-): LiquidiumError {
-  if ("InvalidEvmAddress" in error) {
-    return new LiquidiumError(
-      LiquidiumErrorCode.INVALID_ADDRESS,
-      "Invalid EVM deposit address"
-    );
-  }
-
-  if ("Busy" in error) {
-    return new LiquidiumError(
-      LiquidiumErrorCode.SERVICE_UNAVAILABLE,
-      "Deposit address service is busy"
-    );
-  }
-
-  if ("Cooldown" in error) {
-    return new LiquidiumError(
-      LiquidiumErrorCode.SERVICE_UNAVAILABLE,
-      `Deposit address service is cooling down for ${error.Cooldown.retry_after_secs.toString()} seconds`
-    );
-  }
-
-  if ("Other" in error) {
-    return new LiquidiumError(
-      LiquidiumErrorCode.DEPOSIT_ADDRESS_ERROR,
-      error.Other
-    );
-  }
-
-  if ("AddressDerivationFailed" in error) {
-    return new LiquidiumError(
-      LiquidiumErrorCode.DEPOSIT_ADDRESS_ERROR,
-      "Deposit address derivation failed"
-    );
-  }
-
-  if ("NotFound" in error) {
-    return new LiquidiumError(
-      LiquidiumErrorCode.DEPOSIT_ADDRESS_ERROR,
-      "Deposit address not found"
-    );
-  }
-
-  return new LiquidiumError(
-    LiquidiumErrorCode.DEPOSIT_ADDRESS_ERROR,
-    "Deposit address canister returned an unknown error"
-  );
-}
-
-function isEthStablecoin(asset: string, chain: string): boolean {
-  return chain === Chain.ETH && (asset === Asset.USDC || asset === Asset.USDT);
-}
-
-function getEthStablecoinContractAddress(asset: string): string {
-  if (asset === Asset.USDC) {
-    return USDC_CONTRACT_ADDRESS;
-  }
-
-  if (asset === Asset.USDT) {
-    return USDT_CONTRACT_ADDRESS;
-  }
-
-  throw new LiquidiumError(
-    LiquidiumErrorCode.VALIDATION_ERROR,
-    `ETH stablecoin contract address is not configured for ${asset}`
-  );
-}
-
-function assertSupportsIcrcAccountInflowTarget(asset: string): void {
-  if (asset === Asset.BTC || asset === Asset.USDT || asset === Asset.USDC) {
-    return;
-  }
-
-  throw new LiquidiumError(
-    LiquidiumErrorCode.VALIDATION_ERROR,
-    `ICRC account inflow targets are not supported for ${asset}`
-  );
 }
 
 function getDefaultSubmitInflowRequest(params: {

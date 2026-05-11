@@ -447,21 +447,6 @@ const SDK_METHODS: MethodDefinition[] = [
     },
   },
   {
-    id: "lending.prepareSupply",
-    label: "lending.prepareSupply",
-    defaultArgs:
-      '{\n  "profileId": "aaaaa-aa",\n  "poolId": "bbbbb-bb",\n  "action": "deposit",\n  "mechanism": "transfer"\n}',
-    execute: async (client, input) => {
-      const args = expectObject(input);
-      return await client.lending.prepareSupply({
-        profileId: expectNonEmptyString(args.profileId, "profileId"),
-        poolId: expectNonEmptyString(args.poolId, "poolId"),
-        action: expectSupplyAction(args.action, "action"),
-        mechanism: expectOptionalSupplyMechanism(args.mechanism, "mechanism"),
-      });
-    },
-  },
-  {
     id: "lending.supply",
     label: "lending.supply",
     defaultArgs:

@@ -7,8 +7,8 @@ import {
   type Pool,
   type SupplyAction,
   type SupplyFlow,
-  type SupplyInstruction,
   type SupplyPlanType,
+  type SupplyTarget,
   USDC_CONTRACT_ADDRESS,
   USDT_CONTRACT_ADDRESS,
   type WalletAdapter,
@@ -258,19 +258,13 @@ export function SupplyPage({
           action: supplyAction,
         });
 
-        const instruction: SupplyInstruction = {
+        const target: SupplyTarget = {
+          type: "nativeAddress",
           poolId: selectedSupplyPool.id,
           asset: selectedSupplyPool.asset,
           chain: selectedSupplyPool.chain,
           action: supplyAction,
-          target: {
-            type: "nativeAddress",
-            poolId: selectedSupplyPool.id,
-            asset: selectedSupplyPool.asset,
-            chain: selectedSupplyPool.chain,
-            action: supplyAction,
-            address: depositAddress,
-          },
+          address: depositAddress,
         };
 
         if (!walletAdapter?.sendEthTransaction) {
@@ -305,8 +299,7 @@ export function SupplyPage({
 
         nextSupplyFlow = {
           type: "transfer",
-          instruction,
-          target: instruction.target,
+          target,
           txid,
           submit: async (request) => client.lending.submitInflow(request),
         };
@@ -328,28 +321,28 @@ export function SupplyPage({
   }
 
   async function handleCopyTargetAddress() {
-    const supplyInstruction = supplyFlow?.instruction ?? null;
+    const supplyTarget = supplyFlow?.target ?? null;
 
-    if (!isNativeAddressSupplyInstruction(supplyInstruction)) {
+    if (!isNativeAddressSupplyTarget(supplyTarget)) {
       return;
     }
 
-    await navigator.clipboard.writeText(supplyInstruction.target.address);
+    await navigator.clipboard.writeText(supplyTarget.address);
     setStatusMessage("Copied the supply target address.");
   }
 
   function handleOpenBitcoinUri() {
-    const supplyInstruction = supplyFlow?.instruction ?? null;
+    const supplyTarget = supplyFlow?.target ?? null;
 
     if (
-      !isNativeAddressSupplyInstruction(supplyInstruction) ||
-      supplyInstruction.chain !== "BTC"
+      !isNativeAddressSupplyTarget(supplyTarget) ||
+      supplyTarget.chain !== "BTC"
     ) {
       return;
     }
 
     window.open(
-      `bitcoin:${supplyInstruction.target.address}`,
+      `bitcoin:${supplyTarget.address}`,
       "_blank",
       "noopener,noreferrer"
     );
@@ -467,9 +460,7 @@ export function SupplyPage({
             start supply flow
           </button>
           <button
-            disabled={
-              !isNativeAddressSupplyInstruction(supplyFlow?.instruction ?? null)
-            }
+            disabled={!isNativeAddressSupplyTarget(supplyFlow?.target ?? null)}
             onClick={() => void handleCopyTargetAddress()}
             type="button"
           >
@@ -477,9 +468,8 @@ export function SupplyPage({
           </button>
           <button
             disabled={
-              !isNativeAddressSupplyInstruction(
-                supplyFlow?.instruction ?? null
-              ) || supplyFlow?.instruction.chain !== "BTC"
+              !isNativeAddressSupplyTarget(supplyFlow?.target ?? null) ||
+              supplyFlow?.target.chain !== "BTC"
             }
             onClick={handleOpenBitcoinUri}
             type="button"
@@ -558,16 +548,14 @@ function expectEthSupplyWalletAdapter(
   return walletAdapter;
 }
 
-function isNativeAddressSupplyInstruction(
-  supplyInstruction: SupplyInstruction | null
-): supplyInstruction is SupplyInstruction & {
-  target: { type: "nativeAddress"; address: string };
-} {
-  if (!supplyInstruction) {
+function isNativeAddressSupplyTarget(
+  supplyTarget: SupplyTarget | null
+): supplyTarget is SupplyTarget & { type: "nativeAddress"; address: string } {
+  if (!supplyTarget) {
     return false;
   }
 
-  return supplyInstruction.target.type === "nativeAddress";
+  return supplyTarget.type === "nativeAddress";
 }
 
 function formatSupplyMechanismLabel(
