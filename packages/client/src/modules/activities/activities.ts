@@ -13,7 +13,7 @@ import type {
   GetActivityStatusResponse,
   ListActivitiesRequest,
 } from "./types";
-import { ActivityDirection, ActivityStage } from "./types";
+import { ActivityDirection, ActivityStage, ActivityState } from "./types";
 
 const PRE_TERMINAL_ETH_ACTIVITY_ID_PREFIX = "pre_terminal_eth_";
 
@@ -52,14 +52,17 @@ export class ActivitiesModule {
   constructor(readonly apiClient: ApiClient | undefined) {}
 
   /**
-   * Lists profile activities. Defaults to currently active activities.
+   * Lists profile activities. Defaults to all activities.
    *
    * Requires `apiBaseUrl` on the client.
    */
   async list(request: ListActivitiesRequest): Promise<Activity[]> {
     const apiClient = this.requireApi();
     const response = await apiClient.get<ListActivitiesResponseWire>(
-      buildActivitiesPath(request)
+      buildActivitiesPath({
+        ...request,
+        state: request.state ?? ActivityState.all,
+      })
     );
 
     return response.activities.map(mapActivity);

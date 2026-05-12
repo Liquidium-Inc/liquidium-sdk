@@ -704,7 +704,7 @@ describe("ActivitiesModule", () => {
     });
   });
 
-  test("lists activities through the sdk api", async () => {
+  test("lists all activities by default through the sdk api", async () => {
     // given
     const ACTIVITY_AMOUNT = "100000";
     const ACTIVITY_AMOUNT_BASE_UNITS = 100000n;
@@ -746,7 +746,6 @@ describe("ActivitiesModule", () => {
     // when
     const result = await client.activities.list({
       profileId: "profile-1",
-      state: "active",
     });
 
     // then
@@ -768,7 +767,7 @@ describe("ActivitiesModule", () => {
       },
     ]);
     expect(fetchSpy).toHaveBeenCalledWith(
-      "https://app.liquidium.fi/api/sdk/v1/activities?profileId=profile-1&state=active",
+      "https://app.liquidium.fi/api/sdk/v1/activities?profileId=profile-1&state=all",
       {
         method: "GET",
         headers: undefined,
@@ -3554,6 +3553,25 @@ describe("InstantLoansModule", () => {
     const getDepositAddress = vi.fn().mockResolvedValue({
       Ok: "0x1111111111111111111111111111111111111111",
     });
+    const getCollateralPosition = vi.fn().mockResolvedValue([
+      createInstantLoanPosition(
+        BTC_POOL_ID,
+        { BTC: null },
+        {
+          deposited_native_now: 10_000_000n,
+        }
+      ),
+    ]);
+    const getBorrowPosition = vi.fn().mockResolvedValue([
+      createInstantLoanPosition(
+        USDT_POOL_ID,
+        { USDT: null },
+        {
+          debt_native_now: 2_000_000n,
+          total_debt_interest: 1_000n,
+        }
+      ),
+    ]);
 
     vi.spyOn(Actor, "createActor")
       .mockReturnValueOnce({ get_loan: getLoan } as never)
@@ -3563,6 +3581,8 @@ describe("InstantLoansModule", () => {
       .mockReturnValueOnce({
         list_pools: vi.fn().mockResolvedValue([createUsdtPoolRecord()]),
       } as never)
+      .mockReturnValueOnce({ get_position: getCollateralPosition } as never)
+      .mockReturnValueOnce({ get_position: getBorrowPosition } as never)
       .mockReturnValueOnce({ get_btc_address: getBtcAddress } as never)
       .mockReturnValueOnce({ get_deposit_address: getDepositAddress } as never);
     const client = LiquidiumClient.create({
@@ -3591,6 +3611,21 @@ describe("InstantLoansModule", () => {
       chain: "ETH",
       address: "0x1111111111111111111111111111111111111111",
     });
+    expect(loan.repayment).toMatchObject({
+      amount: 2_003_001n,
+      decimals: 6n,
+      asset: "USDT",
+      chain: "ETH",
+      includesBufferBps: 10n,
+    });
+    expect(loan.position).toMatchObject({
+      collateralAmount: 10_000_000n,
+      collateralDecimals: 8n,
+      borrowedAmount: 2_000_000n,
+      borrowedDecimals: 6n,
+      debtInterestAmount: 1_000n,
+      totalDebtAmount: 2_001_000n,
+    });
   });
 
   test("creates a loan then hydrates canonical loan state", async () => {
@@ -3611,6 +3646,12 @@ describe("InstantLoansModule", () => {
       } as never)
       .mockReturnValueOnce({
         list_pools: vi.fn().mockResolvedValue([createUsdtPoolRecord()]),
+      } as never)
+      .mockReturnValueOnce({
+        get_position: vi.fn().mockResolvedValue([]),
+      } as never)
+      .mockReturnValueOnce({
+        get_position: vi.fn().mockResolvedValue([]),
       } as never)
       .mockReturnValueOnce({
         get_btc_address: vi.fn().mockResolvedValue("bc1qinstantdeposit"),
@@ -3719,6 +3760,36 @@ describe("InstantLoansModule", () => {
       borrow_pool_id: Principal.fromText(USDT_POOL_ID),
       borrow_asset: { USDT: null },
       deposit_detected_ts: [],
+    };
+  }
+
+  function createInstantLoanPosition(
+    poolId: string,
+    asset: { BTC: null } | { USDT: null },
+    overrides: Record<string, unknown> = {}
+  ) {
+    return {
+      lending_index_now: 0n,
+      interest_since_snapshot: 0n,
+      asset,
+      total_debt_interest: 0n,
+      borrow_index_snapshot: 0n,
+      debt_native_now: 0n,
+      borrow_index_now: 0n,
+      lending_index_snapshot: 0n,
+      debt_scaled: 0n,
+      total_earned_interest: 0n,
+      deposit_scaled: 0n,
+      earned_since_snapshot: 0n,
+      deposited_native_now: 0n,
+      pool_id: {
+        toText: () => poolId,
+      },
+      last_update: 0n,
+      user_profile: {
+        toText: () => PROFILE_ID,
+      },
+      ...overrides,
     };
   }
 

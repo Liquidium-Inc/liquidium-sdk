@@ -60,6 +60,40 @@ export interface CreateInstantLoanRequest {
 /** Lookup request for loading canonical instant-loan state. */
 export type InstantLoanGetRequest = { loanId: bigint } | { ref: string };
 
+/** Current amount to send to the repayment target to close the debt. */
+export interface InstantLoanRepayment {
+  /** Buffered repayment amount in the borrow asset's base units. */
+  amount: bigint;
+  /** Decimal scale for `amount`. */
+  decimals: bigint;
+  /** Asset to repay. */
+  asset: MarketAsset;
+  /** Chain used for repayment. */
+  chain: MarketChain;
+  /** Buffer included to cover interest accrual between quote and submission. */
+  includesBufferBps: bigint;
+  /** Address or ICRC account where the repayment should be sent. */
+  target: SupplyTarget;
+}
+
+/** Current lending position backing the instant loan. */
+export interface InstantLoanPositionSummary {
+  /** Current collateral amount in the collateral asset's base units. */
+  collateralAmount: bigint;
+  /** Decimal scale for `collateralAmount`. */
+  collateralDecimals: bigint;
+  /** Earned interest on the collateral side in base units. */
+  collateralInterestAmount: bigint;
+  /** Borrowed principal in the borrow asset's base units. */
+  borrowedAmount: bigint;
+  /** Decimal scale for borrowed/debt amounts. */
+  borrowedDecimals: bigint;
+  /** Accrued borrow interest in base units. */
+  debtInterestAmount: bigint;
+  /** Borrowed principal plus accrued interest in base units, before repayment buffer. */
+  totalDebtAmount: bigint;
+}
+
 /** Hydrated instant-loan state plus generated deposit and repayment targets. */
 export interface InstantLoan {
   /** Canister-assigned loan id. */
@@ -70,7 +104,7 @@ export interface InstantLoan {
   profileId: string;
   /** Whether the borrow leg has started after collateral was detected. */
   started: boolean;
-  /** Nanosecond timestamp when collateral was detected, if any. */
+  /** Seconds timestamp when the canister processed the collateral deposit, if any. */
   depositDetectedTimestamp?: bigint;
   /** Target loan-to-value ratio in basis points. */
   targetLtvBps: bigint;
@@ -97,6 +131,10 @@ export interface InstantLoan {
   depositTarget: SupplyTarget;
   /** Address or ICRC account where the user repays debt. */
   repayTarget: SupplyTarget;
+  /** Current actionable repayment quote. */
+  repayment: InstantLoanRepayment;
+  /** Current lending position state for the generated profile. */
+  position: InstantLoanPositionSummary;
 }
 
 /**

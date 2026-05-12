@@ -137,7 +137,8 @@ client.instantLoans.findByAddress(address); // requires apiBaseUrl
 ```
 
 `create(...)` and `get(...)` are canister-first. The SDK derives deposit and
-repay targets internally from the generated `lending_profile`.
+repay targets internally from the generated `lending_profile`, and `get(...)`
+also returns `position` plus `repayment.amount` for the current repay amount.
 `findByAddress(...)` is a backend-assisted recovery helper and returns
 candidates only.
 
@@ -157,10 +158,10 @@ client.positions.getMaxRepayAmount(profileId, poolId, bufferBps?); // full-repay
 
 ### activities
 
-Receipt status and active/completed activity lists. Requires `apiBaseUrl`.
+Receipt status and active/completed/all activity lists. Requires `apiBaseUrl`.
 
 ```ts
-client.activities.list({ profileId, state: "active" });
+client.activities.list({ profileId, state: "all" });
 client.activities.getStatus({ profileId, id });
 ```
 
@@ -241,6 +242,11 @@ Restore a loan by `ref` whenever possible:
 
 ```ts
 const loan = await client.instantLoans.get({ ref: "8Y9AQQ" });
+const repayAmount = loan.repayment.amount;
+const repayAddress =
+  loan.repayment.target.type === "nativeAddress"
+    ? loan.repayment.target.address
+    : loan.repayment.target.account;
 ```
 
 Use address lookup only as recovery when the user lost the loan reference:

@@ -15,6 +15,8 @@ import { SupplyAction } from "../../core/types";
 import { getVariantKey } from "../../core/utils/variant";
 import { resolveSupplyTarget } from "../lending/_internal/supply-targets";
 import { SupplyPlanType } from "../lending/types";
+import type { PositionsModule } from "../positions";
+import type { Position } from "../positions/types";
 import { intFromPublicId, publicIdFromInt } from "./ref-code";
 import type {
   CreateInstantLoanRequest,
@@ -25,6 +27,8 @@ import type {
   InstantLoanCandidate,
   InstantLoanGetRequest,
 } from "./types";
+
+const DEFAULT_REPAY_BUFFER_BPS = 10n;
 
 type InstantLoanCandidateWire = {
   loanId?: string | bigint;
@@ -50,7 +54,8 @@ type InstantLoanCandidateWire = {
 export class InstantLoansModule {
   constructor(
     readonly canisterContext: CanisterContext,
-    readonly apiClient: ApiClient | undefined
+    readonly apiClient: ApiClient | undefined,
+    readonly positions: PositionsModule
   ) {}
 
   /**
@@ -157,20 +162,27 @@ export class InstantLoansModule {
     const collateralAsset = getVariantKey(record.lend_asset);
     const borrowAsset = getVariantKey(record.borrow_asset);
 
-    const [depositTarget, repayTarget] = await Promise.all([
-      resolveSupplyTarget(this.canisterContext, {
-        profileId,
-        poolId: collateralPoolId,
-        action: SupplyAction.deposit,
-        mechanism: SupplyPlanType.transfer,
-      }),
-      resolveSupplyTarget(this.canisterContext, {
-        profileId,
-        poolId: borrowPoolId,
-        action: SupplyAction.repayment,
-        mechanism: SupplyPlanType.transfer,
-      }),
-    ]);
+    const [depositTarget, repayTarget, collateralPosition, borrowPosition] =
+      await Promise.all([
+        resolveSupplyTarget(this.canisterContext, {
+          profileId,
+          poolId: collateralPoolId,
+          action: SupplyAction.deposit,
+          mechanism: SupplyPlanType.transfer,
+        }),
+        resolveSupplyTarget(this.canisterContext, {
+          profileId,
+          poolId: borrowPoolId,
+          action: SupplyAction.repayment,
+          mechanism: SupplyPlanType.transfer,
+        }),
+        this.positions.getPosition(profileId, collateralPoolId),
+        this.positions.getPosition(profileId, borrowPoolId),
+      ]);
+    const repaymentAmount = calculateRepaymentAmount(
+      borrowPosition,
+      DEFAULT_REPAY_BUFFER_BPS
+    );
 
     return {
       loanId: record.id,
@@ -196,6 +208,23 @@ export class InstantLoansModule {
       refundDestination: accountFromCanister(record.refund_destination),
       depositTarget,
       repayTarget,
+      repayment: {
+        amount: repaymentAmount,
+        decimals: borrowPosition?.borrowedDecimals ?? 0n,
+        asset: borrowAsset,
+        chain: repayTarget.chain,
+        includesBufferBps: DEFAULT_REPAY_BUFFER_BPS,
+        target: repayTarget,
+      },
+      position: {
+        collateralAmount: collateralPosition?.deposited ?? 0n,
+        collateralDecimals: collateralPosition?.depositedDecimals ?? 0n,
+        collateralInterestAmount: collateralPosition?.earnedInterest ?? 0n,
+        borrowedAmount: borrowPosition?.borrowed ?? 0n,
+        borrowedDecimals: borrowPosition?.borrowedDecimals ?? 0n,
+        debtInterestAmount: borrowPosition?.debtInterest ?? 0n,
+        totalDebtAmount: calculateTotalDebtAmount(borrowPosition),
+      },
     };
   }
 
@@ -209,6 +238,26 @@ export class InstantLoansModule {
 
     return this.apiClient;
   }
+}
+
+function calculateRepaymentAmount(
+  borrowPosition: Position | null,
+  bufferBps: bigint
+): bigint {
+  const totalDebtAmount = calculateTotalDebtAmount(borrowPosition);
+  if (totalDebtAmount <= 0n) {
+    return 0n;
+  }
+
+  return (totalDebtAmount * (10000n + bufferBps)) / 10000n;
+}
+
+function calculateTotalDebtAmount(borrowPosition: Position | null): bigint {
+  if (!borrowPosition) {
+    return 0n;
+  }
+
+  return borrowPosition.borrowed + borrowPosition.debtInterest;
 }
 
 function validateCreateRequest(request: CreateInstantLoanRequest): void {

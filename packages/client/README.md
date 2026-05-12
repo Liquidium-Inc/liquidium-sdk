@@ -84,7 +84,8 @@ const collateralDepositAddress =
     : instantLoan.depositTarget.account;
 
 // Preferred restore path: ref is decoded locally and loaded from canister.
-await client.instantLoans.get({ ref: loanRef });
+const restoredLoan = await client.instantLoans.get({ ref: loanRef });
+const repayAmount = restoredLoan.repayment.amount;
 
 // Recovery path: requires apiBaseUrl and returns candidates only.
 const candidates = await client.instantLoans.findByAddress(
@@ -157,7 +158,7 @@ const outflowWithConvenience = await client.lending.borrow({
   signerWalletAdapter: walletAdapter,
 });
 
-// Active activities and receipt status
+// Activities and receipt status
 const activities = await client.activities.list({ profileId: "profile-id" });
 const status = await client.activities.getStatus({
   profileId: "profile-id",
@@ -270,11 +271,11 @@ const client = LiquidiumClient.create({
 
 ### Instant loan flow
 
-Most integrations should start with `client.instantLoans`. It creates an accountless loan and returns the canonical loan plus generated deposit/repay targets.
+Most integrations should start with `client.instantLoans`. It creates an accountless loan and returns the canonical loan plus generated deposit/repay targets, current position state, and the actionable repayment amount.
 
 - `client.instantLoans.create(...)` - create the instant loan and return its generated targets
-- `client.instantLoans.get({ ref })` - restore canonical loan state from the user-facing loan reference
-- `client.instantLoans.get({ loanId })` - restore canonical loan state from the numeric canister loan ID
+- `client.instantLoans.get({ ref })` - restore canonical loan state, position summary, and repayment quote from the user-facing loan reference
+- `client.instantLoans.get({ loanId })` - restore canonical loan state, position summary, and repayment quote from the numeric canister loan ID
 - `client.instantLoans.findByAddress(address)` - recovery helper that requires `apiBaseUrl` and returns candidates only
 
 ### Account creation flow
@@ -323,7 +324,7 @@ Use these calls only when building a profile-based Liquidium app that manages ex
 
 ### Activity tracking
 
-- `client.activities.list({ profileId, state: "active" })` - list active, completed, or all activities for a profile
+- `client.activities.list({ profileId, state: "all" })` - list active, completed, or all activities for a profile; defaults to all activities
 - `client.activities.getStatus({ profileId, id })` - fetch one receipt by receipt id or txid
 - Active inflows use `status: "pending"` as the coarse lifecycle state. Check `activity.stage` for processing detail; ETH deposit-address transfers that are detected but not yet processed return `stage: "deposited"`.
 - Underfunded ETH deposit-address inflows include `activity.topUp` with `depositedAmount`, `feeAmount`, and `shortfallAmount` in base units.

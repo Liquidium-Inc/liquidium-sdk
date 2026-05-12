@@ -80,7 +80,8 @@ export class LiquidiumClient {
     this.history = new HistoryModule(this.apiClient);
     this.instantLoans = new InstantLoansModule(
       this.canisterContext,
-      this.apiClient
+      this.apiClient,
+      this.positions
     );
     this.quote = new QuoteModule();
   }
