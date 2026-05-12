@@ -56,6 +56,9 @@ export class InstantLoansModule {
   /**
    * Creates a profileless instant loan and returns canonical canister state plus
    * deposit/repay targets for the generated lending profile.
+   *
+   * Use `depositWindowSeconds` for the user-facing collateral deposit timeout;
+   * the SDK maps it to the canister's internal `ltv_timer_s` field.
    */
   async create(request: CreateInstantLoanRequest): Promise<InstantLoan> {
     validateCreateRequest(request);
@@ -73,7 +76,7 @@ export class InstantLoansModule {
         refund_destination: externalAccountFromInput(request.refundDestination),
         borrow_pool_id: Principal.fromText(request.borrowPoolId),
         borrow_asset: assetVariant(request.borrowAsset),
-        ltv_timer_min: request.depositWindowSeconds,
+        ltv_timer_s: request.depositWindowSeconds,
       });
 
       if ("Err" in result) {
@@ -90,7 +93,12 @@ export class InstantLoansModule {
     }
   }
 
-  /** Resolves a loan from canonical canister state by loan ID or reference. */
+  /**
+   * Resolves canonical canister state by loan id or short reference.
+   *
+   * References are decoded locally, then the corresponding loan id is loaded
+   * from the instant-loans canister.
+   */
   async get(request: InstantLoanGetRequest): Promise<InstantLoan> {
     const loanId =
       "loanId" in request ? request.loanId : decodeRef(request.ref);
@@ -117,6 +125,9 @@ export class InstantLoansModule {
   /**
    * Finds candidate loans associated with an address. Requires `apiBaseUrl` and
    * returns discovery candidates only; call `get(...)` to hydrate canister state.
+   *
+   * Candidates are useful for recovery flows where the user knows a borrow or
+   * refund address but not the loan reference.
    */
   async findByAddress(address: string): Promise<InstantLoanCandidate[]> {
     const trimmedAddress = address.trim();

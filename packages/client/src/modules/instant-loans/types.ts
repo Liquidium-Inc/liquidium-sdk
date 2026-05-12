@@ -1,50 +1,89 @@
 import type { Chain, MarketAsset, MarketChain } from "../../core/types";
 import type { SupplyTarget } from "../lending";
 
+/** Asset symbols supported by the instant-loans canister. */
 export type InstantLoanAsset = "BTC" | "SOL" | "USDC" | "USDT";
 
+/** External chain account used for borrow delivery or collateral refunds. */
 export interface ExternalAccount {
+  /** Account kind discriminator. */
   type: "External";
+  /** Optional chain metadata for display; the canister only receives `address`. */
   chain?: Chain | MarketChain;
+  /** Destination address on the external chain. */
   address: string;
 }
 
+/** IC principal account returned when a canister-native destination is used. */
 export interface NativeAccount {
+  /** Account kind discriminator. */
   type: "Native";
+  /** Principal text for the canister-native account. */
   principal: string;
 }
 
+/** Borrow destination or refund account associated with an instant loan. */
 export type InstantLoanAccount = ExternalAccount | NativeAccount;
 
+/**
+ * Parameters for creating an accountless instant loan.
+ *
+ * Amount fields are in each asset's smallest/base units. For example, BTC uses
+ * satoshis and ERC-20 assets use token base units according to their decimals.
+ */
 export interface CreateInstantLoanRequest {
+  /** Principal text of the pool that receives the collateral deposit. */
   collateralPoolId: string;
+  /** Principal text of the pool the loan borrows from. */
   borrowPoolId: string;
+  /** Asset deposited as collateral. */
   collateralAsset: InstantLoanAsset;
+  /** Asset borrowed from the borrow pool. */
   borrowAsset: InstantLoanAsset;
+  /** Collateral amount hint in the collateral asset's base units. */
   collateralAmount: bigint;
+  /** Minimum acceptable borrow amount in the borrow asset's base units. */
   minBorrowAmount: bigint;
+  /** Target loan-to-value ratio in basis points. `6_000n` means 60%. */
   targetLtvBps: bigint;
+  /**
+   * Seconds allowed for the collateral deposit before the instant-loan flow
+   * times out. Internally this is sent to the canister as `ltv_timer_s`.
+   */
   depositWindowSeconds: bigint;
+  /** External address that receives the borrowed asset. */
   borrowDestination: string | ExternalAccount;
+  /** External address that receives collateral refunds or withdrawals. */
   refundDestination: string | ExternalAccount;
 }
 
+/** Lookup request for loading canonical instant-loan state. */
 export type InstantLoanGetRequest = { loanId: bigint } | { ref: string };
 
+/** Hydrated instant-loan state plus generated deposit and repayment targets. */
 export interface InstantLoan {
+  /** Canister-assigned loan id. */
   loanId: bigint;
+  /** Short user-facing reference derived from `loanId`. */
   ref: string;
+  /** Generated lending profile principal used by the instant loan. */
   profileId: string;
+  /** Whether the borrow leg has started after collateral was detected. */
   started: boolean;
+  /** Nanosecond timestamp when collateral was detected, if any. */
   depositDetectedTimestamp?: bigint;
+  /** Target loan-to-value ratio in basis points. */
   targetLtvBps: bigint;
+  /** Seconds allowed for the collateral deposit before timeout. */
   depositWindowSeconds: bigint;
+  /** Collateral-side pool, asset, chain, and requested amount hint. */
   collateral: {
     poolId: string;
     asset: MarketAsset;
     chain: MarketChain;
     amountHint: bigint;
   };
+  /** Borrow-side pool, asset, chain, minimum amount, and destination. */
   borrow: {
     poolId: string;
     asset: MarketAsset;
@@ -52,19 +91,37 @@ export interface InstantLoan {
     minAmount: bigint;
     destination: InstantLoanAccount;
   };
+  /** Destination used for collateral refunds or withdrawals. */
   refundDestination: InstantLoanAccount;
+  /** Address or ICRC account where the user deposits collateral. */
   depositTarget: SupplyTarget;
+  /** Address or ICRC account where the user repays debt. */
   repayTarget: SupplyTarget;
 }
 
+/**
+ * Discovery result returned by address lookup.
+ *
+ * Candidates are intentionally lightweight; call `instantLoans.get(...)` with
+ * `loanId` or `ref` to load canonical canister state and transfer targets.
+ */
 export interface InstantLoanCandidate {
+  /** Canister-assigned loan id. */
   loanId: bigint;
+  /** Short user-facing reference derived from `loanId`. */
   ref: string;
+  /** Generated lending profile principal used by the instant loan. */
   profileId: string;
+  /** API-observed creation time, if provided by the indexer. */
   createdAt?: Date;
+  /** Principal text of the collateral pool. */
   collateralPoolId: string;
+  /** Principal text of the borrow pool. */
   borrowPoolId: string;
+  /** Collateral asset symbol. */
   collateralAsset: MarketAsset;
+  /** Borrow asset symbol. */
   borrowAsset: MarketAsset;
+  /** Collateral amount hint in base units. */
   collateralAmountHint: bigint;
 }

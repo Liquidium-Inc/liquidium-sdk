@@ -3646,7 +3646,7 @@ describe("InstantLoansModule", () => {
         min_deposit_hint: 10_000_000n,
         min_borrow_amount: 2_000_000n,
         ltv_target_bps: 3_000n,
-        ltv_timer_min: 3_600n,
+        ltv_timer_s: 3_600n,
         borrow_destination: {
           External: "0x2222222222222222222222222222222222222222",
         },

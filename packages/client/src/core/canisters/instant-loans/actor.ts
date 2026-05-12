@@ -25,7 +25,7 @@ export interface CreateInstantLoanCanisterRequest {
   refund_destination: InstantLoanAccountType;
   borrow_pool_id: Principal;
   borrow_asset: InstantLoanAsset;
-  ltv_timer_min: bigint;
+  ltv_timer_s: bigint;
 }
 
 export interface CreateInstantLoanCanisterResponse {
@@ -65,7 +65,7 @@ export type InstantLoansCanisterError =
   | { DepositAlreadyProcessed: { loan_id: bigint } }
   | { MissingPrice: { symbol: string } }
   | { LendingDecodeFailed: { method: string; reason: string } }
-  | { InvalidLtvTimerMin: null }
+  | { InvalidLtvTimerS: null }
   | { DebtNotFullyRepaid: { loan_id: bigint } }
   | { EmptyCollateralPosition: null }
   | { SigningFailed: { reason: string } };
@@ -149,7 +149,7 @@ const idlFactory: IDL.InterfaceFactory = ({ IDL }) => {
     DepositAlreadyProcessed: IDL.Record({ loan_id: IDL.Nat }),
     MissingPrice: IDL.Record({ symbol: IDL.Text }),
     LendingDecodeFailed: IDL.Record({ method: IDL.Text, reason: IDL.Text }),
-    InvalidLtvTimerMin: IDL.Null,
+    InvalidLtvTimerS: IDL.Null,
     DebtNotFullyRepaid: IDL.Record({ loan_id: IDL.Nat }),
     EmptyCollateralPosition: IDL.Null,
     SigningFailed: IDL.Record({ reason: IDL.Text }),
@@ -164,7 +164,7 @@ const idlFactory: IDL.InterfaceFactory = ({ IDL }) => {
     refund_destination: AccountType,
     borrow_pool_id: IDL.Principal,
     borrow_asset: Assets,
-    ltv_timer_min: IDL.Nat64,
+    ltv_timer_s: IDL.Nat64,
   });
   const CreateLoanResponse = IDL.Record({
     loan_id: IDL.Nat,

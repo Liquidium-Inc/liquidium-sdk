@@ -1,4 +1,7 @@
+/** Number of characters in a public instant-loan reference. */
 export const REF_LENGTH = 6;
+
+/** Crockford-style base32 alphabet used for public instant-loan references. */
 export const REF_ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
 
 const BASE = 32n;
@@ -10,11 +13,13 @@ const ALPHABET_INDEX = new Map(
   [...REF_ALPHABET].map((character, index) => [character, BigInt(index)])
 );
 
+/** Converts a canister loan id into a short user-facing reference. */
 export function publicIdFromInt(id: bigint): string {
   if (id < 0n || id >= MOD) throw new Error("id out of range");
   return toBase32Fixed((id * A + B) % MOD);
 }
 
+/** Decodes a short user-facing reference back into the canister loan id. */
 export function intFromPublicId(ref: string): bigint {
   const encodedId = fromBase32Fixed(ref.toUpperCase());
   const id = ((encodedId - B) * A_INVERSE) % MOD;
