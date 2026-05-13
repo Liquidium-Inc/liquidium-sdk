@@ -16,6 +16,7 @@ import { getVariantKey } from "../../core/utils/variant";
 import { resolveSupplyTarget } from "../lending/_internal/supply-targets";
 import type { LendingModule } from "../lending/lending";
 import { SupplyPlanType } from "../lending/types";
+import type { AssetPrices, Pool } from "../market/types";
 import type { PositionsModule } from "../positions";
 import type { Position } from "../positions/types";
 import { intFromPublicId, publicIdFromInt } from "./ref-code";
@@ -33,6 +34,9 @@ const REPAYMENT_BUFFER_SECONDS = 86_400n;
 const RATE_SCALE = 10n ** 27n;
 const SECONDS_PER_YEAR = 31_536_000n;
 const ETH_STABLECOIN_INFLOW_FEE_FALLBACK = 1_500_000n;
+const INSTANT_LOAN_START_LTV_BUFFER_BPS = 500n;
+const INSTANT_LOAN_MIN_SLIPPAGE_BUFFER_BPS = 200n;
+const BASIS_POINTS_DENOMINATOR = 10_000;
 
 type InstantLoanCandidateWire = {
   loanId?: string | bigint;
@@ -72,18 +76,19 @@ export class InstantLoansModule {
    */
   async create(request: CreateInstantLoanRequest): Promise<InstantLoan> {
     validateCreateRequest(request);
+    await this.validateInstantLoanLtvPolicy(request);
 
     try {
       const result = await createInstantLoansActor(
         this.canisterContext
       ).create_loan({
         borrow_destination: externalAccountFromInput(request.borrowDestination),
-        min_borrow_amount: request.minBorrowAmount,
         lend_asset: assetVariant(request.collateralAsset),
-        ltv_target_bps: request.targetLtvBps,
+        borrow_amount: request.borrowAmount,
         lend_pool_id: Principal.fromText(request.collateralPoolId),
         min_deposit_hint: request.collateralAmount,
         refund_destination: externalAccountFromInput(request.refundDestination),
+        ltv_max_bps: request.ltvMaxBps,
         borrow_pool_id: Principal.fromText(request.borrowPoolId),
         borrow_asset: assetVariant(request.borrowAsset),
         ltv_timer_s: request.depositWindowSeconds,
@@ -208,7 +213,7 @@ export class InstantLoansModule {
       profileId,
       started: record.started,
       depositDetectedTimestamp: record.deposit_detected_ts[0],
-      targetLtvBps: record.ltv_target_bps,
+      ltvMaxBps: record.ltv_max_bps,
       depositWindowSeconds: record.ltv_timer_s,
       collateral: {
         poolId: collateralPoolId,
@@ -220,7 +225,7 @@ export class InstantLoansModule {
         poolId: borrowPoolId,
         asset: borrowAsset,
         chain: repayTarget.chain,
-        minAmount: record.min_borrow_amount,
+        amount: record.borrow_amount,
         destination: accountFromCanister(record.borrow_destination),
       },
       refundDestination: accountFromCanister(record.refund_destination),
@@ -278,6 +283,73 @@ export class InstantLoansModule {
 
     return this.apiClient;
   }
+
+  private async validateInstantLoanLtvPolicy(
+    request: CreateInstantLoanRequest
+  ): Promise<void> {
+    const [pools, assetPrices] = await Promise.all([
+      this.positions.market.listPools(),
+      this.positions.market.getAssetPrices(),
+    ]);
+    const collateralPool = pools.find(
+      (pool) => pool.id === request.collateralPoolId
+    );
+    const borrowPool = pools.find((pool) => pool.id === request.borrowPoolId);
+
+    if (!collateralPool) {
+      throw new LiquidiumError(
+        LiquidiumErrorCode.POOL_NOT_FOUND,
+        `Collateral pool not found: ${request.collateralPoolId}`
+      );
+    }
+
+    if (!borrowPool) {
+      throw new LiquidiumError(
+        LiquidiumErrorCode.POOL_NOT_FOUND,
+        `Borrow pool not found: ${request.borrowPoolId}`
+      );
+    }
+
+    const maxStartingLtvBps =
+      collateralPool.maxLtv - INSTANT_LOAN_START_LTV_BUFFER_BPS;
+    if (maxStartingLtvBps <= 0n) {
+      throw new LiquidiumError(
+        LiquidiumErrorCode.VALIDATION_ERROR,
+        `Collateral pool max LTV ${formatBpsAsPercent(collateralPool.maxLtv)} is too low for instant loans`
+      );
+    }
+
+    const impliedStartingLtvBps = calculateImpliedStartingLtvBps({
+      collateralAmount: request.collateralAmount,
+      collateralPool,
+      borrowAmount: request.borrowAmount,
+      borrowPool,
+      assetPrices,
+    });
+
+    if (impliedStartingLtvBps > maxStartingLtvBps) {
+      throw new LiquidiumError(
+        LiquidiumErrorCode.MAX_LTV_EXCEEDED,
+        `Instant loan starting LTV ${formatBpsAsPercent(impliedStartingLtvBps)} exceeds max starting LTV ${formatBpsAsPercent(maxStartingLtvBps)}`
+      );
+    }
+
+    const minLtvMaxBps =
+      maxStartingLtvBps + INSTANT_LOAN_MIN_SLIPPAGE_BUFFER_BPS;
+    if (request.ltvMaxBps < minLtvMaxBps) {
+      throw new LiquidiumError(
+        LiquidiumErrorCode.VALIDATION_ERROR,
+        `Instant loan max LTV ${formatBpsAsPercent(request.ltvMaxBps)} is below minimum allowed ${formatBpsAsPercent(minLtvMaxBps)}`
+      );
+    }
+
+    if (request.ltvMaxBps > collateralPool.maxLtv) {
+      throw new LiquidiumError(
+        LiquidiumErrorCode.MAX_LTV_EXCEEDED,
+        `Instant loan max LTV ${formatBpsAsPercent(request.ltvMaxBps)} exceeds collateral pool max ${formatBpsAsPercent(collateralPool.maxLtv)}`
+      );
+    }
+  }
 }
 
 function getRepaymentInflowFeeFallback(asset: string, chain: string): bigint {
@@ -313,6 +385,49 @@ function calculateTotalDebtAmount(borrowPosition: Position | null): bigint {
   return borrowPosition.borrowed + borrowPosition.debtInterest;
 }
 
+function calculateImpliedStartingLtvBps(input: {
+  collateralAmount: bigint;
+  collateralPool: Pool;
+  borrowAmount: bigint;
+  borrowPool: Pool;
+  assetPrices: AssetPrices;
+}): bigint {
+  const collateralValueUsd =
+    baseUnitsToNumber(input.collateralAmount, input.collateralPool.decimals) *
+    getAssetPrice(input.assetPrices, input.collateralPool.asset);
+  const borrowValueUsd =
+    baseUnitsToNumber(input.borrowAmount, input.borrowPool.decimals) *
+    getAssetPrice(input.assetPrices, input.borrowPool.asset);
+
+  if (collateralValueUsd <= 0) {
+    throw new LiquidiumError(
+      LiquidiumErrorCode.VALIDATION_ERROR,
+      "Instant loan collateral value must be greater than zero"
+    );
+  }
+
+  return BigInt(
+    Math.round((borrowValueUsd * BASIS_POINTS_DENOMINATOR) / collateralValueUsd)
+  );
+}
+
+function getAssetPrice(assetPrices: AssetPrices, asset: string): number {
+  const price = assetPrices[asset];
+
+  if (typeof price !== "number" || !Number.isFinite(price) || price <= 0) {
+    throw new LiquidiumError(
+      LiquidiumErrorCode.VALIDATION_ERROR,
+      `Missing price for ${asset}`
+    );
+  }
+
+  return price;
+}
+
+function baseUnitsToNumber(amount: bigint, decimals: bigint): number {
+  return Number(amount) / 10 ** Number(decimals);
+}
+
 function validateCreateRequest(request: CreateInstantLoanRequest): void {
   if (request.collateralAmount <= 0n) {
     throw new LiquidiumError(
@@ -320,10 +435,16 @@ function validateCreateRequest(request: CreateInstantLoanRequest): void {
       "Instant loan collateral amount must be greater than zero"
     );
   }
-  if (request.targetLtvBps <= 0n) {
+  if (request.borrowAmount <= 0n) {
     throw new LiquidiumError(
       LiquidiumErrorCode.VALIDATION_ERROR,
-      "Instant loan target LTV must be greater than zero"
+      "Instant loan borrow amount must be greater than zero"
+    );
+  }
+  if (request.ltvMaxBps <= 0n) {
+    throw new LiquidiumError(
+      LiquidiumErrorCode.VALIDATION_ERROR,
+      "Instant loan max LTV must be greater than zero"
     );
   }
   if (request.depositWindowSeconds <= 0n) {
@@ -447,7 +568,8 @@ function mapInstantLoansErrorToLiquidiumError(
         LiquidiumErrorCode.POSITION_NOT_FOUND,
         stringifyErrorPayload(payload)
       );
-    case "LtvTargetTooHigh":
+    case "LtvMaxExceeded":
+    case "LtvMaxOutOfRange":
       return new LiquidiumError(
         LiquidiumErrorCode.MAX_LTV_EXCEEDED,
         stringifyErrorPayload(payload)
@@ -457,7 +579,7 @@ function mapInstantLoansErrorToLiquidiumError(
         LiquidiumErrorCode.INVALID_ADDRESS,
         stringifyErrorPayload(payload)
       );
-    case "BorrowAmountBelowMinimum":
+    case "BorrowAmountRequired":
       return new LiquidiumError(
         LiquidiumErrorCode.BORROW_CAP_EXCEEDED,
         stringifyErrorPayload(payload)
@@ -488,4 +610,13 @@ function stringifyErrorPayload(payload: unknown): string | undefined {
 
     return value;
   });
+}
+
+function formatBpsAsPercent(value: bigint): string {
+  const sign = value < 0n ? "-" : "";
+  const absoluteValue = value < 0n ? -value : value;
+  const wholePart = absoluteValue / 100n;
+  const fractionalPart = (absoluteValue % 100n).toString().padStart(2, "0");
+
+  return `${sign}${wholePart.toString()}.${fractionalPart}%`;
 }

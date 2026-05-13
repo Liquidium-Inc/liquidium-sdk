@@ -3607,6 +3607,8 @@ describe("InstantLoansModule", () => {
     expect(loan.loanId).toBe(LOAN_ID);
     expect(loan.ref).toBe(publicIdFromInt(LOAN_ID));
     expect(loan.profileId).toBe(PROFILE_ID);
+    expect(loan.ltvMaxBps).toBe(6_800n);
+    expect(loan.borrow.amount).toBe(2_000_000n);
     expect(loan.depositTarget).toMatchObject({
       type: "nativeAddress",
       asset: "BTC",
@@ -3651,6 +3653,17 @@ describe("InstantLoansModule", () => {
     const getLoan = vi.fn().mockResolvedValue({ Ok: createInstantLoan() });
 
     vi.spyOn(Actor, "createActor")
+      .mockReturnValueOnce({
+        list_pools: vi
+          .fn()
+          .mockResolvedValue([createBtcPoolRecord(), createUsdtPoolRecord()]),
+        get_pool_rate: vi
+          .fn()
+          .mockResolvedValue([[10_000_000_000_000_000_000_000_000n, 0n, 0n]]),
+      } as never)
+      .mockReturnValueOnce({
+        get_prices: vi.fn().mockResolvedValue(prices()),
+      } as never)
       .mockReturnValueOnce({ create_loan: createLoan } as never)
       .mockReturnValueOnce({ get_loan: getLoan } as never)
       .mockReturnValueOnce({
@@ -3692,8 +3705,8 @@ describe("InstantLoansModule", () => {
       collateralAsset: "BTC",
       borrowAsset: "USDT",
       collateralAmount: 10_000_000n,
-      minBorrowAmount: 2_000_000n,
-      targetLtvBps: 3_000n,
+      borrowAmount: 2_000_000n,
+      ltvMaxBps: 6_800n,
       depositWindowSeconds: 3_600n,
       borrowDestination: "0x2222222222222222222222222222222222222222",
       refundDestination: "bc1qrefunddestination",
@@ -3705,8 +3718,8 @@ describe("InstantLoansModule", () => {
         lend_asset: { BTC: null },
         borrow_asset: { USDT: null },
         min_deposit_hint: 10_000_000n,
-        min_borrow_amount: 2_000_000n,
-        ltv_target_bps: 3_000n,
+        borrow_amount: 2_000_000n,
+        ltv_max_bps: 6_800n,
         ltv_timer_s: 3_600n,
         borrow_destination: {
           External: "0x2222222222222222222222222222222222222222",
@@ -3715,6 +3728,129 @@ describe("InstantLoansModule", () => {
       })
     );
     expect(loan.loanId).toBe(LOAN_ID);
+  });
+
+  test("rejects a loan when starting LTV exceeds the starting cap", async () => {
+    // given
+    const createLoan = vi.fn();
+    vi.spyOn(Actor, "createActor")
+      .mockReturnValueOnce({
+        list_pools: vi
+          .fn()
+          .mockResolvedValue([createBtcPoolRecord(), createUsdtPoolRecord()]),
+        get_pool_rate: vi
+          .fn()
+          .mockResolvedValue([[10_000_000_000_000_000_000_000_000n, 0n, 0n]]),
+      } as never)
+      .mockReturnValueOnce({
+        get_prices: vi.fn().mockResolvedValue(prices()),
+      } as never)
+      .mockReturnValueOnce({ create_loan: createLoan } as never);
+    const client = LiquidiumClient.create({
+      canisterIds: { instantLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
+    });
+
+    // when
+    const result = client.instantLoans.create({
+      collateralPoolId: BTC_POOL_ID,
+      borrowPoolId: USDT_POOL_ID,
+      collateralAsset: "BTC",
+      borrowAsset: "USDT",
+      collateralAmount: 10_000_000n,
+      borrowAmount: 6_600_000_000n,
+      ltvMaxBps: 6_800n,
+      depositWindowSeconds: 3_600n,
+      borrowDestination: "0x2222222222222222222222222222222222222222",
+      refundDestination: "bc1qrefunddestination",
+    });
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.MAX_LTV_EXCEEDED,
+    });
+    expect(createLoan).not.toHaveBeenCalled();
+  });
+
+  test("rejects a loan when max LTV is below the slippage minimum", async () => {
+    // given
+    const createLoan = vi.fn();
+    vi.spyOn(Actor, "createActor")
+      .mockReturnValueOnce({
+        list_pools: vi
+          .fn()
+          .mockResolvedValue([createBtcPoolRecord(), createUsdtPoolRecord()]),
+        get_pool_rate: vi
+          .fn()
+          .mockResolvedValue([[10_000_000_000_000_000_000_000_000n, 0n, 0n]]),
+      } as never)
+      .mockReturnValueOnce({
+        get_prices: vi.fn().mockResolvedValue(prices()),
+      } as never)
+      .mockReturnValueOnce({ create_loan: createLoan } as never);
+    const client = LiquidiumClient.create({
+      canisterIds: { instantLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
+    });
+
+    // when
+    const result = client.instantLoans.create({
+      collateralPoolId: BTC_POOL_ID,
+      borrowPoolId: USDT_POOL_ID,
+      collateralAsset: "BTC",
+      borrowAsset: "USDT",
+      collateralAmount: 10_000_000n,
+      borrowAmount: 2_000_000n,
+      ltvMaxBps: 6_699n,
+      depositWindowSeconds: 3_600n,
+      borrowDestination: "0x2222222222222222222222222222222222222222",
+      refundDestination: "bc1qrefunddestination",
+    });
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+    });
+    expect(createLoan).not.toHaveBeenCalled();
+  });
+
+  test("rejects a loan when max LTV exceeds the collateral pool max", async () => {
+    // given
+    const createLoan = vi.fn();
+    vi.spyOn(Actor, "createActor")
+      .mockReturnValueOnce({
+        list_pools: vi
+          .fn()
+          .mockResolvedValue([createBtcPoolRecord(), createUsdtPoolRecord()]),
+        get_pool_rate: vi
+          .fn()
+          .mockResolvedValue([[10_000_000_000_000_000_000_000_000n, 0n, 0n]]),
+      } as never)
+      .mockReturnValueOnce({
+        get_prices: vi.fn().mockResolvedValue(prices()),
+      } as never)
+      .mockReturnValueOnce({ create_loan: createLoan } as never);
+    const client = LiquidiumClient.create({
+      canisterIds: { instantLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
+    });
+
+    // when
+    const result = client.instantLoans.create({
+      collateralPoolId: BTC_POOL_ID,
+      borrowPoolId: USDT_POOL_ID,
+      collateralAsset: "BTC",
+      borrowAsset: "USDT",
+      collateralAmount: 10_000_000n,
+      borrowAmount: 2_000_000n,
+      ltvMaxBps: 7_001n,
+      depositWindowSeconds: 3_600n,
+      borrowDestination: "0x2222222222222222222222222222222222222222",
+      refundDestination: "bc1qrefunddestination",
+    });
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.MAX_LTV_EXCEEDED,
+    });
+    expect(createLoan).not.toHaveBeenCalled();
   });
 
   test("finds loan candidates by address through the SDK API", async () => {
@@ -3769,9 +3905,9 @@ describe("InstantLoansModule", () => {
         External: "0x2222222222222222222222222222222222222222",
       },
       started: false,
-      min_borrow_amount: 2_000_000n,
+      borrow_amount: 2_000_000n,
       lend_asset: { BTC: null },
-      ltv_target_bps: 3_000n,
+      ltv_max_bps: 6_800n,
       lend_pool_id: Principal.fromText(BTC_POOL_ID),
       min_deposit_hint: 10_000_000n,
       refund_destination: { External: "bc1qrefunddestination" },
@@ -3811,6 +3947,13 @@ describe("InstantLoansModule", () => {
       },
       ...overrides,
     };
+  }
+
+  function prices() {
+    return [
+      ["BTC_USD", 10_000_000n, 2],
+      ["USDT_USD", 100n, 2],
+    ];
   }
 
   function createBtcPoolRecord() {

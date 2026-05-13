@@ -42,10 +42,10 @@ export interface CreateInstantLoanRequest {
   borrowAsset: InstantLoanAsset;
   /** Collateral amount hint in the collateral asset's base units. */
   collateralAmount: bigint;
-  /** Minimum acceptable borrow amount in the borrow asset's base units. */
-  minBorrowAmount: bigint;
-  /** Target loan-to-value ratio in basis points. `6_000n` means 60%. */
-  targetLtvBps: bigint;
+  /** Requested borrow amount in the borrow asset's base units. */
+  borrowAmount: bigint;
+  /** Maximum loan-to-value ratio in basis points. `6_000n` means 60%. */
+  ltvMaxBps: bigint;
   /**
    * Seconds allowed for the collateral deposit before the instant-loan flow
    * times out. Internally this is sent to the canister as `ltv_timer_s`.
@@ -114,8 +114,8 @@ export interface InstantLoan {
   started: boolean;
   /** Seconds timestamp when the canister processed the collateral deposit, if any. */
   depositDetectedTimestamp?: bigint;
-  /** Target loan-to-value ratio in basis points. */
-  targetLtvBps: bigint;
+  /** Maximum loan-to-value ratio in basis points. */
+  ltvMaxBps: bigint;
   /** Seconds allowed for the collateral deposit before timeout. */
   depositWindowSeconds: bigint;
   /** Collateral-side pool, asset, chain, and requested amount hint. */
@@ -125,12 +125,12 @@ export interface InstantLoan {
     chain: MarketChain;
     amountHint: bigint;
   };
-  /** Borrow-side pool, asset, chain, minimum amount, and destination. */
+  /** Borrow-side pool, asset, chain, requested amount, and destination. */
   borrow: {
     poolId: string;
     asset: MarketAsset;
     chain: MarketChain;
-    minAmount: bigint;
+    amount: bigint;
     destination: InstantLoanAccount;
   };
   /** Destination used for collateral refunds or withdrawals. */

@@ -17,12 +17,12 @@ export type InstantLoanLeg = { Lend: null } | { Borrow: null };
 
 export interface CreateInstantLoanCanisterRequest {
   borrow_destination: InstantLoanAccountType;
-  min_borrow_amount: bigint;
   lend_asset: InstantLoanAsset;
-  ltv_target_bps: bigint;
+  borrow_amount: bigint;
   lend_pool_id: Principal;
   min_deposit_hint: bigint;
   refund_destination: InstantLoanAccountType;
+  ltv_max_bps: bigint;
   borrow_pool_id: Principal;
   borrow_asset: InstantLoanAsset;
   ltv_timer_s: bigint;
@@ -37,12 +37,12 @@ export interface InstantLoanCanisterRecord {
   id: bigint;
   borrow_destination: InstantLoanAccountType;
   started: boolean;
-  min_borrow_amount: bigint;
   lend_asset: InstantLoanAsset;
-  ltv_target_bps: bigint;
+  borrow_amount: bigint;
   lend_pool_id: Principal;
   min_deposit_hint: bigint;
   refund_destination: InstantLoanAccountType;
+  ltv_max_bps: bigint;
   ltv_timer_s: bigint;
   lending_profile: Principal;
   borrow_pool_id: Principal;
@@ -51,17 +51,18 @@ export interface InstantLoanCanisterRecord {
 }
 
 export type InstantLoansCanisterError =
+  | { BorrowAmountRequired: null }
   | { NoCollateralPosition: { loan_id: bigint } }
+  | { LtvMaxExceeded: { actual_bps: bigint; max_bps: bigint } }
   | { MemoryLockFailed: { reason: string } }
   | { UnauthorizedAccessListCaller: { caller: Principal } }
-  | { LtvTargetTooHigh: { max: bigint } }
+  | { LtvMaxOutOfRange: { max: bigint } }
   | { AccountRequired: { label: string } }
   | { DepositTimerExceeded: { loan_id: bigint } }
   | { LendingCallFailed: { method: string; reason: string } }
   | { LoanNotFound: { loan_id: bigint } }
   | { LendingProtocolError: { error: unknown; operation: string } }
   | { AuthorizationFailed: { reason: string } }
-  | { BorrowAmountBelowMinimum: { minimum: bigint; amount: bigint } }
   | { DepositAlreadyProcessed: { loan_id: bigint } }
   | { MissingPrice: { symbol: string } }
   | { LendingDecodeFailed: { method: string; reason: string } }
@@ -129,10 +130,15 @@ const idlFactory: IDL.InterfaceFactory = ({ IDL }) => {
     InsufficientFunds: IDL.Null,
   });
   const InstantLoansError = IDL.Variant({
+    BorrowAmountRequired: IDL.Null,
     NoCollateralPosition: IDL.Record({ loan_id: IDL.Nat }),
+    LtvMaxExceeded: IDL.Record({
+      actual_bps: IDL.Nat64,
+      max_bps: IDL.Nat64,
+    }),
     MemoryLockFailed: IDL.Record({ reason: IDL.Text }),
     UnauthorizedAccessListCaller: IDL.Record({ caller: IDL.Principal }),
-    LtvTargetTooHigh: IDL.Record({ max: IDL.Nat64 }),
+    LtvMaxOutOfRange: IDL.Record({ max: IDL.Nat64 }),
     AccountRequired: IDL.Record({ label: IDL.Text }),
     DepositTimerExceeded: IDL.Record({ loan_id: IDL.Nat }),
     LendingCallFailed: IDL.Record({ method: IDL.Text, reason: IDL.Text }),
@@ -142,10 +148,6 @@ const idlFactory: IDL.InterfaceFactory = ({ IDL }) => {
       operation: IDL.Text,
     }),
     AuthorizationFailed: IDL.Record({ reason: IDL.Text }),
-    BorrowAmountBelowMinimum: IDL.Record({
-      minimum: IDL.Nat,
-      amount: IDL.Nat,
-    }),
     DepositAlreadyProcessed: IDL.Record({ loan_id: IDL.Nat }),
     MissingPrice: IDL.Record({ symbol: IDL.Text }),
     LendingDecodeFailed: IDL.Record({ method: IDL.Text, reason: IDL.Text }),
@@ -156,12 +158,12 @@ const idlFactory: IDL.InterfaceFactory = ({ IDL }) => {
   });
   const CreateLoanRequest = IDL.Record({
     borrow_destination: AccountType,
-    min_borrow_amount: IDL.Nat,
     lend_asset: Assets,
-    ltv_target_bps: IDL.Nat64,
+    borrow_amount: IDL.Nat,
     lend_pool_id: IDL.Principal,
     min_deposit_hint: IDL.Nat,
     refund_destination: AccountType,
+    ltv_max_bps: IDL.Nat64,
     borrow_pool_id: IDL.Principal,
     borrow_asset: Assets,
     ltv_timer_s: IDL.Nat64,
@@ -186,12 +188,12 @@ const idlFactory: IDL.InterfaceFactory = ({ IDL }) => {
     authorisation: AuthorisationType,
     borrow_destination: AccountType,
     started: IDL.Bool,
-    min_borrow_amount: IDL.Nat,
     lend_asset: Assets,
-    ltv_target_bps: IDL.Nat64,
+    borrow_amount: IDL.Nat,
     lend_pool_id: IDL.Principal,
     min_deposit_hint: IDL.Nat,
     refund_destination: AccountType,
+    ltv_max_bps: IDL.Nat64,
     ltv_timer_s: IDL.Nat64,
     lending_profile: IDL.Principal,
     borrow_pool_id: IDL.Principal,

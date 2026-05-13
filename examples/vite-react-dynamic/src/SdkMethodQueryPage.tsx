@@ -226,13 +226,85 @@ const SDK_METHODS: MethodDefinition[] = [
   {
     id: "activities.list",
     label: "activities.list",
-    defaultArgs: '{\n  "profileId": "aaaaa-aa",\n  "state": "active"\n}',
+    defaultArgs: '{\n  "profileId": "aaaaa-aa",\n  "state": "all"\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
       return await client.activities.list({
         profileId: expectNonEmptyString(args.profileId, "profileId"),
         state: expectOptionalActivityState(args.state, "state"),
       });
+    },
+  },
+  {
+    id: "instantLoans.create",
+    label: "instantLoans.create",
+    defaultArgs:
+      '{\n  "collateralPoolId": "42svn-2yaaa-aaaae-qfcsq-cai",\n  "borrowPoolId": "7dcux-qqaaa-aaaae-qfc3a-cai",\n  "collateralAsset": "BTC",\n  "borrowAsset": "USDT",\n  "collateralAmount": "37000",\n  "borrowAmount": "9000000",\n  "ltvMaxBps": "6800",\n  "depositWindowSeconds": "3600",\n  "borrowDestination": "0xYourBorrowAddress",\n  "refundDestination": "bc1qYourRefundAddress"\n}',
+    execute: async (client, input) => {
+      const args = expectObject(input);
+      return await client.instantLoans.create({
+        collateralPoolId: expectNonEmptyString(
+          args.collateralPoolId,
+          "collateralPoolId"
+        ),
+        borrowPoolId: expectNonEmptyString(args.borrowPoolId, "borrowPoolId"),
+        collateralAsset: expectInstantLoanAsset(
+          args.collateralAsset,
+          "collateralAsset"
+        ),
+        borrowAsset: expectInstantLoanAsset(args.borrowAsset, "borrowAsset"),
+        collateralAmount: expectBigInt(
+          args.collateralAmount,
+          "collateralAmount"
+        ),
+        borrowAmount: expectBigInt(args.borrowAmount, "borrowAmount"),
+        ltvMaxBps: expectBigInt(args.ltvMaxBps, "ltvMaxBps"),
+        depositWindowSeconds: expectBigInt(
+          args.depositWindowSeconds,
+          "depositWindowSeconds"
+        ),
+        borrowDestination: expectNonEmptyString(
+          args.borrowDestination,
+          "borrowDestination"
+        ),
+        refundDestination: expectNonEmptyString(
+          args.refundDestination,
+          "refundDestination"
+        ),
+      });
+    },
+  },
+  {
+    id: "instantLoans.getByRef",
+    label: "instantLoans.get({ ref })",
+    defaultArgs: '{\n  "ref": "Y7R19F"\n}',
+    execute: async (client, input) => {
+      const args = expectObject(input);
+      return await client.instantLoans.get({
+        ref: expectNonEmptyString(args.ref, "ref"),
+      });
+    },
+  },
+  {
+    id: "instantLoans.getByLoanId",
+    label: "instantLoans.get({ loanId })",
+    defaultArgs: '{\n  "loanId": "66"\n}',
+    execute: async (client, input) => {
+      const args = expectObject(input);
+      return await client.instantLoans.get({
+        loanId: expectBigInt(args.loanId, "loanId"),
+      });
+    },
+  },
+  {
+    id: "instantLoans.findByAddress",
+    label: "instantLoans.findByAddress",
+    defaultArgs: '{\n  "address": "bc1qYourRefundOrDepositAddress"\n}',
+    execute: async (client, input) => {
+      const args = expectObject(input);
+      return await client.instantLoans.findByAddress(
+        expectNonEmptyString(args.address, "address")
+      );
     },
   },
   {
@@ -648,6 +720,10 @@ export function SdkMethodQueryPage({
         nextArgs.receiverAddress = walletAddress;
       }
 
+      if ("borrowDestination" in nextArgs) {
+        nextArgs.borrowDestination = walletAddress;
+      }
+
       if ("chain" in nextArgs) {
         nextArgs.chain = walletChain;
       }
@@ -968,6 +1044,24 @@ function expectAsset(value: unknown, fieldName: string): Asset {
   }
 
   throw new Error(`${fieldName} must be BTC, USDC, or USDT.`);
+}
+
+function expectInstantLoanAsset(
+  value: unknown,
+  fieldName: string
+): "BTC" | "SOL" | "USDC" | "USDT" {
+  const asset = expectNonEmptyString(value, fieldName).toUpperCase();
+
+  if (
+    asset === "BTC" ||
+    asset === "SOL" ||
+    asset === "USDC" ||
+    asset === "USDT"
+  ) {
+    return asset;
+  }
+
+  throw new Error(`${fieldName} must be BTC, SOL, USDC, or USDT.`);
 }
 
 function expectOptionalChain(
