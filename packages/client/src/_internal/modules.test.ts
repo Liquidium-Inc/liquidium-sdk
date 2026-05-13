@@ -3553,6 +3553,10 @@ describe("InstantLoansModule", () => {
     const getDepositAddress = vi.fn().mockResolvedValue({
       Ok: "0x1111111111111111111111111111111111111111",
     });
+    const getPoolRate = vi
+      .fn()
+      .mockResolvedValue([[10_000_000_000_000_000_000_000_000n, 0n, 0n]]);
+    const estimateDepositFee = vi.fn().mockResolvedValue({ Ok: 1_500_000n });
     const getCollateralPosition = vi.fn().mockResolvedValue([
       createInstantLoanPosition(
         BTC_POOL_ID,
@@ -3583,8 +3587,12 @@ describe("InstantLoansModule", () => {
       } as never)
       .mockReturnValueOnce({ get_position: getCollateralPosition } as never)
       .mockReturnValueOnce({ get_position: getBorrowPosition } as never)
+      .mockReturnValueOnce({ get_pool_rate: getPoolRate } as never)
       .mockReturnValueOnce({ get_btc_address: getBtcAddress } as never)
-      .mockReturnValueOnce({ get_deposit_address: getDepositAddress } as never);
+      .mockReturnValueOnce({ get_deposit_address: getDepositAddress } as never)
+      .mockReturnValueOnce({
+        estimate_deposit_fee: estimateDepositFee,
+      } as never);
     const client = LiquidiumClient.create({
       canisterIds: { instantLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
     });
@@ -3612,11 +3620,15 @@ describe("InstantLoansModule", () => {
       address: "0x1111111111111111111111111111111111111111",
     });
     expect(loan.repayment).toMatchObject({
-      amount: 2_003_001n,
+      amount: 3_501_054n,
       decimals: 6n,
+      debtAmount: 2_001_000n,
+      interestBufferAmount: 54n,
+      interestBufferSeconds: 86_400n,
+      inflowFeeAmount: 1_500_000n,
+      inflowFeeEstimateAvailable: true,
       asset: "USDT",
       chain: "ETH",
-      includesBufferBps: 10n,
     });
     expect(loan.position).toMatchObject({
       collateralAmount: 10_000_000n,
@@ -3654,12 +3666,20 @@ describe("InstantLoansModule", () => {
         get_position: vi.fn().mockResolvedValue([]),
       } as never)
       .mockReturnValueOnce({
+        get_pool_rate: vi
+          .fn()
+          .mockResolvedValue([[10_000_000_000_000_000_000_000_000n, 0n, 0n]]),
+      } as never)
+      .mockReturnValueOnce({
         get_btc_address: vi.fn().mockResolvedValue("bc1qinstantdeposit"),
       } as never)
       .mockReturnValueOnce({
         get_deposit_address: vi.fn().mockResolvedValue({
           Ok: "0x1111111111111111111111111111111111111111",
         }),
+      } as never)
+      .mockReturnValueOnce({
+        estimate_deposit_fee: vi.fn().mockResolvedValue({ Ok: 1_500_000n }),
       } as never);
     const client = LiquidiumClient.create({
       canisterIds: { instantLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },

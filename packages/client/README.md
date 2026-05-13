@@ -85,6 +85,7 @@ const collateralDepositAddress =
 
 // Preferred restore path: ref is decoded locally and loaded from canister.
 const restoredLoan = await client.instantLoans.get({ ref: loanRef });
+// Full amount to send to the repayment target, including inflow fee and interest buffer.
 const repayAmount = restoredLoan.repayment.amount;
 
 // Recovery path: requires apiBaseUrl and returns candidates only.

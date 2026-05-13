@@ -11,9 +11,10 @@ import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
 import { buildInstantLoanAddressLookupPath } from "../../core/sdk-api-paths";
 import type { ApiClient } from "../../core/transports/api-client";
 import type { CanisterContext } from "../../core/transports/canister-context";
-import { SupplyAction } from "../../core/types";
+import { type Asset, type Chain, SupplyAction } from "../../core/types";
 import { getVariantKey } from "../../core/utils/variant";
 import { resolveSupplyTarget } from "../lending/_internal/supply-targets";
+import type { LendingModule } from "../lending/lending";
 import { SupplyPlanType } from "../lending/types";
 import type { PositionsModule } from "../positions";
 import type { Position } from "../positions/types";
@@ -28,7 +29,10 @@ import type {
   InstantLoanGetRequest,
 } from "./types";
 
-const DEFAULT_REPAY_BUFFER_BPS = 10n;
+const REPAYMENT_BUFFER_SECONDS = 86_400n;
+const RATE_SCALE = 10n ** 27n;
+const SECONDS_PER_YEAR = 31_536_000n;
+const ETH_STABLECOIN_INFLOW_FEE_FALLBACK = 1_500_000n;
 
 type InstantLoanCandidateWire = {
   loanId?: string | bigint;
@@ -55,6 +59,7 @@ export class InstantLoansModule {
   constructor(
     readonly canisterContext: CanisterContext,
     readonly apiClient: ApiClient | undefined,
+    readonly lending: LendingModule,
     readonly positions: PositionsModule
   ) {}
 
@@ -162,27 +167,40 @@ export class InstantLoansModule {
     const collateralAsset = getVariantKey(record.lend_asset);
     const borrowAsset = getVariantKey(record.borrow_asset);
 
-    const [depositTarget, repayTarget, collateralPosition, borrowPosition] =
-      await Promise.all([
-        resolveSupplyTarget(this.canisterContext, {
-          profileId,
-          poolId: collateralPoolId,
-          action: SupplyAction.deposit,
-          mechanism: SupplyPlanType.transfer,
-        }),
-        resolveSupplyTarget(this.canisterContext, {
-          profileId,
-          poolId: borrowPoolId,
-          action: SupplyAction.repayment,
-          mechanism: SupplyPlanType.transfer,
-        }),
-        this.positions.getPosition(profileId, collateralPoolId),
-        this.positions.getPosition(profileId, borrowPoolId),
-      ]);
-    const repaymentAmount = calculateRepaymentAmount(
+    const [
+      depositTarget,
+      repayTarget,
+      collateralPosition,
       borrowPosition,
-      DEFAULT_REPAY_BUFFER_BPS
+      borrowPoolRate,
+    ] = await Promise.all([
+      resolveSupplyTarget(this.canisterContext, {
+        profileId,
+        poolId: collateralPoolId,
+        action: SupplyAction.deposit,
+        mechanism: SupplyPlanType.transfer,
+      }),
+      resolveSupplyTarget(this.canisterContext, {
+        profileId,
+        poolId: borrowPoolId,
+        action: SupplyAction.repayment,
+        mechanism: SupplyPlanType.transfer,
+      }),
+      this.positions.getPosition(profileId, collateralPoolId),
+      this.positions.getPosition(profileId, borrowPoolId),
+      this.positions.market.getPoolRate(borrowPoolId),
+    ]);
+    const repaymentInflowFee = await this.estimateRepaymentInflowFee(
+      borrowAsset,
+      repayTarget.chain
     );
+    const totalDebtAmount = calculateTotalDebtAmount(borrowPosition);
+    const interestBufferAmount = calculateInterestBufferAmount(
+      borrowPosition,
+      borrowPoolRate.borrowRate
+    );
+    const repaymentAmount =
+      totalDebtAmount + interestBufferAmount + repaymentInflowFee.totalFee;
 
     return {
       loanId: record.id,
@@ -211,9 +229,13 @@ export class InstantLoansModule {
       repayment: {
         amount: repaymentAmount,
         decimals: borrowPosition?.borrowedDecimals ?? 0n,
+        debtAmount: totalDebtAmount,
+        interestBufferAmount,
+        interestBufferSeconds: REPAYMENT_BUFFER_SECONDS,
+        inflowFeeAmount: repaymentInflowFee.totalFee,
+        inflowFeeEstimateAvailable: repaymentInflowFee.estimateAvailable,
         asset: borrowAsset,
         chain: repayTarget.chain,
-        includesBufferBps: DEFAULT_REPAY_BUFFER_BPS,
         target: repayTarget,
       },
       position: {
@@ -223,9 +245,27 @@ export class InstantLoansModule {
         borrowedAmount: borrowPosition?.borrowed ?? 0n,
         borrowedDecimals: borrowPosition?.borrowedDecimals ?? 0n,
         debtInterestAmount: borrowPosition?.debtInterest ?? 0n,
-        totalDebtAmount: calculateTotalDebtAmount(borrowPosition),
+        totalDebtAmount,
       },
     };
+  }
+
+  private async estimateRepaymentInflowFee(
+    asset: string,
+    chain: string
+  ): Promise<{ totalFee: bigint; estimateAvailable: boolean }> {
+    try {
+      const fee = await this.lending.estimateInflowFee({
+        asset: asset as Asset,
+        chain: chain as Chain,
+      });
+      return { totalFee: fee.totalFee, estimateAvailable: true };
+    } catch {
+      return {
+        totalFee: getRepaymentInflowFeeFallback(asset, chain),
+        estimateAvailable: false,
+      };
+    }
   }
 
   private requireApi(): ApiClient {
@@ -240,16 +280,29 @@ export class InstantLoansModule {
   }
 }
 
-function calculateRepaymentAmount(
+function getRepaymentInflowFeeFallback(asset: string, chain: string): bigint {
+  if (chain === "ETH" && (asset === "USDT" || asset === "USDC")) {
+    return ETH_STABLECOIN_INFLOW_FEE_FALLBACK;
+  }
+
+  return 0n;
+}
+
+function calculateInterestBufferAmount(
   borrowPosition: Position | null,
-  bufferBps: bigint
+  annualBorrowRate: bigint
 ): bigint {
   const totalDebtAmount = calculateTotalDebtAmount(borrowPosition);
-  if (totalDebtAmount <= 0n) {
+  if (totalDebtAmount <= 0n || annualBorrowRate <= 0n) {
     return 0n;
   }
 
-  return (totalDebtAmount * (10000n + bufferBps)) / 10000n;
+  const interestBuffer =
+    (totalDebtAmount * annualBorrowRate * REPAYMENT_BUFFER_SECONDS) /
+    RATE_SCALE /
+    SECONDS_PER_YEAR;
+
+  return interestBuffer > 1n ? interestBuffer : 1n;
 }
 
 function calculateTotalDebtAmount(borrowPosition: Position | null): bigint {

@@ -62,16 +62,24 @@ export type InstantLoanGetRequest = { loanId: bigint } | { ref: string };
 
 /** Current amount to send to the repayment target to close the debt. */
 export interface InstantLoanRepayment {
-  /** Buffered repayment amount in the borrow asset's base units. */
+  /** Full amount to send to the repayment target, including fee and interest buffer. */
   amount: bigint;
   /** Decimal scale for `amount`. */
   decimals: bigint;
+  /** Current debt in base units, before fee and interest buffer. */
+  debtAmount: bigint;
+  /** Additional interest buffer in base units. */
+  interestBufferAmount: bigint;
+  /** Seconds of interest accrual included in `interestBufferAmount`. */
+  interestBufferSeconds: bigint;
+  /** Inflow fee amount in base units added to the repayment transfer. Falls back to the protocol minimum when live estimation is unavailable. */
+  inflowFeeAmount: bigint;
+  /** Whether `inflowFeeAmount` came from a live fee estimate. */
+  inflowFeeEstimateAvailable: boolean;
   /** Asset to repay. */
   asset: MarketAsset;
   /** Chain used for repayment. */
   chain: MarketChain;
-  /** Buffer included to cover interest accrual between quote and submission. */
-  includesBufferBps: bigint;
   /** Address or ICRC account where the repayment should be sent. */
   target: SupplyTarget;
 }

@@ -138,7 +138,8 @@ client.instantLoans.findByAddress(address); // requires apiBaseUrl
 
 `create(...)` and `get(...)` are canister-first. The SDK derives deposit and
 repay targets internally from the generated `lending_profile`, and `get(...)`
-also returns `position` plus `repayment.amount` for the current repay amount.
+also returns `position` plus `repayment.amount` for the full amount to send to
+the repayment target, including inflow fee and interest buffer.
 `findByAddress(...)` is a backend-assisted recovery helper and returns
 candidates only.
 
