@@ -5,6 +5,13 @@ export interface QuoteRequest {
   targetLtvBps: bigint;
 }
 
+export interface CalculateLtvRequest {
+  borrowAmount: bigint;
+  borrowPoolId: string;
+  collateralAmount: bigint;
+  collateralPoolId: string;
+}
+
 export interface QuoteValidationError {
   code: QuoteValidationErrorCode;
   message: string;
@@ -43,4 +50,18 @@ export interface QuoteResult {
   collateralAsset: string;
   validationErrors: QuoteValidationError[];
   warnings: QuoteWarning[];
+}
+
+export interface LtvCalculation {
+  borrowAmount: bigint;
+  collateralAmount: bigint;
+  borrowUsd: bigint;
+  collateralUsd: bigint;
+  ltvBps: bigint;
+  maxAllowedLtvBps: bigint;
+  borrowPoolId: string;
+  collateralPoolId: string;
+  borrowAsset: string;
+  collateralAsset: string;
+  validationErrors: QuoteValidationError[];
 }

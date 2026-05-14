@@ -25,6 +25,17 @@ const quote = await client.quote.getQuote(
   prices
 );
 
+const ltv = client.quote.calculateLtv(
+  {
+    borrowAmount: 2_000_000n,
+    borrowPoolId: pools[1].id,
+    collateralAmount: 10_000_000n,
+    collateralPoolId: pools[0].id,
+  },
+  pools,
+  prices
+);
+
 const instantLoan = await client.instantLoans.create({
   collateralPoolId: pools[0].id,
   borrowPoolId: pools[1].id,
@@ -32,7 +43,7 @@ const instantLoan = await client.instantLoans.create({
   borrowAsset: "USDT",
   collateralAmount: 10_000_000n,
   borrowAmount: 2_000_000n,
-  ltvMaxBps: 6_800n,
+  ltvMaxBps: ltv.maxAllowedLtvBps,
   depositWindowSeconds: 3_600n,
   borrowDestination: "0x2222222222222222222222222222222222222222",
   refundDestination: "bc1qrefunddestination",

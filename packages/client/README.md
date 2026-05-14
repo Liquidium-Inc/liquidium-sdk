@@ -64,6 +64,17 @@ const reserve = await client.market.getReserveData({
 });
 
 // Default borrow flow: accountless instant loan with deposit/repay targets.
+const instantLoanLtv = client.quote.calculateLtv(
+  {
+    collateralPoolId: btcPool.id,
+    borrowPoolId: "<eth-usdt-pool-id>",
+    collateralAmount: 10_000_000n,
+    borrowAmount: 2_000_000n,
+  },
+  pools,
+  prices
+);
+
 const instantLoan = await client.instantLoans.create({
   collateralPoolId: btcPool.id,
   borrowPoolId: "<eth-usdt-pool-id>",
@@ -71,7 +82,7 @@ const instantLoan = await client.instantLoans.create({
   borrowAsset: "USDT",
   collateralAmount: 10_000_000n,
   borrowAmount: 2_000_000n,
-  ltvMaxBps: 6_800n,
+  ltvMaxBps: instantLoanLtv.maxAllowedLtvBps,
   depositWindowSeconds: 3_600n,
   borrowDestination: "0x2222222222222222222222222222222222222222",
   refundDestination: "bc1qrefunddestination",
@@ -279,6 +290,7 @@ Most integrations should start with `client.instantLoans`. It creates an account
 - `client.instantLoans.get({ ref })` - restore canonical loan state, position summary, and repayment quote from the user-facing loan reference
 - `client.instantLoans.get({ loanId })` - restore canonical loan state, position summary, and repayment quote from the numeric canister loan ID
 - `client.instantLoans.findByAddress(address)` - recovery helper that requires `apiBaseUrl` and returns candidates only
+- `client.quote.calculateLtv(...)` - calculate current LTV from borrow and collateral amounts before creating a loan
 
 ### Account creation flow
 
@@ -290,6 +302,7 @@ Most integrations should start with `client.instantLoans`. It creates an account
 ### Quote flow
 
 - `client.quote.getQuote(request, pools, prices)` - calculate borrow USD value, required collateral, validation errors, and warnings from caller-supplied market data
+- `client.quote.calculateLtv(request, pools, prices)` - calculate LTV from caller-supplied borrow and collateral amounts
 
 ### Advanced profile-based execution
 

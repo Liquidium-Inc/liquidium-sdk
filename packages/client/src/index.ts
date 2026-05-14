@@ -126,6 +126,8 @@ export type {
   UserStats,
 } from "./modules/positions";
 export type {
+  CalculateLtvRequest,
+  LtvCalculation,
   QuoteRequest,
   QuoteResult,
   QuoteValidationError,

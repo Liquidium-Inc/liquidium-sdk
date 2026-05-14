@@ -16,9 +16,10 @@ import { getVariantKey } from "../../core/utils/variant";
 import { resolveSupplyTarget } from "../lending/_internal/supply-targets";
 import type { LendingModule } from "../lending/lending";
 import { SupplyPlanType } from "../lending/types";
-import type { AssetPrices, Pool } from "../market/types";
 import type { PositionsModule } from "../positions";
 import type { Position } from "../positions/types";
+import { QuoteModule } from "../quote";
+import { QuoteValidationErrorCode } from "../quote/types";
 import { intFromPublicId, publicIdFromInt } from "./ref-code";
 import type {
   CreateInstantLoanRequest,
@@ -36,7 +37,13 @@ const SECONDS_PER_YEAR = 31_536_000n;
 const ETH_STABLECOIN_INFLOW_FEE_FALLBACK = 1_500_000n;
 const INSTANT_LOAN_START_LTV_BUFFER_BPS = 500n;
 const INSTANT_LOAN_MIN_SLIPPAGE_BUFFER_BPS = 200n;
-const BASIS_POINTS_DENOMINATOR = 10_000;
+
+type InstantLoanLtvPolicy = {
+  ltvBps: bigint;
+  maxStartingLtvBps: bigint;
+  minLtvMaxBps: bigint;
+  maxLtvMaxBps: bigint;
+};
 
 type InstantLoanCandidateWire = {
   loanId?: string | bigint;
@@ -287,68 +294,70 @@ export class InstantLoansModule {
   private async validateInstantLoanLtvPolicy(
     request: CreateInstantLoanRequest
   ): Promise<void> {
+    const ltvCalculation = await this.calculateInstantLoanLtv(request);
+
+    if (ltvCalculation.ltvBps > ltvCalculation.maxStartingLtvBps) {
+      throw new LiquidiumError(
+        LiquidiumErrorCode.MAX_LTV_EXCEEDED,
+        `Instant loan starting LTV ${formatBpsAsPercent(ltvCalculation.ltvBps)} exceeds max starting LTV ${formatBpsAsPercent(ltvCalculation.maxStartingLtvBps)}`
+      );
+    }
+
+    if (request.ltvMaxBps < ltvCalculation.minLtvMaxBps) {
+      throw new LiquidiumError(
+        LiquidiumErrorCode.VALIDATION_ERROR,
+        `Instant loan max LTV ${formatBpsAsPercent(request.ltvMaxBps)} is below minimum allowed ${formatBpsAsPercent(ltvCalculation.minLtvMaxBps)}`
+      );
+    }
+
+    if (request.ltvMaxBps > ltvCalculation.maxLtvMaxBps) {
+      throw new LiquidiumError(
+        LiquidiumErrorCode.MAX_LTV_EXCEEDED,
+        `Instant loan max LTV ${formatBpsAsPercent(request.ltvMaxBps)} exceeds collateral pool max ${formatBpsAsPercent(ltvCalculation.maxLtvMaxBps)}`
+      );
+    }
+  }
+
+  private async calculateInstantLoanLtv(
+    request: CreateInstantLoanRequest
+  ): Promise<InstantLoanLtvPolicy> {
     const [pools, assetPrices] = await Promise.all([
       this.positions.market.listPools(),
       this.positions.market.getAssetPrices(),
     ]);
-    const collateralPool = pools.find(
-      (pool) => pool.id === request.collateralPoolId
+    const ltvCalculation = new QuoteModule().calculateLtv(
+      {
+        borrowAmount: request.borrowAmount,
+        borrowPoolId: request.borrowPoolId,
+        collateralAmount: request.collateralAmount,
+        collateralPoolId: request.collateralPoolId,
+      },
+      pools,
+      assetPrices
     );
-    const borrowPool = pools.find((pool) => pool.id === request.borrowPoolId);
 
-    if (!collateralPool) {
-      throw new LiquidiumError(
-        LiquidiumErrorCode.POOL_NOT_FOUND,
-        `Collateral pool not found: ${request.collateralPoolId}`
-      );
-    }
-
-    if (!borrowPool) {
-      throw new LiquidiumError(
-        LiquidiumErrorCode.POOL_NOT_FOUND,
-        `Borrow pool not found: ${request.borrowPoolId}`
-      );
+    if (ltvCalculation.validationErrors.length > 0) {
+      throwLtvCalculationError(ltvCalculation.validationErrors[0]);
     }
 
     const maxStartingLtvBps =
-      collateralPool.maxLtv - INSTANT_LOAN_START_LTV_BUFFER_BPS;
+      ltvCalculation.maxAllowedLtvBps - INSTANT_LOAN_START_LTV_BUFFER_BPS;
     if (maxStartingLtvBps <= 0n) {
       throw new LiquidiumError(
         LiquidiumErrorCode.VALIDATION_ERROR,
-        `Collateral pool max LTV ${formatBpsAsPercent(collateralPool.maxLtv)} is too low for instant loans`
-      );
-    }
-
-    const impliedStartingLtvBps = calculateImpliedStartingLtvBps({
-      collateralAmount: request.collateralAmount,
-      collateralPool,
-      borrowAmount: request.borrowAmount,
-      borrowPool,
-      assetPrices,
-    });
-
-    if (impliedStartingLtvBps > maxStartingLtvBps) {
-      throw new LiquidiumError(
-        LiquidiumErrorCode.MAX_LTV_EXCEEDED,
-        `Instant loan starting LTV ${formatBpsAsPercent(impliedStartingLtvBps)} exceeds max starting LTV ${formatBpsAsPercent(maxStartingLtvBps)}`
+        `Collateral pool max LTV ${formatBpsAsPercent(ltvCalculation.maxAllowedLtvBps)} is too low for instant loans`
       );
     }
 
     const minLtvMaxBps =
       maxStartingLtvBps + INSTANT_LOAN_MIN_SLIPPAGE_BUFFER_BPS;
-    if (request.ltvMaxBps < minLtvMaxBps) {
-      throw new LiquidiumError(
-        LiquidiumErrorCode.VALIDATION_ERROR,
-        `Instant loan max LTV ${formatBpsAsPercent(request.ltvMaxBps)} is below minimum allowed ${formatBpsAsPercent(minLtvMaxBps)}`
-      );
-    }
 
-    if (request.ltvMaxBps > collateralPool.maxLtv) {
-      throw new LiquidiumError(
-        LiquidiumErrorCode.MAX_LTV_EXCEEDED,
-        `Instant loan max LTV ${formatBpsAsPercent(request.ltvMaxBps)} exceeds collateral pool max ${formatBpsAsPercent(collateralPool.maxLtv)}`
-      );
-    }
+    return {
+      ltvBps: ltvCalculation.ltvBps,
+      maxStartingLtvBps,
+      minLtvMaxBps,
+      maxLtvMaxBps: ltvCalculation.maxAllowedLtvBps,
+    };
   }
 }
 
@@ -385,49 +394,6 @@ function calculateTotalDebtAmount(borrowPosition: Position | null): bigint {
   return borrowPosition.borrowed + borrowPosition.debtInterest;
 }
 
-function calculateImpliedStartingLtvBps(input: {
-  collateralAmount: bigint;
-  collateralPool: Pool;
-  borrowAmount: bigint;
-  borrowPool: Pool;
-  assetPrices: AssetPrices;
-}): bigint {
-  const collateralValueUsd =
-    baseUnitsToNumber(input.collateralAmount, input.collateralPool.decimals) *
-    getAssetPrice(input.assetPrices, input.collateralPool.asset);
-  const borrowValueUsd =
-    baseUnitsToNumber(input.borrowAmount, input.borrowPool.decimals) *
-    getAssetPrice(input.assetPrices, input.borrowPool.asset);
-
-  if (collateralValueUsd <= 0) {
-    throw new LiquidiumError(
-      LiquidiumErrorCode.VALIDATION_ERROR,
-      "Instant loan collateral value must be greater than zero"
-    );
-  }
-
-  return BigInt(
-    Math.round((borrowValueUsd * BASIS_POINTS_DENOMINATOR) / collateralValueUsd)
-  );
-}
-
-function getAssetPrice(assetPrices: AssetPrices, asset: string): number {
-  const price = assetPrices[asset];
-
-  if (typeof price !== "number" || !Number.isFinite(price) || price <= 0) {
-    throw new LiquidiumError(
-      LiquidiumErrorCode.VALIDATION_ERROR,
-      `Missing price for ${asset}`
-    );
-  }
-
-  return price;
-}
-
-function baseUnitsToNumber(amount: bigint, decimals: bigint): number {
-  return Number(amount) / 10 ** Number(decimals);
-}
-
 function validateCreateRequest(request: CreateInstantLoanRequest): void {
   if (request.collateralAmount <= 0n) {
     throw new LiquidiumError(
@@ -453,6 +419,17 @@ function validateCreateRequest(request: CreateInstantLoanRequest): void {
       "Instant loan deposit window must be greater than zero seconds"
     );
   }
+}
+
+function throwLtvCalculationError(
+  error: { code: QuoteValidationErrorCode; message: string } | undefined
+): never {
+  throw new LiquidiumError(
+    error?.code === QuoteValidationErrorCode.POOL_NOT_FOUND
+      ? LiquidiumErrorCode.POOL_NOT_FOUND
+      : LiquidiumErrorCode.VALIDATION_ERROR,
+    error?.message ?? "Unable to calculate instant loan LTV"
+  );
 }
 
 function externalAccountFromInput(

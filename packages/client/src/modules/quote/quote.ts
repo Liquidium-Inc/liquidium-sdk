@@ -1,6 +1,8 @@
 import { ceilDivBigint } from "../../core/utils/bigint";
 import type { AssetPrices, Pool } from "../market/types";
 import type {
+  CalculateLtvRequest,
+  LtvCalculation,
   QuoteRequest,
   QuoteResult,
   QuoteValidationError,
@@ -32,6 +34,137 @@ type CreateQuoteResultParams = {
 };
 
 export class QuoteModule {
+  /**
+   * Calculates current LTV from caller-supplied borrow and collateral amounts.
+   *
+   * Amount fields are base units. USD fields are scaled to 8 decimal places.
+   */
+  calculateLtv(
+    request: CalculateLtvRequest,
+    pools: Pool[],
+    prices: AssetPrices
+  ): LtvCalculation {
+    const validationErrors: QuoteValidationError[] = [];
+    const borrowPool = pools.find((pool) => pool.id === request.borrowPoolId);
+    const collateralPool = pools.find(
+      (pool) => pool.id === request.collateralPoolId
+    );
+
+    if (!borrowPool) {
+      validationErrors.push({
+        code: QuoteValidationErrorCode.POOL_NOT_FOUND,
+        message: `Borrow pool not found: ${request.borrowPoolId}`,
+      });
+    }
+
+    if (!collateralPool) {
+      validationErrors.push({
+        code: QuoteValidationErrorCode.POOL_NOT_FOUND,
+        message: `Collateral pool not found: ${request.collateralPoolId}`,
+      });
+    }
+
+    if (!borrowPool || !collateralPool) {
+      return createLtvCalculation({
+        request,
+        borrowUsd: 0n,
+        collateralUsd: 0n,
+        ltvBps: 0n,
+        maxAllowedLtvBps: 0n,
+        borrowAsset: "",
+        collateralAsset: "",
+        validationErrors,
+      });
+    }
+
+    const borrowPrice = prices[borrowPool.asset];
+    const collateralPrice = prices[collateralPool.asset];
+
+    if (!isValidPrice(borrowPrice)) {
+      validationErrors.push({
+        code: QuoteValidationErrorCode.PRICE_NOT_AVAILABLE,
+        message: `Price not available for borrow asset: ${borrowPool.asset}`,
+      });
+    }
+
+    if (!isValidPrice(collateralPrice)) {
+      validationErrors.push({
+        code: QuoteValidationErrorCode.PRICE_NOT_AVAILABLE,
+        message: `Price not available for collateral asset: ${collateralPool.asset}`,
+      });
+    }
+
+    if (request.borrowAmount <= 0n) {
+      validationErrors.push({
+        code: QuoteValidationErrorCode.BORROW_AMOUNT_TOO_LOW,
+        message: "Borrow amount must be greater than 0",
+      });
+    }
+
+    if (request.collateralAmount <= 0n) {
+      validationErrors.push({
+        code: QuoteValidationErrorCode.INVALID_LTV,
+        message: "Collateral amount must be greater than 0",
+      });
+    }
+
+    if (validationErrors.length > 0) {
+      return createLtvCalculation({
+        request,
+        borrowUsd: 0n,
+        collateralUsd: 0n,
+        ltvBps: 0n,
+        maxAllowedLtvBps: collateralPool.maxLtv,
+        borrowAsset: borrowPool.asset,
+        collateralAsset: collateralPool.asset,
+        validationErrors,
+      });
+    }
+
+    const borrowUsd = computeUsdInternalFromBaseUnits({
+      amountBaseUnits: request.borrowAmount,
+      priceScaled: scalePriceUsdToBigint(borrowPrice as number),
+      assetDecimalPlaces: getPoolDecimalPlaces(borrowPool),
+    });
+    const collateralUsd = computeUsdInternalFromBaseUnits({
+      amountBaseUnits: request.collateralAmount,
+      priceScaled: scalePriceUsdToBigint(collateralPrice as number),
+      assetDecimalPlaces: getPoolDecimalPlaces(collateralPool),
+    });
+
+    if (collateralUsd <= 0n) {
+      validationErrors.push({
+        code: QuoteValidationErrorCode.INVALID_LTV,
+        message: "Collateral value must be greater than 0",
+      });
+
+      return createLtvCalculation({
+        request,
+        borrowUsd,
+        collateralUsd,
+        ltvBps: 0n,
+        maxAllowedLtvBps: collateralPool.maxLtv,
+        borrowAsset: borrowPool.asset,
+        collateralAsset: collateralPool.asset,
+        validationErrors,
+      });
+    }
+
+    return createLtvCalculation({
+      request,
+      borrowUsd,
+      collateralUsd,
+      ltvBps: roundDivBigint(
+        borrowUsd * BASIS_POINTS_DENOMINATOR,
+        collateralUsd
+      ),
+      maxAllowedLtvBps: collateralPool.maxLtv,
+      borrowAsset: borrowPool.asset,
+      collateralAsset: collateralPool.asset,
+      validationErrors,
+    });
+  }
+
   /**
    * Calculates a loan quote based on borrow amount, LTV, and pool selections.
    *
@@ -230,6 +363,31 @@ export class QuoteModule {
   }
 }
 
+function createLtvCalculation(params: {
+  request: CalculateLtvRequest;
+  borrowUsd: bigint;
+  collateralUsd: bigint;
+  ltvBps: bigint;
+  maxAllowedLtvBps: bigint;
+  borrowAsset: string;
+  collateralAsset: string;
+  validationErrors: QuoteValidationError[];
+}): LtvCalculation {
+  return {
+    borrowAmount: params.request.borrowAmount,
+    collateralAmount: params.request.collateralAmount,
+    borrowUsd: params.borrowUsd,
+    collateralUsd: params.collateralUsd,
+    ltvBps: params.ltvBps,
+    maxAllowedLtvBps: params.maxAllowedLtvBps,
+    borrowPoolId: params.request.borrowPoolId,
+    collateralPoolId: params.request.collateralPoolId,
+    borrowAsset: params.borrowAsset,
+    collateralAsset: params.collateralAsset,
+    validationErrors: params.validationErrors,
+  };
+}
+
 function createQuoteResult(params: CreateQuoteResultParams): QuoteResult {
   return {
     borrowAmount: params.borrowAmount,
@@ -286,9 +444,17 @@ function computeBaseUnitsFromUsdInternalCeil(params: {
   );
 }
 
+function roundDivBigint(numerator: bigint, denominator: bigint): bigint {
+  return (numerator + denominator / 2n) / denominator;
+}
+
 function scalePriceUsdToBigint(priceUsd: number): bigint {
   const scaled = Math.round(priceUsd * 10 ** PRICE_SCALE_DECIMAL_PLACES);
   return BigInt(scaled);
+}
+
+function isValidPrice(price: number | undefined): price is number {
+  return typeof price === "number" && Number.isFinite(price) && price > 0;
 }
 
 function getPoolDecimalPlaces(pool: Pool): number {

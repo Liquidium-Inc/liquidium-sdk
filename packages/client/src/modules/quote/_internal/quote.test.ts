@@ -68,6 +68,59 @@ describe("QuoteModule", () => {
     USDT: 1,
   };
 
+  test("should calculate LTV from borrow and collateral amounts", () => {
+    // given
+    const BORROW_AMOUNT_USDT_BASE_UNITS = 100_000_000n;
+    const COLLATERAL_AMOUNT_SATS = 200_000n;
+    const request = {
+      borrowAmount: BORROW_AMOUNT_USDT_BASE_UNITS,
+      borrowPoolId: usdtPool.id,
+      collateralAmount: COLLATERAL_AMOUNT_SATS,
+      collateralPoolId: btcPool.id,
+    };
+
+    // when
+    const result = quoteModule.calculateLtv(request, pools, prices);
+
+    // then
+    const EXPECTED_BORROW_USD_INTERNAL = 10_000_000_000n;
+    const EXPECTED_COLLATERAL_USD_INTERNAL = 20_000_000_000n;
+    const EXPECTED_LTV_BPS = 5_000n;
+
+    expect(result.validationErrors).toHaveLength(0);
+    expect(result.borrowAmount).toBe(BORROW_AMOUNT_USDT_BASE_UNITS);
+    expect(result.collateralAmount).toBe(COLLATERAL_AMOUNT_SATS);
+    expect(result.borrowUsd).toBe(EXPECTED_BORROW_USD_INTERNAL);
+    expect(result.collateralUsd).toBe(EXPECTED_COLLATERAL_USD_INTERNAL);
+    expect(result.ltvBps).toBe(EXPECTED_LTV_BPS);
+    expect(result.maxAllowedLtvBps).toBe(btcPool.maxLtv);
+    expect(result.borrowAsset).toBe(usdtPool.asset);
+    expect(result.collateralAsset).toBe(btcPool.asset);
+  });
+
+  test("should return validation errors when LTV inputs cannot be valued", () => {
+    // given
+    const pricesWithoutUsdt: AssetPrices = { BTC: 100000 };
+    const request = {
+      borrowAmount: 100_000_000n,
+      borrowPoolId: usdtPool.id,
+      collateralAmount: 0n,
+      collateralPoolId: btcPool.id,
+    };
+
+    // when
+    const result = quoteModule.calculateLtv(request, pools, pricesWithoutUsdt);
+
+    // then
+    expect(result.ltvBps).toBe(0n);
+    expect(result.validationErrors).toEqual([
+      expect.objectContaining({
+        code: QuoteValidationErrorCode.PRICE_NOT_AVAILABLE,
+      }),
+      expect.objectContaining({ code: QuoteValidationErrorCode.INVALID_LTV }),
+    ]);
+  });
+
   test("calculates required collateral for valid cross-asset quote", () => {
     // given
     const request = {

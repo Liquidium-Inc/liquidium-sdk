@@ -87,6 +87,7 @@ client.instantLoans.create(...);
 client.instantLoans.get({ ref });
 client.instantLoans.get({ loanId });
 client.instantLoans.findByAddress(address); // requires apiBaseUrl
+client.quote.calculateLtv(...); // pure helper for current LTV previews
 ```
 
 `create(...)` accepts direct `collateralAmount`, `borrowAmount`, `ltvMaxBps`, and
@@ -97,7 +98,9 @@ instant-loans canister, then returns the hydrated loan.
 Current LTV guards reserve a 500 bps buffer below the collateral pool max LTV
 for the starting loan, then require `ltvMaxBps` to be no lower than the pool max
 minus 300 bps and no higher than the pool max. Do not confuse the quote module's
-`targetLtvBps` with `create(...)`'s `ltvMaxBps`.
+`targetLtvBps` with `create(...)`'s `ltvMaxBps`. Use
+`client.quote.calculateLtv(...)` when clients need to preview the current LTV
+from chosen borrow and collateral amounts before calling `create(...)`.
 
 `create(...)` and `get(...)` do not require `apiBaseUrl`, a wallet adapter, a
 profile ID, or message signing. The SDK derives deposit and repay targets
@@ -126,7 +129,7 @@ client.market.getPoolRate(poolId);
 ### quote
 
 Quote-first planning. Use this to calculate borrow USD value, required
-collateral, validation errors, and warnings from caller-supplied market data.
+collateral, current LTV, validation errors, and warnings from caller-supplied market data.
 For default authless loans, the quote can help choose `collateralAmount` and
 `borrowAmount`; execution still goes through `client.instantLoans.create(...)`.
 For advanced profile-based borrowing, fetch pools and prices first, then call
@@ -136,6 +139,7 @@ For advanced profile-based borrowing, fetch pools and prices first, then call
 const pools = await client.market.listPools();
 const prices = await client.market.getAssetPrices();
 const quote = client.quote.getQuote(request, pools, prices);
+const ltv = client.quote.calculateLtv(ltvRequest, pools, prices);
 ```
 
 `getQuote(...)` is synchronous and pure after the app has already fetched pools
@@ -143,6 +147,11 @@ and prices. It returns `validationErrors` and `warnings`; it does not throw for
 normal quote validation failures such as missing pools, missing prices, invalid
 LTV, too-small borrow amounts, or disallowed same-asset borrowing. Treat a quote
 with validation errors as non-executable.
+
+`calculateLtv(...)` is also synchronous and pure after fetching pools and prices.
+It accepts `borrowAmount`, `borrowPoolId`, `collateralAmount`, and
+`collateralPoolId`, then returns `ltvBps`, `borrowUsd`, `collateralUsd`,
+`maxAllowedLtvBps`, asset metadata, and `validationErrors`.
 
 ### accounts
 
@@ -245,15 +254,27 @@ loan ID, then sends collateral to the generated deposit address.
 Default app sequence:
 
 1. Fetch pools and prices for pool selection and optional quote display.
-2. Call `client.instantLoans.create(...)` with direct base-unit amounts and destination addresses.
-3. Persist or display `loan.ref` as the primary recovery key.
-4. Show `loan.depositTarget` for collateral deposit and `loan.repayment.target` plus `loan.repayment.amount` for repayment.
+2. Optionally call `client.quote.calculateLtv(...)` to show current LTV and the collateral pool's max allowed LTV.
+3. Call `client.instantLoans.create(...)` with direct base-unit amounts and destination addresses.
+4. Persist or display `loan.ref` as the primary recovery key.
+5. Show `loan.depositTarget` for collateral deposit and `loan.repayment.target` plus `loan.repayment.amount` for repayment.
 
 The default instant-loan flow does not need a wallet adapter. The user signs or
 broadcasts only the external wallet transfer to the generated deposit or repay
 target outside the SDK.
 
 ```ts
+const ltv = client.quote.calculateLtv(
+  {
+    collateralPoolId: btcPool.id,
+    borrowPoolId: usdtPool.id,
+    collateralAmount: 10_000_000n,
+    borrowAmount: 2_000_000n,
+  },
+  pools,
+  prices
+);
+
 const loan = await client.instantLoans.create({
   collateralPoolId: btcPool.id,
   borrowPoolId: usdtPool.id,
@@ -261,7 +282,7 @@ const loan = await client.instantLoans.create({
   borrowAsset: "USDT",
   collateralAmount: 10_000_000n,
   borrowAmount: 2_000_000n,
-  ltvMaxBps: 6_800n,
+  ltvMaxBps: ltv.maxAllowedLtvBps,
   depositWindowSeconds: 3_600n,
   borrowDestination: "0x2222222222222222222222222222222222222222",
   refundDestination: "bc1qrefunddestination",
