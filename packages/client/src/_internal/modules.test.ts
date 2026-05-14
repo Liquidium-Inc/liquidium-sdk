@@ -412,13 +412,70 @@ describe("HistoryModule", () => {
     );
   });
 
-  test("fetches pool history through the sdk api", async () => {
+  test("fetches pool rate history through the sdk api", async () => {
+    // given
+    const apiRateDecimals = Number(RATE_DECIMALS);
+    const responsePayload = {
+      success: true as const,
+      items: [
+        {
+          date: "2026-04-01T00:00:00.000Z",
+          rateDecimals: apiRateDecimals,
+          avgBorrowRate: "1000",
+          avgLendRate: "500",
+          avgUtilizationRate: "8000",
+        },
+      ],
+      nextCursor: "2026-04-01T00:00:00.000Z::1",
+    };
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify(responsePayload), {
+        status: 200,
+        headers: {
+          "content-type": "application/json",
+        },
+      })
+    );
+    const client = LiquidiumClient.create({
+      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
+    });
+
+    // when
+    const result = await client.history.getPoolHistory("pool-1", {
+      from: "2026-04-01T00:00:00.000Z",
+      limit: 1,
+    });
+
+    // then
+    expect(result).toEqual({
+      items: [
+        {
+          date: "2026-04-01T00:00:00.000Z",
+          rateDecimals: RATE_DECIMALS,
+          avgBorrowRate: 1000n,
+          avgLendRate: 500n,
+          avgUtilizationRate: 8000n,
+        },
+      ],
+      nextCursor: "2026-04-01T00:00:00.000Z::1",
+    });
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "https://app.liquidium.fi/api/sdk/v1/history/pool/pool-1?from=2026-04-01T00%3A00%3A00.000Z&limit=1",
+      {
+        method: "GET",
+        headers: undefined,
+        body: undefined,
+        signal: expect.any(AbortSignal),
+      }
+    );
+  });
+
+  test("fetches pool config history through the sdk api", async () => {
     // given
     const responsePayload = {
       success: true as const,
       items: [
         {
-          id: "snapshot-1",
           type: "configuration_change" as const,
           poolId: "pool-1",
           asset: "BTC",
@@ -441,7 +498,6 @@ describe("HistoryModule", () => {
           borrowIndex: "400",
           sameAssetBorrowing: true,
           frozen: false,
-          lastUpdated: "123",
         },
       ],
     };
@@ -458,13 +514,12 @@ describe("HistoryModule", () => {
     });
 
     // when
-    const result = await client.history.getPoolHistory("pool-1");
+    const result = await client.history.getPoolConfigHistory("pool-1");
 
     // then
     expect(result).toEqual({
       items: [
         {
-          id: "snapshot-1",
           type: "configuration_change",
           poolId: "pool-1",
           asset: "BTC",
@@ -487,13 +542,12 @@ describe("HistoryModule", () => {
           borrowIndex: 400n,
           sameAssetBorrowing: true,
           frozen: false,
-          lastUpdated: 123n,
         },
       ],
       nextCursor: undefined,
     });
     expect(fetchSpy).toHaveBeenCalledWith(
-      "https://app.liquidium.fi/api/sdk/v1/history/pool/pool-1",
+      "https://app.liquidium.fi/api/sdk/v1/history/pool-config/pool-1",
       {
         method: "GET",
         headers: undefined,

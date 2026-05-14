@@ -37,6 +37,8 @@ export interface BorrowApyHistoryRequest {
   to?: string;
 }
 
+export type PoolHistoryRequest = BorrowApyHistoryRequest;
+
 export interface ApySample {
   date: string;
   rateDecimals: bigint;
@@ -72,7 +74,28 @@ export interface UserHistoryResponse {
 }
 
 export interface PoolHistoryEntry {
-  id: string;
+  date: string;
+  rateDecimals: bigint;
+  avgBorrowRate: bigint;
+  avgLendRate: bigint;
+  avgUtilizationRate: bigint;
+}
+
+export interface PoolHistoryEntryApiItem {
+  date: string;
+  rateDecimals: number;
+  avgBorrowRate: string;
+  avgLendRate: string;
+  avgUtilizationRate: string;
+}
+
+export interface PoolHistoryResponse {
+  success: true;
+  items: PoolHistoryEntryApiItem[];
+  nextCursor?: string;
+}
+
+export interface PoolConfigHistoryEntry {
   type: "configuration_change";
   poolId: string;
   asset: string;
@@ -95,11 +118,9 @@ export interface PoolHistoryEntry {
   borrowIndex: bigint;
   sameAssetBorrowing: boolean;
   frozen: boolean;
-  lastUpdated?: bigint;
 }
 
-export interface PoolHistoryEntryApiItem {
-  id: string;
+export interface PoolConfigHistoryEntryApiItem {
   type: "configuration_change";
   poolId: string;
   asset: string;
@@ -122,16 +143,18 @@ export interface PoolHistoryEntryApiItem {
   borrowIndex: string;
   sameAssetBorrowing: boolean;
   frozen: boolean;
-  lastUpdated?: string;
 }
 
-export interface PoolHistoryResponse {
+export interface PoolConfigHistoryResponse {
   success: true;
-  items: PoolHistoryEntryApiItem[];
+  items: PoolConfigHistoryEntryApiItem[];
   nextCursor?: string;
 }
 
-export type HistoryEntry = UserHistoryEntry | PoolHistoryEntry;
+export type HistoryEntry =
+  | UserHistoryEntry
+  | PoolHistoryEntry
+  | PoolConfigHistoryEntry;
 
 export interface PaginatedResponse<T> {
   items: T[];

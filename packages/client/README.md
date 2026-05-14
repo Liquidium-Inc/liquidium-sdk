@@ -128,6 +128,7 @@ const userHistory = await client.history.getUserTransactionHistory(
 );
 const liquidations = await client.history.getLiquidationHistory("profile-id");
 const poolHistory = await client.history.getPoolHistory("pool-id");
+const poolConfigHistory = await client.history.getPoolConfigHistory("pool-id");
 const borrowRates = await client.history.getBorrowRateHistory("pool-id");
 
 // Borrow with a required custom outflow account
@@ -320,7 +321,8 @@ Use these calls only when building a profile-based Liquidium app that manages ex
 
 - `client.history.getUserTransactionHistory(profileId, filters?)` - paginated profile transaction history
 - `client.history.getLiquidationHistory(profileId, filters?)` - paginated profile liquidation history
-- `client.history.getPoolHistory(poolId, cursor?)` - paginated reserve configuration changes
+- `client.history.getPoolHistory(poolId, window?)` - paginated pool rate and utilization samples
+- `client.history.getPoolConfigHistory(poolId, cursor?)` - paginated reserve configuration changes
 - `client.history.getBorrowRateHistory(poolId, window?)` - paginated borrow-rate samples
 
 ### Activity tracking

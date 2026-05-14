@@ -173,14 +173,16 @@ User or pool history. Requires `apiBaseUrl`.
 ```ts
 client.history.getUserTransactionHistory(profileId, filters?);
 client.history.getLiquidationHistory(profileId, filters?);
-client.history.getPoolHistory(poolId, cursor?);
+client.history.getPoolHistory(poolId, window?);
+client.history.getPoolConfigHistory(poolId, cursor?);
 client.history.getBorrowRateHistory(poolId, window?);
 ```
 
 User history entries expose `txids?: string[]`; do not expect separate inbound
-or outbound txid fields. Pool history entries are reserve configuration-change
-snapshots (`type: "configuration_change"`) with pool config, caps, indexes,
-liquidity, debt, and `sameAssetBorrowing` fields.
+or outbound txid fields. Pool history entries are rate/utilization samples.
+Pool config history entries are reserve configuration-change snapshots
+(`type: "configuration_change"`) with pool config, caps, indexes, liquidity,
+debt, and `sameAssetBorrowing` fields.
 
 ## Wallet Adapter
 

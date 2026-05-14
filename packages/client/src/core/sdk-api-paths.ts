@@ -32,11 +32,24 @@ type BuildInstantLoanAddressLookupPathRequest = {
 };
 
 const HISTORY_POOL = `${SDK_API_V1_PREFIX}/history/pool`;
+const HISTORY_POOL_CONFIG = `${SDK_API_V1_PREFIX}/history/pool-config`;
 const HISTORY_RATES = `${SDK_API_V1_PREFIX}/history/rates`;
 const HISTORY_USERS = `${SDK_API_V1_PREFIX}/history/users`;
 
-export function buildHistoryPoolPath(poolId: string, cursor?: string): string {
+export function buildHistoryPoolPath(
+  poolId: string,
+  query: URLSearchParams
+): string {
   const base = `${HISTORY_POOL}/${encodeURIComponent(poolId)}`;
+  const qs = query.toString();
+  return qs ? `${base}?${qs}` : base;
+}
+
+export function buildHistoryPoolConfigPath(
+  poolId: string,
+  cursor?: string
+): string {
+  const base = `${HISTORY_POOL_CONFIG}/${encodeURIComponent(poolId)}`;
   if (!cursor) {
     return base;
   }

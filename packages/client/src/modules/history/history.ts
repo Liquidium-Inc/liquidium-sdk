@@ -1,6 +1,7 @@
 import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
 import { RATE_DECIMALS } from "../../core/rates";
 import {
+  buildHistoryPoolConfigPath,
   buildHistoryPoolPath,
   buildHistoryRatesPath,
   buildHistoryUserLiquidationsPath,
@@ -14,7 +15,10 @@ import type {
   BorrowApyHistoryRequest,
   BorrowRateHistoryResponse,
   PaginatedResponse,
+  PoolConfigHistoryEntry,
+  PoolConfigHistoryResponse,
   PoolHistoryEntry,
+  PoolHistoryRequest,
   PoolHistoryResponse,
   UserHistoryEntry,
   UserHistoryResponse,
@@ -37,23 +41,54 @@ export class HistoryModule {
   }
 
   /**
-   * Returns paginated history for a pool.
+   * Returns paginated rate and utilization history for a pool.
    *
    * @param poolId - The pool principal text.
-   * @param cursor - An optional pagination cursor from a previous response.
-   * @returns A page of pool history entries and the next cursor when more results are available.
+   * @param window - Optional time window with from/to timestamps and limit.
+   * @returns A page of pool rate history entries and the next cursor when more results are available.
    */
   async getPoolHistory(
     poolId: string,
-    cursor?: string
+    window: PoolHistoryRequest = {}
   ): Promise<PaginatedResponse<PoolHistoryEntry>> {
     const apiClient = this.requireApi();
-    const requestPath = buildHistoryPoolPath(poolId, cursor);
+    const query = createHistoryWindowQuery(window);
+    const requestPath = buildHistoryPoolPath(poolId, query);
     const response = await apiClient.get<PoolHistoryResponse>(requestPath);
 
     return {
       items: response.items.map((item) => ({
-        id: item.id,
+        date: item.date,
+        rateDecimals: RATE_DECIMALS,
+        avgBorrowRate: parseBigInt(item.avgBorrowRate, "pool borrow rate"),
+        avgLendRate: parseBigInt(item.avgLendRate, "pool lend rate"),
+        avgUtilizationRate: parseBigInt(
+          item.avgUtilizationRate,
+          "pool utilization rate"
+        ),
+      })),
+      nextCursor: response.nextCursor,
+    };
+  }
+
+  /**
+   * Returns paginated configuration change history for a pool.
+   *
+   * @param poolId - The pool principal text.
+   * @param cursor - An optional pagination cursor from a previous response.
+   * @returns A page of pool configuration changes and the next cursor when more results are available.
+   */
+  async getPoolConfigHistory(
+    poolId: string,
+    cursor?: string
+  ): Promise<PaginatedResponse<PoolConfigHistoryEntry>> {
+    const apiClient = this.requireApi();
+    const requestPath = buildHistoryPoolConfigPath(poolId, cursor);
+    const response =
+      await apiClient.get<PoolConfigHistoryResponse>(requestPath);
+
+    return {
+      items: response.items.map((item) => ({
         type: item.type,
         poolId: item.poolId,
         asset: item.asset,
@@ -106,10 +141,6 @@ export class HistoryModule {
         borrowIndex: parseBigInt(item.borrowIndex, "pool history borrowIndex"),
         sameAssetBorrowing: item.sameAssetBorrowing,
         frozen: item.frozen,
-        lastUpdated: parseOptionalBigInt(
-          item.lastUpdated,
-          "pool history lastUpdated"
-        ),
       })),
       nextCursor: response.nextCursor,
     };
@@ -127,13 +158,7 @@ export class HistoryModule {
     window: BorrowApyHistoryRequest = {}
   ): Promise<PaginatedResponse<ApySample>> {
     const apiClient = this.requireApi();
-    const query = new URLSearchParams();
-    if (window.cursor) query.set(SdkApiQueryParam.cursor, window.cursor);
-    if (window.from) query.set(SdkApiQueryParam.from, window.from);
-    if (window.to) query.set(SdkApiQueryParam.to, window.to);
-    if (window.limit !== undefined) {
-      query.set(SdkApiQueryParam.limit, String(window.limit));
-    }
+    const query = createHistoryWindowQuery(window);
 
     const requestPath = buildHistoryRatesPath(poolId, query);
     const response =
@@ -284,6 +309,20 @@ export class HistoryModule {
       nextCursor: response.nextCursor,
     };
   }
+}
+
+function createHistoryWindowQuery(
+  window: BorrowApyHistoryRequest
+): URLSearchParams {
+  const query = new URLSearchParams();
+  if (window.cursor) query.set(SdkApiQueryParam.cursor, window.cursor);
+  if (window.from) query.set(SdkApiQueryParam.from, window.from);
+  if (window.to) query.set(SdkApiQueryParam.to, window.to);
+  if (window.limit !== undefined) {
+    query.set(SdkApiQueryParam.limit, String(window.limit));
+  }
+
+  return query;
 }
 
 function normalizeTransactionHistoryFilters(
