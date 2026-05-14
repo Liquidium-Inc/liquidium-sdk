@@ -1,6 +1,6 @@
 ---
 name: liquidium-sdk-integration
-description: "Use this skill when working with the Liquidium TypeScript SDK, `@liquidium/client`, `LiquidiumClient`, wallet adapters, instant loans, Liquidium profile creation, market data, quotes, borrowing, supply flows, positions, activities, or history. Use it whenever the user wants to integrate Liquidium into a TypeScript, React, or Vite app, or asks how to call Liquidium SDK methods correctly."
+description: "Use this skill first for the Liquidium TypeScript SDK authless instant-loan flow, `@liquidium/client`, `LiquidiumClient`, `client.instantLoans`, wallet adapters, Liquidium profile creation, market data, quotes, borrowing, supply flows, positions, activities, or history. Use it whenever the user wants to integrate Liquidium into a TypeScript, React, or Vite app, or asks how to call Liquidium SDK methods correctly."
 license: MIT
 metadata:
   title: Liquidium SDK Integration
@@ -9,9 +9,17 @@ metadata:
 
 # Liquidium SDK Integration
 
-`@liquidium/client` reads Liquidium market and position data, then executes accountless instant loans and advanced profile-based lending flows.
+`@liquidium/client` reads Liquidium market and position data, then executes authless instant loans and advanced profile-based lending flows.
 
-Priority: use `client.instantLoans` first, deposit-address profile flows second, and ETH contract interaction only when explicitly needed.
+Priority: authless instant loans are the default product flow. Use `client.instantLoans` first, deposit-address profile flows second, and ETH contract interaction only when explicitly needed.
+
+## Default Decision
+
+When the user asks for a simple borrow, loan, collateral deposit, repayment target, or Liquidium integration and does not explicitly ask to manage Liquidium profiles, implement the authless instant-loan flow with `client.instantLoans`.
+
+Do not require the user to create a Liquidium profile, sign a borrow message, or call `client.lending.borrow(...)` for the default flow. The instant-loans canister creates the backing lending profile and the SDK returns generated deposit and repayment targets.
+
+Use profile-based `client.accounts` and `client.lending` only when the user explicitly asks for advanced profile management, existing profile positions, manual supply/repay tracking, signed borrow/withdraw flows, or lower-level wallet orchestration.
 
 ## Modules
 
@@ -68,6 +76,39 @@ or route RPC calls through a server if the key must remain private.
 
 ## Module Guide
 
+### instantLoans
+
+Authless instant loans. This is the default simple borrow UX: create a loan,
+show the generated collateral deposit address, restore by reference, and show
+the actionable repayment amount when the user wants to close the loan.
+
+```ts
+client.instantLoans.create(...);
+client.instantLoans.get({ ref });
+client.instantLoans.get({ loanId });
+client.instantLoans.findByAddress(address); // requires apiBaseUrl
+```
+
+`create(...)` accepts direct `collateralAmount`, `borrowAmount`, `ltvMaxBps`, and
+`depositWindowSeconds` values in base units. It validates positive amounts,
+loads pools and prices, applies SDK-side instant-loan LTV guards, submits to the
+instant-loans canister, then returns the hydrated loan.
+
+Current LTV guards reserve a 500 bps buffer below the collateral pool max LTV
+for the starting loan, then require `ltvMaxBps` to be no lower than the pool max
+minus 300 bps and no higher than the pool max. Do not confuse the quote module's
+`targetLtvBps` with `create(...)`'s `ltvMaxBps`.
+
+`create(...)` and `get(...)` do not require `apiBaseUrl`, a wallet adapter, a
+profile ID, or message signing. The SDK derives deposit and repay targets
+internally from the generated `profileId`; `get(...)` also returns `position`
+plus `repayment.amount` for the full amount to send to the repayment target,
+including inflow fee and interest buffer.
+
+`findByAddress(...)` is a backend-assisted recovery helper and returns
+candidates only. It requires `apiBaseUrl`; follow it with `get({ loanId })` or
+`get({ ref })` before showing canonical loan state.
+
 ### market
 
 Pool discovery, asset prices, and per-reserve data.
@@ -84,7 +125,12 @@ client.market.getPoolRate(poolId);
 
 ### quote
 
-Quote-first UX. In borrow flows, fetch pools and prices first, then call `quote` before preparing the borrow.
+Quote-first planning. Use this to calculate borrow USD value, required
+collateral, validation errors, and warnings from caller-supplied market data.
+For default authless loans, the quote can help choose `collateralAmount` and
+`borrowAmount`; execution still goes through `client.instantLoans.create(...)`.
+For advanced profile-based borrowing, fetch pools and prices first, then call
+`quote` before preparing the signed borrow.
 
 ```ts
 const pools = await client.market.listPools();
@@ -122,26 +168,6 @@ client.lending.supply(...);
 client.lending.estimateInflowFee({ asset: "USDT", chain: "ETH" });
 client.lending.submitInflow({ txid, chain: "BTC", type: "DEPOSIT" }); // requires apiBaseUrl
 ```
-
-### instantLoans
-
-Accountless instant loans. This is the default simple borrow UX: create a
-loan, show the generated collateral deposit address, and let the protocol
-borrow to the selected destination after the deposit confirms.
-
-```ts
-client.instantLoans.create(...);
-client.instantLoans.get({ ref });
-client.instantLoans.get({ loanId });
-client.instantLoans.findByAddress(address); // requires apiBaseUrl
-```
-
-`create(...)` and `get(...)` are canister-first. The SDK derives deposit and
-repay targets internally from the generated `lending_profile`, and `get(...)`
-also returns `position` plus `repayment.amount` for the full amount to send to
-the repayment target, including inflow fee and interest buffer.
-`findByAddress(...)` is a backend-assisted recovery helper and returns
-candidates only.
 
 ### positions
 
@@ -188,6 +214,10 @@ debt, and `sameAssetBorrowing` fields.
 
 The SDK uses a `WalletAdapter` for signing and transaction execution. Implement only the methods the selected flow needs.
 
+Default authless instant loans do not need a `WalletAdapter`. Add one only
+for advanced profile creation, signed borrow/withdraw, or automated transfer
+execution.
+
 ```ts
 import type { WalletAdapter } from "@liquidium/client";
 
@@ -212,6 +242,17 @@ Use `client.instantLoans.create(...)` when the user should not create or manage
 a Liquidium profile. The user supplies destination addresses, receives a short
 loan ID, then sends collateral to the generated deposit address.
 
+Default app sequence:
+
+1. Fetch pools and prices for pool selection and optional quote display.
+2. Call `client.instantLoans.create(...)` with direct base-unit amounts and destination addresses.
+3. Persist or display `loan.ref` as the primary recovery key.
+4. Show `loan.depositTarget` for collateral deposit and `loan.repayment.target` plus `loan.repayment.amount` for repayment.
+
+The default instant-loan flow does not need a wallet adapter. The user signs or
+broadcasts only the external wallet transfer to the generated deposit or repay
+target outside the SDK.
+
 ```ts
 const loan = await client.instantLoans.create({
   collateralPoolId: btcPool.id,
@@ -230,6 +271,11 @@ const ref = loan.ref;
 const depositTarget = loan.depositTarget;
 const repayTarget = loan.repayTarget;
 ```
+
+`collateralAmount` and `borrowAmount` are in each asset's base units. Use pool
+`decimals` and the quote module when building UI inputs. Keep the initial loan
+LTV under the SDK's instant-loan starting-LTV guard and set `ltvMaxBps` within
+the collateral pool's accepted max-LTV range.
 
 If the target is a native address, show `target.address`. If it is an ICRC
 account, show `target.account`.
@@ -273,7 +319,10 @@ Do not use `client.lending.borrow(...)` for this flow. `lending.borrow(...)` is
 the profile-based signed borrow primitive. Instant loans automate the borrow
 after collateral arrives.
 
-### Create a profile
+### Advanced: create a profile
+
+Only use this when the app intentionally manages Liquidium profiles. Do not add
+profile creation to the default authless instant-loan flow.
 
 Convenience method when the app already has wallet signing wired:
 
@@ -325,7 +374,11 @@ const summary = await client.positions.getUserPositionSummary(profileId);
 const reserves = await client.positions.getUserReserves(profileId);
 ```
 
-### Quote-first borrow
+### Advanced profile-based quote-first borrow
+
+Use this only for apps that already manage profiles and need signed borrow
+execution. For the authless product flow, use the quote only for planning and
+execute with `client.instantLoans.create(...)`.
 
 ```ts
 const pools = await client.market.listPools();
@@ -354,7 +407,7 @@ const outflow = await client.lending.borrow({
 ### Advanced profile-based supply flow
 
 Use this only for profile-based integrations that intentionally manage Liquidium
-profiles. Use `client.instantLoans` for the default accountless borrow UX.
+profiles. Use `client.instantLoans` for the default authless borrow UX.
 
 ```ts
 const supplyFlow = await client.lending.supply({
@@ -479,20 +532,22 @@ const contractInteractionFlow = await client.lending.supply({
 
 ## Common Mistakes
 
-1. `LiquidiumClient.create({})` does not cover every method. History, activities, and inflow reporting need `apiBaseUrl`; lower-level contract-interaction planning also needs `evmRpcUrl` or `evmPublicClient`. Default ETH stablecoin deposit-address supply, `borrow(...)`, and `withdraw(...)` do not.
-2. Prepare methods return signable actions, not completed actions. `prepareCreateProfile`, `prepareBorrow`, and `prepareWithdraw` still need signing and submission.
-3. Build a wallet adapter with only the methods the selected flow needs. Avoid adding `signMessage`, `sendBtcTransaction`, or `sendEthTransaction` unless the flow uses them.
-4. Skip the quote step in borrow UX only when you explicitly want a lower-level flow.
-5. Do not `await client.quote.getQuote(...)`; it is synchronous once pools and prices are available.
-6. Check `quote.validationErrors` before enabling borrow execution. Quote validation failures are returned in-band rather than thrown.
-7. `client.lending.supply(...)` auto-routes by pool. BTC and ETH USDT pools currently resolve to deposit-address transfer targets by default; use `mechanism` only when intentionally overriding that route.
-8. Handle existing profiles explicitly when account creation can race with existing state. Do not rely on `prepareCreateProfile(...)` to reject an existing profile before signing.
-9. Work from the public modules and names exported by `@liquidium/client`. Do not invent SDK methods.
-10. After `borrow(...)`, treat `outflow.id` as the user-visible reference immediately. Do not assume `outflow.txid` is set on the first response; resolve it later via activities or history if you need the chain transaction id.
-11. History entries use `txids?: string[]`; do not look for legacy direction-specific txid fields.
-12. ETH deposit-address `unauthorized` is usually not an `apiBaseUrl` problem. The deposit-address lookup is a direct canister call. Check the `poolId`, `ethDeposit` canister ID, token address, and deployment/environment alignment first.
-13. Do not model instant loans as a `lending.supply(...)` mechanism. Use `client.instantLoans` for the accountless product flow and `client.lending.supply(...)` only for advanced profile-based supply/repay integrations.
-14. Do not trust address lookup as canonical loan state. Use it to find candidates, then hydrate the selected loan through `instantLoans.get(...)`.
+1. Treating profile lending as the default borrow flow. Use `client.instantLoans.create(...)` for the authless product flow unless the user explicitly asks for profiles.
+2. Adding profile creation, signed borrow, or wallet adapter requirements to instant loans. `instantLoans.create(...)` and `instantLoans.get(...)` do not need them.
+3. Confusing `quote.targetLtvBps` with instant-loan `ltvMaxBps`. The quote target helps plan amounts; `ltvMaxBps` is validated by the instant-loan LTV guards.
+4. `LiquidiumClient.create({})` does not cover every method. History, activities, inflow reporting, and `instantLoans.findByAddress(...)` need `apiBaseUrl`; lower-level contract-interaction planning also needs `evmRpcUrl` or `evmPublicClient`. `instantLoans.create(...)`, `instantLoans.get(...)`, default ETH stablecoin deposit-address supply, `borrow(...)`, and `withdraw(...)` do not.
+5. Prepare methods return signable actions, not completed actions. `prepareCreateProfile`, `prepareBorrow`, and `prepareWithdraw` still need signing and submission.
+6. Build a wallet adapter with only the methods the selected flow needs. Avoid adding `signMessage`, `sendBtcTransaction`, or `sendEthTransaction` unless the flow uses them.
+7. Do not `await client.quote.getQuote(...)`; it is synchronous once pools and prices are available.
+8. Check `quote.validationErrors` before enabling borrow execution. Quote validation failures are returned in-band rather than thrown.
+9. `client.lending.supply(...)` auto-routes by pool. BTC and ETH USDT pools currently resolve to deposit-address transfer targets by default; use `mechanism` only when intentionally overriding that route.
+10. Handle existing profiles explicitly when account creation can race with existing state. Do not rely on `prepareCreateProfile(...)` to reject an existing profile before signing.
+11. Work from the public modules and names exported by `@liquidium/client`. Do not invent SDK methods.
+12. After `borrow(...)`, treat `outflow.id` as the user-visible reference immediately. Do not assume `outflow.txid` is set on the first response; resolve it later via activities or history if you need the chain transaction id.
+13. History entries use `txids?: string[]`; do not look for legacy direction-specific txid fields.
+14. ETH deposit-address `unauthorized` is usually not an `apiBaseUrl` problem. The deposit-address lookup is a direct canister call. Check the `poolId`, `ethDeposit` canister ID, token address, and deployment/environment alignment first.
+15. Do not model instant loans as a `lending.supply(...)` mechanism. Use `client.instantLoans` for the authless product flow and `client.lending.supply(...)` only for advanced profile-based supply/repay integrations.
+16. Do not trust address lookup as canonical loan state. Use it to find candidates, then hydrate the selected loan through `instantLoans.get(...)`.
 
 ## Preferred Style
 
@@ -504,11 +559,11 @@ const contractInteractionFlow = await client.lending.supply({
 
 ## Defaults
 
-- Start with `LiquidiumClient.create({})` for read-only market and position work
-- Add `apiBaseUrl` when the requested flow touches backend-assisted endpoints
+- Prefer `client.instantLoans.create(...)` for the simple authless borrow UX
+- Start with `LiquidiumClient.create({})` for market reads and authless `instantLoans.create(...)` / `instantLoans.get(...)`
+- Add `apiBaseUrl` when the requested flow touches backend-assisted endpoints such as history, activities, inflow reporting, or `instantLoans.findByAddress(...)`
 - Add `evmRpcUrl` or `evmPublicClient` when the requested flow reads Ethereum chain state
 - Use `chain: "ETH"` or `chain: "BTC"` exactly as required by the SDK
-- Prefer `client.instantLoans.create(...)` for the simple accountless borrow UX
 - Prefer a quote-first flow for advanced profile-based borrowing
 - Prefer the BTC payment address when the wallet exposes both ordinals and payment addresses
 
@@ -518,6 +573,7 @@ When unsure, check these first:
 
 - `packages/client/README.md`
 - `README.md`
+- `packages/client/src/modules/instant-loans/instant-loans.ts`
 - `packages/client/src/modules/history/types.ts`
 - `packages/client/src/modules/instant-loans/types.ts`
 - `packages/client/src/modules/lending/types.ts`
