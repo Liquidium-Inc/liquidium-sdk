@@ -84,7 +84,8 @@ pre {
   background: #fff;
 }
 
-.example-nav a {
+.example-nav a,
+.example-nav span {
   display: inline-flex;
   align-items: center;
   min-height: 2.25rem;
@@ -95,7 +96,8 @@ pre {
   border-radius: 999px;
 }
 
-.example-nav a.is-active {
+.example-nav a.is-active,
+.example-nav span.is-active {
   color: #fff;
   background: #111;
   border-color: #111;
@@ -262,7 +264,8 @@ pre {
     flex-direction: column;
   }
 
-  .example-nav a {
+  .example-nav a,
+  .example-nav span {
     justify-content: center;
   }
 

@@ -322,10 +322,25 @@ const SDK_METHODS: MethodDefinition[] = [
   {
     id: "history.getPoolHistory",
     label: "history.getPoolHistory",
-    defaultArgs: '{\n  "poolId": "aaaaa-aa"\n}',
+    defaultArgs:
+      '{\n  "poolId": "aaaaa-aa",\n  "window": {\n    "limit": 20\n  }\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
+      const window = expectOptionalObject(args.window, "window");
+
       return await client.history.getPoolHistory(
+        expectNonEmptyString(args.poolId, "poolId"),
+        parseHistoryWindow(window, "window")
+      );
+    },
+  },
+  {
+    id: "history.getPoolConfigHistory",
+    label: "history.getPoolConfigHistory",
+    defaultArgs: '{\n  "poolId": "aaaaa-aa",\n  "cursor": ""\n}',
+    execute: async (client, input) => {
+      const args = expectObject(input);
+      return await client.history.getPoolConfigHistory(
         expectNonEmptyString(args.poolId, "poolId"),
         expectOptionalString(args.cursor, "cursor")
       );
@@ -342,14 +357,7 @@ const SDK_METHODS: MethodDefinition[] = [
 
       return await client.history.getBorrowRateHistory(
         expectNonEmptyString(args.poolId, "poolId"),
-        window
-          ? {
-              cursor: expectOptionalString(window.cursor, "window.cursor"),
-              from: expectOptionalString(window.from, "window.from"),
-              to: expectOptionalString(window.to, "window.to"),
-              limit: expectOptionalLimit(window.limit, "window.limit"),
-            }
-          : {}
+        parseHistoryWindow(window, "window")
       );
     },
   },
@@ -1024,6 +1032,22 @@ function expectOptionalLimit(
   }
 
   return value;
+}
+
+function parseHistoryWindow(
+  value: Record<string, unknown> | undefined,
+  fieldName: string
+) {
+  if (!value) {
+    return {};
+  }
+
+  return {
+    cursor: expectOptionalString(value.cursor, `${fieldName}.cursor`),
+    from: expectOptionalString(value.from, `${fieldName}.from`),
+    to: expectOptionalString(value.to, `${fieldName}.to`),
+    limit: expectOptionalLimit(value.limit, `${fieldName}.limit`),
+  };
 }
 
 function expectChain(value: unknown, fieldName: string): "BTC" | "ETH" {

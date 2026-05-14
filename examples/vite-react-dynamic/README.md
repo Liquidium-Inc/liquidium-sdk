@@ -1,19 +1,14 @@
-# Vite React Dynamic Example
+# Vite React SDK Method Query Example
 
-This example is intentionally small.
+This example is a focused developer tool for calling `@liquidium/client` methods
+from a Vite React app with Dynamic loaded.
 
-It shows one clear happy path for using `@liquidium/client` in a Vite React app
-with Dynamic:
+It provides a single SDK method query screen where you can:
 
-- Connect an Ethereum or Bitcoin wallet with Dynamic
-- Create or resolve a Liquidium profile
-- Load pools and prices
-- Generate a quote with `client.quote.getQuote(...)`
-- Borrow from the quoted pool with `client.lending.borrow(...)` and display the instant receipt (txid may resolve later)
-- Start a supply flow with `client.lending.supply(...)` and let the SDK resolve the deposit-address target
-
-The goal is to make the first SDK integration obvious, while also including an
-SDK method query page for raw response inspection.
+- Pick an SDK method from a dropdown
+- Edit JSON arguments directly
+- Apply connected-wallet defaults where relevant
+- Run the method and inspect the raw return payload
 
 ## Setup
 
@@ -21,8 +16,8 @@ SDK method query page for raw response inspection.
 2. Set `VITE_DYNAMIC_ENVIRONMENT_ID` from your Dynamic dashboard
 3. Set `VITE_LIQUIDIUM_BASE_URL` to the Liquidium SDK API base URL. The example
    defaults to `https://app.liquidium.fi/api/sdk`.
-4. Set `VITE_INFURA_API_KEY` for ETH stablecoin supply flows. Alternatively,
-   set `VITE_EVM_RPC_URL` to a full Ethereum mainnet RPC URL.
+4. Set `VITE_INFURA_API_KEY` for ETH reads that need an RPC provider.
+   Alternatively, set `VITE_EVM_RPC_URL` to a full Ethereum mainnet RPC URL.
 5. Install dependencies from the SDK root:
 
 ```bash
@@ -37,34 +32,23 @@ pnpm --filter @liquidium/example-vite-react-dynamic dev
 
 ## What To Look At
 
-The example calls `@liquidium/client` directly from each page. The only
-non-SDK code is small, focused helpers under `src/lib/` and wallet glue for
-Dynamic.
+- `src/SdkMethodQueryPage.tsx` — method definitions, JSON templates, argument
+  validation, and raw result rendering
+- `src/Root.tsx` — mounts the single SDK method query page
+- `src/lib/client.ts` — creates a `LiquidiumClient` from runtime config
+- `src/liquidium-runtime-config.ts` — environment-driven client config
 
-- `src/App.tsx` — borrow page: quote-first borrow, position reads, history
-- `src/SupplyPage.tsx` — unified supply page for BTC and ETH stablecoin pools
-- `src/SdkMethodQueryPage.tsx` — developer tool to run any SDK method with raw
-  JSON args and inspect the raw response
-- `src/Root.tsx` — simple hash-based page switcher
-- `src/lib/client.ts` — one-liner factory that builds a `LiquidiumClient`
-- `src/lib/profile.ts` — `createOrResolveProfile()` helper that handles the
-  "profile already exists" race explicitly
-- `src/lib/pools.ts` — pool predicates and default-selection helpers
-- `src/lib/format.ts` — amount parsing and display helpers (bigint base units,
-  USD, percentages)
-- `src/lib/assets.ts` — asset decimals and stablecoin detection
-- `src/lib/borrow-capacity.ts` — capacity validation that scales quote USD to
-  profile-stats USD before comparing
-- `src/wallet-signing.ts` — adapts Dynamic wallets to the SDK signing flow
-- `src/example-wallet.ts` — Dynamic-specific wallet helpers (chain label,
-  preferred BTC payment address)
+## Included Method Templates
 
-## Notes
+The query page includes templates for account, market, position, activity,
+history, quote, lending, and instant-loan methods, including:
 
-- Pages call the SDK directly (`client.market.listPools()`,
-  `client.lending.borrow(...)`, etc) so the SDK surface stays visible
-- The borrow flow is quote-first so it mirrors the sats terminal interaction
-  model
-- The supply page uses the unified `supply()` API and lets BTC and ETH USDT
-  pools resolve deposit-address transfer targets by default
-- For Bitcoin wallets, the example prefers the payment address when available
+- `history.getPoolHistory`
+- `history.getPoolConfigHistory`
+- `instantLoans.create`
+- `instantLoans.get({ ref })`
+- `instantLoans.get({ loanId })`
+- `instantLoans.findByAddress`
+
+`instantLoans.get(...)` returns canister loan state plus generated targets,
+current position state, and the actionable repayment amount.
