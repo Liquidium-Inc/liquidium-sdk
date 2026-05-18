@@ -3696,6 +3696,58 @@ describe("InstantLoansModule", () => {
     });
   });
 
+  test("returns zero repayment quote when the loan has no debt", async () => {
+    // given
+    const getLoan = vi.fn().mockResolvedValue({ Ok: createInstantLoan() });
+    const getBtcAddress = vi.fn().mockResolvedValue("bc1qinstantdeposit");
+    const getDepositAddress = vi.fn().mockResolvedValue({
+      Ok: "0x1111111111111111111111111111111111111111",
+    });
+    const getPoolRate = vi
+      .fn()
+      .mockResolvedValue([[10_000_000_000_000_000_000_000_000n, 0n, 0n]]);
+    const estimateDepositFee = vi.fn().mockResolvedValue({ Ok: 1_500_000n });
+
+    vi.spyOn(Actor, "createActor")
+      .mockReturnValueOnce({ get_loan: getLoan } as never)
+      .mockReturnValueOnce({
+        list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord()]),
+      } as never)
+      .mockReturnValueOnce({
+        list_pools: vi.fn().mockResolvedValue([createUsdtPoolRecord()]),
+      } as never)
+      .mockReturnValueOnce({
+        get_position: vi.fn().mockResolvedValue([]),
+      } as never)
+      .mockReturnValueOnce({
+        get_position: vi.fn().mockResolvedValue([]),
+      } as never)
+      .mockReturnValueOnce({ get_pool_rate: getPoolRate } as never)
+      .mockReturnValueOnce({ get_btc_address: getBtcAddress } as never)
+      .mockReturnValueOnce({ get_deposit_address: getDepositAddress } as never)
+      .mockReturnValueOnce({
+        estimate_deposit_fee: estimateDepositFee,
+      } as never);
+    const client = LiquidiumClient.create({
+      canisterIds: { instantLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
+    });
+
+    // when
+    const loan = await client.instantLoans.get({
+      ref: publicIdFromInt(LOAN_ID),
+    });
+
+    // then
+    expect(loan.repayment).toMatchObject({
+      amount: 0n,
+      debtAmount: 0n,
+      interestBufferAmount: 0n,
+      inflowFeeAmount: 0n,
+      inflowFeeEstimateAvailable: false,
+    });
+    expect(estimateDepositFee).not.toHaveBeenCalled();
+  });
+
   test("creates a loan then hydrates canonical loan state", async () => {
     // given
     const createLoan = vi.fn().mockResolvedValue({

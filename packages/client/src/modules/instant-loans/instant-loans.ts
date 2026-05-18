@@ -202,15 +202,15 @@ export class InstantLoansModule {
       this.positions.getPosition(profileId, borrowPoolId),
       this.positions.market.getPoolRate(borrowPoolId),
     ]);
-    const repaymentInflowFee = await this.estimateRepaymentInflowFee(
-      borrowAsset,
-      repayTarget.chain
-    );
     const totalDebtAmount = calculateTotalDebtAmount(borrowPosition);
     const interestBufferAmount = calculateInterestBufferAmount(
       borrowPosition,
       borrowPoolRate.borrowRate
     );
+    const repaymentInflowFee =
+      totalDebtAmount > 0n
+        ? await this.estimateRepaymentInflowFee(borrowAsset, repayTarget.chain)
+        : { totalFee: 0n, estimateAvailable: false };
     const repaymentAmount =
       totalDebtAmount + interestBufferAmount + repaymentInflowFee.totalFee;
 
