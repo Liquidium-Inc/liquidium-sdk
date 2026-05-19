@@ -1381,13 +1381,13 @@ describe("MarketModule", () => {
     });
   });
 
-  test("gets asset prices from USD-quoted pairs", async () => {
+  test("gets asset prices from USDT-quoted pairs", async () => {
     // given
     vi.spyOn(Actor, "createActor").mockReturnValue({
       get_prices: vi.fn().mockResolvedValue([
-        ["BTC_USD", 72_000_000_000_000_000_000_000_000_000_000n, 27],
-        ["USDC_USD", 999_910_065_000_000_000_000_000_000n, 27],
-        ["USDT_USD", 1_000_018_620_000_000_000_000_000_000n, 27],
+        ["BTC_USDT", 72_000_000_000_000_000_000_000_000_000_000n, 27],
+        ["USDC_USDT", 999_910_065_000_000_000_000_000_000n, 27],
+        ["USDT_USDT", 1_000_018_620_000_000_000_000_000_000n, 27],
       ]),
     } as never);
     const client = LiquidiumClient.create({});
@@ -1401,7 +1401,7 @@ describe("MarketModule", () => {
     expect(prices.USDC).toBeCloseTo(0.999910065, 12);
   });
 
-  test("ignores pairs that are not USD-quoted", async () => {
+  test("ignores pairs that are not USDT-quoted", async () => {
     // given
     vi.spyOn(Actor, "createActor").mockReturnValue({
       get_prices: vi.fn().mockResolvedValue([
@@ -1420,13 +1420,15 @@ describe("MarketModule", () => {
     // then
     expect(prices).toEqual({
       BTC: 68500,
+      SOL: 150,
+      USDT: 1,
     });
   });
 
-  test("returns an empty price map when USD-quoted pairs are missing", async () => {
+  test("returns an empty price map when USDT-quoted pairs are missing", async () => {
     // given
     vi.spyOn(Actor, "createActor").mockReturnValue({
-      get_prices: vi.fn().mockResolvedValue([["BTC_USDT", 68_500_000_000n, 6]]),
+      get_prices: vi.fn().mockResolvedValue([["BTC_USD", 68_500_000_000n, 6]]),
     } as never);
     const client = LiquidiumClient.create({});
 
@@ -1968,8 +1970,8 @@ describe("PositionsModule", () => {
       ]),
       get_pool_rate: vi.fn().mockResolvedValue([]),
       get_prices: vi.fn().mockResolvedValue([
-        ["BTC_USD", 50_000_000_000n, 6],
-        ["USDT_USD", 1_000_000n, 6],
+        ["BTC_USDT", 50_000_000_000n, 6],
+        ["USDT_USDT", 1_000_000n, 6],
       ]),
     } as never);
     const client = LiquidiumClient.create({});
@@ -4164,8 +4166,8 @@ describe("InstantLoansModule", () => {
 
   function prices() {
     return [
-      ["BTC_USD", 10_000_000n, 2],
-      ["USDT_USD", 100n, 2],
+      ["BTC_USDT", 10_000_000n, 2],
+      ["USDT_USDT", 100n, 2],
     ];
   }
 

@@ -10,7 +10,7 @@ import type { AssetPrices, Pool } from "./types";
 
 const DECIMAL_BASE = 10;
 const PAIR_SEPARATOR = "_";
-const USD_SYMBOL = "USD";
+const USDT_SYMBOL = "USDT";
 
 export function mapLendingPoolRecordToPool(
   pool: LendingPoolRecord,
@@ -67,7 +67,7 @@ export function mapGetPricesResponseToAssetPrices(
   for (const [pairName, pairPrice] of pairPricesByName) {
     const [baseAsset, quoteAsset] = pairName.split(PAIR_SEPARATOR);
 
-    if (!baseAsset || !quoteAsset || quoteAsset !== USD_SYMBOL) {
+    if (!baseAsset || !quoteAsset || quoteAsset !== USDT_SYMBOL) {
       continue;
     }
 
