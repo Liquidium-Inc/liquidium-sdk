@@ -76,7 +76,10 @@ export class LiquidiumClient {
     );
     this.market = new MarketModule(this.canisterContext, this.apiClient);
     this.positions = new PositionsModule(this.canisterContext, this.market);
-    this.activities = new ActivitiesModule(this.apiClient);
+    this.activities = new ActivitiesModule(
+      this.apiClient,
+      this.canisterContext
+    );
     this.history = new HistoryModule(this.apiClient);
     this.instantLoans = new InstantLoansModule(
       this.canisterContext,

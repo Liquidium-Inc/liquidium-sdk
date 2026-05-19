@@ -903,6 +903,91 @@ describe("ActivitiesModule", () => {
     );
   });
 
+  test("gets activity status by instant loan short ref", async () => {
+    // given
+    const LOAN_ID = 42n;
+    const PROFILE_ID = "aaaaa-aa";
+    const SHORT_REF = publicIdFromInt(LOAN_ID);
+    const ACTIVITY_AMOUNT = "50000";
+    const ACTIVITY_AMOUNT_BASE_UNITS = 50000n;
+    const ACTIVITY_TIMESTAMP_MS = 1775001600000;
+    const ACTIVITY_CONFIRMATIONS = 0;
+    const ACTIVITY_REQUIRED_CONFIRMATIONS = 1;
+    const getLoan = vi.fn().mockResolvedValue({
+      Ok: {
+        lending_profile: Principal.fromText(PROFILE_ID),
+      },
+    });
+    const responsePayload = {
+      success: true as const,
+      found: true as const,
+      activity: {
+        id: "activity-1",
+        direction: "outflow" as const,
+        kind: "borrow" as const,
+        status: "sent" as const,
+        poolId: "pool-1",
+        asset: "BTC",
+        chain: "BTC" as const,
+        amount: ACTIVITY_AMOUNT,
+        timestampMs: ACTIVITY_TIMESTAMP_MS,
+        txid: "tx-1",
+        confirmations: ACTIVITY_CONFIRMATIONS,
+        requiredConfirmations: ACTIVITY_REQUIRED_CONFIRMATIONS,
+      },
+    };
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      get_loan: getLoan,
+    } as never);
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify(responsePayload), {
+        status: 200,
+        headers: {
+          "content-type": "application/json",
+        },
+      })
+    );
+    const client = LiquidiumClient.create({
+      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
+      canisterIds: { instantLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
+    });
+
+    // when
+    const result = await client.activities.getStatus({
+      shortRef: SHORT_REF,
+      id: "activity-1",
+    });
+
+    // then
+    expect(getLoan).toHaveBeenCalledWith(LOAN_ID);
+    expect(result).toEqual({
+      found: true,
+      activity: {
+        id: "activity-1",
+        direction: "outflow",
+        kind: "borrow",
+        status: "sent",
+        poolId: "pool-1",
+        asset: "BTC",
+        chain: "BTC",
+        amount: ACTIVITY_AMOUNT_BASE_UNITS,
+        timestampMs: ACTIVITY_TIMESTAMP_MS,
+        txid: "tx-1",
+        confirmations: ACTIVITY_CONFIRMATIONS,
+        requiredConfirmations: ACTIVITY_REQUIRED_CONFIRMATIONS,
+      },
+    });
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "https://app.liquidium.fi/api/sdk/v1/activities/activity-1/status?profileId=aaaaa-aa",
+      {
+        method: "GET",
+        headers: undefined,
+        body: undefined,
+        signal: expect.any(AbortSignal),
+      }
+    );
+  });
+
   test("backfills deposited stage for pre-terminal eth inflows", async () => {
     // given
     const ACTIVITY_AMOUNT = "4000000";
@@ -3661,7 +3746,16 @@ describe("InstantLoansModule", () => {
     expect(loan.loanId).toBe(LOAN_ID);
     expect(loan.ref).toBe(publicIdFromInt(LOAN_ID));
     expect(loan.profileId).toBe(PROFILE_ID);
+    expect(loan).not.toHaveProperty("started");
+    expect(loan).not.toHaveProperty("depositDetectedTimestamp");
     expect(loan.ltvMaxBps).toBe(6_800n);
+    expect(loan.collateral).toMatchObject({
+      poolId: BTC_POOL_ID,
+      asset: "BTC",
+      chain: "BTC",
+      amount: 10_000_000n,
+    });
+    expect(loan.collateral).not.toHaveProperty("amountHint");
     expect(loan.borrow.amount).toBe(2_000_000n);
     expect(loan.depositTarget).toMatchObject({
       type: "nativeAddress",

@@ -76,10 +76,9 @@ export interface ListActivitiesRequest {
   state?: ActivityState;
 }
 
-export interface GetActivityStatusRequest {
-  profileId: string;
+export type GetActivityStatusRequest = {
   id: string;
-}
+} & ({ profileId: string } | { shortRef: string });
 
 export type GetActivityStatusResponse =
   | {

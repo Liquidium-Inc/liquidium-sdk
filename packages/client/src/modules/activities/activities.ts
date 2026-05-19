@@ -1,11 +1,17 @@
+import {
+  createInstantLoansActor,
+  type InstantLoansCanisterError,
+} from "../../core/canisters/instant-loans/actor";
 import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
 import {
   buildActivitiesPath,
   buildActivityStatusPath,
 } from "../../core/sdk-api-paths";
 import type { ApiClient } from "../../core/transports/api-client";
+import type { CanisterContext } from "../../core/transports/canister-context";
 import { Chain } from "../../core/types";
 import { parseBigInt } from "../../core/utils/bigint";
+import { intFromPublicId } from "../instant-loans/ref-code";
 import type {
   Activity,
   ActivityTopUp,
@@ -49,7 +55,10 @@ type ActivityStatusResponseWire =
     };
 
 export class ActivitiesModule {
-  constructor(readonly apiClient: ApiClient | undefined) {}
+  constructor(
+    readonly apiClient: ApiClient | undefined,
+    readonly canisterContext: CanisterContext
+  ) {}
 
   /**
    * Lists profile activities. Defaults to all activities.
@@ -77,8 +86,9 @@ export class ActivitiesModule {
     request: GetActivityStatusRequest
   ): Promise<GetActivityStatusResponse> {
     const apiClient = this.requireApi();
+    const profileId = await this.resolveProfileId(request);
     const response = await apiClient.get<ActivityStatusResponseWire>(
-      buildActivityStatusPath(request)
+      buildActivityStatusPath({ id: request.id, profileId })
     );
 
     if (!response.found) {
@@ -101,6 +111,62 @@ export class ActivitiesModule {
 
     return this.apiClient;
   }
+
+  private async resolveProfileId(
+    request: GetActivityStatusRequest
+  ): Promise<string> {
+    if ("profileId" in request) {
+      return request.profileId;
+    }
+
+    let loanId: bigint;
+    try {
+      loanId = intFromPublicId(request.shortRef.trim());
+    } catch (error) {
+      throw new LiquidiumError(
+        LiquidiumErrorCode.VALIDATION_ERROR,
+        "Invalid instant loan reference",
+        error
+      );
+    }
+
+    try {
+      const result = await createInstantLoansActor(
+        this.canisterContext
+      ).get_loan(loanId);
+
+      if ("Err" in result) {
+        throw mapInstantLoanLookupError(result.Err);
+      }
+
+      return result.Ok.lending_profile.toText();
+    } catch (error) {
+      if (error instanceof LiquidiumError) {
+        throw error;
+      }
+
+      throw new LiquidiumError(
+        LiquidiumErrorCode.CANISTER_REJECTED,
+        "Unable to resolve instant loan reference",
+        error
+      );
+    }
+  }
+}
+
+function mapInstantLoanLookupError(
+  error: InstantLoansCanisterError
+): LiquidiumError {
+  const [key] = Object.entries(error)[0] ?? ["Unknown"];
+
+  if (key === "LoanNotFound") {
+    return new LiquidiumError(
+      LiquidiumErrorCode.POSITION_NOT_FOUND,
+      "Instant loan not found"
+    );
+  }
+
+  return new LiquidiumError(LiquidiumErrorCode.INTERNAL, key);
 }
 
 function mapActivity(wire: ActivityWire): Activity {

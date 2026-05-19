@@ -110,20 +110,16 @@ export interface InstantLoan {
   ref: string;
   /** Generated lending profile principal used by the instant loan. */
   profileId: string;
-  /** Whether the borrow leg has started after collateral was detected. */
-  started: boolean;
-  /** Seconds timestamp when the canister processed the collateral deposit, if any. */
-  depositDetectedTimestamp?: bigint;
   /** Maximum loan-to-value ratio in basis points. */
   ltvMaxBps: bigint;
   /** Seconds allowed for the collateral deposit before timeout. */
   depositWindowSeconds: bigint;
-  /** Collateral-side pool, asset, chain, and requested amount hint. */
+  /** Collateral-side pool, asset, chain, and requested deposit amount. */
   collateral: {
     poolId: string;
     asset: MarketAsset;
     chain: MarketChain;
-    amountHint: bigint;
+    amount: bigint;
   };
   /** Borrow-side pool, asset, chain, requested amount, and destination. */
   borrow: {

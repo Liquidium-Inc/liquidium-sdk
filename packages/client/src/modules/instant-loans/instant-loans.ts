@@ -218,15 +218,13 @@ export class InstantLoansModule {
       loanId: record.id,
       ref: publicIdFromInt(record.id),
       profileId,
-      started: record.started,
-      depositDetectedTimestamp: record.deposit_detected_ts[0],
       ltvMaxBps: record.ltv_max_bps,
       depositWindowSeconds: record.ltv_timer_s,
       collateral: {
         poolId: collateralPoolId,
         asset: collateralAsset,
         chain: depositTarget.chain,
-        amountHint: record.min_deposit_hint,
+        amount: record.min_deposit_hint,
       },
       borrow: {
         poolId: borrowPoolId,
