@@ -1,14 +1,15 @@
-import { Principal } from "@dfinity/principal";
 import {
   createInstantLoansActor,
   type InstantLoanAccountType,
-  type InstantLoanAsset as InstantLoanAssetVariant,
   type InstantLoanCanisterRecord,
   type InstantLoansCanisterError,
 } from "../../core/canisters/instant-loans/actor";
 import { mapCanisterCallErrorToLiquidiumError } from "../../core/canisters/lending/error-mappers";
 import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
-import { buildInstantLoanAddressLookupPath } from "../../core/sdk-api-paths";
+import {
+  buildInstantLoanAddressLookupPath,
+  SdkApiPath,
+} from "../../core/sdk-api-paths";
 import type { ApiClient } from "../../core/transports/api-client";
 import type { CanisterContext } from "../../core/transports/canister-context";
 import { type Asset, type Chain, SupplyAction } from "../../core/types";
@@ -64,6 +65,57 @@ type InstantLoanCandidateWire = {
   min_deposit_hint?: string | bigint;
 };
 
+type InstantLoanCreateRequestWire = {
+  collateralPoolId: string;
+  borrowPoolId: string;
+  collateralAsset: InstantLoanAsset;
+  borrowAsset: InstantLoanAsset;
+  collateralAmount: string;
+  borrowAmount: string;
+  ltvMaxBps: string;
+  depositWindowSeconds: string;
+  borrowDestination: string;
+  refundDestination: string;
+};
+
+type InstantLoanAccountWire =
+  | { address: string; type: "External" }
+  | { principal: string; type: "Native" };
+
+type InstantLoanWire = {
+  loanId: string | bigint;
+  ref?: string;
+  profileId: string;
+  ltvMaxBps: string | bigint;
+  depositWindowSeconds: string | bigint;
+  collateral: {
+    poolId: string;
+    asset: string;
+    amountHint: string | bigint;
+  };
+  borrow: {
+    poolId: string;
+    asset: string;
+    amount: string | bigint;
+    destination: InstantLoanAccountWire;
+  };
+  refundDestination: InstantLoanAccountWire;
+};
+
+type InstantLoanHydrationInput = {
+  loanId: bigint;
+  profileId: string;
+  ltvMaxBps: bigint;
+  depositWindowSeconds: bigint;
+  collateralPoolId: string;
+  borrowPoolId: string;
+  collateralAsset: string;
+  borrowAsset: string;
+  borrowAmount: bigint;
+  borrowDestination: InstantLoanAccount;
+  refundDestination: InstantLoanAccount;
+};
+
 export class InstantLoansModule {
   constructor(
     readonly canisterContext: CanisterContext,
@@ -81,36 +133,35 @@ export class InstantLoansModule {
    */
   async create(request: CreateInstantLoanRequest): Promise<InstantLoan> {
     validateCreateRequest(request);
+    const apiClient = this.requireApi("Instant loan creation");
+
     await this.validateInstantLoanLtvPolicy(request);
 
-    try {
-      const result = await createInstantLoansActor(
-        this.canisterContext
-      ).create_loan({
-        borrow_destination: externalAccountFromInput(request.borrowDestination),
-        lend_asset: assetVariant(request.collateralAsset),
-        borrow_amount: request.borrowAmount,
-        lend_pool_id: Principal.fromText(request.collateralPoolId),
-        min_deposit_hint: request.collateralAmount,
-        refund_destination: externalAccountFromInput(request.refundDestination),
-        ltv_max_bps: request.ltvMaxBps,
-        borrow_pool_id: Principal.fromText(request.borrowPoolId),
-        borrow_asset: assetVariant(request.borrowAsset),
-        ltv_timer_s: request.depositWindowSeconds,
-      });
+    const response = await apiClient.post<
+      { loan: InstantLoanWire; success?: true },
+      InstantLoanCreateRequestWire
+    >(SdkApiPath.instantLoans, {
+      collateralPoolId: request.collateralPoolId,
+      borrowPoolId: request.borrowPoolId,
+      collateralAsset: request.collateralAsset,
+      borrowAsset: request.borrowAsset,
+      collateralAmount: request.collateralAmount.toString(),
+      borrowAmount: request.borrowAmount.toString(),
+      ltvMaxBps: request.ltvMaxBps.toString(),
+      depositWindowSeconds: request.depositWindowSeconds.toString(),
+      borrowDestination: externalAddressFromInput(request.borrowDestination),
+      refundDestination: externalAddressFromInput(request.refundDestination),
+    });
 
-      if ("Err" in result) {
-        throw mapInstantLoansErrorToLiquidiumError(result.Err);
-      }
+    const loan = await this.mapLoanWire(response.loan);
 
-      return await this.get({ loanId: result.Ok.loan_id });
-    } catch (error) {
-      if (error instanceof LiquidiumError) {
-        throw error;
-      }
-
-      throw mapCanisterCallErrorToLiquidiumError("create_loan", error);
-    }
+    return {
+      ...loan,
+      collateral: {
+        ...loan.collateral,
+        amount: request.collateralAmount,
+      },
+    };
   }
 
   /**
@@ -158,7 +209,7 @@ export class InstantLoansModule {
       );
     }
 
-    const apiClient = this.requireApi();
+    const apiClient = this.requireApi("Instant loan address lookup");
     const response = await apiClient.get<{
       success?: true;
       loans?: InstantLoanCandidateWire[];
@@ -171,11 +222,50 @@ export class InstantLoansModule {
   private async mapLoanRecord(
     record: InstantLoanCanisterRecord
   ): Promise<InstantLoan> {
-    const profileId = record.lending_profile.toText();
-    const collateralPoolId = record.lend_pool_id.toText();
-    const borrowPoolId = record.borrow_pool_id.toText();
-    const collateralAsset = getVariantKey(record.lend_asset);
-    const borrowAsset = getVariantKey(record.borrow_asset);
+    return await this.hydrateLoan({
+      loanId: record.id,
+      profileId: record.lending_profile.toText(),
+      ltvMaxBps: record.ltv_max_bps,
+      depositWindowSeconds: record.ltv_timer_s,
+      collateralPoolId: record.lend_pool_id.toText(),
+      borrowPoolId: record.borrow_pool_id.toText(),
+      collateralAsset: getVariantKey(record.lend_asset),
+      borrowAsset: getVariantKey(record.borrow_asset),
+      borrowAmount: record.borrow_amount,
+      borrowDestination: accountFromCanister(record.borrow_destination),
+      refundDestination: accountFromCanister(record.refund_destination),
+    });
+  }
+
+  private async mapLoanWire(loan: InstantLoanWire): Promise<InstantLoan> {
+    const loanId = parseBigintWire(loan.loanId, "loan ID");
+
+    return await this.hydrateLoan({
+      loanId,
+      profileId: loan.profileId,
+      ltvMaxBps: parseBigintWire(loan.ltvMaxBps, "max LTV"),
+      depositWindowSeconds: parseBigintWire(
+        loan.depositWindowSeconds,
+        "deposit window"
+      ),
+      collateralPoolId: loan.collateral.poolId,
+      borrowPoolId: loan.borrow.poolId,
+      collateralAsset: loan.collateral.asset,
+      borrowAsset: loan.borrow.asset,
+      borrowAmount: parseBigintWire(loan.borrow.amount, "borrow amount"),
+      borrowDestination: accountFromWire(loan.borrow.destination),
+      refundDestination: accountFromWire(loan.refundDestination),
+    });
+  }
+
+  private async hydrateLoan(
+    input: InstantLoanHydrationInput
+  ): Promise<InstantLoan> {
+    const profileId = input.profileId;
+    const collateralPoolId = input.collateralPoolId;
+    const borrowPoolId = input.borrowPoolId;
+    const collateralAsset = input.collateralAsset;
+    const borrowAsset = input.borrowAsset;
 
     const [
       depositTarget,
@@ -213,25 +303,25 @@ export class InstantLoansModule {
       totalDebtAmount + interestBufferAmount + repaymentInflowFee.totalFee;
 
     return {
-      loanId: record.id,
-      ref: publicIdFromInt(record.id),
+      loanId: input.loanId,
+      ref: publicIdFromInt(input.loanId),
       profileId,
-      ltvMaxBps: record.ltv_max_bps,
-      depositWindowSeconds: record.ltv_timer_s,
+      ltvMaxBps: input.ltvMaxBps,
+      depositWindowSeconds: input.depositWindowSeconds,
       collateral: {
         poolId: collateralPoolId,
         asset: collateralAsset,
         chain: depositTarget.chain,
-        amount: record.min_deposit_hint,
+        amount: collateralPosition?.deposited ?? 0n,
       },
       borrow: {
         poolId: borrowPoolId,
         asset: borrowAsset,
         chain: repayTarget.chain,
-        amount: record.borrow_amount,
-        destination: accountFromCanister(record.borrow_destination),
+        amount: input.borrowAmount,
+        destination: input.borrowDestination,
       },
-      refundDestination: accountFromCanister(record.refund_destination),
+      refundDestination: input.refundDestination,
       depositTarget,
       repayTarget,
       repayment: {
@@ -276,11 +366,11 @@ export class InstantLoansModule {
     }
   }
 
-  private requireApi(): ApiClient {
+  private requireApi(action: string): ApiClient {
     if (!this.apiClient) {
       throw new LiquidiumError(
         LiquidiumErrorCode.VALIDATION_ERROR,
-        "Instant loan address lookup requires an API base URL in client config"
+        `${action} requires an API base URL in client config`
       );
     }
 
@@ -411,9 +501,7 @@ function throwLtvCalculationError(
   );
 }
 
-function externalAccountFromInput(
-  account: string | ExternalAccount
-): InstantLoanAccountType {
+function externalAddressFromInput(account: string | ExternalAccount): string {
   const address =
     typeof account === "string" ? account.trim() : account.address.trim();
   if (!address) {
@@ -423,7 +511,7 @@ function externalAccountFromInput(
     );
   }
 
-  return { External: address };
+  return address;
 }
 
 function accountFromCanister(
@@ -436,8 +524,12 @@ function accountFromCanister(
   return { type: "External", address: account.External };
 }
 
-function assetVariant(asset: InstantLoanAsset): InstantLoanAssetVariant {
-  return { [asset]: null } as InstantLoanAssetVariant;
+function accountFromWire(account: InstantLoanAccountWire): InstantLoanAccount {
+  if (account.type === "Native") {
+    return { type: "Native", principal: account.principal };
+  }
+
+  return { type: "External", address: account.address };
 }
 
 function decodeRef(ref: string): bigint {
@@ -529,6 +621,12 @@ function mapInstantLoansErrorToLiquidiumError(
       return new LiquidiumError(
         LiquidiumErrorCode.MAX_LTV_EXCEEDED,
         stringifyErrorPayload(payload)
+      );
+    case "LtvTimerOutOfRange":
+    case "InvalidLtvTimerS":
+      return new LiquidiumError(
+        LiquidiumErrorCode.VALIDATION_ERROR,
+        stringifyErrorPayload(payload) ?? key
       );
     case "AccountRequired":
       return new LiquidiumError(

@@ -22,7 +22,9 @@ import {
   type WalletAdapter,
 } from "@liquidium/client";
 
-const client = LiquidiumClient.create({});
+const client = LiquidiumClient.create({
+  apiBaseUrl: "https://app.liquidium.fi/api/sdk",
+});
 const walletAdapter: WalletAdapter = {
   signMessage: async ({ message }) => wallet.signMessage(message),
   sendEthTransaction: async ({ transaction }) =>
@@ -64,6 +66,7 @@ const reserve = await client.market.getReserveData({
 });
 
 // Default borrow flow: accountless instant loan with deposit/repay targets.
+// Requires apiBaseUrl so creation is submitted through Liquidium's backend.
 const instantLoanLtv = client.quote.calculateLtv(
   {
     collateralPoolId: btcPool.id,

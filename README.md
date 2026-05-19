@@ -9,7 +9,9 @@ Recommended order: use `client.instantLoans` first, deposit-address profile flow
 ```ts
 import { LiquidiumClient } from "@liquidium/client";
 
-const client = LiquidiumClient.create({});
+const client = LiquidiumClient.create({
+  apiBaseUrl: "https://app.liquidium.fi/api/sdk",
+});
 
 const pools = await client.market.listPools();
 const prices = await client.market.getAssetPrices();

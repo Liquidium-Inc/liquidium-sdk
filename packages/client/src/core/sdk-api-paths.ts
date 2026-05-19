@@ -35,6 +35,7 @@ const HISTORY_POOL = `${SDK_API_V1_PREFIX}/history/pool`;
 const HISTORY_POOL_CONFIG = `${SDK_API_V1_PREFIX}/history/pool-config`;
 const HISTORY_RATES = `${SDK_API_V1_PREFIX}/history/rates`;
 const HISTORY_USERS = `${SDK_API_V1_PREFIX}/history/users`;
+const INSTANT_LOANS = `${SDK_API_V1_PREFIX}/instant-loans`;
 
 export function buildHistoryPoolPath(
   poolId: string,
@@ -114,9 +115,10 @@ export function buildInstantLoanAddressLookupPath(
   request: BuildInstantLoanAddressLookupPathRequest
 ): string {
   const query = new URLSearchParams({ address: request.address });
-  return `${SDK_API_V1_PREFIX}/instant-loans/address?${query.toString()}`;
+  return `${INSTANT_LOANS}/address?${query.toString()}`;
 }
 
 export const SdkApiPath = {
   inflow: `${SDK_API_V1_PREFIX}/inflow`,
+  instantLoans: INSTANT_LOANS,
 } as const;

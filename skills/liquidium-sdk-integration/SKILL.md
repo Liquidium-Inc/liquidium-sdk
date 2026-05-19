@@ -54,7 +54,7 @@ const client = LiquidiumClient.create({
 
 - `environment`: sets the canister preset. Only `mainnet` is bundled; pass `canisterIds` explicitly for custom deployments
 - `apiBaseUrl`: required for history, activities, and inflow reporting. Not required for `borrow(...)`, `withdraw(...)`, or default ETH stablecoin deposit-address supply/repay targets
-- `apiBaseUrl`: also required for `instantLoans.findByAddress(...)`. It is not required for `instantLoans.create(...)` or `instantLoans.get(...)`
+- `apiBaseUrl`: required for `instantLoans.create(...)` and `instantLoans.findByAddress(...)`. It is not required for `instantLoans.get(...)`
 - `evmRpcUrl` / `evmPublicClient`: required for lower-level ETH contract-interaction supply planning and allowance polling. Use `evmRpcHeaders` when the RPC provider authenticates with HTTP headers
 - `identity` / `icHost`: custom ICP agent configuration
 - `canisterIds.instantLoans`: defaults to mainnet `qdt2k-xqaaa-aaaae-qkapq-cai`; override it for custom deployments
@@ -556,7 +556,7 @@ const contractInteractionFlow = await client.lending.supply({
 1. Treating profile lending as the default borrow flow. Use `client.instantLoans.create(...)` for the authless product flow unless the user explicitly asks for profiles.
 2. Adding profile creation, signed borrow, or wallet adapter requirements to instant loans. `instantLoans.create(...)` and `instantLoans.get(...)` do not need them.
 3. Confusing `quote.targetLtvBps` with instant-loan `ltvMaxBps`. The quote target helps plan amounts; `ltvMaxBps` is validated by the instant-loan LTV guards.
-4. `LiquidiumClient.create({})` does not cover every method. History, activities, inflow reporting, and `instantLoans.findByAddress(...)` need `apiBaseUrl`; lower-level contract-interaction planning also needs `evmRpcUrl` or `evmPublicClient`. `instantLoans.create(...)`, `instantLoans.get(...)`, default ETH stablecoin deposit-address supply, `borrow(...)`, and `withdraw(...)` do not.
+4. `LiquidiumClient.create({})` does not cover every method. History, activities, inflow reporting, `instantLoans.create(...)`, and `instantLoans.findByAddress(...)` need `apiBaseUrl`; lower-level contract-interaction planning also needs `evmRpcUrl` or `evmPublicClient`. `instantLoans.get(...)`, default ETH stablecoin deposit-address supply, `borrow(...)`, and `withdraw(...)` do not.
 5. Prepare methods return signable actions, not completed actions. `prepareCreateProfile`, `prepareBorrow`, and `prepareWithdraw` still need signing and submission.
 6. Build a wallet adapter with only the methods the selected flow needs. Avoid adding `signMessage`, `sendBtcTransaction`, or `sendEthTransaction` unless the flow uses them.
 7. Do not `await client.quote.getQuote(...)`; it is synchronous once pools and prices are available.
@@ -581,8 +581,8 @@ const contractInteractionFlow = await client.lending.supply({
 ## Defaults
 
 - Prefer `client.instantLoans.create(...)` for the simple authless borrow UX
-- Start with `LiquidiumClient.create({})` for market reads and authless `instantLoans.create(...)` / `instantLoans.get(...)`
-- Add `apiBaseUrl` when the requested flow touches backend-assisted endpoints such as history, activities, inflow reporting, or `instantLoans.findByAddress(...)`
+- Start with `LiquidiumClient.create({ apiBaseUrl })` for market reads and authless `instantLoans.create(...)`
+- Add `apiBaseUrl` when the requested flow touches backend-assisted endpoints such as instant-loan creation, history, activities, inflow reporting, or `instantLoans.findByAddress(...)`
 - Add `evmRpcUrl` or `evmPublicClient` when the requested flow reads Ethereum chain state
 - Use `chain: "ETH"` or `chain: "BTC"` exactly as required by the SDK
 - Prefer a quote-first flow for advanced profile-based borrowing
