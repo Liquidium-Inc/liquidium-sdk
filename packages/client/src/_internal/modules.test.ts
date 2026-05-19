@@ -3856,7 +3856,10 @@ describe("InstantLoansModule", () => {
       .mockReturnValueOnce({
         list_pools: vi
           .fn()
-          .mockResolvedValue([createBtcPoolRecord(), createUsdtPoolRecord()]),
+          .mockResolvedValue([
+            createBtcPoolRecord({ max_ltv: 6_500n }),
+            createUsdtPoolRecord(),
+          ]),
         get_pool_rate: vi
           .fn()
           .mockResolvedValue([[10_000_000_000_000_000_000_000_000n, 0n, 0n]]),
@@ -3905,8 +3908,8 @@ describe("InstantLoansModule", () => {
       collateralAsset: "BTC",
       borrowAsset: "USDT",
       collateralAmount: 10_000_000n,
-      borrowAmount: 2_000_000n,
-      ltvMaxBps: 6_800n,
+      borrowAmount: 5_726_000_000n,
+      ltvMaxBps: 6_000n,
       depositWindowSeconds: 3_600n,
       borrowDestination: "0x2222222222222222222222222222222222222222",
       refundDestination: "bc1qrefunddestination",
@@ -3918,8 +3921,8 @@ describe("InstantLoansModule", () => {
         lend_asset: { BTC: null },
         borrow_asset: { USDT: null },
         min_deposit_hint: 10_000_000n,
-        borrow_amount: 2_000_000n,
-        ltv_max_bps: 6_800n,
+        borrow_amount: 5_726_000_000n,
+        ltv_max_bps: 6_000n,
         ltv_timer_s: 3_600n,
         borrow_destination: {
           External: "0x2222222222222222222222222222222222222222",
@@ -3930,14 +3933,17 @@ describe("InstantLoansModule", () => {
     expect(loan.loanId).toBe(LOAN_ID);
   });
 
-  test("rejects a loan when starting LTV exceeds the starting cap", async () => {
+  test("rejects a loan when current LTV plus slippage exceeds the pool max", async () => {
     // given
     const createLoan = vi.fn();
     vi.spyOn(Actor, "createActor")
       .mockReturnValueOnce({
         list_pools: vi
           .fn()
-          .mockResolvedValue([createBtcPoolRecord(), createUsdtPoolRecord()]),
+          .mockResolvedValue([
+            createBtcPoolRecord({ max_ltv: 6_500n }),
+            createUsdtPoolRecord(),
+          ]),
         get_pool_rate: vi
           .fn()
           .mockResolvedValue([[10_000_000_000_000_000_000_000_000n, 0n, 0n]]),
@@ -3957,8 +3963,8 @@ describe("InstantLoansModule", () => {
       collateralAsset: "BTC",
       borrowAsset: "USDT",
       collateralAmount: 10_000_000n,
-      borrowAmount: 6_600_000_000n,
-      ltvMaxBps: 6_800n,
+      borrowAmount: 6_500_000_000n,
+      ltvMaxBps: 6_500n,
       depositWindowSeconds: 3_600n,
       borrowDestination: "0x2222222222222222222222222222222222222222",
       refundDestination: "bc1qrefunddestination",
@@ -3966,7 +3972,9 @@ describe("InstantLoansModule", () => {
 
     // then
     await expect(result).rejects.toMatchObject({
-      code: LiquidiumErrorCode.MAX_LTV_EXCEEDED,
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message:
+        "Instant loan max LTV 65.00% is below minimum allowed 67.00% (current implied LTV 65.00% + 2.00% buffer)",
     });
     expect(createLoan).not.toHaveBeenCalled();
   });
@@ -3978,7 +3986,10 @@ describe("InstantLoansModule", () => {
       .mockReturnValueOnce({
         list_pools: vi
           .fn()
-          .mockResolvedValue([createBtcPoolRecord(), createUsdtPoolRecord()]),
+          .mockResolvedValue([
+            createBtcPoolRecord({ max_ltv: 6_500n }),
+            createUsdtPoolRecord(),
+          ]),
         get_pool_rate: vi
           .fn()
           .mockResolvedValue([[10_000_000_000_000_000_000_000_000n, 0n, 0n]]),
@@ -3998,8 +4009,8 @@ describe("InstantLoansModule", () => {
       collateralAsset: "BTC",
       borrowAsset: "USDT",
       collateralAmount: 10_000_000n,
-      borrowAmount: 2_000_000n,
-      ltvMaxBps: 6_699n,
+      borrowAmount: 5_726_000_000n,
+      ltvMaxBps: 5_925n,
       depositWindowSeconds: 3_600n,
       borrowDestination: "0x2222222222222222222222222222222222222222",
       refundDestination: "bc1qrefunddestination",
@@ -4008,6 +4019,8 @@ describe("InstantLoansModule", () => {
     // then
     await expect(result).rejects.toMatchObject({
       code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message:
+        "Instant loan max LTV 59.25% is below minimum allowed 59.26% (current implied LTV 57.26% + 2.00% buffer)",
     });
     expect(createLoan).not.toHaveBeenCalled();
   });
@@ -4156,7 +4169,7 @@ describe("InstantLoansModule", () => {
     ];
   }
 
-  function createBtcPoolRecord() {
+  function createBtcPoolRecord(overrides = {}) {
     return {
       optimal_utilization_rate: 80n,
       principal: {
@@ -4183,6 +4196,7 @@ describe("InstantLoansModule", () => {
       liquidation_threshold: 7_500n,
       max_ltv: 7_000n,
       total_supply_at_last_sync: 50_000n,
+      ...overrides,
     };
   }
 

@@ -35,12 +35,10 @@ const REPAYMENT_BUFFER_SECONDS = 86_400n;
 const RATE_SCALE = 10n ** 27n;
 const SECONDS_PER_YEAR = 31_536_000n;
 const ETH_STABLECOIN_INFLOW_FEE_FALLBACK = 1_500_000n;
-const INSTANT_LOAN_START_LTV_BUFFER_BPS = 500n;
 const INSTANT_LOAN_MIN_SLIPPAGE_BUFFER_BPS = 200n;
 
 type InstantLoanLtvPolicy = {
   ltvBps: bigint;
-  maxStartingLtvBps: bigint;
   minLtvMaxBps: bigint;
   maxLtvMaxBps: bigint;
 };
@@ -294,17 +292,10 @@ export class InstantLoansModule {
   ): Promise<void> {
     const ltvCalculation = await this.calculateInstantLoanLtv(request);
 
-    if (ltvCalculation.ltvBps > ltvCalculation.maxStartingLtvBps) {
-      throw new LiquidiumError(
-        LiquidiumErrorCode.MAX_LTV_EXCEEDED,
-        `Instant loan starting LTV ${formatBpsAsPercent(ltvCalculation.ltvBps)} exceeds max starting LTV ${formatBpsAsPercent(ltvCalculation.maxStartingLtvBps)}`
-      );
-    }
-
     if (request.ltvMaxBps < ltvCalculation.minLtvMaxBps) {
       throw new LiquidiumError(
         LiquidiumErrorCode.VALIDATION_ERROR,
-        `Instant loan max LTV ${formatBpsAsPercent(request.ltvMaxBps)} is below minimum allowed ${formatBpsAsPercent(ltvCalculation.minLtvMaxBps)}`
+        `Instant loan max LTV ${formatBpsAsPercent(request.ltvMaxBps)} is below minimum allowed ${formatBpsAsPercent(ltvCalculation.minLtvMaxBps)} (current implied LTV ${formatBpsAsPercent(ltvCalculation.ltvBps)} + ${formatBpsAsPercent(INSTANT_LOAN_MIN_SLIPPAGE_BUFFER_BPS)} buffer)`
       );
     }
 
@@ -338,21 +329,11 @@ export class InstantLoansModule {
       throwLtvCalculationError(ltvCalculation.validationErrors[0]);
     }
 
-    const maxStartingLtvBps =
-      ltvCalculation.maxAllowedLtvBps - INSTANT_LOAN_START_LTV_BUFFER_BPS;
-    if (maxStartingLtvBps <= 0n) {
-      throw new LiquidiumError(
-        LiquidiumErrorCode.VALIDATION_ERROR,
-        `Collateral pool max LTV ${formatBpsAsPercent(ltvCalculation.maxAllowedLtvBps)} is too low for instant loans`
-      );
-    }
-
     const minLtvMaxBps =
-      maxStartingLtvBps + INSTANT_LOAN_MIN_SLIPPAGE_BUFFER_BPS;
+      ltvCalculation.ltvBps + INSTANT_LOAN_MIN_SLIPPAGE_BUFFER_BPS;
 
     return {
       ltvBps: ltvCalculation.ltvBps,
-      maxStartingLtvBps,
       minLtvMaxBps,
       maxLtvMaxBps: ltvCalculation.maxAllowedLtvBps,
     };
