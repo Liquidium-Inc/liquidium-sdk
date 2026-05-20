@@ -831,6 +831,58 @@ describe("ActivitiesModule", () => {
     );
   });
 
+  test("lists activities by instant loan short ref", async () => {
+    // given
+    const LOAN_ID = 42n;
+    const PROFILE_ID = "aaaaa-aa";
+    const SHORT_REF = publicIdFromInt(LOAN_ID);
+    const getLoan = vi.fn().mockResolvedValue({
+      Ok: {
+        lending_profile: Principal.fromText(PROFILE_ID),
+      },
+    });
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      get_loan: getLoan,
+    } as never);
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          success: true,
+          activities: [],
+        }),
+        {
+          status: 200,
+          headers: {
+            "content-type": "application/json",
+          },
+        }
+      )
+    );
+    const client = LiquidiumClient.create({
+      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
+      canisterIds: { instantLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
+    });
+
+    // when
+    const result = await client.activities.list({
+      shortRef: SHORT_REF,
+      state: "active",
+    });
+
+    // then
+    expect(getLoan).toHaveBeenCalledWith(LOAN_ID);
+    expect(result).toEqual([]);
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "https://app.liquidium.fi/api/sdk/v1/activities?profileId=aaaaa-aa&state=active",
+      {
+        method: "GET",
+        headers: undefined,
+        body: undefined,
+        signal: expect.any(AbortSignal),
+      }
+    );
+  });
+
   test("gets activity status by receipt id", async () => {
     // given
     const ACTIVITY_AMOUNT = "50000";

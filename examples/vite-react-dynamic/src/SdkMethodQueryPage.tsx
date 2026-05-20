@@ -226,12 +226,21 @@ const SDK_METHODS: MethodDefinition[] = [
   {
     id: "activities.list",
     label: "activities.list",
-    defaultArgs: '{\n  "profileId": "aaaaa-aa",\n  "state": "all"\n}',
+    defaultArgs: '{\n  "shortRef": "Y7R19F",\n  "state": "all"\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
+      const request = args.shortRef
+        ? {
+            shortRef: expectNonEmptyString(args.shortRef, "shortRef"),
+            state: expectOptionalActivityState(args.state, "state"),
+          }
+        : {
+            profileId: expectNonEmptyString(args.profileId, "profileId"),
+            state: expectOptionalActivityState(args.state, "state"),
+          };
+
       return await client.activities.list({
-        profileId: expectNonEmptyString(args.profileId, "profileId"),
-        state: expectOptionalActivityState(args.state, "state"),
+        ...request,
       });
     },
   },

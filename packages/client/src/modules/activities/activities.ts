@@ -67,9 +67,10 @@ export class ActivitiesModule {
    */
   async list(request: ListActivitiesRequest): Promise<Activity[]> {
     const apiClient = this.requireApi();
+    const profileId = await this.resolveProfileId(request);
     const response = await apiClient.get<ListActivitiesResponseWire>(
       buildActivitiesPath({
-        ...request,
+        profileId,
         state: request.state ?? ActivityState.all,
       })
     );
@@ -113,7 +114,7 @@ export class ActivitiesModule {
   }
 
   private async resolveProfileId(
-    request: GetActivityStatusRequest
+    request: GetActivityStatusRequest | ListActivitiesRequest
   ): Promise<string> {
     if ("profileId" in request) {
       return request.profileId;

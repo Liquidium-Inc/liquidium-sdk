@@ -71,10 +71,9 @@ export interface Activity {
   topUp?: ActivityTopUp;
 }
 
-export interface ListActivitiesRequest {
-  profileId: string;
+export type ListActivitiesRequest = {
   state?: ActivityState;
-}
+} & ({ profileId: string } | { shortRef: string });
 
 export type GetActivityStatusRequest = {
   id: string;
