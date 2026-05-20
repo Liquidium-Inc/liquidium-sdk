@@ -14,12 +14,13 @@ import { parseBigInt } from "../../core/utils/bigint";
 import { intFromPublicId } from "../instant-loans/ref-code";
 import type {
   Activity,
+  ActivityStatus,
   ActivityTopUp,
   GetActivityStatusRequest,
   GetActivityStatusResponse,
   ListActivitiesRequest,
 } from "./types";
-import { ActivityDirection, ActivityStage, ActivityState } from "./types";
+import { ActivityDirection, ActivityFilter } from "./types";
 
 const PRE_TERMINAL_ETH_ACTIVITY_ID_PREFIX = "pre_terminal_eth_";
 
@@ -32,8 +33,24 @@ type ActivityTopUpWire = Omit<
   shortfallAmount: string;
 };
 
-type ActivityWire = Omit<Activity, "amount" | "topUp"> & {
+type ActivityWireStatus =
+  | "requested"
+  | "pending"
+  | "sent"
+  | "confirmed"
+  | "failed";
+
+type ActivityWireStage =
+  | "logged"
+  | "deposited"
+  | "confirmed"
+  | "pending"
+  | "finalising";
+
+type ActivityWire = Omit<Activity, "amount" | "status" | "topUp"> & {
   amount: string;
+  status: ActivityWireStatus;
+  stage?: ActivityWireStage;
   topUp?: ActivityTopUpWire;
 };
 
@@ -71,7 +88,7 @@ export class ActivitiesModule {
     const response = await apiClient.get<ListActivitiesResponseWire>(
       buildActivitiesPath({
         profileId,
-        state: request.state ?? ActivityState.all,
+        state: request.filter ?? ActivityFilter.all,
       })
     );
 
@@ -171,16 +188,35 @@ function mapInstantLoanLookupError(
 }
 
 function mapActivity(wire: ActivityWire): Activity {
-  const { amount, topUp: topUpWire, ...activity } = wire;
-  const stage = wire.stage ?? deriveActivityStage(wire);
+  const { amount, stage, status, topUp: topUpWire, ...activity } = wire;
+  const effectiveStage = stage ?? deriveActivityStage(wire);
   const topUp = topUpWire ? mapActivityTopUp(topUpWire) : undefined;
 
   return {
     ...activity,
-    ...(stage ? { stage } : {}),
+    status: mapActivityStatus(status, effectiveStage),
     ...(topUp ? { topUp } : {}),
     amount: parseBigInt(amount, "activity amount"),
   };
+}
+
+function mapActivityStatus(
+  status: ActivityWireStatus,
+  stage: ActivityWireStage | undefined
+): ActivityStatus {
+  if (status !== "pending") {
+    return status;
+  }
+
+  if (stage === "deposited") {
+    return "detected";
+  }
+
+  if (stage === "confirmed" || stage === "finalising" || stage === "pending") {
+    return "processing";
+  }
+
+  return "pending";
 }
 
 function mapActivityTopUp(wire: ActivityTopUpWire): ActivityTopUp {
@@ -198,13 +234,15 @@ function mapActivityTopUp(wire: ActivityTopUpWire): ActivityTopUp {
   };
 }
 
-function deriveActivityStage(wire: ActivityWire): Activity["stage"] {
+function deriveActivityStage(
+  wire: ActivityWire
+): ActivityWireStage | undefined {
   if (
     wire.id.startsWith(PRE_TERMINAL_ETH_ACTIVITY_ID_PREFIX) &&
     wire.direction === ActivityDirection.inflow &&
     wire.chain === Chain.ETH
   ) {
-    return ActivityStage.deposited;
+    return "deposited";
   }
 
   return undefined;

@@ -7,8 +7,7 @@ export type {
 } from "./types";
 export {
   ActivityDirection,
+  ActivityFilter,
   ActivityKind,
-  ActivityStage,
-  ActivityState,
   ActivityStatus,
 } from "./types";

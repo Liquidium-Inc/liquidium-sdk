@@ -1,11 +1,12 @@
 import type { Chain } from "../../core/types";
 
-export const ActivityState = {
+export const ActivityFilter = {
   active: "active",
   completed: "completed",
   all: "all",
 } as const;
-export type ActivityState = (typeof ActivityState)[keyof typeof ActivityState];
+export type ActivityFilter =
+  (typeof ActivityFilter)[keyof typeof ActivityFilter];
 
 export const ActivityDirection = {
   inflow: "inflow",
@@ -25,21 +26,14 @@ export type ActivityKind = (typeof ActivityKind)[keyof typeof ActivityKind];
 export const ActivityStatus = {
   requested: "requested",
   pending: "pending",
+  detected: "detected",
+  processing: "processing",
   sent: "sent",
   confirmed: "confirmed",
   failed: "failed",
 } as const;
 export type ActivityStatus =
   (typeof ActivityStatus)[keyof typeof ActivityStatus];
-
-export const ActivityStage = {
-  logged: "logged",
-  deposited: "deposited",
-  confirmed: "confirmed",
-  pending: "pending",
-  finalising: "finalising",
-} as const;
-export type ActivityStage = (typeof ActivityStage)[keyof typeof ActivityStage];
 
 export interface ActivityTopUp {
   required: boolean;
@@ -55,10 +49,8 @@ export interface Activity {
   id: string;
   direction: ActivityDirection;
   kind: ActivityKind;
-  /** Coarse lifecycle status. Active inflows stay pending until completed. */
+  /** Single consumer-facing lifecycle status. */
   status: ActivityStatus;
-  /** Inflow processing stage, e.g. deposited for detected ETH deposits. */
-  stage?: ActivityStage;
   poolId: string;
   asset: string | null;
   chain: Chain | null;
@@ -72,7 +64,7 @@ export interface Activity {
 }
 
 export type ListActivitiesRequest = {
-  state?: ActivityState;
+  filter?: ActivityFilter;
 } & ({ profileId: string } | { shortRef: string });
 
 export type GetActivityStatusRequest = {

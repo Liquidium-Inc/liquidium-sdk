@@ -401,7 +401,7 @@ describe("HistoryModule", () => {
           amount: 100000n,
           poolId: "pool-1",
           timestamp: "2026-04-01T00:00:00.000Z",
-          status: "CONFIRMED",
+          status: "confirmed",
           txids: ["tx-1"],
         },
       ],
@@ -598,7 +598,7 @@ describe("HistoryModule", () => {
       market: "pool-btc",
       poolId: "pool-btc",
       types: ["borrow"],
-      statuses: ["CONFIRMED"],
+      statuses: ["confirmed"],
       from: "2026-04-01T00:00:00.000Z",
       to: "2026-04-03T00:00:00.000Z",
       limit: 1,
@@ -613,7 +613,7 @@ describe("HistoryModule", () => {
           amount: 50000n,
           poolId: "pool-btc",
           timestamp: "2026-04-02T00:00:00.000Z",
-          status: "CONFIRMED",
+          status: "confirmed",
           txids: ["tx-1"],
         },
       ],
@@ -821,7 +821,6 @@ describe("ActivitiesModule", () => {
         direction: "inflow",
         kind: "deposit",
         status: "pending",
-        stage: "logged",
         poolId: "pool-1",
         asset: "BTC",
         chain: "BTC",
@@ -878,7 +877,7 @@ describe("ActivitiesModule", () => {
     // when
     const result = await client.activities.list({
       shortRef: SHORT_REF,
-      state: "active",
+      filter: "active",
     });
 
     // then
@@ -1052,7 +1051,7 @@ describe("ActivitiesModule", () => {
     );
   });
 
-  test("backfills deposited stage for pre-terminal eth inflows", async () => {
+  test("maps pre-terminal eth inflows to detected status", async () => {
     // given
     const ACTIVITY_AMOUNT = "4000000";
     const ACTIVITY_AMOUNT_BASE_UNITS = 4000000n;
@@ -1112,8 +1111,7 @@ describe("ActivitiesModule", () => {
         id: "pre_terminal_eth_36",
         direction: "inflow",
         kind: "deposit",
-        status: "pending",
-        stage: "deposited",
+        status: "detected",
         poolId: "7dcux-qqaaa-aaaae-qfc3a-cai",
         asset: "USDT",
         chain: "ETH",
@@ -3818,6 +3816,7 @@ describe("InstantLoansModule", () => {
     expect(getLoan).toHaveBeenCalledWith(LOAN_ID);
     expect(loan.loanId).toBe(LOAN_ID);
     expect(loan.ref).toBe(publicIdFromInt(LOAN_ID));
+    expect(loan.status).toBe("active");
     expect(loan.profileId).toBe(PROFILE_ID);
     expect(loan).not.toHaveProperty("started");
     expect(loan).not.toHaveProperty("depositDetectedTimestamp");
@@ -3998,6 +3997,7 @@ describe("InstantLoansModule", () => {
       inflowFeeAmount: 0n,
       inflowFeeEstimateAvailable: false,
     });
+    expect(loan.status).toBe("awaiting_deposit");
     expect(estimateDepositFee).not.toHaveBeenCalled();
   });
 
@@ -4123,6 +4123,7 @@ describe("InstantLoansModule", () => {
       expect.objectContaining({ canisterId: "kzrva-ziaaa-aaaar-qamyq-cai" })
     );
     expect(loan.loanId).toBe(LOAN_ID);
+    expect(loan.status).toBe("awaiting_deposit");
     expect(loan.collateral.amount).toBe(10_000_000n);
   });
 

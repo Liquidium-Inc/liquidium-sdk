@@ -51,9 +51,8 @@ export type {
 } from "./modules/activities";
 export {
   ActivityDirection,
+  ActivityFilter,
   ActivityKind,
-  ActivityStage,
-  ActivityState,
   ActivityStatus,
 } from "./modules/activities";
 export type {
@@ -72,9 +71,11 @@ export type {
   UserHistoryEntry,
   UserHistoryEntryApiItem,
   UserHistoryResponse,
+  UserHistoryStatusApi,
   UserLiquidationHistoryFilters,
   UserTransactionHistoryFilters,
 } from "./modules/history";
+export { UserHistoryStatus } from "./modules/history";
 export type {
   CreateInstantLoanRequest,
   ExternalAccount,
@@ -85,7 +86,11 @@ export type {
   InstantLoanGetRequest,
   NativeAccount,
 } from "./modules/instant-loans";
-export { intFromPublicId, publicIdFromInt } from "./modules/instant-loans";
+export {
+  InstantLoanStatus,
+  intFromPublicId,
+  publicIdFromInt,
+} from "./modules/instant-loans";
 export type {
   BorrowAction,
   BorrowSubmitSignatureInfo,

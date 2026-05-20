@@ -22,6 +22,8 @@ import type {
   PoolHistoryResponse,
   UserHistoryEntry,
   UserHistoryResponse,
+  UserHistoryStatus,
+  UserHistoryStatusApi,
   UserLiquidationHistoryFilters,
   UserTransactionHistoryFilters,
 } from "./types";
@@ -217,7 +219,7 @@ export class HistoryModule {
     if (normalizedFilters.statuses?.length) {
       query.set(
         SdkApiQueryParam.statuses,
-        normalizedFilters.statuses.join(",")
+        normalizedFilters.statuses.map(mapHistoryStatusToApi).join(",")
       );
     }
     if (normalizedFilters.from) {
@@ -240,7 +242,7 @@ export class HistoryModule {
         amount: parseBigInt(item.amount, "history user amount"),
         poolId: item.poolId,
         timestamp: item.timestamp,
-        status: item.status,
+        status: mapHistoryStatusFromApi(item.status),
         txids: item.txids,
       })),
       nextCursor: response.nextCursor,
@@ -303,7 +305,7 @@ export class HistoryModule {
         amount: parseBigInt(item.amount, "history user amount"),
         poolId: item.poolId,
         timestamp: item.timestamp,
-        status: item.status,
+        status: mapHistoryStatusFromApi(item.status),
         txids: item.txids,
       })),
       nextCursor: response.nextCursor,
@@ -345,4 +347,16 @@ function normalizeLiquidationHistoryFilters(
   }
 
   return { ...(marketOrFilters ?? {}), ...filters };
+}
+
+function mapHistoryStatusFromApi(
+  status: UserHistoryStatusApi
+): UserHistoryStatus {
+  return status.toLowerCase() as UserHistoryStatus;
+}
+
+function mapHistoryStatusToApi(
+  status: UserHistoryStatus
+): UserHistoryStatusApi {
+  return status.toUpperCase() as UserHistoryStatusApi;
 }

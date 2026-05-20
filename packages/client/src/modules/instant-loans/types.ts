@@ -189,12 +189,25 @@ export interface InstantLoanPositionSummary {
   totalDebtAmount: bigint;
 }
 
+/** Simplified lifecycle status for consumer UIs. */
+export const InstantLoanStatus = {
+  awaitingDeposit: "awaiting_deposit",
+  depositDetected: "deposit_detected",
+  active: "active",
+  settling: "settling",
+  closed: "closed",
+} as const;
+export type InstantLoanStatus =
+  (typeof InstantLoanStatus)[keyof typeof InstantLoanStatus];
+
 /** Hydrated instant-loan state plus generated deposit and repayment targets. */
 export interface InstantLoan {
   /** Canister-assigned loan id. */
   loanId: bigint;
   /** Short user-facing reference derived from `loanId`. */
   ref: string;
+  /** Simplified lifecycle status for display and flow control. */
+  status: InstantLoanStatus;
   /** Generated lending profile principal used by the instant loan. */
   profileId: string;
   /** Maximum loan-to-value ratio in basis points. */

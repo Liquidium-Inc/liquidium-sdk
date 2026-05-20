@@ -2,7 +2,7 @@ import { isBitcoinWallet } from "@dynamic-labs/bitcoin";
 import { isEthereumWallet } from "@dynamic-labs/ethereum";
 import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import type {
-  ActivityState,
+  ActivityFilter,
   Asset,
   AssetPrices,
   Chain,
@@ -226,17 +226,17 @@ const SDK_METHODS: MethodDefinition[] = [
   {
     id: "activities.list",
     label: "activities.list",
-    defaultArgs: '{\n  "shortRef": "Y7R19F",\n  "state": "all"\n}',
+    defaultArgs: '{\n  "shortRef": "Y7R19F",\n  "filter": "all"\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
       const request = args.shortRef
         ? {
             shortRef: expectNonEmptyString(args.shortRef, "shortRef"),
-            state: expectOptionalActivityState(args.state, "state"),
+            filter: expectOptionalActivityFilter(args.filter, "filter"),
           }
         : {
             profileId: expectNonEmptyString(args.profileId, "profileId"),
-            state: expectOptionalActivityState(args.state, "state"),
+            filter: expectOptionalActivityFilter(args.filter, "filter"),
           };
 
       return await client.activities.list({
@@ -1153,17 +1153,17 @@ function expectOptionalInflowSubmitType(
   throw new Error(`${fieldName} must be DEPOSIT or REPAY.`);
 }
 
-function expectOptionalActivityState(
+function expectOptionalActivityFilter(
   value: unknown,
   fieldName: string
-): ActivityState | undefined {
-  const state = expectOptionalString(value, fieldName);
-  if (!state) {
+): ActivityFilter | undefined {
+  const filter = expectOptionalString(value, fieldName);
+  if (!filter) {
     return undefined;
   }
 
-  if (state === "active" || state === "completed" || state === "all") {
-    return state;
+  if (filter === "active" || filter === "completed" || filter === "all") {
+    return filter;
   }
 
   throw new Error(`${fieldName} must be active, completed, or all.`);

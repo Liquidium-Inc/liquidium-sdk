@@ -41,6 +41,7 @@ import type {
   InstantLoanGetRequest,
   InstantLoanLeg,
   InstantLoanListEventsRequest,
+  InstantLoanStatus,
   InstantLoanWarmedProfile,
 } from "./types";
 
@@ -126,6 +127,7 @@ type InstantLoanHydrationInput = {
   borrowAmount: bigint;
   borrowDestination: InstantLoanAccount;
   refundDestination: InstantLoanAccount;
+  started?: boolean;
 };
 
 export class InstantLoansModule {
@@ -329,6 +331,7 @@ export class InstantLoansModule {
       borrowAmount: record.borrow_amount,
       borrowDestination: accountFromCanister(record.borrow_destination),
       refundDestination: accountFromCanister(record.refund_destination),
+      started: record.started,
     });
   }
 
@@ -396,10 +399,22 @@ export class InstantLoansModule {
         : { totalFee: 0n, estimateAvailable: false };
     const repaymentAmount =
       totalDebtAmount + interestBufferAmount + repaymentInflowFee.totalFee;
+    const collateralAmount = collateralPosition?.deposited ?? 0n;
+    const collateralDecimals = collateralPosition?.depositedDecimals ?? 0n;
+    const collateralInterestAmount = collateralPosition?.earnedInterest ?? 0n;
+    const borrowedAmount = borrowPosition?.borrowed ?? 0n;
+    const borrowedDecimals = borrowPosition?.borrowedDecimals ?? 0n;
+    const debtInterestAmount = borrowPosition?.debtInterest ?? 0n;
+    const status = deriveInstantLoanStatus({
+      collateralAmount,
+      started: input.started,
+      totalDebtAmount,
+    });
 
     return {
       loanId: input.loanId,
       ref: publicIdFromInt(input.loanId),
+      status,
       profileId,
       ltvMaxBps: input.ltvMaxBps,
       depositWindowSeconds: input.depositWindowSeconds,
@@ -407,7 +422,7 @@ export class InstantLoansModule {
         poolId: collateralPoolId,
         asset: collateralAsset,
         chain: depositTarget.chain,
-        amount: collateralPosition?.deposited ?? 0n,
+        amount: collateralAmount,
       },
       borrow: {
         poolId: borrowPoolId,
@@ -421,7 +436,7 @@ export class InstantLoansModule {
       repayTarget,
       repayment: {
         amount: repaymentAmount,
-        decimals: borrowPosition?.borrowedDecimals ?? 0n,
+        decimals: borrowedDecimals,
         debtAmount: totalDebtAmount,
         interestBufferAmount,
         interestBufferSeconds: REPAYMENT_BUFFER_SECONDS,
@@ -432,12 +447,12 @@ export class InstantLoansModule {
         target: repayTarget,
       },
       position: {
-        collateralAmount: collateralPosition?.deposited ?? 0n,
-        collateralDecimals: collateralPosition?.depositedDecimals ?? 0n,
-        collateralInterestAmount: collateralPosition?.earnedInterest ?? 0n,
-        borrowedAmount: borrowPosition?.borrowed ?? 0n,
-        borrowedDecimals: borrowPosition?.borrowedDecimals ?? 0n,
-        debtInterestAmount: borrowPosition?.debtInterest ?? 0n,
+        collateralAmount,
+        collateralDecimals,
+        collateralInterestAmount,
+        borrowedAmount,
+        borrowedDecimals,
+        debtInterestAmount,
         totalDebtAmount,
       },
     };
@@ -556,6 +571,26 @@ function calculateTotalDebtAmount(borrowPosition: Position | null): bigint {
   }
 
   return borrowPosition.borrowed + borrowPosition.debtInterest;
+}
+
+function deriveInstantLoanStatus(input: {
+  collateralAmount: bigint;
+  started: boolean | undefined;
+  totalDebtAmount: bigint;
+}): InstantLoanStatus {
+  if (input.totalDebtAmount > 0n) {
+    return "active";
+  }
+
+  if (input.collateralAmount > 0n) {
+    return input.started ? "settling" : "deposit_detected";
+  }
+
+  if (input.started) {
+    return "closed";
+  }
+
+  return "awaiting_deposit";
 }
 
 function validateCreateRequest(request: CreateInstantLoanRequest): void {

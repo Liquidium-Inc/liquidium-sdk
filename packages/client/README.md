@@ -290,6 +290,7 @@ Most integrations should start with `client.instantLoans`. It creates an account
 - `client.instantLoans.create(...)` - create the instant loan and return its generated targets
 - `client.instantLoans.get({ ref })` - restore canonical loan state, position summary, and repayment quote from the user-facing loan reference
 - `client.instantLoans.get({ loanId })` - restore canonical loan state, position summary, and repayment quote from the numeric canister loan ID
+- `loan.status` is the simplified lifecycle: `awaiting_deposit`, `deposit_detected`, `active`, `settling`, or `closed`
 - `client.instantLoans.findByAddress(address)` - recovery helper that uses the Liquidium SDK API and returns candidates only
 - `client.quote.calculateLtv(...)` - calculate current LTV from borrow and collateral amounts before creating a loan
 
@@ -338,12 +339,13 @@ Use these calls only when building a profile-based Liquidium app that manages ex
 - `client.history.getPoolHistory(poolId, window?)` - paginated pool rate and utilization samples
 - `client.history.getPoolConfigHistory(poolId, cursor?)` - paginated reserve configuration changes
 - `client.history.getBorrowRateHistory(poolId, window?)` - paginated borrow-rate samples
+- User history statuses are lowercase: `requested`, `pending`, `confirmed`, or `failed`
 
 ### Activity tracking
 
-- `client.activities.list({ profileId, state: "all" })` - list active, completed, or all activities for a profile; defaults to all activities
+- `client.activities.list({ profileId, filter: "all" })` - list active, completed, or all activities for a profile; defaults to all activities
 - `client.activities.getStatus({ profileId, id })` - fetch one receipt by receipt id or txid
-- Active inflows use `status: "pending"` as the coarse lifecycle state. Check `activity.stage` for processing detail; ETH deposit-address transfers that are detected but not yet processed return `stage: "deposited"`.
+- Activities expose one consumer-facing `status`. ETH deposit-address transfers that are detected but not yet processed return `status: "detected"`.
 - Underfunded ETH deposit-address inflows include `activity.topUp` with `depositedAmount`, `feeAmount`, and `shortfallAmount` in base units.
 
 ### Supply tracking flow

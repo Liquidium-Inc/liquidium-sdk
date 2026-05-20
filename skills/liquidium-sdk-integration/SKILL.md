@@ -197,7 +197,7 @@ client.positions.getMaxRepayAmount(profileId, poolId, bufferBps?); // full-repay
 Receipt status and active/completed/all activity lists. Requires `apiBaseUrl`.
 
 ```ts
-client.activities.list({ profileId, state: "all" });
+client.activities.list({ profileId, filter: "all" });
 client.activities.getStatus({ profileId, id });
 ```
 

@@ -1,10 +1,20 @@
+export const UserHistoryStatus = {
+  requested: "requested",
+  pending: "pending",
+  confirmed: "confirmed",
+  failed: "failed",
+} as const;
+export type UserHistoryStatus =
+  (typeof UserHistoryStatus)[keyof typeof UserHistoryStatus];
+export type UserHistoryStatusApi = Uppercase<UserHistoryStatus>;
+
 export interface UserHistoryEntry {
   id: string;
   type: "supply" | "borrow" | "repay" | "withdraw" | "liquidation";
   amount: bigint;
   poolId: string;
   timestamp: string;
-  status: "REQUESTED" | "PENDING" | "CONFIRMED" | "FAILED";
+  status: UserHistoryStatus;
   txids?: string[];
 }
 
@@ -63,7 +73,7 @@ export interface UserHistoryEntryApiItem {
   amount: string;
   poolId: string;
   timestamp: string;
-  status: UserHistoryEntry["status"];
+  status: UserHistoryStatusApi;
   txids?: string[];
 }
 
