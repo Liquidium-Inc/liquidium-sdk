@@ -3793,6 +3793,91 @@ describe("InstantLoansModule", () => {
     });
   });
 
+  test("calls public instant-loan query methods directly on the canister", async () => {
+    // given
+    const getConfig = vi.fn().mockResolvedValue({
+      lending_canister: Principal.fromText("aaaaa-aa"),
+    });
+    const getEvent = vi.fn().mockResolvedValue([createLoanCreatedEvent()]);
+    const listEvents = vi
+      .fn()
+      .mockResolvedValue([[1n, createLoanCreatedEvent()]]);
+    const listAccessList = vi
+      .fn()
+      .mockResolvedValue([Principal.fromText("aaaaa-aa")]);
+    const countWarmedProfiles = vi.fn().mockResolvedValue(2n);
+    const listWarmedProfiles = vi.fn().mockResolvedValue([
+      {
+        id: 7n,
+        authorisation: {
+          EthSignature: {
+            derivation_index: new Uint8Array([1]),
+            pubkey: new Uint8Array([2]),
+            address: "0x1111111111111111111111111111111111111111",
+          },
+        },
+        created_at: 123n,
+        lending_profile: Principal.fromText(PROFILE_ID),
+      },
+    ]);
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      count_warmed_profiles: countWarmedProfiles,
+      get_config: getConfig,
+      get_event: getEvent,
+      list_access_list: listAccessList,
+      list_events: listEvents,
+      list_warmed_profiles: listWarmedProfiles,
+    } as never);
+    const client = LiquidiumClient.create({
+      canisterIds: { instantLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
+    });
+
+    // when
+    const config = await client.instantLoans.getConfig();
+    const event = await client.instantLoans.getEvent(1n);
+    const events = await client.instantLoans.listEvents({
+      start: 1n,
+      limit: 10n,
+    });
+    const accessList = await client.instantLoans.listAccessList();
+    const warmedProfileCount = await client.instantLoans.countWarmedProfiles();
+    const warmedProfiles = await client.instantLoans.listWarmedProfiles();
+
+    // then
+    expect(getConfig).toHaveBeenCalledWith();
+    expect(getEvent).toHaveBeenCalledWith(1n);
+    expect(listEvents).toHaveBeenCalledWith(1n, 10n);
+    expect(listAccessList).toHaveBeenCalledWith();
+    expect(countWarmedProfiles).toHaveBeenCalledWith();
+    expect(listWarmedProfiles).toHaveBeenCalledWith();
+    expect(config).toEqual({ lendingCanisterId: "aaaaa-aa" });
+    expect(event).toMatchObject({
+      id: 1n,
+      eventType: {
+        type: "LoanCreated",
+        loanId: LOAN_ID,
+        collateralAsset: "BTC",
+        borrowAsset: "USDT",
+      },
+    });
+    expect(events).toHaveLength(1);
+    expect(accessList).toEqual(["aaaaa-aa"]);
+    expect(warmedProfileCount).toBe(2n);
+    expect(warmedProfiles).toEqual([
+      {
+        id: 7n,
+        authorization: {
+          type: "EthSignature",
+          derivationIndex: new Uint8Array([1]),
+          publicKey: new Uint8Array([2]),
+          address: "0x1111111111111111111111111111111111111111",
+        },
+        createdAt: 123n,
+        profileId: PROFILE_ID,
+      },
+    ]);
+  });
+
   test("returns zero repayment quote when the loan has no debt", async () => {
     // given
     const getLoan = vi.fn().mockResolvedValue({ Ok: createInstantLoan() });
@@ -3846,7 +3931,7 @@ describe("InstantLoansModule", () => {
     expect(estimateDepositFee).not.toHaveBeenCalled();
   });
 
-  test("creates a loan through the SDK API then hydrates canonical loan state", async () => {
+  test("creates a loan through the SDK API without calling the instant-loans canister", async () => {
     // given
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(
@@ -3882,7 +3967,8 @@ describe("InstantLoansModule", () => {
       )
     );
 
-    vi.spyOn(Actor, "createActor")
+    const actorCreateSpy = vi
+      .spyOn(Actor, "createActor")
       .mockReturnValueOnce({
         list_pools: vi
           .fn()
@@ -3962,6 +4048,10 @@ describe("InstantLoansModule", () => {
         }),
         method: "POST",
       })
+    );
+    expect(actorCreateSpy).not.toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ canisterId: "kzrva-ziaaa-aaaar-qamyq-cai" })
     );
     expect(loan.loanId).toBe(LOAN_ID);
     expect(loan.collateral.amount).toBe(10_000_000n);
@@ -4200,6 +4290,31 @@ describe("InstantLoansModule", () => {
       borrow_asset: { USDT: null },
       expires_at: [],
       deposit_detected_ts: [],
+    };
+  }
+
+  function createLoanCreatedEvent() {
+    return {
+      id: 1n,
+      schema_version: 1,
+      timestamp: 123n,
+      event_type: {
+        LoanCreated: {
+          loan_id: LOAN_ID,
+          borrow_destination: {
+            External: "0x2222222222222222222222222222222222222222",
+          },
+          lend_asset: { BTC: null },
+          borrow_amount: 5_726_000_000n,
+          lend_pool_id: Principal.fromText(BTC_POOL_ID),
+          refund_destination: { External: "bc1qrefunddestination" },
+          ltv_max_bps: 6_800n,
+          ltv_timer_s: 3_600n,
+          lending_profile: Principal.fromText(PROFILE_ID),
+          borrow_pool_id: Principal.fromText(USDT_POOL_ID),
+          borrow_asset: { USDT: null },
+        },
+      },
     };
   }
 

@@ -60,6 +60,93 @@ export interface CreateInstantLoanRequest {
 /** Lookup request for loading canonical instant-loan state. */
 export type InstantLoanGetRequest = { loanId: bigint } | { ref: string };
 
+/** Page request for direct instant-loan canister event queries. */
+export interface InstantLoanListEventsRequest {
+  /** Event id to start from. */
+  start: bigint;
+  /** Maximum number of events to return. */
+  limit: bigint;
+}
+
+/** Active instant-loans canister config. */
+export interface InstantLoanConfig {
+  /** Principal text of the lending canister used by instant loans. */
+  lendingCanisterId: string;
+}
+
+/** Authentication metadata for warmed instant-loan profiles. */
+export interface InstantLoanAuthorization {
+  type: "EthSignature";
+  derivationIndex: Uint8Array;
+  publicKey: Uint8Array;
+  address: string;
+}
+
+/** Warmed profile available for a future instant loan. */
+export interface InstantLoanWarmedProfile {
+  id: bigint;
+  authorization: InstantLoanAuthorization;
+  createdAt: bigint;
+  profileId: string;
+}
+
+/** Direct canister event returned by the instant-loans query API. */
+export interface InstantLoanEvent {
+  id: bigint;
+  schemaVersion: number;
+  timestamp: bigint;
+  eventType: InstantLoanEventType;
+}
+
+export type InstantLoanLeg = "Lend" | "Borrow";
+
+export type InstantLoanEventType =
+  | {
+      type: "LoanCreated";
+      loanId: bigint;
+      borrowDestination: InstantLoanAccount;
+      collateralAsset: InstantLoanAsset;
+      borrowAmount: bigint;
+      collateralPoolId: string;
+      refundDestination: InstantLoanAccount;
+      ltvMaxBps: bigint;
+      depositWindowSeconds: bigint;
+      profileId: string;
+      borrowPoolId: string;
+      borrowAsset: InstantLoanAsset;
+    }
+  | {
+      type: "FullLendWithdrawalRequested";
+      loanId: bigint;
+      account: InstantLoanAccount;
+      poolId: string;
+    }
+  | {
+      type: "BorrowRequested";
+      loanId: bigint;
+      account: InstantLoanAccount;
+      poolId: string;
+      amount: bigint;
+    }
+  | { type: "DepositTimerExceeded"; loanId: bigint }
+  | {
+      type: "StuckFundsWithdrawalRequested";
+      leg: InstantLoanLeg;
+      loanId: bigint;
+      account: InstantLoanAccount;
+      poolId: string;
+      amount: bigint;
+    }
+  | {
+      type: "ProfileWarmed";
+      derivationIndex: Uint8Array;
+      warmedProfileId: bigint;
+      ethAddress: string;
+      profileId: string;
+    }
+  | { type: "RepayComplete"; loanId: bigint; profileId: string }
+  | { type: "DepositTimerStarted"; loanId: bigint; timestamp: bigint };
+
 /** Current amount to send to the repayment target to close the debt. */
 export interface InstantLoanRepayment {
   /** Full amount to send to the repayment target, including fee and interest buffer. */
@@ -114,7 +201,7 @@ export interface InstantLoan {
   ltvMaxBps: bigint;
   /** Seconds allowed for the collateral deposit before timeout. */
   depositWindowSeconds: bigint;
-  /** Collateral-side pool, asset, chain, and requested deposit amount. */
+  /** Collateral-side pool, asset, chain, and current or requested collateral amount. */
   collateral: {
     poolId: string;
     asset: MarketAsset;

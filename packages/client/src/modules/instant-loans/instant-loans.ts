@@ -1,8 +1,13 @@
 import {
   createInstantLoansActor,
+  type HeadlessLoanEvent,
+  type HeadlessLoanEventType,
+  type InstantLoanAuthorisation,
   type InstantLoanAccountType,
   type InstantLoanCanisterRecord,
+  type InstantLoanLeg as InstantLoanCanisterLeg,
   type InstantLoansCanisterError,
+  type WarmedProfile,
 } from "../../core/canisters/instant-loans/actor";
 import { mapCanisterCallErrorToLiquidiumError } from "../../core/canisters/lending/error-mappers";
 import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
@@ -27,9 +32,16 @@ import type {
   ExternalAccount,
   InstantLoan,
   InstantLoanAccount,
+  InstantLoanAuthorization,
   InstantLoanAsset,
   InstantLoanCandidate,
+  InstantLoanConfig,
+  InstantLoanEvent,
+  InstantLoanEventType,
   InstantLoanGetRequest,
+  InstantLoanLeg,
+  InstantLoanListEventsRequest,
+  InstantLoanWarmedProfile,
 } from "./types";
 
 const REPAYMENT_BUFFER_SECONDS = 86_400n;
@@ -190,6 +202,89 @@ export class InstantLoansModule {
       }
 
       throw mapCanisterCallErrorToLiquidiumError("get_loan", error);
+    }
+  }
+
+  /** Returns the active instant-loans canister config via direct query. */
+  async getConfig(): Promise<InstantLoanConfig> {
+    try {
+      const config = await createInstantLoansActor(
+        this.canisterContext
+      ).get_config();
+
+      return {
+        lendingCanisterId: config.lending_canister.toText(),
+      };
+    } catch (error) {
+      throw mapCanisterCallErrorToLiquidiumError("get_config", error);
+    }
+  }
+
+  /** Returns a single canister event by id via direct query. */
+  async getEvent(eventId: bigint): Promise<InstantLoanEvent | null> {
+    try {
+      const event = await createInstantLoansActor(
+        this.canisterContext
+      ).get_event(eventId);
+
+      return event[0] ? mapInstantLoanEvent(event[0]) : null;
+    } catch (error) {
+      throw mapCanisterCallErrorToLiquidiumError("get_event", error);
+    }
+  }
+
+  /** Returns a page of canister events via direct query. */
+  async listEvents(
+    request: InstantLoanListEventsRequest
+  ): Promise<InstantLoanEvent[]> {
+    try {
+      const events = await createInstantLoansActor(
+        this.canisterContext
+      ).list_events(request.start, request.limit);
+
+      return events.map(([, event]) => mapInstantLoanEvent(event));
+    } catch (error) {
+      throw mapCanisterCallErrorToLiquidiumError("list_events", error);
+    }
+  }
+
+  /** Returns principals authorized for protected update callbacks. */
+  async listAccessList(): Promise<string[]> {
+    try {
+      const principals = await createInstantLoansActor(
+        this.canisterContext
+      ).list_access_list();
+
+      return principals.map((principal) => principal.toText());
+    } catch (error) {
+      throw mapCanisterCallErrorToLiquidiumError("list_access_list", error);
+    }
+  }
+
+  /** Returns the current size of the warmed-profile pool via direct query. */
+  async countWarmedProfiles(): Promise<bigint> {
+    try {
+      return await createInstantLoansActor(
+        this.canisterContext
+      ).count_warmed_profiles();
+    } catch (error) {
+      throw mapCanisterCallErrorToLiquidiumError(
+        "count_warmed_profiles",
+        error
+      );
+    }
+  }
+
+  /** Returns warmed profiles currently available for future instant loans. */
+  async listWarmedProfiles(): Promise<InstantLoanWarmedProfile[]> {
+    try {
+      const profiles = await createInstantLoansActor(
+        this.canisterContext
+      ).list_warmed_profiles();
+
+      return profiles.map(mapWarmedProfile);
+    } catch (error) {
+      throw mapCanisterCallErrorToLiquidiumError("list_warmed_profiles", error);
     }
   }
 
@@ -530,6 +625,130 @@ function accountFromWire(account: InstantLoanAccountWire): InstantLoanAccount {
   }
 
   return { type: "External", address: account.address };
+}
+
+function mapInstantLoanEvent(event: HeadlessLoanEvent): InstantLoanEvent {
+  return {
+    id: event.id,
+    schemaVersion: event.schema_version,
+    timestamp: event.timestamp,
+    eventType: mapInstantLoanEventType(event.event_type),
+  };
+}
+
+function mapInstantLoanEventType(
+  eventType: HeadlessLoanEventType
+): InstantLoanEventType {
+  if ("LoanCreated" in eventType) {
+    const event = eventType.LoanCreated;
+    return {
+      type: "LoanCreated",
+      loanId: event.loan_id,
+      borrowDestination: accountFromCanister(event.borrow_destination),
+      collateralAsset: assetFromCanister(event.lend_asset),
+      borrowAmount: event.borrow_amount,
+      collateralPoolId: event.lend_pool_id.toText(),
+      refundDestination: accountFromCanister(event.refund_destination),
+      ltvMaxBps: event.ltv_max_bps,
+      depositWindowSeconds: event.ltv_timer_s,
+      profileId: event.lending_profile.toText(),
+      borrowPoolId: event.borrow_pool_id.toText(),
+      borrowAsset: assetFromCanister(event.borrow_asset),
+    };
+  }
+
+  if ("FullLendWithdrawalRequested" in eventType) {
+    const event = eventType.FullLendWithdrawalRequested;
+    return {
+      type: "FullLendWithdrawalRequested",
+      loanId: event.loan_id,
+      account: accountFromCanister(event.account),
+      poolId: event.pool_id.toText(),
+    };
+  }
+
+  if ("BorrowRequested" in eventType) {
+    const event = eventType.BorrowRequested;
+    return {
+      type: "BorrowRequested",
+      loanId: event.loan_id,
+      account: accountFromCanister(event.account),
+      poolId: event.pool_id.toText(),
+      amount: event.amount,
+    };
+  }
+
+  if ("DepositTimerExceeded" in eventType) {
+    return {
+      type: "DepositTimerExceeded",
+      loanId: eventType.DepositTimerExceeded.loan_id,
+    };
+  }
+
+  if ("StuckFundsWithdrawalRequested" in eventType) {
+    const event = eventType.StuckFundsWithdrawalRequested;
+    return {
+      type: "StuckFundsWithdrawalRequested",
+      leg: legFromCanister(event.leg),
+      loanId: event.loan_id,
+      account: accountFromCanister(event.account),
+      poolId: event.pool_id.toText(),
+      amount: event.amount,
+    };
+  }
+
+  if ("ProfileWarmed" in eventType) {
+    const event = eventType.ProfileWarmed;
+    return {
+      type: "ProfileWarmed",
+      derivationIndex: event.derivation_index,
+      warmedProfileId: event.warmed_profile_id,
+      ethAddress: event.eth_address,
+      profileId: event.lending_profile.toText(),
+    };
+  }
+
+  if ("RepayComplete" in eventType) {
+    return {
+      type: "RepayComplete",
+      loanId: eventType.RepayComplete.loan_id,
+      profileId: eventType.RepayComplete.lending_profile.toText(),
+    };
+  }
+
+  return {
+    type: "DepositTimerStarted",
+    loanId: eventType.DepositTimerStarted.loan_id,
+    timestamp: eventType.DepositTimerStarted.timestamp,
+  };
+}
+
+function mapWarmedProfile(profile: WarmedProfile): InstantLoanWarmedProfile {
+  return {
+    id: profile.id,
+    authorization: authorizationFromCanister(profile.authorisation),
+    createdAt: profile.created_at,
+    profileId: profile.lending_profile.toText(),
+  };
+}
+
+function authorizationFromCanister(
+  authorization: InstantLoanAuthorisation
+): InstantLoanAuthorization {
+  return {
+    type: "EthSignature",
+    derivationIndex: authorization.EthSignature.derivation_index,
+    publicKey: authorization.EthSignature.pubkey,
+    address: authorization.EthSignature.address,
+  };
+}
+
+function assetFromCanister(asset: { [key: string]: null }): InstantLoanAsset {
+  return getVariantKey(asset) as InstantLoanAsset;
+}
+
+function legFromCanister(leg: InstantLoanCanisterLeg): InstantLoanLeg {
+  return getVariantKey(leg) as InstantLoanLeg;
 }
 
 function decodeRef(ref: string): bigint {
