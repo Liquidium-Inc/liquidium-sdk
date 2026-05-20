@@ -2,10 +2,10 @@ import {
   createInstantLoansActor,
   type HeadlessLoanEvent,
   type HeadlessLoanEventType,
-  type InstantLoanAuthorisation,
   type InstantLoanAccountType,
-  type InstantLoanCanisterRecord,
+  type InstantLoanAuthorisation,
   type InstantLoanLeg as InstantLoanCanisterLeg,
+  type InstantLoanCanisterRecord,
   type InstantLoansCanisterError,
   type WarmedProfile,
 } from "../../core/canisters/instant-loans/actor";
@@ -32,8 +32,8 @@ import type {
   ExternalAccount,
   InstantLoan,
   InstantLoanAccount,
-  InstantLoanAuthorization,
   InstantLoanAsset,
+  InstantLoanAuthorization,
   InstantLoanCandidate,
   InstantLoanConfig,
   InstantLoanEvent,
@@ -289,8 +289,8 @@ export class InstantLoansModule {
   }
 
   /**
-   * Finds candidate loans associated with an address. Requires `apiBaseUrl` and
-   * returns discovery candidates only; call `get(...)` to hydrate canister state.
+   * Finds candidate loans associated with an address through the Liquidium SDK
+   * API. Returns discovery candidates only; call `get(...)` to hydrate canister state.
    *
    * Candidates are useful for recovery flows where the user knows a borrow or
    * refund address but not the loan reference.
@@ -465,7 +465,7 @@ export class InstantLoansModule {
     if (!this.apiClient) {
       throw new LiquidiumError(
         LiquidiumErrorCode.VALIDATION_ERROR,
-        `${action} requires an API base URL in client config`
+        `${action} requires an API client`
       );
     }
 

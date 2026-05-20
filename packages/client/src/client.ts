@@ -1,6 +1,7 @@
 import { createPublicClient, http } from "viem";
 import { mainnet } from "viem/chains";
 import {
+  DEFAULT_API_BASE_URL,
   DEFAULT_ENVIRONMENT,
   DEFAULT_TIMEOUT_MS,
   resolveCanisterIds,
@@ -35,7 +36,7 @@ export class LiquidiumClient {
   readonly market: MarketModule;
   /** Receipt-oriented activity status and activity lists. */
   readonly activities: ActivitiesModule;
-  /** Pool and user history (requires `apiBaseUrl`). */
+  /** Pool and user history through the Liquidium SDK API. */
   readonly history: HistoryModule;
   /** Accountless instant loans backed by generated deposit/repay targets. */
   readonly instantLoans: InstantLoansModule;
@@ -57,14 +58,12 @@ export class LiquidiumClient {
       canisterIds,
     });
 
-    this.apiClient = config.apiBaseUrl
-      ? createApiClient({
-          baseUrl: config.apiBaseUrl,
-          headers: config.headers,
-          fetchFn: config.fetch,
-          timeoutMs,
-        })
-      : undefined;
+    this.apiClient = createApiClient({
+      baseUrl: config.apiBaseUrl ?? DEFAULT_API_BASE_URL,
+      headers: config.headers,
+      fetchFn: config.fetch,
+      timeoutMs,
+    });
 
     this.evmReadClient = resolveEvmReadClient(config);
 

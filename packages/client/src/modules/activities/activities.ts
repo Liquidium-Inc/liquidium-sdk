@@ -63,7 +63,7 @@ export class ActivitiesModule {
   /**
    * Lists profile activities. Defaults to all activities.
    *
-   * Requires `apiBaseUrl` on the client.
+   * Uses the Liquidium SDK API.
    */
   async list(request: ListActivitiesRequest): Promise<Activity[]> {
     const apiClient = this.requireApi();
@@ -81,7 +81,7 @@ export class ActivitiesModule {
   /**
    * Fetches the latest status for a single receipt/activity id.
    *
-   * Requires `apiBaseUrl` on the client.
+   * Uses the Liquidium SDK API.
    */
   async getStatus(
     request: GetActivityStatusRequest
@@ -106,7 +106,7 @@ export class ActivitiesModule {
     if (!this.apiClient) {
       throw new LiquidiumError(
         LiquidiumErrorCode.VALIDATION_ERROR,
-        "Activities require an API base URL in client config"
+        "Activities require an API client"
       );
     }
 

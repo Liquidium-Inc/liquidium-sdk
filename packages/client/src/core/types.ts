@@ -6,9 +6,8 @@ export type EvmReadClient = Pick<PublicClient, "readContract">;
 /**
  * Runtime options for `LiquidiumClient.create`.
  *
- * Canister-backed reads work with `{}` defaults. Set `apiBaseUrl` when using
- * HTTP features: instant-loan creation, user/pool history, activities, and
- * inflow reporting.
+ * Canister-backed reads and SDK HTTP features work with `{}` defaults. Set
+ * `apiBaseUrl` only when overriding the Liquidium production API root.
  */
 export interface LiquidiumClientConfig {
   /** Preset canister IDs. Only `mainnet` is bundled. */
@@ -18,9 +17,9 @@ export interface LiquidiumClientConfig {
   /** Agent identity for signed canister calls. */
   identity?: Identity;
   /**
-   * Base URL for the Liquidium SDK HTTP API (e.g. `https://app.example.com/api/sdk`).
-   * Required for instant-loan creation, history, activities, inflow endpoints,
-   * and automated inflow reporting.
+   * Base URL for the Liquidium SDK HTTP API root (e.g. `https://app.example.com/api/sdk`).
+   * Defaults to the Liquidium production API root. Endpoint versions are owned
+   * by this SDK package version.
    */
   apiBaseUrl?: string;
   /** Extra headers sent with every SDK API request. */

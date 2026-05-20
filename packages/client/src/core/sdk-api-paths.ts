@@ -2,7 +2,12 @@
  * Path and query key constants for the Liquidium SDK HTTP API.
  */
 
-export const SDK_API_V1_PREFIX = "/v1";
+const SDK_API_VERSION = {
+  activities: "v1",
+  history: "v1",
+  inflow: "v1",
+  instantLoans: "v1",
+} as const;
 
 export const SdkApiQueryParam = {
   cursor: "cursor",
@@ -31,11 +36,13 @@ type BuildInstantLoanAddressLookupPathRequest = {
   address: string;
 };
 
-const HISTORY_POOL = `${SDK_API_V1_PREFIX}/history/pool`;
-const HISTORY_POOL_CONFIG = `${SDK_API_V1_PREFIX}/history/pool-config`;
-const HISTORY_RATES = `${SDK_API_V1_PREFIX}/history/rates`;
-const HISTORY_USERS = `${SDK_API_V1_PREFIX}/history/users`;
-const INSTANT_LOANS = `${SDK_API_V1_PREFIX}/instant-loans`;
+const ACTIVITIES = `/${SDK_API_VERSION.activities}/activities`;
+const HISTORY_POOL = `/${SDK_API_VERSION.history}/history/pool`;
+const HISTORY_POOL_CONFIG = `/${SDK_API_VERSION.history}/history/pool-config`;
+const HISTORY_RATES = `/${SDK_API_VERSION.history}/history/rates`;
+const HISTORY_USERS = `/${SDK_API_VERSION.history}/history/users`;
+const INFLOW = `/${SDK_API_VERSION.inflow}/inflow`;
+const INSTANT_LOANS = `/${SDK_API_VERSION.instantLoans}/instant-loans`;
 
 export function buildHistoryPoolPath(
   poolId: string,
@@ -96,7 +103,7 @@ export function buildActivitiesPath(
     query.set(SdkApiQueryParam.state, request.state);
   }
 
-  return `${SDK_API_V1_PREFIX}/activities?${query.toString()}`;
+  return `${ACTIVITIES}?${query.toString()}`;
 }
 
 export function buildActivityStatusPath(
@@ -106,7 +113,7 @@ export function buildActivityStatusPath(
     [SdkApiQueryParam.profileId]: request.profileId,
   });
 
-  return `${SDK_API_V1_PREFIX}/activities/${encodeURIComponent(
+  return `${ACTIVITIES}/${encodeURIComponent(
     request.id
   )}/status?${query.toString()}`;
 }
@@ -119,6 +126,6 @@ export function buildInstantLoanAddressLookupPath(
 }
 
 export const SdkApiPath = {
-  inflow: `${SDK_API_V1_PREFIX}/inflow`,
+  inflow: INFLOW,
   instantLoans: INSTANT_LOANS,
 } as const;

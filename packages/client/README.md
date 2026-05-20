@@ -22,9 +22,7 @@ import {
   type WalletAdapter,
 } from "@liquidium/client";
 
-const client = LiquidiumClient.create({
-  apiBaseUrl: "https://app.liquidium.fi/api/sdk",
-});
+const client = LiquidiumClient.create();
 const walletAdapter: WalletAdapter = {
   signMessage: async ({ message }) => wallet.signMessage(message),
   sendEthTransaction: async ({ transaction }) =>
@@ -66,7 +64,7 @@ const reserve = await client.market.getReserveData({
 });
 
 // Default borrow flow: accountless instant loan with deposit/repay targets.
-// Requires apiBaseUrl so creation is submitted through Liquidium's backend.
+// Uses the Liquidium SDK API default unless apiBaseUrl is overridden.
 const instantLoanLtv = client.quote.calculateLtv(
   {
     collateralPoolId: btcPool.id,
@@ -102,7 +100,7 @@ const restoredLoan = await client.instantLoans.get({ ref: loanRef });
 // Full amount to send to the repayment target, including inflow fee and interest buffer.
 const repayAmount = restoredLoan.repayment.amount;
 
-// Recovery path: requires apiBaseUrl and returns candidates only.
+// Recovery path: uses the Liquidium SDK API and returns candidates only.
 const candidates = await client.instantLoans.findByAddress(
   "bc1qrefunddestination"
 );
@@ -136,7 +134,7 @@ const profileWithConvenience = await client.accounts.createProfile({
   walletAdapter,
 });
 
-// History (requires apiBaseUrl)
+// History through the Liquidium SDK API
 const userHistory = await client.history.getUserTransactionHistory(
   "profile-id"
 );
@@ -181,7 +179,7 @@ const status = await client.activities.getStatus({
   id: outflowWithConvenience.id,
 });
 
-// Inflow reporting (requires apiBaseUrl)
+// Inflow reporting through the Liquidium SDK API
 await client.lending.submitInflow({
   txid: "<broadcast-txid>",
   chain: "BTC",
@@ -231,7 +229,7 @@ if (
 }
 
 // Force the lower-level ETH contract-interaction path when needed.
-// This requires apiBaseUrl, an EVM RPC/read client, account, amount, and
+// This requires an EVM RPC/read client, account, amount, and
 // sendEthTransaction.
 const contractInteractionFlow = await client.lending.supply({
   profileId: "<liquidium-profile-id>",
@@ -253,7 +251,7 @@ const contractInteractionFlow = await client.lending.supply({
 | `environment`     | `"mainnet"`              | No       | Canister ID preset to use                    |
 | `icHost`          | `string`                 | No       | ICP replica host override                    |
 | `identity`        | `Identity`               | No       | `@dfinity/agent` identity                    |
-| `apiBaseUrl`      | `string`                 | No       | Liquidium API base URL                       |
+| `apiBaseUrl`      | `string`                 | No       | Liquidium API root override                  |
 | `headers`         | `Record<string, string>` | No       | Default HTTP headers for API requests        |
 | `canisterIds`     | `Partial<CanisterIds>`   | No       | Override canister IDs for custom deployments |
 | `fetch`           | `typeof fetch`           | No       | Custom fetch implementation for API requests |
@@ -292,7 +290,7 @@ Most integrations should start with `client.instantLoans`. It creates an account
 - `client.instantLoans.create(...)` - create the instant loan and return its generated targets
 - `client.instantLoans.get({ ref })` - restore canonical loan state, position summary, and repayment quote from the user-facing loan reference
 - `client.instantLoans.get({ loanId })` - restore canonical loan state, position summary, and repayment quote from the numeric canister loan ID
-- `client.instantLoans.findByAddress(address)` - recovery helper that requires `apiBaseUrl` and returns candidates only
+- `client.instantLoans.findByAddress(address)` - recovery helper that uses the Liquidium SDK API and returns candidates only
 - `client.quote.calculateLtv(...)` - calculate current LTV from borrow and collateral amounts before creating a loan
 
 ### Account creation flow
@@ -313,13 +311,13 @@ Most integrations should start with `client.instantLoans`. It creates an account
 - `client.lending.borrow({ ..., signerChain, signerWalletAdapter })` - sign and submit a borrow request in one call; resolves with the instant receipt (txid may be null until the canister assigns one)
 - `client.lending.withdraw({ ..., signerChain, signerWalletAdapter })` - sign and submit a withdraw request in one call
 
-Use these calls only when building a profile-based Liquidium app that manages explicit profile/account state. They use the lending canister only and do not require `apiBaseUrl`. To show status or a chain transaction id once it exists, use `client.activities`.
+Use these calls only when building a profile-based Liquidium app that manages explicit profile/account state. They use the lending canister only and do not call the Liquidium SDK API. To show status or a chain transaction id once it exists, use `client.activities`.
 
 ### Wallet adapters
 
 - `WalletAdapter` currently supports BTC/ETH message signing through `signMessage`
 - Transfer-path supply automation uses `sendBtcTransaction` or `sendEthTransaction`, depending on the resolved target chain
-- Contract-interaction supply automation uses `sendEthTransaction` together with `apiBaseUrl` and an EVM RPC/read client
+- Contract-interaction supply automation uses `sendEthTransaction` together with the Liquidium SDK API and an EVM RPC/read client
 - Future versions will add native ICP, native Solana, and additional ck-asset execution paths
 
 ### Modules
@@ -352,7 +350,7 @@ Use these calls only when building a profile-based Liquidium app that manages ex
 
 - `client.lending.supply(...)` resolves the target internally and returns a tracked `SupplyFlow` with `type: "transfer" | "contractInteraction"`.
 - Transfer-path inflows can auto-broadcast when `walletAdapter`, `account`, and `amount` are provided.
-- ETH stablecoin inflows default to deposit-address transfers and do not need `apiBaseUrl` for target resolution or wallet broadcast.
+- ETH stablecoin inflows default to deposit-address transfers and do not need the Liquidium SDK API for target resolution or wallet broadcast.
 - Use `mechanism: "contractInteraction"` only when explicitly opting into the lower-level ETH contract route.
 - Supply flows are for profile-based integrations. Use `client.instantLoans` for the default accountless borrow UX.
 

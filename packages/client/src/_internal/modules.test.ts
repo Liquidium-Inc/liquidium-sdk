@@ -2,12 +2,12 @@ import { Actor } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
 import { decodeFunctionData } from "viem";
 import { afterEach, describe, expect, test, vi } from "vitest";
+import { DEFAULT_API_BASE_URL } from "../core/config";
 import { CK_DEPOSIT_ABI, ERC20_ABI } from "../core/evm";
 import { encodeInflowSubaccount } from "../core/utils/inflow-subaccount";
 import {
   executeWith,
   LiquidiumClient,
-  LiquidiumError,
   LiquidiumErrorCode,
   publicIdFromInt,
   RATE_DECIMALS,
@@ -333,21 +333,27 @@ describe("AccountsModule", () => {
 });
 
 describe("HistoryModule", () => {
-  test("throws VALIDATION_ERROR when no apiBaseUrl configured", async () => {
+  test("uses default prod API base URL when no apiBaseUrl configured", async () => {
     // given
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(
+        new Response(
+          JSON.stringify({ success: true, items: [], nextCursor: undefined }),
+          { status: 200 }
+        )
+      );
     const client = LiquidiumClient.create({});
 
     // when
+    const result = await client.history.getUserTransactionHistory("profile-1");
 
     // then
-    await expect(
-      client.history.getUserTransactionHistory("profile-1")
-    ).rejects.toThrow(LiquidiumError);
-    await expect(
-      client.history.getUserTransactionHistory("profile-1")
-    ).rejects.toMatchObject({
-      code: LiquidiumErrorCode.VALIDATION_ERROR,
-    });
+    expect(result).toEqual({ items: [], nextCursor: undefined });
+    expect(fetchSpy).toHaveBeenCalledWith(
+      `${DEFAULT_API_BASE_URL}/v1/history/users/profile-1/transactions`,
+      expect.objectContaining({ method: "GET" })
+    );
   });
 
   test("fetches user history through the sdk api", async () => {
@@ -744,18 +750,24 @@ describe("HistoryModule", () => {
 });
 
 describe("ActivitiesModule", () => {
-  test("throws VALIDATION_ERROR when no apiBaseUrl configured", async () => {
+  test("uses default prod API base URL when no apiBaseUrl configured", async () => {
     // given
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ success: true, activities: [] }), {
+        status: 200,
+      })
+    );
     const client = LiquidiumClient.create({});
 
     // when
+    const result = await client.activities.list({ profileId: "profile-1" });
 
     // then
-    await expect(
-      client.activities.list({ profileId: "profile-1" })
-    ).rejects.toMatchObject({
-      code: LiquidiumErrorCode.VALIDATION_ERROR,
-    });
+    expect(result).toEqual([]);
+    expect(fetchSpy).toHaveBeenCalledWith(
+      `${DEFAULT_API_BASE_URL}/v1/activities?profileId=profile-1&state=all`,
+      expect.objectContaining({ method: "GET" })
+    );
   });
 
   test("lists all activities by default through the sdk api", async () => {
@@ -3331,19 +3343,25 @@ describe("LendingModule", () => {
     });
   });
 
-  test("throws VALIDATION_ERROR for inflow submission without apiBaseUrl", async () => {
+  test("uses default prod API base URL for inflow submission without apiBaseUrl", async () => {
     // given
+    const TXID = "abc";
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ success: true, txid: TXID }), {
+        status: 200,
+      })
+    );
     const client = LiquidiumClient.create({});
 
     // when
+    const result = await client.lending.submitInflow({ txid: TXID });
 
     // then
-    await expect(
-      client.lending.submitInflow({ txid: "abc" })
-    ).rejects.toMatchObject({
-      code: LiquidiumErrorCode.VALIDATION_ERROR,
-      message: "Lending API actions require an API base URL in client config",
-    });
+    expect(result).toEqual({ success: true, txid: TXID });
+    expect(fetchSpy).toHaveBeenCalledWith(
+      `${DEFAULT_API_BASE_URL}/v1/inflow`,
+      expect.objectContaining({ method: "POST" })
+    );
   });
 
   test("creates and submits a borrow action with a custom outflow account", async () => {
@@ -3983,7 +4001,7 @@ describe("InstantLoansModule", () => {
     expect(estimateDepositFee).not.toHaveBeenCalled();
   });
 
-  test("creates a loan through the SDK API without calling the instant-loans canister", async () => {
+  test("creates a loan through the default SDK API without calling the instant-loans canister", async () => {
     // given
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(
@@ -4064,7 +4082,6 @@ describe("InstantLoansModule", () => {
         estimate_deposit_fee: vi.fn().mockResolvedValue({ Ok: 1_500_000n }),
       } as never);
     const client = LiquidiumClient.create({
-      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
       canisterIds: { instantLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
     });
 
@@ -4084,7 +4101,7 @@ describe("InstantLoansModule", () => {
 
     // then
     expect(fetchSpy).toHaveBeenCalledWith(
-      "https://app.liquidium.fi/api/sdk/v1/instant-loans",
+      `${DEFAULT_API_BASE_URL}/v1/instant-loans`,
       expect.objectContaining({
         body: JSON.stringify({
           collateralPoolId: BTC_POOL_ID,
@@ -4107,34 +4124,6 @@ describe("InstantLoansModule", () => {
     );
     expect(loan.loanId).toBe(LOAN_ID);
     expect(loan.collateral.amount).toBe(10_000_000n);
-  });
-
-  test("requires an SDK API base URL when creating a loan", async () => {
-    // given
-    const client = LiquidiumClient.create({
-      canisterIds: { instantLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
-    });
-
-    // when
-    const result = client.instantLoans.create({
-      collateralPoolId: BTC_POOL_ID,
-      borrowPoolId: USDT_POOL_ID,
-      collateralAsset: "BTC",
-      borrowAsset: "USDT",
-      collateralAmount: 10_000_000n,
-      borrowAmount: 5_726_000_000n,
-      ltvMaxBps: 6_000n,
-      depositWindowSeconds: 3_600n,
-      borrowDestination: "0x2222222222222222222222222222222222222222",
-      refundDestination: "bc1qrefunddestination",
-    });
-
-    // then
-    await expect(result).rejects.toMatchObject({
-      code: LiquidiumErrorCode.VALIDATION_ERROR,
-      message:
-        "Instant loan creation requires an API base URL in client config",
-    });
   });
 
   test("rejects a loan when current LTV plus slippage exceeds the pool max", async () => {

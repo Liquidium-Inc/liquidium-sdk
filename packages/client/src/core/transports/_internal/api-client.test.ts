@@ -36,6 +36,28 @@ describe("ApiClient", () => {
     );
   });
 
+  test("normalizes trailing slashes from the base URL", async () => {
+    // given
+    const expected = { success: true };
+    vi.mocked(fetch).mockResolvedValueOnce(
+      new Response(JSON.stringify(expected), { status: 200 })
+    );
+    const client = createApiClient({
+      baseUrl: `${MOCK_BASE_URL}/`,
+      timeoutMs: TIMEOUT_MS,
+    });
+
+    // when
+    const result = await client.get("/v1/markets/pools");
+
+    // then
+    expect(result).toEqual(expected);
+    expect(fetch).toHaveBeenCalledWith(
+      `${MOCK_BASE_URL}/v1/markets/pools`,
+      expect.objectContaining({ signal: expect.any(AbortSignal) })
+    );
+  });
+
   test("throws SERVICE_UNAVAILABLE on non-200 response", async () => {
     // given
     vi.mocked(fetch).mockResolvedValue(

@@ -33,7 +33,7 @@ export class HistoryModule {
     if (!this.apiClient) {
       throw new LiquidiumError(
         LiquidiumErrorCode.VALIDATION_ERROR,
-        "History requires an API base URL in client config"
+        "History requires an API client"
       );
     }
 

@@ -19,9 +19,14 @@ export function createApiClient(opts: {
   timeoutMs: number;
   fetchFn?: typeof fetch;
 }): ApiClient {
+  const normalizedOpts = {
+    ...opts,
+    baseUrl: normalizeBaseUrl(opts.baseUrl),
+  };
+
   return {
     async get<T>(path: string): Promise<T> {
-      return await sendRequest<T>(opts, {
+      return await sendRequest<T>(normalizedOpts, {
         path,
         method: HTTP_METHOD_GET,
       });
@@ -30,13 +35,17 @@ export function createApiClient(opts: {
       path: string,
       body: TBody
     ): Promise<TResponse> {
-      return await sendRequest<TResponse>(opts, {
+      return await sendRequest<TResponse>(normalizedOpts, {
         path,
         method: HTTP_METHOD_POST,
         body,
       });
     },
   };
+}
+
+function normalizeBaseUrl(baseUrl: string): string {
+  return baseUrl.replace(/\/+$/, "");
 }
 
 async function sendRequest<TResponse>(

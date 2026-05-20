@@ -879,7 +879,7 @@ export class LendingModule {
   /**
    * Submits an inflow transaction id for faster indexing.
    *
-   * Requires `apiBaseUrl` on the client.
+   * Uses the Liquidium SDK API.
    *
    * @param request - Broadcast `txid` plus optional `chain` and inflow `type`.
    * @returns Acknowledgement including the submitted `txid`.
@@ -921,7 +921,7 @@ export class LendingModule {
     if (!this.apiClient) {
       throw new LiquidiumError(
         LiquidiumErrorCode.VALIDATION_ERROR,
-        "Lending API actions require an API base URL in client config"
+        "Lending API actions require an API client"
       );
     }
 

@@ -1,6 +1,7 @@
 import { type CanisterIds, Environment } from "./types";
 
 const MAINNET_HOST = "https://icp-api.io";
+export const DEFAULT_API_BASE_URL = "https://app.liquidium.fi/api/sdk";
 export const DEFAULT_ENVIRONMENT: Environment = Environment.mainnet;
 
 const MAINNET_CANISTER_IDS: CanisterIds = {
