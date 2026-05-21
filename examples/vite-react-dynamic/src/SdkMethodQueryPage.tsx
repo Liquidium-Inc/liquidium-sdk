@@ -7,6 +7,7 @@ import type {
   AssetPrices,
   Chain,
   InflowSubmitType,
+  InstantLoanAccount,
   LiquidiumClient,
   Pool,
   QuoteRequest,
@@ -248,7 +249,7 @@ const SDK_METHODS: MethodDefinition[] = [
     id: "instantLoans.create",
     label: "instantLoans.create",
     defaultArgs:
-      '{\n  "collateralPoolId": "42svn-2yaaa-aaaae-qfcsq-cai",\n  "borrowPoolId": "7dcux-qqaaa-aaaae-qfc3a-cai",\n  "collateralAsset": "BTC",\n  "borrowAsset": "USDT",\n  "collateralAmount": "37000",\n  "borrowAmount": "9000000",\n  "ltvMaxBps": "6800",\n  "depositWindowSeconds": "3600",\n  "borrowDestination": "0xYourBorrowAddress",\n  "refundDestination": "bc1qYourRefundAddress"\n}',
+      '{\n  "collateralPoolId": "42svn-2yaaa-aaaae-qfcsq-cai",\n  "borrowPoolId": "7dcux-qqaaa-aaaae-qfc3a-cai",\n  "collateralAsset": "BTC",\n  "borrowAsset": "USDT",\n  "collateralAmount": "37000",\n  "borrowAmount": "9000000",\n  "ltvMaxBps": "6800",\n  "depositWindowSeconds": "3600",\n  "borrowDestination": {\n    "type": "External",\n    "address": "0xYourBorrowAddress"\n  },\n  "refundDestination": {\n    "type": "External",\n    "address": "bc1qYourRefundAddress"\n  }\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
       return await client.instantLoans.create({
@@ -272,11 +273,11 @@ const SDK_METHODS: MethodDefinition[] = [
           args.depositWindowSeconds,
           "depositWindowSeconds"
         ),
-        borrowDestination: expectNonEmptyString(
+        borrowDestination: expectInstantLoanAccount(
           args.borrowDestination,
           "borrowDestination"
         ),
-        refundDestination: expectNonEmptyString(
+        refundDestination: expectInstantLoanAccount(
           args.refundDestination,
           "refundDestination"
         ),
@@ -1095,6 +1096,40 @@ function expectInstantLoanAsset(
   }
 
   throw new Error(`${fieldName} must be BTC, SOL, USDC, or USDT.`);
+}
+
+function expectInstantLoanAccount(
+  value: unknown,
+  fieldName: string
+): InstantLoanAccount {
+  if (typeof value === "string") {
+    return {
+      type: "External",
+      address: expectNonEmptyString(value, fieldName),
+    };
+  }
+
+  const account = expectObject(value, fieldName);
+  const type = expectNonEmptyString(account.type, `${fieldName}.type`);
+
+  if (type === "External") {
+    return {
+      type,
+      address: expectNonEmptyString(account.address, `${fieldName}.address`),
+    };
+  }
+
+  if (type === "Native") {
+    return {
+      type,
+      principal: expectNonEmptyString(
+        account.principal,
+        `${fieldName}.principal`
+      ),
+    };
+  }
+
+  throw new Error(`${fieldName}.type must be External or Native.`);
 }
 
 function expectOptionalChain(

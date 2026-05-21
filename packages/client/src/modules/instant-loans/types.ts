@@ -51,10 +51,10 @@ export interface CreateInstantLoanRequest {
    * times out. Internally this is sent to the canister as `ltv_timer_s`.
    */
   depositWindowSeconds: bigint;
-  /** External address that receives the borrowed asset. */
-  borrowDestination: string | ExternalAccount;
-  /** External address that receives collateral refunds or withdrawals. */
-  refundDestination: string | ExternalAccount;
+  /** Address or native IC principal that receives the borrowed asset. */
+  borrowDestination: string | InstantLoanAccount;
+  /** Address or native IC principal that receives collateral refunds or withdrawals. */
+  refundDestination: string | InstantLoanAccount;
 }
 
 /** Lookup request for loading canonical instant-loan state. */

@@ -1,3 +1,4 @@
+import { Principal } from "@dfinity/principal";
 import {
   createInstantLoansActor,
   type HeadlessLoanEvent,
@@ -29,7 +30,6 @@ import { QuoteValidationErrorCode } from "../quote/types";
 import { intFromPublicId, publicIdFromInt } from "./ref-code";
 import type {
   CreateInstantLoanRequest,
-  ExternalAccount,
   InstantLoan,
   InstantLoanAccount,
   InstantLoanAsset,
@@ -87,13 +87,16 @@ type InstantLoanCreateRequestWire = {
   borrowAmount: string;
   ltvMaxBps: string;
   depositWindowSeconds: string;
-  borrowDestination: string;
-  refundDestination: string;
+  borrowDestination: InstantLoanAccountVariantWire;
+  refundDestination: InstantLoanAccountVariantWire;
 };
+
+type InstantLoanAccountVariantWire = { External: string } | { Native: string };
 
 type InstantLoanAccountWire =
   | { address: string; type: "External" }
-  | { principal: string; type: "Native" };
+  | { principal: string; type: "Native" }
+  | InstantLoanAccountVariantWire;
 
 type InstantLoanWire = {
   loanId: string | bigint;
@@ -163,8 +166,8 @@ export class InstantLoansModule {
       borrowAmount: request.borrowAmount.toString(),
       ltvMaxBps: request.ltvMaxBps.toString(),
       depositWindowSeconds: request.depositWindowSeconds.toString(),
-      borrowDestination: externalAddressFromInput(request.borrowDestination),
-      refundDestination: externalAddressFromInput(request.refundDestination),
+      borrowDestination: accountWireFromInput(request.borrowDestination),
+      refundDestination: accountWireFromInput(request.refundDestination),
     });
 
     const loan = await this.mapLoanWire(response.loan);
@@ -631,17 +634,42 @@ function throwLtvCalculationError(
   );
 }
 
-function externalAddressFromInput(account: string | ExternalAccount): string {
-  const address =
-    typeof account === "string" ? account.trim() : account.address.trim();
-  if (!address) {
+function accountWireFromInput(
+  account: string | InstantLoanAccount
+): InstantLoanAccountVariantWire {
+  if (typeof account === "string" || account.type === "External") {
+    const address =
+      typeof account === "string" ? account.trim() : account.address.trim();
+    if (!address) {
+      throw new LiquidiumError(
+        LiquidiumErrorCode.VALIDATION_ERROR,
+        "Instant loan account address must be non-empty"
+      );
+    }
+
+    return { External: address };
+  }
+
+  const principal = account.principal.trim();
+  if (!principal) {
     throw new LiquidiumError(
       LiquidiumErrorCode.VALIDATION_ERROR,
-      "Instant loan account address must be non-empty"
+      "Instant loan native principal must be non-empty"
     );
   }
 
-  return address;
+  let parsedPrincipal: Principal;
+  try {
+    parsedPrincipal = Principal.fromText(principal);
+  } catch (error) {
+    throw new LiquidiumError(
+      LiquidiumErrorCode.VALIDATION_ERROR,
+      "Instant loan native principal must be valid principal text",
+      error
+    );
+  }
+
+  return { Native: parsedPrincipal.toText() };
 }
 
 function accountFromCanister(
@@ -655,6 +683,14 @@ function accountFromCanister(
 }
 
 function accountFromWire(account: InstantLoanAccountWire): InstantLoanAccount {
+  if ("Native" in account) {
+    return { type: "Native", principal: account.Native };
+  }
+
+  if ("External" in account) {
+    return { type: "External", address: account.External };
+  }
+
   if (account.type === "Native") {
     return { type: "Native", principal: account.principal };
   }

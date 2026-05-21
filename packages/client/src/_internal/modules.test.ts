@@ -4023,14 +4023,10 @@ describe("InstantLoansModule", () => {
               asset: "USDT",
               amount: "5726000000",
               destination: {
-                type: "External",
-                address: "0x2222222222222222222222222222222222222222",
+                External: "0x2222222222222222222222222222222222222222",
               },
             },
-            refundDestination: {
-              type: "External",
-              address: "bc1qrefunddestination",
-            },
+            refundDestination: { External: "bc1qrefunddestination" },
           },
         }),
         { status: 200, headers: { "content-type": "application/json" } }
@@ -4112,8 +4108,10 @@ describe("InstantLoansModule", () => {
           borrowAmount: "5726000000",
           ltvMaxBps: "6000",
           depositWindowSeconds: "3600",
-          borrowDestination: "0x2222222222222222222222222222222222222222",
-          refundDestination: "bc1qrefunddestination",
+          borrowDestination: {
+            External: "0x2222222222222222222222222222222222222222",
+          },
+          refundDestination: { External: "bc1qrefunddestination" },
         }),
         method: "POST",
       })

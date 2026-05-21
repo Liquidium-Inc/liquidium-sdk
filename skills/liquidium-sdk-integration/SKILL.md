@@ -284,8 +284,11 @@ const loan = await client.instantLoans.create({
   borrowAmount: 2_000_000n,
   ltvMaxBps: ltv.maxAllowedLtvBps,
   depositWindowSeconds: 3_600n,
-  borrowDestination: "0x2222222222222222222222222222222222222222",
-  refundDestination: "bc1qrefunddestination",
+  borrowDestination: {
+    type: "External",
+    address: "0x2222222222222222222222222222222222222222",
+  },
+  refundDestination: { type: "External", address: "bc1qrefunddestination" },
 });
 
 const ref = loan.ref;
