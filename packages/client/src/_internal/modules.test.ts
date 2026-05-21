@@ -2430,6 +2430,67 @@ describe("LendingModule", () => {
     ]);
   });
 
+  test("should not submit eth stablecoin transfer txids through the inflow endpoint", async () => {
+    // given
+    const profileId = "aaaaa-aa";
+    const txid =
+      "0x76ffa8bd3b89187c1a54b9f9c0adcd53da15623b38dc80304937fe962243b86e";
+    vi.spyOn(Actor, "createActor")
+      .mockReturnValueOnce({
+        list_pools: vi.fn().mockResolvedValue([
+          {
+            optimal_utilization_rate: 80n,
+            principal: {
+              toString: () => USDC_POOL_ID,
+              toText: () => USDC_POOL_ID,
+            },
+            total_generated_interest_snapshot: 0n,
+            supply_cap: [],
+            same_asset_borrowing: [],
+            asset: { USDC: null },
+            rate_slope_before: 1n,
+            borrow_cap: [],
+            total_debt_at_last_sync: 0n,
+            chain: { ETH: null },
+            rate_slope_after: 2n,
+            reserve_factor: 100n,
+            last_updated: [],
+            lending_index: 300n,
+            protocol_liquidation_fee: 50n,
+            borrow_index: 400n,
+            base_rate: 5n,
+            frozen: false,
+            liquidation_bonus: 200n,
+            liquidation_threshold: 7_500n,
+            max_ltv: 7_000n,
+            total_supply_at_last_sync: 50_000n,
+          },
+        ]),
+      } as never)
+      .mockReturnValueOnce({
+        get_deposit_address: vi.fn().mockResolvedValue({
+          Ok: "0x2222222222222222222222222222222222222222",
+        }),
+      } as never);
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    const client = new LiquidiumClient({
+      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
+    });
+
+    // when
+    const supplyFlow = await client.lending.supply({
+      profileId,
+      poolId: USDC_POOL_ID,
+      action: "deposit",
+      mechanism: "transfer",
+    });
+    const result = await supplyFlow.submit({ txid });
+
+    // then
+    expect(result).toEqual({ success: true, txid });
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
   test("rejects supply when no supply mechanism is configured", async () => {
     // given
     vi.spyOn(Actor, "createActor").mockReturnValue({
@@ -3488,6 +3549,101 @@ Nonce: 17`);
       chain: "ETH",
       message: expect.stringContaining("Liquidium: Borrow Assets"),
       account: "0xsigner",
+    });
+  });
+
+  test("should submit eth borrow with a checksummed signer address", async () => {
+    // given
+    const LOWERCASE_SIGNER_ADDRESS =
+      "0xa5789280df0d6e3f5bc9a00358379768e391bea9";
+    const EXPECTED_CHECKSUM_SIGNER_ADDRESS =
+      "0xA5789280dF0D6E3F5BC9a00358379768e391BEA9";
+    const borrowAssets = vi.fn().mockResolvedValue({
+      Ok: {
+        id: "outflow-4",
+        txid: [],
+        outflow_type: { Borrow: null },
+        outflow_ref: [],
+        amount: 12_000n,
+        receiver: { External: "bc1qborrow" },
+      },
+    });
+    const getNonce = vi.fn().mockResolvedValue(31n);
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      get_nonce: getNonce,
+      borrow_assets: borrowAssets,
+    } as never);
+    const signMessage = vi.fn().mockResolvedValue("0xsigned");
+    const client = new LiquidiumClient({});
+
+    // when
+    await client.lending.borrow({
+      profileId: "aaaaa-aa",
+      poolId: "rrkah-fqaaa-aaaaa-aaaaq-cai",
+      amount: 12_000n,
+      receiverAddress: "bc1qborrow",
+      signerWalletAddress: LOWERCASE_SIGNER_ADDRESS,
+      signerChain: "ETH",
+      signerWalletAdapter: { signMessage },
+    });
+
+    // then
+    expect(getNonce).toHaveBeenCalledWith(EXPECTED_CHECKSUM_SIGNER_ADDRESS);
+    expect(signMessage).toHaveBeenCalledWith(
+      expect.objectContaining({ account: EXPECTED_CHECKSUM_SIGNER_ADDRESS })
+    );
+    expect(borrowAssets.mock.calls[0]?.[1]).toMatchObject({
+      signature_info: {
+        Wallet: {
+          account: EXPECTED_CHECKSUM_SIGNER_ADDRESS,
+        },
+      },
+    });
+  });
+
+  test("should submit eth borrow signatures without the 0x prefix", async () => {
+    // given
+    const SIGNATURE_WITH_PREFIX =
+      "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1b";
+    const EXPECTED_SIGNATURE =
+      "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1b";
+    const borrowAssets = vi.fn().mockResolvedValue({
+      Ok: {
+        id: "outflow-4",
+        txid: [],
+        outflow_type: { Borrow: null },
+        outflow_ref: [],
+        amount: 12_000n,
+        receiver: { External: "bc1qborrow" },
+      },
+    });
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      get_nonce: vi.fn().mockResolvedValue(31n),
+      borrow_assets: borrowAssets,
+    } as never);
+    const signMessage = vi.fn().mockResolvedValue(SIGNATURE_WITH_PREFIX);
+    const client = new LiquidiumClient({});
+
+    // when
+    await client.lending.borrow({
+      profileId: "aaaaa-aa",
+      poolId: "rrkah-fqaaa-aaaaa-aaaaq-cai",
+      amount: 12_000n,
+      receiverAddress: "bc1qborrow",
+      signerWalletAddress: "0xsigner",
+      signerChain: "ETH",
+      signerWalletAdapter: { signMessage },
+    });
+
+    // then
+    expect(borrowAssets.mock.calls[0]?.[1]).toMatchObject({
+      signature_info: {
+        Wallet: {
+          signature: EXPECTED_SIGNATURE,
+          chain: { ETH: null },
+          account: "0xsigner",
+        },
+      },
     });
   });
 

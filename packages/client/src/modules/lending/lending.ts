@@ -18,6 +18,7 @@ import {
   CK_ETH_DEPOSIT_CONTRACT_ADDRESS,
   ERC20_ABI,
   MAX_UINT256,
+  normalizeEvmAddress,
 } from "../../core/evm";
 import { SdkApiPath } from "../../core/sdk-api-paths";
 import type { ApiClient } from "../../core/transports/api-client";
@@ -126,7 +127,9 @@ export class LendingModule {
     request: CreateWithdrawRequest
   ): Promise<WithdrawAction> {
     const destinationAccount = request.receiverAddress.trim();
-    const signerAccount = request.signerWalletAddress.trim();
+    const signerAccount = normalizeEvmAddress(
+      request.signerWalletAddress.trim()
+    );
     if (!destinationAccount) {
       throw new LiquidiumError(
         LiquidiumErrorCode.VALIDATION_ERROR,
@@ -199,7 +202,7 @@ export class LendingModule {
           },
           signature_info: {
             Wallet: {
-              signature: signatureInfo.signature,
+              signature: normalizeHexSignature(signatureInfo.signature),
               chain: mapWalletChainToLendingChain(signatureInfo.chain),
               account: request.signerWalletAddress,
             },
@@ -237,7 +240,7 @@ export class LendingModule {
     return await executeWith({
       walletAdapter: params.signerWalletAdapter,
       chain: params.signerChain,
-      account: params.signerWalletAddress,
+      account: action.account,
     })(action);
   }
 
@@ -251,7 +254,9 @@ export class LendingModule {
    */
   async prepareBorrow(request: CreateBorrowRequest): Promise<BorrowAction> {
     const destinationAccount = request.receiverAddress.trim();
-    const signerAccount = request.signerWalletAddress.trim();
+    const signerAccount = normalizeEvmAddress(
+      request.signerWalletAddress.trim()
+    );
     if (!destinationAccount) {
       throw new LiquidiumError(
         LiquidiumErrorCode.VALIDATION_ERROR,
@@ -324,7 +329,7 @@ export class LendingModule {
         },
         signature_info: {
           Wallet: {
-            signature: signatureInfo.signature,
+            signature: normalizeHexSignature(signatureInfo.signature),
             chain: mapWalletChainToLendingChain(signatureInfo.chain),
             account: request.signerWalletAddress,
           },
@@ -365,7 +370,7 @@ export class LendingModule {
     return await executeWith({
       walletAdapter: params.signerWalletAdapter,
       chain: params.signerChain,
-      account: params.signerWalletAddress,
+      account: action.account,
     })(action);
   }
 
@@ -429,9 +434,11 @@ export class LendingModule {
       target: instruction.target,
       txid,
       submit: async (submitRequest) => {
-        return await this.submitInflow({
-          ...defaultSubmitInflowRequest,
-          ...submitRequest,
+        return await this.submitSupplyFlowInflow({
+          instruction,
+          mechanism,
+          defaultSubmitInflowRequest,
+          submitRequest,
         });
       },
     };
@@ -648,12 +655,28 @@ export class LendingModule {
     });
 
     if (
-      !(instruction.asset === Asset.USDT && instruction.chain === Chain.ETH)
+      shouldSubmitInflow({ instruction, mechanism: SupplyPlanType.transfer })
     ) {
       await this.submitInflowWithRetry(txid, defaultSubmitInflowRequest);
     }
 
     return txid;
+  }
+
+  private async submitSupplyFlowInflow(params: {
+    instruction: SupplyInstruction;
+    mechanism: SupplyPlanType;
+    defaultSubmitInflowRequest?: Omit<SubmitInflowRequest, "txid">;
+    submitRequest: SubmitInflowRequest;
+  }): Promise<SubmitInflowResponse> {
+    if (!shouldSubmitInflow(params)) {
+      return { success: true, txid: params.submitRequest.txid };
+    }
+
+    return await this.submitInflow({
+      ...params.defaultSubmitInflowRequest,
+      ...params.submitRequest,
+    });
   }
 
   private async executeContractSupply(params: {
@@ -1122,4 +1145,29 @@ function getDefaultSubmitInflowRequest(params: {
         ? InflowSubmitType.REPAY
         : InflowSubmitType.DEPOSIT,
   };
+}
+
+function shouldSubmitInflow(params: {
+  instruction: SupplyInstruction;
+  mechanism: SupplyPlanType;
+}): boolean {
+  if (params.mechanism !== SupplyPlanType.transfer) {
+    return true;
+  }
+
+  return !isEthStablecoin(params.instruction.asset, params.instruction.chain);
+}
+
+function normalizeHexSignature(signature: string): string {
+  if (!signature.startsWith("0x")) {
+    return signature;
+  }
+
+  const signatureWithoutPrefix = signature.slice(2);
+
+  if (!/^[0-9a-fA-F]+$/.test(signatureWithoutPrefix)) {
+    return signature;
+  }
+
+  return signatureWithoutPrefix;
 }
