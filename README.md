@@ -2,7 +2,7 @@
 ![license](https://img.shields.io/npm/l/@liquidium/client)
 
 <p align="center">
-  <img src="./instant-loan-hero.svg" alt="Liquidium instant loan flow" width="700" />
+  <img src="./liquidium-hero.png" alt="Borrow. Beyond. Borders. Liquidium" width="700" />
 </p>
 
 <h1 align="center">Liquidium SDK</h1>
@@ -94,6 +94,10 @@ console.log("Loan status:", restoredLoan.status);
 console.log("Repay amount:", restoredLoan.repayment.amount.toString());
 console.log("Repay target:", formatSupplyTarget(restoredLoan.repayment.target));
 
+const activities = await client.activities.list({ shortRef: loan.ref });
+
+console.log("Loan activities:", activities);
+
 function requirePool(pools: Pool[], asset: string): Pool {
   const pool = pools.find((candidatePool) => candidatePool.asset === asset);
 
@@ -126,7 +130,7 @@ The default integration is intentionally small:
 | Load market data | `client.market.listPools()` and `client.market.getAssetPrices()` | Show supported collateral and borrow assets |
 | Validate amounts | `client.quote.calculateLtv(...)` | Block invalid LTV or frozen-pool input before creating a loan |
 | Create loan | `client.instantLoans.create(...)` | Store `loan.ref` and show `loan.depositTarget` |
-| Track loan | `client.instantLoans.get({ ref })` | Reload status, position, deposit target, and repayment quote |
+| Track loan | `client.instantLoans.get({ ref })` and `client.activities.list({ shortRef: ref })` | Reload loan state and monitor deposit, borrow, and repayment activity |
 | Repay loan | Read `loan.repayment` | Ask the user to send `loan.repayment.amount` to `loan.repayment.target` |
 
 `client.instantLoans.create(...)` returns the generated Liquidium profile, transfer targets, current position state, and repayment quote. The user does not need to manage the generated profile directly.
@@ -203,6 +207,15 @@ Use `Pool.decimals` from `client.market.listPools()` when converting user-entere
 ## Status And Activity Tracking
 
 Reload the loan itself with `client.instantLoans.get({ ref })` when you need current loan state, transfer targets, or the latest repayment quote.
+
+Use activities to track the operational flow behind the loan, including collateral deposits, borrow outflows, repayment deposits, confirmations, and fee top-ups. The activities module accepts the same saved instant-loan reference and resolves the generated profile for you:
+
+```ts
+const activities = await client.activities.list({
+  shortRef: loan.ref,
+  filter: "active",
+});
+```
 
 If you have a receipt or activity id from the flow, you can also load activity status:
 
