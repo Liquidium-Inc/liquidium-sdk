@@ -2,7 +2,7 @@
 
 The official TypeScript client for the Liquidium protocol.
 
-Current wallet/signing support: BTC and ETH.
+Current wallet/signing support: BTC and ETH. Initial release flows support L1 BTC and ETH USDC/USDT inflows through deposit addresses or ETH contract interaction; direct ck/native-token transfers are not exposed.
 
 Recommended order: use `client.instantLoans` first, deposit-address profile flows second, and ETH contract interaction only when explicitly needed.
 
@@ -319,7 +319,7 @@ Use these calls only when building a profile-based Liquidium app that manages ex
 - `WalletAdapter` currently supports BTC/ETH message signing through `signMessage`
 - Transfer-path supply automation uses `sendBtcTransaction` or `sendEthTransaction`, depending on the resolved target chain
 - Contract-interaction supply automation uses `sendEthTransaction` together with the Liquidium SDK API and an EVM RPC/read client
-- Future versions will add native ICP, native Solana, and additional ck-asset execution paths
+- Future versions will add native ICP, native Solana, and direct ck/native-token transfer support
 
 ### Modules
 
@@ -350,7 +350,7 @@ Use these calls only when building a profile-based Liquidium app that manages ex
 
 ### Supply tracking flow
 
-- `client.lending.supply(...)` resolves the target internally and returns a tracked `SupplyFlow` with `type: "transfer" | "contractInteraction"`.
+- `client.lending.supply(...)` resolves the target internally and returns a tracked `SupplyFlow` with `type: "transfer" | "contractInteraction"` for supported L1 inflow routes.
 - Transfer-path inflows can auto-broadcast when `walletAdapter`, `account`, and `amount` are provided.
 - ETH stablecoin inflows default to deposit-address transfers and do not need the Liquidium SDK API for target resolution or wallet broadcast.
 - Use `mechanism: "contractInteraction"` only when explicitly opting into the lower-level ETH contract route.
