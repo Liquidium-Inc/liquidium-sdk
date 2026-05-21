@@ -32,6 +32,7 @@ import {
 } from "../../core/types";
 import { encodeInflowSubaccount } from "../../core/utils/inflow-subaccount";
 import { retryWithBackoff } from "../../core/utils/retry";
+import { normalizeHexSignature } from "../../core/utils/signature";
 import { computeExpiryTimestampFromNow } from "../../core/utils/time";
 import { getVariantKey } from "../../core/utils/variant";
 import {
@@ -808,7 +809,12 @@ export class LendingModule {
       `supply-${request.action}-deposit-erc20`
     );
 
-    await this.submitInflowWithRetry(depositTxid, defaultSubmitInflowRequest);
+    try {
+      await this.submitInflowWithRetry(depositTxid, defaultSubmitInflowRequest);
+    } catch {
+      // The deposit transaction is already broadcast and cannot be rolled back.
+      // Return the txid so callers can track it even if the indexing hint fails.
+    }
 
     return depositTxid;
   }
@@ -1156,18 +1162,4 @@ function shouldSubmitInflow(params: {
   }
 
   return !isEthStablecoin(params.instruction.asset, params.instruction.chain);
-}
-
-function normalizeHexSignature(signature: string): string {
-  if (!signature.startsWith("0x")) {
-    return signature;
-  }
-
-  const signatureWithoutPrefix = signature.slice(2);
-
-  if (!/^[0-9a-fA-F]+$/.test(signatureWithoutPrefix)) {
-    return signature;
-  }
-
-  return signatureWithoutPrefix;
 }

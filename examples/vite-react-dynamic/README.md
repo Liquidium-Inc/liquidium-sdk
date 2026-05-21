@@ -14,7 +14,7 @@ It provides a single SDK method query screen where you can:
 
 1. Copy `.env.example` to `.env`
 2. Set `VITE_DYNAMIC_ENVIRONMENT_ID` from your Dynamic dashboard
-3. Set `VITE_LIQUIDIUM_BASE_URL` to the Liquidium SDK API base URL. The example
+3. Set `VITE_LIQUIDIUM_BASE_URL` to the Liquidium service base URL. The example
    defaults to `https://app.liquidium.fi/api/sdk`.
 4. Set `VITE_INFURA_API_KEY` for ETH reads that need an RPC provider.
    Alternatively, set `VITE_EVM_RPC_URL` to a full Ethereum mainnet RPC URL.
@@ -50,5 +50,5 @@ history, quote, lending, and instant-loan methods, including:
 - `instantLoans.get({ loanId })`
 - `instantLoans.findByAddress`
 
-`instantLoans.get(...)` returns canister loan state plus generated targets,
-current position state, and the actionable repayment amount.
+`instantLoans.get(...)` returns current loan state plus generated targets,
+position state, and the actionable repayment amount.

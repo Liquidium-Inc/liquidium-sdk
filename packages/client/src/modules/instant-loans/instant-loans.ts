@@ -148,8 +148,15 @@ export class InstantLoansModule {
    * Creates a profileless instant loan and returns canonical canister state plus
    * deposit/repay targets for the generated lending profile.
    *
-   * Use `depositWindowSeconds` for the user-facing collateral deposit timeout;
-   * the SDK maps it to the canister's internal `ltv_timer_s` field.
+   * Choose `collateralPoolId` and `borrowPoolId` from
+   * `client.market.listPools()`, convert UI amounts to base units with the
+   * selected pool decimals, and call `client.quote.calculateLtv(...)` before
+   * creation to block invalid LTV input.
+   *
+   * `borrowDestination` receives the borrowed asset after the loan starts.
+   * `refundDestination` receives collateral refunds or withdrawals. Use
+   * `depositWindowSeconds` for the user-facing collateral deposit timeout; the
+   * SDK maps it to the canister's internal `ltv_timer_s` field.
    */
   async create(request: CreateInstantLoanRequest): Promise<InstantLoan> {
     validateCreateRequest(request);

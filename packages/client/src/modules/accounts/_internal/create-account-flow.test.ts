@@ -29,7 +29,7 @@ describe("create account flow example", () => {
         .mockImplementation(
           async ({ message }: { account: string; message: string }) => {
             void message;
-            return "0xsignature";
+            return "0xabcdef";
           }
         ),
     };
@@ -78,7 +78,7 @@ describe("create account flow example", () => {
     expect(typeof registerProfileRequest.data.expiry_timestamp).toBe("bigint");
     expect(registerProfileRequest.signature_info).toEqual({
       Wallet: {
-        signature: "0xsignature",
+        signature: "abcdef",
         chain: { ETH: null },
         account: "0x123",
       },

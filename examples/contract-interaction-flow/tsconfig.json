@@ -3,9 +3,6 @@
   "compilerOptions": {
     "baseUrl": ".",
     "jsx": "react-jsx",
-    "paths": {
-      "@liquidium/client": ["../../packages/client/src/index.ts"]
-    },
     "types": ["vite/client"],
     "noEmit": true,
     "declaration": false,

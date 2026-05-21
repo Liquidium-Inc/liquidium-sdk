@@ -8,7 +8,7 @@
 <h1 align="center">Liquidium SDK</h1>
 
 <p align="center">
-  TypeScript SDK for creating and tracking Liquidium instant loans.
+  Use the Liquidium SDK from TypeScript apps. Start here with the accountless instant-loan flow.
 </p>
 
 <p align="center">
@@ -17,7 +17,7 @@
   <a href="./packages/client/README.md"><b>Full Client API</b></a>
 </p>
 
-## Why Liquidium SDK
+## Why Start With Instant Loans
 
 - **Accountless loan creation**: create an instant loan without asking users to create or manage a Liquidium profile first.
 - **Generated transfer targets**: receive the collateral deposit target and repayment target directly from the SDK response.

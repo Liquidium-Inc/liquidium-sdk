@@ -32,10 +32,10 @@ void import("./bootstrap")
 
 function StartupErrorScreen({ message }: { message: string }) {
   return (
-    <main className="example-page">
-      <section className="example-card">
+    <main>
+      <section>
         <h1>App failed to load</h1>
-        <p className="error-text">{message}</p>
+        <p>{message}</p>
       </section>
     </main>
   );

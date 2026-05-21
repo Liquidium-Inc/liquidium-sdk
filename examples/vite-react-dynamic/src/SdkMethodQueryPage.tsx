@@ -1,4 +1,3 @@
-import { isBitcoinWallet } from "@dynamic-labs/bitcoin";
 import { isEthereumWallet } from "@dynamic-labs/ethereum";
 import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import type {
@@ -739,7 +738,10 @@ export function SdkMethodQueryPage({
       }
 
       if ("borrowDestination" in nextArgs) {
-        nextArgs.borrowDestination = walletAddress;
+        nextArgs.borrowDestination = {
+          type: "External",
+          address: walletAddress,
+        };
       }
 
       if ("chain" in nextArgs) {
@@ -1196,11 +1198,7 @@ function expectOptionalActivityFilter(
 
 function getWalletChainLabel(
   primaryWallet: ReturnType<typeof useDynamicContext>["primaryWallet"]
-): "BTC" | "ETH" {
-  if (primaryWallet && isBitcoinWallet(primaryWallet)) {
-    return "BTC";
-  }
-
+): "ETH" {
   if (primaryWallet && isEthereumWallet(primaryWallet)) {
     return "ETH";
   }

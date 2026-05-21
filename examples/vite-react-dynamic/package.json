@@ -10,19 +10,18 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@dynamic-labs/bitcoin": "^4.64.0",
-    "@dynamic-labs/ethereum": "^4.64.0",
-    "@dynamic-labs/sdk-react-core": "^4.64.0",
+    "@dynamic-labs/ethereum": "^4.83.1",
+    "@dynamic-labs/sdk-react-core": "^4.83.1",
     "@liquidium/client": "workspace:*",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6"
   },
   "devDependencies": {
-    "@types/react": "^19.2.2",
-    "@types/react-dom": "^19.2.2",
-    "@vitejs/plugin-react": "^5.0.4",
+    "@types/react": "^19.2.15",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.2.0",
     "typescript": "^5.9.3",
-    "vite": "^7.1.12",
+    "vite": "^7.3.3",
     "vite-plugin-node-polyfills": "^0.24.0"
   }
 }

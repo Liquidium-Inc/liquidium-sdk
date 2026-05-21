@@ -125,16 +125,17 @@ describe("AccountsModule", () => {
 
   test("creates and executes an account creation request directly", async () => {
     // given
+    const registerProfile = vi.fn().mockResolvedValue({
+      Ok: {
+        toText: () => "ddddd-dd",
+      },
+    });
     vi.spyOn(Actor, "createActor").mockReturnValue({
       get_nonce: vi.fn().mockResolvedValue(13n),
       get_wallet_profile: vi.fn().mockResolvedValue([]),
-      register_profile: vi.fn().mockResolvedValue({
-        Ok: {
-          toText: () => "ddddd-dd",
-        },
-      }),
+      register_profile: registerProfile,
     } as never);
-    const signMessage = vi.fn().mockResolvedValue("0xsigned");
+    const signMessage = vi.fn().mockResolvedValue("0xabcdef");
     const client = new LiquidiumClient({});
 
     // when
@@ -147,6 +148,13 @@ describe("AccountsModule", () => {
     // then
     expect(profileId).toBe("ddddd-dd");
     expect(signMessage).toHaveBeenCalledTimes(1);
+    expect(registerProfile).toHaveBeenCalledWith(
+      expect.objectContaining({
+        signature_info: expect.objectContaining({
+          Wallet: expect.objectContaining({ signature: "abcdef" }),
+        }),
+      })
+    );
   });
 
   test("should canonicalize Ethereum account casing before profile calls", async () => {
@@ -2965,6 +2973,45 @@ describe("LendingModule", () => {
         }),
       })
     );
+  });
+
+  test("should return contract-interaction txid when inflow registration fails after broadcast", async () => {
+    // given
+    const profileId = "aaaaa-aa";
+    const depositTxid = "0xcontractdeposit";
+    const API_FAILURE = new Error("api unavailable");
+    mockUsdtPoolList();
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockRejectedValueOnce(API_FAILURE);
+    const readContract = vi
+      .fn()
+      .mockResolvedValueOnce(1_000_000n)
+      .mockResolvedValueOnce(2_000_000n);
+    const sendEthTransaction = vi.fn().mockResolvedValueOnce(depositTxid);
+    const client = new LiquidiumClient({
+      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
+      evmPublicClient: { readContract } as never,
+    });
+
+    // when
+    const flow = await client.lending.supply({
+      profileId,
+      poolId: USDT_POOL_ID,
+      action: "deposit",
+      account: "0x1234567890123456789012345678901234567890",
+      amount: 1_000_000n,
+      mechanism: "contractInteraction",
+      walletAdapter: {
+        sendEthTransaction,
+      },
+    });
+
+    // then
+    expect(flow.type).toBe("contractInteraction");
+    expect(flow.txid).toBe(depositTxid);
+    expect(sendEthTransaction).toHaveBeenCalledTimes(1);
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
   });
 
   test("should require an EVM read client for contract-interaction supply", async () => {

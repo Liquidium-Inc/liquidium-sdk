@@ -2,7 +2,7 @@ import { EthereumWalletConnectors } from "@dynamic-labs/ethereum";
 import { DynamicContextProvider } from "@dynamic-labs/sdk-react-core";
 import React from "react";
 import type { Root } from "react-dom/client";
-import RootPage from "./Root";
+import { App } from "./App";
 
 type MountAppParams = {
   root: Root;
@@ -19,7 +19,7 @@ export function mountApp({ root, dynamicEnvironmentId }: MountAppParams) {
           walletConnectors: [EthereumWalletConnectors],
         }}
       >
-        <RootPage />
+        <App />
       </DynamicContextProvider>
     </React.StrictMode>
   );
