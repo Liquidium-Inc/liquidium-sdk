@@ -2,7 +2,7 @@
 ![license](https://img.shields.io/npm/l/@liquidium/client)
 
 <p align="center">
-  <img src="./liquidium-hero.png" alt="Borrow. Beyond. Borders. Liquidium" width="700" />
+  <img src="./borrow.svg" alt="Liquidium borrow illustration" width="700" />
 </p>
 
 <h1 align="center">Liquidium SDK</h1>
