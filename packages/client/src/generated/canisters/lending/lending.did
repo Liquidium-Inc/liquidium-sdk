@@ -1,0 +1,408 @@
+type AccountType = variant { Native : principal; External : text };
+type AddAccountRequest = record {
+  target_principal : principal;
+  chain : WalletType;
+  wallet_signature : SignatureScheme;
+  expiry_timestamp : nat64;
+};
+type AssetType = variant { CkAsset : principal; Unknown };
+type Assets = variant { BTC; SOL; USDC; USDT };
+type BorrowAssetRequest = record {
+  expiry_timestamp : nat64;
+  account : AccountType;
+  pool_id : principal;
+  amount : nat;
+};
+type BorrowingPower = record {
+  max_borrowable_usd : nat;
+  weighted_max_ltv : nat;
+};
+type Chains = variant { BTC; ETH; SOL };
+type ClaimFeeRequest = record { pool_id : principal };
+type InflowDetails = record {
+  id : text;
+  inflow_type : InflowType;
+  txid : text;
+  timestamp : nat64;
+  amount : nat;
+  receiver : principal;
+};
+type InflowType = variant { Repayment; Deposit };
+type InitializeAccountRequest = record { expiry_timestamp : nat64 };
+type LiqTxTarget = variant { Collateral; Change };
+type LiquidatablePosition = record {
+  collateral_amount : nat;
+  asset_type : AssetType;
+  debt_amount : nat;
+  asset : Assets;
+  account : principal;
+  pool_id : principal;
+  protocol_fee : nat64;
+  liquidation_bonus : nat64;
+  liquidation_threshold : nat64;
+};
+type LiquidatableUser = record {
+  health_factor : nat;
+  total_debt : nat;
+  account : principal;
+  positions : vec LiquidatablePosition;
+  weighted_liquidation_threshold : nat;
+};
+type LiquidationAmounts = record {
+  debt_repaid : nat;
+  collateral_received : nat;
+};
+type LiquidationRequest = record {
+  debt_amount : nat;
+  receiver_address : principal;
+  collateral_pool_id : principal;
+  borrower : principal;
+  debt_pool_id : principal;
+  buy_bad_debt : bool;
+};
+type LiquidationResult = record {
+  id : nat;
+  status : LiquidationStatus;
+  change_tx : TxStatus;
+  debt_asset : AssetType;
+  amounts : LiquidationAmounts;
+  collateral_asset : AssetType;
+  timestamp : nat64;
+  collateral_tx : TxStatus;
+};
+type LiquidationStatus = variant {
+  CollateralTransferFailed : text;
+  FailedLiquidation : text;
+  InflowProcessed;
+  Success;
+  CoreExecuted;
+  ChangeTransferFailed : text;
+  Pending;
+};
+type ListPositionsResponse = record {
+  total : nat64;
+  next_cursor : opt record { principal; principal };
+  positions : vec PositionView;
+};
+type ListProfilesResponse = record {
+  total : nat64;
+  next_cursor : opt principal;
+  profiles : vec record { principal; record { nat; UserStats } };
+};
+type OutflowDetails = record {
+  id : text;
+  txid : opt text;
+  outflow_type : OutflowType;
+  outflow_ref : opt text;
+  amount : nat;
+  receiver : AccountType;
+};
+type OutflowType = variant { Withdraw; FeeClaim; Borrow };
+type Pool = record {
+  optimal_utilization_rate : nat;
+  "principal" : principal;
+  total_generated_interest_snapshot : nat;
+  asset_type : AssetType;
+  supply_cap : opt nat;
+  same_asset_borrowing : opt bool;
+  asset : Assets;
+  rate_slope_before : nat;
+  borrow_cap : opt nat;
+  total_debt_at_last_sync : nat;
+  supply_at_last_sync : nat;
+  chain : Chains;
+  rate_slope_after : nat;
+  reserve_factor : nat64;
+  last_updated : opt nat64;
+  lending_index : nat;
+  protocol_liquidation_fee : nat64;
+  treasury_supply_scaled : nat;
+  same_asset_borrowing_dust_threshold : nat;
+  borrow_index : nat;
+  base_rate : nat;
+  frozen : bool;
+  liquidation_bonus : nat64;
+  liquidation_threshold : nat64;
+  max_ltv : nat64;
+  repay_grace_period : opt nat64;
+  pending_service_fees : nat;
+  total_supply_at_last_sync : nat;
+};
+type PoolEvents = variant {
+  DepositConfirmed : InflowDetails;
+  RepaymentConfirmed : RepaymentDetails;
+};
+type Position = record {
+  asset : Assets;
+  total_debt_interest : nat;
+  borrow_index_snapshot : nat;
+  lending_index_snapshot : nat;
+  debt_scaled : nat;
+  total_earned_interest : nat;
+  deposit_scaled : nat;
+  pool_id : principal;
+  unpaid_debt_interest : nat;
+  last_update : nat64;
+  user_profile : principal;
+};
+type PositionView = record {
+  lending_index_now : nat;
+  interest_since_snapshot : nat;
+  asset : Assets;
+  total_debt_interest : nat;
+  borrow_index_snapshot : nat;
+  debt_native_now : nat;
+  borrow_index_now : nat;
+  lending_index_snapshot : nat;
+  debt_scaled : nat;
+  total_earned_interest : nat;
+  deposit_scaled : nat;
+  earned_since_snapshot : nat;
+  deposited_native_now : nat;
+  pool_id : principal;
+  last_update : nat64;
+  user_profile : principal;
+};
+type ProfileCreatedEvent = record { wallet : Wallet; profile : principal };
+type ProtocolError = variant {
+  PositionNotFound;
+  Internal : text;
+  InvalidAddress : text;
+  InvalidTargetPrincipal;
+  SignatureError : SignatureVerificationError;
+  SupplyCapExceeded;
+  AccountNotFound;
+  NotAllowed : text;
+  PoolNotFound : text;
+  FeeClaimReceiverNotConfigured;
+  InsufficientCollateral;
+  ProfileNotFound;
+  SignatureExpiryTooFarInFuture;
+  MaxLtvExceeded;
+  ProfileAlreadyExists;
+  LiquidationNotFound : text;
+  HealthFactorTooLow;
+  NoLiquidity;
+  SignatureExpired;
+  BorrowingDisabled;
+  BorrowCapExceeded;
+  PoolFrozen;
+  TransferFailed : text;
+  AccountAlreadyLinked;
+  CannotRemoveSoleAccount;
+  InsufficientFunds;
+};
+type ProtocolEvent = record {
+  id : nat;
+  user : principal;
+  timestamp : nat64;
+  event_type : ProtocolEventType;
+};
+type ProtocolEventType = variant {
+  RepaymentRejected : record {
+    pool : principal;
+    error : ProtocolError;
+    details : RepaymentDetails;
+  };
+  AccountCreated : ProfileCreatedEvent;
+  DepositConfirmed : record { pool : principal; details : InflowDetails };
+  DepositRejected : record {
+    pool : principal;
+    error : ProtocolError;
+    details : InflowDetails;
+  };
+  AccountAdded : Wallet;
+  BorrowStateUpdated : bool;
+  LiquidationUnderlyingWithdrawal : record {
+    txid : text;
+    target : LiqTxTarget;
+    liquidation_id : nat;
+    account : text;
+    pool_id : text;
+    amount : nat;
+  };
+  PoolUpdated : Pool;
+  RepaymentConfirmed : record { pool : principal; details : RepaymentDetails };
+  LiquidationExecuted : record {
+    result : LiquidationResult;
+    request : LiquidationRequest;
+  };
+  WithdrawalConfirmed : record { pool : principal; details : OutflowDetails };
+  BorrowConfirmed : record { pool : principal; details : OutflowDetails };
+  PoolRegistered : Pool;
+  AccountRemoved : Wallet;
+  PoolRemoved : principal;
+};
+type RemoveAccountRequest = record {
+  wallet_address : text;
+  expiry_timestamp : nat64;
+};
+type RepaymentDetails = record {
+  id : text;
+  txid : text;
+  account : principal;
+  timestamp : nat64;
+  amount : nat;
+};
+type Result = variant { Ok; Err : ProtocolError };
+type Result_1 = variant { Ok : OutflowDetails; Err : ProtocolError };
+type Result_2 = variant { Ok : LiquidationResult; Err : ProtocolError };
+type Result_3 = variant { Ok : record { nat; nat32 }; Err : text };
+type Result_4 = variant { Ok : opt nat; Err : ProtocolError };
+type Result_5 = variant { Ok : principal; Err : ProtocolError };
+type Result_6 = variant { Ok; Err : text };
+type Result_7 = variant { Ok; Err : text };
+type Result_8 = variant { Ok : nat; Err : ProtocolError };
+type ScanResult = record {
+  scanned : nat64;
+  users : vec LiquidatableUser;
+  next_cursor : opt principal;
+};
+type SignatureInfo = record {
+  signature : text;
+  chain : Chains;
+  account : text;
+};
+type SignatureScheme = variant { Wallet : SignatureInfo };
+type SignatureVerificationError = variant {
+  InvalidEthSignature;
+  UnsupportedChain;
+  InvalidSolSignature;
+  InvalidEthAddress;
+  CouldNotDecode : text;
+  ProfileNotFound;
+  InvalidBtcSignature;
+};
+type SignedRequest = record {
+  data : AddAccountRequest;
+  signature_info : SignatureScheme;
+};
+type SignedRequest_1 = record {
+  data : BorrowAssetRequest;
+  signature_info : SignatureScheme;
+};
+type SignedRequest_2 = record {
+  data : InitializeAccountRequest;
+  signature_info : SignatureScheme;
+};
+type SignedRequest_3 = record {
+  data : RemoveAccountRequest;
+  signature_info : SignatureScheme;
+};
+type SignedRequest_4 = record {
+  data : WithdrawRequest;
+  signature_info : SignatureScheme;
+};
+type TransferStatus = variant { Failed : text; Success; Pending };
+type TxStatus = record { status : TransferStatus; tx_id : opt text };
+type UserStats = record {
+  debt : nat;
+  collateral : nat;
+  acumulated_interest : nat;
+  borrowing_power : BorrowingPower;
+  positions : vec Position;
+  weighted_liquidation_threshold : nat;
+};
+type Wallet = record { chain : WalletType; address : text };
+type WalletType = variant { Wallet : Chains };
+type WithdrawRequest = record {
+  expiry_timestamp : nat64;
+  account : AccountType;
+  pool_id : principal;
+  amount : nat;
+};
+service : (opt text) -> {
+  add_admin : (principal) -> ();
+  add_liquidator : (principal) -> ();
+  // Add a wallet to an existing profile
+  add_wallet : (principal, SignedRequest) -> (Result);
+  // Borrow assets from a pool against collateral
+  borrow_assets : (principal, SignedRequest_1) -> (Result_1);
+  claim_fee : (ClaimFeeRequest) -> (Result_1);
+  disable_borrowing : () -> ();
+  disable_same_asset_borrowing : (principal) -> ();
+  enable_borrowing : () -> ();
+  enable_same_asset_borrowing : (principal) -> ();
+  freeze_pool : (principal) -> ();
+  get_admins : () -> (vec principal) query;
+  // Get positions eligible for liquidation with offset-based pagination
+  get_at_risk_positions : (nat64, nat64) -> (vec LiquidatableUser) query;
+  // Check if borrowing is globally disabled
+  get_borrowing_disabled : () -> (bool) query;
+  // Fetch a specific canister event by ID
+  get_event : (nat) -> (opt ProtocolEvent) query;
+  // Get the health factor and stats for a profile
+  get_health_factor : (principal) -> (nat, UserStats) query;
+  // Get details of a completed liquidation by ID
+  get_liquidation : (nat) -> (Result_2) query;
+  get_liquidators : () -> (vec principal) query;
+  // Get the current signature nonce for a wallet address
+  get_nonce : (text) -> (nat) query;
+  // Get a specific pool by its principal with current rates
+  get_pool : (principal) -> (opt Pool) query;
+  // Get current rates for a pool (borrow, lending, utilization)
+  get_pool_rate : (principal) -> (opt record { nat; nat; nat }) query;
+  // Get a profile's position in a specific pool
+  get_position : (principal, principal) -> (opt PositionView) query;
+  // Price functionality
+  get_price : (text, text) -> (Result_3) query;
+  get_prices : () -> (vec record { text; nat; nat32 }) query;
+  // Get aggregate stats for a profile across all positions
+  get_profile_stats : (principal) -> (UserStats) query;
+  // Get all wallets linked to a profile
+  get_profile_wallets : (principal) -> (vec Wallet) query;
+  get_protocol_fee_claim_receiver : () -> (opt principal) query;
+  // Get the profile principal that owns a wallet address
+  get_wallet_profile : (text) -> (opt principal) query;
+  // Execute a liquidation of an undercollateralized position
+  liquidate : (LiquidationRequest) -> (Result_2);
+  // Fetch all canister events with offset-based pagination
+  list_events : (nat, nat64) -> (vec record { nat; ProtocolEvent }) query;
+  // Pool related functionality
+  // Get all registered pools
+  list_pools : () -> (vec Pool) query;
+  // List all positions across all profiles with cursor-based pagination
+  list_positions : (opt record { principal; principal }, nat64) -> (
+      ListPositionsResponse,
+    ) query;
+  // List all profiles with cursor-based pagination
+  list_profiles : (opt principal, nat64) -> (ListProfilesResponse) query;
+  //
+  // * Called by pool contracts to notify that a fee claim failed
+  //
+  notify_fee_claim_rollback : (nat) -> ();
+  //
+  // * Called by pool contracts to notify events
+  //
+  notify_pool_events : (vec PoolEvents) -> (vec Result);
+  refresh_pool_transfer_fee : (principal) -> (Result_4);
+  refund_stuck_liquidation : (nat) -> (Result_2);
+  register_pool : (Pool) -> ();
+  // Create a new profile from a signed wallet address
+  register_profile : (SignedRequest_2) -> (Result_5);
+  remove_admin : (principal) -> ();
+  remove_liquidator : (principal) -> ();
+  remove_pool : (principal) -> (Result_6);
+  // Remove a wallet from a profile (requires at least one remaining wallet)
+  remove_wallet : (principal, SignedRequest_3) -> (Result);
+  // Scan for at-risk positions with cursor-based pagination
+  scan_at_risk_positions : (opt principal, nat64, nat64) -> (ScanResult) query;
+  set_base_rate : (principal, nat) -> ();
+  set_optimal_utilization_rate : (principal, nat) -> ();
+  set_pool_borrow_cap : (principal, opt nat) -> ();
+  set_pool_liquidation_bonus : (principal, nat64) -> ();
+  set_pool_liquidation_threshold : (principal, nat64) -> ();
+  set_pool_max_ltv : (principal, nat64) -> ();
+  set_pool_protocol_liquidation_fee : (principal, nat64) -> ();
+  set_pool_reserve_factor : (principal, nat64) -> ();
+  set_pool_supply_cap : (principal, opt nat) -> ();
+  set_protocol_fee_claim_receiver : (principal) -> (Result_7);
+  set_rate_slope_after : (principal, nat) -> ();
+  set_rate_slope_before : (principal, nat) -> ();
+  set_same_asset_borrow_dust_threshold : (principal, nat) -> ();
+  unfreeze_pool : (principal) -> ();
+  // Withdraw supplied assets from a pool
+  withdraw : (principal, SignedRequest_4) -> (Result_1);
+  // Withdraw funds stuck in pool subaccounts
+  withdraw_stuck_pool_funds : (principal, SignedRequest_4) -> (Result_8);
+}

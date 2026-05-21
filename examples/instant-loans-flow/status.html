@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Liquidium Instant Loan Status</title>
+    <script type="module" src="/src/status.ts"></script>
+  </head>
+  <body>
+    <main>
+      <nav class="page-switcher" aria-label="Example pages">
+        <a class="page-switcher-link" href="/">Create loan</a>
+        <a class="page-switcher-link page-switcher-link-active" href="/status.html">Loan status</a>
+      </nav>
+
+      <h1>Liquidium Instant Loan Status</h1>
+      <p>Load canonical loan state by reference or loan id. Address lookup is only for recovery.</p>
+
+      <section>
+        <h2>SDK Config</h2>
+        <div id="sdk-config" class="list-box">Loading config...</div>
+      </section>
+
+      <section>
+        <h2>Lookup</h2>
+        <label for="loan-ref-input">Loan reference</label>
+        <input id="loan-ref-input" placeholder="Example: 8Y9AQQ" />
+
+        <label for="loan-id-input">Loan id</label>
+        <input id="loan-id-input" inputmode="numeric" placeholder="Numeric loan id" />
+
+        <button id="load-loan-button" type="button">Load Loan Status</button>
+        <div id="loan-output" class="result-box">Enter a loan reference or loan id.</div>
+      </section>
+
+      <section>
+        <h2>Activity Status</h2>
+        <p>Check a single receipt/activity id using the instant loan reference.</p>
+
+        <label for="activity-id-input">Activity id</label>
+        <input id="activity-id-input" placeholder="Activity or receipt id" />
+
+        <button id="load-activity-button" type="button">Load Activity Status</button>
+        <div id="activity-output" class="result-box">Enter an activity id and loan reference.</div>
+      </section>
+
+      <section>
+        <h2>Recover By Address</h2>
+        <label for="address-input">Borrow or refund address</label>
+        <input id="address-input" placeholder="Address used on the loan" />
+
+        <button id="find-loans-button" type="button">Find Candidate Loans</button>
+        <div id="candidates-output" class="result-box">Enter an address to find candidates.</div>
+      </section>
+
+      <section>
+        <h2>Recent Loan Refs</h2>
+        <div id="recent-loans-list" class="list-box">No recent loans stored in this browser.</div>
+      </section>
+
+      <section>
+        <h2>Status</h2>
+        <pre id="status-log">Ready.</pre>
+      </section>
+    </main>
+  </body>
+</html>

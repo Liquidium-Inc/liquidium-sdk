@@ -1,0 +1,279 @@
+:root {
+  font-family: sans-serif;
+  color: #111;
+  background: #fff;
+  line-height: 1.5;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+h1,
+h2,
+h3,
+p,
+dl {
+  margin-top: 0;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+button,
+input,
+select,
+pre {
+  border: 1px solid #ccc;
+}
+
+button,
+input,
+select {
+  min-height: 2.5rem;
+  padding: 0.5rem 0.75rem;
+  background: #fff;
+}
+
+button {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+input,
+select {
+  width: 100%;
+}
+
+label {
+  display: grid;
+  gap: 0.375rem;
+}
+
+pre {
+  margin: 0;
+  padding: 0.75rem;
+  overflow: auto;
+  background: #f7f7f7;
+}
+
+.app {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+.example-nav {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.75rem 1.5rem;
+  border-bottom: 1px solid #ddd;
+  background: #fff;
+}
+
+.example-nav a,
+.example-nav span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.25rem;
+  padding: 0 0.75rem;
+  color: #333;
+  text-decoration: none;
+  border: 1px solid #ddd;
+  border-radius: 999px;
+}
+
+.example-nav a.is-active,
+.example-nav span.is-active {
+  color: #fff;
+  background: #111;
+  border-color: #111;
+}
+
+.section {
+  margin-top: 1.5rem;
+  padding: 1.25rem;
+  border: 1px solid #ddd;
+  background: #fafafa;
+}
+
+.section h2 {
+  margin-bottom: 1rem;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin: 1rem 0;
+}
+
+.field-grid,
+.details {
+  display: grid;
+  gap: 1rem;
+}
+
+.field-grid {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.details {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  margin: 1rem 0;
+}
+
+.details div {
+  min-width: 0;
+  padding: 0.75rem;
+  border: 1px solid #e3e3e3;
+  background: #fff;
+}
+
+.details dt {
+  font-weight: 600;
+}
+
+.details dd {
+  margin: 0.25rem 0 0;
+  word-break: break-word;
+}
+
+.messages {
+  display: grid;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+
+.error {
+  color: #b00020;
+}
+
+.warning {
+  color: #8a5a00;
+}
+
+.output {
+  margin-top: 0.75rem;
+}
+
+.portfolio-view {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.position-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.position-card {
+  display: grid;
+  gap: 1rem;
+  padding: 0.75rem;
+  background: #fff;
+  border: 1px solid #e3e3e3;
+}
+
+.position-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.position-heading > div {
+  display: grid;
+}
+
+.position-heading strong {
+  font-size: 1rem;
+}
+
+.position-heading span {
+  color: #555;
+}
+
+.position-heading > span {
+  color: #111;
+  font-weight: 700;
+}
+
+.position-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+  margin: 0;
+}
+
+.position-details div {
+  min-width: 0;
+  padding: 0.75rem;
+  background: #fafafa;
+  border: 1px solid #e3e3e3;
+}
+
+.position-details dt {
+  font-weight: 600;
+}
+
+.position-details dd {
+  margin: 0.25rem 0 0;
+  word-break: break-word;
+}
+
+.empty-state {
+  padding: 1rem;
+  color: #555;
+  text-align: center;
+  background: #fff;
+  border: 1px dashed #ccc;
+}
+
+.query-input-label {
+  display: grid;
+  gap: 0.375rem;
+  margin-top: 1rem;
+}
+
+.query-json-input {
+  width: 100%;
+  min-height: 14rem;
+  padding: 0.75rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    "Liberation Mono", "Courier New", monospace;
+  border: 1px solid #ccc;
+  resize: vertical;
+}
+
+@media (max-width: 640px) {
+  .example-nav {
+    flex-direction: column;
+  }
+
+  .example-nav a,
+  .example-nav span {
+    justify-content: center;
+  }
+
+  .actions {
+    flex-direction: column;
+  }
+
+  .actions > * {
+    width: 100%;
+  }
+}

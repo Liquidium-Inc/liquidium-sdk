@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.4.8/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.4.15/schema.json",
   "formatter": {
     "enabled": true,
     "indentStyle": "space",
@@ -19,6 +19,11 @@
       "recommended": true
     }
   },
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
   "assist": {
     "actions": {
       "source": {
@@ -27,6 +32,16 @@
     }
   },
   "files": {
-    "includes": ["packages/**/src/**/*.ts", "*.json", "*.yaml", "*.ts"]
+    "includes": [
+      "**/*.ts",
+      "**/*.tsx",
+      "**/*.js",
+      "**/*.jsx",
+      "**/*.mjs",
+      "**/*.cjs",
+      "**/*.json",
+      "**/*.yaml",
+      "!packages/client/src/generated"
+    ]
   }
 }
