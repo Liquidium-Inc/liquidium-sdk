@@ -1,14 +1,13 @@
 # Vite React SDK Method Query Example
 
-This example is a focused developer tool for calling `@liquidium/client` methods
-from a Vite React app with Dynamic loaded.
+Use this example to call `@liquidium/client` methods from a Vite React app with Dynamic loaded.
 
-It provides a single SDK method query screen where you can:
+The SDK method query screen lets you:
 
 - Pick an SDK method from a dropdown
-- Edit JSON arguments directly
+- Edit JSON arguments
 - Apply connected-wallet defaults where relevant
-- Run the method and inspect the raw return payload
+- Run the method and inspect the return payload
 
 ## Setup
 
@@ -30,16 +29,16 @@ pnpm --filter @liquidium/example-vite-react-dynamic dev
 
 ## What To Look At
 
-- `src/SdkMethodQueryPage.tsx` — method definitions, JSON templates, argument
+- `src/SdkMethodQueryPage.tsx`: method definitions, JSON templates, argument
   validation, and raw result rendering
-- `src/Root.tsx` — mounts the single SDK method query page
-- `src/lib/client.ts` — creates a `LiquidiumClient` from runtime config
-- `src/liquidium-runtime-config.ts` — environment-driven client config
+- `src/Root.tsx`: mounts the single SDK method query page
+- `src/lib/client.ts`: creates a `LiquidiumClient` from runtime config
+- `src/liquidium-runtime-config.ts`: environment-driven client config
 
 ## Included Method Templates
 
 The query page includes templates for account, market, position, activity,
-history, quote, lending, and instant-loan methods, including:
+history, quote, lending, and instant-loan methods:
 
 - `history.getPoolHistory`
 - `history.getPoolConfigHistory`
