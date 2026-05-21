@@ -22,7 +22,7 @@ import {
   type WalletAdapter,
 } from "@liquidium/client";
 
-const client = LiquidiumClient.create();
+const client = new LiquidiumClient();
 const walletAdapter: WalletAdapter = {
   signMessage: async ({ message }) => wallet.signMessage(message),
   sendEthTransaction: async ({ transaction }) =>
@@ -244,7 +244,7 @@ const contractInteractionFlow = await client.lending.supply({
 
 ## API
 
-### `LiquidiumClient.create(config)`
+### `new LiquidiumClient(config)`
 
 | Option            | Type                     | Required | Description                                  |
 | ----------------- | ------------------------ | -------- | -------------------------------------------- |
@@ -272,7 +272,7 @@ Environment preset:
 For custom deployments, pass explicit canister ID overrides:
 
 ```ts
-const client = LiquidiumClient.create({
+const client = new LiquidiumClient({
   canisterIds: {
     btcPool: "<btc-pool-canister-id>",
     ethDeposit: "<eth-deposit-canister-id>",

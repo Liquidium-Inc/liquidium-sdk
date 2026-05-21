@@ -7,7 +7,7 @@ describe("LiquidiumClient", () => {
     const config = {};
 
     // when
-    const client = LiquidiumClient.create(config);
+    const client = new LiquidiumClient(config);
 
     // then
     expect(client).toBeDefined();
@@ -26,7 +26,7 @@ describe("LiquidiumClient", () => {
     };
 
     // when
-    const client = LiquidiumClient.create(config);
+    const client = new LiquidiumClient(config);
 
     // then
     expect(client).toBeDefined();

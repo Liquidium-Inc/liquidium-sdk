@@ -61,7 +61,7 @@ describe("AccountsModule", () => {
       get_wallet_profile: vi.fn().mockResolvedValue([]),
       register_profile: registerProfile,
     } as never);
-    const client = LiquidiumClient.create({});
+    const client = new LiquidiumClient({});
 
     // when
     const createAction = await client.accounts.prepareCreateProfile({
@@ -98,7 +98,7 @@ describe("AccountsModule", () => {
       register_profile: registerProfile,
     } as never);
     const signMessage = vi.fn().mockResolvedValue("0xsigned");
-    const client = LiquidiumClient.create({});
+    const client = new LiquidiumClient({});
 
     // when
     const profileId = await client.accounts
@@ -135,7 +135,7 @@ describe("AccountsModule", () => {
       }),
     } as never);
     const signMessage = vi.fn().mockResolvedValue("0xsigned");
-    const client = LiquidiumClient.create({});
+    const client = new LiquidiumClient({});
 
     // when
     const profileId = await client.accounts.createProfile({
@@ -166,7 +166,7 @@ describe("AccountsModule", () => {
       register_profile: registerProfile,
     } as never);
     const signMessage = vi.fn().mockResolvedValue("0xsigned");
-    const client = LiquidiumClient.create({});
+    const client = new LiquidiumClient({});
 
     // when
     const profileId = await client.accounts.createProfile({
@@ -200,7 +200,7 @@ describe("AccountsModule", () => {
         Err: { ProfileAlreadyExists: null },
       }),
     } as never);
-    const client = LiquidiumClient.create({});
+    const client = new LiquidiumClient({});
 
     // when
 
@@ -231,7 +231,7 @@ describe("AccountsModule", () => {
       get_nonce: getNonce,
       register_profile: vi.fn(),
     } as never);
-    const client = LiquidiumClient.create({});
+    const client = new LiquidiumClient({});
 
     // when
     const createAction = await client.accounts.prepareCreateProfile({
@@ -254,7 +254,7 @@ describe("AccountsModule", () => {
       get_nonce: vi.fn().mockResolvedValue(29n),
       register_profile: registerProfile,
     } as never);
-    const client = LiquidiumClient.create({});
+    const client = new LiquidiumClient({});
 
     // when
 
@@ -290,7 +290,7 @@ describe("AccountsModule", () => {
         },
       ]),
     } as never);
-    const client = LiquidiumClient.create({});
+    const client = new LiquidiumClient({});
 
     // when
     const wallets = await client.accounts.listLinkedWallets("aaaaa-aa");
@@ -318,7 +318,7 @@ describe("AccountsModule", () => {
         },
       ]),
     } as never);
-    const client = LiquidiumClient.create({});
+    const client = new LiquidiumClient({});
 
     // when
 
@@ -343,7 +343,7 @@ describe("HistoryModule", () => {
           { status: 200 }
         )
       );
-    const client = LiquidiumClient.create({});
+    const client = new LiquidiumClient({});
 
     // when
     const result = await client.history.getUserTransactionHistory("profile-1");
@@ -381,7 +381,7 @@ describe("HistoryModule", () => {
         },
       })
     );
-    const client = LiquidiumClient.create({
+    const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
     });
 
@@ -442,7 +442,7 @@ describe("HistoryModule", () => {
         },
       })
     );
-    const client = LiquidiumClient.create({
+    const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
     });
 
@@ -515,7 +515,7 @@ describe("HistoryModule", () => {
         },
       })
     );
-    const client = LiquidiumClient.create({
+    const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
     });
 
@@ -588,7 +588,7 @@ describe("HistoryModule", () => {
         },
       })
     );
-    const client = LiquidiumClient.create({
+    const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
     });
 
@@ -654,7 +654,7 @@ describe("HistoryModule", () => {
         },
       })
     );
-    const client = LiquidiumClient.create({
+    const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
     });
 
@@ -711,7 +711,7 @@ describe("HistoryModule", () => {
         },
       })
     );
-    const client = LiquidiumClient.create({
+    const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
     });
 
@@ -757,7 +757,7 @@ describe("ActivitiesModule", () => {
         status: 200,
       })
     );
-    const client = LiquidiumClient.create({});
+    const client = new LiquidiumClient({});
 
     // when
     const result = await client.activities.list({ profileId: "profile-1" });
@@ -805,7 +805,7 @@ describe("ActivitiesModule", () => {
         },
       })
     );
-    const client = LiquidiumClient.create({
+    const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
     });
 
@@ -869,7 +869,7 @@ describe("ActivitiesModule", () => {
         }
       )
     );
-    const client = LiquidiumClient.create({
+    const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
       canisterIds: { instantLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
     });
@@ -927,7 +927,7 @@ describe("ActivitiesModule", () => {
         },
       })
     );
-    const client = LiquidiumClient.create({
+    const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
     });
 
@@ -1010,7 +1010,7 @@ describe("ActivitiesModule", () => {
         },
       })
     );
-    const client = LiquidiumClient.create({
+    const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
       canisterIds: { instantLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
     });
@@ -1094,7 +1094,7 @@ describe("ActivitiesModule", () => {
         },
       })
     );
-    const client = LiquidiumClient.create({
+    const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
     });
 
@@ -1163,7 +1163,7 @@ describe("MarketModule", () => {
       ]),
       get_pool_rate: vi.fn().mockResolvedValue([[10n, 20n, 30n]]),
     } as never);
-    const client = LiquidiumClient.create({});
+    const client = new LiquidiumClient({});
 
     // when
     const pools = await client.market.listPools();
@@ -1233,7 +1233,7 @@ describe("MarketModule", () => {
       ]),
       get_pool_rate: vi.fn().mockResolvedValue([]),
     } as never);
-    const client = LiquidiumClient.create({});
+    const client = new LiquidiumClient({});
 
     // when
     const pools = await client.market.listPools();
@@ -1282,7 +1282,7 @@ describe("MarketModule", () => {
       ]),
       get_pool_rate: vi.fn().mockResolvedValue([[10n, 20n, 30n]]),
     } as never);
-    const client = LiquidiumClient.create({});
+    const client = new LiquidiumClient({});
 
     // when
     const pools = await client.market.listPools();
@@ -1357,7 +1357,7 @@ describe("MarketModule", () => {
       ]),
       get_pool_rate: vi.fn().mockResolvedValue([]),
     } as never);
-    const client = LiquidiumClient.create({});
+    const client = new LiquidiumClient({});
 
     // when
     const pool = await client.market.findPool({ asset: "BTC", chain: "BTC" });
@@ -1429,7 +1429,7 @@ describe("MarketModule", () => {
       ]),
       get_pool_rate: vi.fn().mockResolvedValue([]),
     } as never);
-    const client = LiquidiumClient.create({});
+    const client = new LiquidiumClient({});
 
     // when
 
@@ -1452,7 +1452,7 @@ describe("MarketModule", () => {
         ["USDT_USDT", 1_000_018_620_000_000_000_000_000_000n, 27],
       ]),
     } as never);
-    const client = LiquidiumClient.create({});
+    const client = new LiquidiumClient({});
 
     // when
     const prices = await client.market.getAssetPrices();
@@ -1474,7 +1474,7 @@ describe("MarketModule", () => {
         ["ETH_BTC", 50_000n, 6],
       ]),
     } as never);
-    const client = LiquidiumClient.create({});
+    const client = new LiquidiumClient({});
 
     // when
     const prices = await client.market.getAssetPrices();
@@ -1492,7 +1492,7 @@ describe("MarketModule", () => {
     vi.spyOn(Actor, "createActor").mockReturnValue({
       get_prices: vi.fn().mockResolvedValue([["BTC_USD", 68_500_000_000n, 6]]),
     } as never);
-    const client = LiquidiumClient.create({});
+    const client = new LiquidiumClient({});
 
     // when
     const prices = await client.market.getAssetPrices();
@@ -1506,7 +1506,7 @@ describe("MarketModule", () => {
     vi.spyOn(Actor, "createActor").mockReturnValue({
       get_pool_rate: vi.fn().mockResolvedValue([[10n, 20n, 30n]]),
     } as never);
-    const client = LiquidiumClient.create({});
+    const client = new LiquidiumClient({});
 
     // when
     const rate = await client.market.getPoolRate("aaaaa-aa");
@@ -1555,7 +1555,7 @@ describe("MarketModule", () => {
       ]),
       get_pool_rate: vi.fn().mockResolvedValue([[10n, 20n, 30n]]),
     } as never);
-    const client = LiquidiumClient.create({});
+    const client = new LiquidiumClient({});
 
     // when
     const reserve = await client.market.getReserveData({
@@ -1584,7 +1584,7 @@ describe("MarketModule", () => {
     vi.spyOn(Actor, "createActor").mockReturnValue({
       get_pool_rate: vi.fn().mockResolvedValue([]),
     } as never);
-    const client = LiquidiumClient.create({});
+    const client = new LiquidiumClient({});
 
     // when
 
@@ -1641,7 +1641,7 @@ describe("PositionsModule", () => {
     vi.spyOn(Actor, "createActor").mockReturnValue({
       get_position: getPosition,
     } as never);
-    const client = LiquidiumClient.create({});
+    const client = new LiquidiumClient({});
 
     // when
     const position = await client.positions.getPosition(PROFILE_ID, POOL_ID);
@@ -1669,7 +1669,7 @@ describe("PositionsModule", () => {
     vi.spyOn(Actor, "createActor").mockReturnValue({
       get_position: vi.fn().mockResolvedValue([]),
     } as never);
-    const client = LiquidiumClient.create({});
+    const client = new LiquidiumClient({});
 
     // when
     const position = await client.positions.getPosition(PROFILE_ID, POOL_ID);
@@ -1715,7 +1715,7 @@ describe("PositionsModule", () => {
       get_profile_stats: getProfileStats,
       get_position: getPosition,
     } as never);
-    const client = LiquidiumClient.create({});
+    const client = new LiquidiumClient({});
 
     // when
     const positions = await client.positions.listPositions(PROFILE_ID);
@@ -1762,7 +1762,7 @@ describe("PositionsModule", () => {
       get_profile_stats: getProfileStats,
       get_position: vi.fn().mockResolvedValue([]),
     } as never);
-    const client = LiquidiumClient.create({});
+    const client = new LiquidiumClient({});
 
     // when
     const positions = await client.positions.listPositions(PROFILE_ID);
@@ -1790,7 +1790,7 @@ describe("PositionsModule", () => {
     vi.spyOn(Actor, "createActor").mockReturnValue({
       get_health_factor: getHealthFactor,
     } as never);
-    const client = LiquidiumClient.create({});
+    const client = new LiquidiumClient({});
 
     // when
     const health = await client.positions.getHealthFactor(PROFILE_ID);
@@ -1821,7 +1821,7 @@ describe("PositionsModule", () => {
     vi.spyOn(Actor, "createActor").mockReturnValue({
       get_position: vi.fn().mockRejectedValue(new Error("boom")),
     } as never);
-    const client = LiquidiumClient.create({});
+    const client = new LiquidiumClient({});
 
     // when
 
@@ -1858,7 +1858,7 @@ describe("PositionsModule", () => {
         },
       ]),
     } as never);
-    const client = LiquidiumClient.create({});
+    const client = new LiquidiumClient({});
 
     // when
     const summary = await client.positions.getUserPositionSummary(PROFILE_ID);
@@ -1898,7 +1898,7 @@ describe("PositionsModule", () => {
         },
       ]),
     } as never);
-    const client = LiquidiumClient.create({});
+    const client = new LiquidiumClient({});
 
     // when
     const summary = await client.positions.getUserPositionSummary(PROFILE_ID);
@@ -1930,7 +1930,7 @@ describe("PositionsModule", () => {
         },
       ]),
     } as never);
-    const client = LiquidiumClient.create({});
+    const client = new LiquidiumClient({});
 
     // when
     const summary = await client.positions.getUserPositionSummary(PROFILE_ID);
@@ -2036,7 +2036,7 @@ describe("PositionsModule", () => {
         ["USDT_USDT", 1_000_000n, 6],
       ]),
     } as never);
-    const client = LiquidiumClient.create({});
+    const client = new LiquidiumClient({});
 
     // when
     const reserves = await client.positions.getUserReserves(PROFILE_ID);
@@ -2061,7 +2061,7 @@ describe("PositionsModule", () => {
     vi.spyOn(Actor, "createActor").mockReturnValue({
       get_position: vi.fn().mockResolvedValue([]),
     } as never);
-    const client = LiquidiumClient.create({});
+    const client = new LiquidiumClient({});
 
     // when
     const repay = await client.positions.getMaxRepayAmount(PROFILE_ID, POOL_ID);
@@ -2079,7 +2079,7 @@ describe("PositionsModule", () => {
           makePositionView({ deposited_native_now: 100n, debt_native_now: 0n }),
         ]),
     } as never);
-    const client = LiquidiumClient.create({});
+    const client = new LiquidiumClient({});
 
     // when
     const repay = await client.positions.getMaxRepayAmount(PROFILE_ID, POOL_ID);
@@ -2101,7 +2101,7 @@ describe("PositionsModule", () => {
         }),
       ]),
     } as never);
-    const client = LiquidiumClient.create({});
+    const client = new LiquidiumClient({});
 
     // when
     const repay = await client.positions.getMaxRepayAmount(PROFILE_ID, POOL_ID);
@@ -2127,7 +2127,7 @@ describe("PositionsModule", () => {
         }),
       ]),
     } as never);
-    const client = LiquidiumClient.create({});
+    const client = new LiquidiumClient({});
 
     // when
     const repay = await client.positions.getMaxRepayAmount(
@@ -2239,7 +2239,7 @@ describe("LendingModule", () => {
       .mockReturnValueOnce({
         get_btc_address: getBtcAddress,
       } as never);
-    const client = LiquidiumClient.create({});
+    const client = new LiquidiumClient({});
 
     // when
     const supplyFlow = await client.lending.supply({
@@ -2314,7 +2314,7 @@ describe("LendingModule", () => {
       .mockReturnValueOnce({
         get_deposit_address: getDepositAddress,
       } as never);
-    const client = LiquidiumClient.create({});
+    const client = new LiquidiumClient({});
 
     // when
     const supplyFlow = await client.lending.supply({
@@ -2392,7 +2392,7 @@ describe("LendingModule", () => {
       .mockReturnValueOnce({
         get_deposit_address: getDepositAddress,
       } as never);
-    const client = LiquidiumClient.create({});
+    const client = new LiquidiumClient({});
 
     // when
     const supplyFlow = await client.lending.supply({
@@ -2463,7 +2463,7 @@ describe("LendingModule", () => {
         },
       ]),
     } as never);
-    const client = LiquidiumClient.create({});
+    const client = new LiquidiumClient({});
 
     // when
 
@@ -2514,7 +2514,7 @@ describe("LendingModule", () => {
         },
       ]),
     } as never);
-    const client = LiquidiumClient.create({});
+    const client = new LiquidiumClient({});
 
     // when
 
@@ -2565,7 +2565,7 @@ describe("LendingModule", () => {
         },
       ]),
     } as never);
-    const client = LiquidiumClient.create({});
+    const client = new LiquidiumClient({});
 
     // when
 
@@ -2599,7 +2599,7 @@ describe("LendingModule", () => {
         },
       })
     );
-    const client = LiquidiumClient.create({
+    const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
     });
 
@@ -2628,7 +2628,7 @@ describe("LendingModule", () => {
       .fn()
       .mockResolvedValueOnce(0n)
       .mockResolvedValueOnce(2_000_000n);
-    const client = LiquidiumClient.create({
+    const client = new LiquidiumClient({
       evmPublicClient: { readContract } as never,
     });
 
@@ -2686,7 +2686,7 @@ describe("LendingModule", () => {
       .fn()
       .mockResolvedValueOnce(500_000n)
       .mockResolvedValueOnce(2_000_000n);
-    const client = LiquidiumClient.create({
+    const client = new LiquidiumClient({
       evmPublicClient: { readContract } as never,
     });
 
@@ -2711,7 +2711,7 @@ describe("LendingModule", () => {
     vi.spyOn(Actor, "createActor").mockReturnValue({
       estimate_deposit_fee: estimateDepositFee,
     } as never);
-    const client = LiquidiumClient.create({});
+    const client = new LiquidiumClient({});
 
     // when
     const estimate = await client.lending.estimateInflowFee({
@@ -2767,7 +2767,7 @@ describe("LendingModule", () => {
       } as never);
     const fetchSpy = vi.spyOn(globalThis, "fetch");
     const sendEthTransaction = vi.fn().mockResolvedValueOnce("0xdeposit");
-    const client = LiquidiumClient.create({});
+    const client = new LiquidiumClient({});
 
     // when
     const flow = await client.lending.supply({
@@ -2833,7 +2833,7 @@ describe("LendingModule", () => {
       .mockResolvedValueOnce(1_000_000n)
       .mockResolvedValueOnce(2_000_000n);
     const sendEthTransaction = vi.fn().mockResolvedValueOnce(depositTxid);
-    const client = LiquidiumClient.create({
+    const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
       evmPublicClient: { readContract } as never,
     });
@@ -2910,7 +2910,7 @@ describe("LendingModule", () => {
     // given
     mockUsdtPoolList();
     const sendEthTransaction = vi.fn();
-    const client = LiquidiumClient.create({
+    const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
     });
 
@@ -2982,7 +2982,7 @@ describe("LendingModule", () => {
         },
       })
     );
-    const client = LiquidiumClient.create({
+    const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
     });
 
@@ -3060,7 +3060,7 @@ describe("LendingModule", () => {
       })
     );
     const sendBtcTransaction = vi.fn().mockResolvedValue(txid);
-    const client = LiquidiumClient.create({
+    const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
     });
 
@@ -3161,7 +3161,7 @@ describe("LendingModule", () => {
       })
     );
     const sendBtcTransaction = vi.fn().mockResolvedValue(txid);
-    const client = LiquidiumClient.create({
+    const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
     });
 
@@ -3242,7 +3242,7 @@ describe("LendingModule", () => {
       })
     );
     const sendBtcTransaction = vi.fn().mockResolvedValue(txid);
-    const client = LiquidiumClient.create({
+    const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
     });
 
@@ -3319,7 +3319,7 @@ describe("LendingModule", () => {
       .mockReturnValueOnce({
         get_btc_address: vi.fn().mockResolvedValue("bc1qexampledepositaddress"),
       } as never);
-    const client = LiquidiumClient.create({
+    const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
     });
 
@@ -3349,7 +3349,7 @@ describe("LendingModule", () => {
         status: 200,
       })
     );
-    const client = LiquidiumClient.create({});
+    const client = new LiquidiumClient({});
 
     // when
     const result = await client.lending.submitInflow({ txid: TXID });
@@ -3380,7 +3380,7 @@ describe("LendingModule", () => {
       get_nonce: getNonce,
       borrow_assets: borrowAssets,
     } as never);
-    const client = LiquidiumClient.create({});
+    const client = new LiquidiumClient({});
     const profileId = "aaaaa-aa";
     const poolId = "rrkah-fqaaa-aaaaa-aaaaq-cai";
 
@@ -3467,7 +3467,7 @@ Nonce: 17`);
       }),
     } as never);
     const signMessage = vi.fn().mockResolvedValue("0xsigned");
-    const client = LiquidiumClient.create({});
+    const client = new LiquidiumClient({});
 
     // when
     const outflow = await client.lending.borrow({
@@ -3499,7 +3499,7 @@ Nonce: 17`);
         Err: { BorrowingDisabled: null },
       }),
     } as never);
-    const client = LiquidiumClient.create({});
+    const client = new LiquidiumClient({});
 
     // when
 
@@ -3526,7 +3526,7 @@ Nonce: 17`);
 
   test("validates createBorrow inputs", async () => {
     // given
-    const client = LiquidiumClient.create({});
+    const client = new LiquidiumClient({});
 
     // when
 
@@ -3575,7 +3575,7 @@ Nonce: 17`);
       get_nonce: getNonce,
       withdraw,
     } as never);
-    const client = LiquidiumClient.create({});
+    const client = new LiquidiumClient({});
 
     // when
     const withdrawAction = await client.lending.prepareWithdraw({
@@ -3658,7 +3658,7 @@ Nonce: 23`);
       }),
     } as never);
     const signMessage = vi.fn().mockResolvedValue("0xsigned");
-    const client = LiquidiumClient.create({});
+    const client = new LiquidiumClient({});
 
     // when
     const outflow = await client.lending.withdraw({
@@ -3690,7 +3690,7 @@ Nonce: 23`);
         Err: { InsufficientFunds: null },
       }),
     } as never);
-    const client = LiquidiumClient.create({});
+    const client = new LiquidiumClient({});
 
     // when
 
@@ -3717,7 +3717,7 @@ Nonce: 23`);
 
   test("validates withdraw inputs", async () => {
     // given
-    const client = LiquidiumClient.create({});
+    const client = new LiquidiumClient({});
 
     // when
 
@@ -3802,7 +3802,7 @@ describe("InstantLoansModule", () => {
       .mockReturnValueOnce({
         estimate_deposit_fee: estimateDepositFee,
       } as never);
-    const client = LiquidiumClient.create({
+    const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
       canisterIds: { instantLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
     });
@@ -3897,7 +3897,7 @@ describe("InstantLoansModule", () => {
       list_events: listEvents,
       list_warmed_profiles: listWarmedProfiles,
     } as never);
-    const client = LiquidiumClient.create({
+    const client = new LiquidiumClient({
       canisterIds: { instantLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
     });
 
@@ -3979,7 +3979,7 @@ describe("InstantLoansModule", () => {
       .mockReturnValueOnce({
         estimate_deposit_fee: estimateDepositFee,
       } as never);
-    const client = LiquidiumClient.create({
+    const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
       canisterIds: { instantLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
     });
@@ -4081,7 +4081,7 @@ describe("InstantLoansModule", () => {
       .mockReturnValueOnce({
         estimate_deposit_fee: vi.fn().mockResolvedValue({ Ok: 1_500_000n }),
       } as never);
-    const client = LiquidiumClient.create({
+    const client = new LiquidiumClient({
       canisterIds: { instantLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
     });
 
@@ -4145,7 +4145,7 @@ describe("InstantLoansModule", () => {
       .mockReturnValueOnce({
         get_prices: vi.fn().mockResolvedValue(prices()),
       } as never);
-    const client = LiquidiumClient.create({
+    const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
       canisterIds: { instantLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
     });
@@ -4191,7 +4191,7 @@ describe("InstantLoansModule", () => {
       .mockReturnValueOnce({
         get_prices: vi.fn().mockResolvedValue(prices()),
       } as never);
-    const client = LiquidiumClient.create({
+    const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
       canisterIds: { instantLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
     });
@@ -4234,7 +4234,7 @@ describe("InstantLoansModule", () => {
       .mockReturnValueOnce({
         get_prices: vi.fn().mockResolvedValue(prices()),
       } as never);
-    const client = LiquidiumClient.create({
+    const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
       canisterIds: { instantLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
     });
@@ -4282,7 +4282,7 @@ describe("InstantLoansModule", () => {
         { status: 200, headers: { "content-type": "application/json" } }
       )
     );
-    const client = LiquidiumClient.create({
+    const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
     });
 

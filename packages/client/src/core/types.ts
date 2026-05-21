@@ -4,7 +4,7 @@ import type { PublicClient } from "viem";
 export type EvmReadClient = Pick<PublicClient, "readContract">;
 
 /**
- * Runtime options for `LiquidiumClient.create`.
+ * Runtime options for `new LiquidiumClient(config)`.
  *
  * Canister-backed reads and SDK HTTP features work with `{}` defaults. Set
  * `apiBaseUrl` only when overriding the Liquidium production API root.

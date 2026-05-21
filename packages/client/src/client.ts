@@ -23,7 +23,7 @@ import { QuoteModule } from "./modules/quote";
 /**
  * Root client for Liquidium protocol integration (canister + optional HTTP API).
  *
- * Construct with {@link LiquidiumClient.create}.
+ * Construct with `new LiquidiumClient(config)`.
  */
 export class LiquidiumClient {
   /** Profile lifecycle: create, resolve, linked wallets. */
@@ -47,7 +47,7 @@ export class LiquidiumClient {
   private readonly apiClient: ApiClient | undefined;
   private readonly evmReadClient: EvmReadClient | undefined;
 
-  private constructor(config: LiquidiumClientConfig) {
+  constructor(config: LiquidiumClientConfig = {}) {
     const environment = config.environment ?? DEFAULT_ENVIRONMENT;
     const canisterIds = resolveCanisterIds(environment, config.canisterIds);
     const timeoutMs = config.timeoutMs ?? DEFAULT_TIMEOUT_MS;
@@ -89,15 +89,6 @@ export class LiquidiumClient {
     this.quote = new QuoteModule();
   }
 
-  /**
-   * Creates a client instance with the provided runtime configuration.
-   *
-   * @param config - Optional client configuration such as environment, canister ids, and API settings.
-   * @returns A configured `LiquidiumClient` instance.
-   */
-  static create(config: LiquidiumClientConfig = {}): LiquidiumClient {
-    return new LiquidiumClient(config);
-  }
 }
 
 function resolveEvmReadClient(

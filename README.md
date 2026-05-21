@@ -9,7 +9,7 @@ Recommended order: use `client.instantLoans` first, deposit-address profile flow
 ```ts
 import { LiquidiumClient } from "@liquidium/client";
 
-const client = LiquidiumClient.create({
+const client = new LiquidiumClient({
   apiBaseUrl: "https://app.liquidium.fi/api/sdk",
 });
 

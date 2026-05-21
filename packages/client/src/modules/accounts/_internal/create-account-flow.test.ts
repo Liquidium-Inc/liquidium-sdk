@@ -34,7 +34,7 @@ describe("create account flow example", () => {
         ),
     };
 
-    const client = LiquidiumClient.create({});
+    const client = new LiquidiumClient({});
 
     // when
     const [account] = await walletClient.getAddresses();
