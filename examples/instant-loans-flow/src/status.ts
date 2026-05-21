@@ -1,6 +1,6 @@
 import "./styles.css";
 
-import { client, formatConfig } from "./client";
+import { formatConfig } from "./client";
 import {
   formatActivityStatus,
   formatCandidate,
@@ -11,6 +11,11 @@ import {
   parsePositiveBigInt,
   saveRecentLoanRef,
 } from "./format";
+import {
+  findInstantLoansByAddress,
+  getInstantLoan,
+  getLoanActivityStatus,
+} from "./sdk-example";
 
 const sdkConfig = getElement<HTMLDivElement>("sdk-config");
 const loanRefInput = getElement<HTMLInputElement>("loan-ref-input");
@@ -48,8 +53,8 @@ async function loadLoan(): Promise<void> {
   loanOutput.textContent = "Loading loan...";
 
   const loan = ref
-    ? await client.instantLoans.get({ ref })
-    : await client.instantLoans.get({
+    ? await getInstantLoan({ ref })
+    : await getInstantLoan({
         loanId: parsePositiveBigInt(loanIdText, "Loan id"),
       });
 
@@ -77,7 +82,7 @@ async function loadActivityStatus(): Promise<void> {
   setStatus("Loading activity status...");
   activityOutput.textContent = "Loading activity status...";
 
-  const response = await client.activities.getStatus({
+  const response = await getLoanActivityStatus({
     shortRef,
     id: activityId,
   });
@@ -96,7 +101,7 @@ async function findLoansByAddress(): Promise<void> {
   setStatus("Finding candidate loans...");
   candidatesOutput.textContent = "Searching...";
 
-  const candidates = await client.instantLoans.findByAddress(address);
+  const candidates = await findInstantLoansByAddress(address);
 
   if (candidates.length === 0) {
     candidatesOutput.textContent = "No candidate loans found for this address.";

@@ -1,8 +1,8 @@
 import { isEthereumWallet } from "@dynamic-labs/ethereum";
 import { DynamicWidget, useDynamicContext } from "@dynamic-labs/sdk-react-core";
-import type { AssetPrices, InstantLoanAsset, Pool } from "@liquidium/client";
+import type { AssetPrices, Pool } from "@liquidium/client";
 import { useEffect, useState } from "react";
-import { client, formatConfig } from "./client";
+import { formatConfig } from "./client";
 import {
   formatAmount,
   formatError,
@@ -15,6 +15,11 @@ import {
   parsePositiveBigInt,
   saveRecentLoanRef,
 } from "./format";
+import {
+  calculateLoanLtv,
+  createInstantLoan,
+  loadMarketData,
+} from "./sdk-example";
 
 const PRICE_DISPLAY_DECIMALS = 8;
 const DEFAULT_COLLATERAL_ASSET = "BTC";
@@ -44,10 +49,8 @@ export function App() {
   useEffect(() => {
     void run(async () => {
       setStatus("Loading pools...");
-      const [loadedPools, loadedAssetPrices] = await Promise.all([
-        client.market.listPools(),
-        client.market.getAssetPrices(),
-      ]);
+      const { pools: loadedPools, assetPrices: loadedAssetPrices } =
+        await loadMarketData();
       const defaultCollateralPool = findPoolByAsset(
         loadedPools,
         DEFAULT_COLLATERAL_ASSET
@@ -84,10 +87,8 @@ export function App() {
 
   async function loadPools(): Promise<void> {
     setStatus("Loading pools...");
-    const [loadedPools, loadedAssetPrices] = await Promise.all([
-      client.market.listPools(),
-      client.market.getAssetPrices(),
-    ]);
+    const { pools: loadedPools, assetPrices: loadedAssetPrices } =
+      await loadMarketData();
     const defaultCollateralPool = findPoolByAsset(
       loadedPools,
       DEFAULT_COLLATERAL_ASSET
@@ -111,7 +112,7 @@ export function App() {
     setStatus(`Loaded ${loadedPools.length} pools.`);
   }
 
-  async function createInstantLoan(): Promise<void> {
+  async function createInstantLoanFromForm(): Promise<void> {
     const collateralPool = getSelectedPool(pools, selectedCollateralPoolId);
     const borrowPool = getSelectedPool(pools, selectedBorrowPoolId);
     const parsedCollateralAmount = parseAmountToBaseUnits(
@@ -141,23 +142,17 @@ export function App() {
     setStatus("Creating instant loan...");
     setLoanResult("Creating loan...");
 
-    const loan = await client.instantLoans.create({
+    const loan = await createInstantLoan({
       collateralPoolId: collateralPool.id,
       borrowPoolId: borrowPool.id,
-      collateralAsset: getInstantLoanAsset(collateralPool.asset),
-      borrowAsset: getInstantLoanAsset(borrowPool.asset),
+      collateralAsset: collateralPool.asset,
+      borrowAsset: borrowPool.asset,
       collateralAmount: parsedCollateralAmount,
       borrowAmount: parsedBorrowAmount,
       ltvMaxBps,
       depositWindowSeconds: parsedDepositWindowSeconds,
-      borrowDestination: {
-        type: "External",
-        address: trimmedBorrowDestination,
-      },
-      refundDestination: {
-        type: "External",
-        address: trimmedRefundDestination,
-      },
+      borrowDestinationAddress: trimmedBorrowDestination,
+      refundDestinationAddress: trimmedRefundDestination,
     });
 
     saveRecentLoanRef(loan.ref);
@@ -326,7 +321,7 @@ export function App() {
         <button
           id="create-loan-button"
           type="button"
-          onClick={() => void run(createInstantLoan, setStatus)}
+          onClick={() => void run(createInstantLoanFromForm, setStatus)}
         >
           Create Instant Loan
         </button>
@@ -378,16 +373,14 @@ export function App() {
         borrowPool.decimals
       );
       const ltvMaxBps = parsePercentToBps(maxLtv);
-      const ltvCalculation = client.quote.calculateLtv(
-        {
-          borrowAmount: parsedBorrowAmount,
-          borrowPoolId: borrowPool.id,
-          collateralAmount: parsedCollateralAmount,
-          collateralPoolId: collateralPool.id,
-        },
+      const ltvCalculation = calculateLoanLtv({
+        borrowAmount: parsedBorrowAmount,
+        borrowPoolId: borrowPool.id,
+        collateralAmount: parsedCollateralAmount,
+        collateralPoolId: collateralPool.id,
         pools,
-        assetPrices
-      );
+        assetPrices,
+      });
 
       if (ltvCalculation.validationErrors.length > 0) {
         throw new Error(
@@ -411,10 +404,6 @@ export function App() {
         : "LTV preview unavailable.";
     }
   }
-}
-
-function getInstantLoanAsset(asset: string): InstantLoanAsset {
-  return asset as InstantLoanAsset;
 }
 
 function findPoolByAsset(pools: Pool[], asset: string): Pool | undefined {

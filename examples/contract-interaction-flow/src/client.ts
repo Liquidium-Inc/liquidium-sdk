@@ -28,7 +28,9 @@ function resolveEvmRpcUrl(): string | undefined {
   const configuredEvmRpcUrl = normalizeOptionalValue(
     import.meta.env.VITE_EVM_RPC_URL
   );
-  const infuraApiKey = normalizeOptionalValue(import.meta.env.VITE_INFURA_API_KEY);
+  const infuraApiKey = normalizeOptionalValue(
+    import.meta.env.VITE_INFURA_API_KEY
+  );
 
   if (configuredEvmRpcUrl) {
     return resolveValidOptionalUrl(configuredEvmRpcUrl);

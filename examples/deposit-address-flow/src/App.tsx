@@ -5,11 +5,14 @@ import type {
   AssetPrices,
   Pool,
   SupplyFlow,
-  WalletAdapter,
 } from "@liquidium/client";
-import { Chain, SupplyAction } from "@liquidium/client";
+import { Chain } from "@liquidium/client";
 import { useEffect, useState } from "react";
-import { client, formatConfig } from "./client";
+import { formatConfig } from "./client";
+import {
+  createDynamicWalletAdapter,
+  getConnectedWalletAddress,
+} from "./dynamic-wallet";
 import {
   formatActivityStatus,
   formatAmount,
@@ -21,23 +24,18 @@ import {
   parseAmountToBaseUnits,
   saveRecentActivityId,
 } from "./format";
+import {
+  borrowWithWallet,
+  createDepositAddressSupply,
+  getActivityStatus,
+  getOrCreateWalletProfile,
+  listProfileActivities,
+  loadMarketData,
+  registerSupplyTxid,
+} from "./sdk-example";
 
 const DEFAULT_SUPPLY_ASSET = "USDC";
 const DEFAULT_BORROW_ASSET = "USDC";
-
-type DynamicWalletClient = {
-  signMessage(request: {
-    account: `0x${string}`;
-    message: string;
-  }): Promise<string>;
-};
-
-type DynamicEvmConnector = {
-  getWalletClient?(
-    chainId?: string
-  ): DynamicWalletClient | Promise<DynamicWalletClient | undefined> | undefined;
-  signMessage?(messageToSign: string): Promise<string | undefined>;
-};
 
 export function App() {
   const isStatusPage = window.location.pathname.endsWith("/status.html");
@@ -79,10 +77,8 @@ function SupplyBorrowPage() {
   useEffect(() => {
     void run(async () => {
       setStatus("Loading pools...");
-      const [loadedPools, loadedAssetPrices] = await Promise.all([
-        client.market.listPools(),
-        client.market.getAssetPrices(),
-      ]);
+      const { pools: loadedPools, assetPrices: loadedAssetPrices } =
+        await loadMarketData();
       const defaultSupplyPool = findPoolByAsset(
         loadedPools,
         DEFAULT_SUPPLY_ASSET
@@ -122,10 +118,8 @@ function SupplyBorrowPage() {
 
   async function loadPools(): Promise<void> {
     setStatus("Loading pools...");
-    const [loadedPools, loadedAssetPrices] = await Promise.all([
-      client.market.listPools(),
-      client.market.getAssetPrices(),
-    ]);
+    const { pools: loadedPools, assetPrices: loadedAssetPrices } =
+      await loadMarketData();
     const defaultSupplyPool = findPoolByAsset(
       loadedPools,
       DEFAULT_SUPPLY_ASSET
@@ -157,10 +151,9 @@ function SupplyBorrowPage() {
     setStatus("Generating deposit address...");
     setSupplyResult("Generating deposit address...");
 
-    const supplyFlow = await client.lending.supply({
+    const supplyFlow = await createDepositAddressSupply({
       profileId: trimmedProfileId,
       poolId: selectedSupplyPool.id,
-      action: SupplyAction.deposit,
     });
 
     setCurrentSupplyFlow(supplyFlow);
@@ -194,7 +187,10 @@ function SupplyBorrowPage() {
 
     setStatus("Registering supply txid...");
     setSubmitSupplyResult("Registering txid...");
-    const response = await currentSupplyFlow.submit({ txid });
+    const response = await registerSupplyTxid({
+      supplyFlow: currentSupplyFlow,
+      txid,
+    });
     saveRecentActivityId(response.txid);
     setSubmitSupplyResult(
       ["Supply txid registered.", `Txid: ${response.txid}`].join("\n")
@@ -212,7 +208,7 @@ function SupplyBorrowPage() {
     setStatus("Loading supply txid activity...");
     setSubmitSupplyResult("Loading activity status...");
 
-    const response = await client.activities.getStatus({
+    const response = await getActivityStatus({
       profileId: trimmedProfileId,
       id: txid,
     });
@@ -257,13 +253,12 @@ function SupplyBorrowPage() {
     setStatus("Submitting borrow...");
     setBorrowResult("Submitting borrow...");
 
-    const outflow = await client.lending.borrow({
+    const outflow = await borrowWithWallet({
       profileId: result.profileId,
       poolId: selectedBorrowPool.id,
       amount: parsedBorrowAmount,
       receiverAddress,
       signerWalletAddress,
-      signerChain: Chain.ETH,
       signerWalletAdapter: createDynamicWalletAdapter(primaryWallet),
     });
     saveRecentActivityId(outflow.id);
@@ -446,8 +441,7 @@ function ActivityTrackerPage() {
   const [activityId, setActivityId] = useState(
     searchParams.get("activityId") ?? ""
   );
-  const [activityFilter, setActivityFilter] =
-    useState<ActivityFilter>("all");
+  const [activityFilter, setActivityFilter] = useState<ActivityFilter>("all");
   const [activitiesOutput, setActivitiesOutput] = useState(
     "Enter a profile id to load activities."
   );
@@ -469,7 +463,7 @@ function ActivityTrackerPage() {
     setStatus("Loading activities...");
     setActivitiesOutput("Loading activities...");
 
-    const activities = await client.activities.list({
+    const activities = await listProfileActivities({
       profileId: trimmedProfileId,
       filter: activityFilter,
     });
@@ -510,7 +504,7 @@ function ActivityTrackerPage() {
     setStatus("Loading activity status...");
     setActivityOutput("Loading activity status...");
 
-    const response = await client.activities.getStatus({
+    const response = await getActivityStatus({
       profileId: trimmedProfileId,
       id: trimmedActivityId,
     });
@@ -629,19 +623,11 @@ async function getOrCreateConnectedWalletProfile(
   primaryWallet: ReturnType<typeof useDynamicContext>["primaryWallet"]
 ): Promise<{ profileId: string; wasCreated: boolean }> {
   const account = getConnectedWalletAddress(primaryWallet);
-  const existingProfileId = await client.accounts.getProfileId(account);
 
-  if (existingProfileId) {
-    return { profileId: existingProfileId, wasCreated: false };
-  }
-
-  const profileId = await client.accounts.createProfile({
+  return await getOrCreateWalletProfile({
     account,
-    chain: Chain.ETH,
     walletAdapter: createDynamicWalletAdapter(primaryWallet),
   });
-
-  return { profileId, wasCreated: true };
 }
 
 function findPoolByAsset(pools: Pool[], asset: string): Pool | undefined {
@@ -660,52 +646,6 @@ function getSelectedPool(pools: Pool[], poolId: string): Pool {
   }
 
   return pool;
-}
-
-function getConnectedWalletAddress(
-  primaryWallet: ReturnType<typeof useDynamicContext>["primaryWallet"]
-): string {
-  if (!primaryWallet || !isEthereumWallet(primaryWallet)) {
-    throw new Error("Connect an Ethereum wallet first.");
-  }
-
-  if (!primaryWallet.address) {
-    throw new Error("Connected wallet has no address.");
-  }
-
-  return primaryWallet.address;
-}
-
-function createDynamicWalletAdapter(
-  primaryWallet: ReturnType<typeof useDynamicContext>["primaryWallet"]
-): WalletAdapter {
-  const account = getConnectedWalletAddress(primaryWallet);
-  const connector = primaryWallet?.connector as DynamicEvmConnector | undefined;
-
-  return {
-    signMessage: async (request) => {
-      if (connector?.signMessage) {
-        const signature = await connector.signMessage(request.message);
-
-        if (!signature) {
-          throw new Error("Wallet did not return a signature.");
-        }
-
-        return signature;
-      }
-
-      const walletClient = await connector?.getWalletClient?.("1");
-
-      if (walletClient?.signMessage) {
-        return await walletClient.signMessage({
-          account: account as `0x${string}`,
-          message: request.message,
-        });
-      }
-
-      throw new Error("Connected wallet does not support message signing.");
-    },
-  };
 }
 
 function formatUsdPrice(price: number | undefined): string {
