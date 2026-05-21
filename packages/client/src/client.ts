@@ -47,6 +47,11 @@ export class LiquidiumClient {
   private readonly apiClient: ApiClient | undefined;
   private readonly evmReadClient: EvmReadClient | undefined;
 
+  /**
+   * Creates a Liquidium SDK client.
+   *
+   * @param config - Runtime transport, canister, API, identity, and EVM read options.
+   */
   constructor(config: LiquidiumClientConfig = {}) {
     const environment = config.environment ?? DEFAULT_ENVIRONMENT;
     const canisterIds = resolveCanisterIds(environment, config.canisterIds);

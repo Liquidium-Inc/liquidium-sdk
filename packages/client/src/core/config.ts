@@ -20,6 +20,7 @@ export function resolveHost(override?: string): string {
   return override ?? MAINNET_HOST;
 }
 
+/** Resolves environment canister ids with optional per-canister overrides. */
 export function resolveCanisterIds(
   environment: Environment = DEFAULT_ENVIRONMENT,
   overrides?: Partial<CanisterIds>
@@ -29,6 +30,7 @@ export function resolveCanisterIds(
 
 export const DEFAULT_TIMEOUT_MS = 30_000;
 
+/** Mainnet chain-key Bitcoin and Ethereum helper canister principals. */
 export const CK_CANISTER_IDS = {
   btcMinter: "mqygn-kiaaa-aaaar-qaadq-cai",
   btcLedger: "mxzaz-hqaaa-aaaar-qaada-cai",

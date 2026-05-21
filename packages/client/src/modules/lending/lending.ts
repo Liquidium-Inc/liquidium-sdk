@@ -112,6 +112,7 @@ type SupplyInstruction = {
 
 type EvmAddress = `0x${string}`;
 
+/** Borrow, withdraw, supply, inflow reporting, and fee-estimation helpers. */
 export class LendingModule {
   constructor(
     readonly canisterContext: CanisterContext,
@@ -368,7 +369,7 @@ export class LendingModule {
    * This is the convenience form of `prepareBorrow(...)` plus execution.
    *
    * @param params - Borrow request fields plus `signerChain` and `signerWalletAdapter`.
-   * @returns The instant canister receipt as {@link OutflowDetails}.
+   * @returns The lending canister receipt as {@link OutflowDetails}.
    *
    * @remarks
    * `id` is always present. `txid` may be missing on the first response; the SDK does not
@@ -594,6 +595,9 @@ export class LendingModule {
    *
    * ETH stablecoin deposit-address estimates are served by the deposit-address
    * canister. BTC estimates are not exposed by this SDK yet and return zero.
+   *
+   * @param request - Asset and chain pair to estimate for.
+   * @returns Total fee estimate in the asset's base units.
    */
   async estimateInflowFee(
     request: EstimateInflowFeeRequest

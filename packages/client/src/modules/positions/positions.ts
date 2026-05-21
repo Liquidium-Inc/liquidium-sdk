@@ -22,6 +22,7 @@ import type {
 const BPS_SCALE = 10000n;
 const DEFAULT_REPAY_BUFFER_BPS = 10n;
 
+/** Profile position, health factor, and reserve valuation helpers. */
 export class PositionsModule {
   constructor(
     readonly canisterContext: CanisterContext,
@@ -146,6 +147,7 @@ export class PositionsModule {
    * `currentLtvBps = debt * 10_000 / collateral` (0 when collateral is 0).
    *
    * @param profileId - The Liquidium profile principal text.
+   * @returns Derived position summary for the requested profile.
    */
   async getUserPositionSummary(
     profileId: string
@@ -181,6 +183,7 @@ export class PositionsModule {
    * USD values are scaled to {@link USD_VALUE_SCALE_DECIMALS} (27).
    *
    * @param profileId - The Liquidium profile principal text.
+   * @returns Per-reserve position rows joined with pool metadata and USD values.
    */
   async getUserReserves(profileId: string): Promise<UserReserve[]> {
     const [positions, pools, prices] = await Promise.all([
@@ -229,6 +232,7 @@ export class PositionsModule {
    * @param profileId - The Liquidium profile principal text.
    * @param poolId - The pool principal text.
    * @param bufferBps - Optional buffer in basis points (default 10 = 0.1%).
+   * @returns Buffered repayment amount in the borrowed asset's base units.
    */
   async getMaxRepayAmount(
     profileId: string,

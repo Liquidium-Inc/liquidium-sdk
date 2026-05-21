@@ -6,6 +6,7 @@ import { CK_DEPOSIT_ABI, ERC20_ABI } from "../../core/evm";
 import type { SupplyAction } from "../../core/types";
 import { encodeInflowSubaccount } from "../../core/utils/inflow-subaccount";
 
+/** Builds calldata for an ERC-20 `approve(spender, amount)` transaction. */
 export function createApproveTransaction(params: {
   tokenAddress: string;
   spenderAddress: string;
@@ -21,6 +22,7 @@ export function createApproveTransaction(params: {
   };
 }
 
+/** Builds calldata for an ERC-20 `transfer(recipient, amount)` transaction. */
 export function createTransferErc20Transaction(params: {
   tokenAddress: string;
   recipientAddress: string;
@@ -36,6 +38,7 @@ export function createTransferErc20Transaction(params: {
   };
 }
 
+/** Builds calldata for depositing ERC-20 funds into the ckETH deposit helper. */
 export function createDepositErc20Transaction(params: {
   depositContractAddress: string;
   tokenAddress: string;

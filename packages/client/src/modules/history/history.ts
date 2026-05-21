@@ -31,6 +31,7 @@ import type {
 } from "./types";
 import { UserHistoryStatus } from "./types";
 
+/** Historical pool, rate, user transaction, and liquidation data helpers. */
 export class HistoryModule {
   constructor(readonly apiClient: ApiClient | undefined) {}
 

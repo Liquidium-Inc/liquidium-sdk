@@ -33,11 +33,17 @@ type CreateQuoteResultParams = {
   warnings: QuoteWarning[];
 };
 
+/** Pure quote helpers for LTV and required-collateral calculations. */
 export class QuoteModule {
   /**
    * Calculates current LTV from caller-supplied borrow and collateral amounts.
    *
    * Amount fields are base units. USD fields are scaled to 8 decimal places.
+   *
+   * @param request - Borrow and collateral pool ids plus base-unit amounts.
+   * @param pools - Available pools, usually from `client.market.listPools()`.
+   * @param prices - USD price map, usually from `client.market.getAssetPrices()`.
+   * @returns LTV calculation plus validation errors when inputs are unusable.
    */
   calculateLtv(
     request: CalculateLtvRequest,

@@ -13,13 +13,23 @@ const ALPHABET_INDEX = new Map(
   [...REF_ALPHABET].map((character, index) => [character, BigInt(index)])
 );
 
-/** Converts a canister loan id into a short user-facing reference. */
+/**
+ * Converts a canister loan id into a short user-facing reference.
+ *
+ * @param id - Canister loan id in the supported public-reference range.
+ * @returns Fixed-length public reference string.
+ */
 export function publicIdFromInt(id: bigint): string {
   if (id < 0n || id >= MOD) throw new Error("id out of range");
   return toBase32Fixed((id * A + B) % MOD);
 }
 
-/** Decodes a short user-facing reference back into the canister loan id. */
+/**
+ * Decodes a short user-facing reference back into the canister loan id.
+ *
+ * @param ref - Fixed-length public reference string.
+ * @returns Canister loan id represented by the reference.
+ */
 export function intFromPublicId(ref: string): bigint {
   const encodedId = fromBase32Fixed(ref.toUpperCase());
   const id = ((encodedId - B) * A_INVERSE) % MOD;

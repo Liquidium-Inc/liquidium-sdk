@@ -15,6 +15,7 @@ import type { AssetPrices, FindPoolQuery, Pool, PoolRate } from "./types";
 
 const ZERO_POOL_RATE: PoolRateTuple = [0n, 0n, 0n];
 
+/** Pool metadata, prices, and current rate helpers. */
 export class MarketModule {
   constructor(
     readonly canisterContext: CanisterContext,

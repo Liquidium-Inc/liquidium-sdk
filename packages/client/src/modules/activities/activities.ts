@@ -86,6 +86,7 @@ type ActivityStatusResponseWire =
       id: string;
     };
 
+/** Receipt-oriented activity list and status helpers. */
 export class ActivitiesModule {
   constructor(
     readonly apiClient: ApiClient | undefined,
@@ -96,6 +97,9 @@ export class ActivitiesModule {
    * Lists profile activities. Defaults to all activities.
    *
    * Uses the Liquidium SDK API.
+   *
+   * @param request - Profile id or instant-loan short reference plus optional state filter.
+   * @returns Activities owned by the resolved profile.
    */
   async list(request: ListActivitiesRequest): Promise<Activity[]> {
     const apiClient = this.requireApi();
@@ -114,6 +118,9 @@ export class ActivitiesModule {
    * Fetches the latest status for a single receipt/activity id.
    *
    * Uses the Liquidium SDK API.
+   *
+   * @param request - Activity id plus profile id or instant-loan short reference.
+   * @returns The activity when found, otherwise `{ found: false }` with the requested id.
    */
   async getStatus(
     request: GetActivityStatusRequest

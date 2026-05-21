@@ -53,8 +53,11 @@ export const LiquidiumErrorCode = {
 export type LiquidiumErrorCode =
   (typeof LiquidiumErrorCode)[keyof typeof LiquidiumErrorCode];
 
+/** Optional debug identifiers attached to mapped SDK errors. */
 export interface LiquidiumErrorContext {
+  /** Backend trace id for support/debugging when available. */
   traceId?: string;
+  /** SDK API request id for support/debugging when available. */
   requestId?: string;
 }
 

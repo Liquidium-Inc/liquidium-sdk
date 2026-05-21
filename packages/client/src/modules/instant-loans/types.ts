@@ -171,8 +171,10 @@ export interface InstantLoanEvent {
   eventType: InstantLoanEventType;
 }
 
+/** Instant-loan leg used when stuck funds are withdrawn. */
 export type InstantLoanLeg = "Lend" | "Borrow";
 
+/** Direct canister event payload returned by instant-loans event queries. */
 export type InstantLoanEventType =
   | {
       type: "LoanCreated";

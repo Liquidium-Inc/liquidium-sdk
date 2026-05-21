@@ -1,19 +1,25 @@
+/** Consumer-facing status for profile transaction history entries. */
 export const UserHistoryStatus = {
   requested: "requested",
   pending: "pending",
   confirmed: "confirmed",
   failed: "failed",
 } as const;
+/** Consumer-facing status for profile transaction history entries. */
 export type UserHistoryStatus =
   (typeof UserHistoryStatus)[keyof typeof UserHistoryStatus];
+/** Uppercase status value used by SDK API responses. */
 export type UserHistoryStatusApi = Uppercase<UserHistoryStatus>;
 
+/** User transaction kinds returned by profile transaction history. */
 export type UserTransactionHistoryType =
   | "supply"
   | "borrow"
   | "repay"
   | "withdraw";
+/** User liquidation history kind. */
 export type UserLiquidationHistoryType = "liquidation";
+/** Any user history kind returned by the history API. */
 export type UserHistoryType =
   | UserTransactionHistoryType
   | UserLiquidationHistoryType;
@@ -26,69 +32,106 @@ interface BaseUserHistoryEntry {
   txids?: string[];
 }
 
+/** Supply, borrow, repay, or withdraw entry in user history. */
 export interface UserTransactionHistoryEntry extends BaseUserHistoryEntry {
+  /** Transaction history kind. */
   type: UserTransactionHistoryType;
+  /** Current lifecycle status. */
   status: UserHistoryStatus;
 }
 
+/** Liquidation entry in user history. */
 export interface UserLiquidationHistoryEntry extends BaseUserHistoryEntry {
+  /** Liquidation kind discriminator. */
   type: UserLiquidationHistoryType;
+  /** Liquidations are only returned once confirmed. */
   status: typeof UserHistoryStatus.confirmed;
 }
 
+/** Any consumer-facing profile history entry. */
 export type UserHistoryEntry =
   | UserTransactionHistoryEntry
   | UserLiquidationHistoryEntry;
 
+/** Filters for profile transaction history requests. */
 export interface UserTransactionHistoryFilters {
+  /** Pagination cursor from a previous response. */
   cursor?: string;
+  /** Maximum number of entries to return. */
   limit?: number;
+  /** Market filter accepted by the SDK API. */
   market?: string;
+  /** Pool principal text filter. */
   poolId?: string;
+  /** Transaction kind filters. */
   types?: UserTransactionHistoryType[];
+  /** Status filters. */
   statuses?: UserHistoryEntry["status"][];
+  /** Inclusive start timestamp filter accepted by the SDK API. */
   from?: string;
+  /** Inclusive end timestamp filter accepted by the SDK API. */
   to?: string;
 }
 
+/** Filters for profile liquidation history requests. */
 export interface UserLiquidationHistoryFilters {
+  /** Pagination cursor from a previous response. */
   cursor?: string;
+  /** Maximum number of entries to return. */
   limit?: number;
+  /** Market filter accepted by the SDK API. */
   market?: string;
+  /** Pool principal text filter. */
   poolId?: string;
+  /** Inclusive start timestamp filter accepted by the SDK API. */
   from?: string;
+  /** Inclusive end timestamp filter accepted by the SDK API. */
   to?: string;
 }
 
+/** Backwards-compatible alias for user transaction history filters. */
 export type ActivitiesRequest = UserTransactionHistoryFilters;
 
+/** Time-window and pagination options for borrow APY history. */
 export interface BorrowApyHistoryRequest {
+  /** Pagination cursor from a previous response. */
   cursor?: string;
+  /** Maximum number of samples to return. */
   limit?: number;
+  /** Inclusive start timestamp filter accepted by the SDK API. */
   from?: string;
+  /** Inclusive end timestamp filter accepted by the SDK API. */
   to?: string;
 }
 
+/** Time-window and pagination options for pool rate history. */
 export type PoolHistoryRequest = BorrowApyHistoryRequest;
 
+/** Borrow APY sample returned to SDK consumers. */
 export interface ApySample {
+  /** Sample date from the SDK API. */
   date: string;
+  /** Decimal scale for `avgRate`. */
   rateDecimals: bigint;
+  /** Average borrow rate for the sample, scaled by `rateDecimals`. */
   avgRate: bigint;
 }
 
+/** Wire-format borrow APY sample returned by the SDK API. */
 export interface ApySampleApiItem {
   date: string;
   rateDecimals: number;
   avgRate: string;
 }
 
+/** Wire-format borrow rate history response returned by the SDK API. */
 export interface BorrowRateHistoryResponse {
   success: true;
   items: ApySampleApiItem[];
   nextCursor?: string;
 }
 
+/** Wire-format user history item returned by the SDK API. */
 export interface UserHistoryEntryApiItem {
   id: string;
   type: UserHistoryType;
@@ -99,20 +142,28 @@ export interface UserHistoryEntryApiItem {
   txids?: string[];
 }
 
+/** Wire-format user history page returned by the SDK API. */
 export interface UserHistoryResponse {
   success: true;
   items: UserHistoryEntryApiItem[];
   nextCursor?: string;
 }
 
+/** Pool rate and utilization history entry returned to SDK consumers. */
 export interface PoolHistoryEntry {
+  /** Sample date from the SDK API. */
   date: string;
+  /** Decimal scale for rate fields. */
   rateDecimals: bigint;
+  /** Average borrow rate for the sample, scaled by `rateDecimals`. */
   avgBorrowRate: bigint;
+  /** Average lend rate for the sample, scaled by `rateDecimals`. */
   avgLendRate: bigint;
+  /** Average utilization rate for the sample, scaled by `rateDecimals`. */
   avgUtilizationRate: bigint;
 }
 
+/** Wire-format pool rate history item returned by the SDK API. */
 export interface PoolHistoryEntryApiItem {
   date: string;
   rateDecimals: number;
@@ -121,12 +172,14 @@ export interface PoolHistoryEntryApiItem {
   avgUtilizationRate: string;
 }
 
+/** Wire-format pool rate history page returned by the SDK API. */
 export interface PoolHistoryResponse {
   success: true;
   items: PoolHistoryEntryApiItem[];
   nextCursor?: string;
 }
 
+/** Pool configuration snapshot returned to SDK consumers. */
 export interface PoolConfigHistoryEntry {
   type: "configuration_change";
   poolId: string;
@@ -152,6 +205,7 @@ export interface PoolConfigHistoryEntry {
   frozen: boolean;
 }
 
+/** Wire-format pool configuration history item returned by the SDK API. */
 export interface PoolConfigHistoryEntryApiItem {
   type: "configuration_change";
   poolId: string;
@@ -177,18 +231,23 @@ export interface PoolConfigHistoryEntryApiItem {
   frozen: boolean;
 }
 
+/** Wire-format pool configuration history page returned by the SDK API. */
 export interface PoolConfigHistoryResponse {
   success: true;
   items: PoolConfigHistoryEntryApiItem[];
   nextCursor?: string;
 }
 
+/** Any history entry returned by history module methods. */
 export type HistoryEntry =
   | UserHistoryEntry
   | PoolHistoryEntry
   | PoolConfigHistoryEntry;
 
+/** Generic SDK API paginated response. */
 export interface PaginatedResponse<T> {
+  /** Items in the current page. */
   items: T[];
+  /** Cursor for the next page when more results are available. */
   nextCursor?: string;
 }

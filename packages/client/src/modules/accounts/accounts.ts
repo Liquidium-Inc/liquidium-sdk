@@ -33,6 +33,7 @@ type CreateProfileParams = {
   walletAdapter: WalletAdapter;
 };
 
+/** Profile lifecycle and linked-wallet helpers. */
 export class AccountsModule {
   constructor(readonly canisterContext: CanisterContext) {}
 

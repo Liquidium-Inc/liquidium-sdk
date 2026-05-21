@@ -136,6 +136,7 @@ type InstantLoanHydrationInput = {
   started?: boolean;
 };
 
+/** Accountless instant-loan creation, lookup, recovery, and canister query helpers. */
 export class InstantLoansModule {
   constructor(
     readonly canisterContext: CanisterContext,
@@ -157,6 +158,9 @@ export class InstantLoansModule {
    * `refundDestination` receives collateral refunds or withdrawals. Use
    * `depositWindowSeconds` for the user-facing collateral deposit timeout; the
    * SDK maps it to the canister's internal `ltv_timer_s` field.
+   *
+   * @param request - Pool ids, assets, base-unit amounts, LTV limit, timeout, and destinations.
+   * @returns Hydrated loan state plus generated deposit and repayment targets.
    */
   async create(request: CreateInstantLoanRequest): Promise<InstantLoan> {
     validateCreateRequest(request);
@@ -196,6 +200,9 @@ export class InstantLoansModule {
    *
    * References are decoded locally, then the corresponding loan id is loaded
    * from the instant-loans canister.
+   *
+   * @param request - Canister loan id or short public reference.
+   * @returns Hydrated loan state plus generated deposit and repayment targets.
    */
   async get(request: InstantLoanGetRequest): Promise<InstantLoan> {
     const loanId =
@@ -220,7 +227,11 @@ export class InstantLoansModule {
     }
   }
 
-  /** Returns the active instant-loans canister config via direct query. */
+  /**
+   * Returns the active instant-loans canister config via direct query.
+   *
+   * @returns Active canister configuration.
+   */
   async getConfig(): Promise<InstantLoanConfig> {
     try {
       const config = await createInstantLoansActor(
@@ -235,7 +246,12 @@ export class InstantLoansModule {
     }
   }
 
-  /** Returns a single canister event by id via direct query. */
+  /**
+   * Returns a single canister event by id via direct query.
+   *
+   * @param eventId - Event id to load.
+   * @returns The event when found, otherwise `null`.
+   */
   async getEvent(eventId: bigint): Promise<InstantLoanEvent | null> {
     try {
       const event = await createInstantLoansActor(
@@ -248,7 +264,12 @@ export class InstantLoansModule {
     }
   }
 
-  /** Returns a page of canister events via direct query. */
+  /**
+   * Returns a page of canister events via direct query.
+   *
+   * @param request - Start event id and maximum number of events to return.
+   * @returns Canister events in ascending id order.
+   */
   async listEvents(
     request: InstantLoanListEventsRequest
   ): Promise<InstantLoanEvent[]> {
@@ -263,7 +284,11 @@ export class InstantLoansModule {
     }
   }
 
-  /** Returns principals authorized for protected update callbacks. */
+  /**
+   * Returns principals authorized for protected update callbacks.
+   *
+   * @returns Principal text values on the canister access list.
+   */
   async listAccessList(): Promise<string[]> {
     try {
       const principals = await createInstantLoansActor(
@@ -276,7 +301,11 @@ export class InstantLoansModule {
     }
   }
 
-  /** Returns the current size of the warmed-profile pool via direct query. */
+  /**
+   * Returns the current size of the warmed-profile pool via direct query.
+   *
+   * @returns Number of warmed profiles available on the canister.
+   */
   async countWarmedProfiles(): Promise<bigint> {
     try {
       return await createInstantLoansActor(
@@ -290,7 +319,11 @@ export class InstantLoansModule {
     }
   }
 
-  /** Returns warmed profiles currently available for future instant loans. */
+  /**
+   * Returns warmed profiles currently available for future instant loans.
+   *
+   * @returns Warmed profile records available for assignment.
+   */
   async listWarmedProfiles(): Promise<InstantLoanWarmedProfile[]> {
     try {
       const profiles = await createInstantLoansActor(
@@ -309,6 +342,9 @@ export class InstantLoansModule {
    *
    * Candidates are useful for recovery flows where the user knows a borrow or
    * refund address but not the loan reference.
+   *
+   * @param address - Borrow or refund address to search for.
+   * @returns Lightweight loan candidates associated with the address.
    */
   async findByAddress(address: string): Promise<InstantLoanCandidate[]> {
     const trimmedAddress = address.trim();
