@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Liquidium Instant Loan Flow</title>
+    <script type="module" src="/src/main.ts"></script>
+  </head>
+  <body>
+    <main>
+      <nav class="page-switcher" aria-label="Example pages">
+        <a class="page-switcher-link page-switcher-link-active" href="/">Create loan</a>
+        <a class="page-switcher-link" href="/status.html">Loan status</a>
+      </nav>
+
+      <h1>Liquidium Instant Loan Flow</h1>
+      <p>Create an accountless loan, then send collateral to the generated deposit target.</p>
+
+      <section>
+        <h2>SDK Config</h2>
+        <div id="sdk-config" class="list-box">Loading config...</div>
+      </section>
+
+      <section>
+        <h2>Available Pools</h2>
+        <button id="refresh-pools-button" type="button">Refresh Pools</button>
+        <div id="pools-list" class="list-box">No pools loaded.</div>
+      </section>
+
+      <section>
+        <h2>Create Instant Loan</h2>
+
+        <label for="collateral-pool-select">Collateral pool</label>
+        <select id="collateral-pool-select"></select>
+
+        <label for="borrow-pool-select">Borrow pool</label>
+        <select id="borrow-pool-select"></select>
+
+        <div id="price-preview" class="list-box">Load pools to show the prices used for LTV.</div>
+
+        <label for="collateral-amount-input">Collateral amount</label>
+        <input id="collateral-amount-input" inputmode="decimal" value="0.0002" />
+
+        <label for="borrow-amount-input">Borrow amount</label>
+        <input id="borrow-amount-input" inputmode="decimal" value="9" />
+
+        <label for="max-ltv-input">Max LTV %</label>
+        <input id="max-ltv-input" inputmode="decimal" value="30" />
+
+        <div id="ltv-preview" class="list-box">Enter amounts to preview the implied current LTV.</div>
+
+        <label for="deposit-window-input">Deposit window seconds</label>
+        <input id="deposit-window-input" inputmode="numeric" value="3600" />
+
+        <label for="borrow-destination-input">Borrow destination address</label>
+        <input
+          id="borrow-destination-input"
+          value="0xA5789280dF0D6E3F5BC9a00358379768e391BEA9"
+        />
+
+        <label for="refund-destination-input">Refund destination address</label>
+        <input
+          id="refund-destination-input"
+          value="bc1qnynl093xgt074qzdypmwu24argqxew9d3pwxy8"
+        />
+
+        <button id="create-loan-button" type="button">Create Instant Loan</button>
+        <div id="loan-result" class="result-box">No loan created yet.</div>
+      </section>
+
+      <section>
+        <h2>Recent Loan Refs</h2>
+        <div id="recent-loans-list" class="list-box">No recent loans stored in this browser.</div>
+      </section>
+
+      <section>
+        <h2>Status</h2>
+        <pre id="status-log">Ready.</pre>
+      </section>
+    </main>
+  </body>
+</html>
