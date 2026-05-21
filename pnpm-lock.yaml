@@ -34,13 +34,13 @@ importers:
     dependencies:
       '@dynamic-labs/ethereum':
         specifier: ^4.83.1
-        version: 4.83.1(@dynamic-labs-wallet/primitives@0.0.337)(@types/react@19.2.15)(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3)(use-sync-external-store@1.4.0(react@19.2.6))(utf-8-validate@6.0.6)(viem@2.50.4(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
+        version: 4.83.1(@dynamic-labs-wallet/primitives@0.0.337)(@types/react@19.2.15)(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3)(use-sync-external-store@1.4.0(react@19.2.6))(utf-8-validate@5.0.10)(viem@2.50.4(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@3.25.76))(zod@3.25.76)
       '@dynamic-labs/sdk-react-core':
         specifier: ^4.83.1
-        version: 4.83.1(@dynamic-labs-wallet/primitives@0.0.337)(@types/react@19.2.15)(bufferutil@4.1.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(utf-8-validate@6.0.6)
+        version: 4.83.1(@dynamic-labs-wallet/primitives@0.0.337)(@types/react@19.2.15)(bufferutil@4.1.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(utf-8-validate@5.0.10)
       '@liquidium/client':
         specifier: file:liquidium-client-0.1.0.tgz
-        version: file:examples/contract-interaction-flow/liquidium-client-0.1.0.tgz(@dfinity/utils@2.14.0(@dfinity/agent@2.1.3(@dfinity/candid@2.1.3(@dfinity/principal@2.1.3))(@dfinity/principal@2.1.3))(@dfinity/candid@2.1.3(@dfinity/principal@2.1.3))(@dfinity/principal@2.1.3))(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76)
+        version: file:examples/contract-interaction-flow/liquidium-client-0.1.0.tgz(@dfinity/utils@2.14.0(@dfinity/agent@2.1.3(@dfinity/candid@2.1.3(@dfinity/principal@2.1.3))(@dfinity/principal@2.1.3))(@dfinity/candid@2.1.3(@dfinity/principal@2.1.3))(@dfinity/principal@2.1.3))(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@3.25.76)
       react:
         specifier: ^19.2.6
         version: 19.2.6
@@ -49,7 +49,7 @@ importers:
         version: 19.2.6(react@19.2.6)
       viem:
         specifier: ^2.50.4
-        version: 2.50.4(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76)
+        version: 2.50.4(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@3.25.76)
     devDependencies:
       '@types/react':
         specifier: ^19.2.15
@@ -74,13 +74,13 @@ importers:
     dependencies:
       '@dynamic-labs/ethereum':
         specifier: ^4.83.1
-        version: 4.83.1(@dynamic-labs-wallet/primitives@0.0.337)(@types/react@19.2.15)(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3)(use-sync-external-store@1.4.0(react@19.2.6))(utf-8-validate@5.0.10)(viem@2.50.4(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@3.25.76))(zod@3.25.76)
+        version: 4.83.1(@dynamic-labs-wallet/primitives@0.0.337)(@types/react@19.2.15)(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3)(use-sync-external-store@1.4.0(react@19.2.6))(utf-8-validate@6.0.6)(viem@2.50.4(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76))(zod@3.25.76)
       '@dynamic-labs/sdk-react-core':
         specifier: ^4.83.1
-        version: 4.83.1(@dynamic-labs-wallet/primitives@0.0.337)(@types/react@19.2.15)(bufferutil@4.1.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(utf-8-validate@5.0.10)
+        version: 4.83.1(@dynamic-labs-wallet/primitives@0.0.337)(@types/react@19.2.15)(bufferutil@4.1.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(utf-8-validate@6.0.6)
       '@liquidium/client':
         specifier: file:liquidium-client-0.1.0.tgz
-        version: file:examples/deposit-address-flow/liquidium-client-0.1.0.tgz(@dfinity/utils@2.14.0(@dfinity/agent@2.1.3(@dfinity/candid@2.1.3(@dfinity/principal@2.1.3))(@dfinity/principal@2.1.3))(@dfinity/candid@2.1.3(@dfinity/principal@2.1.3))(@dfinity/principal@2.1.3))(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@3.25.76)
+        version: file:examples/deposit-address-flow/liquidium-client-0.1.0.tgz(@dfinity/utils@2.14.0(@dfinity/agent@2.1.3(@dfinity/candid@2.1.3(@dfinity/principal@2.1.3))(@dfinity/principal@2.1.3))(@dfinity/candid@2.1.3(@dfinity/principal@2.1.3))(@dfinity/principal@2.1.3))(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76)
       react:
         specifier: ^19.2.6
         version: 19.2.6
@@ -89,7 +89,7 @@ importers:
         version: 19.2.6(react@19.2.6)
       viem:
         specifier: ^2.50.4
-        version: 2.50.4(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@3.25.76)
+        version: 2.50.4(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76)
     devDependencies:
       '@types/react':
         specifier: ^19.2.15
@@ -986,15 +986,15 @@ packages:
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
 
   '@liquidium/client@file:examples/contract-interaction-flow/liquidium-client-0.1.0.tgz':
-    resolution: {integrity: sha512-24z/sDPyA/TAqYMeFo3EcQL51rs3hdl5iZji/IUL5672l8aIVaEaC/jJrIDm6Y478KPNpDIUOsvhpindvFbBjw==, tarball: file:examples/contract-interaction-flow/liquidium-client-0.1.0.tgz}
+    resolution: {integrity: sha512-+IlHxb6H6WKzfoYUcP1OlwttNyvL3NwpfhCyGD7XyQmc5rd5EVVu4OvXIouOfsGg/RtjZNGP7zKmkHjK5CPOuA==, tarball: file:examples/contract-interaction-flow/liquidium-client-0.1.0.tgz}
     version: 0.1.0
 
   '@liquidium/client@file:examples/deposit-address-flow/liquidium-client-0.1.0.tgz':
-    resolution: {integrity: sha512-24z/sDPyA/TAqYMeFo3EcQL51rs3hdl5iZji/IUL5672l8aIVaEaC/jJrIDm6Y478KPNpDIUOsvhpindvFbBjw==, tarball: file:examples/deposit-address-flow/liquidium-client-0.1.0.tgz}
+    resolution: {integrity: sha512-+IlHxb6H6WKzfoYUcP1OlwttNyvL3NwpfhCyGD7XyQmc5rd5EVVu4OvXIouOfsGg/RtjZNGP7zKmkHjK5CPOuA==, tarball: file:examples/deposit-address-flow/liquidium-client-0.1.0.tgz}
     version: 0.1.0
 
   '@liquidium/client@file:examples/instant-loans-flow/liquidium-client-0.1.0.tgz':
-    resolution: {integrity: sha512-24z/sDPyA/TAqYMeFo3EcQL51rs3hdl5iZji/IUL5672l8aIVaEaC/jJrIDm6Y478KPNpDIUOsvhpindvFbBjw==, tarball: file:examples/instant-loans-flow/liquidium-client-0.1.0.tgz}
+    resolution: {integrity: sha512-+IlHxb6H6WKzfoYUcP1OlwttNyvL3NwpfhCyGD7XyQmc5rd5EVVu4OvXIouOfsGg/RtjZNGP7zKmkHjK5CPOuA==, tarball: file:examples/instant-loans-flow/liquidium-client-0.1.0.tgz}
     version: 0.1.0
 
   '@lit-labs/ssr-dom-shim@1.6.0':
@@ -5965,23 +5965,7 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  '@liquidium/client@file:examples/contract-interaction-flow/liquidium-client-0.1.0.tgz(@dfinity/utils@2.14.0(@dfinity/agent@2.1.3(@dfinity/candid@2.1.3(@dfinity/principal@2.1.3))(@dfinity/principal@2.1.3))(@dfinity/candid@2.1.3(@dfinity/principal@2.1.3))(@dfinity/principal@2.1.3))(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76)':
-    dependencies:
-      '@dfinity/agent': 2.1.3(@dfinity/candid@2.1.3(@dfinity/principal@2.1.3))(@dfinity/principal@2.1.3)
-      '@dfinity/candid': 2.1.3(@dfinity/principal@2.1.3)
-      '@dfinity/ledger-icrc': 2.1.3(@dfinity/agent@2.1.3(@dfinity/candid@2.1.3(@dfinity/principal@2.1.3))(@dfinity/principal@2.1.3))(@dfinity/candid@2.1.3(@dfinity/principal@2.1.3))(@dfinity/principal@2.1.3)(@dfinity/utils@2.14.0(@dfinity/agent@2.1.3(@dfinity/candid@2.1.3(@dfinity/principal@2.1.3))(@dfinity/principal@2.1.3))(@dfinity/candid@2.1.3(@dfinity/principal@2.1.3))(@dfinity/principal@2.1.3))
-      '@dfinity/principal': 2.1.3
-      '@icp-sdk/core': 5.4.0
-      '@noble/hashes': 1.8.0
-      viem: 2.50.4(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76)
-    transitivePeerDependencies:
-      - '@dfinity/utils'
-      - bufferutil
-      - typescript
-      - utf-8-validate
-      - zod
-
-  '@liquidium/client@file:examples/deposit-address-flow/liquidium-client-0.1.0.tgz(@dfinity/utils@2.14.0(@dfinity/agent@2.1.3(@dfinity/candid@2.1.3(@dfinity/principal@2.1.3))(@dfinity/principal@2.1.3))(@dfinity/candid@2.1.3(@dfinity/principal@2.1.3))(@dfinity/principal@2.1.3))(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@3.25.76)':
+  '@liquidium/client@file:examples/contract-interaction-flow/liquidium-client-0.1.0.tgz(@dfinity/utils@2.14.0(@dfinity/agent@2.1.3(@dfinity/candid@2.1.3(@dfinity/principal@2.1.3))(@dfinity/principal@2.1.3))(@dfinity/candid@2.1.3(@dfinity/principal@2.1.3))(@dfinity/principal@2.1.3))(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@3.25.76)':
     dependencies:
       '@dfinity/agent': 2.1.3(@dfinity/candid@2.1.3(@dfinity/principal@2.1.3))(@dfinity/principal@2.1.3)
       '@dfinity/candid': 2.1.3(@dfinity/principal@2.1.3)
@@ -5990,6 +5974,22 @@ snapshots:
       '@icp-sdk/core': 5.4.0
       '@noble/hashes': 1.8.0
       viem: 2.50.4(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@3.25.76)
+    transitivePeerDependencies:
+      - '@dfinity/utils'
+      - bufferutil
+      - typescript
+      - utf-8-validate
+      - zod
+
+  '@liquidium/client@file:examples/deposit-address-flow/liquidium-client-0.1.0.tgz(@dfinity/utils@2.14.0(@dfinity/agent@2.1.3(@dfinity/candid@2.1.3(@dfinity/principal@2.1.3))(@dfinity/principal@2.1.3))(@dfinity/candid@2.1.3(@dfinity/principal@2.1.3))(@dfinity/principal@2.1.3))(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76)':
+    dependencies:
+      '@dfinity/agent': 2.1.3(@dfinity/candid@2.1.3(@dfinity/principal@2.1.3))(@dfinity/principal@2.1.3)
+      '@dfinity/candid': 2.1.3(@dfinity/principal@2.1.3)
+      '@dfinity/ledger-icrc': 2.1.3(@dfinity/agent@2.1.3(@dfinity/candid@2.1.3(@dfinity/principal@2.1.3))(@dfinity/principal@2.1.3))(@dfinity/candid@2.1.3(@dfinity/principal@2.1.3))(@dfinity/principal@2.1.3)(@dfinity/utils@2.14.0(@dfinity/agent@2.1.3(@dfinity/candid@2.1.3(@dfinity/principal@2.1.3))(@dfinity/principal@2.1.3))(@dfinity/candid@2.1.3(@dfinity/principal@2.1.3))(@dfinity/principal@2.1.3))
+      '@dfinity/principal': 2.1.3
+      '@icp-sdk/core': 5.4.0
+      '@noble/hashes': 1.8.0
+      viem: 2.50.4(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76)
     transitivePeerDependencies:
       - '@dfinity/utils'
       - bufferutil
