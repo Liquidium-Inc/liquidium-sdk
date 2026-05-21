@@ -256,7 +256,7 @@ cp examples/instant-loans-flow/.env.example examples/instant-loans-flow/.env
 pnpm --filter @liquidium/example-instant-loans-flow dev
 ```
 
-Set `VITE_DYNAMIC_ENVIRONMENT_ID` in `examples/instant-loans-flow/.env` before starting the app. Set `VITE_INFURA_API_KEY` when your flow needs Ethereum reads through Infura.
+Set `VITE_INFURA_API_KEY` when your flow needs Ethereum reads through Infura.
 
 ## Browser And Runtime Support
 
