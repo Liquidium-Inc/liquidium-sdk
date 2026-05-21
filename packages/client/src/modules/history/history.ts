@@ -22,11 +22,14 @@ import type {
   PoolHistoryResponse,
   UserHistoryEntry,
   UserHistoryResponse,
-  UserHistoryStatus,
   UserHistoryStatusApi,
+  UserLiquidationHistoryEntry,
   UserLiquidationHistoryFilters,
+  UserTransactionHistoryEntry,
   UserTransactionHistoryFilters,
+  UserTransactionHistoryType,
 } from "./types";
+import { UserHistoryStatus } from "./types";
 
 export class HistoryModule {
   constructor(readonly apiClient: ApiClient | undefined) {}
@@ -186,17 +189,17 @@ export class HistoryModule {
   async getUserTransactionHistory(
     user: string,
     filters?: UserTransactionHistoryFilters
-  ): Promise<PaginatedResponse<UserHistoryEntry>>;
+  ): Promise<PaginatedResponse<UserTransactionHistoryEntry>>;
   async getUserTransactionHistory(
     user: string,
     market?: string,
     filters?: UserTransactionHistoryFilters
-  ): Promise<PaginatedResponse<UserHistoryEntry>>;
+  ): Promise<PaginatedResponse<UserTransactionHistoryEntry>>;
   async getUserTransactionHistory(
     user: string,
     marketOrFilters?: string | UserTransactionHistoryFilters,
     filters: UserTransactionHistoryFilters = {}
-  ): Promise<PaginatedResponse<UserHistoryEntry>> {
+  ): Promise<PaginatedResponse<UserTransactionHistoryEntry>> {
     const apiClient = this.requireApi();
     const normalizedFilters = normalizeTransactionHistoryFilters(
       marketOrFilters,
@@ -236,15 +239,7 @@ export class HistoryModule {
     const response = await apiClient.get<UserHistoryResponse>(requestPath);
 
     return {
-      items: response.items.map((item) => ({
-        id: item.id,
-        type: item.type,
-        amount: parseBigInt(item.amount, "history user amount"),
-        poolId: item.poolId,
-        timestamp: item.timestamp,
-        status: mapHistoryStatusFromApi(item.status),
-        txids: item.txids,
-      })),
+      items: response.items.map(mapUserTransactionHistoryEntry),
       nextCursor: response.nextCursor,
     };
   }
@@ -259,17 +254,17 @@ export class HistoryModule {
   async getLiquidationHistory(
     user: string,
     filters?: UserLiquidationHistoryFilters
-  ): Promise<PaginatedResponse<UserHistoryEntry>>;
+  ): Promise<PaginatedResponse<UserLiquidationHistoryEntry>>;
   async getLiquidationHistory(
     user: string,
     market?: string,
     filters?: UserLiquidationHistoryFilters
-  ): Promise<PaginatedResponse<UserHistoryEntry>>;
+  ): Promise<PaginatedResponse<UserLiquidationHistoryEntry>>;
   async getLiquidationHistory(
     user: string,
     marketOrFilters?: string | UserLiquidationHistoryFilters,
     filters: UserLiquidationHistoryFilters = {}
-  ): Promise<PaginatedResponse<UserHistoryEntry>> {
+  ): Promise<PaginatedResponse<UserLiquidationHistoryEntry>> {
     const apiClient = this.requireApi();
     const normalizedFilters = normalizeLiquidationHistoryFilters(
       marketOrFilters,
@@ -299,18 +294,73 @@ export class HistoryModule {
     const response = await apiClient.get<UserHistoryResponse>(requestPath);
 
     return {
-      items: response.items.map((item) => ({
-        id: item.id,
-        type: item.type,
-        amount: parseBigInt(item.amount, "history user amount"),
-        poolId: item.poolId,
-        timestamp: item.timestamp,
-        status: mapHistoryStatusFromApi(item.status),
-        txids: item.txids,
-      })),
+      items: response.items.map(mapUserLiquidationHistoryEntry),
       nextCursor: response.nextCursor,
     };
   }
+}
+
+function mapUserTransactionHistoryEntry(
+  item: UserHistoryResponse["items"][number]
+): UserTransactionHistoryEntry {
+  return {
+    id: item.id,
+    type: mapUserTransactionHistoryType(item.type),
+    amount: parseBigInt(item.amount, "history user amount"),
+    poolId: item.poolId,
+    timestamp: item.timestamp,
+    status: mapHistoryStatusFromApi(item.status),
+    txids: item.txids,
+  };
+}
+
+function mapUserLiquidationHistoryEntry(
+  item: UserHistoryResponse["items"][number]
+): UserLiquidationHistoryEntry {
+  if (item.type !== "liquidation") {
+    throw new LiquidiumError(
+      LiquidiumErrorCode.INTERNAL,
+      `Invalid liquidation history type: ${item.type}`
+    );
+  }
+
+  return {
+    id: item.id,
+    type: "liquidation",
+    amount: parseBigInt(item.amount, "history user amount"),
+    poolId: item.poolId,
+    timestamp: item.timestamp,
+    status: mapLiquidationHistoryStatus(item.status),
+    txids: item.txids,
+  };
+}
+
+function mapUserTransactionHistoryType(
+  type: UserHistoryEntry["type"]
+): UserTransactionHistoryType {
+  if (type !== "liquidation") {
+    return type;
+  }
+
+  throw new LiquidiumError(
+    LiquidiumErrorCode.INTERNAL,
+    "Transaction history response included a liquidation entry"
+  );
+}
+
+function mapLiquidationHistoryStatus(
+  status: UserHistoryStatusApi
+): typeof UserHistoryStatus.confirmed {
+  const mappedStatus = mapHistoryStatusFromApi(status);
+
+  if (mappedStatus === UserHistoryStatus.confirmed) {
+    return mappedStatus;
+  }
+
+  throw new LiquidiumError(
+    LiquidiumErrorCode.INTERNAL,
+    `Invalid liquidation history status: ${status}`
+  );
 }
 
 function createHistoryWindowQuery(

@@ -35,6 +35,16 @@ export interface OutflowDetails {
   receiver: OutflowReceiver;
 }
 
+export type BorrowOutflowDetails = OutflowDetails & {
+  outflowType: "borrow";
+  receiver: { type: "External"; account: string };
+};
+
+export type WithdrawOutflowDetails = OutflowDetails & {
+  outflowType: "withdraw";
+  receiver: { type: "External"; account: string };
+};
+
 export interface BorrowSubmitSignatureInfo extends SignatureInfo {}
 
 export interface WithdrawSubmitSignatureInfo extends SignatureInfo {}
@@ -56,7 +66,7 @@ export interface CreateBorrowData extends CreateBorrowRequest {
 }
 
 export interface BorrowAction
-  extends SignMessageWalletAction<CreateBorrowData, OutflowDetails> {
+  extends SignMessageWalletAction<CreateBorrowData, BorrowOutflowDetails> {
   kind: typeof WalletActionKind.createBorrow;
   executionKind: typeof WalletExecutionKind.signMessage;
   actionType: typeof WalletActionKind.createBorrow;
@@ -78,7 +88,7 @@ export interface CreateWithdrawData extends CreateWithdrawRequest {
 }
 
 export interface WithdrawAction
-  extends SignMessageWalletAction<CreateWithdrawData, OutflowDetails> {
+  extends SignMessageWalletAction<CreateWithdrawData, WithdrawOutflowDetails> {
   kind: typeof WalletActionKind.createWithdraw;
   executionKind: typeof WalletExecutionKind.signMessage;
   actionType: typeof WalletActionKind.createWithdraw;
@@ -119,19 +129,28 @@ interface BaseSupplyFlowRequest {
   action: SupplyAction;
 }
 
-/**
- * Input for transfer-based `lending.supply`. Omitting wallet fields returns
- * instructions so the caller can broadcast manually and call `SupplyFlow.submit`.
- */
-export interface TransferSupplyFlowRequest extends BaseSupplyFlowRequest {
+/** Manual transfer-based `lending.supply` request. */
+export interface ManualTransferSupplyFlowRequest extends BaseSupplyFlowRequest {
   mechanism?: typeof SupplyPlanType.transfer;
-  walletAdapter?: Pick<
+  walletAdapter?: never;
+  account?: never;
+  amount?: never;
+}
+
+/** Wallet-executed transfer-based `lending.supply` request. */
+export interface WalletTransferSupplyFlowRequest extends BaseSupplyFlowRequest {
+  mechanism?: typeof SupplyPlanType.transfer;
+  walletAdapter: Pick<
     WalletAdapter,
     "sendBtcTransaction" | "sendEthTransaction"
   >;
-  account?: string;
-  amount?: bigint;
+  account: string;
+  amount: bigint;
 }
+
+export type TransferSupplyFlowRequest =
+  | ManualTransferSupplyFlowRequest
+  | WalletTransferSupplyFlowRequest;
 
 /** Input for contract-interaction `lending.supply`, which always executes now. */
 export interface ContractInteractionSupplyFlowRequest

@@ -28,6 +28,7 @@ import {
   Chain,
   type EvmReadClient,
   InflowSubmitType,
+  OutflowType,
   SupplyAction,
 } from "../../core/types";
 import { encodeInflowSubaccount } from "../../core/utils/inflow-subaccount";
@@ -60,6 +61,7 @@ import {
 } from "./mappers";
 import {
   type BorrowAction,
+  type BorrowOutflowDetails,
   type BorrowSubmitSignatureInfo,
   type CreateBorrowRequest,
   type CreateWithdrawRequest,
@@ -76,6 +78,7 @@ import {
   SupplyPlanType,
   type SupplyTarget,
   type WithdrawAction,
+  type WithdrawOutflowDetails,
   type WithdrawSubmitSignatureInfo,
 } from "./types";
 
@@ -190,7 +193,7 @@ export class LendingModule {
   private async submitWithdraw(
     request: OutflowRequestData,
     signatureInfo: WithdrawSubmitSignatureInfo
-  ): Promise<OutflowDetails> {
+  ): Promise<WithdrawOutflowDetails> {
     try {
       const result = await createLendingActor(this.canisterContext).withdraw(
         Principal.fromText(request.profileId),
@@ -215,7 +218,11 @@ export class LendingModule {
         throw mapLendingProtocolErrorToLiquidiumError(result.Err);
       }
 
-      return mapCanisterOutflowDetails(result.Ok);
+      return mapExpectedOutflowDetails(
+        mapCanisterOutflowDetails(result.Ok),
+        OutflowType.withdraw,
+        "withdraw"
+      );
     } catch (error) {
       if (error instanceof LiquidiumError) {
         throw error;
@@ -235,7 +242,7 @@ export class LendingModule {
    */
   async withdraw(
     params: CreateWithdrawRequest & WalletExecutionParams
-  ): Promise<OutflowDetails> {
+  ): Promise<WithdrawOutflowDetails> {
     const action = await this.prepareWithdraw(params);
 
     return await executeWith({
@@ -317,7 +324,7 @@ export class LendingModule {
   private async submitBorrow(
     request: OutflowRequestData,
     signatureInfo: BorrowSubmitSignatureInfo
-  ): Promise<OutflowDetails> {
+  ): Promise<BorrowOutflowDetails> {
     try {
       const result = await createLendingActor(
         this.canisterContext
@@ -341,7 +348,11 @@ export class LendingModule {
         throw mapLendingProtocolErrorToLiquidiumError(result.Err);
       }
 
-      return mapCanisterOutflowDetails(result.Ok);
+      return mapExpectedOutflowDetails(
+        mapCanisterOutflowDetails(result.Ok),
+        OutflowType.borrow,
+        "borrow_assets"
+      );
     } catch (error) {
       if (error instanceof LiquidiumError) {
         throw error;
@@ -365,7 +376,7 @@ export class LendingModule {
    */
   async borrow(
     params: CreateBorrowRequest & WalletExecutionParams
-  ): Promise<OutflowDetails> {
+  ): Promise<BorrowOutflowDetails> {
     const action = await this.prepareBorrow(params);
 
     return await executeWith({
@@ -1110,6 +1121,38 @@ function normalizeAndValidateEvmAddress(
   }
 
   return getAddress(address) as EvmAddress;
+}
+
+function mapExpectedOutflowDetails(
+  details: OutflowDetails,
+  expectedOutflowType: typeof OutflowType.borrow,
+  operation: string
+): BorrowOutflowDetails;
+function mapExpectedOutflowDetails(
+  details: OutflowDetails,
+  expectedOutflowType: typeof OutflowType.withdraw,
+  operation: string
+): WithdrawOutflowDetails;
+function mapExpectedOutflowDetails(
+  details: OutflowDetails,
+  expectedOutflowType: typeof OutflowType.borrow | typeof OutflowType.withdraw,
+  operation: string
+): BorrowOutflowDetails | WithdrawOutflowDetails {
+  if (details.outflowType !== expectedOutflowType) {
+    throw new LiquidiumError(
+      LiquidiumErrorCode.INTERNAL,
+      `${operation} returned unexpected outflow type ${details.outflowType}`
+    );
+  }
+
+  if (details.receiver.type !== "External") {
+    throw new LiquidiumError(
+      LiquidiumErrorCode.INTERNAL,
+      `${operation} returned unexpected receiver type ${details.receiver.type}`
+    );
+  }
+
+  return details as BorrowOutflowDetails | WithdrawOutflowDetails;
 }
 
 async function delay(timeoutMs: number): Promise<void> {

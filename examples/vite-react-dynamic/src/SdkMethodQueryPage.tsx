@@ -574,14 +574,23 @@ const SDK_METHODS: MethodDefinition[] = [
         });
       }
 
+      if (walletAdapter) {
+        return await client.lending.supply({
+          profileId: expectNonEmptyString(args.profileId, "profileId"),
+          poolId: expectNonEmptyString(args.poolId, "poolId"),
+          action: expectSupplyAction(args.action, "action"),
+          mechanism: "transfer",
+          account: expectNonEmptyString(args.account, "account"),
+          amount: expectBigInt(args.amount, "amount"),
+          walletAdapter,
+        });
+      }
+
       return await client.lending.supply({
         profileId: expectNonEmptyString(args.profileId, "profileId"),
         poolId: expectNonEmptyString(args.poolId, "poolId"),
         action: expectSupplyAction(args.action, "action"),
         mechanism: "transfer",
-        account,
-        amount,
-        walletAdapter,
       });
     },
   },

@@ -18,7 +18,12 @@ export type {
   UserHistoryEntryApiItem,
   UserHistoryResponse,
   UserHistoryStatusApi,
+  UserHistoryType,
+  UserLiquidationHistoryEntry,
   UserLiquidationHistoryFilters,
+  UserLiquidationHistoryType,
+  UserTransactionHistoryEntry,
   UserTransactionHistoryFilters,
+  UserTransactionHistoryType,
 } from "./types";
 export { UserHistoryStatus } from "./types";

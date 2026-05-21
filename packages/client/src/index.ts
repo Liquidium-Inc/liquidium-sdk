@@ -47,7 +47,13 @@ export type {
   Activity,
   GetActivityStatusRequest,
   GetActivityStatusResponse,
+  InflowActivity,
+  InflowActivityKind,
+  InflowActivityStatus,
   ListActivitiesRequest,
+  OutflowActivity,
+  OutflowActivityKind,
+  OutflowActivityStatus,
 } from "./modules/activities";
 export {
   ActivityDirection,
@@ -72,8 +78,13 @@ export type {
   UserHistoryEntryApiItem,
   UserHistoryResponse,
   UserHistoryStatusApi,
+  UserHistoryType,
+  UserLiquidationHistoryEntry,
   UserLiquidationHistoryFilters,
+  UserLiquidationHistoryType,
+  UserTransactionHistoryEntry,
   UserTransactionHistoryFilters,
+  UserTransactionHistoryType,
 } from "./modules/history";
 export { UserHistoryStatus } from "./modules/history";
 export type {
@@ -93,6 +104,7 @@ export {
 } from "./modules/instant-loans";
 export type {
   BorrowAction,
+  BorrowOutflowDetails,
   BorrowSubmitSignatureInfo,
   ContractInteractionSupplyFlowRequest,
   CreateBorrowData,
@@ -114,6 +126,7 @@ export type {
   SupplyTarget,
   TransferSupplyFlowRequest,
   WithdrawAction,
+  WithdrawOutflowDetails,
   WithdrawSubmitSignatureInfo,
 } from "./modules/lending";
 export {

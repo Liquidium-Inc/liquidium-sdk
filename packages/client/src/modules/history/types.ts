@@ -8,22 +8,44 @@ export type UserHistoryStatus =
   (typeof UserHistoryStatus)[keyof typeof UserHistoryStatus];
 export type UserHistoryStatusApi = Uppercase<UserHistoryStatus>;
 
-export interface UserHistoryEntry {
+export type UserTransactionHistoryType =
+  | "supply"
+  | "borrow"
+  | "repay"
+  | "withdraw";
+export type UserLiquidationHistoryType = "liquidation";
+export type UserHistoryType =
+  | UserTransactionHistoryType
+  | UserLiquidationHistoryType;
+
+interface BaseUserHistoryEntry {
   id: string;
-  type: "supply" | "borrow" | "repay" | "withdraw" | "liquidation";
   amount: bigint;
   poolId: string;
   timestamp: string;
-  status: UserHistoryStatus;
   txids?: string[];
 }
+
+export interface UserTransactionHistoryEntry extends BaseUserHistoryEntry {
+  type: UserTransactionHistoryType;
+  status: UserHistoryStatus;
+}
+
+export interface UserLiquidationHistoryEntry extends BaseUserHistoryEntry {
+  type: UserLiquidationHistoryType;
+  status: typeof UserHistoryStatus.confirmed;
+}
+
+export type UserHistoryEntry =
+  | UserTransactionHistoryEntry
+  | UserLiquidationHistoryEntry;
 
 export interface UserTransactionHistoryFilters {
   cursor?: string;
   limit?: number;
   market?: string;
   poolId?: string;
-  types?: UserHistoryEntry["type"][];
+  types?: UserTransactionHistoryType[];
   statuses?: UserHistoryEntry["status"][];
   from?: string;
   to?: string;
@@ -69,7 +91,7 @@ export interface BorrowRateHistoryResponse {
 
 export interface UserHistoryEntryApiItem {
   id: string;
-  type: UserHistoryEntry["type"];
+  type: UserHistoryType;
   amount: string;
   poolId: string;
   timestamp: string;

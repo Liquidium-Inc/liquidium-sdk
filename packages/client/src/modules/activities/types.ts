@@ -45,12 +45,29 @@ export interface ActivityTopUp {
   shortfallAmount: bigint;
 }
 
-export interface Activity {
+export type InflowActivityKind =
+  | typeof ActivityKind.deposit
+  | typeof ActivityKind.repayment;
+export type OutflowActivityKind =
+  | typeof ActivityKind.borrow
+  | typeof ActivityKind.withdraw;
+
+export type InflowActivityStatus =
+  | typeof ActivityStatus.requested
+  | typeof ActivityStatus.pending
+  | typeof ActivityStatus.detected
+  | typeof ActivityStatus.processing
+  | typeof ActivityStatus.confirmed
+  | typeof ActivityStatus.failed;
+export type OutflowActivityStatus =
+  | typeof ActivityStatus.requested
+  | typeof ActivityStatus.pending
+  | typeof ActivityStatus.sent
+  | typeof ActivityStatus.confirmed
+  | typeof ActivityStatus.failed;
+
+interface BaseActivity {
   id: string;
-  direction: ActivityDirection;
-  kind: ActivityKind;
-  /** Single consumer-facing lifecycle status. */
-  status: ActivityStatus;
   poolId: string;
   asset: string | null;
   chain: Chain | null;
@@ -60,8 +77,25 @@ export interface Activity {
   txids?: string[];
   confirmations: number | null;
   requiredConfirmations: number | null;
+}
+
+export interface InflowActivity extends BaseActivity {
+  direction: typeof ActivityDirection.inflow;
+  kind: InflowActivityKind;
+  /** Single consumer-facing lifecycle status. */
+  status: InflowActivityStatus;
   topUp?: ActivityTopUp;
 }
+
+export interface OutflowActivity extends BaseActivity {
+  direction: typeof ActivityDirection.outflow;
+  kind: OutflowActivityKind;
+  /** Single consumer-facing lifecycle status. */
+  status: OutflowActivityStatus;
+  topUp?: never;
+}
+
+export type Activity = InflowActivity | OutflowActivity;
 
 export type ListActivitiesRequest = {
   filter?: ActivityFilter;

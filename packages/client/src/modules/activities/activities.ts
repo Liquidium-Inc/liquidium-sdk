@@ -18,7 +18,11 @@ import type {
   ActivityTopUp,
   GetActivityStatusRequest,
   GetActivityStatusResponse,
+  InflowActivityKind,
+  InflowActivityStatus,
   ListActivitiesRequest,
+  OutflowActivityKind,
+  OutflowActivityStatus,
 } from "./types";
 import { ActivityDirection, ActivityFilter } from "./types";
 
@@ -47,8 +51,19 @@ type ActivityWireStage =
   | "pending"
   | "finalising";
 
-type ActivityWire = Omit<Activity, "amount" | "status" | "topUp"> & {
+type ActivityWire = {
+  id: string;
+  direction: Activity["direction"];
+  kind: Activity["kind"];
+  poolId: string;
+  asset: string | null;
+  chain: Chain | null;
   amount: string;
+  timestampMs: number;
+  txid: string | null;
+  txids?: string[];
+  confirmations: number | null;
+  requiredConfirmations: number | null;
   status: ActivityWireStatus;
   stage?: ActivityWireStage;
   topUp?: ActivityTopUpWire;
@@ -190,14 +205,77 @@ function mapInstantLoanLookupError(
 function mapActivity(wire: ActivityWire): Activity {
   const { amount, stage, status, topUp: topUpWire, ...activity } = wire;
   const effectiveStage = stage ?? deriveActivityStage(wire);
-  const topUp = topUpWire ? mapActivityTopUp(topUpWire) : undefined;
+  const topUp =
+    activity.direction === ActivityDirection.inflow && topUpWire
+      ? mapActivityTopUp(topUpWire)
+      : undefined;
+
+  if (activity.direction === ActivityDirection.inflow) {
+    return {
+      ...activity,
+      direction: ActivityDirection.inflow,
+      kind: mapInflowActivityKind(activity.kind),
+      status: mapInflowActivityStatus(
+        mapActivityStatus(status, effectiveStage)
+      ),
+      ...(topUp ? { topUp } : {}),
+      amount: parseBigInt(amount, "activity amount"),
+    };
+  }
 
   return {
     ...activity,
-    status: mapActivityStatus(status, effectiveStage),
-    ...(topUp ? { topUp } : {}),
+    direction: ActivityDirection.outflow,
+    kind: mapOutflowActivityKind(activity.kind),
+    status: mapOutflowActivityStatus(mapActivityStatus(status, effectiveStage)),
     amount: parseBigInt(amount, "activity amount"),
   };
+}
+
+function mapInflowActivityKind(kind: Activity["kind"]): InflowActivityKind {
+  if (kind === "deposit" || kind === "repayment") {
+    return kind;
+  }
+
+  throw new LiquidiumError(
+    LiquidiumErrorCode.INTERNAL,
+    `Invalid inflow activity kind: ${kind}`
+  );
+}
+
+function mapOutflowActivityKind(kind: Activity["kind"]): OutflowActivityKind {
+  if (kind === "borrow" || kind === "withdraw") {
+    return kind;
+  }
+
+  throw new LiquidiumError(
+    LiquidiumErrorCode.INTERNAL,
+    `Invalid outflow activity kind: ${kind}`
+  );
+}
+
+function mapInflowActivityStatus(status: ActivityStatus): InflowActivityStatus {
+  if (status !== "sent") {
+    return status;
+  }
+
+  throw new LiquidiumError(
+    LiquidiumErrorCode.INTERNAL,
+    `Invalid inflow activity status: ${status}`
+  );
+}
+
+function mapOutflowActivityStatus(
+  status: ActivityStatus
+): OutflowActivityStatus {
+  if (status !== "detected" && status !== "processing") {
+    return status;
+  }
+
+  throw new LiquidiumError(
+    LiquidiumErrorCode.INTERNAL,
+    `Invalid outflow activity status: ${status}`
+  );
 }
 
 function mapActivityStatus(

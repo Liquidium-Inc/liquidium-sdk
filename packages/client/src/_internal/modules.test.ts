@@ -925,6 +925,12 @@ describe("ActivitiesModule", () => {
         txid: "tx-1",
         confirmations: ACTIVITY_CONFIRMATIONS,
         requiredConfirmations: ACTIVITY_REQUIRED_CONFIRMATIONS,
+        topUp: {
+          required: true,
+          depositedAmount: "1000",
+          feeAmount: "2000",
+          shortfallAmount: "1000",
+        },
       },
     };
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
