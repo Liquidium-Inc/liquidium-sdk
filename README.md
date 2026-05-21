@@ -2,38 +2,49 @@
 ![license](https://img.shields.io/npm/l/@liquidium/client)
 
 <p align="center">
-  <img src="./borrow.svg" alt="Liquidium borrow illustration" width="700" />
+  <img src="https://raw.githubusercontent.com/Liquidium-Inc/liquidium-sdk/main/borrow.svg" alt="Liquidium borrow illustration" width="700" />
 </p>
 
 <h1 align="center">Liquidium SDK</h1>
 
 <p align="center">
-  Use the Liquidium SDK from TypeScript apps. Start here with the accountless instant-loan flow.
+  Use the Liquidium SDK from TypeScript apps. Start with accountless instant loans.
 </p>
 
 <p align="center">
-  <a href="./examples/instant-loans-flow"><b>Instant Loan Example</b></a> ·
-  <a href="./examples/vite-react-dynamic"><b>SDK Method Query Example</b></a> ·
-  <a href="./packages/client/README.md"><b>Full Client API</b></a>
+  <a href="https://github.com/Liquidium-Inc/liquidium-sdk/tree/main/examples/instant-loans-flow"><b>Instant Loan Example</b></a> ·
+  <a href="https://github.com/Liquidium-Inc/liquidium-sdk/tree/main/examples/vite-react-dynamic"><b>SDK Method Query Example</b></a> ·
+  <a href="#core-api"><b>Core API</b></a>
 </p>
 
 ## Why Start With Instant Loans
 
-- **Accountless loan creation**: create an instant loan without asking users to create or manage a Liquidium profile first.
-- **Generated transfer targets**: receive the collateral deposit target and repayment target directly from the SDK response.
-- **Reference-based restore**: save `loan.ref` and reload canonical loan state from any browser session or support link.
-- **Built-in LTV helpers**: use market pools and prices to validate collateral and borrow amounts before creating the loan.
-- **Status and repayment quote**: reload the current lifecycle status, position state, and full repayment amount in one call.
+- **Accountless loan creation**: create instant loans without requiring a Liquidium profile.
+- **Generated transfer targets**: get collateral deposit and repayment targets from the SDK response.
+- **Reference-based restore**: save `loan.ref` and reload loan state from any browser session or support link.
+- **LTV checks**: use market pools and prices to validate collateral and borrow amounts before loan creation.
+- **Status and repayment quote**: reload lifecycle status, position state, and repayment amount in one call.
+
+## Integration Paths
+
+Liquidium supports two lending integration paths:
+
+| Path | Use when | Main SDK calls |
+| --- | --- | --- |
+| Recommended: accountless instant loans | You want a short checkout-style flow where users borrow against collateral without creating a Liquidium profile first | `client.instantLoans.create(...)`, `client.instantLoans.get(...)`, `client.activities.list(...)` |
+| Account-based profile flows | You want users to keep a Liquidium profile, manage positions across sessions, supply funds, borrow, withdraw, or use ETH contract-interaction deposits | `client.accounts.createProfile(...)`, `client.lending.supply(...)`, `client.lending.borrow(...)`, `client.lending.withdraw(...)`, `client.positions.list(...)` |
+
+Use accountless instant loans for new borrow flows unless you need profile-level position management. Use account-based flows when your app owns the full lending dashboard experience.
 
 ## Quick Start
 
-Install the client package and ICP packages used by the SDK:
+Install the client package:
 
 ```bash
-npm install @liquidium/client @dfinity/agent @dfinity/candid @dfinity/principal
+npm install @liquidium/client
 ```
 
-Create an instant loan, show the generated deposit target, and restore the loan by reference:
+Create an instant loan, display the deposit target, and restore the loan by reference:
 
 ```ts
 import { LiquidiumClient, type Pool, type SupplyTarget } from "@liquidium/client";
@@ -123,7 +134,7 @@ function formatSupplyTarget(target: SupplyTarget): string {
 
 ## Instant Loan Flow
 
-The default integration is intentionally small:
+Instant-loan integrations use this sequence:
 
 | Step | SDK call | What your app does |
 | --- | --- | --- |
@@ -133,7 +144,7 @@ The default integration is intentionally small:
 | Track loan | `client.instantLoans.get({ ref })` and `client.activities.list({ shortRef: ref })` | Reload loan state and monitor deposit, borrow, and repayment activity |
 | Repay loan | Read `loan.repayment` | Ask the user to send `loan.repayment.amount` to `loan.repayment.target` |
 
-`client.instantLoans.create(...)` returns the generated Liquidium profile, transfer targets, current position state, and repayment quote. The user does not need to manage the generated profile directly.
+`client.instantLoans.create(...)` returns the generated Liquidium profile, transfer targets, current position state, and repayment quote. Users do not manage the generated profile.
 
 ## Core API
 
@@ -158,13 +169,13 @@ Creates an accountless instant loan and returns generated transfer targets.
 
 ### `client.instantLoans.get({ ref })`
 
-Loads canonical loan state from a saved user-facing reference.
+Loads loan state from a saved user-facing reference.
 
 Use this for status pages, refreshes, and support links.
 
 ### `client.instantLoans.get({ loanId })`
 
-Loads canonical loan state by numeric canister loan id.
+Loads loan state by numeric canister loan id.
 
 Use this when your backend stores the numeric id instead of the short reference.
 
@@ -172,7 +183,7 @@ Use this when your backend stores the numeric id instead of the short reference.
 
 Finds candidate loans associated with a borrow or refund address.
 
-This is a recovery helper only. Candidates are intentionally lightweight; call `client.instantLoans.get({ ref })` or `client.instantLoans.get({ loanId })` before showing canonical loan state or transfer targets.
+Use this only for recovery. The method returns candidate matches; call `client.instantLoans.get({ ref })` or `client.instantLoans.get({ loanId })` before showing loan state or transfer targets.
 
 ### `client.quote.calculateLtv(request, pools, prices)`
 
@@ -182,12 +193,12 @@ Use this before `client.instantLoans.create(...)` so your app can block invalid 
 
 ## Response Fields
 
-These are the fields most user-facing instant loan UIs should show or store:
+Most instant-loan UIs show or store these fields:
 
 | Field | Use |
 | --- | --- |
 | `loan.ref` | Save and show this reference so the loan can be restored later |
-| `loan.status` | Show the simplified lifecycle: `awaiting_deposit`, `deposit_detected`, `active`, `settling`, or `closed` |
+| `loan.status` | Show the lifecycle: `awaiting_deposit`, `deposit_detected`, `active`, `settling`, or `closed` |
 | `loan.depositTarget` | Address or ICRC account where the user sends collateral |
 | `loan.repayment.amount` | Full amount to repay, including fee and interest buffer |
 | `loan.repayment.target` | Address or ICRC account where the user sends repayment |
@@ -195,7 +206,7 @@ These are the fields most user-facing instant loan UIs should show or store:
 
 ## Amounts
 
-All amount fields are `bigint` values in the asset's smallest unit.
+The SDK returns amount fields as `bigint` values in the asset's smallest unit.
 
 | Asset type | Example |
 | --- | --- |
@@ -206,9 +217,9 @@ Use `Pool.decimals` from `client.market.listPools()` when converting user-entere
 
 ## Status And Activity Tracking
 
-Reload the loan itself with `client.instantLoans.get({ ref })` when you need current loan state, transfer targets, or the latest repayment quote.
+Reload loans with `client.instantLoans.get({ ref })` when you need current state, transfer targets, or the latest repayment quote.
 
-Use activities to track the operational flow behind the loan, including collateral deposits, borrow outflows, repayment deposits, confirmations, and fee top-ups. The activities module accepts the same saved instant-loan reference and resolves the generated profile for you:
+Use activities to track collateral deposits, borrow outflows, repayment deposits, confirmations, and fee top-ups. The activities module accepts the saved instant-loan reference and resolves the generated profile for you:
 
 ```ts
 const activities = await client.activities.list({
@@ -228,16 +239,18 @@ const activityStatus = await client.activities.getStatus({
 
 ## Example Apps
 
-The examples are the best starting point for browser integrations.
+Start browser integrations with the examples.
 
 | Example | What it shows |
 | --- | --- |
-| [`examples/instant-loans-flow`](./examples/instant-loans-flow) | Full instant loan UX with Dynamic wallet connection, pool selection, LTV preview, loan creation, status reload, activity status, and address recovery |
-| [`examples/vite-react-dynamic`](./examples/vite-react-dynamic) | Developer tool for calling SDK methods directly, including instant loan method templates |
+| [`examples/instant-loans-flow`](https://github.com/Liquidium-Inc/liquidium-sdk/tree/main/examples/instant-loans-flow) | Instant loan UX with Dynamic wallet connection, pool selection, LTV preview, loan creation, status reload, activity status, and address recovery |
+| [`examples/vite-react-dynamic`](https://github.com/Liquidium-Inc/liquidium-sdk/tree/main/examples/vite-react-dynamic) | Developer tool for calling SDK methods, including instant loan method templates |
 
 Run the instant loan example:
 
 ```bash
+git clone https://github.com/Liquidium-Inc/liquidium-sdk.git
+cd liquidium-sdk
 pnpm install
 cp examples/instant-loans-flow/.env.example examples/instant-loans-flow/.env
 pnpm --filter @liquidium/example-instant-loans-flow dev
@@ -247,7 +260,7 @@ Set `VITE_DYNAMIC_ENVIRONMENT_ID` in `examples/instant-loans-flow/.env` before s
 
 ## Browser And Runtime Support
 
-The SDK is intended for browser apps and modern TypeScript runtimes.
+Use the SDK in browser apps and modern TypeScript runtimes.
 
 | Requirement | Notes |
 | --- | --- |
@@ -259,6 +272,8 @@ The SDK is intended for browser apps and modern TypeScript runtimes.
 ## Development
 
 ```bash
+git clone https://github.com/Liquidium-Inc/liquidium-sdk.git
+cd liquidium-sdk
 pnpm install
 pnpm run build
 pnpm run typecheck
@@ -267,7 +282,7 @@ pnpm run test
 
 ## More API Details
 
-See [`packages/client/README.md`](./packages/client/README.md) for the full client API reference. Most new integrations should still start with `client.instantLoans`; profile-based deposit-address flows and ETH contract-interaction flows are advanced paths.
+This README covers `@liquidium/client`. Start new integrations with `client.instantLoans`; profile-based deposit-address flows and ETH contract-interaction flows are advanced paths.
 
 ## License
 
