@@ -88,7 +88,6 @@ export class LiquidiumClient {
     );
     this.quote = new QuoteModule();
   }
-
 }
 
 function resolveEvmReadClient(
