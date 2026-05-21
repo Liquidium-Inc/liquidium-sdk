@@ -14,17 +14,15 @@ It provides a single SDK method query screen where you can:
 
 1. Copy `.env.example` to `.env`
 2. Set `VITE_DYNAMIC_ENVIRONMENT_ID` from your Dynamic dashboard
-3. Set `VITE_LIQUIDIUM_BASE_URL` to the Liquidium service base URL. The example
-   defaults to `https://app.liquidium.fi/api/sdk`.
-4. Set `VITE_INFURA_API_KEY` for ETH reads that need an RPC provider.
+3. Set `VITE_INFURA_API_KEY` for ETH reads that need an RPC provider.
    Alternatively, set `VITE_EVM_RPC_URL` to a full Ethereum mainnet RPC URL.
-5. Install dependencies from the SDK root:
+4. Install dependencies from the SDK root:
 
 ```bash
 pnpm install
 ```
 
-6. Run the example:
+5. Run the example:
 
 ```bash
 pnpm --filter @liquidium/example-vite-react-dynamic dev

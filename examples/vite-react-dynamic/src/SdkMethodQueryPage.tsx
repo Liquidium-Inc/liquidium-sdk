@@ -248,7 +248,7 @@ const SDK_METHODS: MethodDefinition[] = [
     id: "instantLoans.create",
     label: "instantLoans.create",
     defaultArgs:
-      '{\n  "collateralPoolId": "42svn-2yaaa-aaaae-qfcsq-cai",\n  "borrowPoolId": "7dcux-qqaaa-aaaae-qfc3a-cai",\n  "collateralAsset": "BTC",\n  "borrowAsset": "USDT",\n  "collateralAmount": "37000",\n  "borrowAmount": "9000000",\n  "ltvMaxBps": "6800",\n  "depositWindowSeconds": "3600",\n  "borrowDestination": {\n    "type": "External",\n    "address": "0xYourBorrowAddress"\n  },\n  "refundDestination": {\n    "type": "External",\n    "address": "bc1qYourRefundAddress"\n  }\n}',
+      '{\n  "collateralPoolId": "hkmli-faaaa-aaaar-qb4ba-cai",\n  "borrowPoolId": "hnnn4-iyaaa-aaaar-qb4bq-cai",\n  "collateralAsset": "BTC",\n  "borrowAsset": "USDT",\n  "collateralAmount": "37000",\n  "borrowAmount": "9000000",\n  "ltvMaxBps": "6800",\n  "depositWindowSeconds": "3600",\n  "borrowDestination": {\n    "type": "External",\n    "address": "0xYourBorrowAddress"\n  },\n  "refundDestination": {\n    "type": "External",\n    "address": "bc1qYourRefundAddress"\n  }\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
       return await client.instantLoans.create({
