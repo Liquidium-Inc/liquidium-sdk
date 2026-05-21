@@ -12,7 +12,7 @@
   "dependencies": {
     "@dynamic-labs/ethereum": "^4.83.1",
     "@dynamic-labs/sdk-react-core": "^4.83.1",
-    "@liquidium/client": "workspace:*",
+    "@liquidium/client": "0.1.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6"
   },

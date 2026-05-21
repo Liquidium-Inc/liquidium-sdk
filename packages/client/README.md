@@ -1,8 +1,8 @@
 ![npm](https://img.shields.io/npm/v/@liquidium/client?label=%40liquidium%2Fclient)
-![license](https://img.shields.io/npm/l/@liquidium/client)
+![license](https://img.shields.io/badge/license-MIT-blue)
 
 <p align="center">
-  <img src="../../borrow.svg" alt="Liquidium borrow illustration" width="700" />
+  <img src="https://raw.githubusercontent.com/Liquidium-Inc/liquidium-sdk/main/borrow.svg" alt="Liquidium borrow illustration" width="700" />
 </p>
 
 <h1 align="center">Liquidium SDK</h1>
