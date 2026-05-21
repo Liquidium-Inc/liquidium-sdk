@@ -1,4 +1,3 @@
-import { Principal } from "@dfinity/principal";
 import {
   createInstantLoansActor,
   type HeadlessLoanEvent,
@@ -30,6 +29,7 @@ import { QuoteValidationErrorCode } from "../quote/types";
 import { intFromPublicId, publicIdFromInt } from "./ref-code";
 import type {
   CreateInstantLoanRequest,
+  ExternalAccount,
   InstantLoan,
   InstantLoanAccount,
   InstantLoanAsset,
@@ -87,11 +87,14 @@ type InstantLoanCreateRequestWire = {
   borrowAmount: string;
   ltvMaxBps: string;
   depositWindowSeconds: string;
-  borrowDestination: InstantLoanAccountVariantWire;
-  refundDestination: InstantLoanAccountVariantWire;
+  borrowDestination: InstantLoanCreateAccountWire;
+  refundDestination: InstantLoanCreateAccountWire;
 };
 
-type InstantLoanAccountVariantWire = { External: string } | { Native: string };
+type InstantLoanCreateAccountWire = { External: string };
+type InstantLoanAccountVariantWire =
+  | InstantLoanCreateAccountWire
+  | { Native: string };
 
 type InstantLoanAccountWire =
   | { address: string; type: "External" }
@@ -635,41 +638,18 @@ function throwLtvCalculationError(
 }
 
 function accountWireFromInput(
-  account: string | InstantLoanAccount
-): InstantLoanAccountVariantWire {
-  if (typeof account === "string" || account.type === "External") {
-    const address =
-      typeof account === "string" ? account.trim() : account.address.trim();
-    if (!address) {
-      throw new LiquidiumError(
-        LiquidiumErrorCode.VALIDATION_ERROR,
-        "Instant loan account address must be non-empty"
-      );
-    }
-
-    return { External: address };
-  }
-
-  const principal = account.principal.trim();
-  if (!principal) {
+  account: string | ExternalAccount
+): InstantLoanCreateAccountWire {
+  const address =
+    typeof account === "string" ? account.trim() : account.address.trim();
+  if (!address) {
     throw new LiquidiumError(
       LiquidiumErrorCode.VALIDATION_ERROR,
-      "Instant loan native principal must be non-empty"
+      "Instant loan account address must be non-empty"
     );
   }
 
-  let parsedPrincipal: Principal;
-  try {
-    parsedPrincipal = Principal.fromText(principal);
-  } catch (error) {
-    throw new LiquidiumError(
-      LiquidiumErrorCode.VALIDATION_ERROR,
-      "Instant loan native principal must be valid principal text",
-      error
-    );
-  }
-
-  return { Native: parsedPrincipal.toText() };
+  return { External: address };
 }
 
 function accountFromCanister(

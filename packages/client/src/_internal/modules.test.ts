@@ -4091,7 +4091,10 @@ describe("InstantLoansModule", () => {
       borrowAmount: 5_726_000_000n,
       ltvMaxBps: 6_000n,
       depositWindowSeconds: 3_600n,
-      borrowDestination: "0x2222222222222222222222222222222222222222",
+      borrowDestination: {
+        type: "External",
+        address: "0x2222222222222222222222222222222222222222",
+      },
       refundDestination: "bc1qrefunddestination",
     });
 

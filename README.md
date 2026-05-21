@@ -60,4 +60,7 @@ const depositAddress =
     : instantLoan.depositTarget.account;
 ```
 
+Instant-loan destinations can be passed as external address strings or as
+`{ type: "External", address: "..." }` account objects.
+
 See `packages/client/README.md` for the full API guide, including instant loans, reference/address recovery, default deposit-address supply flows, explicit supply mechanism selection, activities, and history.

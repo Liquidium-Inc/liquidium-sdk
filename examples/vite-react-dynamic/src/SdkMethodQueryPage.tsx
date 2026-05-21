@@ -6,8 +6,8 @@ import type {
   Asset,
   AssetPrices,
   Chain,
+  ExternalAccount,
   InflowSubmitType,
-  InstantLoanAccount,
   LiquidiumClient,
   Pool,
   QuoteRequest,
@@ -1101,7 +1101,7 @@ function expectInstantLoanAsset(
 function expectInstantLoanAccount(
   value: unknown,
   fieldName: string
-): InstantLoanAccount {
+): ExternalAccount {
   if (typeof value === "string") {
     return {
       type: "External",
@@ -1119,17 +1119,7 @@ function expectInstantLoanAccount(
     };
   }
 
-  if (type === "Native") {
-    return {
-      type,
-      principal: expectNonEmptyString(
-        account.principal,
-        `${fieldName}.principal`
-      ),
-    };
-  }
-
-  throw new Error(`${fieldName}.type must be External or Native.`);
+  throw new Error(`${fieldName}.type must be External.`);
 }
 
 function expectOptionalChain(
