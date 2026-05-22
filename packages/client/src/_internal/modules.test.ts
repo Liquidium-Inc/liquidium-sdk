@@ -1,5 +1,5 @@
-import { Actor } from "@dfinity/agent";
-import { Principal } from "@dfinity/principal";
+import { Actor } from "@icp-sdk/core/agent";
+import { Principal } from "@icp-sdk/core/principal";
 import { decodeFunctionData } from "viem";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { DEFAULT_API_BASE_URL } from "../core/config";

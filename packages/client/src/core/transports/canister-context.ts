@@ -1,5 +1,5 @@
-import type { Identity } from "@dfinity/agent";
-import { HttpAgent } from "@dfinity/agent";
+import type { Identity } from "@icp-sdk/core/agent";
+import { HttpAgent } from "@icp-sdk/core/agent";
 import { resolveHost } from "../config";
 import type { CanisterIds } from "../types";
 

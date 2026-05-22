@@ -8,5 +8,9 @@ export default defineConfig({
   sourcemap: true,
   clean: true,
   treeshake: true,
-  external: ["@dfinity/agent", "@dfinity/candid", "@dfinity/principal"],
+  external: [
+    "@icp-sdk/core/agent",
+    "@icp-sdk/core/candid",
+    "@icp-sdk/core/principal",
+  ],
 });

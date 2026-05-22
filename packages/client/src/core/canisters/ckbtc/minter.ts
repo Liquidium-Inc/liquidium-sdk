@@ -1,4 +1,4 @@
-import { Actor } from "@dfinity/agent";
+import { Actor } from "@icp-sdk/core/agent";
 import type { _SERVICE } from "../../../generated/canisters/ck-btc-minter/declaration";
 import { idlFactory } from "../../../generated/canisters/ck-btc-minter/declaration.js";
 import { CK_CANISTER_IDS } from "../../config";

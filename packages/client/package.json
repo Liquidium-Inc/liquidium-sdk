@@ -49,8 +49,6 @@
     "prepublishOnly": "pnpm run build && pnpm run typecheck"
   },
   "dependencies": {
-    "@dfinity/agent": "2.1.3",
-    "@dfinity/candid": "2.1.3",
     "@dfinity/ledger-icrc": "2.1.3",
     "@dfinity/principal": "2.1.3",
     "@icp-sdk/core": "^5.4.0",

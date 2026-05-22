@@ -1,4 +1,4 @@
-import type { Identity } from "@dfinity/agent";
+import type { Identity } from "@icp-sdk/core/agent";
 import type { PublicClient } from "viem";
 
 /** Minimal viem-compatible client shape required for SDK EVM read calls. */
@@ -13,7 +13,7 @@ export type EvmReadClient = Pick<PublicClient, "readContract">;
 export interface LiquidiumClientConfig {
   /** Preset canister IDs. Only `mainnet` is bundled. */
   environment?: Environment;
-  /** ICP replica host override (defaults follow `@dfinity/agent`). */
+  /** ICP replica host override (defaults follow `@icp-sdk/core/agent`). */
   icHost?: string;
   /** Agent identity for signed canister calls. */
   identity?: Identity;

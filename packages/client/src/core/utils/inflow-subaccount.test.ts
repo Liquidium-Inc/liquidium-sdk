@@ -1,4 +1,4 @@
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 import { describe, expect, test } from "vitest";
 import { SupplyAction } from "../types";
 import { encodeInflowSubaccount } from "./inflow-subaccount";

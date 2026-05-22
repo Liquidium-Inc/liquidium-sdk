@@ -1,5 +1,6 @@
 import { encodeIcrcAccount } from "@dfinity/ledger-icrc";
-import { Principal } from "@dfinity/principal";
+import { Principal as DfinityPrincipal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 import { encodeFunctionData } from "viem";
 import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
 import { CK_DEPOSIT_ABI, ERC20_ABI } from "../../core/evm";
@@ -49,7 +50,7 @@ export function createDepositErc20Transaction(params: {
   action: SupplyAction;
 }): { to: string; data: string } {
   const expectedDestinationAccount = encodeIcrcAccount({
-    owner: Principal.fromText(params.poolId),
+    owner: DfinityPrincipal.fromText(params.poolId),
     subaccount: encodeInflowSubaccount({
       action: params.action,
       principal: Principal.fromText(params.profileId),

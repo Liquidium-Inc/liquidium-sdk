@@ -1,4 +1,4 @@
-import type { Principal } from "@dfinity/principal";
+import type { Principal } from "@icp-sdk/core/principal";
 import { LiquidiumError, LiquidiumErrorCode } from "../errors";
 import { SupplyAction } from "../types";
 

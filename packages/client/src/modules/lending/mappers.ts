@@ -1,4 +1,4 @@
-import type { Principal } from "@dfinity/principal";
+import type { Principal } from "@icp-sdk/core/principal";
 import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
 import { Chain, OutflowType } from "../../core/types";
 import { getVariantKey } from "../../core/utils/variant";

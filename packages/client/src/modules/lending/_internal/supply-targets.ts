@@ -1,5 +1,6 @@
 import { encodeIcrcAccount } from "@dfinity/ledger-icrc";
-import { Principal } from "@dfinity/principal";
+import { Principal as DfinityPrincipal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 import { createCkBtcMinterActor } from "../../../core/canisters/ckbtc/minter";
 import {
   createDepositAccountsActor,
@@ -280,7 +281,7 @@ function getIcrcAccountSupplyTarget(
     owner: poolPrincipal.toText(),
     subaccount,
     account: encodeIcrcAccount({
-      owner: Principal.fromText(poolPrincipal.toText()),
+      owner: DfinityPrincipal.fromText(poolPrincipal.toText()),
       subaccount,
     }),
   };

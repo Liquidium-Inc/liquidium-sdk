@@ -1,4 +1,4 @@
-import { Principal } from "@dfinity/principal";
+import { Principal } from "@icp-sdk/core/principal";
 import { getAddress, isAddress } from "viem";
 import { createDepositAccountsActor } from "../../core/canisters/deposit-accounts/actor";
 import {
