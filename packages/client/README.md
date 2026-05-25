@@ -2,7 +2,7 @@
 ![license](https://img.shields.io/badge/license-MIT-blue)
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Liquidium-Inc/liquidium-sdk/main/borrow.svg" alt="Liquidium borrow illustration" width="700" />
+  <img src="https://raw.githubusercontent.com/Liquidium-Inc/liquidium-sdk/main/sdk.svg" alt="Liquidium SDK illustration" width="700" />
 </p>
 
 <h1 align="center">Liquidium SDK</h1>
