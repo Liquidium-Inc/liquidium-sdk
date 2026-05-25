@@ -1,0 +1,31 @@
+---
+title: Instant Loans Flow Example
+description: Run the instant-loans browser example.
+order: 300
+---
+
+# Instant Loans Flow Example
+
+Use `examples/instant-loans-flow` as the starting point for accountless borrow UX.
+
+It covers:
+
+| Area | What to inspect |
+| --- | --- |
+| Wallet connection | Dynamic-powered browser wallet setup |
+| Pool selection | Market data and frozen-pool handling |
+| LTV preview | Client-side quote validation before creation |
+| Loan creation | `client.instantLoans.create(...)` request shape |
+| Status reload | `client.instantLoans.get({ ref })` |
+| Activity status | `client.activities.list(...)` and `client.activities.getStatus(...)` |
+| Recovery | `client.instantLoans.findByAddress(...)` |
+
+Run it from the SDK root:
+
+```bash
+pnpm install
+cp examples/instant-loans-flow/.env.example examples/instant-loans-flow/.env
+pnpm --filter @liquidium/example-instant-loans-flow dev
+```
+
+Set `VITE_INFURA_API_KEY` when your flow needs Ethereum reads through Infura.

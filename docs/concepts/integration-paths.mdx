@@ -1,0 +1,33 @@
+---
+title: Integration Paths
+description: Choose between instant loans and account-based profile flows.
+order: 200
+---
+
+# Integration Paths
+
+Liquidium supports two main SDK paths.
+
+## Accountless Instant Loans
+
+Use instant loans when your app wants a short borrow flow. The user chooses collateral, borrow amount, and destinations. The SDK returns deposit and repayment targets tied to a generated profile.
+
+Best fit:
+
+| App shape | Why instant loans fit |
+| --- | --- |
+| Checkout borrow flow | The app can store `loan.ref` and resume without profile management |
+| Support links | Staff can ask for the short reference and reload state |
+| Simple repayments | The SDK returns the current amount and target |
+
+## Account-Based Profile Flows
+
+Use profile flows when your app owns a full lending dashboard. Users create or reuse a Liquidium profile, supply funds, borrow, withdraw, and monitor positions across sessions.
+
+Best fit:
+
+| App shape | Why profile flows fit |
+| --- | --- |
+| Portfolio dashboard | The user manages positions over time |
+| Repeated borrowing | The same profile signs multiple actions |
+| Advanced deposits | The app can choose transfer or contract-interaction supply flows |

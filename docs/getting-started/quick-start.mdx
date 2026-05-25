@@ -1,0 +1,93 @@
+---
+title: Quick Start
+description: Create and restore an accountless instant loan.
+order: 20
+---
+
+# Quick Start
+
+Create an instant loan, show the deposit target, and restore the loan by reference.
+
+```ts
+import { LiquidiumClient, type Pool, type SupplyTarget } from "@liquidium/client";
+
+const client = new LiquidiumClient();
+
+const [pools, prices] = await Promise.all([
+  client.market.listPools(),
+  client.market.getAssetPrices(),
+]);
+
+const collateralPool = requirePool(pools, "BTC");
+const borrowPool = requirePool(pools, "USDC");
+
+const collateralAmount = 50_000n;
+const borrowAmount = 9_000_000n;
+
+const ltv = client.quote.calculateLtv(
+  {
+    collateralPoolId: collateralPool.id,
+    borrowPoolId: borrowPool.id,
+    collateralAmount,
+    borrowAmount,
+  },
+  pools,
+  prices
+);
+
+if (ltv.validationErrors.length > 0) {
+  throw new Error(ltv.validationErrors.map((error) => error.message).join(" "));
+}
+
+const loan = await client.instantLoans.create({
+  collateralPoolId: collateralPool.id,
+  borrowPoolId: borrowPool.id,
+  collateralAsset: "BTC",
+  borrowAsset: "USDC",
+  collateralAmount,
+  borrowAmount,
+  ltvMaxBps: ltv.maxAllowedLtvBps,
+  depositWindowSeconds: 3_600n,
+  borrowDestination: {
+    type: "External",
+    address: "0x2222222222222222222222222222222222222222",
+  },
+  refundDestination: {
+    type: "External",
+    address: "bc1qrefunddestination",
+  },
+});
+
+console.log("Save this loan reference:", loan.ref);
+console.log("Send collateral to:", formatSupplyTarget(loan.depositTarget));
+
+const restoredLoan = await client.instantLoans.get({ ref: loan.ref });
+
+console.log("Loan status:", restoredLoan.status);
+console.log("Repay amount:", restoredLoan.repayment.amount.toString());
+console.log("Repay target:", formatSupplyTarget(restoredLoan.repayment.target));
+
+function requirePool(pools: Pool[], asset: string): Pool {
+  const pool = pools.find((candidatePool) => candidatePool.asset === asset);
+
+  if (!pool) {
+    throw new Error(`Missing ${asset} pool.`);
+  }
+
+  if (pool.frozen) {
+    throw new Error(`${asset} pool is frozen.`);
+  }
+
+  return pool;
+}
+
+function formatSupplyTarget(target: SupplyTarget): string {
+  if (target.type === "nativeAddress") {
+    return target.address;
+  }
+
+  return target.account;
+}
+```
+
+Save `loan.ref`. Use it for refreshes, status pages, and support links.

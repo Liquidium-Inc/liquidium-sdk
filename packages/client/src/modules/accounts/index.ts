@@ -1,3 +1,7 @@
+export type {
+  CreateProfileParams,
+  PrepareCreateProfileOptions,
+} from "./accounts";
 export { AccountsModule } from "./accounts";
 export type {
   CreateAccountAction,

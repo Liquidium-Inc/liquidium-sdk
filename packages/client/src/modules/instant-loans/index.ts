@@ -14,6 +14,8 @@ export type {
   InstantLoanGetRequest,
   InstantLoanLeg,
   InstantLoanListEventsRequest,
+  InstantLoanPositionSummary,
+  InstantLoanRepayment,
   InstantLoanWarmedProfile,
   NativeAccount,
 } from "./types";

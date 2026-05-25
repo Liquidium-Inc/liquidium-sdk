@@ -23,11 +23,11 @@ import { executeWith } from "../../execute";
 import { mapCreateAccountRequestToRegisterProfileRequest } from "./mappers";
 import type { CreateAccountAction, CreateAccountRequest } from "./types";
 
-type PrepareCreateProfileOptions = {
+export type PrepareCreateProfileOptions = {
   account: string;
 };
 
-type CreateProfileParams = {
+export type CreateProfileParams = {
   account: string;
   chain: Chain;
   walletAdapter: WalletAdapter;
@@ -35,7 +35,7 @@ type CreateProfileParams = {
 
 /** Profile lifecycle and linked-wallet helpers. */
 export class AccountsModule {
-  constructor(readonly canisterContext: CanisterContext) {}
+  constructor(private readonly canisterContext: CanisterContext) {}
 
   /**
    * Prepares a profile-creation action that can be signed and submitted later.

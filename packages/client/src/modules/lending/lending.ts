@@ -88,7 +88,7 @@ const SUBMIT_INFLOW_RETRY_BACKOFF_MULTIPLIER = 2;
 const ETH_APPROVAL_POLL_INTERVAL_MS = 2_000;
 const ETH_APPROVAL_MAX_POLLS = 30;
 
-type WalletExecutionParams = {
+export type WalletExecutionParams = {
   signerChain: Chain;
   signerWalletAdapter: WalletAdapter;
 };
@@ -115,9 +115,9 @@ type EvmAddress = `0x${string}`;
 /** Borrow, withdraw, supply, inflow reporting, and fee-estimation helpers. */
 export class LendingModule {
   constructor(
-    readonly canisterContext: CanisterContext,
-    readonly apiClient: ApiClient | undefined,
-    readonly evmReadClient: EvmReadClient | undefined
+    private readonly canisterContext: CanisterContext,
+    private readonly apiClient: ApiClient | undefined,
+    private readonly evmReadClient: EvmReadClient | undefined
   ) {}
 
   /**

@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Liquidium">
+  <rect width="64" height="64" rx="16" fill="#0f766e" />
+  <path d="M19 43h26v6H13V15h6v28Z" fill="#f8fafc" />
+  <path d="M27 37c0-9 5-15 15-22 4 9 7 15 7 21 0 8-5 13-12 13-6 0-10-5-10-12Z" fill="#2dd4bf" />
+</svg>

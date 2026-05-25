@@ -1,0 +1,28 @@
+---
+title: LTV Validation
+description: Validate borrow and collateral amounts before creating an instant loan.
+order: 230
+---
+
+# LTV Validation
+
+Call `client.quote.calculateLtv(...)` before creating an instant loan. This lets your app reject invalid amount pairs before it asks the protocol to create a loan.
+
+```ts
+const ltv = client.quote.calculateLtv(
+  {
+    collateralPoolId,
+    borrowPoolId,
+    collateralAmount,
+    borrowAmount,
+  },
+  pools,
+  prices
+);
+
+if (ltv.validationErrors.length > 0) {
+  throw new Error(ltv.validationErrors.map((error) => error.message).join(" "));
+}
+```
+
+Amounts must use each asset's smallest unit. BTC uses satoshis. USDC and USDT use token base units based on the selected pool decimals.

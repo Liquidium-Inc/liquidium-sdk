@@ -18,8 +18,8 @@ const ZERO_POOL_RATE: PoolRateTuple = [0n, 0n, 0n];
 /** Pool metadata, prices, and current rate helpers. */
 export class MarketModule {
   constructor(
-    readonly canisterContext: CanisterContext,
-    readonly apiClient: ApiClient | undefined
+    private readonly canisterContext: CanisterContext,
+    private readonly apiClient: ApiClient | undefined
   ) {}
 
   /**
