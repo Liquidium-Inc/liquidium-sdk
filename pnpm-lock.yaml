@@ -39,8 +39,8 @@ importers:
         specifier: ^4.83.1
         version: 4.83.1(@dynamic-labs-wallet/primitives@0.0.337)(@types/react@19.2.15)(bufferutil@4.1.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(utf-8-validate@6.0.6)
       '@liquidium/client':
-        specifier: 0.1.0
-        version: 0.1.0(@dfinity/utils@2.14.0(@dfinity/agent@2.1.3(@dfinity/candid@2.1.3(@dfinity/principal@2.1.3))(@dfinity/principal@2.1.3))(@dfinity/candid@2.1.3(@dfinity/principal@2.1.3))(@dfinity/principal@2.1.3))(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76)
+        specifier: 0.1.1
+        version: 0.1.1(@dfinity/agent@2.1.3(@dfinity/candid@2.1.3(@dfinity/principal@2.1.3))(@dfinity/principal@2.1.3))(@dfinity/candid@2.1.3(@dfinity/principal@2.1.3))(@dfinity/utils@2.14.0(@dfinity/agent@2.1.3(@dfinity/candid@2.1.3(@dfinity/principal@2.1.3))(@dfinity/principal@2.1.3))(@dfinity/candid@2.1.3(@dfinity/principal@2.1.3))(@dfinity/principal@2.1.3))(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76)
       react:
         specifier: ^19.2.6
         version: 19.2.6
@@ -79,8 +79,8 @@ importers:
         specifier: ^4.83.1
         version: 4.83.1(@dynamic-labs-wallet/primitives@0.0.337)(@types/react@19.2.15)(bufferutil@4.1.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(utf-8-validate@5.0.10)
       '@liquidium/client':
-        specifier: 0.1.0
-        version: 0.1.0(@dfinity/utils@2.14.0(@dfinity/agent@2.1.3(@dfinity/candid@2.1.3(@dfinity/principal@3.4.3))(@dfinity/principal@3.4.3))(@dfinity/candid@2.1.3(@dfinity/principal@3.4.3))(@dfinity/principal@3.4.3))(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@3.25.76)
+        specifier: 0.1.1
+        version: 0.1.1(@dfinity/agent@2.1.3(@dfinity/candid@2.1.3(@dfinity/principal@3.4.3))(@dfinity/principal@3.4.3))(@dfinity/candid@2.1.3(@dfinity/principal@3.4.3))(@dfinity/utils@2.14.0(@dfinity/agent@2.1.3(@dfinity/candid@2.1.3(@dfinity/principal@3.4.3))(@dfinity/principal@3.4.3))(@dfinity/candid@2.1.3(@dfinity/principal@3.4.3))(@dfinity/principal@3.4.3))(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@3.25.76)
       react:
         specifier: ^19.2.6
         version: 19.2.6
@@ -119,8 +119,8 @@ importers:
         specifier: ^4.83.1
         version: 4.83.1(@dynamic-labs-wallet/primitives@0.0.337)(@types/react@19.2.15)(bufferutil@4.1.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(utf-8-validate@5.0.10)
       '@liquidium/client':
-        specifier: 0.1.0
-        version: 0.1.0(@dfinity/utils@2.14.0(@dfinity/agent@2.1.3(@dfinity/candid@2.1.3(@dfinity/principal@3.4.3))(@dfinity/principal@3.4.3))(@dfinity/candid@2.1.3(@dfinity/principal@3.4.3))(@dfinity/principal@3.4.3))(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@3.25.76)
+        specifier: 0.1.1
+        version: 0.1.1(@dfinity/agent@2.1.3(@dfinity/candid@2.1.3(@dfinity/principal@3.4.3))(@dfinity/principal@3.4.3))(@dfinity/candid@2.1.3(@dfinity/principal@3.4.3))(@dfinity/utils@2.14.0(@dfinity/agent@2.1.3(@dfinity/candid@2.1.3(@dfinity/principal@3.4.3))(@dfinity/principal@3.4.3))(@dfinity/candid@2.1.3(@dfinity/principal@3.4.3))(@dfinity/principal@3.4.3))(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@3.25.76)
       react:
         specifier: ^19.2.6
         version: 19.2.6
@@ -159,8 +159,8 @@ importers:
         specifier: ^4.83.1
         version: 4.83.1(@dynamic-labs-wallet/primitives@0.0.337)(@types/react@19.2.15)(bufferutil@4.1.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(utf-8-validate@5.0.10)
       '@liquidium/client':
-        specifier: 0.1.0
-        version: 0.1.0(@dfinity/utils@2.14.0(@dfinity/agent@2.1.3(@dfinity/candid@2.1.3(@dfinity/principal@3.4.3))(@dfinity/principal@3.4.3))(@dfinity/candid@2.1.3(@dfinity/principal@3.4.3))(@dfinity/principal@3.4.3))(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@3.25.76)
+        specifier: 0.1.1
+        version: 0.1.1(@dfinity/agent@2.1.3(@dfinity/candid@2.1.3(@dfinity/principal@3.4.3))(@dfinity/principal@3.4.3))(@dfinity/candid@2.1.3(@dfinity/principal@3.4.3))(@dfinity/utils@2.14.0(@dfinity/agent@2.1.3(@dfinity/candid@2.1.3(@dfinity/principal@3.4.3))(@dfinity/principal@3.4.3))(@dfinity/candid@2.1.3(@dfinity/principal@3.4.3))(@dfinity/principal@3.4.3))(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@3.25.76)
       react:
         specifier: ^19.2.6
         version: 19.2.6
@@ -983,8 +983,8 @@ packages:
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
 
-  '@liquidium/client@0.1.0':
-    resolution: {integrity: sha512-fdefp2s4FbY0VN8qMHrVBMcslEsUuf3ZDPTynkI4di912hEHB7UyJK3NZ9C1av2UN0BhEb9fWcagI7uYVGyfsg==}
+  '@liquidium/client@0.1.1':
+    resolution: {integrity: sha512-nX14XI3KHYuurG+EW0jLXMcoTug6vfo1oSqzv4VAHNflAfE4FQJCJRO3UrXZqK5HMkJCFIucX8W1NWybNzCs/w==}
 
   '@lit-labs/ssr-dom-shim@1.6.0':
     resolution: {integrity: sha512-VHb0ALPMTlgKjM6yIxxoQNnpKyUKLD04VzeQdsiXkMqkvYlAHxq9glGLmgbb889/1GsohSOAjvQYoiBppXFqrQ==}
@@ -4783,17 +4783,6 @@ snapshots:
       buffer: 6.0.3
       simple-cbor: 0.4.1
 
-  '@dfinity/agent@2.1.3(@dfinity/candid@2.1.3(@dfinity/principal@3.4.3))(@dfinity/principal@2.1.3)':
-    dependencies:
-      '@dfinity/candid': 2.1.3(@dfinity/principal@3.4.3)
-      '@dfinity/principal': 2.1.3
-      '@noble/curves': 1.9.7
-      '@noble/hashes': 1.8.0
-      base64-arraybuffer: 0.2.0
-      borc: 2.1.2
-      buffer: 6.0.3
-      simple-cbor: 0.4.1
-
   '@dfinity/agent@2.1.3(@dfinity/candid@2.1.3(@dfinity/principal@3.4.3))(@dfinity/principal@3.4.3)':
     dependencies:
       '@dfinity/candid': 2.1.3(@dfinity/principal@3.4.3)
@@ -5997,32 +5986,32 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  '@liquidium/client@0.1.0(@dfinity/utils@2.14.0(@dfinity/agent@2.1.3(@dfinity/candid@2.1.3(@dfinity/principal@2.1.3))(@dfinity/principal@2.1.3))(@dfinity/candid@2.1.3(@dfinity/principal@2.1.3))(@dfinity/principal@2.1.3))(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76)':
+  '@liquidium/client@0.1.1(@dfinity/agent@2.1.3(@dfinity/candid@2.1.3(@dfinity/principal@2.1.3))(@dfinity/principal@2.1.3))(@dfinity/candid@2.1.3(@dfinity/principal@2.1.3))(@dfinity/utils@2.14.0(@dfinity/agent@2.1.3(@dfinity/candid@2.1.3(@dfinity/principal@2.1.3))(@dfinity/principal@2.1.3))(@dfinity/candid@2.1.3(@dfinity/principal@2.1.3))(@dfinity/principal@2.1.3))(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76)':
     dependencies:
-      '@dfinity/agent': 2.1.3(@dfinity/candid@2.1.3(@dfinity/principal@2.1.3))(@dfinity/principal@2.1.3)
-      '@dfinity/candid': 2.1.3(@dfinity/principal@2.1.3)
       '@dfinity/ledger-icrc': 2.1.3(@dfinity/agent@2.1.3(@dfinity/candid@2.1.3(@dfinity/principal@2.1.3))(@dfinity/principal@2.1.3))(@dfinity/candid@2.1.3(@dfinity/principal@2.1.3))(@dfinity/principal@2.1.3)(@dfinity/utils@2.14.0(@dfinity/agent@2.1.3(@dfinity/candid@2.1.3(@dfinity/principal@2.1.3))(@dfinity/principal@2.1.3))(@dfinity/candid@2.1.3(@dfinity/principal@2.1.3))(@dfinity/principal@2.1.3))
       '@dfinity/principal': 2.1.3
       '@icp-sdk/core': 5.4.0
       '@noble/hashes': 1.8.0
       viem: 2.50.4(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@3.25.76)
     transitivePeerDependencies:
+      - '@dfinity/agent'
+      - '@dfinity/candid'
       - '@dfinity/utils'
       - bufferutil
       - typescript
       - utf-8-validate
       - zod
 
-  '@liquidium/client@0.1.0(@dfinity/utils@2.14.0(@dfinity/agent@2.1.3(@dfinity/candid@2.1.3(@dfinity/principal@3.4.3))(@dfinity/principal@3.4.3))(@dfinity/candid@2.1.3(@dfinity/principal@3.4.3))(@dfinity/principal@3.4.3))(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@3.25.76)':
+  '@liquidium/client@0.1.1(@dfinity/agent@2.1.3(@dfinity/candid@2.1.3(@dfinity/principal@3.4.3))(@dfinity/principal@3.4.3))(@dfinity/candid@2.1.3(@dfinity/principal@3.4.3))(@dfinity/utils@2.14.0(@dfinity/agent@2.1.3(@dfinity/candid@2.1.3(@dfinity/principal@3.4.3))(@dfinity/principal@3.4.3))(@dfinity/candid@2.1.3(@dfinity/principal@3.4.3))(@dfinity/principal@3.4.3))(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@3.25.76)':
     dependencies:
-      '@dfinity/agent': 2.1.3(@dfinity/candid@2.1.3(@dfinity/principal@3.4.3))(@dfinity/principal@2.1.3)
-      '@dfinity/candid': 2.1.3(@dfinity/principal@2.1.3)
       '@dfinity/ledger-icrc': 2.1.3(@dfinity/agent@2.1.3(@dfinity/candid@2.1.3(@dfinity/principal@3.4.3))(@dfinity/principal@3.4.3))(@dfinity/candid@2.1.3(@dfinity/principal@3.4.3))(@dfinity/principal@2.1.3)(@dfinity/utils@2.14.0(@dfinity/agent@2.1.3(@dfinity/candid@2.1.3(@dfinity/principal@3.4.3))(@dfinity/principal@3.4.3))(@dfinity/candid@2.1.3(@dfinity/principal@3.4.3))(@dfinity/principal@3.4.3))
       '@dfinity/principal': 2.1.3
       '@icp-sdk/core': 5.4.0
       '@noble/hashes': 1.8.0
       viem: 2.50.4(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@3.25.76)
     transitivePeerDependencies:
+      - '@dfinity/agent'
+      - '@dfinity/candid'
       - '@dfinity/utils'
       - bufferutil
       - typescript
