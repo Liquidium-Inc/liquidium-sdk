@@ -8,8 +8,8 @@ const config = {
   tagline: "TypeScript SDK documentation for Liquidium integrations.",
   favicon: "img/logo.svg",
 
-  url: "https://docs.liquidium.fi",
-  baseUrl: "/",
+  url: "https://liquidium-inc.github.io",
+  baseUrl: "/liquidium-sdk/",
 
   organizationName: "Liquidium-Inc",
   projectName: "liquidium-sdk",
