@@ -7,9 +7,10 @@
     "sdk",
     "defi",
     "icp",
+    "borrowing",
     "lending"
   ],
-  "homepage": "https://github.com/Liquidium-Inc/liquidium-sdk",
+  "homepage": "https://liquidium-inc.github.io/liquidium-sdk/",
   "bugs": {
     "url": "https://github.com/Liquidium-Inc/liquidium-sdk/issues"
   },
