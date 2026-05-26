@@ -1,15 +1,16 @@
 {
   "name": "@liquidium/client",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "The official client for the Liquidium protocol",
   "keywords": [
     "liquidium",
     "sdk",
     "defi",
     "icp",
+    "borrowing",
     "lending"
   ],
-  "homepage": "https://github.com/Liquidium-Inc/liquidium-sdk",
+  "homepage": "https://liquidium-inc.github.io/liquidium-sdk/",
   "bugs": {
     "url": "https://github.com/Liquidium-Inc/liquidium-sdk/issues"
   },

@@ -2,7 +2,7 @@
 ![license](https://img.shields.io/badge/license-MIT-blue)
 
 <p align="center">
-  <img src="./sdk.svg" alt="Liquidium SDK illustration" width="700" />
+  <img src="https://raw.githubusercontent.com/Liquidium-Inc/liquidium-sdk/main/sdk.svg" alt="Liquidium SDK illustration" width="700" />
 </p>
 
 <h1 align="center">Liquidium SDK</h1>
@@ -12,10 +12,17 @@
 </p>
 
 <p align="center">
+  <a href="https://liquidium-inc.github.io/liquidium-sdk/"><b>SDK Docs</b></a> ·
   <a href="https://github.com/Liquidium-Inc/liquidium-sdk/tree/main/examples/instant-loans-flow"><b>Instant Loan Example</b></a> ·
   <a href="https://github.com/Liquidium-Inc/liquidium-sdk/tree/main/examples/vite-react-dynamic"><b>SDK Method Query Example</b></a> ·
   <a href="#core-api"><b>Core API</b></a>
 </p>
+
+## Documentation
+
+Use the SDK docs for setup, guides, API reference, and examples.
+
+[Open the Liquidium SDK docs](https://liquidium-inc.github.io/liquidium-sdk/)
 
 ## Why Start With Instant Loans
 
@@ -27,7 +34,7 @@
 
 ## Integration Paths
 
-Liquidium supports two lending integration paths:
+Liquidium supports two borrowing and lending integration paths:
 
 | Path | Use when | Main SDK calls |
 | --- | --- | --- |

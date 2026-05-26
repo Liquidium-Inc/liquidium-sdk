@@ -1,5 +1,11 @@
 # @liquidium/client
 
+## 0.1.2
+
+### Patch Changes
+
+- Add SDK documentation links and publish the expanded API export surface.
+
 ## 0.1.1
 
 ### Patch Changes
