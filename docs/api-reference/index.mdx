@@ -1,0 +1,32 @@
+---
+title: API Reference
+description: Look up Liquidium SDK modules, methods, and exported types.
+order: 400
+---
+
+# API Reference
+
+The SDK exports `LiquidiumClient`, error types, constants, module request types, response types, and wallet action types from `@liquidium/client`.
+
+## Client Modules
+
+| Module | Purpose |
+| --- | --- |
+| `client.accounts` | Profile lifecycle, account lookup, and linked wallets |
+| `client.activities` | Activity lists and receipt-oriented status |
+| `client.history` | Pool and user history through the Liquidium SDK API |
+| `client.instantLoans` | Accountless instant loans with generated deposit and repayment targets |
+| `client.lending` | Supply, borrow, withdraw, and inflow reporting |
+| `client.market` | Pools, prices, and pool rate lookups |
+| `client.positions` | Per-pool positions, health, and aggregate stats |
+| `client.quote` | Pure quote helpers from market inputs |
+
+## Generated Reference
+
+Generated API reference files should live in `api-reference/generated/`.
+
+Use TypeDoc with `typedoc-plugin-markdown` when we add the generator:
+
+```bash
+pnpm docs:api
+```

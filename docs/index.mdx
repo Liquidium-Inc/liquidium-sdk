@@ -1,0 +1,36 @@
+---
+title: Liquidium SDK Docs
+slug: /
+description: Use the Liquidium SDK from TypeScript apps.
+order: 0
+---
+
+# Liquidium SDK Docs
+
+Use `@liquidium/client` to build Liquidium integrations from TypeScript apps. Start with accountless instant loans unless your app needs a full profile dashboard.
+
+## Choose An Integration Path
+
+| Path | Use when | Main SDK calls |
+| --- | --- | --- |
+| Accountless instant loans | You want a short borrow flow where users do not create a Liquidium profile first | `client.instantLoans.create(...)`, `client.instantLoans.get(...)`, `client.activities.list(...)` |
+| Account-based profile flows | You want users to manage positions, supply funds, borrow, withdraw, or use ETH contract-interaction deposits | `client.accounts.createProfile(...)`, `client.lending.supply(...)`, `client.lending.borrow(...)`, `client.lending.withdraw(...)`, `client.positions.list(...)` |
+
+## Docs Map
+
+| Section | Purpose |
+| --- | --- |
+| [Getting Started](./getting-started/quick-start.mdx) | Install the SDK and create your first instant loan flow |
+| [Guides](./guides/instant-loans.mdx) | Complete specific integration tasks |
+| [Concepts](./concepts/integration-paths.mdx) | Understand protocol and SDK behavior before designing a flow |
+| [Examples](./examples/instant-loans-flow.mdx) | Run and inspect working apps |
+| [API Reference](./api-reference/index.mdx) | Look up exported SDK modules, types, and methods |
+
+## Runtime Requirements
+
+| Requirement | Notes |
+| --- | --- |
+| Node.js | 20+ for local SDK development |
+| Package manager | pnpm 9+ for this repository |
+| Browser APIs | `fetch`, `BigInt`, and standard ESM support |
+| Wallet UI | Bring your own wallet provider. The examples use Dynamic. |

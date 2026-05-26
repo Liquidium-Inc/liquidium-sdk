@@ -1,0 +1,25 @@
+---
+title: Instant Loan Lifecycle
+description: Understand instant-loan states and what your UI should do.
+order: 210
+---
+
+# Instant Loan Lifecycle
+
+An instant loan moves through a small set of UI-facing states.
+
+| Status | Meaning | UI action |
+| --- | --- | --- |
+| `awaiting_deposit` | The loan exists and waits for collateral | Show `loan.depositTarget` and the deposit deadline |
+| `deposit_detected` | The protocol detected collateral and is processing the borrow | Keep polling and show a pending state |
+| `active` | The borrow is active and the user can repay | Show `loan.repayment.amount` and `loan.repayment.target` |
+| `settling` | The protocol is closing the loan | Keep polling and avoid duplicate user actions |
+| `closed` | The loan finished | Show final state and stop prompting for repayment |
+
+Reload state with:
+
+```ts
+const loan = await client.instantLoans.get({ ref });
+```
+
+Use activities when your UI needs more detail about deposits, borrow outflows, repayment deposits, confirmations, or fee top-ups.

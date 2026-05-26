@@ -25,7 +25,7 @@ const DEFAULT_REPAY_BUFFER_BPS = 10n;
 /** Profile position, health factor, and reserve valuation helpers. */
 export class PositionsModule {
   constructor(
-    readonly canisterContext: CanisterContext,
+    private readonly canisterContext: CanisterContext,
     readonly market: MarketModule
   ) {}
 
@@ -180,7 +180,7 @@ export class PositionsModule {
    * Returns the per-reserve breakdown of a profile's supplies and borrows,
    * joined with pool metadata, rates, and current USD prices.
    *
-   * USD values are scaled to {@link USD_VALUE_SCALE_DECIMALS} (27).
+   * USD values are scaled to 27 decimals.
    *
    * @param profileId - The Liquidium profile principal text.
    * @returns Per-reserve position rows joined with pool metadata and USD values.

@@ -1,0 +1,45 @@
+---
+title: Configuration
+description: Configure transports, canister IDs, API requests, and EVM reads.
+order: 30
+---
+
+# Configuration
+
+Create the client with defaults for Liquidium mainnet:
+
+```ts
+import { LiquidiumClient } from "@liquidium/client";
+
+const client = new LiquidiumClient();
+```
+
+Pass config when your app needs custom transports, headers, canister IDs, or EVM read support:
+
+```ts
+const client = new LiquidiumClient({
+  apiBaseUrl: "https://app.liquidium.fi/api/sdk",
+  headers: {
+    "x-client-name": "my-app",
+  },
+  evmRpcUrl: import.meta.env.VITE_EVM_RPC_URL,
+});
+```
+
+## Config Fields
+
+| Field | Use |
+| --- | --- |
+| `environment` | Select bundled canister IDs. The SDK currently bundles mainnet. |
+| `icHost` | Override the ICP replica host. |
+| `identity` | Send signed canister calls with a caller identity. |
+| `apiBaseUrl` | Override the Liquidium SDK HTTP API root. |
+| `headers` | Add headers to SDK HTTP API requests. |
+| `canisterIds` | Override individual canister principals for custom deployments. |
+| `fetch` | Provide a custom fetch implementation. |
+| `timeoutMs` | Set the SDK API request timeout in milliseconds. |
+| `evmRpcUrl` | Create a viem public client for EVM reads. |
+| `evmRpcHeaders` | Add headers to EVM RPC requests. |
+| `evmPublicClient` | Use an existing viem-compatible read client. |
+
+Set `VITE_INFURA_API_KEY` or `VITE_EVM_RPC_URL` when you run an example that needs Ethereum reads.

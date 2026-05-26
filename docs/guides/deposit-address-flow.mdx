@@ -1,0 +1,37 @@
+---
+title: Deposit Address Flow
+description: Use account-based manual deposit targets.
+order: 110
+---
+
+# Deposit Address Flow
+
+Use this path when your app manages a Liquidium profile and asks the user to send funds to a deposit target.
+
+## When To Use It
+
+Use deposit-address flows when your app needs:
+
+| Need | Use |
+| --- | --- |
+| Profile-level positions | The user returns to the same Liquidium profile across sessions |
+| Manual transfers | Your app shows an address or ICRC account and lets the user send funds outside the SDK |
+| Dashboard flows | The user supplies, borrows, withdraws, and repays from one account |
+
+## Shape
+
+```ts
+const supplyFlow = await client.lending.supply({
+  profileId,
+  poolId,
+  action: "deposit",
+});
+
+if (supplyFlow.target.type === "nativeAddress") {
+  console.log("Send funds to", supplyFlow.target.address);
+} else {
+  console.log("Send funds to", supplyFlow.target.account);
+}
+```
+
+When the flow needs a transaction ID, call `supplyFlow.submit(...)` after the user broadcasts the transfer.

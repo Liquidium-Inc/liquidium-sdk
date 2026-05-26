@@ -33,7 +33,7 @@ import { UserHistoryStatus } from "./types";
 
 /** Historical pool, rate, user transaction, and liquidation data helpers. */
 export class HistoryModule {
-  constructor(readonly apiClient: ApiClient | undefined) {}
+  constructor(private readonly apiClient: ApiClient | undefined) {}
 
   private requireApi(): ApiClient {
     if (!this.apiClient) {

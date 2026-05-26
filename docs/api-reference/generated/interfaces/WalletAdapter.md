@@ -1,0 +1,96 @@
+[**@liquidium/client**](../README.md)
+
+***
+
+[@liquidium/client](../README.md) / WalletAdapter
+
+# Interface: WalletAdapter
+
+Defined in: [external/liquidium-sdk/packages/client/src/core/wallet-actions.ts:109](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/core/wallet-actions.ts#L109)
+
+Optional wallet capabilities. Implement only what your flow uses:
+
+- `signMessage` - account creation, borrow, withdraw
+- `sendBtcTransaction` / `sendEthTransaction` - automated transfer-path supply
+- `sendEthTransaction` - contract-interaction supply and ETH native sends
+- `signPsbt` - reserved for PSBT-based actions when exposed
+
+## Properties
+
+### sendBtcTransaction?
+
+> `optional` **sendBtcTransaction?**: (`request`) => `Promise`\<`string`\>
+
+Defined in: [external/liquidium-sdk/packages/client/src/core/wallet-actions.ts:117](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/core/wallet-actions.ts#L117)
+
+Sends a BTC transaction and returns its transaction id.
+
+#### Parameters
+
+##### request
+
+[`SendBtcTransactionRequest`](SendBtcTransactionRequest.md)
+
+#### Returns
+
+`Promise`\<`string`\>
+
+***
+
+### sendEthTransaction?
+
+> `optional` **sendEthTransaction?**: (`request`) => `Promise`\<`string`\>
+
+Defined in: [external/liquidium-sdk/packages/client/src/core/wallet-actions.ts:115](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/core/wallet-actions.ts#L115)
+
+Sends an EVM transaction and returns its transaction hash.
+
+#### Parameters
+
+##### request
+
+[`SendEthTransactionRequest`](SendEthTransactionRequest.md)
+
+#### Returns
+
+`Promise`\<`string`\>
+
+***
+
+### signMessage?
+
+> `optional` **signMessage?**: (`request`) => `Promise`\<`string`\>
+
+Defined in: [external/liquidium-sdk/packages/client/src/core/wallet-actions.ts:111](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/core/wallet-actions.ts#L111)
+
+Signs an SDK plaintext message and returns the wallet signature.
+
+#### Parameters
+
+##### request
+
+[`SignMessageRequest`](SignMessageRequest.md)
+
+#### Returns
+
+`Promise`\<`string`\>
+
+***
+
+### signPsbt?
+
+> `optional` **signPsbt?**: (`request`) => `Promise`\<`string`\>
+
+Defined in: [external/liquidium-sdk/packages/client/src/core/wallet-actions.ts:113](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/core/wallet-actions.ts#L113)
+
+Signs an SDK-provided BTC PSBT and returns the signed PSBT as base64.
+
+#### Parameters
+
+##### request
+
+[`SignPsbtRequest`](SignPsbtRequest.md)
+
+#### Returns
+
+`Promise`\<`string`\>

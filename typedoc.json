@@ -1,0 +1,14 @@
+{
+  "name": "@liquidium/client",
+  "entryPoints": ["packages/client/src/index.ts"],
+  "tsconfig": "packages/client/tsconfig.json",
+  "plugin": ["typedoc-plugin-markdown"],
+  "out": "docs/api-reference/generated",
+  "readme": "none",
+  "excludePrivate": true,
+  "excludeProtected": true,
+  "excludeInternal": true,
+  "intentionallyNotExported": ["ApiClient", "CanisterContext"],
+  "githubPages": false,
+  "cleanOutputDir": true
+}

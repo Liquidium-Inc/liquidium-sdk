@@ -1,0 +1,41 @@
+---
+title: Error Handling
+description: Handle SDK errors and validation failures.
+order: 130
+---
+
+# Error Handling
+
+Handle validation before you call state-changing methods. Handle SDK errors at the boundary where your app can show a user-facing message or retry.
+
+## LTV Validation
+
+```ts
+const ltv = client.quote.calculateLtv(request, pools, prices);
+
+if (ltv.validationErrors.length > 0) {
+  return {
+    ok: false,
+    message: ltv.validationErrors.map((error) => error.message).join(" "),
+  };
+}
+```
+
+## SDK Errors
+
+```ts
+import { LiquidiumError } from "@liquidium/client";
+
+try {
+  const loan = await client.instantLoans.get({ ref });
+  return loan;
+} catch (error) {
+  if (error instanceof LiquidiumError) {
+    throw new Error(error.message);
+  }
+
+  throw error;
+}
+```
+
+Use the exported `LiquidiumErrorCode` values when your UI needs different copy for timeout, transport, validation, or protocol failures.

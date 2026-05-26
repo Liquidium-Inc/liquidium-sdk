@@ -139,10 +139,10 @@ type InstantLoanHydrationInput = {
 /** Accountless instant-loan creation, lookup, recovery, and canister query helpers. */
 export class InstantLoansModule {
   constructor(
-    readonly canisterContext: CanisterContext,
-    readonly apiClient: ApiClient | undefined,
-    readonly lending: LendingModule,
-    readonly positions: PositionsModule
+    private readonly canisterContext: CanisterContext,
+    private readonly apiClient: ApiClient | undefined,
+    private readonly lending: LendingModule,
+    private readonly positions: PositionsModule
   ) {}
 
   /**

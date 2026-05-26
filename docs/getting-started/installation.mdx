@@ -1,0 +1,34 @@
+---
+title: Installation
+description: Install the Liquidium SDK client package.
+order: 10
+---
+
+# Installation
+
+Install the client package in your app:
+
+```bash
+npm install @liquidium/client
+```
+
+For local development in this repository:
+
+```bash
+git clone https://github.com/Liquidium-Inc/liquidium-sdk.git
+cd liquidium-sdk
+pnpm install
+pnpm run build
+pnpm run typecheck
+pnpm run test
+```
+
+## Runtime Support
+
+Use the SDK in browser apps and modern TypeScript runtimes.
+
+| Requirement | Notes |
+| --- | --- |
+| Node.js | 20+ for this repository |
+| pnpm | 9+ for local development |
+| Browser | `fetch`, `BigInt`, and ESM support |

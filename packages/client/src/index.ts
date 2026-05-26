@@ -1,4 +1,5 @@
 export { LiquidiumClient } from "./client";
+export type { LiquidiumErrorContext } from "./core/errors";
 export { LiquidiumError, LiquidiumErrorCode } from "./core/errors";
 export {
   CK_ETH_DEPOSIT_CONTRACT_ADDRESS,
@@ -24,6 +25,7 @@ export {
 } from "./core/types";
 export type {
   EthTransactionRequest,
+  SendBtcTransactionRequest,
   SendEthTransactionRequest,
   SendEthTransactionWalletAction,
   SignMessageRequest,
@@ -40,11 +42,15 @@ export type {
   CreateAccountAction,
   CreateAccountData,
   CreateAccountRequest,
+  CreateProfileParams,
+  PrepareCreateProfileOptions,
   SignableAction,
   SignatureInfo,
 } from "./modules/accounts";
+export { AccountsModule } from "./modules/accounts";
 export type {
   Activity,
+  ActivityTopUp,
   GetActivityStatusRequest,
   GetActivityStatusResponse,
   InflowActivity,
@@ -56,6 +62,7 @@ export type {
   OutflowActivityStatus,
 } from "./modules/activities";
 export {
+  ActivitiesModule,
   ActivityDirection,
   ActivityFilter,
   ActivityKind,
@@ -86,19 +93,29 @@ export type {
   UserTransactionHistoryFilters,
   UserTransactionHistoryType,
 } from "./modules/history";
-export { UserHistoryStatus } from "./modules/history";
+export { HistoryModule, UserHistoryStatus } from "./modules/history";
 export type {
   CreateInstantLoanRequest,
   ExternalAccount,
   InstantLoan,
   InstantLoanAccount,
   InstantLoanAsset,
+  InstantLoanAuthorization,
   InstantLoanCandidate,
+  InstantLoanConfig,
+  InstantLoanEvent,
+  InstantLoanEventType,
   InstantLoanGetRequest,
+  InstantLoanLeg,
+  InstantLoanListEventsRequest,
+  InstantLoanPositionSummary,
+  InstantLoanRepayment,
+  InstantLoanWarmedProfile,
   NativeAccount,
 } from "./modules/instant-loans";
 export {
   InstantLoanStatus,
+  InstantLoansModule,
   intFromPublicId,
   publicIdFromInt,
 } from "./modules/instant-loans";
@@ -116,6 +133,7 @@ export type {
   GetEvmSupplyContextRequest,
   IcrcAccountSupplyTarget,
   InflowFeeEstimate,
+  ManualTransferSupplyFlowRequest,
   NativeAddressSupplyTarget,
   OutflowDetails,
   OutflowReceiver,
@@ -125,6 +143,8 @@ export type {
   SupplyFlowRequest,
   SupplyTarget,
   TransferSupplyFlowRequest,
+  WalletExecutionParams,
+  WalletTransferSupplyFlowRequest,
   WithdrawAction,
   WithdrawOutflowDetails,
   WithdrawSubmitSignatureInfo,
@@ -132,17 +152,26 @@ export type {
 export {
   createTransferErc20Transaction,
   EvmSupplyApprovalStrategy,
+  LendingModule,
   SupplyPlanType,
 } from "./modules/lending";
-export type { AssetPrices, Pool, PoolRate } from "./modules/market";
+export type {
+  AssetPrices,
+  FindPoolQuery,
+  Pool,
+  PoolRate,
+} from "./modules/market";
+export { MarketModule } from "./modules/market";
 export type {
   BorrowingPower,
   HealthFactor,
+  MaxRepayAmount,
   Position,
   UserPositionSummary,
   UserReserve,
   UserStats,
 } from "./modules/positions";
+export { PositionsModule } from "./modules/positions";
 export type {
   CalculateLtvRequest,
   LtvCalculation,
@@ -151,4 +180,8 @@ export type {
   QuoteValidationError,
   QuoteWarning,
 } from "./modules/quote";
-export { QuoteValidationErrorCode, QuoteWarningCode } from "./modules/quote";
+export {
+  QuoteModule,
+  QuoteValidationErrorCode,
+  QuoteWarningCode,
+} from "./modules/quote";

@@ -1,2 +1,2 @@
 export { MarketModule } from "./market";
-export type { AssetPrices, Pool, PoolRate } from "./types";
+export type { AssetPrices, FindPoolQuery, Pool, PoolRate } from "./types";

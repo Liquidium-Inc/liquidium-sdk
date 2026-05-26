@@ -1,0 +1,28 @@
+---
+title: Vite React Dynamic Example
+description: Run the SDK method query example.
+order: 330
+---
+
+# Vite React Dynamic Example
+
+Use `examples/vite-react-dynamic` to call SDK methods from a Vite React app with Dynamic loaded.
+
+The method query screen lets you:
+
+| Capability | Use |
+| --- | --- |
+| Method dropdown | Pick an SDK method |
+| JSON editor | Edit method arguments |
+| Wallet defaults | Apply connected-wallet values where relevant |
+| Raw result view | Inspect return payloads |
+
+Run it from the SDK root:
+
+```bash
+pnpm install
+cp examples/vite-react-dynamic/.env.example examples/vite-react-dynamic/.env
+pnpm --filter @liquidium/example-vite-react-dynamic dev
+```
+
+Included method templates cover account, market, position, activity, history, quote, lending, and instant-loan methods.

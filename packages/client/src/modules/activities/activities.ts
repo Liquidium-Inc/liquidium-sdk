@@ -89,8 +89,8 @@ type ActivityStatusResponseWire =
 /** Receipt-oriented activity list and status helpers. */
 export class ActivitiesModule {
   constructor(
-    readonly apiClient: ApiClient | undefined,
-    readonly canisterContext: CanisterContext
+    private readonly apiClient: ApiClient | undefined,
+    private readonly canisterContext: CanisterContext
   ) {}
 
   /**

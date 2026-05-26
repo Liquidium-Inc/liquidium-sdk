@@ -1,6 +1,7 @@
 export { ActivitiesModule } from "./activities";
 export type {
   Activity,
+  ActivityTopUp,
   GetActivityStatusRequest,
   GetActivityStatusResponse,
   InflowActivity,

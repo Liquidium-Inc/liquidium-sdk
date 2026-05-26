@@ -1,0 +1,35 @@
+---
+title: Contract Interaction Flow
+description: Use wallet-executed ETH contract interactions for token deposits and repayments.
+order: 120
+---
+
+# Contract Interaction Flow
+
+Use contract-interaction flows when an EVM wallet should approve and deposit ERC-20 funds through the SDK.
+
+## Requirements
+
+| Requirement | Why |
+| --- | --- |
+| `evmRpcUrl` or `evmPublicClient` | The SDK needs public ERC-20 reads |
+| Wallet adapter with `sendEthTransaction` | The SDK asks the wallet to broadcast approval and deposit transactions |
+| Token base-unit amount | The SDK sends protocol amounts as integers |
+
+## Shape
+
+```ts
+const supplyFlow = await client.lending.supply({
+  mechanism: "contractInteraction",
+  profileId,
+  poolId,
+  action: "deposit",
+  walletAdapter,
+  account: evmAddress,
+  amount,
+});
+
+console.log("Deposit txid", supplyFlow.txid);
+```
+
+Use this for account-based ETH stablecoin flows. Instant loans return their own deposit and repayment targets.
