@@ -108,6 +108,15 @@ message signing. The SDK returns deposit and repay targets for the generated
 full amount to send to the repayment target, including inflow fee and interest
 buffer.
 
+Deposit and repayment targets are distinct generated inflow targets. Show
+`loan.depositTarget` only when asking the user to send collateral. Show
+`loan.repayment.target` or `loan.repayTarget` only when asking the user to repay
+debt. Do not assume these addresses/accounts match, do not reuse the collateral
+deposit target for repayment, and do not cache one target for both phases.
+
+Reload with `client.instantLoans.get({ ref })` before displaying repayment
+instructions so the app uses the canonical repayment amount and target.
+
 `findByAddress(...)` is a recovery helper and returns candidates only. Follow it
 with `get({ loanId })` or `get({ ref })` before showing canonical loan state.
 
@@ -218,6 +227,43 @@ Pool config history entries are reserve configuration-change snapshots
 (`type: "configuration_change"`) with pool config, caps, indexes, liquidity,
 debt, and `sameAssetBorrowing` fields.
 
+## Rate and Amount Formatting
+
+Amount fields are `bigint` base units. Format them with the asset or pool
+`decimals`; do not display raw base-unit values as user amounts.
+
+Rate and risk-ratio fields such as `lendingRate`, `borrowingRate`,
+`utilizationRate`, `maxLtv`, `liquidationThreshold`, pool-history rates, and
+reserve-history rates are fixed-point values scaled by `rateDecimals`, usually
+`27`. Do not render raw scaled values as percentages.
+
+Never convert a raw scaled rate directly to display text or append `%` to it.
+That can produce impossible UI values such as `3.7e+24%`. Divide by
+`10 ** rateDecimals` first, then multiply by `100` only for percentage display,
+and format the final value with fixed decimals or `Intl.NumberFormat`.
+
+```ts
+function formatScaledRatePercent(
+  scaledRate: bigint,
+  rateDecimals: bigint,
+  fractionDigits = 2,
+): string {
+  const scale = 10n ** rateDecimals;
+  const percentScale = 100n;
+  const displayScale = 10n ** BigInt(fractionDigits);
+  const rounded =
+    (scaledRate * percentScale * displayScale + scale / 2n) / scale;
+  const whole = rounded / displayScale;
+  const fraction = rounded % displayScale;
+
+  if (fractionDigits === 0) {
+    return `${whole}%`;
+  }
+
+  return `${whole}.${fraction.toString().padStart(fractionDigits, "0")}%`;
+}
+```
+
 ## Wallet Adapter
 
 The SDK uses a `WalletAdapter` for signing and transaction execution. Implement only the methods the selected flow needs.
@@ -261,6 +307,11 @@ Default app sequence:
 The default instant-loan flow does not need a wallet adapter. The user signs or
 broadcasts only the external wallet transfer to the generated deposit or repay
 target outside the SDK.
+
+The deposit target and repayment target are not interchangeable. Collateral goes
+to `loan.depositTarget`. Repayment goes to `loan.repayment.target` or
+`loan.repayTarget`. If a UI has separate deposit and repay screens, each screen
+must read the target for that exact phase instead of sharing one saved address.
 
 ```ts
 const ltv = client.quote.calculateLtv(
@@ -451,6 +502,12 @@ if (
 await supplyFlow.submit({ txid: "<broadcast-txid>" });
 ```
 
+For profile-based inflows, `action: "deposit"` and `action: "repayment"`
+derive different targets. Use the `supplyFlow.target` returned by the exact
+`client.lending.supply(...)` call for the action being executed. Do not use a
+deposit flow, cached deposit address, or previous `supplyFlow.target` for a
+repayment transfer.
+
 `supply(...)` returns a receipt. When the SDK broadcast for you (wallet-adapter
 path), `supplyFlow.txid` is populated. The SDK does not poll inflow status;
 when you have a txid, you are responsible for polling confirmation state.
@@ -573,6 +630,8 @@ const contractInteractionFlow = await client.lending.supply({
 14. ETH deposit-address `unauthorized` is usually not an `apiBaseUrl` problem. The deposit-address lookup is a direct canister call. Check the `poolId`, `ethDeposit` canister ID, token address, and deployment/environment alignment first.
 15. Do not model instant loans as a `lending.supply(...)` mechanism. Use `client.instantLoans` for the authless product flow and `client.lending.supply(...)` only for advanced profile-based supply/repay integrations.
 16. Do not trust address lookup as canonical loan state. Use it to find candidates, then hydrate the selected loan through `instantLoans.get(...)`.
+17. Do not confuse deposit/supply targets with repayment targets. They are generated for different inflow actions and may be different addresses/accounts.
+18. Do not render raw `rateDecimals = 27` fixed-point values as percentages. Format scaled rates first or the UI can show scientific notation such as `3.7e+24%`.
 
 ## Preferred Style
 
