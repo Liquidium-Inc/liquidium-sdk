@@ -2160,6 +2160,11 @@ describe("LendingModule", () => {
   const BTC_POOL_ID = "hkmli-faaaa-aaaar-qb4ba-cai";
   const USDT_POOL_ID = "hnnn4-iyaaa-aaaar-qb4bq-cai";
   const USDC_POOL_ID = "ryjl3-tyaaa-aaaaa-aaaba-cai";
+  const VALID_BTC_OUTFLOW_ADDRESS = "1BoatSLRHtKNngkdXEeobR76b53LETtpyT";
+  const LOWERCASE_EVM_OUTFLOW_ADDRESS =
+    "0x52908400098527886e0f7030069857d2e4169ee7";
+  const CHECKSUM_EVM_OUTFLOW_ADDRESS =
+    "0x52908400098527886E0F7030069857D2E4169EE7";
 
   function encodeBytes32Hex(bytes: Uint8Array): `0x${string}` {
     return `0x${Array.from(bytes, (byte) =>
@@ -2197,6 +2202,36 @@ describe("LendingModule", () => {
       borrow_cap: [],
       total_debt_at_last_sync: 0n,
       chain: { ETH: null },
+      rate_slope_after: 2n,
+      reserve_factor: 100n,
+      last_updated: [],
+      lending_index: 300n,
+      protocol_liquidation_fee: 50n,
+      borrow_index: 400n,
+      base_rate: 5n,
+      frozen: false,
+      liquidation_bonus: 200n,
+      liquidation_threshold: 7_500n,
+      max_ltv: 7_000n,
+      total_supply_at_last_sync: 50_000n,
+    };
+  }
+
+  function createBtcPoolRecord(poolId = BTC_POOL_ID) {
+    return {
+      optimal_utilization_rate: 80n,
+      principal: {
+        toString: () => poolId,
+        toText: () => poolId,
+      },
+      total_generated_interest_snapshot: 0n,
+      supply_cap: [],
+      same_asset_borrowing: [],
+      asset: { BTC: null },
+      rate_slope_before: 1n,
+      borrow_cap: [],
+      total_debt_at_last_sync: 0n,
+      chain: { BTC: null },
       rate_slope_after: 2n,
       reserve_factor: 100n,
       last_updated: [],
@@ -3479,6 +3514,8 @@ describe("LendingModule", () => {
   test("creates and submits a borrow action with a custom outflow account", async () => {
     // given
     vi.setSystemTime(new Date("2026-04-01T00:00:00.000Z"));
+    const profileId = "aaaaa-aa";
+    const poolId = "rrkah-fqaaa-aaaaa-aaaaq-cai";
     const getNonce = vi.fn().mockResolvedValue(17n);
     const borrowAssets = vi.fn().mockResolvedValue({
       Ok: {
@@ -3487,23 +3524,22 @@ describe("LendingModule", () => {
         outflow_type: { Borrow: null },
         outflow_ref: ["ref-1"],
         amount: 50_000n,
-        receiver: { External: "bc1qcustomoutflow" },
+        receiver: { External: VALID_BTC_OUTFLOW_ADDRESS },
       },
     });
     vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord(poolId)]),
       get_nonce: getNonce,
       borrow_assets: borrowAssets,
     } as never);
     const client = new LiquidiumClient({});
-    const profileId = "aaaaa-aa";
-    const poolId = "rrkah-fqaaa-aaaaa-aaaaq-cai";
 
     // when
     const borrowAction = await client.lending.prepareBorrow({
       profileId,
       poolId,
       amount: 50_000n,
-      receiverAddress: "bc1qcustomoutflow",
+      receiverAddress: VALID_BTC_OUTFLOW_ADDRESS,
       signerWalletAddress: "0xsigner",
     });
     const outflow = await borrowAction.submit({
@@ -3522,7 +3558,7 @@ describe("LendingModule", () => {
       profileId,
       poolId,
       amount: 50_000n,
-      receiverAddress: "bc1qcustomoutflow",
+      receiverAddress: VALID_BTC_OUTFLOW_ADDRESS,
       signerWalletAddress: "0xsigner",
     });
     expect(borrowAction.message).toBe(`Liquidium: Borrow Assets
@@ -3530,7 +3566,7 @@ describe("LendingModule", () => {
 Action: Borrow from pool
 Pool ID: rrkah-fqaaa-aaaaa-aaaaq-cai
 Amount: 50000
-Address:bc1qcustomoutflow
+Address:${VALID_BTC_OUTFLOW_ADDRESS}
 Expires: 1775001900
 Nonce: 17`);
     expect(borrowAssets).toHaveBeenCalledTimes(1);
@@ -3540,7 +3576,7 @@ Nonce: 17`);
     expect(borrowAssets.mock.calls[0]?.[1]).toMatchObject({
       data: {
         expiry_timestamp: 1775001900n,
-        account: { External: "bc1qcustomoutflow" },
+        account: { External: VALID_BTC_OUTFLOW_ADDRESS },
         pool_id: Principal.fromText(poolId),
         amount: 50_000n,
       },
@@ -3560,7 +3596,7 @@ Nonce: 17`);
       amount: 50_000n,
       receiver: {
         type: "External",
-        account: "bc1qcustomoutflow",
+        account: VALID_BTC_OUTFLOW_ADDRESS,
       },
     });
   });
@@ -3568,6 +3604,7 @@ Nonce: 17`);
   test("creates and executes a borrow request directly", async () => {
     // given
     vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord()]),
       get_nonce: vi.fn().mockResolvedValue(31n),
       borrow_assets: vi.fn().mockResolvedValue({
         Ok: {
@@ -3576,7 +3613,7 @@ Nonce: 17`);
           outflow_type: { Borrow: null },
           outflow_ref: [],
           amount: 12_000n,
-          receiver: { External: "bc1qborrow" },
+          receiver: { External: VALID_BTC_OUTFLOW_ADDRESS },
         },
       }),
     } as never);
@@ -3586,9 +3623,9 @@ Nonce: 17`);
     // when
     const outflow = await client.lending.borrow({
       profileId: "aaaaa-aa",
-      poolId: "rrkah-fqaaa-aaaaa-aaaaq-cai",
+      poolId: BTC_POOL_ID,
       amount: 12_000n,
-      receiverAddress: "bc1qborrow",
+      receiverAddress: VALID_BTC_OUTFLOW_ADDRESS,
       signerWalletAddress: "0xsigner",
       signerChain: "ETH",
       signerWalletAdapter: { signMessage },
@@ -3618,11 +3655,12 @@ Nonce: 17`);
         outflow_type: { Borrow: null },
         outflow_ref: [],
         amount: 12_000n,
-        receiver: { External: "bc1qborrow" },
+        receiver: { External: VALID_BTC_OUTFLOW_ADDRESS },
       },
     });
     const getNonce = vi.fn().mockResolvedValue(31n);
     vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord()]),
       get_nonce: getNonce,
       borrow_assets: borrowAssets,
     } as never);
@@ -3632,9 +3670,9 @@ Nonce: 17`);
     // when
     await client.lending.borrow({
       profileId: "aaaaa-aa",
-      poolId: "rrkah-fqaaa-aaaaa-aaaaq-cai",
+      poolId: BTC_POOL_ID,
       amount: 12_000n,
-      receiverAddress: "bc1qborrow",
+      receiverAddress: VALID_BTC_OUTFLOW_ADDRESS,
       signerWalletAddress: LOWERCASE_SIGNER_ADDRESS,
       signerChain: "ETH",
       signerWalletAdapter: { signMessage },
@@ -3667,10 +3705,11 @@ Nonce: 17`);
         outflow_type: { Borrow: null },
         outflow_ref: [],
         amount: 12_000n,
-        receiver: { External: "bc1qborrow" },
+        receiver: { External: VALID_BTC_OUTFLOW_ADDRESS },
       },
     });
     vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord()]),
       get_nonce: vi.fn().mockResolvedValue(31n),
       borrow_assets: borrowAssets,
     } as never);
@@ -3680,9 +3719,9 @@ Nonce: 17`);
     // when
     await client.lending.borrow({
       profileId: "aaaaa-aa",
-      poolId: "rrkah-fqaaa-aaaaa-aaaaq-cai",
+      poolId: BTC_POOL_ID,
       amount: 12_000n,
-      receiverAddress: "bc1qborrow",
+      receiverAddress: VALID_BTC_OUTFLOW_ADDRESS,
       signerWalletAddress: "0xsigner",
       signerChain: "ETH",
       signerWalletAdapter: { signMessage },
@@ -3703,6 +3742,7 @@ Nonce: 17`);
   test("maps protocol errors for createBorrow submission", async () => {
     // given
     vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord()]),
       get_nonce: vi.fn().mockResolvedValue(19n),
       borrow_assets: vi.fn().mockResolvedValue({
         Err: { BorrowingDisabled: null },
@@ -3717,9 +3757,9 @@ Nonce: 17`);
       client.lending
         .prepareBorrow({
           profileId: "aaaaa-aa",
-          poolId: "rrkah-fqaaa-aaaaa-aaaaq-cai",
+          poolId: BTC_POOL_ID,
           amount: 50_000n,
-          receiverAddress: "bc1qcustomoutflow",
+          receiverAddress: VALID_BTC_OUTFLOW_ADDRESS,
           signerWalletAddress: "bc1qsigner",
         })
         .then((borrowAction) =>
@@ -3757,12 +3797,82 @@ Nonce: 17`);
         profileId: "p1",
         poolId: "aaaaa-aa",
         amount: 50_000n,
-        receiverAddress: "bc1qcustomoutflow",
+        receiverAddress: VALID_BTC_OUTFLOW_ADDRESS,
         signerWalletAddress: "  ",
       })
     ).rejects.toMatchObject({
       code: LiquidiumErrorCode.VALIDATION_ERROR,
       message: "Borrow requires a signer account",
+    });
+  });
+
+  test("rejects a borrow with an invalid BTC receiver address", async () => {
+    // given
+    const getNonce = vi.fn().mockResolvedValue(17n);
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord()]),
+      get_nonce: getNonce,
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const result = client.lending.prepareBorrow({
+      profileId: "aaaaa-aa",
+      poolId: BTC_POOL_ID,
+      amount: 50_000n,
+      receiverAddress: "not-a-btc-address",
+      signerWalletAddress: "0xsigner",
+    });
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.INVALID_ADDRESS,
+      message: "Borrow receiver address must be a valid mainnet BTC address",
+    });
+    expect(getNonce).not.toHaveBeenCalled();
+  });
+
+  test("normalizes an EVM borrow receiver address", async () => {
+    // given
+    const getNonce = vi.fn().mockResolvedValue(17n);
+    const borrowAssets = vi.fn().mockResolvedValue({
+      Ok: {
+        id: "outflow-evm",
+        txid: [],
+        outflow_type: { Borrow: null },
+        outflow_ref: [],
+        amount: 50_000n,
+        receiver: { External: CHECKSUM_EVM_OUTFLOW_ADDRESS },
+      },
+    });
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi.fn().mockResolvedValue([createUsdtPoolRecord()]),
+      get_nonce: getNonce,
+      borrow_assets: borrowAssets,
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const borrowAction = await client.lending.prepareBorrow({
+      profileId: "aaaaa-aa",
+      poolId: USDT_POOL_ID,
+      amount: 50_000n,
+      receiverAddress: LOWERCASE_EVM_OUTFLOW_ADDRESS,
+      signerWalletAddress: "0xsigner",
+    });
+    await borrowAction.submit({ signature: "0xsigned", chain: "ETH" });
+
+    // then
+    expect(borrowAction.data.receiverAddress).toBe(
+      CHECKSUM_EVM_OUTFLOW_ADDRESS
+    );
+    expect(borrowAction.message).toContain(
+      `Address:${CHECKSUM_EVM_OUTFLOW_ADDRESS}`
+    );
+    expect(borrowAssets.mock.calls[0]?.[1]).toMatchObject({
+      data: {
+        account: { External: CHECKSUM_EVM_OUTFLOW_ADDRESS },
+      },
     });
   });
 
@@ -3777,10 +3887,11 @@ Nonce: 17`);
         outflow_type: { Withdraw: null },
         outflow_ref: ["ref-2"],
         amount: 10_000n,
-        receiver: { External: "bc1qwithdraw" },
+        receiver: { External: VALID_BTC_OUTFLOW_ADDRESS },
       },
     });
     vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord()]),
       get_nonce: getNonce,
       withdraw,
     } as never);
@@ -3789,9 +3900,9 @@ Nonce: 17`);
     // when
     const withdrawAction = await client.lending.prepareWithdraw({
       profileId: "aaaaa-aa",
-      poolId: "rrkah-fqaaa-aaaaa-aaaaq-cai",
+      poolId: BTC_POOL_ID,
       amount: 10_000n,
-      receiverAddress: "bc1qwithdraw",
+      receiverAddress: VALID_BTC_OUTFLOW_ADDRESS,
       signerWalletAddress: "0xsigner",
     });
     const outflow = await withdrawAction.submit({
@@ -3808,17 +3919,17 @@ Nonce: 17`);
     expect(withdrawAction.account).toBe("0xsigner");
     expect(withdrawAction.data).toMatchObject({
       profileId: "aaaaa-aa",
-      poolId: "rrkah-fqaaa-aaaaa-aaaaq-cai",
+      poolId: BTC_POOL_ID,
       amount: 10_000n,
-      receiverAddress: "bc1qwithdraw",
+      receiverAddress: VALID_BTC_OUTFLOW_ADDRESS,
       signerWalletAddress: "0xsigner",
     });
     expect(withdrawAction.message).toBe(`Liquidium: Withdraw Assets
 
 Action: Withdraw from pool
-Pool ID: rrkah-fqaaa-aaaaa-aaaaq-cai
+Pool ID: hkmli-faaaa-aaaar-qb4ba-cai
 Amount: 10000
-Address:bc1qwithdraw
+Address:${VALID_BTC_OUTFLOW_ADDRESS}
 Expires: 1775001900
 Nonce: 23`);
     expect(withdraw).toHaveBeenCalledTimes(1);
@@ -3826,8 +3937,8 @@ Nonce: 23`);
     expect(withdraw.mock.calls[0]?.[1]).toMatchObject({
       data: {
         expiry_timestamp: 1775001900n,
-        account: { External: "bc1qwithdraw" },
-        pool_id: Principal.fromText("rrkah-fqaaa-aaaaa-aaaaq-cai"),
+        account: { External: VALID_BTC_OUTFLOW_ADDRESS },
+        pool_id: Principal.fromText(BTC_POOL_ID),
         amount: 10_000n,
       },
       signature_info: {
@@ -3846,7 +3957,7 @@ Nonce: 23`);
       amount: 10_000n,
       receiver: {
         type: "External",
-        account: "bc1qwithdraw",
+        account: VALID_BTC_OUTFLOW_ADDRESS,
       },
     });
   });
@@ -3854,6 +3965,7 @@ Nonce: 23`);
   test("creates and executes a withdraw request directly", async () => {
     // given
     vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord()]),
       get_nonce: vi.fn().mockResolvedValue(37n),
       withdraw: vi.fn().mockResolvedValue({
         Ok: {
@@ -3862,7 +3974,7 @@ Nonce: 23`);
           outflow_type: { Withdraw: null },
           outflow_ref: [],
           amount: 8_000n,
-          receiver: { External: "bc1qwithdraw" },
+          receiver: { External: VALID_BTC_OUTFLOW_ADDRESS },
         },
       }),
     } as never);
@@ -3872,9 +3984,9 @@ Nonce: 23`);
     // when
     const outflow = await client.lending.withdraw({
       profileId: "aaaaa-aa",
-      poolId: "rrkah-fqaaa-aaaaa-aaaaq-cai",
+      poolId: BTC_POOL_ID,
       amount: 8_000n,
-      receiverAddress: "bc1qwithdraw",
+      receiverAddress: VALID_BTC_OUTFLOW_ADDRESS,
       signerWalletAddress: "0xsigner",
       signerChain: "ETH",
       signerWalletAdapter: { signMessage },
@@ -3894,6 +4006,7 @@ Nonce: 23`);
   test("maps protocol errors for withdraw submission", async () => {
     // given
     vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord()]),
       get_nonce: vi.fn().mockResolvedValue(29n),
       withdraw: vi.fn().mockResolvedValue({
         Err: { InsufficientFunds: null },
@@ -3908,9 +4021,9 @@ Nonce: 23`);
       client.lending
         .prepareWithdraw({
           profileId: "aaaaa-aa",
-          poolId: "rrkah-fqaaa-aaaaa-aaaaq-cai",
+          poolId: BTC_POOL_ID,
           amount: 10_000n,
-          receiverAddress: "bc1qwithdraw",
+          receiverAddress: VALID_BTC_OUTFLOW_ADDRESS,
           signerWalletAddress: "bc1qsigner",
         })
         .then((withdrawAction) =>
@@ -3948,13 +4061,39 @@ Nonce: 23`);
         profileId: "p1",
         poolId: "aaaaa-aa",
         amount: 10_000n,
-        receiverAddress: "bc1qwithdraw",
+        receiverAddress: VALID_BTC_OUTFLOW_ADDRESS,
         signerWalletAddress: "  ",
       })
     ).rejects.toMatchObject({
       code: LiquidiumErrorCode.VALIDATION_ERROR,
       message: "Withdraw requires a signer account",
     });
+  });
+
+  test("rejects a withdraw with an invalid EVM receiver address", async () => {
+    // given
+    const getNonce = vi.fn().mockResolvedValue(17n);
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi.fn().mockResolvedValue([createUsdtPoolRecord()]),
+      get_nonce: getNonce,
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const result = client.lending.prepareWithdraw({
+      profileId: "aaaaa-aa",
+      poolId: USDT_POOL_ID,
+      amount: 10_000n,
+      receiverAddress: "not-an-evm-address",
+      signerWalletAddress: "0xsigner",
+    });
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.INVALID_ADDRESS,
+      message: "Withdraw receiver address must be a valid EVM address",
+    });
+    expect(getNonce).not.toHaveBeenCalled();
   });
 });
 
@@ -3963,6 +4102,11 @@ describe("InstantLoansModule", () => {
   const BTC_POOL_ID = "hkmli-faaaa-aaaar-qb4ba-cai";
   const USDT_POOL_ID = "hnnn4-iyaaa-aaaar-qb4bq-cai";
   const LOAN_ID = 42n;
+  const VALID_BTC_REFUND_ADDRESS = "1BoatSLRHtKNngkdXEeobR76b53LETtpyT";
+  const LOWERCASE_EVM_BORROW_ADDRESS =
+    "0x52908400098527886e0f7030069857d2e4169ee7";
+  const CHECKSUM_EVM_BORROW_ADDRESS =
+    "0x52908400098527886E0F7030069857D2E4169EE7";
 
   test("gets canonical loan state by ref and derives flow targets", async () => {
     // given
@@ -4235,7 +4379,7 @@ describe("InstantLoansModule", () => {
                 External: "0x2222222222222222222222222222222222222222",
               },
             },
-            refundDestination: { External: "bc1qrefunddestination" },
+            refundDestination: { External: VALID_BTC_REFUND_ADDRESS },
           },
         }),
         { status: 200, headers: { "content-type": "application/json" } }
@@ -4302,9 +4446,9 @@ describe("InstantLoansModule", () => {
       depositWindowSeconds: 3_600n,
       borrowDestination: {
         type: "External",
-        address: "0x2222222222222222222222222222222222222222",
+        address: LOWERCASE_EVM_BORROW_ADDRESS,
       },
-      refundDestination: "bc1qrefunddestination",
+      refundDestination: VALID_BTC_REFUND_ADDRESS,
     });
 
     // then
@@ -4321,9 +4465,9 @@ describe("InstantLoansModule", () => {
           ltvMaxBps: "6000",
           depositWindowSeconds: "3600",
           borrowDestination: {
-            External: "0x2222222222222222222222222222222222222222",
+            External: CHECKSUM_EVM_BORROW_ADDRESS,
           },
-          refundDestination: { External: "bc1qrefunddestination" },
+          refundDestination: { External: VALID_BTC_REFUND_ADDRESS },
         }),
         method: "POST",
       })
@@ -4335,6 +4479,124 @@ describe("InstantLoansModule", () => {
     expect(loan.loanId).toBe(LOAN_ID);
     expect(loan.status).toBe("awaiting_deposit");
     expect(loan.collateral.amount).toBe(10_000_000n);
+  });
+
+  test("rejects an instant loan with an invalid BTC refund destination", async () => {
+    // given
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    const actorCreateSpy = vi.spyOn(Actor, "createActor");
+    const client = new LiquidiumClient({});
+
+    // when
+    const result = client.instantLoans.create({
+      collateralPoolId: BTC_POOL_ID,
+      borrowPoolId: USDT_POOL_ID,
+      collateralAsset: "BTC",
+      borrowAsset: "USDT",
+      collateralAmount: 10_000_000n,
+      borrowAmount: 5_726_000_000n,
+      ltvMaxBps: 6_000n,
+      depositWindowSeconds: 3_600n,
+      borrowDestination: CHECKSUM_EVM_BORROW_ADDRESS,
+      refundDestination: "bc1qrefunddestination",
+    });
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.INVALID_ADDRESS,
+      message:
+        "Instant loan refund destination must be a valid mainnet BTC address",
+    });
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(actorCreateSpy).not.toHaveBeenCalled();
+  });
+
+  test("rejects an instant loan with an invalid EVM borrow destination", async () => {
+    // given
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    const actorCreateSpy = vi.spyOn(Actor, "createActor");
+    const client = new LiquidiumClient({});
+
+    // when
+    const result = client.instantLoans.create({
+      collateralPoolId: BTC_POOL_ID,
+      borrowPoolId: USDT_POOL_ID,
+      collateralAsset: "BTC",
+      borrowAsset: "USDT",
+      collateralAmount: 10_000_000n,
+      borrowAmount: 5_726_000_000n,
+      ltvMaxBps: 6_000n,
+      depositWindowSeconds: 3_600n,
+      borrowDestination: "not-an-evm-address",
+      refundDestination: VALID_BTC_REFUND_ADDRESS,
+    });
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.INVALID_ADDRESS,
+      message: "Instant loan borrow destination must be a valid EVM address",
+    });
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(actorCreateSpy).not.toHaveBeenCalled();
+  });
+
+  test("rejects an instant loan with an invalid BTC borrow destination", async () => {
+    // given
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    const actorCreateSpy = vi.spyOn(Actor, "createActor");
+    const client = new LiquidiumClient({});
+
+    // when
+    const result = client.instantLoans.create({
+      collateralPoolId: USDT_POOL_ID,
+      borrowPoolId: BTC_POOL_ID,
+      collateralAsset: "USDT",
+      borrowAsset: "BTC",
+      collateralAmount: 5_726_000_000n,
+      borrowAmount: 10_000_000n,
+      ltvMaxBps: 6_000n,
+      depositWindowSeconds: 3_600n,
+      borrowDestination: "tb1qnotmainnet",
+      refundDestination: CHECKSUM_EVM_BORROW_ADDRESS,
+    });
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.INVALID_ADDRESS,
+      message:
+        "Instant loan borrow destination must be a valid mainnet BTC address",
+    });
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(actorCreateSpy).not.toHaveBeenCalled();
+  });
+
+  test("rejects an instant loan with an invalid EVM refund destination", async () => {
+    // given
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    const actorCreateSpy = vi.spyOn(Actor, "createActor");
+    const client = new LiquidiumClient({});
+
+    // when
+    const result = client.instantLoans.create({
+      collateralPoolId: USDT_POOL_ID,
+      borrowPoolId: BTC_POOL_ID,
+      collateralAsset: "USDT",
+      borrowAsset: "BTC",
+      collateralAmount: 5_726_000_000n,
+      borrowAmount: 10_000_000n,
+      ltvMaxBps: 6_000n,
+      depositWindowSeconds: 3_600n,
+      borrowDestination: VALID_BTC_REFUND_ADDRESS,
+      refundDestination: "not-an-evm-address",
+    });
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.INVALID_ADDRESS,
+      message: "Instant loan refund destination must be a valid EVM address",
+    });
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(actorCreateSpy).not.toHaveBeenCalled();
   });
 
   test("rejects a loan when current LTV plus slippage exceeds the pool max", async () => {
@@ -4371,7 +4633,7 @@ describe("InstantLoansModule", () => {
       ltvMaxBps: 6_500n,
       depositWindowSeconds: 3_600n,
       borrowDestination: "0x2222222222222222222222222222222222222222",
-      refundDestination: "bc1qrefunddestination",
+      refundDestination: VALID_BTC_REFUND_ADDRESS,
     });
 
     // then
@@ -4417,7 +4679,7 @@ describe("InstantLoansModule", () => {
       ltvMaxBps: 5_925n,
       depositWindowSeconds: 3_600n,
       borrowDestination: "0x2222222222222222222222222222222222222222",
-      refundDestination: "bc1qrefunddestination",
+      refundDestination: VALID_BTC_REFUND_ADDRESS,
     });
 
     // then
@@ -4460,7 +4722,7 @@ describe("InstantLoansModule", () => {
       ltvMaxBps: 7_001n,
       depositWindowSeconds: 3_600n,
       borrowDestination: "0x2222222222222222222222222222222222222222",
-      refundDestination: "bc1qrefunddestination",
+      refundDestination: VALID_BTC_REFUND_ADDRESS,
     });
 
     // then
@@ -4535,7 +4797,7 @@ describe("InstantLoansModule", () => {
       schema_version: 1,
       ltv_max_bps: 6_800n,
       lend_pool_id: Principal.fromText(BTC_POOL_ID),
-      refund_destination: { External: "bc1qrefunddestination" },
+      refund_destination: { External: VALID_BTC_REFUND_ADDRESS },
       ltv_timer_s: 3_600n,
       lending_profile: Principal.fromText(PROFILE_ID),
       borrow_pool_id: Principal.fromText(USDT_POOL_ID),
@@ -4559,7 +4821,7 @@ describe("InstantLoansModule", () => {
           lend_asset: { BTC: null },
           borrow_amount: 5_726_000_000n,
           lend_pool_id: Principal.fromText(BTC_POOL_ID),
-          refund_destination: { External: "bc1qrefunddestination" },
+          refund_destination: { External: VALID_BTC_REFUND_ADDRESS },
           ltv_max_bps: 6_800n,
           ltv_timer_s: 3_600n,
           lending_profile: Principal.fromText(PROFILE_ID),

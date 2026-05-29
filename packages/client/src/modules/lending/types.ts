@@ -73,7 +73,7 @@ export interface CreateBorrowRequest {
   poolId: string;
   /** Amount to borrow in the borrow asset's base units. */
   amount: bigint;
-  /** External-chain address that receives the borrowed asset. */
+  /** External-chain address that receives the borrowed asset. Must match the borrow pool chain. */
   receiverAddress: string;
   /** Wallet address that signs the borrow authorization. */
   signerWalletAddress: string;
@@ -106,7 +106,7 @@ export interface CreateWithdrawRequest {
   poolId: string;
   /** Amount to withdraw in the pool asset's base units. */
   amount: bigint;
-  /** External-chain address that receives the withdrawn asset. */
+  /** External-chain address that receives the withdrawn asset. Must match the pool chain. */
   receiverAddress: string;
   /** Wallet address that signs the withdraw authorization. */
   signerWalletAddress: string;
