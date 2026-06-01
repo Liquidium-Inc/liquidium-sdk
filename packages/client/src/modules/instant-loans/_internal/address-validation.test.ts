@@ -56,6 +56,29 @@ describe("normalizeExternalAddress", () => {
     });
   });
 
+  test("should reject BTC destinations on a non-BTC chain", () => {
+    // given
+    const address = "1BoatSLRHtKNngkdXEeobR76b53LETtpyT";
+
+    // when
+    let result: unknown;
+    try {
+      normalizeExternalAddress({
+        address,
+        asset: "BTC",
+        chain: "ETH",
+      });
+    } catch (error) {
+      result = error;
+    }
+
+    // then
+    expect(result).toMatchObject({
+      code: LiquidiumErrorCode.INVALID_ADDRESS,
+      message: "Address chain must match asset",
+    });
+  });
+
   test("should normalize valid EVM destinations", () => {
     // given
     const address = "0x52908400098527886e0f7030069857d2e4169ee7";
@@ -93,6 +116,29 @@ describe("normalizeExternalAddress", () => {
     expect(result).toMatchObject({
       code: LiquidiumErrorCode.INVALID_ADDRESS,
       message: "Address must be a valid EVM address",
+    });
+  });
+
+  test("should reject EVM destinations on a non-EVM chain", () => {
+    // given
+    const address = "0x52908400098527886e0f7030069857d2e4169ee7";
+
+    // when
+    let result: unknown;
+    try {
+      normalizeExternalAddress({
+        address,
+        asset: "USDT",
+        chain: "BTC",
+      });
+    } catch (error) {
+      result = error;
+    }
+
+    // then
+    expect(result).toMatchObject({
+      code: LiquidiumErrorCode.INVALID_ADDRESS,
+      message: "Address chain must match asset",
     });
   });
 });
