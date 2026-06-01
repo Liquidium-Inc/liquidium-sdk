@@ -4218,15 +4218,7 @@ describe("InstantLoansModule", () => {
   test("includes btc inflow fee in the instant loan repayment quote", async () => {
     // given
     const getLoan = vi.fn().mockResolvedValue({
-      Ok: createInstantLoan({
-        borrow_destination: { External: VALID_BTC_REFUND_ADDRESS },
-        borrow_amount: 1_000_000n,
-        lend_asset: { USDT: null },
-        lend_pool_id: Principal.fromText(USDT_POOL_ID),
-        refund_destination: { External: CHECKSUM_EVM_BORROW_ADDRESS },
-        borrow_pool_id: Principal.fromText(BTC_POOL_ID),
-        borrow_asset: { BTC: null },
-      }),
+      Ok: createBtcBorrowInstantLoan(),
     });
     const getDepositAddress = vi.fn().mockResolvedValue({
       Ok: "0x1111111111111111111111111111111111111111",
@@ -4856,7 +4848,7 @@ describe("InstantLoansModule", () => {
     );
   });
 
-  function createInstantLoan(overrides: Record<string, unknown> = {}) {
+  function createInstantLoan() {
     return {
       id: LOAN_ID,
       authorisation: {
@@ -4883,7 +4875,19 @@ describe("InstantLoansModule", () => {
       borrow_asset: { USDT: null },
       expires_at: [],
       deposit_detected_ts: [],
-      ...overrides,
+    };
+  }
+
+  function createBtcBorrowInstantLoan() {
+    return {
+      ...createInstantLoan(),
+      borrow_destination: { External: VALID_BTC_REFUND_ADDRESS },
+      borrow_amount: 1_000_000n,
+      lend_asset: { USDT: null },
+      lend_pool_id: Principal.fromText(USDT_POOL_ID),
+      refund_destination: { External: CHECKSUM_EVM_BORROW_ADDRESS },
+      borrow_pool_id: Principal.fromText(BTC_POOL_ID),
+      borrow_asset: { BTC: null },
     };
   }
 
