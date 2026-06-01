@@ -26,6 +26,10 @@ import type { PositionsModule } from "../positions";
 import type { Position } from "../positions/types";
 import { QuoteModule } from "../quote";
 import { QuoteValidationErrorCode } from "../quote/types";
+import {
+  validateInstantLoanBorrowDestination,
+  validateInstantLoanRefundDestination,
+} from "./_internal/address-validation";
 import { intFromPublicId, publicIdFromInt } from "./ref-code";
 import type {
   CreateInstantLoanRequest,
@@ -164,6 +168,18 @@ export class InstantLoansModule {
    */
   async create(request: CreateInstantLoanRequest): Promise<InstantLoan> {
     validateCreateRequest(request);
+    const borrowDestination = {
+      External: validateInstantLoanBorrowDestination(
+        addressFromAccountInput(request.borrowDestination),
+        request.borrowAsset
+      ),
+    };
+    const refundDestination = {
+      External: validateInstantLoanRefundDestination(
+        addressFromAccountInput(request.refundDestination),
+        request.collateralAsset
+      ),
+    };
     const apiClient = this.requireApi("Instant loan creation");
 
     await this.validateInstantLoanLtvPolicy(request);
@@ -180,8 +196,8 @@ export class InstantLoansModule {
       borrowAmount: request.borrowAmount.toString(),
       ltvMaxBps: request.ltvMaxBps.toString(),
       depositWindowSeconds: request.depositWindowSeconds.toString(),
-      borrowDestination: accountWireFromInput(request.borrowDestination),
-      refundDestination: accountWireFromInput(request.refundDestination),
+      borrowDestination,
+      refundDestination,
     });
 
     const loan = await this.mapLoanWire(response.loan);
@@ -680,9 +696,7 @@ function throwLtvCalculationError(
   );
 }
 
-function accountWireFromInput(
-  account: string | ExternalAccount
-): InstantLoanCreateAccountWire {
+function addressFromAccountInput(account: string | ExternalAccount): string {
   const address =
     typeof account === "string" ? account.trim() : account.address.trim();
   if (!address) {
@@ -692,7 +706,7 @@ function accountWireFromInput(
     );
   }
 
-  return { External: address };
+  return address;
 }
 
 function accountFromCanister(

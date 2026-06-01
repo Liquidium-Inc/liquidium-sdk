@@ -1,5 +1,9 @@
 import { Principal } from "@icp-sdk/core/principal";
-import { getAddress, isAddress } from "viem";
+import {
+  type EvmAddress,
+  normalizeAndValidateEvmAddress,
+  normalizeExternalAddress,
+} from "../../core/address-validation";
 import { createDepositAccountsActor } from "../../core/canisters/deposit-accounts/actor";
 import {
   createLendingActor,
@@ -110,8 +114,6 @@ type SupplyInstruction = {
   target: SupplyTarget;
 };
 
-type EvmAddress = `0x${string}`;
-
 /** Borrow, withdraw, supply, inflow reporting, and fee-estimation helpers. */
 export class LendingModule {
   constructor(
@@ -147,6 +149,10 @@ export class LendingModule {
         "Withdraw requires a signer account"
       );
     }
+    const receiverAddress = await this.normalizeOutflowReceiverAddress({
+      poolId: request.poolId,
+      receiverAddress: destinationAccount,
+    });
 
     const lendingActor = createLendingActor(this.canisterContext);
 
@@ -157,7 +163,7 @@ export class LendingModule {
         profileId: request.profileId,
         poolId: request.poolId,
         amount: request.amount,
-        receiverAddress: destinationAccount,
+        receiverAddress,
         signerWalletAddress: signerAccount,
         expiryTimestamp,
       };
@@ -172,7 +178,7 @@ export class LendingModule {
           {
             pool_id: request.poolId,
             amount: request.amount.toString(),
-            account: { type: "External", data: destinationAccount },
+            account: { type: "External", data: receiverAddress },
             expiry_timestamp: expiryTimestamp,
           },
           nonce
@@ -278,6 +284,10 @@ export class LendingModule {
         "Borrow requires a signer account"
       );
     }
+    const receiverAddress = await this.normalizeOutflowReceiverAddress({
+      poolId: request.poolId,
+      receiverAddress: destinationAccount,
+    });
 
     const lendingActor = createLendingActor(this.canisterContext);
 
@@ -288,7 +298,7 @@ export class LendingModule {
         profileId: request.profileId,
         poolId: request.poolId,
         amount: request.amount,
-        receiverAddress: destinationAccount,
+        receiverAddress,
         signerWalletAddress: signerAccount,
         expiryTimestamp,
       };
@@ -303,7 +313,7 @@ export class LendingModule {
           {
             pool_id: request.poolId,
             amount: request.amount.toString(),
-            account: { type: "External", data: destinationAccount },
+            account: { type: "External", data: receiverAddress },
             expiry_timestamp: expiryTimestamp,
           },
           nonce
@@ -996,6 +1006,19 @@ export class LendingModule {
     return selectedPool;
   }
 
+  private async normalizeOutflowReceiverAddress(params: {
+    poolId: string;
+    receiverAddress: string;
+  }): Promise<string> {
+    const selectedPool = await this.getPoolById(params.poolId);
+
+    return normalizeExternalAddress({
+      address: params.receiverAddress,
+      asset: getVariantKey(selectedPool.asset),
+      chain: getVariantKey(selectedPool.chain),
+    });
+  }
+
   private async sendEthContractTransaction(
     walletAdapter: Pick<WalletAdapter, "sendEthTransaction">,
     walletAddress: string,
@@ -1114,17 +1137,6 @@ function getApprovalStrategy(params: {
   }
 
   return EvmSupplyApprovalStrategy.resetThenApproveMax;
-}
-
-function normalizeAndValidateEvmAddress(
-  address: string,
-  errorMessage: string
-): EvmAddress {
-  if (!isAddress(address)) {
-    throw new LiquidiumError(LiquidiumErrorCode.INVALID_ADDRESS, errorMessage);
-  }
-
-  return getAddress(address) as EvmAddress;
 }
 
 function mapExpectedOutflowDetails(
