@@ -2,6 +2,7 @@ import { Principal } from "@icp-sdk/core/principal";
 import {
   type EvmAddress,
   type ExternalAddressValidationError,
+  type ExternalAddressValidationResult,
   normalizeAndValidateEvmAddress,
   normalizeExternalAddress,
 } from "../../core/address-validation";
@@ -1018,7 +1019,7 @@ export class LendingModule {
   private async normalizeOutflowReceiverAddress(params: {
     poolId: string;
     receiverAddress: string;
-  }): Promise<ReturnType<typeof normalizeExternalAddress>> {
+  }): Promise<ExternalAddressValidationResult> {
     const selectedPool = await this.getPoolById(params.poolId);
 
     return normalizeExternalAddress({
