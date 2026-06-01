@@ -155,12 +155,6 @@ importers:
 
   examples/instant-loans-flow:
     dependencies:
-      '@dynamic-labs/ethereum':
-        specifier: ^4.83.1
-        version: 4.83.1(@dynamic-labs-wallet/primitives@0.0.337)(@types/react@19.2.15)(bufferutil@4.1.0)(fastestsmallesttextencoderdecoder@1.0.22)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@5.9.3)(use-sync-external-store@1.4.0(react@19.2.6))(utf-8-validate@5.0.10)(viem@2.50.4(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@3.25.76))(zod@3.25.76)
-      '@dynamic-labs/sdk-react-core':
-        specifier: ^4.83.1
-        version: 4.83.1(@dynamic-labs-wallet/primitives@0.0.337)(@types/react@19.2.15)(bufferutil@4.1.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(utf-8-validate@5.0.10)
       '@liquidium/client':
         specifier: workspace:*
         version: link:../../packages/client
@@ -170,9 +164,6 @@ importers:
       react-dom:
         specifier: ^19.2.6
         version: 19.2.6(react@19.2.6)
-      viem:
-        specifier: ^2.50.4
-        version: 2.50.4(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@3.25.76)
     devDependencies:
       '@types/react':
         specifier: ^19.2.15
@@ -189,9 +180,6 @@ importers:
       vite:
         specifier: ^7.3.3
         version: 7.3.3(@types/node@25.9.1)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.48.0)(tsx@4.21.0)(yaml@2.9.0)
-      vite-plugin-node-polyfills:
-        specifier: ^0.24.0
-        version: 0.24.0(rollup@4.60.4)(vite@7.3.3(@types/node@25.9.1)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.48.0)(tsx@4.21.0)(yaml@2.9.0))
 
   examples/vite-react-dynamic:
     dependencies:
