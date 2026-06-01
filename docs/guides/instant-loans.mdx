@@ -33,7 +33,7 @@ Use instant loans for a checkout-style borrow flow. The SDK creates a generated 
 | `borrowDestination` | External address that receives borrowed funds |
 | `refundDestination` | External address that receives collateral refunds |
 
-`borrowDestination` and `refundDestination` can be address strings or account objects such as `{ type: "External", address: "bc1q..." }`.
+`borrowDestination` and `refundDestination` can be address strings or account objects such as `{ type: "External", address: "bc1q..." }`. Use addresses that match the selected asset; invalid destinations throw `LiquidiumErrorCode.INVALID_ADDRESS`.
 
 ## Restore State
 
