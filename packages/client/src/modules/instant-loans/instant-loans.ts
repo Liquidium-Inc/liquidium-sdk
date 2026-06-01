@@ -168,16 +168,18 @@ export class InstantLoansModule {
    */
   async create(request: CreateInstantLoanRequest): Promise<InstantLoan> {
     validateCreateRequest(request);
-    const borrowDestination = accountWireFromInput(
-      request.borrowDestination,
-      request.borrowAsset,
-      validateInstantLoanBorrowDestination
-    );
-    const refundDestination = accountWireFromInput(
-      request.refundDestination,
-      request.collateralAsset,
-      validateInstantLoanRefundDestination
-    );
+    const borrowDestination = {
+      External: validateInstantLoanBorrowDestination(
+        addressFromAccountInput(request.borrowDestination),
+        request.borrowAsset
+      ),
+    };
+    const refundDestination = {
+      External: validateInstantLoanRefundDestination(
+        addressFromAccountInput(request.refundDestination),
+        request.collateralAsset
+      ),
+    };
     const apiClient = this.requireApi("Instant loan creation");
 
     await this.validateInstantLoanLtvPolicy(request);
@@ -694,11 +696,7 @@ function throwLtvCalculationError(
   );
 }
 
-function accountWireFromInput(
-  account: string | ExternalAccount,
-  asset: InstantLoanAsset,
-  validateAddress: (address: string, asset: InstantLoanAsset) => string
-): InstantLoanCreateAccountWire {
+function addressFromAccountInput(account: string | ExternalAccount): string {
   const address =
     typeof account === "string" ? account.trim() : account.address.trim();
   if (!address) {
@@ -708,9 +706,7 @@ function accountWireFromInput(
     );
   }
 
-  return {
-    External: validateAddress(address, asset),
-  };
+  return address;
 }
 
 function accountFromCanister(
