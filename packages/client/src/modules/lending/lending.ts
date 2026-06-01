@@ -1,8 +1,6 @@
 import { Principal } from "@icp-sdk/core/principal";
 import {
   type EvmAddress,
-  type ExternalAddressValidationError,
-  type ExternalAddressValidationResult,
   normalizeAndValidateEvmAddress,
   normalizeExternalAddress,
 } from "../../core/address-validation";
@@ -151,14 +149,10 @@ export class LendingModule {
         "Withdraw requires a signer account"
       );
     }
-    const receiverAddressResult = await this.normalizeOutflowReceiverAddress({
+    const receiverAddress = await this.normalizeOutflowReceiverAddress({
       poolId: request.poolId,
       receiverAddress: destinationAccount,
     });
-    if (!receiverAddressResult.success) {
-      throwInvalidWithdrawReceiverAddress(receiverAddressResult.error);
-    }
-    const receiverAddress = receiverAddressResult.address;
 
     const lendingActor = createLendingActor(this.canisterContext);
 
@@ -290,14 +284,10 @@ export class LendingModule {
         "Borrow requires a signer account"
       );
     }
-    const receiverAddressResult = await this.normalizeOutflowReceiverAddress({
+    const receiverAddress = await this.normalizeOutflowReceiverAddress({
       poolId: request.poolId,
       receiverAddress: destinationAccount,
     });
-    if (!receiverAddressResult.success) {
-      throwInvalidBorrowReceiverAddress(receiverAddressResult.error);
-    }
-    const receiverAddress = receiverAddressResult.address;
 
     const lendingActor = createLendingActor(this.canisterContext);
 
@@ -1019,7 +1009,7 @@ export class LendingModule {
   private async normalizeOutflowReceiverAddress(params: {
     poolId: string;
     receiverAddress: string;
-  }): Promise<ExternalAddressValidationResult> {
+  }): Promise<string> {
     const selectedPool = await this.getPoolById(params.poolId);
 
     return normalizeExternalAddress({
@@ -1147,38 +1137,6 @@ function getApprovalStrategy(params: {
   }
 
   return EvmSupplyApprovalStrategy.resetThenApproveMax;
-}
-
-function throwInvalidBorrowReceiverAddress(
-  error: ExternalAddressValidationError
-): never {
-  if (error === "invalid_mainnet_btc_address") {
-    throw new LiquidiumError(
-      LiquidiumErrorCode.INVALID_ADDRESS,
-      "Borrow receiver address must be a valid mainnet BTC address"
-    );
-  }
-
-  throw new LiquidiumError(
-    LiquidiumErrorCode.INVALID_ADDRESS,
-    "Borrow receiver address must be a valid EVM address"
-  );
-}
-
-function throwInvalidWithdrawReceiverAddress(
-  error: ExternalAddressValidationError
-): never {
-  if (error === "invalid_mainnet_btc_address") {
-    throw new LiquidiumError(
-      LiquidiumErrorCode.INVALID_ADDRESS,
-      "Withdraw receiver address must be a valid mainnet BTC address"
-    );
-  }
-
-  throw new LiquidiumError(
-    LiquidiumErrorCode.INVALID_ADDRESS,
-    "Withdraw receiver address must be a valid EVM address"
-  );
 }
 
 function mapExpectedOutflowDetails(

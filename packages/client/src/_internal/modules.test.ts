@@ -3827,7 +3827,7 @@ Nonce: 17`);
     // then
     await expect(result).rejects.toMatchObject({
       code: LiquidiumErrorCode.INVALID_ADDRESS,
-      message: "Borrow receiver address must be a valid mainnet BTC address",
+      message: "Address must be a valid mainnet BTC address",
     });
     expect(getNonce).not.toHaveBeenCalled();
   });
@@ -4091,7 +4091,7 @@ Nonce: 23`);
     // then
     await expect(result).rejects.toMatchObject({
       code: LiquidiumErrorCode.INVALID_ADDRESS,
-      message: "Withdraw receiver address must be a valid EVM address",
+      message: "Address must be a valid EVM address",
     });
     expect(getNonce).not.toHaveBeenCalled();
   });
@@ -4504,8 +4504,7 @@ describe("InstantLoansModule", () => {
     // then
     await expect(result).rejects.toMatchObject({
       code: LiquidiumErrorCode.INVALID_ADDRESS,
-      message:
-        "Instant loan refund destination must be a valid mainnet BTC address",
+      message: "Address must be a valid mainnet BTC address",
     });
     expect(fetchSpy).not.toHaveBeenCalled();
     expect(actorCreateSpy).not.toHaveBeenCalled();
@@ -4534,7 +4533,7 @@ describe("InstantLoansModule", () => {
     // then
     await expect(result).rejects.toMatchObject({
       code: LiquidiumErrorCode.INVALID_ADDRESS,
-      message: "Instant loan borrow destination must be a valid EVM address",
+      message: "Address must be a valid EVM address",
     });
     expect(fetchSpy).not.toHaveBeenCalled();
     expect(actorCreateSpy).not.toHaveBeenCalled();
@@ -4563,8 +4562,7 @@ describe("InstantLoansModule", () => {
     // then
     await expect(result).rejects.toMatchObject({
       code: LiquidiumErrorCode.INVALID_ADDRESS,
-      message:
-        "Instant loan borrow destination must be a valid mainnet BTC address",
+      message: "Address must be a valid mainnet BTC address",
     });
     expect(fetchSpy).not.toHaveBeenCalled();
     expect(actorCreateSpy).not.toHaveBeenCalled();
@@ -4593,7 +4591,7 @@ describe("InstantLoansModule", () => {
     // then
     await expect(result).rejects.toMatchObject({
       code: LiquidiumErrorCode.INVALID_ADDRESS,
-      message: "Instant loan refund destination must be a valid EVM address",
+      message: "Address must be a valid EVM address",
     });
     expect(fetchSpy).not.toHaveBeenCalled();
     expect(actorCreateSpy).not.toHaveBeenCalled();

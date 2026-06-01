@@ -7,38 +7,37 @@ import { LiquidiumError, LiquidiumErrorCode } from "./errors";
 import { Asset, Chain } from "./types";
 
 export type EvmAddress = `0x${string}`;
-export type ExternalAddressValidationError =
-  | "invalid_mainnet_btc_address"
-  | "invalid_evm_address";
-
-export type ExternalAddressValidationResult =
-  | { success: true; address: string }
-  | { success: false; error: ExternalAddressValidationError };
 
 export function normalizeExternalAddress(params: {
   address: string;
   asset: string;
   chain?: string;
-}): ExternalAddressValidationResult {
+}): string {
   if (isBtcMainnetAddressTarget(params)) {
     if (
       !validateBitcoinAddress(params.address, BitcoinAddressNetwork.mainnet)
     ) {
-      return { success: false, error: "invalid_mainnet_btc_address" };
+      throw new LiquidiumError(
+        LiquidiumErrorCode.INVALID_ADDRESS,
+        "Address must be a valid mainnet BTC address"
+      );
     }
 
-    return { success: true, address: params.address };
+    return params.address;
   }
 
   if (isEvmAddressTarget(params)) {
     if (!isAddress(params.address)) {
-      return { success: false, error: "invalid_evm_address" };
+      throw new LiquidiumError(
+        LiquidiumErrorCode.INVALID_ADDRESS,
+        "Address must be a valid EVM address"
+      );
     }
 
-    return { success: true, address: getAddress(params.address) };
+    return getAddress(params.address);
   }
 
-  return { success: true, address: params.address };
+  return params.address;
 }
 
 export function normalizeAndValidateEvmAddress(

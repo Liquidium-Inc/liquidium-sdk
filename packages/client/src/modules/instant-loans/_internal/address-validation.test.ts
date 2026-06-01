@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { normalizeExternalAddress } from "../../../core/address-validation";
+import { LiquidiumErrorCode } from "../../../core/errors";
 
 describe("normalizeExternalAddress", () => {
   test("should accept valid mainnet BTC base58 destinations", () => {
@@ -14,7 +15,7 @@ describe("normalizeExternalAddress", () => {
     });
 
     // then
-    expect(result).toEqual({ success: true, address });
+    expect(result).toBe(address);
   });
 
   test("should accept valid mainnet BTC bech32 destinations", () => {
@@ -29,7 +30,7 @@ describe("normalizeExternalAddress", () => {
     });
 
     // then
-    expect(result).toEqual({ success: true, address });
+    expect(result).toBe(address);
   });
 
   test("should reject non-mainnet BTC destinations", () => {
@@ -37,16 +38,21 @@ describe("normalizeExternalAddress", () => {
     const address = "tb1qcr8te4kr609gcawutmrza0j4xv80jy5p8pe5uc";
 
     // when
-    const result = normalizeExternalAddress({
-      address,
-      asset: "BTC",
-      chain: "BTC",
-    });
+    let result: unknown;
+    try {
+      normalizeExternalAddress({
+        address,
+        asset: "BTC",
+        chain: "BTC",
+      });
+    } catch (error) {
+      result = error;
+    }
 
     // then
-    expect(result).toEqual({
-      success: false,
-      error: "invalid_mainnet_btc_address",
+    expect(result).toMatchObject({
+      code: LiquidiumErrorCode.INVALID_ADDRESS,
+      message: "Address must be a valid mainnet BTC address",
     });
   });
 
@@ -64,10 +70,7 @@ describe("normalizeExternalAddress", () => {
     });
 
     // then
-    expect(result).toEqual({
-      success: true,
-      address: EXPECTED_CHECKSUM_ADDRESS,
-    });
+    expect(result).toBe(EXPECTED_CHECKSUM_ADDRESS);
   });
 
   test("should reject invalid EVM destinations", () => {
@@ -75,13 +78,21 @@ describe("normalizeExternalAddress", () => {
     const address = "not-an-evm-address";
 
     // when
-    const result = normalizeExternalAddress({
-      address,
-      asset: "USDC",
-      chain: "ETH",
-    });
+    let result: unknown;
+    try {
+      normalizeExternalAddress({
+        address,
+        asset: "USDC",
+        chain: "ETH",
+      });
+    } catch (error) {
+      result = error;
+    }
 
     // then
-    expect(result).toEqual({ success: false, error: "invalid_evm_address" });
+    expect(result).toMatchObject({
+      code: LiquidiumErrorCode.INVALID_ADDRESS,
+      message: "Address must be a valid EVM address",
+    });
   });
 });
