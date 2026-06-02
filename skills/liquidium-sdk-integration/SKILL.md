@@ -306,7 +306,7 @@ try {
       // Show retry copy or trigger the app's retry path.
     }
 
-    throw new Error(error.message);
+    throw error;
   }
 
   throw error;
