@@ -35,13 +35,13 @@ Principal text of the borrow pool.
 
 ***
 
-### collateralAmountHint
+### collateralAmount
 
-> **collateralAmountHint**: `bigint`
+> **collateralAmount**: `bigint`
 
 Defined in: [packages/client/src/modules/instant-loans/types.ts:387](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L387)
 
-Collateral amount hint in base units.
+Collateral amount in base units.
 
 ***
 

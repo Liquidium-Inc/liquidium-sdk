@@ -94,11 +94,11 @@ Destination used for collateral refunds or withdrawals.
 
 ### repayment
 
-> **repayment**: [`InstantLoanRepayment`](InstantLoanRepayment.md) \| `null`
+> **repayment**: [`InstantLoanRepayment`](InstantLoanRepayment.md)
 
 Defined in: [packages/client/src/modules/instant-loans/types.ts:358](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L358)
 
-Current actionable repayment quote, or `null` when the loan has no debt.
+Current repayment quote. Amount fields are zero when the loan has no debt.
 
 ***
 
