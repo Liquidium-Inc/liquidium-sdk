@@ -474,29 +474,38 @@ export class InstantLoansModule {
       this.positions.getPosition(profileId, borrowPoolId),
       this.positions.market.getPoolRate(borrowPoolId),
     ]);
+
     const totalDebtAmount = calculateTotalDebtAmount(borrowPosition);
     const interestBufferAmount = calculateInterestBufferAmount(
       borrowPosition,
       borrowPoolRate.borrowRate
     );
+
     const repaymentInflowFee =
       totalDebtAmount > 0n
         ? await this.estimateRepaymentInflowFee(borrowAsset, repayTarget.chain)
         : { totalFee: 0n, estimateAvailable: false };
+
     const repaymentAmount =
       totalDebtAmount + interestBufferAmount + repaymentInflowFee.totalFee;
+
     const currentCollateralAmount = collateralPosition?.deposited ?? 0n;
+
     const collateralAmount = input.collateralAmountHint;
     const collateralDecimals = collateralPosition?.depositedDecimals ?? 0n;
     const collateralInterestAmount = collateralPosition?.earnedInterest ?? 0n;
+
     const borrowedAmount = borrowPosition?.borrowed ?? 0n;
     const borrowedDecimals = borrowPosition?.borrowedDecimals ?? 0n;
+
     const debtInterestAmount = borrowPosition?.debtInterest ?? 0n;
+
     const status = deriveInstantLoanStatus({
       collateralAmount: currentCollateralAmount,
       started: input.started,
       totalDebtAmount,
     });
+
     const initialDeposit = await this.createInitialDepositQuote({
       collateralAmount,
       asset: collateralAsset,
