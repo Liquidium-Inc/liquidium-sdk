@@ -37,6 +37,8 @@ Install the client package:
 
 ```bash
 npm install @liquidium/client
+pnpm add @liquidium/client
+bun add @liquidium/client
 ```
 
 Use the SDK in browser apps and modern TypeScript runtimes. For this repository,
