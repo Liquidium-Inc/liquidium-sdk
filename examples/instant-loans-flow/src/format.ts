@@ -159,34 +159,23 @@ export function formatInstantLoan(
     loan.borrow.poolId,
     loan.borrow.decimals
   );
-  const repaymentLines = loan.repayment
-    ? [
-        `Amount to repay: ${formatAmount(
-          loan.repayment.amount,
-          borrowDecimals
-        )} ${loan.repayment.asset} on ${loan.repayment.chain}`,
-        `Current debt: ${formatAmount(
-          loan.repayment.debtAmount,
-          borrowDecimals
-        )} ${loan.repayment.asset}`,
-        `Interest buffer: ${formatAmount(
-          loan.repayment.interestBufferAmount,
-          borrowDecimals
-        )} ${
-          loan.repayment.asset
-        } (${loan.repayment.interestBufferSeconds.toString()} seconds)`,
-        `Inflow fee: ${formatAmount(
-          loan.repayment.inflowFeeAmount,
-          borrowDecimals
-        )} ${loan.repayment.asset}${
-          loan.repayment.inflowFeeEstimateAvailable
-            ? ""
-            : " (estimate unavailable)"
-        }`,
-        "Repay target:",
-        formatSupplyTarget(loan.repayment.target),
-      ]
-    : ["No repayment due."];
+  const repaymentLines = [
+    `Amount to repay: ${formatAmount(loan.repayment.amount, borrowDecimals)} ${
+      loan.repayment.asset
+    } on ${loan.repayment.chain}`,
+    `Current debt: ${formatAmount(loan.repayment.debtAmount, borrowDecimals)} ${
+      loan.repayment.asset
+    }`,
+    `Interest buffer: ${formatAmount(
+      loan.repayment.interestBufferAmount,
+      borrowDecimals
+    )} ${loan.repayment.asset} (${loan.repayment.interestBufferSeconds.toString()} seconds)`,
+    `Inflow fee: ${formatAmount(loan.repayment.inflowFeeAmount, borrowDecimals)} ${
+      loan.repayment.asset
+    }${loan.repayment.inflowFeeEstimateAvailable ? "" : " (estimate unavailable)"}`,
+    "Repay target:",
+    formatSupplyTarget(loan.repayment.target),
+  ];
 
   return [
     `Reference: ${loan.ref}`,
@@ -280,7 +269,7 @@ export function formatCandidate(candidate: InstantLoanCandidate): string {
     `Loan id: ${candidate.loanId.toString()}`,
     `Profile id: ${candidate.profileId}`,
     `Created at: ${candidate.createdAt?.toISOString() ?? "unknown"}`,
-    `Collateral: ${candidate.collateralAmountHint.toString()} base units of ${
+    `Collateral: ${candidate.collateralAmount.toString()} base units of ${
       candidate.collateralAsset
     }`,
     `Borrow asset: ${candidate.borrowAsset}`,

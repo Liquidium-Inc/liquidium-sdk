@@ -354,8 +354,8 @@ export interface InstantLoan {
   refundDestination: InstantLoanAccount;
   /** Current actionable initial collateral deposit quote. */
   initialDeposit: InstantLoanInitialDeposit;
-  /** Current actionable repayment quote, or `null` when the loan has no debt. */
-  repayment: InstantLoanRepayment | null;
+  /** Current repayment quote. Amount fields are zero when the loan has no debt. */
+  repayment: InstantLoanRepayment;
   /** Current lending position state for the generated profile. */
   position: InstantLoanPositionSummary;
 }
@@ -383,6 +383,6 @@ export interface InstantLoanCandidate {
   collateralAsset: MarketAsset;
   /** Borrow asset symbol. */
   borrowAsset: MarketAsset;
-  /** Collateral amount hint in base units. */
-  collateralAmountHint: bigint;
+  /** Collateral amount in base units. */
+  collateralAmount: bigint;
 }

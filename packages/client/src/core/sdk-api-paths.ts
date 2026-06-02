@@ -36,7 +36,7 @@ type BuildInstantLoanAddressLookupPathRequest = {
   address: string;
 };
 
-type BuildInstantLoanCollateralHintPathRequest = {
+type BuildInstantLoanCollateralAmountPathRequest = {
   loanId: bigint;
 };
 
@@ -129,12 +129,12 @@ export function buildInstantLoanAddressLookupPath(
   return `${INSTANT_LOANS}/address?${query.toString()}`;
 }
 
-export function buildInstantLoanCollateralHintPath(
-  request: BuildInstantLoanCollateralHintPathRequest
+export function buildInstantLoanCollateralAmountPath(
+  request: BuildInstantLoanCollateralAmountPathRequest
 ): string {
   return `${INSTANT_LOANS}/${encodeURIComponent(
     request.loanId.toString()
-  )}/collateral-hint`;
+  )}/collateral-amount`;
 }
 
 export const SdkApiPath = {

@@ -13,7 +13,7 @@ import { mapCanisterCallErrorToLiquidiumError } from "../../core/canisters/lendi
 import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
 import {
   buildInstantLoanAddressLookupPath,
-  buildInstantLoanCollateralHintPath,
+  buildInstantLoanCollateralAmountPath,
   SdkApiPath,
 } from "../../core/sdk-api-paths";
 import type { ApiClient } from "../../core/transports/api-client";
@@ -48,16 +48,16 @@ import type {
   InstantLoanInitialDeposit,
   InstantLoanLeg,
   InstantLoanListEventsRequest,
-  InstantLoanStatus,
+  InstantLoanStatus as InstantLoanStatusValue,
   InstantLoanWarmedProfile,
 } from "./types";
+import { InstantLoanStatus } from "./types";
 
 const REPAYMENT_BUFFER_SECONDS = 86_400n;
 const RATE_SCALE = 10n ** 27n;
 const SECONDS_PER_YEAR = 31_536_000n;
 const ETH_STABLECOIN_INFLOW_FEE_FALLBACK = 1_500_000n;
 const INSTANT_LOAN_MIN_SLIPPAGE_BUFFER_BPS = 200n;
-const NANOSECONDS_PER_MILLISECOND = 1_000_000n;
 
 type InstantLoanLtvPolicy = {
   ltvBps: bigint;
@@ -82,8 +82,7 @@ type InstantLoanCandidateWire = {
   lend_asset?: string;
   borrowAsset?: string;
   borrow_asset?: string;
-  collateralAmountHint?: string;
-  min_deposit_hint?: string;
+  collateralAmount: string;
 };
 
 type InstantLoanCreateRequestWire = {
@@ -99,8 +98,8 @@ type InstantLoanCreateRequestWire = {
   refundDestination: InstantLoanCreateAccountWire;
 };
 
-type InstantLoanCollateralHintWire = {
-  collateralAmountHint: string;
+type InstantLoanCollateralAmountWire = {
+  collateralAmount: string;
 };
 
 type InstantLoanCreateAccountWire = { External: string };
@@ -113,11 +112,6 @@ type InstantLoanAccountWire =
   | { principal: string; type: "Native" }
   | InstantLoanAccountVariantWire;
 
-type InstantLoanStatusHydrationInput = {
-  collateralAmount: bigint;
-  totalDebtAmount: bigint;
-};
-
 type InstantLoanWire = {
   loanId: string;
   ref?: string;
@@ -127,7 +121,7 @@ type InstantLoanWire = {
   collateral: {
     poolId: string;
     asset: string;
-    amountHint: string;
+    amount: string;
   };
   borrow: {
     poolId: string;
@@ -144,14 +138,13 @@ type InstantLoanHydrationInput = {
   ltvMaxBps: bigint;
   depositWindowSeconds: bigint;
   collateralPoolId: string;
-  collateralAmountHint: bigint;
+  collateralAmount: bigint;
   borrowPoolId: string;
   collateralAsset: string;
   borrowAsset: string;
   borrowAmount: bigint;
   borrowDestination: InstantLoanAccount;
   refundDestination: InstantLoanAccount;
-  deriveStatus: (input: InstantLoanStatusHydrationInput) => InstantLoanStatus;
 };
 
 /** Accountless instant-loan creation, lookup, recovery, and canister query helpers. */
@@ -239,9 +232,9 @@ export class InstantLoansModule {
         throw mapInstantLoansErrorToLiquidiumError(result.Err);
       }
 
-      const collateralAmountHint = await this.getCollateralAmountHint(loanId);
+      const collateralAmount = await this.getCollateralAmount(loanId);
 
-      return await this.mapLoanRecord(result.Ok, collateralAmountHint);
+      return await this.mapLoanRecord(result.Ok, collateralAmount);
     } catch (error) {
       if (error instanceof LiquidiumError) {
         throw error;
@@ -391,7 +384,7 @@ export class InstantLoansModule {
 
   private async mapLoanRecord(
     record: InstantLoanCanisterRecord,
-    collateralAmountHint: bigint
+    collateralAmount: bigint
   ): Promise<InstantLoan> {
     return await this.hydrateLoan({
       loanId: record.id,
@@ -399,34 +392,25 @@ export class InstantLoansModule {
       ltvMaxBps: record.ltv_max_bps,
       depositWindowSeconds: record.ltv_timer_s,
       collateralPoolId: record.lend_pool_id.toText(),
-      collateralAmountHint,
+      collateralAmount,
       borrowPoolId: record.borrow_pool_id.toText(),
       collateralAsset: getVariantKey(record.lend_asset),
       borrowAsset: getVariantKey(record.borrow_asset),
       borrowAmount: record.borrow_amount,
       borrowDestination: accountFromCanister(record.borrow_destination),
       refundDestination: accountFromCanister(record.refund_destination),
-      deriveStatus: (input) =>
-        deriveInstantLoanRecordStatus({
-          ...input,
-          expiresAt: record.expires_at[0],
-          started: record.started,
-        }),
     });
   }
 
-  private async getCollateralAmountHint(loanId: bigint): Promise<bigint> {
+  private async getCollateralAmount(loanId: bigint): Promise<bigint> {
     const apiClient = this.requireApi("Instant loan lookup");
     const response = await apiClient.get<
       {
         success?: true;
-      } & InstantLoanCollateralHintWire
-    >(buildInstantLoanCollateralHintPath({ loanId }));
+      } & InstantLoanCollateralAmountWire
+    >(buildInstantLoanCollateralAmountPath({ loanId }));
 
-    return parseBigintWire(
-      response.collateralAmountHint,
-      "collateral amount hint"
-    );
+    return parseBigintWire(response.collateralAmount, "collateral amount");
   }
 
   private async mapLoanWire(loan: InstantLoanWire): Promise<InstantLoan> {
@@ -441,9 +425,9 @@ export class InstantLoansModule {
         "deposit window"
       ),
       collateralPoolId: loan.collateral.poolId,
-      collateralAmountHint: parseBigintWire(
-        loan.collateral.amountHint,
-        "collateral amount hint"
+      collateralAmount: parseBigintWire(
+        loan.collateral.amount,
+        "collateral amount"
       ),
       borrowPoolId: loan.borrow.poolId,
       collateralAsset: loan.collateral.asset,
@@ -451,7 +435,6 @@ export class InstantLoansModule {
       borrowAmount: parseBigintWire(loan.borrow.amount, "borrow amount"),
       borrowDestination: accountFromWire(loan.borrow.destination),
       refundDestination: accountFromWire(loan.refundDestination),
-      deriveStatus: deriveInstantLoanWireStatus,
     });
   }
 
@@ -504,7 +487,7 @@ export class InstantLoansModule {
 
     const currentCollateralAmount = collateralPosition?.deposited ?? 0n;
 
-    const collateralAmount = input.collateralAmountHint;
+    const collateralAmount = input.collateralAmount;
     const collateralDecimals =
       collateralPosition?.depositedDecimals ??
       getAssetNativeDecimals(collateralAsset);
@@ -516,7 +499,7 @@ export class InstantLoansModule {
 
     const debtInterestAmount = borrowPosition?.debtInterest ?? 0n;
 
-    const status = input.deriveStatus({
+    const status = deriveInstantLoanStatus({
       collateralAmount: currentCollateralAmount,
       totalDebtAmount,
     });
@@ -528,21 +511,18 @@ export class InstantLoansModule {
       target: depositTarget,
     });
 
-    const repayment =
-      totalDebtAmount > 0n
-        ? {
-            amount: repaymentAmount,
-            decimals: borrowedDecimals,
-            debtAmount: totalDebtAmount,
-            interestBufferAmount,
-            interestBufferSeconds: REPAYMENT_BUFFER_SECONDS,
-            inflowFeeAmount: repaymentInflowFee.totalFee,
-            inflowFeeEstimateAvailable: repaymentInflowFee.estimateAvailable,
-            asset: borrowAsset,
-            chain: repayTarget.chain,
-            target: repayTarget,
-          }
-        : null;
+    const repayment = {
+      amount: repaymentAmount,
+      decimals: borrowedDecimals,
+      debtAmount: totalDebtAmount,
+      interestBufferAmount,
+      interestBufferSeconds: REPAYMENT_BUFFER_SECONDS,
+      inflowFeeAmount: repaymentInflowFee.totalFee,
+      inflowFeeEstimateAvailable: repaymentInflowFee.estimateAvailable,
+      asset: borrowAsset,
+      chain: repayTarget.chain,
+      target: repayTarget,
+    };
 
     return {
       loanId: input.loanId,
@@ -720,61 +700,19 @@ function calculateTotalDebtAmount(borrowPosition: Position | null): bigint {
   return borrowPosition.borrowed + borrowPosition.debtInterest;
 }
 
-function deriveInstantLoanWireStatus(
-  input: InstantLoanStatusHydrationInput
-): InstantLoanStatus {
-  return deriveInstantLoanStatus({ ...input, started: undefined });
-}
-
-function deriveInstantLoanRecordStatus(
-  input: InstantLoanStatusHydrationInput & {
-    expiresAt: bigint | undefined;
-    started: boolean;
-  }
-): InstantLoanStatus {
-  const status = deriveInstantLoanStatus({
-    collateralAmount: input.collateralAmount,
-    started: input.started,
-    totalDebtAmount: input.totalDebtAmount,
-  });
-
-  if (status !== "awaiting_deposit") {
-    return status;
-  }
-
-  return hasExpiredDepositWindow(input.expiresAt) ? "expired" : status;
-}
-
 function deriveInstantLoanStatus(input: {
   collateralAmount: bigint;
-  started: boolean | undefined;
   totalDebtAmount: bigint;
-}): InstantLoanStatus {
+}): InstantLoanStatusValue {
   if (input.totalDebtAmount > 0n) {
-    return "active";
+    return InstantLoanStatus.active;
   }
 
   if (input.collateralAmount > 0n) {
-    return input.started ? "settling" : "deposit_detected";
+    return InstantLoanStatus.depositDetected;
   }
 
-  if (input.started) {
-    return "closed";
-  }
-
-  return "awaiting_deposit";
-}
-
-function hasExpiredDepositWindow(expiresAt: bigint | undefined): boolean {
-  if (expiresAt === undefined) {
-    return false;
-  }
-
-  return expiresAt <= currentProtocolTimestamp();
-}
-
-function currentProtocolTimestamp(): bigint {
-  return BigInt(Date.now()) * NANOSECONDS_PER_MILLISECOND;
+  return InstantLoanStatus.awaitingDeposit;
 }
 
 function validateCreateRequest(request: CreateInstantLoanRequest): void {
@@ -1021,9 +959,9 @@ function mapCandidateWire(
       wire.borrowAsset ?? wire.borrow_asset,
       "borrow asset"
     ),
-    collateralAmountHint: parseBigintWire(
-      wire.collateralAmountHint ?? wire.min_deposit_hint,
-      "collateral amount hint"
+    collateralAmount: parseBigintWire(
+      wire.collateralAmount,
+      "collateral amount"
     ),
   };
 }

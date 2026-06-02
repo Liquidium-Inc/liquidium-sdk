@@ -111,12 +111,8 @@ const restoredLoan = await client.instantLoans.get({ ref: loan.ref });
 
 console.log("Loan status:", restoredLoan.status);
 console.log("Restored initial deposit amount:", restoredLoan.initialDeposit.amount.toString());
-if (restoredLoan.repayment) {
-  console.log("Repay amount:", restoredLoan.repayment.amount.toString());
-  console.log("Repay target:", formatSupplyTarget(restoredLoan.repayment.target));
-} else {
-  console.log("No repayment due yet.");
-}
+console.log("Repay amount:", restoredLoan.repayment.amount.toString());
+console.log("Repay target:", formatSupplyTarget(restoredLoan.repayment.target));
 
 const activities = await client.activities.list({ shortRef: loan.ref });
 
@@ -155,9 +151,9 @@ Instant-loan integrations use this sequence:
 | Validate amounts | `client.quote.calculateLtv(...)` | Block invalid LTV or frozen-pool input before creating a loan |
 | Create loan | `client.instantLoans.create(...)` | Store `loan.ref` and show `loan.initialDeposit.amount` plus `loan.initialDeposit.target` |
 | Track loan | `client.instantLoans.get({ ref })` and `client.activities.list({ shortRef: ref })` | Reload loan state, initial deposit quote, and repayment activity |
-| Repay loan | Read `loan.repayment` | If non-null, ask the user to send `loan.repayment.amount` to `loan.repayment.target` |
+| Repay loan | Read `loan.repayment` | Ask the user to send `loan.repayment.amount` to `loan.repayment.target`; amount is `0n` when no repayment is due |
 
-`client.instantLoans.create(...)` and `client.instantLoans.get(...)` return the generated Liquidium profile, current position state, an initial deposit quote with its transfer target, and a nullable repayment quote with its transfer target. Users do not manage the generated profile.
+`client.instantLoans.create(...)` and `client.instantLoans.get(...)` return the generated Liquidium profile, current position state, an initial deposit quote with its transfer target, and a repayment quote with its transfer target. Repayment amount fields are zero when the loan has no debt. Users do not manage the generated profile.
 
 ## Core API
 
@@ -215,8 +211,8 @@ Most instant-loan UIs show or store these fields:
 | `loan.initialDeposit.amount` | Fee-inclusive collateral amount to send after creation or restore |
 | `loan.initialDeposit.collateralAmount` | Intended credited collateral target used for LTV |
 | `loan.initialDeposit.target` | Address or ICRC account where the user sends collateral |
-| `loan.repayment?.amount` | Full amount to repay, including fee and interest buffer, when debt exists |
-| `loan.repayment?.target` | Address or ICRC account where the user sends repayment, when debt exists |
+| `loan.repayment.amount` | Full amount to repay, including fee and interest buffer. Zero when no repayment is due |
+| `loan.repayment.target` | Address or ICRC account where the user sends repayment |
 | `loan.position` | Current collateral, debt, and interest state for the generated profile |
 
 ## Amounts
