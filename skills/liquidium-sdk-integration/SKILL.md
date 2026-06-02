@@ -41,9 +41,9 @@ pnpm add @liquidium/client
 bun add @liquidium/client
 ```
 
-Use the SDK in browser apps and modern TypeScript runtimes. For this repository,
-local development expects Node.js 20+ and pnpm 9+. Browser integrations need
-`fetch`, `BigInt`, and standard ESM support.
+Use the SDK in browser apps and modern TypeScript runtimes. Browser integrations
+need `fetch`, `BigInt`, and standard ESM support. Follow the host app's package
+manager and build tooling.
 
 Minimal config:
 
