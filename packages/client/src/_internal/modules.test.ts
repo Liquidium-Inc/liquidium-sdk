@@ -4184,23 +4184,27 @@ describe("InstantLoansModule", () => {
     expect(loan.profileId).toBe(PROFILE_ID);
     expect(loan).not.toHaveProperty("started");
     expect(loan).not.toHaveProperty("depositDetectedTimestamp");
-    expect(loan.ltvMaxBps).toBe(6_800n);
+    expect(loan.terms).toEqual({
+      ltvMaxBps: 6_800n,
+      depositWindowSeconds: 3_600n,
+    });
     expect(loan.collateral).toMatchObject({
       poolId: BTC_POOL_ID,
       asset: "BTC",
       chain: "BTC",
+      decimals: 8n,
       amount: 10_000_000n,
     });
     expect(loan.collateral).not.toHaveProperty("amountHint");
-    expect(loan.borrow.amount).toBe(2_000_000n);
-    expect(loan.depositTarget).toMatchObject({
-      type: "nativeAddress",
-      asset: "BTC",
-      chain: "BTC",
-      address: "bc1qinstantdeposit",
+    expect(loan.borrow).toMatchObject({
+      amount: 2_000_000n,
+      decimals: 6n,
     });
+    expect(loan).not.toHaveProperty("depositTarget");
+    expect(loan).not.toHaveProperty("repayTarget");
     expect(loan.initialDeposit).toMatchObject({
       amount: 10_002_010n,
+      decimals: 8n,
       collateralAmount: 10_000_000n,
       inflowFeeAmount: 2_010n,
       asset: "BTC",
@@ -4208,12 +4212,6 @@ describe("InstantLoansModule", () => {
       target: expect.objectContaining({
         address: "bc1qinstantdeposit",
       }),
-    });
-    expect(loan.repayTarget).toMatchObject({
-      type: "nativeAddress",
-      asset: "USDT",
-      chain: "ETH",
-      address: "0x1111111111111111111111111111111111111111",
     });
     expect(loan.repayment).toMatchObject({
       amount: 3_501_054n,
@@ -4225,6 +4223,12 @@ describe("InstantLoansModule", () => {
       inflowFeeEstimateAvailable: true,
       asset: "USDT",
       chain: "ETH",
+      target: expect.objectContaining({
+        type: "nativeAddress",
+        asset: "USDT",
+        chain: "ETH",
+        address: "0x1111111111111111111111111111111111111111",
+      }),
     });
     expect(loan.position).toMatchObject({
       collateralAmount: 10_000_000n,
@@ -4309,6 +4313,7 @@ describe("InstantLoansModule", () => {
     // then
     expect(loan.repayment).toMatchObject({
       amount: 1_002_537n,
+      decimals: 8n,
       debtAmount: 1_000_500n,
       interestBufferAmount: 27n,
       inflowFeeAmount: 2_010n,
@@ -4318,6 +4323,7 @@ describe("InstantLoansModule", () => {
     });
     expect(loan.initialDeposit).toMatchObject({
       amount: 6_500_000n,
+      decimals: 6n,
       collateralAmount: 5_000_000n,
       inflowFeeAmount: 1_500_000n,
       asset: "USDT",
@@ -4412,7 +4418,7 @@ describe("InstantLoansModule", () => {
     ]);
   });
 
-  test("returns zero repayment quote when the loan has no debt", async () => {
+  test("returns null repayment quote when the loan has no debt", async () => {
     // given
     const getLoan = vi.fn().mockResolvedValue({ Ok: createInstantLoan() });
     const getBtcAddress = vi.fn().mockResolvedValue("bc1qinstantdeposit");
@@ -4459,15 +4465,70 @@ describe("InstantLoansModule", () => {
     });
 
     // then
-    expect(loan.repayment).toMatchObject({
-      amount: 0n,
-      debtAmount: 0n,
-      interestBufferAmount: 0n,
-      inflowFeeAmount: 0n,
-      inflowFeeEstimateAvailable: false,
-    });
+    expect(loan.repayment).toBeNull();
     expect(loan.initialDeposit.amount).toBe(10_002_010n);
     expect(loan.status).toBe("awaiting_deposit");
+    expect(estimateDepositFee).not.toHaveBeenCalled();
+  });
+
+  test("returns expired status when the deposit window passed before collateral arrived", async () => {
+    // given
+    const ONE_SECOND_MS = 1_000;
+    const NANOSECONDS_PER_MILLISECOND = 1_000_000n;
+    const EXPIRED_DEPOSIT_TIMESTAMP_NS =
+      BigInt(Date.now() - ONE_SECOND_MS) * NANOSECONDS_PER_MILLISECOND;
+    const getLoan = vi.fn().mockResolvedValue({
+      Ok: {
+        ...createInstantLoan(),
+        expires_at: [EXPIRED_DEPOSIT_TIMESTAMP_NS],
+      },
+    });
+    const getBtcAddress = vi.fn().mockResolvedValue("bc1qinstantdeposit");
+    const getDepositAddress = vi.fn().mockResolvedValue({
+      Ok: "0x1111111111111111111111111111111111111111",
+    });
+    const getPoolRate = vi
+      .fn()
+      .mockResolvedValue([[10_000_000_000_000_000_000_000_000n, 0n, 0n]]);
+    const estimateDepositFee = vi.fn().mockResolvedValue({ Ok: 1_500_000n });
+    const getDepositFee = vi.fn().mockResolvedValue(2_000n);
+    const icrc1Fee = vi.fn().mockResolvedValue(10n);
+    mockInstantLoanLookupFetch({
+      collateralAmountHint: "10000000",
+    });
+
+    vi.spyOn(Actor, "createActor")
+      .mockReturnValueOnce({ get_loan: getLoan } as never)
+      .mockReturnValueOnce({
+        list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord()]),
+      } as never)
+      .mockReturnValueOnce({
+        list_pools: vi.fn().mockResolvedValue([createUsdtPoolRecord()]),
+      } as never)
+      .mockReturnValueOnce({
+        get_position: vi.fn().mockResolvedValue([]),
+      } as never)
+      .mockReturnValueOnce({
+        get_position: vi.fn().mockResolvedValue([]),
+      } as never)
+      .mockReturnValueOnce({ get_pool_rate: getPoolRate } as never)
+      .mockReturnValueOnce({ get_btc_address: getBtcAddress } as never)
+      .mockReturnValueOnce({ get_deposit_address: getDepositAddress } as never)
+      .mockReturnValueOnce({ get_deposit_fee: getDepositFee } as never)
+      .mockReturnValueOnce({ icrc1_fee: icrc1Fee } as never);
+    const client = new LiquidiumClient({
+      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
+      canisterIds: { instantLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
+    });
+
+    // when
+    const loan = await client.instantLoans.get({
+      ref: publicIdFromInt(LOAN_ID),
+    });
+
+    // then
+    expect(loan.status).toBe("expired");
+    expect(loan.repayment).toBeNull();
     expect(estimateDepositFee).not.toHaveBeenCalled();
   });
 
@@ -4604,8 +4665,14 @@ describe("InstantLoansModule", () => {
     expect(loan.loanId).toBe(LOAN_ID);
     expect(loan.status).toBe("awaiting_deposit");
     expect(loan.collateral.amount).toBe(10_000_000n);
+    expect(loan.terms).toEqual({
+      ltvMaxBps: 6_800n,
+      depositWindowSeconds: 3_600n,
+    });
+    expect(loan.repayment).toBeNull();
     expect(loan.initialDeposit).toMatchObject({
       amount: EXPECTED_INITIAL_DEPOSIT_AMOUNT_SATS,
+      decimals: 8n,
       collateralAmount: 10_000_000n,
       inflowFeeAmount: BTC_MINTER_DEPOSIT_FEE_SATS + CKBTC_LEDGER_FEE_SATS,
       asset: "BTC",

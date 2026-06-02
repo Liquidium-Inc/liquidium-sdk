@@ -7,7 +7,9 @@ export type {
   InstantLoanAccount,
   InstantLoanAsset,
   InstantLoanAuthorization,
+  InstantLoanBorrow,
   InstantLoanCandidate,
+  InstantLoanCollateral,
   InstantLoanConfig,
   InstantLoanEvent,
   InstantLoanEventType,
@@ -17,6 +19,7 @@ export type {
   InstantLoanListEventsRequest,
   InstantLoanPositionSummary,
   InstantLoanRepayment,
+  InstantLoanTerms,
   InstantLoanWarmedProfile,
   NativeAccount,
 } from "./types";

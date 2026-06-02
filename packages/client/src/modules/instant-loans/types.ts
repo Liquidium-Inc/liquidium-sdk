@@ -87,7 +87,7 @@ export interface CreateInstantLoanRequest {
    * deposit/inflow fees are deducted. For BTC, pass satoshis. For token assets,
    * convert the UI amount using the selected pool's `decimals` value. After
    * creation, use `loan.initialDeposit.amount` as the fee-inclusive transfer
-   * amount to send to `loan.depositTarget`.
+   * amount to send to `loan.initialDeposit.target`.
    */
   collateralAmount: bigint;
   /**
@@ -252,6 +252,8 @@ export interface InstantLoanRepayment {
 export interface InstantLoanInitialDeposit {
   /** Full amount to send to the deposit target, including the estimated inflow fee. */
   amount: bigint;
+  /** Decimal scale for `amount`, `collateralAmount`, and `inflowFeeAmount`. */
+  decimals: bigint;
   /** Intended credited collateral amount in base units, before inflow fees. */
   collateralAmount: bigint;
   /** Inflow fee amount in base units added to the transfer amount. */
@@ -289,11 +291,50 @@ export const InstantLoanStatus = {
   active: "active",
   settling: "settling",
   closed: "closed",
+  expired: "expired",
 } as const;
 export type InstantLoanStatus =
   (typeof InstantLoanStatus)[keyof typeof InstantLoanStatus];
 
-/** Hydrated instant-loan state plus generated deposit and repayment targets. */
+/** Immutable terms selected for an instant loan. */
+export interface InstantLoanTerms {
+  /** Maximum loan-to-value ratio in basis points. */
+  ltvMaxBps: bigint;
+  /** Seconds allowed for the collateral deposit before timeout. */
+  depositWindowSeconds: bigint;
+}
+
+/** Collateral leg selected for an instant loan. */
+export interface InstantLoanCollateral {
+  /** Principal text of the collateral pool. */
+  poolId: string;
+  /** Collateral asset symbol. */
+  asset: MarketAsset;
+  /** Chain used for collateral deposits. */
+  chain: MarketChain;
+  /** Decimal scale for collateral amounts. */
+  decimals: bigint;
+  /** Intended credited collateral amount in base units, before inflow fees. */
+  amount: bigint;
+}
+
+/** Borrow leg selected for an instant loan. */
+export interface InstantLoanBorrow {
+  /** Principal text of the borrow pool. */
+  poolId: string;
+  /** Borrow asset symbol. */
+  asset: MarketAsset;
+  /** Chain used for repayment. */
+  chain: MarketChain;
+  /** Decimal scale for borrow and debt amounts. */
+  decimals: bigint;
+  /** Requested borrow amount in base units. */
+  amount: bigint;
+  /** Destination that receives the borrowed asset. */
+  destination: InstantLoanAccount;
+}
+
+/** Hydrated instant-loan state plus generated quote targets. */
 export interface InstantLoan {
   /** Canister-assigned loan id. */
   loanId: bigint;
@@ -303,35 +344,18 @@ export interface InstantLoan {
   status: InstantLoanStatus;
   /** Generated lending profile principal used by the instant loan. */
   profileId: string;
-  /** Maximum loan-to-value ratio in basis points. */
-  ltvMaxBps: bigint;
-  /** Seconds allowed for the collateral deposit before timeout. */
-  depositWindowSeconds: bigint;
-  /** Collateral-side pool, asset, chain, and current or requested credited collateral amount. */
-  collateral: {
-    poolId: string;
-    asset: MarketAsset;
-    chain: MarketChain;
-    amount: bigint;
-  };
-  /** Borrow-side pool, asset, chain, requested amount, and destination. */
-  borrow: {
-    poolId: string;
-    asset: MarketAsset;
-    chain: MarketChain;
-    amount: bigint;
-    destination: InstantLoanAccount;
-  };
+  /** Immutable loan terms. */
+  terms: InstantLoanTerms;
+  /** Collateral-side pool, asset, chain, decimals, and requested credited amount. */
+  collateral: InstantLoanCollateral;
+  /** Borrow-side pool, asset, chain, decimals, requested amount, and destination. */
+  borrow: InstantLoanBorrow;
   /** Destination used for collateral refunds or withdrawals. */
   refundDestination: InstantLoanAccount;
-  /** Address or ICRC account where the user deposits collateral. */
-  depositTarget: SupplyTarget;
-  /** Address or ICRC account where the user repays debt. */
-  repayTarget: SupplyTarget;
   /** Current actionable initial collateral deposit quote. */
   initialDeposit: InstantLoanInitialDeposit;
-  /** Current actionable repayment quote. */
-  repayment: InstantLoanRepayment;
+  /** Current actionable repayment quote, or `null` when the loan has no debt. */
+  repayment: InstantLoanRepayment | null;
   /** Current lending position state for the generated profile. */
   position: InstantLoanPositionSummary;
 }
