@@ -13,7 +13,7 @@ import { mapCanisterCallErrorToLiquidiumError } from "../../core/canisters/lendi
 import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
 import {
   buildInstantLoanAddressLookupPath,
-  buildInstantLoanCollateralHintPath,
+  buildInstantLoanCollateralAmountPath,
   SdkApiPath,
 } from "../../core/sdk-api-paths";
 import type { ApiClient } from "../../core/transports/api-client";
@@ -82,8 +82,7 @@ type InstantLoanCandidateWire = {
   lend_asset?: string;
   borrowAsset?: string;
   borrow_asset?: string;
-  collateralAmountHint?: string;
-  min_deposit_hint?: string;
+  collateralAmount: string;
 };
 
 type InstantLoanCreateRequestWire = {
@@ -99,8 +98,8 @@ type InstantLoanCreateRequestWire = {
   refundDestination: InstantLoanCreateAccountWire;
 };
 
-type InstantLoanCollateralHintWire = {
-  collateralAmountHint: string;
+type InstantLoanCollateralAmountWire = {
+  collateralAmount: string;
 };
 
 type InstantLoanCreateAccountWire = { External: string };
@@ -127,7 +126,7 @@ type InstantLoanWire = {
   collateral: {
     poolId: string;
     asset: string;
-    amountHint: string;
+    amount: string;
   };
   borrow: {
     poolId: string;
@@ -144,7 +143,7 @@ type InstantLoanHydrationInput = {
   ltvMaxBps: bigint;
   depositWindowSeconds: bigint;
   collateralPoolId: string;
-  collateralAmountHint: bigint;
+  collateralAmount: bigint;
   borrowPoolId: string;
   collateralAsset: string;
   borrowAsset: string;
@@ -239,9 +238,9 @@ export class InstantLoansModule {
         throw mapInstantLoansErrorToLiquidiumError(result.Err);
       }
 
-      const collateralAmountHint = await this.getCollateralAmountHint(loanId);
+      const collateralAmount = await this.getCollateralAmount(loanId);
 
-      return await this.mapLoanRecord(result.Ok, collateralAmountHint);
+      return await this.mapLoanRecord(result.Ok, collateralAmount);
     } catch (error) {
       if (error instanceof LiquidiumError) {
         throw error;
@@ -391,7 +390,7 @@ export class InstantLoansModule {
 
   private async mapLoanRecord(
     record: InstantLoanCanisterRecord,
-    collateralAmountHint: bigint
+    collateralAmount: bigint
   ): Promise<InstantLoan> {
     return await this.hydrateLoan({
       loanId: record.id,
@@ -399,7 +398,7 @@ export class InstantLoansModule {
       ltvMaxBps: record.ltv_max_bps,
       depositWindowSeconds: record.ltv_timer_s,
       collateralPoolId: record.lend_pool_id.toText(),
-      collateralAmountHint,
+      collateralAmount,
       borrowPoolId: record.borrow_pool_id.toText(),
       collateralAsset: getVariantKey(record.lend_asset),
       borrowAsset: getVariantKey(record.borrow_asset),
@@ -415,18 +414,15 @@ export class InstantLoansModule {
     });
   }
 
-  private async getCollateralAmountHint(loanId: bigint): Promise<bigint> {
+  private async getCollateralAmount(loanId: bigint): Promise<bigint> {
     const apiClient = this.requireApi("Instant loan lookup");
     const response = await apiClient.get<
       {
         success?: true;
-      } & InstantLoanCollateralHintWire
-    >(buildInstantLoanCollateralHintPath({ loanId }));
+      } & InstantLoanCollateralAmountWire
+    >(buildInstantLoanCollateralAmountPath({ loanId }));
 
-    return parseBigintWire(
-      response.collateralAmountHint,
-      "collateral amount hint"
-    );
+    return parseBigintWire(response.collateralAmount, "collateral amount");
   }
 
   private async mapLoanWire(loan: InstantLoanWire): Promise<InstantLoan> {
@@ -441,9 +437,9 @@ export class InstantLoansModule {
         "deposit window"
       ),
       collateralPoolId: loan.collateral.poolId,
-      collateralAmountHint: parseBigintWire(
-        loan.collateral.amountHint,
-        "collateral amount hint"
+      collateralAmount: parseBigintWire(
+        loan.collateral.amount,
+        "collateral amount"
       ),
       borrowPoolId: loan.borrow.poolId,
       collateralAsset: loan.collateral.asset,
@@ -504,7 +500,7 @@ export class InstantLoansModule {
 
     const currentCollateralAmount = collateralPosition?.deposited ?? 0n;
 
-    const collateralAmount = input.collateralAmountHint;
+    const collateralAmount = input.collateralAmount;
     const collateralDecimals =
       collateralPosition?.depositedDecimals ??
       getAssetNativeDecimals(collateralAsset);
@@ -528,21 +524,18 @@ export class InstantLoansModule {
       target: depositTarget,
     });
 
-    const repayment =
-      totalDebtAmount > 0n
-        ? {
-            amount: repaymentAmount,
-            decimals: borrowedDecimals,
-            debtAmount: totalDebtAmount,
-            interestBufferAmount,
-            interestBufferSeconds: REPAYMENT_BUFFER_SECONDS,
-            inflowFeeAmount: repaymentInflowFee.totalFee,
-            inflowFeeEstimateAvailable: repaymentInflowFee.estimateAvailable,
-            asset: borrowAsset,
-            chain: repayTarget.chain,
-            target: repayTarget,
-          }
-        : null;
+    const repayment = {
+      amount: repaymentAmount,
+      decimals: borrowedDecimals,
+      debtAmount: totalDebtAmount,
+      interestBufferAmount,
+      interestBufferSeconds: REPAYMENT_BUFFER_SECONDS,
+      inflowFeeAmount: repaymentInflowFee.totalFee,
+      inflowFeeEstimateAvailable: repaymentInflowFee.estimateAvailable,
+      asset: borrowAsset,
+      chain: repayTarget.chain,
+      target: repayTarget,
+    };
 
     return {
       loanId: input.loanId,
@@ -1021,9 +1014,9 @@ function mapCandidateWire(
       wire.borrowAsset ?? wire.borrow_asset,
       "borrow asset"
     ),
-    collateralAmountHint: parseBigintWire(
-      wire.collateralAmountHint ?? wire.min_deposit_hint,
-      "collateral amount hint"
+    collateralAmount: parseBigintWire(
+      wire.collateralAmount,
+      "collateral amount"
     ),
   };
 }

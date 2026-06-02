@@ -4122,7 +4122,7 @@ describe("InstantLoansModule", () => {
     const getDepositFee = vi.fn().mockResolvedValue(2_000n);
     const icrc1Fee = vi.fn().mockResolvedValue(10n);
     const fetchSpy = mockInstantLoanLookupFetch({
-      collateralAmountHint: "10000000",
+      collateralAmount: "10000000",
     });
     const getCollateralPosition = vi.fn().mockResolvedValue([
       createInstantLoanPosition(
@@ -4175,7 +4175,7 @@ describe("InstantLoansModule", () => {
     // then
     expect(getLoan).toHaveBeenCalledWith(LOAN_ID);
     expect(fetchSpy).toHaveBeenCalledWith(
-      `${DEFAULT_API_BASE_URL}/v1/instant-loans/${LOAN_ID.toString()}/collateral-hint`,
+      `${DEFAULT_API_BASE_URL}/v1/instant-loans/${LOAN_ID.toString()}/collateral-amount`,
       expect.objectContaining({ method: "GET" })
     );
     expect(loan.loanId).toBe(LOAN_ID);
@@ -4195,7 +4195,6 @@ describe("InstantLoansModule", () => {
       decimals: 8n,
       amount: 10_000_000n,
     });
-    expect(loan.collateral).not.toHaveProperty("amountHint");
     expect(loan.borrow).toMatchObject({
       amount: 2_000_000n,
       decimals: 6n,
@@ -4277,7 +4276,7 @@ describe("InstantLoansModule", () => {
     mockInstantLoanLookupFetch({
       borrowAsset: "BTC",
       borrowPoolId: BTC_POOL_ID,
-      collateralAmountHint: "5000000",
+      collateralAmount: "5000000",
       collateralAsset: "USDT",
       collateralPoolId: USDT_POOL_ID,
     });
@@ -4418,7 +4417,7 @@ describe("InstantLoansModule", () => {
     ]);
   });
 
-  test("returns null repayment quote when the loan has no debt", async () => {
+  test("returns zero repayment quote when the loan has no debt", async () => {
     // given
     const getLoan = vi.fn().mockResolvedValue({ Ok: createInstantLoan() });
     const getBtcAddress = vi.fn().mockResolvedValue("bc1qinstantdeposit");
@@ -4432,7 +4431,7 @@ describe("InstantLoansModule", () => {
     const getDepositFee = vi.fn().mockResolvedValue(2_000n);
     const icrc1Fee = vi.fn().mockResolvedValue(10n);
     mockInstantLoanLookupFetch({
-      collateralAmountHint: "10000000",
+      collateralAmount: "10000000",
     });
 
     vi.spyOn(Actor, "createActor")
@@ -4465,7 +4464,15 @@ describe("InstantLoansModule", () => {
     });
 
     // then
-    expect(loan.repayment).toBeNull();
+    expect(loan.repayment).toMatchObject({
+      amount: 0n,
+      debtAmount: 0n,
+      interestBufferAmount: 0n,
+      inflowFeeAmount: 0n,
+      inflowFeeEstimateAvailable: false,
+      asset: "USDT",
+      chain: "ETH",
+    });
     expect(loan.initialDeposit.amount).toBe(10_002_010n);
     expect(loan.status).toBe("awaiting_deposit");
     expect(estimateDepositFee).not.toHaveBeenCalled();
@@ -4494,7 +4501,7 @@ describe("InstantLoansModule", () => {
     const getDepositFee = vi.fn().mockResolvedValue(2_000n);
     const icrc1Fee = vi.fn().mockResolvedValue(10n);
     mockInstantLoanLookupFetch({
-      collateralAmountHint: "10000000",
+      collateralAmount: "10000000",
     });
 
     vi.spyOn(Actor, "createActor")
@@ -4528,7 +4535,15 @@ describe("InstantLoansModule", () => {
 
     // then
     expect(loan.status).toBe("expired");
-    expect(loan.repayment).toBeNull();
+    expect(loan.repayment).toMatchObject({
+      amount: 0n,
+      debtAmount: 0n,
+      interestBufferAmount: 0n,
+      inflowFeeAmount: 0n,
+      inflowFeeEstimateAvailable: false,
+      asset: "USDT",
+      chain: "ETH",
+    });
     expect(estimateDepositFee).not.toHaveBeenCalled();
   });
 
@@ -4549,7 +4564,7 @@ describe("InstantLoansModule", () => {
             collateral: {
               poolId: BTC_POOL_ID,
               asset: "BTC",
-              amountHint: "10000000",
+              amount: "10000000",
             },
             borrow: {
               poolId: USDT_POOL_ID,
@@ -4669,7 +4684,15 @@ describe("InstantLoansModule", () => {
       ltvMaxBps: 6_800n,
       depositWindowSeconds: 3_600n,
     });
-    expect(loan.repayment).toBeNull();
+    expect(loan.repayment).toMatchObject({
+      amount: 0n,
+      debtAmount: 0n,
+      interestBufferAmount: 0n,
+      inflowFeeAmount: 0n,
+      inflowFeeEstimateAvailable: false,
+      asset: "USDT",
+      chain: "ETH",
+    });
     expect(loan.initialDeposit).toMatchObject({
       amount: EXPECTED_INITIAL_DEPOSIT_AMOUNT_SATS,
       decimals: 8n,
@@ -4947,7 +4970,7 @@ describe("InstantLoansModule", () => {
               borrow_pool_ic_id: USDT_POOL_ID,
               lend_asset: "BTC",
               borrow_asset: "USDT",
-              min_deposit_hint: "10000000",
+              collateralAmount: "10000000",
             },
           ],
         }),
@@ -4968,6 +4991,7 @@ describe("InstantLoansModule", () => {
         ref: publicIdFromInt(LOAN_ID),
         profileId: PROFILE_ID,
         collateralAsset: "BTC",
+        collateralAmount: 10_000_000n,
         borrowAsset: "USDT",
       }),
     ]);
@@ -5011,7 +5035,7 @@ describe("InstantLoansModule", () => {
     overrides: Partial<{
       borrowAsset: string;
       borrowPoolId: string;
-      collateralAmountHint: string;
+      collateralAmount: string;
       collateralAsset: string;
       collateralPoolId: string;
     }> = {}
@@ -5020,7 +5044,7 @@ describe("InstantLoansModule", () => {
       new Response(
         JSON.stringify({
           success: true,
-          collateralAmountHint: overrides.collateralAmountHint ?? "10000000",
+          collateralAmount: overrides.collateralAmount ?? "10000000",
         }),
         { status: 200, headers: { "content-type": "application/json" } }
       )
