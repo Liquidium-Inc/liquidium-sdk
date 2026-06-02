@@ -132,6 +132,11 @@ deposit target for repayment, and do not cache one target for both phases.
 Reload with `client.instantLoans.get({ ref })` before displaying repayment
 instructions so the app uses the canonical repayment amount and target.
 
+When showing deposit progress, always pair `instantLoans.get({ ref })` with
+`activities.list({ shortRef: ref, filter: "active" })`. The canonical loan
+status may still be `awaiting_deposit` while the activity stream already shows
+detected or processing confirmations.
+
 `findByAddress(...)` is a recovery helper and returns candidates only. Follow it
 with `get({ loanId })` or `get({ ref })` before showing canonical loan state.
 
