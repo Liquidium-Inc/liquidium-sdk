@@ -81,11 +81,13 @@ export interface CreateInstantLoanRequest {
    */
   borrowAsset: InstantLoanAsset;
   /**
-   * Amount the user is expected to deposit as collateral, in base units.
+   * Intended credited collateral amount, in base units.
    *
-   * This is used to validate LTV and initialize the loan record. For BTC, pass
-   * satoshis. For token assets, convert the UI amount using the selected pool's
-   * `decimals` value.
+   * This is used to validate LTV and initialize the loan record before
+   * deposit/inflow fees are deducted. For BTC, pass satoshis. For token assets,
+   * convert the UI amount using the selected pool's `decimals` value. After
+   * creation, use `loan.initialDeposit.amount` as the fee-inclusive transfer
+   * amount to send to `loan.depositTarget`.
    */
   collateralAmount: bigint;
   /**
@@ -246,6 +248,22 @@ export interface InstantLoanRepayment {
   target: SupplyTarget;
 }
 
+/** Initial collateral deposit quote returned when an instant loan is created. */
+export interface InstantLoanInitialDeposit {
+  /** Full amount to send to the deposit target, including the estimated inflow fee. */
+  amount: bigint;
+  /** Intended credited collateral amount in base units, before inflow fees. */
+  collateralAmount: bigint;
+  /** Inflow fee amount in base units added to the transfer amount. */
+  inflowFeeAmount: bigint;
+  /** Collateral asset to deposit. */
+  asset: MarketAsset;
+  /** Chain used for the collateral deposit. */
+  chain: MarketChain;
+  /** Address or ICRC account where the collateral should be sent. */
+  target: SupplyTarget;
+}
+
 /** Current lending position backing the instant loan. */
 export interface InstantLoanPositionSummary {
   /** Current collateral amount in the collateral asset's base units. */
@@ -289,7 +307,7 @@ export interface InstantLoan {
   ltvMaxBps: bigint;
   /** Seconds allowed for the collateral deposit before timeout. */
   depositWindowSeconds: bigint;
-  /** Collateral-side pool, asset, chain, and current or requested collateral amount. */
+  /** Collateral-side pool, asset, chain, and current or requested credited collateral amount. */
   collateral: {
     poolId: string;
     asset: MarketAsset;
@@ -310,6 +328,8 @@ export interface InstantLoan {
   depositTarget: SupplyTarget;
   /** Address or ICRC account where the user repays debt. */
   repayTarget: SupplyTarget;
+  /** Current actionable initial collateral deposit quote. */
+  initialDeposit: InstantLoanInitialDeposit;
   /** Current actionable repayment quote. */
   repayment: InstantLoanRepayment;
   /** Current lending position state for the generated profile. */

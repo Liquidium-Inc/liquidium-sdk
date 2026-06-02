@@ -66,7 +66,7 @@ const client = new LiquidiumClient({
 **Config requirements:**
 
 - `environment`: sets the canister preset. Only `mainnet` is bundled; pass `canisterIds` explicitly for custom deployments
-- `apiBaseUrl`: overrides the default Liquidium service root for history, activities, inflow reporting, `instantLoans.create(...)`, and `instantLoans.findByAddress(...)`. It is not needed for `instantLoans.get(...)`, `borrow(...)`, `withdraw(...)`, or default ETH stablecoin deposit-address supply/repay targets
+- `apiBaseUrl`: overrides the default Liquidium service root for history, activities, inflow reporting, `instantLoans.create(...)`, `instantLoans.get(...)`, and `instantLoans.findByAddress(...)`. It is not needed for `borrow(...)`, `withdraw(...)`, or default ETH stablecoin deposit-address supply/repay targets
 - `headers`: adds headers to Liquidium SDK HTTP API requests, for example app attribution or auth from a backend proxy
 - `fetch`: supplies a custom fetch implementation when the runtime needs one
 - `evmRpcUrl` / `evmPublicClient`: required for lower-level ETH contract-interaction supply planning and allowance polling. Use `evmRpcHeaders` when the RPC provider authenticates with HTTP headers
@@ -94,8 +94,9 @@ or route RPC calls through a server if the key must remain private.
 ### instantLoans
 
 Authless instant loans. This is the default simple borrow UX: create a loan,
-show the generated collateral deposit address, restore by reference, and show
-the actionable repayment amount when the user wants to close the loan.
+show the fee-inclusive initial deposit quote and generated collateral deposit
+address, restore by reference, and show the actionable repayment amount when the
+user wants to close the loan.
 
 ```ts
 client.instantLoans.create(...);
@@ -109,7 +110,7 @@ client.quote.calculateLtv(...); // pure helper for current LTV previews
 `depositWindowSeconds` values in base units, plus external borrow/refund
 destinations. It validates positive amounts, loads pools and prices, applies
 SDK-side instant-loan LTV guards, creates the loan, then returns the hydrated
-loan.
+loan with `initialDeposit.amount` for the fee-inclusive collateral transfer.
 
 Current LTV guards require `ltvMaxBps` to be at least the current implied LTV
 plus the SDK slippage buffer and no higher than the collateral pool max LTV. Do
@@ -119,8 +120,10 @@ from chosen borrow and collateral amounts before calling `create(...)`.
 
 `create(...)` and `get(...)` do not require a wallet adapter, profile ID, or
 message signing. The SDK returns deposit and repay targets for the generated
-`profileId`; `get(...)` also returns `position` plus `repayment.amount` for the
-full amount to send to the repayment target, including inflow fee and interest
+`profileId`; `create(...)` and `get(...)` return `initialDeposit.amount` for
+the full amount to send to the deposit target, including the estimated inflow
+fee. `get(...)` also returns `position` plus `repayment.amount` for the full
+amount to send to the repayment target, including inflow fee and interest
 buffer.
 
 Deposit and repayment targets are distinct generated inflow targets. Show
@@ -358,7 +361,7 @@ Default app sequence:
 2. Optionally call `client.quote.calculateLtv(...)` to show current LTV and the collateral pool's max allowed LTV.
 3. Call `client.instantLoans.create(...)` with direct base-unit amounts and external destination addresses.
 4. Persist or display `loan.ref` as the primary recovery key.
-5. Show `loan.depositTarget` for collateral deposit and `loan.repayment.target` plus `loan.repayment.amount` for repayment.
+5. Show `loan.initialDeposit.amount` plus `loan.depositTarget` for collateral deposit and `loan.repayment.target` plus `loan.repayment.amount` for repayment.
 
 The default instant-loan flow does not need a wallet adapter. The user signs or
 broadcasts only the external wallet transfer to the generated deposit or repay
@@ -398,6 +401,7 @@ const loan = await client.instantLoans.create({
 });
 
 const ref = loan.ref;
+const initialDepositAmount = loan.initialDeposit.amount;
 const depositTarget = loan.depositTarget;
 const repayTarget = loan.repayTarget;
 ```
@@ -405,10 +409,12 @@ const repayTarget = loan.repayTarget;
 Create destinations are external-only. Pass an external address string or an
 external account object: `{ type: "External", address: "..." }`.
 
-`collateralAmount` and `borrowAmount` are in each asset's base units. Use pool
-`decimals` and the quote module when building UI inputs. Keep the initial loan
-LTV under the SDK's instant-loan starting-LTV guard and set `ltvMaxBps` within
-the collateral pool's accepted max-LTV range.
+`collateralAmount` and `borrowAmount` are in each asset's base units.
+`collateralAmount` is the intended credited collateral target before
+deposit/inflow fees; use `loan.initialDeposit.amount` as the amount to transfer
+after creation. Use pool `decimals` and the quote module when building UI inputs.
+Keep the initial loan LTV under the SDK's instant-loan starting-LTV guard and set
+`ltvMaxBps` within the collateral pool's accepted max-LTV range.
 
 If the target is a native address, show `target.address`. If it is an ICRC
 account, show `target.account`.
@@ -684,7 +690,7 @@ const contractInteractionFlow = await client.lending.supply({
 1. Treating profile lending as the default borrow flow. Use `client.instantLoans.create(...)` for the authless product flow unless the user explicitly asks for profiles.
 2. Adding profile creation, signed borrow, or wallet adapter requirements to instant loans. `instantLoans.create(...)` and `instantLoans.get(...)` do not need them.
 3. Confusing `quote.targetLtvBps` with instant-loan `ltvMaxBps`. The quote target helps plan amounts; `ltvMaxBps` is validated by the instant-loan LTV guards.
-4. `new LiquidiumClient({})` uses the default Liquidium service configuration. Override `apiBaseUrl` for custom service deployments. Lower-level contract-interaction planning also needs `evmRpcUrl` or `evmPublicClient`. `instantLoans.get(...)`, default ETH stablecoin deposit-address supply, `borrow(...)`, and `withdraw(...)` do not use the service configuration.
+4. `new LiquidiumClient({})` uses the default Liquidium service configuration. Override `apiBaseUrl` for custom service deployments. Lower-level contract-interaction planning also needs `evmRpcUrl` or `evmPublicClient`. Default ETH stablecoin deposit-address supply, `borrow(...)`, and `withdraw(...)` do not use the service configuration.
 5. Prepare methods return signable actions, not completed actions. `prepareCreateProfile`, `prepareBorrow`, and `prepareWithdraw` still need signing and submission.
 6. Build a wallet adapter with only the methods the selected flow needs. Avoid adding `signMessage`, `sendBtcTransaction`, or `sendEthTransaction` unless the flow uses them.
 7. Do not `await client.quote.getQuote(...)`; it is synchronous once pools and prices are available.

@@ -145,13 +145,27 @@ export function App() {
     setRecentLoanRefs(getRecentLoanRefs());
     setLoanResult(
       [
-        "Loan created. Save the reference and send collateral to the deposit target.",
+        "Loan created. Save the reference and send the initial deposit amount to the deposit target.",
         "",
-        `Collateral amount: ${formatAmount(parsedCollateralAmount, collateralPool.decimals)} ${collateralPool.asset}`,
-        `Borrow amount: ${formatAmount(parsedBorrowAmount, borrowPool.decimals)} ${borrowPool.asset}`,
+        `Amount to send: ${formatAmount(
+          loan.initialDeposit.amount,
+          collateralPool.decimals
+        )} ${collateralPool.asset}`,
+        `Credited collateral: ${formatAmount(
+          loan.initialDeposit.collateralAmount,
+          collateralPool.decimals
+        )} ${collateralPool.asset}`,
+        `Estimated inflow fee: ${formatAmount(
+          loan.initialDeposit.inflowFeeAmount,
+          collateralPool.decimals
+        )} ${collateralPool.asset}`,
+        `Borrow amount: ${formatAmount(
+          parsedBorrowAmount,
+          borrowPool.decimals
+        )} ${borrowPool.asset}`,
         `Max LTV: ${formatPercentFromBps(ltvMaxBps)}`,
         "",
-        formatInstantLoan(loan),
+        formatInstantLoan(loan, { pools }),
       ].join("\n")
     );
     setStatus(`Created instant loan ${loan.ref}.`);
@@ -316,8 +330,12 @@ export function App() {
 
       return [
         "Prices used for LTV:",
-        `Collateral ${collateralPool.asset}: ${formatUsdPrice(assetPrices[collateralPool.asset])}`,
-        `Borrow ${borrowPool.asset}: ${formatUsdPrice(assetPrices[borrowPool.asset])}`,
+        `Collateral ${collateralPool.asset}: ${formatUsdPrice(
+          assetPrices[collateralPool.asset]
+        )}`,
+        `Borrow ${borrowPool.asset}: ${formatUsdPrice(
+          assetPrices[borrowPool.asset]
+        )}`,
         "Source: Liquidium market data.",
       ].join("\n");
     } catch {
@@ -358,7 +376,9 @@ export function App() {
       return [
         `Implied current LTV: ${formatPercentFromBps(ltvCalculation.ltvBps)}`,
         `User max LTV: ${formatPercentFromBps(ltvMaxBps)}`,
-        `SDK max allowed LTV: ${formatPercentFromBps(ltvCalculation.maxAllowedLtvBps)}`,
+        `SDK max allowed LTV: ${formatPercentFromBps(
+          ltvCalculation.maxAllowedLtvBps
+        )}`,
         ltvMaxBps > ltvCalculation.maxAllowedLtvBps
           ? "Warning: user max LTV is above the SDK max allowed LTV."
           : "User max LTV is within the SDK max allowed LTV.",

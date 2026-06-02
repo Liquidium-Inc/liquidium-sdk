@@ -12,6 +12,7 @@ export type {
   InstantLoanEvent,
   InstantLoanEventType,
   InstantLoanGetRequest,
+  InstantLoanInitialDeposit,
   InstantLoanLeg,
   InstantLoanListEventsRequest,
   InstantLoanPositionSummary,

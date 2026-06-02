@@ -36,6 +36,10 @@ type BuildInstantLoanAddressLookupPathRequest = {
   address: string;
 };
 
+type BuildInstantLoanCollateralHintPathRequest = {
+  loanId: bigint;
+};
+
 const ACTIVITIES = `/${SDK_API_VERSION.activities}/activities`;
 const HISTORY_POOL = `/${SDK_API_VERSION.history}/history/pool`;
 const HISTORY_POOL_CONFIG = `/${SDK_API_VERSION.history}/history/pool-config`;
@@ -123,6 +127,14 @@ export function buildInstantLoanAddressLookupPath(
 ): string {
   const query = new URLSearchParams({ address: request.address });
   return `${INSTANT_LOANS}/address?${query.toString()}`;
+}
+
+export function buildInstantLoanCollateralHintPath(
+  request: BuildInstantLoanCollateralHintPathRequest
+): string {
+  return `${INSTANT_LOANS}/${encodeURIComponent(
+    request.loanId.toString()
+  )}/collateral-hint`;
 }
 
 export const SdkApiPath = {
