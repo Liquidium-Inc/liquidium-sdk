@@ -211,8 +211,8 @@ Most instant-loan UIs show or store these fields:
 | `loan.initialDeposit.amount` | Fee-inclusive collateral amount to send after creation or restore |
 | `loan.initialDeposit.collateralAmount` | Intended credited collateral target used for LTV |
 | `loan.initialDeposit.target` | Address or ICRC account where the user sends collateral |
-| `loan.repayment?.amount` | Full amount to repay, including fee and interest buffer, when debt exists |
-| `loan.repayment?.target` | Address or ICRC account where the user sends repayment, when debt exists |
+| `loan.repayment.amount` | Full amount to repay, including fee and interest buffer. Zero when no repayment is due |
+| `loan.repayment.target` | Address or ICRC account where the user sends repayment |
 | `loan.position` | Current collateral, debt, and interest state for the generated profile |
 
 ## Amounts

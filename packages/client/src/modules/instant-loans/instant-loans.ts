@@ -48,16 +48,16 @@ import type {
   InstantLoanInitialDeposit,
   InstantLoanLeg,
   InstantLoanListEventsRequest,
-  InstantLoanStatus,
+  InstantLoanStatus as InstantLoanStatusValue,
   InstantLoanWarmedProfile,
 } from "./types";
+import { InstantLoanStatus } from "./types";
 
 const REPAYMENT_BUFFER_SECONDS = 86_400n;
 const RATE_SCALE = 10n ** 27n;
 const SECONDS_PER_YEAR = 31_536_000n;
 const ETH_STABLECOIN_INFLOW_FEE_FALLBACK = 1_500_000n;
 const INSTANT_LOAN_MIN_SLIPPAGE_BUFFER_BPS = 200n;
-const NANOSECONDS_PER_MILLISECOND = 1_000_000n;
 
 type InstantLoanLtvPolicy = {
   ltvBps: bigint;
@@ -112,11 +112,6 @@ type InstantLoanAccountWire =
   | { principal: string; type: "Native" }
   | InstantLoanAccountVariantWire;
 
-type InstantLoanStatusHydrationInput = {
-  collateralAmount: bigint;
-  totalDebtAmount: bigint;
-};
-
 type InstantLoanWire = {
   loanId: string;
   ref?: string;
@@ -150,7 +145,6 @@ type InstantLoanHydrationInput = {
   borrowAmount: bigint;
   borrowDestination: InstantLoanAccount;
   refundDestination: InstantLoanAccount;
-  deriveStatus: (input: InstantLoanStatusHydrationInput) => InstantLoanStatus;
 };
 
 /** Accountless instant-loan creation, lookup, recovery, and canister query helpers. */
@@ -405,12 +399,6 @@ export class InstantLoansModule {
       borrowAmount: record.borrow_amount,
       borrowDestination: accountFromCanister(record.borrow_destination),
       refundDestination: accountFromCanister(record.refund_destination),
-      deriveStatus: (input) =>
-        deriveInstantLoanRecordStatus({
-          ...input,
-          expiresAt: record.expires_at[0],
-          started: record.started,
-        }),
     });
   }
 
@@ -447,7 +435,6 @@ export class InstantLoansModule {
       borrowAmount: parseBigintWire(loan.borrow.amount, "borrow amount"),
       borrowDestination: accountFromWire(loan.borrow.destination),
       refundDestination: accountFromWire(loan.refundDestination),
-      deriveStatus: deriveInstantLoanWireStatus,
     });
   }
 
@@ -512,7 +499,7 @@ export class InstantLoansModule {
 
     const debtInterestAmount = borrowPosition?.debtInterest ?? 0n;
 
-    const status = input.deriveStatus({
+    const status = deriveInstantLoanStatus({
       collateralAmount: currentCollateralAmount,
       totalDebtAmount,
     });
@@ -713,61 +700,19 @@ function calculateTotalDebtAmount(borrowPosition: Position | null): bigint {
   return borrowPosition.borrowed + borrowPosition.debtInterest;
 }
 
-function deriveInstantLoanWireStatus(
-  input: InstantLoanStatusHydrationInput
-): InstantLoanStatus {
-  return deriveInstantLoanStatus({ ...input, started: undefined });
-}
-
-function deriveInstantLoanRecordStatus(
-  input: InstantLoanStatusHydrationInput & {
-    expiresAt: bigint | undefined;
-    started: boolean;
-  }
-): InstantLoanStatus {
-  const status = deriveInstantLoanStatus({
-    collateralAmount: input.collateralAmount,
-    started: input.started,
-    totalDebtAmount: input.totalDebtAmount,
-  });
-
-  if (status !== "awaiting_deposit") {
-    return status;
-  }
-
-  return hasExpiredDepositWindow(input.expiresAt) ? "expired" : status;
-}
-
 function deriveInstantLoanStatus(input: {
   collateralAmount: bigint;
-  started: boolean | undefined;
   totalDebtAmount: bigint;
-}): InstantLoanStatus {
+}): InstantLoanStatusValue {
   if (input.totalDebtAmount > 0n) {
-    return "active";
+    return InstantLoanStatus.active;
   }
 
   if (input.collateralAmount > 0n) {
-    return input.started ? "settling" : "deposit_detected";
+    return InstantLoanStatus.depositDetected;
   }
 
-  if (input.started) {
-    return "closed";
-  }
-
-  return "awaiting_deposit";
-}
-
-function hasExpiredDepositWindow(expiresAt: bigint | undefined): boolean {
-  if (expiresAt === undefined) {
-    return false;
-  }
-
-  return expiresAt <= currentProtocolTimestamp();
-}
-
-function currentProtocolTimestamp(): bigint {
-  return BigInt(Date.now()) * NANOSECONDS_PER_MILLISECOND;
+  return InstantLoanStatus.awaitingDeposit;
 }
 
 function validateCreateRequest(request: CreateInstantLoanRequest): void {

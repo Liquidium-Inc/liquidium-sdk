@@ -4478,18 +4478,9 @@ describe("InstantLoansModule", () => {
     expect(estimateDepositFee).not.toHaveBeenCalled();
   });
 
-  test("returns expired status when the deposit window passed before collateral arrived", async () => {
+  test("returns awaiting deposit status when collateral has not arrived", async () => {
     // given
-    const ONE_SECOND_MS = 1_000;
-    const NANOSECONDS_PER_MILLISECOND = 1_000_000n;
-    const EXPIRED_DEPOSIT_TIMESTAMP_NS =
-      BigInt(Date.now() - ONE_SECOND_MS) * NANOSECONDS_PER_MILLISECOND;
-    const getLoan = vi.fn().mockResolvedValue({
-      Ok: {
-        ...createInstantLoan(),
-        expires_at: [EXPIRED_DEPOSIT_TIMESTAMP_NS],
-      },
-    });
+    const getLoan = vi.fn().mockResolvedValue({ Ok: createInstantLoan() });
     const getBtcAddress = vi.fn().mockResolvedValue("bc1qinstantdeposit");
     const getDepositAddress = vi.fn().mockResolvedValue({
       Ok: "0x1111111111111111111111111111111111111111",
@@ -4534,7 +4525,7 @@ describe("InstantLoansModule", () => {
     });
 
     // then
-    expect(loan.status).toBe("expired");
+    expect(loan.status).toBe("awaiting_deposit");
     expect(loan.repayment).toMatchObject({
       amount: 0n,
       debtAmount: 0n,
