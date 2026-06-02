@@ -8,6 +8,6 @@
 
 > `const` **CK\_ETH\_DEPOSIT\_CONTRACT\_ADDRESS**: `"0x18901044688D3756C35Ed2b36D93e6a5B8e00E68"` = `"0x18901044688D3756C35Ed2b36D93e6a5B8e00E68"`
 
-Defined in: [external/liquidium-sdk/packages/client/src/core/evm.ts:10](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/core/evm.ts#L10)
+Defined in: [packages/client/src/core/evm.ts:10](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/evm.ts#L10)
 
 Ethereum mainnet ckETH minter ERC-20 deposit helper contract address.

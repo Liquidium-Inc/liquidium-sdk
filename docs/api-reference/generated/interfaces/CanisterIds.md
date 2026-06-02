@@ -6,7 +6,7 @@
 
 # Interface: CanisterIds
 
-Defined in: [external/liquidium-sdk/packages/client/src/core/types.ts:43](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/core/types.ts#L43)
+Defined in: [packages/client/src/core/types.ts:43](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L43)
 
 Principal text values for canisters used by the client.
 
@@ -16,7 +16,7 @@ Principal text values for canisters used by the client.
 
 > **btcPool**: `string`
 
-Defined in: [external/liquidium-sdk/packages/client/src/core/types.ts:47](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/core/types.ts#L47)
+Defined in: [packages/client/src/core/types.ts:47](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L47)
 
 BTC pool canister principal.
 
@@ -26,7 +26,7 @@ BTC pool canister principal.
 
 > **ercPool**: `string`
 
-Defined in: [external/liquidium-sdk/packages/client/src/core/types.ts:49](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/core/types.ts#L49)
+Defined in: [packages/client/src/core/types.ts:49](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L49)
 
 ERC-20 pool canister principal.
 
@@ -36,7 +36,7 @@ ERC-20 pool canister principal.
 
 > **ethDeposit**: `string`
 
-Defined in: [external/liquidium-sdk/packages/client/src/core/types.ts:51](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/core/types.ts#L51)
+Defined in: [packages/client/src/core/types.ts:51](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L51)
 
 ckETH minter deposit helper canister principal.
 
@@ -46,7 +46,7 @@ ckETH minter deposit helper canister principal.
 
 > **instantLoans**: `string`
 
-Defined in: [external/liquidium-sdk/packages/client/src/core/types.ts:53](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/core/types.ts#L53)
+Defined in: [packages/client/src/core/types.ts:53](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L53)
 
 Accountless instant-loans canister principal.
 
@@ -56,6 +56,6 @@ Accountless instant-loans canister principal.
 
 > **lending**: `string`
 
-Defined in: [external/liquidium-sdk/packages/client/src/core/types.ts:45](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/core/types.ts#L45)
+Defined in: [packages/client/src/core/types.ts:45](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L45)
 
 Liquidium lending canister principal.

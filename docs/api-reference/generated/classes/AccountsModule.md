@@ -6,7 +6,7 @@
 
 # Class: AccountsModule
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/accounts/accounts.ts:37](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/accounts/accounts.ts#L37)
+Defined in: [packages/client/src/modules/accounts/accounts.ts:37](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/accounts/accounts.ts#L37)
 
 Profile lifecycle and linked-wallet helpers.
 
@@ -16,7 +16,7 @@ Profile lifecycle and linked-wallet helpers.
 
 > **new AccountsModule**(`canisterContext`): `AccountsModule`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/accounts/accounts.ts:38](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/accounts/accounts.ts#L38)
+Defined in: [packages/client/src/modules/accounts/accounts.ts:38](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/accounts/accounts.ts#L38)
 
 #### Parameters
 
@@ -34,7 +34,7 @@ Defined in: [external/liquidium-sdk/packages/client/src/modules/accounts/account
 
 > **createProfile**(`params`): `Promise`\<`string`\>
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/accounts/accounts.ts:62](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/accounts/accounts.ts#L62)
+Defined in: [packages/client/src/modules/accounts/accounts.ts:62](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/accounts/accounts.ts#L62)
 
 Creates a Liquidium profile using the provided wallet adapter.
 
@@ -60,7 +60,7 @@ The new profile principal as text.
 
 > **getProfileId**(`walletAddress`): `Promise`\<`string` \| `null`\>
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/accounts/accounts.ts:81](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/accounts/accounts.ts#L81)
+Defined in: [packages/client/src/modules/accounts/accounts.ts:81](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/accounts/accounts.ts#L81)
 
 Resolves the Liquidium profile id linked to a wallet address.
 
@@ -84,7 +84,7 @@ Profile principal text, or `null` if none exists.
 
 > **getWalletNonce**(`walletAddress`): `Promise`\<`bigint`\>
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/accounts/accounts.ts:106](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/accounts/accounts.ts#L106)
+Defined in: [packages/client/src/modules/accounts/accounts.ts:106](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/accounts/accounts.ts#L106)
 
 Returns the current nonce for a wallet address.
 
@@ -110,7 +110,7 @@ The next signing nonce as a bigint.
 
 > **listLinkedWallets**(`profileId`): `Promise`\<[`Wallet`](../interfaces/Wallet.md)[]\>
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/accounts/accounts.ts:125](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/accounts/accounts.ts#L125)
+Defined in: [packages/client/src/modules/accounts/accounts.ts:125](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/accounts/accounts.ts#L125)
 
 Lists the wallets currently linked to a profile.
 
@@ -134,7 +134,7 @@ The wallets currently linked to the requested profile.
 
 > **prepareCreateProfile**(`options`): `Promise`\<[`CreateAccountAction`](../interfaces/CreateAccountAction.md)\>
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/accounts/accounts.ts:48](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/accounts/accounts.ts#L48)
+Defined in: [packages/client/src/modules/accounts/accounts.ts:48](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/accounts/accounts.ts#L48)
 
 Prepares a profile-creation action that can be signed and submitted later.
 

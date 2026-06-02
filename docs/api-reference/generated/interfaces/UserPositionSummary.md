@@ -6,7 +6,7 @@
 
 # Interface: UserPositionSummary
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/positions/types.ts:61](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/positions/types.ts#L61)
+Defined in: [packages/client/src/modules/positions/types.ts:61](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/types.ts#L61)
 
 Derived profile-level position summary for dashboards.
 
@@ -16,7 +16,7 @@ Derived profile-level position summary for dashboards.
 
 > **availableBorrowsUsd**: `bigint`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/positions/types.ts:67](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/positions/types.ts#L67)
+Defined in: [packages/client/src/modules/positions/types.ts:67](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/types.ts#L67)
 
 Available borrow capacity in USD-scaled units.
 
@@ -26,7 +26,7 @@ Available borrow capacity in USD-scaled units.
 
 > **currentLtvBps**: `bigint`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/positions/types.ts:73](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/positions/types.ts#L73)
+Defined in: [packages/client/src/modules/positions/types.ts:73](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/types.ts#L73)
 
 Current LTV in basis points.
 
@@ -36,7 +36,7 @@ Current LTV in basis points.
 
 > **healthFactor**: `bigint`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/positions/types.ts:79](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/positions/types.ts#L79)
+Defined in: [packages/client/src/modules/positions/types.ts:79](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/types.ts#L79)
 
 Current health factor.
 
@@ -46,7 +46,7 @@ Current health factor.
 
 > **netWorthUsd**: `bigint`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/positions/types.ts:69](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/positions/types.ts#L69)
+Defined in: [packages/client/src/modules/positions/types.ts:69](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/types.ts#L69)
 
 Collateral minus debt in USD-scaled units.
 
@@ -56,7 +56,7 @@ Collateral minus debt in USD-scaled units.
 
 > **totalCollateralUsd**: `bigint`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/positions/types.ts:63](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/positions/types.ts#L63)
+Defined in: [packages/client/src/modules/positions/types.ts:63](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/types.ts#L63)
 
 Total collateral USD value.
 
@@ -66,7 +66,7 @@ Total collateral USD value.
 
 > **totalDebtUsd**: `bigint`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/positions/types.ts:65](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/positions/types.ts#L65)
+Defined in: [packages/client/src/modules/positions/types.ts:65](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/types.ts#L65)
 
 Total debt USD value.
 
@@ -76,7 +76,7 @@ Total debt USD value.
 
 > **usdDecimals**: `bigint`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/positions/types.ts:71](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/positions/types.ts#L71)
+Defined in: [packages/client/src/modules/positions/types.ts:71](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/types.ts#L71)
 
 Decimal scale for USD fields.
 
@@ -86,7 +86,7 @@ Decimal scale for USD fields.
 
 > **weightedLiquidationThresholdBps**: `bigint`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/positions/types.ts:77](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/positions/types.ts#L77)
+Defined in: [packages/client/src/modules/positions/types.ts:77](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/types.ts#L77)
 
 Weighted liquidation threshold in basis points.
 
@@ -96,6 +96,6 @@ Weighted liquidation threshold in basis points.
 
 > **weightedMaxLtvBps**: `bigint`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/positions/types.ts:75](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/positions/types.ts#L75)
+Defined in: [packages/client/src/modules/positions/types.ts:75](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/types.ts#L75)
 
 Weighted maximum LTV in basis points.

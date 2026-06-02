@@ -9,6 +9,8 @@
   "excludeProtected": true,
   "excludeInternal": true,
   "intentionallyNotExported": ["ApiClient", "CanisterContext"],
+  "displayBasePath": ".",
+  "sourceLinkTemplate": "https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/{path}#L{line}",
   "githubPages": false,
   "cleanOutputDir": true
 }

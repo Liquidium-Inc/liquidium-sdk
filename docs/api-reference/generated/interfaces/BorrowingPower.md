@@ -6,7 +6,7 @@
 
 # Interface: BorrowingPower
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/positions/types.ts:27](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/positions/types.ts#L27)
+Defined in: [packages/client/src/modules/positions/types.ts:27](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/types.ts#L27)
 
 Aggregate borrowing capacity for a profile.
 
@@ -16,7 +16,7 @@ Aggregate borrowing capacity for a profile.
 
 > **maxBorrowableUsd**: `bigint`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/positions/types.ts:31](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/positions/types.ts#L31)
+Defined in: [packages/client/src/modules/positions/types.ts:31](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/types.ts#L31)
 
 Maximum borrowable USD value, scaled by `maxBorrowableUsdDecimals`.
 
@@ -26,7 +26,7 @@ Maximum borrowable USD value, scaled by `maxBorrowableUsdDecimals`.
 
 > **maxBorrowableUsdDecimals**: `bigint`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/positions/types.ts:33](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/positions/types.ts#L33)
+Defined in: [packages/client/src/modules/positions/types.ts:33](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/types.ts#L33)
 
 Decimal scale for `maxBorrowableUsd`.
 
@@ -36,6 +36,6 @@ Decimal scale for `maxBorrowableUsd`.
 
 > **weightedMaxLtv**: `bigint`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/positions/types.ts:29](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/positions/types.ts#L29)
+Defined in: [packages/client/src/modules/positions/types.ts:29](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/types.ts#L29)
 
 Weighted maximum LTV, scaled by protocol rate decimals.

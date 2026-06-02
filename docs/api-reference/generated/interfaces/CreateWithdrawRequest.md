@@ -6,7 +6,7 @@
 
 # Interface: CreateWithdrawRequest
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/lending/types.ts:102](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/lending/types.ts#L102)
+Defined in: [packages/client/src/modules/lending/types.ts:102](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L102)
 
 Fields to build a withdraw request. `amount` is in the pool asset's base units.
 
@@ -20,7 +20,7 @@ Fields to build a withdraw request. `amount` is in the pool asset's base units.
 
 > **amount**: `bigint`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/lending/types.ts:108](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/lending/types.ts#L108)
+Defined in: [packages/client/src/modules/lending/types.ts:108](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L108)
 
 Amount to withdraw in the pool asset's base units.
 
@@ -30,7 +30,7 @@ Amount to withdraw in the pool asset's base units.
 
 > **poolId**: `string`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/lending/types.ts:106](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/lending/types.ts#L106)
+Defined in: [packages/client/src/modules/lending/types.ts:106](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L106)
 
 Pool principal text to withdraw from.
 
@@ -40,7 +40,7 @@ Pool principal text to withdraw from.
 
 > **profileId**: `string`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/lending/types.ts:104](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/lending/types.ts#L104)
+Defined in: [packages/client/src/modules/lending/types.ts:104](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L104)
 
 Liquidium profile principal text.
 
@@ -50,9 +50,9 @@ Liquidium profile principal text.
 
 > **receiverAddress**: `string`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/lending/types.ts:110](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/lending/types.ts#L110)
+Defined in: [packages/client/src/modules/lending/types.ts:110](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L110)
 
-External-chain address that receives the withdrawn asset.
+External-chain address that receives the withdrawn asset. Must match the pool chain.
 
 ***
 
@@ -60,6 +60,6 @@ External-chain address that receives the withdrawn asset.
 
 > **signerWalletAddress**: `string`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/lending/types.ts:112](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/lending/types.ts#L112)
+Defined in: [packages/client/src/modules/lending/types.ts:112](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L112)
 
 Wallet address that signs the withdraw authorization.

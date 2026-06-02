@@ -6,7 +6,7 @@
 
 # Interface: InstantLoanWarmedProfile
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/instant-loans/types.ts:159](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/instant-loans/types.ts#L159)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:161](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L161)
 
 Warmed profile available for a future instant loan.
 
@@ -16,7 +16,7 @@ Warmed profile available for a future instant loan.
 
 > **authorization**: [`InstantLoanAuthorization`](InstantLoanAuthorization.md)
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/instant-loans/types.ts:161](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/instant-loans/types.ts#L161)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:163](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L163)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [external/liquidium-sdk/packages/client/src/modules/instant-loans/ty
 
 > **createdAt**: `bigint`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/instant-loans/types.ts:162](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/instant-loans/types.ts#L162)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:164](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L164)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [external/liquidium-sdk/packages/client/src/modules/instant-loans/ty
 
 > **id**: `bigint`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/instant-loans/types.ts:160](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/instant-loans/types.ts#L160)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:162](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L162)
 
 ***
 
@@ -40,4 +40,4 @@ Defined in: [external/liquidium-sdk/packages/client/src/modules/instant-loans/ty
 
 > **profileId**: `string`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/instant-loans/types.ts:163](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/instant-loans/types.ts#L163)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:165](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L165)

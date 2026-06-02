@@ -6,7 +6,7 @@
 
 # Interface: InstantLoanAuthorization
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/instant-loans/types.ts:151](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/instant-loans/types.ts#L151)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:153](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L153)
 
 Authentication metadata for warmed instant-loan profiles.
 
@@ -16,7 +16,7 @@ Authentication metadata for warmed instant-loan profiles.
 
 > **address**: `string`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/instant-loans/types.ts:155](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/instant-loans/types.ts#L155)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:157](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L157)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [external/liquidium-sdk/packages/client/src/modules/instant-loans/ty
 
 > **derivationIndex**: `Uint8Array`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/instant-loans/types.ts:153](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/instant-loans/types.ts#L153)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:155](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L155)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [external/liquidium-sdk/packages/client/src/modules/instant-loans/ty
 
 > **publicKey**: `Uint8Array`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/instant-loans/types.ts:154](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/instant-loans/types.ts#L154)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:156](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L156)
 
 ***
 
@@ -40,4 +40,4 @@ Defined in: [external/liquidium-sdk/packages/client/src/modules/instant-loans/ty
 
 > **type**: `"EthSignature"`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/instant-loans/types.ts:152](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/instant-loans/types.ts#L152)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:154](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L154)

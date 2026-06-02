@@ -6,7 +6,7 @@
 
 # Class: PositionsModule
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/positions/positions.ts:26](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/positions/positions.ts#L26)
+Defined in: [packages/client/src/modules/positions/positions.ts:26](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/positions.ts#L26)
 
 Profile position, health factor, and reserve valuation helpers.
 
@@ -16,7 +16,7 @@ Profile position, health factor, and reserve valuation helpers.
 
 > **new PositionsModule**(`canisterContext`, `market`): `PositionsModule`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/positions/positions.ts:27](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/positions/positions.ts#L27)
+Defined in: [packages/client/src/modules/positions/positions.ts:27](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/positions.ts#L27)
 
 #### Parameters
 
@@ -38,7 +38,7 @@ Defined in: [external/liquidium-sdk/packages/client/src/modules/positions/positi
 
 > `readonly` **market**: [`MarketModule`](MarketModule.md)
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/positions/positions.ts:29](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/positions/positions.ts#L29)
+Defined in: [packages/client/src/modules/positions/positions.ts:29](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/positions.ts#L29)
 
 ## Methods
 
@@ -46,7 +46,7 @@ Defined in: [external/liquidium-sdk/packages/client/src/modules/positions/positi
 
 > **getHealthFactor**(`profileId`): `Promise`\<[`HealthFactor`](../interfaces/HealthFactor.md)\>
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/positions/positions.ts:100](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/positions/positions.ts#L100)
+Defined in: [packages/client/src/modules/positions/positions.ts:100](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/positions.ts#L100)
 
 Returns the current health factor for a profile.
 
@@ -70,7 +70,7 @@ The current health factor for the requested profile.
 
 > **getMaxRepayAmount**(`profileId`, `poolId`, `bufferBps?`): `Promise`\<[`MaxRepayAmount`](../interfaces/MaxRepayAmount.md)\>
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/positions/positions.ts:237](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/positions/positions.ts#L237)
+Defined in: [packages/client/src/modules/positions/positions.ts:237](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/positions.ts#L237)
 
 Returns the full repayment amount for a position, with a small buffer to
 account for interest that accrues between quote and submit.
@@ -107,7 +107,7 @@ Buffered repayment amount in the borrowed asset's base units.
 
 > **getPosition**(`profileId`, `poolId`): `Promise`\<[`Position`](../interfaces/Position.md) \| `null`\>
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/positions/positions.ts:39](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/positions/positions.ts#L39)
+Defined in: [packages/client/src/modules/positions/positions.ts:39](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/positions.ts#L39)
 
 Returns a single position for a profile and pool.
 
@@ -137,7 +137,7 @@ The position for the requested profile and pool, or `null` when no position exis
 
 > **getUserPositionSummary**(`profileId`): `Promise`\<[`UserPositionSummary`](../interfaces/UserPositionSummary.md)\>
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/positions/positions.ts:152](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/positions/positions.ts#L152)
+Defined in: [packages/client/src/modules/positions/positions.ts:152](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/positions.ts#L152)
 
 Returns an aggregate summary of a profile's position.
 
@@ -166,7 +166,7 @@ Derived position summary for the requested profile.
 
 > **getUserReserves**(`profileId`): `Promise`\<[`UserReserve`](../interfaces/UserReserve.md)[]\>
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/positions/positions.ts:188](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/positions/positions.ts#L188)
+Defined in: [packages/client/src/modules/positions/positions.ts:188](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/positions.ts#L188)
 
 Returns the per-reserve breakdown of a profile's supplies and borrows,
 joined with pool metadata, rates, and current USD prices.
@@ -193,7 +193,7 @@ Per-reserve position rows joined with pool metadata and USD values.
 
 > **getUserStats**(`profileId`): `Promise`\<[`UserStats`](../interfaces/UserStats.md)\>
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/positions/positions.ts:125](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/positions/positions.ts#L125)
+Defined in: [packages/client/src/modules/positions/positions.ts:125](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/positions.ts#L125)
 
 Returns aggregate borrowing and collateral stats for a profile.
 
@@ -217,7 +217,7 @@ Aggregate debt, collateral, and borrowing power metrics for the requested profil
 
 > **listPositions**(`profileId`): `Promise`\<[`Position`](../interfaces/Position.md)[]\>
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/positions/positions.ts:69](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/positions/positions.ts#L69)
+Defined in: [packages/client/src/modules/positions/positions.ts:69](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/positions.ts#L69)
 
 Lists all positions for a profile.
 

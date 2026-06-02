@@ -6,7 +6,7 @@
 
 # Interface: PoolConfigHistoryResponse
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/history/types.ts:235](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/history/types.ts#L235)
+Defined in: [packages/client/src/modules/history/types.ts:235](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L235)
 
 Wire-format pool configuration history page returned by the SDK API.
 
@@ -16,7 +16,7 @@ Wire-format pool configuration history page returned by the SDK API.
 
 > **items**: [`PoolConfigHistoryEntryApiItem`](PoolConfigHistoryEntryApiItem.md)[]
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/history/types.ts:237](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/history/types.ts#L237)
+Defined in: [packages/client/src/modules/history/types.ts:237](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L237)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [external/liquidium-sdk/packages/client/src/modules/history/types.ts
 
 > `optional` **nextCursor?**: `string`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/history/types.ts:238](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/history/types.ts#L238)
+Defined in: [packages/client/src/modules/history/types.ts:238](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L238)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [external/liquidium-sdk/packages/client/src/modules/history/types.ts
 
 > **success**: `true`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/history/types.ts:236](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/history/types.ts#L236)
+Defined in: [packages/client/src/modules/history/types.ts:236](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L236)

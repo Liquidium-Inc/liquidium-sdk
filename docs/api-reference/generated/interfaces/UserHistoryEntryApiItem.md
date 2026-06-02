@@ -6,7 +6,7 @@
 
 # Interface: UserHistoryEntryApiItem
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/history/types.ts:135](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/history/types.ts#L135)
+Defined in: [packages/client/src/modules/history/types.ts:135](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L135)
 
 Wire-format user history item returned by the SDK API.
 
@@ -16,7 +16,7 @@ Wire-format user history item returned by the SDK API.
 
 > **amount**: `string`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/history/types.ts:138](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/history/types.ts#L138)
+Defined in: [packages/client/src/modules/history/types.ts:138](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L138)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [external/liquidium-sdk/packages/client/src/modules/history/types.ts
 
 > **id**: `string`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/history/types.ts:136](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/history/types.ts#L136)
+Defined in: [packages/client/src/modules/history/types.ts:136](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L136)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [external/liquidium-sdk/packages/client/src/modules/history/types.ts
 
 > **poolId**: `string`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/history/types.ts:139](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/history/types.ts#L139)
+Defined in: [packages/client/src/modules/history/types.ts:139](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L139)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [external/liquidium-sdk/packages/client/src/modules/history/types.ts
 
 > **status**: `"PENDING"` \| `"REQUESTED"` \| `"CONFIRMED"` \| `"FAILED"`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/history/types.ts:141](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/history/types.ts#L141)
+Defined in: [packages/client/src/modules/history/types.ts:141](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L141)
 
 ***
 
@@ -48,7 +48,7 @@ Defined in: [external/liquidium-sdk/packages/client/src/modules/history/types.ts
 
 > **timestamp**: `string`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/history/types.ts:140](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/history/types.ts#L140)
+Defined in: [packages/client/src/modules/history/types.ts:140](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L140)
 
 ***
 
@@ -56,7 +56,7 @@ Defined in: [external/liquidium-sdk/packages/client/src/modules/history/types.ts
 
 > `optional` **txids?**: `string`[]
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/history/types.ts:142](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/history/types.ts#L142)
+Defined in: [packages/client/src/modules/history/types.ts:142](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L142)
 
 ***
 
@@ -64,4 +64,4 @@ Defined in: [external/liquidium-sdk/packages/client/src/modules/history/types.ts
 
 > **type**: [`UserHistoryType`](../type-aliases/UserHistoryType.md)
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/history/types.ts:137](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/history/types.ts#L137)
+Defined in: [packages/client/src/modules/history/types.ts:137](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L137)

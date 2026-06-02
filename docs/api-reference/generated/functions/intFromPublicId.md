@@ -8,7 +8,7 @@
 
 > **intFromPublicId**(`ref`): `bigint`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/instant-loans/ref-code.ts:33](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/instant-loans/ref-code.ts#L33)
+Defined in: [packages/client/src/modules/instant-loans/ref-code.ts:33](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/ref-code.ts#L33)
 
 Decodes a short user-facing reference back into the canister loan id.
 

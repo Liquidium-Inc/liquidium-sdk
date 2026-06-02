@@ -6,7 +6,7 @@
 
 # Interface: InstantLoanCandidate
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/instant-loans/types.ts:325](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/instant-loans/types.ts#L325)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:345](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L345)
 
 Discovery result returned by address lookup.
 
@@ -19,7 +19,7 @@ Candidates are intentionally lightweight; call `instantLoans.get(...)` with
 
 > **borrowAsset**: `string`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/instant-loans/types.ts:341](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/instant-loans/types.ts#L341)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:361](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L361)
 
 Borrow asset symbol.
 
@@ -29,7 +29,7 @@ Borrow asset symbol.
 
 > **borrowPoolId**: `string`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/instant-loans/types.ts:337](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/instant-loans/types.ts#L337)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:357](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L357)
 
 Principal text of the borrow pool.
 
@@ -39,7 +39,7 @@ Principal text of the borrow pool.
 
 > **collateralAmountHint**: `bigint`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/instant-loans/types.ts:343](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/instant-loans/types.ts#L343)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:363](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L363)
 
 Collateral amount hint in base units.
 
@@ -49,7 +49,7 @@ Collateral amount hint in base units.
 
 > **collateralAsset**: `string`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/instant-loans/types.ts:339](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/instant-loans/types.ts#L339)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:359](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L359)
 
 Collateral asset symbol.
 
@@ -59,7 +59,7 @@ Collateral asset symbol.
 
 > **collateralPoolId**: `string`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/instant-loans/types.ts:335](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/instant-loans/types.ts#L335)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:355](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L355)
 
 Principal text of the collateral pool.
 
@@ -69,7 +69,7 @@ Principal text of the collateral pool.
 
 > `optional` **createdAt?**: `Date`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/instant-loans/types.ts:333](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/instant-loans/types.ts#L333)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:353](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L353)
 
 API-observed creation time, if provided by the indexer.
 
@@ -79,7 +79,7 @@ API-observed creation time, if provided by the indexer.
 
 > **loanId**: `bigint`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/instant-loans/types.ts:327](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/instant-loans/types.ts#L327)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:347](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L347)
 
 Canister-assigned loan id.
 
@@ -89,7 +89,7 @@ Canister-assigned loan id.
 
 > **profileId**: `string`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/instant-loans/types.ts:331](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/instant-loans/types.ts#L331)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:351](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L351)
 
 Generated lending profile principal used by the instant loan.
 
@@ -99,6 +99,6 @@ Generated lending profile principal used by the instant loan.
 
 > **ref**: `string`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/instant-loans/types.ts:329](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/instant-loans/types.ts#L329)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:349](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L349)
 
 Short user-facing reference derived from `loanId`.

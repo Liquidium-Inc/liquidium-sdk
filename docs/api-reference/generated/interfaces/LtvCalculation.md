@@ -6,7 +6,7 @@
 
 # Interface: LtvCalculation
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/quote/types.ts:87](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/quote/types.ts#L87)
+Defined in: [packages/client/src/modules/quote/types.ts:87](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/quote/types.ts#L87)
 
 LTV calculation result for explicit borrow and collateral amounts.
 
@@ -16,7 +16,7 @@ LTV calculation result for explicit borrow and collateral amounts.
 
 > **borrowAmount**: `bigint`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/quote/types.ts:89](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/quote/types.ts#L89)
+Defined in: [packages/client/src/modules/quote/types.ts:89](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/quote/types.ts#L89)
 
 Requested borrow amount in borrow asset base units.
 
@@ -26,7 +26,7 @@ Requested borrow amount in borrow asset base units.
 
 > **borrowAsset**: `string`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/quote/types.ts:105](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/quote/types.ts#L105)
+Defined in: [packages/client/src/modules/quote/types.ts:105](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/quote/types.ts#L105)
 
 Borrow asset symbol.
 
@@ -36,7 +36,7 @@ Borrow asset symbol.
 
 > **borrowPoolId**: `string`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/quote/types.ts:101](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/quote/types.ts#L101)
+Defined in: [packages/client/src/modules/quote/types.ts:101](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/quote/types.ts#L101)
 
 Pool principal text for the borrow side.
 
@@ -46,7 +46,7 @@ Pool principal text for the borrow side.
 
 > **borrowUsd**: `bigint`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/quote/types.ts:93](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/quote/types.ts#L93)
+Defined in: [packages/client/src/modules/quote/types.ts:93](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/quote/types.ts#L93)
 
 Borrow value in internal USD units.
 
@@ -56,7 +56,7 @@ Borrow value in internal USD units.
 
 > **collateralAmount**: `bigint`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/quote/types.ts:91](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/quote/types.ts#L91)
+Defined in: [packages/client/src/modules/quote/types.ts:91](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/quote/types.ts#L91)
 
 Collateral amount in collateral asset base units.
 
@@ -66,7 +66,7 @@ Collateral amount in collateral asset base units.
 
 > **collateralAsset**: `string`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/quote/types.ts:107](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/quote/types.ts#L107)
+Defined in: [packages/client/src/modules/quote/types.ts:107](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/quote/types.ts#L107)
 
 Collateral asset symbol.
 
@@ -76,7 +76,7 @@ Collateral asset symbol.
 
 > **collateralPoolId**: `string`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/quote/types.ts:103](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/quote/types.ts#L103)
+Defined in: [packages/client/src/modules/quote/types.ts:103](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/quote/types.ts#L103)
 
 Pool principal text for the collateral side.
 
@@ -86,7 +86,7 @@ Pool principal text for the collateral side.
 
 > **collateralUsd**: `bigint`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/quote/types.ts:95](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/quote/types.ts#L95)
+Defined in: [packages/client/src/modules/quote/types.ts:95](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/quote/types.ts#L95)
 
 Collateral value in internal USD units.
 
@@ -96,7 +96,7 @@ Collateral value in internal USD units.
 
 > **ltvBps**: `bigint`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/quote/types.ts:97](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/quote/types.ts#L97)
+Defined in: [packages/client/src/modules/quote/types.ts:97](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/quote/types.ts#L97)
 
 Computed LTV in basis points.
 
@@ -106,7 +106,7 @@ Computed LTV in basis points.
 
 > **maxAllowedLtvBps**: `bigint`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/quote/types.ts:99](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/quote/types.ts#L99)
+Defined in: [packages/client/src/modules/quote/types.ts:99](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/quote/types.ts#L99)
 
 Maximum allowed LTV in basis points for the collateral pool.
 
@@ -116,6 +116,6 @@ Maximum allowed LTV in basis points for the collateral pool.
 
 > **validationErrors**: [`QuoteValidationError`](QuoteValidationError.md)[]
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/quote/types.ts:109](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/quote/types.ts#L109)
+Defined in: [packages/client/src/modules/quote/types.ts:109](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/quote/types.ts#L109)
 
 Blocking validation errors. Empty when the calculation is usable.

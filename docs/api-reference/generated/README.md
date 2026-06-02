@@ -57,6 +57,7 @@
 - [InstantLoanCandidate](interfaces/InstantLoanCandidate.md)
 - [InstantLoanConfig](interfaces/InstantLoanConfig.md)
 - [InstantLoanEvent](interfaces/InstantLoanEvent.md)
+- [InstantLoanInitialDeposit](interfaces/InstantLoanInitialDeposit.md)
 - [InstantLoanListEventsRequest](interfaces/InstantLoanListEventsRequest.md)
 - [InstantLoanPositionSummary](interfaces/InstantLoanPositionSummary.md)
 - [InstantLoanRepayment](interfaces/InstantLoanRepayment.md)
