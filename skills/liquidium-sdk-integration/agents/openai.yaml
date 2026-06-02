@@ -1,0 +1,4 @@
+interface:
+  display_name: "Liquidium SDK Integration"
+  short_description: "Integrate the Liquidium TypeScript SDK"
+  default_prompt: "Use $liquidium-sdk-integration to add an accountless Liquidium instant-loan flow to my TypeScript app."
