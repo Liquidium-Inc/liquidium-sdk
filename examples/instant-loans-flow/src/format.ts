@@ -152,21 +152,49 @@ export function formatInstantLoan(
   const collateralDecimals = getInstantLoanPoolDecimals(
     options.pools,
     loan.collateral.poolId,
-    loan.position.collateralDecimals
+    loan.collateral.decimals
   );
   const borrowDecimals = getInstantLoanPoolDecimals(
     options.pools,
     loan.borrow.poolId,
-    loan.repayment.decimals
+    loan.borrow.decimals
   );
+  const repaymentLines = loan.repayment
+    ? [
+        `Amount to repay: ${formatAmount(
+          loan.repayment.amount,
+          borrowDecimals
+        )} ${loan.repayment.asset} on ${loan.repayment.chain}`,
+        `Current debt: ${formatAmount(
+          loan.repayment.debtAmount,
+          borrowDecimals
+        )} ${loan.repayment.asset}`,
+        `Interest buffer: ${formatAmount(
+          loan.repayment.interestBufferAmount,
+          borrowDecimals
+        )} ${
+          loan.repayment.asset
+        } (${loan.repayment.interestBufferSeconds.toString()} seconds)`,
+        `Inflow fee: ${formatAmount(
+          loan.repayment.inflowFeeAmount,
+          borrowDecimals
+        )} ${loan.repayment.asset}${
+          loan.repayment.inflowFeeEstimateAvailable
+            ? ""
+            : " (estimate unavailable)"
+        }`,
+        "Repay target:",
+        formatSupplyTarget(loan.repayment.target),
+      ]
+    : ["No repayment due."];
 
   return [
     `Reference: ${loan.ref}`,
     `Loan id: ${loan.loanId.toString()}`,
     `Status: ${loan.status}`,
     `Profile id: ${loan.profileId}`,
-    `Max LTV: ${formatPercentFromBps(loan.ltvMaxBps)}`,
-    `Deposit window seconds: ${loan.depositWindowSeconds.toString()}`,
+    `Max LTV: ${formatPercentFromBps(loan.terms.ltvMaxBps)}`,
+    `Deposit window seconds: ${loan.terms.depositWindowSeconds.toString()}`,
     "",
     "Collateral:",
     `${formatAmount(loan.collateral.amount, collateralDecimals)} ${
@@ -184,7 +212,7 @@ export function formatInstantLoan(
     `Refund destination: ${formatInstantLoanAccount(loan.refundDestination)}`,
     "",
     "Deposit target:",
-    formatSupplyTarget(loan.depositTarget),
+    formatSupplyTarget(loan.initialDeposit.target),
     "",
     "Initial deposit quote:",
     `Amount to send: ${formatAmount(
@@ -222,26 +250,7 @@ export function formatInstantLoan(
     )} ${loan.borrow.asset}`,
     "",
     "Repayment quote:",
-    `Amount to repay: ${formatAmount(loan.repayment.amount, borrowDecimals)} ${
-      loan.repayment.asset
-    } on ${loan.repayment.chain}`,
-    `Current debt: ${formatAmount(loan.repayment.debtAmount, borrowDecimals)} ${
-      loan.repayment.asset
-    }`,
-    `Interest buffer: ${formatAmount(
-      loan.repayment.interestBufferAmount,
-      borrowDecimals
-    )} ${
-      loan.repayment.asset
-    } (${loan.repayment.interestBufferSeconds.toString()} seconds)`,
-    `Inflow fee: ${formatAmount(
-      loan.repayment.inflowFeeAmount,
-      borrowDecimals
-    )} ${loan.repayment.asset}${
-      loan.repayment.inflowFeeEstimateAvailable ? "" : " (estimate unavailable)"
-    }`,
-    "Repay target:",
-    formatSupplyTarget(loan.repayment.target),
+    ...repaymentLines,
   ].join("\n");
 }
 

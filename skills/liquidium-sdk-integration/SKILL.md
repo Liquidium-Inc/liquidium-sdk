@@ -122,15 +122,16 @@ from chosen borrow and collateral amounts before calling `create(...)`.
 message signing. The SDK returns deposit and repay targets for the generated
 `profileId`; `create(...)` and `get(...)` return `initialDeposit.amount` for
 the full amount to send to the deposit target, including the estimated inflow
-fee. `get(...)` also returns `position` plus `repayment.amount` for the full
-amount to send to the repayment target, including inflow fee and interest
-buffer.
+fee. `get(...)` also returns `position` plus nullable `repayment` details for
+the full amount to send to the repayment target, including inflow fee and
+interest buffer, when debt exists.
 
 Deposit and repayment targets are distinct generated inflow targets. Show
-`loan.depositTarget` only when asking the user to send collateral. Show
-`loan.repayment.target` or `loan.repayTarget` only when asking the user to repay
-debt. Do not assume these addresses/accounts match, do not reuse the collateral
-deposit target for repayment, and do not cache one target for both phases.
+`loan.initialDeposit.target` only when asking the user to send collateral. Show
+`loan.repayment.target` only when `loan.repayment` is non-null and the user needs
+to repay debt. Do not assume these addresses/accounts match, do not reuse the
+collateral deposit target for repayment, and do not cache one target for both
+phases.
 
 Reload with `client.instantLoans.get({ ref })` before displaying repayment
 instructions so the app uses the canonical repayment amount and target.
@@ -361,16 +362,17 @@ Default app sequence:
 2. Optionally call `client.quote.calculateLtv(...)` to show current LTV and the collateral pool's max allowed LTV.
 3. Call `client.instantLoans.create(...)` with direct base-unit amounts and external destination addresses.
 4. Persist or display `loan.ref` as the primary recovery key.
-5. Show `loan.initialDeposit.amount` plus `loan.depositTarget` for collateral deposit and `loan.repayment.target` plus `loan.repayment.amount` for repayment.
+5. Show `loan.initialDeposit.amount` plus `loan.initialDeposit.target` for collateral deposit and, when `loan.repayment` is non-null, `loan.repayment.target` plus `loan.repayment.amount` for repayment.
 
 The default instant-loan flow does not need a wallet adapter. The user signs or
 broadcasts only the external wallet transfer to the generated deposit or repay
 target outside the SDK.
 
 The deposit target and repayment target are not interchangeable. Collateral goes
-to `loan.depositTarget`. Repayment goes to `loan.repayment.target` or
-`loan.repayTarget`. If a UI has separate deposit and repay screens, each screen
-must read the target for that exact phase instead of sharing one saved address.
+to `loan.initialDeposit.target`. Repayment goes to `loan.repayment.target` when
+`loan.repayment` is non-null. If a UI has separate deposit and repay screens,
+each screen must read the target for that exact phase instead of sharing one
+saved address.
 
 ```ts
 const ltv = client.quote.calculateLtv(
@@ -402,8 +404,8 @@ const loan = await client.instantLoans.create({
 
 const ref = loan.ref;
 const initialDepositAmount = loan.initialDeposit.amount;
-const depositTarget = loan.depositTarget;
-const repayTarget = loan.repayTarget;
+const depositTarget = loan.initialDeposit.target;
+const repayTarget = loan.repayment?.target;
 ```
 
 Create destinations are external-only. Pass an external address string or an
@@ -433,11 +435,12 @@ Restore a loan by `ref` whenever possible:
 
 ```ts
 const loan = await client.instantLoans.get({ ref: "8Y9AQQ" });
-const repayAmount = loan.repayment.amount;
-const repayAddress =
-  loan.repayment.target.type === "nativeAddress"
+const repayAmount = loan.repayment?.amount;
+const repayAddress = loan.repayment
+  ? loan.repayment.target.type === "nativeAddress"
     ? loan.repayment.target.address
-    : loan.repayment.target.account;
+    : loan.repayment.target.account
+  : undefined;
 ```
 
 Use address lookup only as recovery when the user lost the loan reference:
@@ -462,11 +465,12 @@ after collateral arrives.
 
 Instant loan status values are UI-facing:
 
-- `awaiting_deposit`: show `loan.depositTarget` and the deposit deadline
+- `awaiting_deposit`: show `loan.initialDeposit.target` and the deposit deadline
 - `deposit_detected`: keep polling and show a pending state
 - `active`: show `loan.repayment.amount` and `loan.repayment.target`
 - `settling`: keep polling and avoid duplicate user actions
 - `closed`: show final state and stop prompting for repayment
+- `expired`: show timeout state and stop prompting for collateral deposit
 
 ### Advanced: create a profile
 

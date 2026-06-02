@@ -149,15 +149,15 @@ export function App() {
         "",
         `Amount to send: ${formatAmount(
           loan.initialDeposit.amount,
-          collateralPool.decimals
+          loan.initialDeposit.decimals
         )} ${collateralPool.asset}`,
         `Credited collateral: ${formatAmount(
           loan.initialDeposit.collateralAmount,
-          collateralPool.decimals
+          loan.initialDeposit.decimals
         )} ${collateralPool.asset}`,
         `Estimated inflow fee: ${formatAmount(
           loan.initialDeposit.inflowFeeAmount,
-          collateralPool.decimals
+          loan.initialDeposit.decimals
         )} ${collateralPool.asset}`,
         `Borrow amount: ${formatAmount(
           parsedBorrowAmount,
