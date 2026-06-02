@@ -33,6 +33,16 @@ The client exposes: `instantLoans`, `accounts`, `lending`, `positions`, `market`
 
 ## Setup
 
+Install the client package:
+
+```bash
+npm install @liquidium/client
+```
+
+Use the SDK in browser apps and modern TypeScript runtimes. For this repository,
+local development expects Node.js 20+ and pnpm 9+. Browser integrations need
+`fetch`, `BigInt`, and standard ESM support.
+
 Minimal config:
 
 ```ts
@@ -45,6 +55,7 @@ Richer config when the flow requires it:
 const client = new LiquidiumClient({
   environment: "mainnet",
   apiBaseUrl: "https://your-app.example.com/api/sdk",
+  headers: { "x-client-name": "my-app" },
   evmRpcUrl: "https://mainnet.infura.io/v3/<key>",
   timeoutMs: 30_000,
 });
@@ -54,9 +65,11 @@ const client = new LiquidiumClient({
 
 - `environment`: sets the canister preset. Only `mainnet` is bundled; pass `canisterIds` explicitly for custom deployments
 - `apiBaseUrl`: overrides the default Liquidium service root for history, activities, inflow reporting, `instantLoans.create(...)`, and `instantLoans.findByAddress(...)`. It is not needed for `instantLoans.get(...)`, `borrow(...)`, `withdraw(...)`, or default ETH stablecoin deposit-address supply/repay targets
+- `headers`: adds headers to Liquidium SDK HTTP API requests, for example app attribution or auth from a backend proxy
+- `fetch`: supplies a custom fetch implementation when the runtime needs one
 - `evmRpcUrl` / `evmPublicClient`: required for lower-level ETH contract-interaction supply planning and allowance polling. Use `evmRpcHeaders` when the RPC provider authenticates with HTTP headers
 - `identity` / `icHost`: custom ICP agent configuration
-- `canisterIds.instantLoans`: defaults to mainnet `qdt2k-xqaaa-aaaae-qkapq-cai`; override it for custom deployments
+- `canisterIds.instantLoans`: defaults to mainnet `u5rm3-niaaa-aaaar-qb7eq-cai`; override it for custom deployments
 
 Missing required service configuration is a client configuration problem.
 Affected methods throw `LiquidiumErrorCode.VALIDATION_ERROR`, not
@@ -264,6 +277,47 @@ function formatScaledRatePercent(
 }
 ```
 
+## Error Handling
+
+Validate user-selected amounts before calling state-changing methods:
+
+```ts
+const ltv = client.quote.calculateLtv(request, pools, prices);
+
+if (ltv.validationErrors.length > 0) {
+  return {
+    ok: false,
+    message: ltv.validationErrors.map((error) => error.message).join(" "),
+  };
+}
+```
+
+Catch SDK errors at the boundary where the app can show user-facing copy,
+retry, or log diagnostic context:
+
+```ts
+import { LiquidiumError, LiquidiumErrorCode } from "@liquidium/client";
+
+try {
+  return await client.instantLoans.get({ ref });
+} catch (error) {
+  if (error instanceof LiquidiumError) {
+    if (error.code === LiquidiumErrorCode.REQUEST_TIMEOUT) {
+      // Show retry copy or trigger the app's retry path.
+    }
+
+    throw new Error(error.message);
+  }
+
+  throw error;
+}
+```
+
+Use exported `LiquidiumErrorCode` values when the UI needs different copy for
+timeout, transport, validation, or protocol failures. Quote validation failures
+are returned in `validationErrors`; do not rely on thrown errors for normal quote
+invalidity.
+
 ## Wallet Adapter
 
 The SDK uses a `WalletAdapter` for signing and transaction execution. Implement only the methods the selected flow needs.
@@ -364,6 +418,9 @@ const depositAddress =
     : depositTarget.account;
 ```
 
+Transfer targets also include `poolId`, `asset`, `chain`, and `action`. Use
+those fields to label and validate the UI before asking the user to send funds.
+
 Restore a loan by `ref` whenever possible:
 
 ```ts
@@ -394,6 +451,14 @@ multiple candidates and should be followed by `get({ loanId })` or
 Do not use `client.lending.borrow(...)` for this flow. `lending.borrow(...)` is
 the profile-based signed borrow primitive. Instant loans automate the borrow
 after collateral arrives.
+
+Instant loan status values are UI-facing:
+
+- `awaiting_deposit`: show `loan.depositTarget` and the deposit deadline
+- `deposit_detected`: keep polling and show a pending state
+- `active`: show `loan.repayment.amount` and `loan.repayment.target`
+- `settling`: keep polling and avoid duplicate user actions
+- `closed`: show final state and stop prompting for repayment
 
 ### Advanced: create a profile
 
@@ -662,7 +727,20 @@ When unsure, check these first:
 - `packages/client/src/modules/instant-loans/types.ts`
 - `packages/client/src/modules/lending/types.ts`
 - `packages/client/src/modules/quote/types.ts`
+- `examples/instant-loans-flow/src/App.tsx`
+- `examples/instant-loans-flow/src/sdk-example.ts`
+- `examples/deposit-address-flow/src/dynamic-wallet.ts`
+- `examples/deposit-address-flow/src/sdk-example.ts`
+- `examples/contract-interaction-flow/src/dynamic-wallet.ts`
+- `examples/contract-interaction-flow/src/sdk-example.ts`
 - `examples/vite-react-dynamic/README.md`
 - `examples/vite-react-dynamic/src/lib/client.ts`
-- `examples/vite-react-dynamic/src/lib/profile.ts`
-- `examples/vite-react-dynamic/src/wallet-signing.ts`
+- `examples/vite-react-dynamic/src/SdkMethodQueryPage.tsx`
+
+## Useful Resources
+
+- General Liquidium docs for context: https://liquidium.fi/docs
+- SDK docs overview: https://liquidium.fi/docs/sdk
+- GitHub repo: https://github.com/Liquidium-Inc/liquidium-sdk
+- npm package: https://www.npmjs.com/package/@liquidium/client
+- Open SDK Developer Docs: https://liquidium-inc.github.io/liquidium-sdk/
