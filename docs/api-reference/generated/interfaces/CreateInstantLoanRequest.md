@@ -85,7 +85,7 @@ This is used to validate LTV and initialize the loan record before
 deposit/inflow fees are deducted. For BTC, pass satoshis. For token assets,
 convert the UI amount using the selected pool's `decimals` value. After
 creation, use `loan.initialDeposit.amount` as the fee-inclusive transfer
-amount to send to `loan.depositTarget`.
+amount to send to `loan.initialDeposit.target`.
 
 ***
 

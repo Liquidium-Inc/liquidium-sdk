@@ -10,11 +10,12 @@ An instant loan moves through a small set of UI-facing states.
 
 | Status | Meaning | UI action |
 | --- | --- | --- |
-| `awaiting_deposit` | The loan exists and waits for collateral | Show `loan.depositTarget` and the deposit deadline |
+| `awaiting_deposit` | The loan exists and waits for collateral | Show `loan.initialDeposit.amount`, `loan.initialDeposit.target`, and the deposit deadline |
 | `deposit_detected` | The protocol detected collateral and is processing the borrow | Keep polling and show a pending state |
-| `active` | The borrow is active and the user can repay | Show `loan.repayment.amount` and `loan.repayment.target` |
+| `active` | The borrow is active and the user can repay | If `loan.repayment` is non-null, show `loan.repayment.amount` and `loan.repayment.target` |
 | `settling` | The protocol is closing the loan | Keep polling and avoid duplicate user actions |
 | `closed` | The loan finished | Show final state and stop prompting for repayment |
+| `expired` | The deposit window passed before collateral arrived | Show timeout state and stop prompting for collateral deposit |
 
 Reload state with:
 
