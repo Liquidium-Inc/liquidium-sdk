@@ -250,7 +250,7 @@ Start browser integrations with the examples.
 
 | Example | What it shows |
 | --- | --- |
-| [`examples/instant-loans-flow`](https://github.com/Liquidium-Inc/liquidium-sdk/tree/main/examples/instant-loans-flow) | Instant loan UX with Dynamic wallet connection, pool selection, LTV preview, loan creation, status reload, activity status, and address recovery |
+| [`examples/instant-loans-flow`](https://github.com/Liquidium-Inc/liquidium-sdk/tree/main/examples/instant-loans-flow) | Accountless instant loan UX with manual destination addresses, pool selection, LTV preview, loan creation, status reload, activity status, and address recovery |
 | [`examples/vite-react-dynamic`](https://github.com/Liquidium-Inc/liquidium-sdk/tree/main/examples/vite-react-dynamic) | Developer tool for calling SDK methods, including instant loan method templates |
 
 Run the instant loan example:
@@ -274,7 +274,7 @@ Use the SDK in browser apps and modern TypeScript runtimes.
 | Node.js | 20+ for this repository |
 | Package manager | pnpm 9+ for local development |
 | Browser APIs | `fetch`, `BigInt`, and standard ESM support |
-| Wallet UI | Bring your own wallet provider; the example apps use Dynamic |
+| Wallet UI | Bring your own wallet provider; wallet-backed examples use Dynamic |
 
 ## Development
 

@@ -4,6 +4,8 @@ import {
   normalizeAndValidateEvmAddress,
   normalizeExternalAddress,
 } from "../../core/address-validation";
+import { createCkBtcLedgerActor } from "../../core/canisters/ckbtc/ledger";
+import { createCkBtcMinterActor } from "../../core/canisters/ckbtc/minter";
 import { createDepositAccountsActor } from "../../core/canisters/deposit-accounts/actor";
 import {
   createLendingActor,
@@ -604,7 +606,7 @@ export class LendingModule {
    * Estimates the network/deposit fee for an inflow target.
    *
    * ETH stablecoin deposit-address estimates are served by the deposit-address
-   * canister. BTC estimates are not exposed by this SDK yet and return zero.
+   * canister. BTC estimates include the ckBTC minter deposit fee and ledger fee.
    *
    * @param request - Asset and chain pair to estimate for.
    * @returns Total fee estimate in the asset's base units.
@@ -625,13 +627,22 @@ export class LendingModule {
     }
 
     if (request.asset === Asset.BTC && request.chain === Chain.BTC) {
-      return { totalFee: 0n };
+      return await this.estimateBtcInflowFee();
     }
 
     throw new LiquidiumError(
       LiquidiumErrorCode.VALIDATION_ERROR,
       `Inflow fee estimates are not supported for ${request.asset} on ${request.chain}`
     );
+  }
+
+  private async estimateBtcInflowFee(): Promise<InflowFeeEstimate> {
+    const [minterFee, ledgerFee] = await Promise.all([
+      createCkBtcMinterActor(this.canisterContext).get_deposit_fee(),
+      createCkBtcLedgerActor(this.canisterContext).icrc1_fee(),
+    ]);
+
+    return { totalFee: minterFee + ledgerFee };
   }
 
   private async sendAndSubmitNativeSupplyInflow(params: {

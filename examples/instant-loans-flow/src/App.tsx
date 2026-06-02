@@ -1,5 +1,3 @@
-import { isEthereumWallet } from "@dynamic-labs/ethereum";
-import { DynamicWidget, useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import type { AssetPrices, Pool } from "@liquidium/client";
 import { useEffect, useState } from "react";
 import { formatConfig } from "./client";
@@ -26,7 +24,6 @@ const DEFAULT_COLLATERAL_ASSET = "BTC";
 const DEFAULT_BORROW_ASSET = "USDC";
 
 export function App() {
-  const { primaryWallet } = useDynamicContext();
   const [pools, setPools] = useState<Pool[]>([]);
   const [assetPrices, setAssetPrices] = useState<AssetPrices>({});
   const [selectedCollateralPoolId, setSelectedCollateralPoolId] = useState("");
@@ -42,9 +39,6 @@ export function App() {
     getRecentLoanRefs()
   );
   const [status, setStatus] = useState("Ready.");
-  const walletAddress = primaryWallet?.address ?? "";
-  const walletChain =
-    primaryWallet && isEthereumWallet(primaryWallet) ? "ETH" : "Not connected";
 
   useEffect(() => {
     void run(async () => {
@@ -76,14 +70,6 @@ export function App() {
       setStatus(`Loaded ${loadedPools.length} pools.`);
     }, setStatus);
   }, []);
-
-  useEffect(() => {
-    if (!walletAddress) {
-      return;
-    }
-
-    setBorrowDestination(walletAddress);
-  }, [walletAddress]);
 
   async function loadPools(): Promise<void> {
     setStatus("Loading pools...");
@@ -171,14 +157,6 @@ export function App() {
     setStatus(`Created instant loan ${loan.ref}.`);
   }
 
-  function applyConnectedWalletDefaults(): void {
-    if (!walletAddress) {
-      return;
-    }
-
-    setBorrowDestination(walletAddress);
-  }
-
   function handleCollateralPoolChange(poolId: string): void {
     setSelectedCollateralPoolId(poolId);
     const pool = pools.find((candidatePool) => candidatePool.id === poolId);
@@ -202,22 +180,9 @@ export function App() {
       <h1>Liquidium Instant Loan Flow</h1>
       <p>
         Create an accountless loan, then send collateral to the generated
-        deposit target. Dynamic is used for the ETH borrow destination; enter
-        the BTC refund address manually.
+        deposit target. Enter the borrow destination and refund address
+        manually.
       </p>
-
-      <section>
-        <h2>Wallet</h2>
-        <DynamicWidget />
-        <div className="list-box">
-          Connected wallet: {walletAddress || "Not connected"}
-          {"\n"}
-          Wallet chain: {walletChain}
-        </div>
-        <button type="button" onClick={applyConnectedWalletDefaults}>
-          Use Connected Wallet Address
-        </button>
-      </section>
 
       <section>
         <h2>SDK Config</h2>

@@ -4215,6 +4215,79 @@ describe("InstantLoansModule", () => {
     });
   });
 
+  test("includes btc inflow fee in the instant loan repayment quote", async () => {
+    // given
+    const getLoan = vi.fn().mockResolvedValue({
+      Ok: createBtcBorrowInstantLoan(),
+    });
+    const getDepositAddress = vi.fn().mockResolvedValue({
+      Ok: "0x1111111111111111111111111111111111111111",
+    });
+    const getBtcAddress = vi.fn().mockResolvedValue("bc1qrepaybtc");
+    const getPoolRate = vi
+      .fn()
+      .mockResolvedValue([[10_000_000_000_000_000_000_000_000n, 0n, 0n]]);
+    const getCollateralPosition = vi.fn().mockResolvedValue([
+      createInstantLoanPosition(
+        USDT_POOL_ID,
+        { USDT: null },
+        {
+          deposited_native_now: 5_000_000n,
+        }
+      ),
+    ]);
+    const getBorrowPosition = vi.fn().mockResolvedValue([
+      createInstantLoanPosition(
+        BTC_POOL_ID,
+        { BTC: null },
+        {
+          debt_native_now: 1_000_000n,
+          total_debt_interest: 500n,
+        }
+      ),
+    ]);
+    const getDepositFee = vi.fn().mockResolvedValue(2_000n);
+    const icrc1Fee = vi.fn().mockResolvedValue(10n);
+
+    vi.spyOn(Actor, "createActor")
+      .mockReturnValueOnce({ get_loan: getLoan } as never)
+      .mockReturnValueOnce({
+        list_pools: vi.fn().mockResolvedValue([createUsdtPoolRecord()]),
+      } as never)
+      .mockReturnValueOnce({
+        list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord()]),
+      } as never)
+      .mockReturnValueOnce({ get_position: getCollateralPosition } as never)
+      .mockReturnValueOnce({ get_position: getBorrowPosition } as never)
+      .mockReturnValueOnce({ get_pool_rate: getPoolRate } as never)
+      .mockReturnValueOnce({ get_deposit_address: getDepositAddress } as never)
+      .mockReturnValueOnce({ get_btc_address: getBtcAddress } as never)
+      .mockReturnValueOnce({ get_deposit_fee: getDepositFee } as never)
+      .mockReturnValueOnce({ icrc1_fee: icrc1Fee } as never);
+    const client = new LiquidiumClient({
+      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
+      canisterIds: { instantLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
+    });
+
+    // when
+    const loan = await client.instantLoans.get({
+      ref: publicIdFromInt(LOAN_ID),
+    });
+
+    // then
+    expect(loan.repayment).toMatchObject({
+      amount: 1_002_537n,
+      debtAmount: 1_000_500n,
+      interestBufferAmount: 27n,
+      inflowFeeAmount: 2_010n,
+      inflowFeeEstimateAvailable: true,
+      asset: "BTC",
+      chain: "BTC",
+    });
+    expect(getDepositFee).toHaveBeenCalledWith();
+    expect(icrc1Fee).toHaveBeenCalledWith();
+  });
+
   test("calls public instant-loan query methods directly on the canister", async () => {
     // given
     const getConfig = vi.fn().mockResolvedValue({
@@ -4802,6 +4875,19 @@ describe("InstantLoansModule", () => {
       borrow_asset: { USDT: null },
       expires_at: [],
       deposit_detected_ts: [],
+    };
+  }
+
+  function createBtcBorrowInstantLoan() {
+    return {
+      ...createInstantLoan(),
+      borrow_destination: { External: VALID_BTC_REFUND_ADDRESS },
+      borrow_amount: 1_000_000n,
+      lend_asset: { USDT: null },
+      lend_pool_id: Principal.fromText(USDT_POOL_ID),
+      refund_destination: { External: CHECKSUM_EVM_BORROW_ADDRESS },
+      borrow_pool_id: Principal.fromText(BTC_POOL_ID),
+      borrow_asset: { BTC: null },
     };
   }
 
