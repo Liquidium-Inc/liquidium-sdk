@@ -14,3 +14,7 @@ When changing public SDK behavior, exported types, method names, request fields,
 - Put runnable-app notes in `docs/examples/`.
 
 If exported APIs changed, run `pnpm docs:api` to regenerate `docs/api-reference/generated/`.
+
+## Releases
+
+When preparing an `@liquidium/client` release, follow `RELEASE.md`. Keep npm publishing manual unless the user explicitly requests automation.
