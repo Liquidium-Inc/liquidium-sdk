@@ -6,7 +6,7 @@
 
 # Interface: IcrcAccountSupplyTarget
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/lending/types.ts:158](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/lending/types.ts#L158)
+Defined in: [packages/client/src/modules/lending/types.ts:158](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L158)
 
 ICRC account target for ck-asset or contract-interaction inflows.
 
@@ -16,7 +16,7 @@ ICRC account target for ck-asset or contract-interaction inflows.
 
 > **account**: `string`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/lending/types.ts:174](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/lending/types.ts#L174)
+Defined in: [packages/client/src/modules/lending/types.ts:174](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L174)
 
 Text-encoded ICRC account.
 
@@ -26,7 +26,7 @@ Text-encoded ICRC account.
 
 > **action**: [`SupplyAction`](../type-aliases/SupplyAction.md)
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/lending/types.ts:168](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/lending/types.ts#L168)
+Defined in: [packages/client/src/modules/lending/types.ts:168](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L168)
 
 Deposit or repayment action for the inflow.
 
@@ -36,7 +36,7 @@ Deposit or repayment action for the inflow.
 
 > **asset**: `string`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/lending/types.ts:164](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/lending/types.ts#L164)
+Defined in: [packages/client/src/modules/lending/types.ts:164](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L164)
 
 Asset expected by the target.
 
@@ -46,7 +46,7 @@ Asset expected by the target.
 
 > **chain**: `string`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/lending/types.ts:166](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/lending/types.ts#L166)
+Defined in: [packages/client/src/modules/lending/types.ts:166](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L166)
 
 Chain associated with the inflow.
 
@@ -56,7 +56,7 @@ Chain associated with the inflow.
 
 > **owner**: `string`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/lending/types.ts:170](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/lending/types.ts#L170)
+Defined in: [packages/client/src/modules/lending/types.ts:170](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L170)
 
 ICRC account owner principal text.
 
@@ -66,7 +66,7 @@ ICRC account owner principal text.
 
 > **poolId**: `string`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/lending/types.ts:162](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/lending/types.ts#L162)
+Defined in: [packages/client/src/modules/lending/types.ts:162](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L162)
 
 Pool principal text receiving the inflow.
 
@@ -76,7 +76,7 @@ Pool principal text receiving the inflow.
 
 > **subaccount**: `Uint8Array`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/lending/types.ts:172](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/lending/types.ts#L172)
+Defined in: [packages/client/src/modules/lending/types.ts:172](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L172)
 
 ICRC subaccount bytes.
 
@@ -86,6 +86,6 @@ ICRC subaccount bytes.
 
 > **type**: `"icrcAccount"`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/lending/types.ts:160](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/lending/types.ts#L160)
+Defined in: [packages/client/src/modules/lending/types.ts:160](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L160)
 
 Target discriminator.

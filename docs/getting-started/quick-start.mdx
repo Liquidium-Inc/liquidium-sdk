@@ -59,13 +59,18 @@ const loan = await client.instantLoans.create({
 });
 
 console.log("Save this loan reference:", loan.ref);
-console.log("Send collateral to:", formatSupplyTarget(loan.depositTarget));
+console.log("Send collateral amount:", loan.initialDeposit.amount.toString());
+console.log("Send collateral to:", formatSupplyTarget(loan.initialDeposit.target));
 
 const restoredLoan = await client.instantLoans.get({ ref: loan.ref });
 
 console.log("Loan status:", restoredLoan.status);
-console.log("Repay amount:", restoredLoan.repayment.amount.toString());
-console.log("Repay target:", formatSupplyTarget(restoredLoan.repayment.target));
+if (restoredLoan.repayment) {
+  console.log("Repay amount:", restoredLoan.repayment.amount.toString());
+  console.log("Repay target:", formatSupplyTarget(restoredLoan.repayment.target));
+} else {
+  console.log("No repayment due yet.");
+}
 
 function requirePool(pools: Pool[], asset: string): Pool {
   const pool = pools.find((candidatePool) => candidatePool.asset === asset);

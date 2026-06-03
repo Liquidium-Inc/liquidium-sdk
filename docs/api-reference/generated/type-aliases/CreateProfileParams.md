@@ -8,7 +8,7 @@
 
 > **CreateProfileParams** = `object`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/accounts/accounts.ts:30](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/accounts/accounts.ts#L30)
+Defined in: [packages/client/src/modules/accounts/accounts.ts:30](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/accounts/accounts.ts#L30)
 
 ## Properties
 
@@ -16,7 +16,7 @@ Defined in: [external/liquidium-sdk/packages/client/src/modules/accounts/account
 
 > **account**: `string`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/accounts/accounts.ts:31](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/accounts/accounts.ts#L31)
+Defined in: [packages/client/src/modules/accounts/accounts.ts:31](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/accounts/accounts.ts#L31)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [external/liquidium-sdk/packages/client/src/modules/accounts/account
 
 > **chain**: [`Chain`](Chain.md)
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/accounts/accounts.ts:32](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/accounts/accounts.ts#L32)
+Defined in: [packages/client/src/modules/accounts/accounts.ts:32](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/accounts/accounts.ts#L32)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [external/liquidium-sdk/packages/client/src/modules/accounts/account
 
 > **walletAdapter**: [`WalletAdapter`](../interfaces/WalletAdapter.md)
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/accounts/accounts.ts:33](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/accounts/accounts.ts#L33)
+Defined in: [packages/client/src/modules/accounts/accounts.ts:33](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/accounts/accounts.ts#L33)

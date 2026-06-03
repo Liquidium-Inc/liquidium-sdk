@@ -6,7 +6,7 @@
 
 # Interface: Pool
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/market/types.ts:4](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/market/types.ts#L4)
+Defined in: [packages/client/src/modules/market/types.ts:4](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/types.ts#L4)
 
 Current protocol metadata and rate state for a lending pool.
 
@@ -16,7 +16,7 @@ Current protocol metadata and rate state for a lending pool.
 
 > **asset**: `string`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/market/types.ts:8](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/market/types.ts#L8)
+Defined in: [packages/client/src/modules/market/types.ts:8](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/types.ts#L8)
 
 Asset supplied to and borrowed from the pool.
 
@@ -26,7 +26,7 @@ Asset supplied to and borrowed from the pool.
 
 > **availableLiquidity**: `bigint`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/market/types.ts:20](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/market/types.ts#L20)
+Defined in: [packages/client/src/modules/market/types.ts:20](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/types.ts#L20)
 
 Currently available liquidity in base units.
 
@@ -36,7 +36,7 @@ Currently available liquidity in base units.
 
 > **baseRate**: `bigint`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/market/types.ts:44](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/market/types.ts#L44)
+Defined in: [packages/client/src/modules/market/types.ts:44](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/types.ts#L44)
 
 Base borrow rate, scaled by `rateDecimals`.
 
@@ -46,7 +46,7 @@ Base borrow rate, scaled by `rateDecimals`.
 
 > `optional` **borrowCap?**: `bigint`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/market/types.ts:24](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/market/types.ts#L24)
+Defined in: [packages/client/src/modules/market/types.ts:24](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/types.ts#L24)
 
 Optional borrow cap in base units.
 
@@ -56,7 +56,7 @@ Optional borrow cap in base units.
 
 > **borrowIndex**: `bigint`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/market/types.ts:54](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/market/types.ts#L54)
+Defined in: [packages/client/src/modules/market/types.ts:54](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/types.ts#L54)
 
 Current borrow index.
 
@@ -66,7 +66,7 @@ Current borrow index.
 
 > **borrowingRate**: `bigint`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/market/types.ts:40](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/market/types.ts#L40)
+Defined in: [packages/client/src/modules/market/types.ts:40](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/types.ts#L40)
 
 Current borrow APR, scaled by `rateDecimals`.
 
@@ -76,7 +76,7 @@ Current borrow APR, scaled by `rateDecimals`.
 
 > **chain**: `string`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/market/types.ts:10](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/market/types.ts#L10)
+Defined in: [packages/client/src/modules/market/types.ts:10](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/types.ts#L10)
 
 Chain associated with the pool asset.
 
@@ -86,7 +86,7 @@ Chain associated with the pool asset.
 
 > **decimals**: `bigint`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/market/types.ts:12](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/market/types.ts#L12)
+Defined in: [packages/client/src/modules/market/types.ts:12](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/types.ts#L12)
 
 Number of base-unit decimals for pool amounts.
 
@@ -96,7 +96,7 @@ Number of base-unit decimals for pool amounts.
 
 > **frozen**: `boolean`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/market/types.ts:14](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/market/types.ts#L14)
+Defined in: [packages/client/src/modules/market/types.ts:14](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/types.ts#L14)
 
 Whether new pool activity is currently frozen.
 
@@ -106,7 +106,7 @@ Whether new pool activity is currently frozen.
 
 > **id**: `string`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/market/types.ts:6](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/market/types.ts#L6)
+Defined in: [packages/client/src/modules/market/types.ts:6](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/types.ts#L6)
 
 Pool canister principal text.
 
@@ -116,7 +116,7 @@ Pool canister principal text.
 
 > `optional` **lastUpdated?**: `bigint`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/market/types.ts:58](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/market/types.ts#L58)
+Defined in: [packages/client/src/modules/market/types.ts:58](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/types.ts#L58)
 
 Last pool update timestamp when available.
 
@@ -126,7 +126,7 @@ Last pool update timestamp when available.
 
 > **lendingIndex**: `bigint`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/market/types.ts:52](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/market/types.ts#L52)
+Defined in: [packages/client/src/modules/market/types.ts:52](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/types.ts#L52)
 
 Current lending index.
 
@@ -136,7 +136,7 @@ Current lending index.
 
 > **lendingRate**: `bigint`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/market/types.ts:38](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/market/types.ts#L38)
+Defined in: [packages/client/src/modules/market/types.ts:38](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/types.ts#L38)
 
 Current supply APR, scaled by `rateDecimals`.
 
@@ -146,7 +146,7 @@ Current supply APR, scaled by `rateDecimals`.
 
 > **liquidationBonus**: `bigint`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/market/types.ts:30](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/market/types.ts#L30)
+Defined in: [packages/client/src/modules/market/types.ts:30](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/types.ts#L30)
 
 Liquidation bonus, scaled by `rateDecimals`.
 
@@ -156,7 +156,7 @@ Liquidation bonus, scaled by `rateDecimals`.
 
 > **liquidationThreshold**: `bigint`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/market/types.ts:28](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/market/types.ts#L28)
+Defined in: [packages/client/src/modules/market/types.ts:28](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/types.ts#L28)
 
 Liquidation threshold, scaled by `rateDecimals`.
 
@@ -166,7 +166,7 @@ Liquidation threshold, scaled by `rateDecimals`.
 
 > **maxLtv**: `bigint`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/market/types.ts:26](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/market/types.ts#L26)
+Defined in: [packages/client/src/modules/market/types.ts:26](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/types.ts#L26)
 
 Maximum loan-to-value ratio, scaled by `rateDecimals`.
 
@@ -176,7 +176,7 @@ Maximum loan-to-value ratio, scaled by `rateDecimals`.
 
 > **optimalUtilizationRate**: `bigint`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/market/types.ts:46](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/market/types.ts#L46)
+Defined in: [packages/client/src/modules/market/types.ts:46](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/types.ts#L46)
 
 Optimal utilization point, scaled by `rateDecimals`.
 
@@ -186,7 +186,7 @@ Optimal utilization point, scaled by `rateDecimals`.
 
 > **protocolLiquidationFee**: `bigint`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/market/types.ts:32](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/market/types.ts#L32)
+Defined in: [packages/client/src/modules/market/types.ts:32](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/types.ts#L32)
 
 Protocol liquidation fee, scaled by `rateDecimals`.
 
@@ -196,7 +196,7 @@ Protocol liquidation fee, scaled by `rateDecimals`.
 
 > **rateDecimals**: `bigint`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/market/types.ts:36](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/market/types.ts#L36)
+Defined in: [packages/client/src/modules/market/types.ts:36](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/types.ts#L36)
 
 Decimal scale used by rate and risk-ratio fields.
 
@@ -206,7 +206,7 @@ Decimal scale used by rate and risk-ratio fields.
 
 > **rateSlopeAfter**: `bigint`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/market/types.ts:50](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/market/types.ts#L50)
+Defined in: [packages/client/src/modules/market/types.ts:50](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/types.ts#L50)
 
 Rate slope after optimal utilization, scaled by `rateDecimals`.
 
@@ -216,7 +216,7 @@ Rate slope after optimal utilization, scaled by `rateDecimals`.
 
 > **rateSlopeBefore**: `bigint`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/market/types.ts:48](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/market/types.ts#L48)
+Defined in: [packages/client/src/modules/market/types.ts:48](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/types.ts#L48)
 
 Rate slope before optimal utilization, scaled by `rateDecimals`.
 
@@ -226,7 +226,7 @@ Rate slope before optimal utilization, scaled by `rateDecimals`.
 
 > **reserveFactor**: `bigint`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/market/types.ts:34](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/market/types.ts#L34)
+Defined in: [packages/client/src/modules/market/types.ts:34](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/types.ts#L34)
 
 Reserve factor, scaled by `rateDecimals`.
 
@@ -236,7 +236,7 @@ Reserve factor, scaled by `rateDecimals`.
 
 > **sameAssetBorrowing**: `boolean`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/market/types.ts:56](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/market/types.ts#L56)
+Defined in: [packages/client/src/modules/market/types.ts:56](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/types.ts#L56)
 
 Whether borrowing the same asset as collateral is allowed.
 
@@ -246,7 +246,7 @@ Whether borrowing the same asset as collateral is allowed.
 
 > `optional` **supplyCap?**: `bigint`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/market/types.ts:22](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/market/types.ts#L22)
+Defined in: [packages/client/src/modules/market/types.ts:22](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/types.ts#L22)
 
 Optional supply cap in base units.
 
@@ -256,7 +256,7 @@ Optional supply cap in base units.
 
 > **totalDebt**: `bigint`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/market/types.ts:18](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/market/types.ts#L18)
+Defined in: [packages/client/src/modules/market/types.ts:18](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/types.ts#L18)
 
 Total borrowed amount in base units.
 
@@ -266,7 +266,7 @@ Total borrowed amount in base units.
 
 > **totalSupply**: `bigint`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/market/types.ts:16](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/market/types.ts#L16)
+Defined in: [packages/client/src/modules/market/types.ts:16](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/types.ts#L16)
 
 Total supplied amount in base units.
 
@@ -276,6 +276,6 @@ Total supplied amount in base units.
 
 > **utilizationRate**: `bigint`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/market/types.ts:42](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/market/types.ts#L42)
+Defined in: [packages/client/src/modules/market/types.ts:42](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/types.ts#L42)
 
 Current pool utilization, scaled by `rateDecimals`.

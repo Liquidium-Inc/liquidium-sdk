@@ -6,7 +6,7 @@
 
 # Class: LiquidiumClient
 
-Defined in: [external/liquidium-sdk/packages/client/src/client.ts:28](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/client.ts#L28)
+Defined in: [packages/client/src/client.ts:28](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/client.ts#L28)
 
 Root client for Liquidium protocol integration (canister + optional HTTP API).
 
@@ -18,7 +18,7 @@ Construct with `new LiquidiumClient(config)`.
 
 > **new LiquidiumClient**(`config?`): `LiquidiumClient`
 
-Defined in: [external/liquidium-sdk/packages/client/src/client.ts:55](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/client.ts#L55)
+Defined in: [packages/client/src/client.ts:55](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/client.ts#L55)
 
 Creates a Liquidium SDK client.
 
@@ -40,7 +40,7 @@ Runtime transport, canister, API, identity, and EVM read options.
 
 > `readonly` **accounts**: [`AccountsModule`](AccountsModule.md)
 
-Defined in: [external/liquidium-sdk/packages/client/src/client.ts:30](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/client.ts#L30)
+Defined in: [packages/client/src/client.ts:30](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/client.ts#L30)
 
 Profile lifecycle: create, resolve, linked wallets.
 
@@ -50,7 +50,7 @@ Profile lifecycle: create, resolve, linked wallets.
 
 > `readonly` **activities**: [`ActivitiesModule`](ActivitiesModule.md)
 
-Defined in: [external/liquidium-sdk/packages/client/src/client.ts:38](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/client.ts#L38)
+Defined in: [packages/client/src/client.ts:38](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/client.ts#L38)
 
 Receipt-oriented activity status and activity lists.
 
@@ -60,7 +60,7 @@ Receipt-oriented activity status and activity lists.
 
 > `readonly` **history**: [`HistoryModule`](HistoryModule.md)
 
-Defined in: [external/liquidium-sdk/packages/client/src/client.ts:40](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/client.ts#L40)
+Defined in: [packages/client/src/client.ts:40](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/client.ts#L40)
 
 Pool and user history through the Liquidium SDK API.
 
@@ -70,7 +70,7 @@ Pool and user history through the Liquidium SDK API.
 
 > `readonly` **instantLoans**: [`InstantLoansModule`](InstantLoansModule.md)
 
-Defined in: [external/liquidium-sdk/packages/client/src/client.ts:42](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/client.ts#L42)
+Defined in: [packages/client/src/client.ts:42](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/client.ts#L42)
 
 Accountless instant loans backed by generated deposit/repay targets.
 
@@ -80,7 +80,7 @@ Accountless instant loans backed by generated deposit/repay targets.
 
 > `readonly` **lending**: [`LendingModule`](LendingModule.md)
 
-Defined in: [external/liquidium-sdk/packages/client/src/client.ts:32](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/client.ts#L32)
+Defined in: [packages/client/src/client.ts:32](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/client.ts#L32)
 
 Borrow, withdraw, supply, inflow reporting and tracking.
 
@@ -90,7 +90,7 @@ Borrow, withdraw, supply, inflow reporting and tracking.
 
 > `readonly` **market**: [`MarketModule`](MarketModule.md)
 
-Defined in: [external/liquidium-sdk/packages/client/src/client.ts:36](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/client.ts#L36)
+Defined in: [packages/client/src/client.ts:36](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/client.ts#L36)
 
 Pool list, prices, pool rate lookups.
 
@@ -100,7 +100,7 @@ Pool list, prices, pool rate lookups.
 
 > `readonly` **positions**: [`PositionsModule`](PositionsModule.md)
 
-Defined in: [external/liquidium-sdk/packages/client/src/client.ts:34](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/client.ts#L34)
+Defined in: [packages/client/src/client.ts:34](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/client.ts#L34)
 
 Per-pool positions, health, aggregate stats.
 
@@ -110,6 +110,6 @@ Per-pool positions, health, aggregate stats.
 
 > `readonly` **quote**: [`QuoteModule`](QuoteModule.md)
 
-Defined in: [external/liquidium-sdk/packages/client/src/client.ts:44](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/client.ts#L44)
+Defined in: [packages/client/src/client.ts:44](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/client.ts#L44)
 
 Pure quote helpers from market inputs.

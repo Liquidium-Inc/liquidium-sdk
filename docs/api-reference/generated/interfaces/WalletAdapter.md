@@ -6,7 +6,7 @@
 
 # Interface: WalletAdapter
 
-Defined in: [external/liquidium-sdk/packages/client/src/core/wallet-actions.ts:109](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/core/wallet-actions.ts#L109)
+Defined in: [packages/client/src/core/wallet-actions.ts:109](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L109)
 
 Optional wallet capabilities. Implement only what your flow uses:
 
@@ -21,7 +21,7 @@ Optional wallet capabilities. Implement only what your flow uses:
 
 > `optional` **sendBtcTransaction?**: (`request`) => `Promise`\<`string`\>
 
-Defined in: [external/liquidium-sdk/packages/client/src/core/wallet-actions.ts:117](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/core/wallet-actions.ts#L117)
+Defined in: [packages/client/src/core/wallet-actions.ts:117](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L117)
 
 Sends a BTC transaction and returns its transaction id.
 
@@ -41,7 +41,7 @@ Sends a BTC transaction and returns its transaction id.
 
 > `optional` **sendEthTransaction?**: (`request`) => `Promise`\<`string`\>
 
-Defined in: [external/liquidium-sdk/packages/client/src/core/wallet-actions.ts:115](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/core/wallet-actions.ts#L115)
+Defined in: [packages/client/src/core/wallet-actions.ts:115](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L115)
 
 Sends an EVM transaction and returns its transaction hash.
 
@@ -61,7 +61,7 @@ Sends an EVM transaction and returns its transaction hash.
 
 > `optional` **signMessage?**: (`request`) => `Promise`\<`string`\>
 
-Defined in: [external/liquidium-sdk/packages/client/src/core/wallet-actions.ts:111](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/core/wallet-actions.ts#L111)
+Defined in: [packages/client/src/core/wallet-actions.ts:111](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L111)
 
 Signs an SDK plaintext message and returns the wallet signature.
 
@@ -81,7 +81,7 @@ Signs an SDK plaintext message and returns the wallet signature.
 
 > `optional` **signPsbt?**: (`request`) => `Promise`\<`string`\>
 
-Defined in: [external/liquidium-sdk/packages/client/src/core/wallet-actions.ts:113](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/core/wallet-actions.ts#L113)
+Defined in: [packages/client/src/core/wallet-actions.ts:113](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L113)
 
 Signs an SDK-provided BTC PSBT and returns the signed PSBT as base64.
 

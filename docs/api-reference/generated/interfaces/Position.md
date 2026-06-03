@@ -6,7 +6,7 @@
 
 # Interface: Position
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/positions/types.ts:5](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/positions/types.ts#L5)
+Defined in: [packages/client/src/modules/positions/types.ts:5](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/types.ts#L5)
 
 Current profile position in one lending pool.
 
@@ -16,7 +16,7 @@ Current profile position in one lending pool.
 
 > **asset**: `string`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/positions/types.ts:9](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/positions/types.ts#L9)
+Defined in: [packages/client/src/modules/positions/types.ts:9](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/types.ts#L9)
 
 Pool asset symbol.
 
@@ -26,7 +26,7 @@ Pool asset symbol.
 
 > **borrowed**: `bigint`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/positions/types.ts:15](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/positions/types.ts#L15)
+Defined in: [packages/client/src/modules/positions/types.ts:15](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/types.ts#L15)
 
 Borrowed principal in base units.
 
@@ -36,7 +36,7 @@ Borrowed principal in base units.
 
 > **borrowedDecimals**: `bigint`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/positions/types.ts:17](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/positions/types.ts#L17)
+Defined in: [packages/client/src/modules/positions/types.ts:17](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/types.ts#L17)
 
 Decimal scale for borrowed amounts.
 
@@ -46,7 +46,7 @@ Decimal scale for borrowed amounts.
 
 > **debtInterest**: `bigint`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/positions/types.ts:21](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/positions/types.ts#L21)
+Defined in: [packages/client/src/modules/positions/types.ts:21](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/types.ts#L21)
 
 Accrued borrow interest in base units.
 
@@ -56,7 +56,7 @@ Accrued borrow interest in base units.
 
 > **deposited**: `bigint`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/positions/types.ts:11](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/positions/types.ts#L11)
+Defined in: [packages/client/src/modules/positions/types.ts:11](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/types.ts#L11)
 
 Supplied principal in base units.
 
@@ -66,7 +66,7 @@ Supplied principal in base units.
 
 > **depositedDecimals**: `bigint`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/positions/types.ts:13](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/positions/types.ts#L13)
+Defined in: [packages/client/src/modules/positions/types.ts:13](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/types.ts#L13)
 
 Decimal scale for supplied amounts.
 
@@ -76,7 +76,7 @@ Decimal scale for supplied amounts.
 
 > **earnedInterest**: `bigint`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/positions/types.ts:19](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/positions/types.ts#L19)
+Defined in: [packages/client/src/modules/positions/types.ts:19](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/types.ts#L19)
 
 Accrued supply interest in base units.
 
@@ -86,7 +86,7 @@ Accrued supply interest in base units.
 
 > **lastUpdate**: `bigint`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/positions/types.ts:23](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/positions/types.ts#L23)
+Defined in: [packages/client/src/modules/positions/types.ts:23](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/types.ts#L23)
 
 Protocol timestamp of the last position update.
 
@@ -96,6 +96,6 @@ Protocol timestamp of the last position update.
 
 > **poolId**: `string`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/positions/types.ts:7](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/positions/types.ts#L7)
+Defined in: [packages/client/src/modules/positions/types.ts:7](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/types.ts#L7)
 
 Pool principal text.

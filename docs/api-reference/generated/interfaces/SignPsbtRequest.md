@@ -6,7 +6,7 @@
 
 # Interface: SignPsbtRequest
 
-Defined in: [external/liquidium-sdk/packages/client/src/core/wallet-actions.ts:58](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/core/wallet-actions.ts#L58)
+Defined in: [packages/client/src/core/wallet-actions.ts:58](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L58)
 
 PSBT-signing request passed to BTC wallet adapters.
 
@@ -16,7 +16,7 @@ PSBT-signing request passed to BTC wallet adapters.
 
 > `optional` **account?**: `string`
 
-Defined in: [external/liquidium-sdk/packages/client/src/core/wallet-actions.ts:64](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/core/wallet-actions.ts#L64)
+Defined in: [packages/client/src/core/wallet-actions.ts:64](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L64)
 
 Optional BTC account override.
 
@@ -26,7 +26,7 @@ Optional BTC account override.
 
 > **actionType**: `string`
 
-Defined in: [external/liquidium-sdk/packages/client/src/core/wallet-actions.ts:66](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/core/wallet-actions.ts#L66)
+Defined in: [packages/client/src/core/wallet-actions.ts:66](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L66)
 
 SDK action type that produced this request.
 
@@ -36,7 +36,7 @@ SDK action type that produced this request.
 
 > **chain**: `"BTC"`
 
-Defined in: [external/liquidium-sdk/packages/client/src/core/wallet-actions.ts:60](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/core/wallet-actions.ts#L60)
+Defined in: [packages/client/src/core/wallet-actions.ts:60](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L60)
 
 BTC chain discriminator.
 
@@ -46,7 +46,7 @@ BTC chain discriminator.
 
 > **psbtBase64**: `string`
 
-Defined in: [external/liquidium-sdk/packages/client/src/core/wallet-actions.ts:62](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/core/wallet-actions.ts#L62)
+Defined in: [packages/client/src/core/wallet-actions.ts:62](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L62)
 
 Base64-encoded unsigned PSBT.
 
@@ -56,6 +56,6 @@ Base64-encoded unsigned PSBT.
 
 > **transferMode**: [`TransferMode`](../type-aliases/TransferMode.md)
 
-Defined in: [external/liquidium-sdk/packages/client/src/core/wallet-actions.ts:68](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/core/wallet-actions.ts#L68)
+Defined in: [packages/client/src/core/wallet-actions.ts:68](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L68)
 
 Transfer path associated with the action.

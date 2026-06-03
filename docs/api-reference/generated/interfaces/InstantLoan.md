@@ -6,85 +6,39 @@
 
 # Interface: InstantLoan
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/instant-loans/types.ts:279](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/instant-loans/types.ts#L279)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:338](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L338)
 
-Hydrated instant-loan state plus generated deposit and repayment targets.
+Hydrated instant-loan state plus generated quote targets.
 
 ## Properties
 
 ### borrow
 
-> **borrow**: `object`
+> **borrow**: [`InstantLoanBorrow`](InstantLoanBorrow.md)
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/instant-loans/types.ts:300](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/instant-loans/types.ts#L300)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:352](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L352)
 
-Borrow-side pool, asset, chain, requested amount, and destination.
-
-#### amount
-
-> **amount**: `bigint`
-
-#### asset
-
-> **asset**: `string`
-
-#### chain
-
-> **chain**: `string`
-
-#### destination
-
-> **destination**: [`InstantLoanAccount`](../type-aliases/InstantLoanAccount.md)
-
-#### poolId
-
-> **poolId**: `string`
+Borrow-side pool, asset, chain, decimals, requested amount, and destination.
 
 ***
 
 ### collateral
 
-> **collateral**: `object`
+> **collateral**: [`InstantLoanCollateral`](InstantLoanCollateral.md)
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/instant-loans/types.ts:293](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/instant-loans/types.ts#L293)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:350](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L350)
 
-Collateral-side pool, asset, chain, and current or requested collateral amount.
-
-#### amount
-
-> **amount**: `bigint`
-
-#### asset
-
-> **asset**: `string`
-
-#### chain
-
-> **chain**: `string`
-
-#### poolId
-
-> **poolId**: `string`
+Collateral-side pool, asset, chain, decimals, and requested credited amount.
 
 ***
 
-### depositTarget
+### initialDeposit
 
-> **depositTarget**: [`SupplyTarget`](../type-aliases/SupplyTarget.md)
+> **initialDeposit**: [`InstantLoanInitialDeposit`](InstantLoanInitialDeposit.md)
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/instant-loans/types.ts:310](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/instant-loans/types.ts#L310)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:356](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L356)
 
-Address or ICRC account where the user deposits collateral.
-
-***
-
-### depositWindowSeconds
-
-> **depositWindowSeconds**: `bigint`
-
-Defined in: [external/liquidium-sdk/packages/client/src/modules/instant-loans/types.ts:291](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/instant-loans/types.ts#L291)
-
-Seconds allowed for the collateral deposit before timeout.
+Current actionable initial collateral deposit quote.
 
 ***
 
@@ -92,19 +46,9 @@ Seconds allowed for the collateral deposit before timeout.
 
 > **loanId**: `bigint`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/instant-loans/types.ts:281](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/instant-loans/types.ts#L281)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:340](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L340)
 
 Canister-assigned loan id.
-
-***
-
-### ltvMaxBps
-
-> **ltvMaxBps**: `bigint`
-
-Defined in: [external/liquidium-sdk/packages/client/src/modules/instant-loans/types.ts:289](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/instant-loans/types.ts#L289)
-
-Maximum loan-to-value ratio in basis points.
 
 ***
 
@@ -112,7 +56,7 @@ Maximum loan-to-value ratio in basis points.
 
 > **position**: [`InstantLoanPositionSummary`](InstantLoanPositionSummary.md)
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/instant-loans/types.ts:316](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/instant-loans/types.ts#L316)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:360](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L360)
 
 Current lending position state for the generated profile.
 
@@ -122,7 +66,7 @@ Current lending position state for the generated profile.
 
 > **profileId**: `string`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/instant-loans/types.ts:287](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/instant-loans/types.ts#L287)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:346](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L346)
 
 Generated lending profile principal used by the instant loan.
 
@@ -132,7 +76,7 @@ Generated lending profile principal used by the instant loan.
 
 > **ref**: `string`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/instant-loans/types.ts:283](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/instant-loans/types.ts#L283)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:342](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L342)
 
 Short user-facing reference derived from `loanId`.
 
@@ -142,7 +86,7 @@ Short user-facing reference derived from `loanId`.
 
 > **refundDestination**: [`InstantLoanAccount`](../type-aliases/InstantLoanAccount.md)
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/instant-loans/types.ts:308](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/instant-loans/types.ts#L308)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:354](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L354)
 
 Destination used for collateral refunds or withdrawals.
 
@@ -152,19 +96,9 @@ Destination used for collateral refunds or withdrawals.
 
 > **repayment**: [`InstantLoanRepayment`](InstantLoanRepayment.md)
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/instant-loans/types.ts:314](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/instant-loans/types.ts#L314)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:358](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L358)
 
-Current actionable repayment quote.
-
-***
-
-### repayTarget
-
-> **repayTarget**: [`SupplyTarget`](../type-aliases/SupplyTarget.md)
-
-Defined in: [external/liquidium-sdk/packages/client/src/modules/instant-loans/types.ts:312](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/instant-loans/types.ts#L312)
-
-Address or ICRC account where the user repays debt.
+Current repayment quote. Amount fields are zero when the loan has no debt.
 
 ***
 
@@ -172,6 +106,16 @@ Address or ICRC account where the user repays debt.
 
 > **status**: [`InstantLoanStatus`](../type-aliases/InstantLoanStatus.md)
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/instant-loans/types.ts:285](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/instant-loans/types.ts#L285)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:344](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L344)
 
 Simplified lifecycle status for display and flow control.
+
+***
+
+### terms
+
+> **terms**: [`InstantLoanTerms`](InstantLoanTerms.md)
+
+Defined in: [packages/client/src/modules/instant-loans/types.ts:348](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L348)
+
+Immutable loan terms.

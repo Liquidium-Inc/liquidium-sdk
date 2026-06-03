@@ -6,7 +6,7 @@
 
 # Interface: UserLiquidationHistoryEntry
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/history/types.ts:44](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/history/types.ts#L44)
+Defined in: [packages/client/src/modules/history/types.ts:44](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L44)
 
 Liquidation entry in user history.
 
@@ -20,7 +20,7 @@ Liquidation entry in user history.
 
 > **amount**: `bigint`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/history/types.ts:29](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/history/types.ts#L29)
+Defined in: [packages/client/src/modules/history/types.ts:29](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L29)
 
 #### Inherited from
 
@@ -32,7 +32,7 @@ Defined in: [external/liquidium-sdk/packages/client/src/modules/history/types.ts
 
 > **id**: `string`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/history/types.ts:28](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/history/types.ts#L28)
+Defined in: [packages/client/src/modules/history/types.ts:28](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L28)
 
 #### Inherited from
 
@@ -44,7 +44,7 @@ Defined in: [external/liquidium-sdk/packages/client/src/modules/history/types.ts
 
 > **poolId**: `string`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/history/types.ts:30](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/history/types.ts#L30)
+Defined in: [packages/client/src/modules/history/types.ts:30](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L30)
 
 #### Inherited from
 
@@ -56,7 +56,7 @@ Defined in: [external/liquidium-sdk/packages/client/src/modules/history/types.ts
 
 > **status**: `"confirmed"`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/history/types.ts:48](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/history/types.ts#L48)
+Defined in: [packages/client/src/modules/history/types.ts:48](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L48)
 
 Liquidations are only returned once confirmed.
 
@@ -66,7 +66,7 @@ Liquidations are only returned once confirmed.
 
 > **timestamp**: `string`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/history/types.ts:31](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/history/types.ts#L31)
+Defined in: [packages/client/src/modules/history/types.ts:31](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L31)
 
 #### Inherited from
 
@@ -78,7 +78,7 @@ Defined in: [external/liquidium-sdk/packages/client/src/modules/history/types.ts
 
 > `optional` **txids?**: `string`[]
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/history/types.ts:32](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/history/types.ts#L32)
+Defined in: [packages/client/src/modules/history/types.ts:32](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L32)
 
 #### Inherited from
 
@@ -90,6 +90,6 @@ Defined in: [external/liquidium-sdk/packages/client/src/modules/history/types.ts
 
 > **type**: `"liquidation"`
 
-Defined in: [external/liquidium-sdk/packages/client/src/modules/history/types.ts:46](https://github.com/Liquidium-Inc/liquidium-sdk/blob/d95ecc3871409e06258f6093c589e6bd64be7565/packages/client/src/modules/history/types.ts#L46)
+Defined in: [packages/client/src/modules/history/types.ts:46](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L46)
 
 Liquidation kind discriminator.
