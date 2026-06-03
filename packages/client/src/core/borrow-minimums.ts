@@ -13,7 +13,11 @@ export type MinimumBorrowAsset = keyof typeof MIN_BORROW_AMOUNTS_BY_ASSET;
  * Assets without a configured product minimum return `0n`.
  */
 export function getMinimumBorrowAmount(asset: string): bigint {
-  return MIN_BORROW_AMOUNTS_BY_ASSET[asset as MinimumBorrowAsset] ?? 0n;
+  if (!isMinimumBorrowAsset(asset)) {
+    return 0n;
+  }
+
+  return MIN_BORROW_AMOUNTS_BY_ASSET[asset];
 }
 
 export function formatMinimumBorrowAmountMessage(
@@ -21,4 +25,8 @@ export function formatMinimumBorrowAmountMessage(
   minimumAmount: bigint
 ): string {
   return `Borrow amount must be at least ${minimumAmount} base units for ${asset}`;
+}
+
+function isMinimumBorrowAsset(asset: string): asset is MinimumBorrowAsset {
+  return asset in MIN_BORROW_AMOUNTS_BY_ASSET;
 }
