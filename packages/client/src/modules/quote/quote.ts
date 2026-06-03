@@ -1,3 +1,7 @@
+import {
+  formatMinimumBorrowAmountMessage,
+  getMinimumBorrowAmount,
+} from "../../core/borrow-minimums";
 import { ceilDivBigint } from "../../core/utils/bigint";
 import type { AssetPrices, Pool } from "../market/types";
 import type {
@@ -14,7 +18,6 @@ const BASIS_POINTS_DENOMINATOR = 10_000n;
 const BPS_PER_PERCENT = 100n;
 const MIN_LTV_BPS = 0n;
 const HIGH_LTV_WARNING_THRESHOLD_BPS = 8_000n;
-const MIN_BORROW_AMOUNT_BASE_UNITS = 5_000n;
 const INTERNAL_USD_DECIMAL_PLACES = 8;
 const PRICE_SCALE_DECIMAL_PLACES = 8;
 
@@ -100,11 +103,12 @@ export class QuoteModule {
       });
     }
 
-    if (request.borrowAmount <= 0n) {
-      validationErrors.push({
-        code: QuoteValidationErrorCode.BORROW_AMOUNT_TOO_LOW,
-        message: "Borrow amount must be greater than 0",
-      });
+    const borrowAmountError = createBorrowAmountValidationError({
+      amount: request.borrowAmount,
+      asset: borrowPool.asset,
+    });
+    if (borrowAmountError) {
+      validationErrors.push(borrowAmountError);
     }
 
     if (request.collateralAmount <= 0n) {
@@ -255,16 +259,12 @@ export class QuoteModule {
       });
     }
 
-    if (borrowAmount < 0n) {
-      validationErrors.push({
-        code: QuoteValidationErrorCode.BORROW_AMOUNT_TOO_LOW,
-        message: `Borrow amount must be non-negative`,
-      });
-    } else if (borrowAmount < MIN_BORROW_AMOUNT_BASE_UNITS) {
-      validationErrors.push({
-        code: QuoteValidationErrorCode.BORROW_AMOUNT_TOO_LOW,
-        message: `Borrow amount must be at least ${MIN_BORROW_AMOUNT_BASE_UNITS} base units`,
-      });
+    const borrowAmountError = createBorrowAmountValidationError({
+      amount: borrowAmount,
+      asset: borrowAsset,
+    });
+    if (borrowAmountError) {
+      validationErrors.push(borrowAmountError);
     }
 
     if (targetLtvBps <= MIN_LTV_BPS) {
@@ -408,6 +408,35 @@ function createQuoteResult(params: CreateQuoteResultParams): QuoteResult {
     collateralAsset: params.collateralAsset,
     validationErrors: params.validationErrors,
     warnings: params.warnings,
+  };
+}
+
+function createBorrowAmountValidationError(params: {
+  amount: bigint;
+  asset: string;
+}): QuoteValidationError | null {
+  if (params.amount <= 0n) {
+    return {
+      code: QuoteValidationErrorCode.BORROW_AMOUNT_TOO_LOW,
+      message: "Borrow amount must be greater than 0",
+    };
+  }
+
+  const minimumBorrowAmount = getMinimumBorrowAmount(params.asset);
+  if (minimumBorrowAmount <= 0n) {
+    return null;
+  }
+
+  if (params.amount >= minimumBorrowAmount) {
+    return null;
+  }
+
+  return {
+    code: QuoteValidationErrorCode.BORROW_AMOUNT_TOO_LOW,
+    message: formatMinimumBorrowAmountMessage(
+      params.asset,
+      minimumBorrowAmount
+    ),
   };
 }
 

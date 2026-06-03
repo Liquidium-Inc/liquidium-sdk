@@ -26,3 +26,5 @@ if (ltv.validationErrors.length > 0) {
 ```
 
 Amounts must use each asset's smallest unit. BTC uses satoshis. USDC and USDT use token base units based on the selected pool decimals.
+
+The SDK also validates minimum borrow amounts. BTC borrows must be at least `5_100n` sats. USDC and USDT borrows must be at least `1_000_000n` base units. Use `getMinimumBorrowAmount(asset)` to display the same minimum before the user submits.

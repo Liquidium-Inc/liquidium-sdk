@@ -4,6 +4,10 @@ import {
   normalizeAndValidateEvmAddress,
   normalizeExternalAddress,
 } from "../../core/address-validation";
+import {
+  formatMinimumBorrowAmountMessage,
+  getMinimumBorrowAmount,
+} from "../../core/borrow-minimums";
 import { createCkBtcLedgerActor } from "../../core/canisters/ckbtc/ledger";
 import { createCkBtcMinterActor } from "../../core/canisters/ckbtc/minter";
 import { createDepositAccountsActor } from "../../core/canisters/deposit-accounts/actor";
@@ -287,9 +291,25 @@ export class LendingModule {
         "Borrow requires a signer account"
       );
     }
-    const receiverAddress = await this.normalizeOutflowReceiverAddress({
-      poolId: request.poolId,
-      receiverAddress: destinationAccount,
+    if (request.amount <= 0n) {
+      throw new LiquidiumError(
+        LiquidiumErrorCode.VALIDATION_ERROR,
+        "Borrow amount must be greater than 0"
+      );
+    }
+    const selectedPool = await this.getPoolById(request.poolId);
+    const selectedAsset = getVariantKey(selectedPool.asset);
+    const minimumBorrowAmount = getMinimumBorrowAmount(selectedAsset);
+    if (minimumBorrowAmount > 0n && request.amount < minimumBorrowAmount) {
+      throw new LiquidiumError(
+        LiquidiumErrorCode.VALIDATION_ERROR,
+        formatMinimumBorrowAmountMessage(selectedAsset, minimumBorrowAmount)
+      );
+    }
+    const receiverAddress = normalizeExternalAddress({
+      address: destinationAccount,
+      asset: selectedAsset,
+      chain: getVariantKey(selectedPool.chain),
     });
 
     const lendingActor = createLendingActor(this.canisterContext);

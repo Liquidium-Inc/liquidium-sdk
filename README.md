@@ -152,7 +152,7 @@ Instant-loan integrations use this sequence:
 | Step | SDK call | What your app does |
 | --- | --- | --- |
 | Load market data | `client.market.listPools()` and `client.market.getAssetPrices()` | Show supported collateral and borrow assets |
-| Validate amounts | `client.quote.calculateLtv(...)` | Block invalid LTV or frozen-pool input before creating a loan |
+| Validate amounts | `client.quote.calculateLtv(...)` | Block too-small borrow amounts, invalid LTV, or frozen-pool input before creating a loan |
 | Create loan | `client.instantLoans.create(...)` | Store `loan.ref` and show `loan.initialDeposit.amount` plus `loan.initialDeposit.target` |
 | Track loan | `client.instantLoans.get({ ref })` and `client.activities.list({ shortRef: ref })` | Reload loan state, initial deposit quote, and repayment activity |
 | Repay loan | Read `loan.repayment` | If non-null, ask the user to send `loan.repayment.amount` to `loan.repayment.target` |
@@ -172,7 +172,7 @@ Creates an accountless instant loan and returns generated transfer targets.
 | `collateralAsset` | Collateral asset symbol, for example `"BTC"` |
 | `borrowAsset` | Borrow asset symbol, for example `"USDC"` |
 | `collateralAmount` | Intended credited collateral amount in base units, before deposit/inflow fees |
-| `borrowAmount` | Borrow amount in base units |
+| `borrowAmount` | Borrow amount in base units. The SDK rejects values below the asset minimum. |
 | `ltvMaxBps` | Maximum LTV in basis points, where `6_000n` is 60% |
 | `depositWindowSeconds` | How long the user has to send collateral |
 | `borrowDestination` | External address that receives borrowed funds |
@@ -203,6 +203,18 @@ Use this only for recovery. The method returns candidate matches; call `client.i
 Calculates implied LTV from selected pools, prices, borrow amount, and collateral amount.
 
 Use this before `client.instantLoans.create(...)` so your app can block invalid input and choose a safe `ltvMaxBps`.
+
+### Borrow minimums
+
+The SDK enforces product minimums before borrow creation:
+
+| Asset | Minimum borrow amount |
+| --- | --- |
+| BTC | `5_100n` sats |
+| USDC | `1_000_000n` base units |
+| USDT | `1_000_000n` base units |
+
+Use `getMinimumBorrowAmount(asset)` to display the same minimum that `client.quote.calculateLtv(...)`, `client.quote.getQuote(...)`, `client.instantLoans.create(...)`, and `client.lending.prepareBorrow(...)` enforce.
 
 ## Response Fields
 
