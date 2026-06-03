@@ -13,7 +13,7 @@ import { mapCanisterCallErrorToLiquidiumError } from "../../core/canisters/lendi
 import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
 import {
   buildInstantLoanAddressLookupPath,
-  buildInstantLoanCollateralAmountPath,
+  buildInstantLoanCollateralHintPath,
   SdkApiPath,
 } from "../../core/sdk-api-paths";
 import type { ApiClient } from "../../core/transports/api-client";
@@ -98,8 +98,8 @@ type InstantLoanCreateRequestWire = {
   refundDestination: InstantLoanCreateAccountWire;
 };
 
-type InstantLoanCollateralAmountWire = {
-  collateralAmount: string;
+type InstantLoanCollateralHintWire = {
+  collateralAmountHint: string;
 };
 
 type InstantLoanCreateAccountWire = { External: string };
@@ -121,7 +121,7 @@ type InstantLoanWire = {
   collateral: {
     poolId: string;
     asset: string;
-    amount: string;
+    amountHint: string;
   };
   borrow: {
     poolId: string;
@@ -232,7 +232,7 @@ export class InstantLoansModule {
         throw mapInstantLoansErrorToLiquidiumError(result.Err);
       }
 
-      const collateralAmount = await this.getCollateralAmount(loanId);
+      const collateralAmount = await this.getCollateralAmountHint(loanId);
 
       return await this.mapLoanRecord(result.Ok, collateralAmount);
     } catch (error) {
@@ -402,15 +402,15 @@ export class InstantLoansModule {
     });
   }
 
-  private async getCollateralAmount(loanId: bigint): Promise<bigint> {
+  private async getCollateralAmountHint(loanId: bigint): Promise<bigint> {
     const apiClient = this.requireApi("Instant loan lookup");
     const response = await apiClient.get<
       {
         success?: true;
-      } & InstantLoanCollateralAmountWire
-    >(buildInstantLoanCollateralAmountPath({ loanId }));
+      } & InstantLoanCollateralHintWire
+    >(buildInstantLoanCollateralHintPath({ loanId }));
 
-    return parseBigintWire(response.collateralAmount, "collateral amount");
+    return parseBigintWire(response.collateralAmountHint, "collateral amount");
   }
 
   private async mapLoanWire(loan: InstantLoanWire): Promise<InstantLoan> {
@@ -426,7 +426,7 @@ export class InstantLoansModule {
       ),
       collateralPoolId: loan.collateral.poolId,
       collateralAmount: parseBigintWire(
-        loan.collateral.amount,
+        loan.collateral.amountHint,
         "collateral amount"
       ),
       borrowPoolId: loan.borrow.poolId,

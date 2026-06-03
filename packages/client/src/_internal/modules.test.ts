@@ -4122,7 +4122,7 @@ describe("InstantLoansModule", () => {
     const getDepositFee = vi.fn().mockResolvedValue(2_000n);
     const icrc1Fee = vi.fn().mockResolvedValue(10n);
     const fetchSpy = mockInstantLoanLookupFetch({
-      collateralAmount: "10000000",
+      collateralAmountHint: "10000000",
     });
     const getCollateralPosition = vi.fn().mockResolvedValue([
       createInstantLoanPosition(
@@ -4175,7 +4175,7 @@ describe("InstantLoansModule", () => {
     // then
     expect(getLoan).toHaveBeenCalledWith(LOAN_ID);
     expect(fetchSpy).toHaveBeenCalledWith(
-      `${DEFAULT_API_BASE_URL}/v1/instant-loans/${LOAN_ID.toString()}/collateral-amount`,
+      `${DEFAULT_API_BASE_URL}/v1/instant-loans/${LOAN_ID.toString()}/collateral-hint`,
       expect.objectContaining({ method: "GET" })
     );
     expect(loan.loanId).toBe(LOAN_ID);
@@ -4276,7 +4276,7 @@ describe("InstantLoansModule", () => {
     mockInstantLoanLookupFetch({
       borrowAsset: "BTC",
       borrowPoolId: BTC_POOL_ID,
-      collateralAmount: "5000000",
+      collateralAmountHint: "5000000",
       collateralAsset: "USDT",
       collateralPoolId: USDT_POOL_ID,
     });
@@ -4431,7 +4431,7 @@ describe("InstantLoansModule", () => {
     const getDepositFee = vi.fn().mockResolvedValue(2_000n);
     const icrc1Fee = vi.fn().mockResolvedValue(10n);
     mockInstantLoanLookupFetch({
-      collateralAmount: "10000000",
+      collateralAmountHint: "10000000",
     });
 
     vi.spyOn(Actor, "createActor")
@@ -4492,7 +4492,7 @@ describe("InstantLoansModule", () => {
     const getDepositFee = vi.fn().mockResolvedValue(2_000n);
     const icrc1Fee = vi.fn().mockResolvedValue(10n);
     mockInstantLoanLookupFetch({
-      collateralAmount: "10000000",
+      collateralAmountHint: "10000000",
     });
 
     vi.spyOn(Actor, "createActor")
@@ -4555,7 +4555,7 @@ describe("InstantLoansModule", () => {
             collateral: {
               poolId: BTC_POOL_ID,
               asset: "BTC",
-              amount: "10000000",
+              amountHint: "10000000",
             },
             borrow: {
               poolId: USDT_POOL_ID,
@@ -5026,7 +5026,7 @@ describe("InstantLoansModule", () => {
     overrides: Partial<{
       borrowAsset: string;
       borrowPoolId: string;
-      collateralAmount: string;
+      collateralAmountHint: string;
       collateralAsset: string;
       collateralPoolId: string;
     }> = {}
@@ -5035,7 +5035,7 @@ describe("InstantLoansModule", () => {
       new Response(
         JSON.stringify({
           success: true,
-          collateralAmount: overrides.collateralAmount ?? "10000000",
+          collateralAmountHint: overrides.collateralAmountHint ?? "10000000",
         }),
         { status: 200, headers: { "content-type": "application/json" } }
       )
