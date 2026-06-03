@@ -10,6 +10,9 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": resolveProjectPath("./src"),
+      "@liquidium/client": resolveProjectPath(
+        "../../packages/client/src/index.ts"
+      ),
     },
   },
   build: {
@@ -29,5 +32,8 @@ export default defineConfig({
         warn(warning);
       },
     },
+  },
+  optimizeDeps: {
+    exclude: ["@liquidium/client"],
   },
 });

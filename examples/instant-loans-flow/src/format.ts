@@ -14,6 +14,10 @@ const RECENT_LOANS_STORAGE_KEY = "liquidium-instant-loans.recentRefs";
 const MAX_RECENT_LOANS = 10;
 const ERROR_FIELD_EXCLUDE_LIST = new Set(["name", "message", "stack", "cause"]);
 
+type InstantLoanFormatOptions = {
+  pools?: Pool[];
+};
+
 export function getElement<T extends HTMLElement>(id: string): T {
   const element = document.getElementById(id);
 
@@ -116,7 +120,9 @@ export function formatPool(pool: Pool): string {
   return [
     `${pool.asset} on ${pool.chain}`,
     `Pool: ${pool.id}`,
-    `Available: ${formatAmount(pool.availableLiquidity, pool.decimals)} ${pool.asset}`,
+    `Available: ${formatAmount(pool.availableLiquidity, pool.decimals)} ${
+      pool.asset
+    }`,
     `Max LTV: ${formatPercentFromBps(pool.maxLtv)}`,
     `Frozen: ${pool.frozen ? "yes" : "no"}`,
   ].join("\n");
@@ -139,73 +145,112 @@ export function formatSupplyTarget(target: SupplyTarget): string {
   ].join("\n");
 }
 
-export function formatInstantLoan(loan: InstantLoan): string {
+export function formatInstantLoan(
+  loan: InstantLoan,
+  options: InstantLoanFormatOptions = {}
+): string {
+  const collateralDecimals = getInstantLoanPoolDecimals(
+    options.pools,
+    loan.collateral.poolId,
+    loan.collateral.decimals
+  );
+  const borrowDecimals = getInstantLoanPoolDecimals(
+    options.pools,
+    loan.borrow.poolId,
+    loan.borrow.decimals
+  );
+  const repaymentLines = [
+    `Amount to repay: ${formatAmount(loan.repayment.amount, borrowDecimals)} ${
+      loan.repayment.asset
+    } on ${loan.repayment.chain}`,
+    `Current debt: ${formatAmount(loan.repayment.debtAmount, borrowDecimals)} ${
+      loan.repayment.asset
+    }`,
+    `Interest buffer: ${formatAmount(
+      loan.repayment.interestBufferAmount,
+      borrowDecimals
+    )} ${loan.repayment.asset} (${loan.repayment.interestBufferSeconds.toString()} seconds)`,
+    `Inflow fee: ${formatAmount(loan.repayment.inflowFeeAmount, borrowDecimals)} ${
+      loan.repayment.asset
+    }${loan.repayment.inflowFeeEstimateAvailable ? "" : " (estimate unavailable)"}`,
+    "Repay target:",
+    formatSupplyTarget(loan.repayment.target),
+  ];
+
   return [
     `Reference: ${loan.ref}`,
     `Loan id: ${loan.loanId.toString()}`,
     `Status: ${loan.status}`,
     `Profile id: ${loan.profileId}`,
-    `Max LTV: ${formatPercentFromBps(loan.ltvMaxBps)}`,
-    `Deposit window seconds: ${loan.depositWindowSeconds.toString()}`,
+    `Max LTV: ${formatPercentFromBps(loan.terms.ltvMaxBps)}`,
+    `Deposit window seconds: ${loan.terms.depositWindowSeconds.toString()}`,
     "",
     "Collateral:",
-    `${loan.collateral.amount.toString()} base units of ${loan.collateral.asset} on ${loan.collateral.chain}`,
+    `${formatAmount(loan.collateral.amount, collateralDecimals)} ${
+      loan.collateral.asset
+    } on ${loan.collateral.chain}`,
     `Pool: ${loan.collateral.poolId}`,
     "",
     "Borrow:",
-    `Amount: ${loan.borrow.amount.toString()} base units of ${loan.borrow.asset} on ${loan.borrow.chain}`,
+    `Amount: ${formatAmount(loan.borrow.amount, borrowDecimals)} ${
+      loan.borrow.asset
+    } on ${loan.borrow.chain}`,
     `Destination: ${formatInstantLoanAccount(loan.borrow.destination)}`,
     `Pool: ${loan.borrow.poolId}`,
     "",
     `Refund destination: ${formatInstantLoanAccount(loan.refundDestination)}`,
     "",
     "Deposit target:",
-    formatSupplyTarget(loan.depositTarget),
+    formatSupplyTarget(loan.initialDeposit.target),
+    "",
+    "Initial deposit quote:",
+    `Amount to send: ${formatAmount(
+      loan.initialDeposit.amount,
+      collateralDecimals
+    )} ${loan.initialDeposit.asset} on ${loan.initialDeposit.chain}`,
+    `Credited collateral: ${formatAmount(
+      loan.initialDeposit.collateralAmount,
+      collateralDecimals
+    )} ${loan.initialDeposit.asset}`,
+    `Estimated inflow fee: ${formatAmount(
+      loan.initialDeposit.inflowFeeAmount,
+      collateralDecimals
+    )} ${loan.initialDeposit.asset}`,
     "",
     "Current position:",
-    `Collateral: ${formatAmountWithBaseUnits(
+    `Collateral: ${formatAmount(
       loan.position.collateralAmount,
-      loan.position.collateralDecimals
+      collateralDecimals
     )} ${loan.collateral.asset}`,
-    `Collateral interest: ${formatAmountWithBaseUnits(
+    `Collateral interest: ${formatAmount(
       loan.position.collateralInterestAmount,
-      loan.position.collateralDecimals
+      collateralDecimals
     )} ${loan.collateral.asset}`,
-    `Borrowed: ${formatAmountWithBaseUnits(
-      loan.position.borrowedAmount,
-      loan.position.borrowedDecimals
-    )} ${loan.borrow.asset}`,
-    `Debt interest: ${formatAmountWithBaseUnits(
+    `Borrowed: ${formatAmount(loan.position.borrowedAmount, borrowDecimals)} ${
+      loan.borrow.asset
+    }`,
+    `Debt interest: ${formatAmount(
       loan.position.debtInterestAmount,
-      loan.position.borrowedDecimals
+      borrowDecimals
     )} ${loan.borrow.asset}`,
-    `Total debt: ${formatAmountWithBaseUnits(
+    `Total debt: ${formatAmount(
       loan.position.totalDebtAmount,
-      loan.position.borrowedDecimals
+      borrowDecimals
     )} ${loan.borrow.asset}`,
     "",
     "Repayment quote:",
-    `Amount to repay: ${formatAmountWithBaseUnits(
-      loan.repayment.amount,
-      loan.repayment.decimals
-    )} ${loan.repayment.asset} on ${loan.repayment.chain}`,
-    `Current debt: ${formatAmountWithBaseUnits(
-      loan.repayment.debtAmount,
-      loan.repayment.decimals
-    )} ${loan.repayment.asset}`,
-    `Interest buffer: ${formatAmountWithBaseUnits(
-      loan.repayment.interestBufferAmount,
-      loan.repayment.decimals
-    )} ${loan.repayment.asset} (${loan.repayment.interestBufferSeconds.toString()} seconds)`,
-    `Inflow fee: ${formatAmountWithBaseUnits(
-      loan.repayment.inflowFeeAmount,
-      loan.repayment.decimals
-    )} ${loan.repayment.asset}${
-      loan.repayment.inflowFeeEstimateAvailable ? "" : " (estimate unavailable)"
-    }`,
-    "Repay target:",
-    formatSupplyTarget(loan.repayment.target),
+    ...repaymentLines,
   ].join("\n");
+}
+
+function getInstantLoanPoolDecimals(
+  pools: Pool[] | undefined,
+  poolId: string,
+  fallbackDecimals: bigint
+): bigint {
+  return (
+    pools?.find((pool) => pool.id === poolId)?.decimals ?? fallbackDecimals
+  );
 }
 
 export function formatActivityStatus(
@@ -224,7 +269,9 @@ export function formatCandidate(candidate: InstantLoanCandidate): string {
     `Loan id: ${candidate.loanId.toString()}`,
     `Profile id: ${candidate.profileId}`,
     `Created at: ${candidate.createdAt?.toISOString() ?? "unknown"}`,
-    `Collateral: ${candidate.collateralAmountHint.toString()} base units of ${candidate.collateralAsset}`,
+    `Collateral: ${candidate.collateralAmount.toString()} base units of ${
+      candidate.collateralAsset
+    }`,
     `Borrow asset: ${candidate.borrowAsset}`,
     `Collateral pool: ${candidate.collateralPoolId}`,
     `Borrow pool: ${candidate.borrowPoolId}`,
@@ -245,7 +292,9 @@ function formatActivity(activity: Activity): string {
     `Txid: ${activity.txid ?? "not set"}`,
     `Txids: ${activity.txids?.join(", ") ?? "not set"}`,
     `Confirmations: ${activity.confirmations?.toString() ?? "not set"}`,
-    `Required confirmations: ${activity.requiredConfirmations?.toString() ?? "not set"}`,
+    `Required confirmations: ${
+      activity.requiredConfirmations?.toString() ?? "not set"
+    }`,
     activity.topUp
       ? formatActivityTopUp(activity.topUp)
       : "Top-up: not required",
@@ -374,10 +423,6 @@ function formatInstantLoanAccount(
   }
 
   return `Native principal: ${account.principal}`;
-}
-
-function formatAmountWithBaseUnits(amount: bigint, decimals: bigint): string {
-  return `${formatAmount(amount, decimals)} (${amount.toString()} base units)`;
 }
 
 function formatBytes(bytes: Uint8Array): string {

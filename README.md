@@ -104,13 +104,19 @@ const loan = await client.instantLoans.create({
 });
 
 console.log("Save this loan reference:", loan.ref);
-console.log("Send collateral to:", formatSupplyTarget(loan.depositTarget));
+console.log("Send initial deposit amount:", loan.initialDeposit.amount.toString());
+console.log("Send collateral to:", formatSupplyTarget(loan.initialDeposit.target));
 
 const restoredLoan = await client.instantLoans.get({ ref: loan.ref });
 
 console.log("Loan status:", restoredLoan.status);
-console.log("Repay amount:", restoredLoan.repayment.amount.toString());
-console.log("Repay target:", formatSupplyTarget(restoredLoan.repayment.target));
+console.log("Restored initial deposit amount:", restoredLoan.initialDeposit.amount.toString());
+if (restoredLoan.repayment) {
+  console.log("Repay amount:", restoredLoan.repayment.amount.toString());
+  console.log("Repay target:", formatSupplyTarget(restoredLoan.repayment.target));
+} else {
+  console.log("No repayment due yet.");
+}
 
 const activities = await client.activities.list({ shortRef: loan.ref });
 
@@ -147,11 +153,11 @@ Instant-loan integrations use this sequence:
 | --- | --- | --- |
 | Load market data | `client.market.listPools()` and `client.market.getAssetPrices()` | Show supported collateral and borrow assets |
 | Validate amounts | `client.quote.calculateLtv(...)` | Block invalid LTV or frozen-pool input before creating a loan |
-| Create loan | `client.instantLoans.create(...)` | Store `loan.ref` and show `loan.depositTarget` |
-| Track loan | `client.instantLoans.get({ ref })` and `client.activities.list({ shortRef: ref })` | Reload loan state and monitor deposit, borrow, and repayment activity |
-| Repay loan | Read `loan.repayment` | Ask the user to send `loan.repayment.amount` to `loan.repayment.target` |
+| Create loan | `client.instantLoans.create(...)` | Store `loan.ref` and show `loan.initialDeposit.amount` plus `loan.initialDeposit.target` |
+| Track loan | `client.instantLoans.get({ ref })` and `client.activities.list({ shortRef: ref })` | Reload loan state, initial deposit quote, and repayment activity |
+| Repay loan | Read `loan.repayment` | If non-null, ask the user to send `loan.repayment.amount` to `loan.repayment.target` |
 
-`client.instantLoans.create(...)` returns the generated Liquidium profile, transfer targets, current position state, and repayment quote. Users do not manage the generated profile.
+`client.instantLoans.create(...)` and `client.instantLoans.get(...)` return the generated Liquidium profile, current position state, an initial deposit quote with its transfer target, and a nullable repayment quote with its transfer target. Users do not manage the generated profile.
 
 ## Core API
 
@@ -165,7 +171,7 @@ Creates an accountless instant loan and returns generated transfer targets.
 | `borrowPoolId` | Pool the loan borrows from |
 | `collateralAsset` | Collateral asset symbol, for example `"BTC"` |
 | `borrowAsset` | Borrow asset symbol, for example `"USDC"` |
-| `collateralAmount` | Collateral amount in base units |
+| `collateralAmount` | Intended credited collateral amount in base units, before deposit/inflow fees |
 | `borrowAmount` | Borrow amount in base units |
 | `ltvMaxBps` | Maximum LTV in basis points, where `6_000n` is 60% |
 | `depositWindowSeconds` | How long the user has to send collateral |
@@ -178,7 +184,7 @@ Creates an accountless instant loan and returns generated transfer targets.
 
 Loads loan state from a saved user-facing reference.
 
-Use this for status pages, refreshes, and support links.
+Use this for status pages, refreshes, and support links. The SDK combines canister state with the Liquidium SDK API lookup so the restored loan includes the original collateral deposit hint.
 
 ### `client.instantLoans.get({ loanId })`
 
@@ -205,10 +211,12 @@ Most instant-loan UIs show or store these fields:
 | Field | Use |
 | --- | --- |
 | `loan.ref` | Save and show this reference so the loan can be restored later |
-| `loan.status` | Show the lifecycle: `awaiting_deposit`, `deposit_detected`, `active`, `settling`, or `closed` |
-| `loan.depositTarget` | Address or ICRC account where the user sends collateral |
-| `loan.repayment.amount` | Full amount to repay, including fee and interest buffer |
-| `loan.repayment.target` | Address or ICRC account where the user sends repayment |
+| `loan.status` | Show the lifecycle: `awaiting_deposit`, `deposit_detected`, `active`, `settling`, `closed`, or `expired` |
+| `loan.initialDeposit.amount` | Fee-inclusive collateral amount to send after creation or restore |
+| `loan.initialDeposit.collateralAmount` | Intended credited collateral target used for LTV |
+| `loan.initialDeposit.target` | Address or ICRC account where the user sends collateral |
+| `loan.repayment?.amount` | Full amount to repay, including fee and interest buffer, when debt exists |
+| `loan.repayment?.target` | Address or ICRC account where the user sends repayment, when debt exists |
 | `loan.position` | Current collateral, debt, and interest state for the generated profile |
 
 ## Amounts
@@ -220,7 +228,7 @@ The SDK returns amount fields as `bigint` values in the asset's smallest unit.
 | BTC | Satoshis |
 | USDC / USDT | Token base units using the pool decimals |
 
-Use `Pool.decimals` from `client.market.listPools()` when converting user-entered decimals to base units.
+Use `Pool.decimals` from `client.market.listPools()` when converting user-entered decimals to base units. Hydrated instant loans also include `loan.collateral.decimals`, `loan.borrow.decimals`, and `loan.initialDeposit.decimals` for display.
 
 ## Status And Activity Tracking
 

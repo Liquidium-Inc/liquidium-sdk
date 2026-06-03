@@ -4119,6 +4119,11 @@ describe("InstantLoansModule", () => {
       .fn()
       .mockResolvedValue([[10_000_000_000_000_000_000_000_000n, 0n, 0n]]);
     const estimateDepositFee = vi.fn().mockResolvedValue({ Ok: 1_500_000n });
+    const getDepositFee = vi.fn().mockResolvedValue(2_000n);
+    const icrc1Fee = vi.fn().mockResolvedValue(10n);
+    const fetchSpy = mockInstantLoanLookupFetch({
+      collateralAmountHint: "10000000",
+    });
     const getCollateralPosition = vi.fn().mockResolvedValue([
       createInstantLoanPosition(
         BTC_POOL_ID,
@@ -4154,7 +4159,9 @@ describe("InstantLoansModule", () => {
       .mockReturnValueOnce({ get_deposit_address: getDepositAddress } as never)
       .mockReturnValueOnce({
         estimate_deposit_fee: estimateDepositFee,
-      } as never);
+      } as never)
+      .mockReturnValueOnce({ get_deposit_fee: getDepositFee } as never)
+      .mockReturnValueOnce({ icrc1_fee: icrc1Fee } as never);
     const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
       canisterIds: { instantLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
@@ -4167,32 +4174,43 @@ describe("InstantLoansModule", () => {
 
     // then
     expect(getLoan).toHaveBeenCalledWith(LOAN_ID);
+    expect(fetchSpy).toHaveBeenCalledWith(
+      `${DEFAULT_API_BASE_URL}/v1/instant-loans/${LOAN_ID.toString()}/collateral-hint`,
+      expect.objectContaining({ method: "GET" })
+    );
     expect(loan.loanId).toBe(LOAN_ID);
     expect(loan.ref).toBe(publicIdFromInt(LOAN_ID));
     expect(loan.status).toBe("active");
     expect(loan.profileId).toBe(PROFILE_ID);
     expect(loan).not.toHaveProperty("started");
     expect(loan).not.toHaveProperty("depositDetectedTimestamp");
-    expect(loan.ltvMaxBps).toBe(6_800n);
+    expect(loan.terms).toEqual({
+      ltvMaxBps: 6_800n,
+      depositWindowSeconds: 3_600n,
+    });
     expect(loan.collateral).toMatchObject({
       poolId: BTC_POOL_ID,
       asset: "BTC",
       chain: "BTC",
+      decimals: 8n,
       amount: 10_000_000n,
     });
-    expect(loan.collateral).not.toHaveProperty("amountHint");
-    expect(loan.borrow.amount).toBe(2_000_000n);
-    expect(loan.depositTarget).toMatchObject({
-      type: "nativeAddress",
+    expect(loan.borrow).toMatchObject({
+      amount: 2_000_000n,
+      decimals: 6n,
+    });
+    expect(loan).not.toHaveProperty("depositTarget");
+    expect(loan).not.toHaveProperty("repayTarget");
+    expect(loan.initialDeposit).toMatchObject({
+      amount: 10_002_010n,
+      decimals: 8n,
+      collateralAmount: 10_000_000n,
+      inflowFeeAmount: 2_010n,
       asset: "BTC",
       chain: "BTC",
-      address: "bc1qinstantdeposit",
-    });
-    expect(loan.repayTarget).toMatchObject({
-      type: "nativeAddress",
-      asset: "USDT",
-      chain: "ETH",
-      address: "0x1111111111111111111111111111111111111111",
+      target: expect.objectContaining({
+        address: "bc1qinstantdeposit",
+      }),
     });
     expect(loan.repayment).toMatchObject({
       amount: 3_501_054n,
@@ -4204,6 +4222,12 @@ describe("InstantLoansModule", () => {
       inflowFeeEstimateAvailable: true,
       asset: "USDT",
       chain: "ETH",
+      target: expect.objectContaining({
+        type: "nativeAddress",
+        asset: "USDT",
+        chain: "ETH",
+        address: "0x1111111111111111111111111111111111111111",
+      }),
     });
     expect(loan.position).toMatchObject({
       collateralAmount: 10_000_000n,
@@ -4248,6 +4272,14 @@ describe("InstantLoansModule", () => {
     ]);
     const getDepositFee = vi.fn().mockResolvedValue(2_000n);
     const icrc1Fee = vi.fn().mockResolvedValue(10n);
+    const estimateDepositFee = vi.fn().mockResolvedValue({ Ok: 1_500_000n });
+    mockInstantLoanLookupFetch({
+      borrowAsset: "BTC",
+      borrowPoolId: BTC_POOL_ID,
+      collateralAmountHint: "5000000",
+      collateralAsset: "USDT",
+      collateralPoolId: USDT_POOL_ID,
+    });
 
     vi.spyOn(Actor, "createActor")
       .mockReturnValueOnce({ get_loan: getLoan } as never)
@@ -4263,7 +4295,10 @@ describe("InstantLoansModule", () => {
       .mockReturnValueOnce({ get_deposit_address: getDepositAddress } as never)
       .mockReturnValueOnce({ get_btc_address: getBtcAddress } as never)
       .mockReturnValueOnce({ get_deposit_fee: getDepositFee } as never)
-      .mockReturnValueOnce({ icrc1_fee: icrc1Fee } as never);
+      .mockReturnValueOnce({ icrc1_fee: icrc1Fee } as never)
+      .mockReturnValueOnce({
+        estimate_deposit_fee: estimateDepositFee,
+      } as never);
     const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
       canisterIds: { instantLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
@@ -4277,12 +4312,21 @@ describe("InstantLoansModule", () => {
     // then
     expect(loan.repayment).toMatchObject({
       amount: 1_002_537n,
+      decimals: 8n,
       debtAmount: 1_000_500n,
       interestBufferAmount: 27n,
       inflowFeeAmount: 2_010n,
       inflowFeeEstimateAvailable: true,
       asset: "BTC",
       chain: "BTC",
+    });
+    expect(loan.initialDeposit).toMatchObject({
+      amount: 6_500_000n,
+      decimals: 6n,
+      collateralAmount: 5_000_000n,
+      inflowFeeAmount: 1_500_000n,
+      asset: "USDT",
+      chain: "ETH",
     });
     expect(getDepositFee).toHaveBeenCalledWith();
     expect(icrc1Fee).toHaveBeenCalledWith();
@@ -4384,6 +4428,11 @@ describe("InstantLoansModule", () => {
       .fn()
       .mockResolvedValue([[10_000_000_000_000_000_000_000_000n, 0n, 0n]]);
     const estimateDepositFee = vi.fn().mockResolvedValue({ Ok: 1_500_000n });
+    const getDepositFee = vi.fn().mockResolvedValue(2_000n);
+    const icrc1Fee = vi.fn().mockResolvedValue(10n);
+    mockInstantLoanLookupFetch({
+      collateralAmountHint: "10000000",
+    });
 
     vi.spyOn(Actor, "createActor")
       .mockReturnValueOnce({ get_loan: getLoan } as never)
@@ -4402,9 +4451,8 @@ describe("InstantLoansModule", () => {
       .mockReturnValueOnce({ get_pool_rate: getPoolRate } as never)
       .mockReturnValueOnce({ get_btc_address: getBtcAddress } as never)
       .mockReturnValueOnce({ get_deposit_address: getDepositAddress } as never)
-      .mockReturnValueOnce({
-        estimate_deposit_fee: estimateDepositFee,
-      } as never);
+      .mockReturnValueOnce({ get_deposit_fee: getDepositFee } as never)
+      .mockReturnValueOnce({ icrc1_fee: icrc1Fee } as never);
     const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
       canisterIds: { instantLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
@@ -4422,13 +4470,78 @@ describe("InstantLoansModule", () => {
       interestBufferAmount: 0n,
       inflowFeeAmount: 0n,
       inflowFeeEstimateAvailable: false,
+      asset: "USDT",
+      chain: "ETH",
     });
+    expect(loan.initialDeposit.amount).toBe(10_002_010n);
     expect(loan.status).toBe("awaiting_deposit");
+    expect(estimateDepositFee).not.toHaveBeenCalled();
+  });
+
+  test("returns awaiting deposit status when collateral has not arrived", async () => {
+    // given
+    const getLoan = vi.fn().mockResolvedValue({ Ok: createInstantLoan() });
+    const getBtcAddress = vi.fn().mockResolvedValue("bc1qinstantdeposit");
+    const getDepositAddress = vi.fn().mockResolvedValue({
+      Ok: "0x1111111111111111111111111111111111111111",
+    });
+    const getPoolRate = vi
+      .fn()
+      .mockResolvedValue([[10_000_000_000_000_000_000_000_000n, 0n, 0n]]);
+    const estimateDepositFee = vi.fn().mockResolvedValue({ Ok: 1_500_000n });
+    const getDepositFee = vi.fn().mockResolvedValue(2_000n);
+    const icrc1Fee = vi.fn().mockResolvedValue(10n);
+    mockInstantLoanLookupFetch({
+      collateralAmountHint: "10000000",
+    });
+
+    vi.spyOn(Actor, "createActor")
+      .mockReturnValueOnce({ get_loan: getLoan } as never)
+      .mockReturnValueOnce({
+        list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord()]),
+      } as never)
+      .mockReturnValueOnce({
+        list_pools: vi.fn().mockResolvedValue([createUsdtPoolRecord()]),
+      } as never)
+      .mockReturnValueOnce({
+        get_position: vi.fn().mockResolvedValue([]),
+      } as never)
+      .mockReturnValueOnce({
+        get_position: vi.fn().mockResolvedValue([]),
+      } as never)
+      .mockReturnValueOnce({ get_pool_rate: getPoolRate } as never)
+      .mockReturnValueOnce({ get_btc_address: getBtcAddress } as never)
+      .mockReturnValueOnce({ get_deposit_address: getDepositAddress } as never)
+      .mockReturnValueOnce({ get_deposit_fee: getDepositFee } as never)
+      .mockReturnValueOnce({ icrc1_fee: icrc1Fee } as never);
+    const client = new LiquidiumClient({
+      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
+      canisterIds: { instantLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
+    });
+
+    // when
+    const loan = await client.instantLoans.get({
+      ref: publicIdFromInt(LOAN_ID),
+    });
+
+    // then
+    expect(loan.status).toBe("awaiting_deposit");
+    expect(loan.repayment).toMatchObject({
+      amount: 0n,
+      debtAmount: 0n,
+      interestBufferAmount: 0n,
+      inflowFeeAmount: 0n,
+      inflowFeeEstimateAvailable: false,
+      asset: "USDT",
+      chain: "ETH",
+    });
     expect(estimateDepositFee).not.toHaveBeenCalled();
   });
 
   test("creates a loan through the default SDK API without calling the instant-loans canister", async () => {
     // given
+    const BTC_MINTER_DEPOSIT_FEE_SATS = 2_000n;
+    const CKBTC_LEDGER_FEE_SATS = 10n;
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(
         JSON.stringify({
@@ -4501,7 +4614,10 @@ describe("InstantLoansModule", () => {
         }),
       } as never)
       .mockReturnValueOnce({
-        estimate_deposit_fee: vi.fn().mockResolvedValue({ Ok: 1_500_000n }),
+        get_deposit_fee: vi.fn().mockResolvedValue(BTC_MINTER_DEPOSIT_FEE_SATS),
+      } as never)
+      .mockReturnValueOnce({
+        icrc1_fee: vi.fn().mockResolvedValue(CKBTC_LEDGER_FEE_SATS),
       } as never);
     const client = new LiquidiumClient({
       canisterIds: { instantLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
@@ -4525,6 +4641,9 @@ describe("InstantLoansModule", () => {
     });
 
     // then
+    const EXPECTED_INITIAL_DEPOSIT_AMOUNT_SATS =
+      10_000_000n + BTC_MINTER_DEPOSIT_FEE_SATS + CKBTC_LEDGER_FEE_SATS;
+
     expect(fetchSpy).toHaveBeenCalledWith(
       `${DEFAULT_API_BASE_URL}/v1/instant-loans`,
       expect.objectContaining({
@@ -4552,6 +4671,30 @@ describe("InstantLoansModule", () => {
     expect(loan.loanId).toBe(LOAN_ID);
     expect(loan.status).toBe("awaiting_deposit");
     expect(loan.collateral.amount).toBe(10_000_000n);
+    expect(loan.terms).toEqual({
+      ltvMaxBps: 6_800n,
+      depositWindowSeconds: 3_600n,
+    });
+    expect(loan.repayment).toMatchObject({
+      amount: 0n,
+      debtAmount: 0n,
+      interestBufferAmount: 0n,
+      inflowFeeAmount: 0n,
+      inflowFeeEstimateAvailable: false,
+      asset: "USDT",
+      chain: "ETH",
+    });
+    expect(loan.initialDeposit).toMatchObject({
+      amount: EXPECTED_INITIAL_DEPOSIT_AMOUNT_SATS,
+      decimals: 8n,
+      collateralAmount: 10_000_000n,
+      inflowFeeAmount: BTC_MINTER_DEPOSIT_FEE_SATS + CKBTC_LEDGER_FEE_SATS,
+      asset: "BTC",
+      chain: "BTC",
+      target: expect.objectContaining({
+        address: "bc1qinstantdeposit",
+      }),
+    });
   });
 
   test("rejects an instant loan with an invalid BTC refund destination", async () => {
@@ -4818,7 +4961,7 @@ describe("InstantLoansModule", () => {
               borrow_pool_ic_id: USDT_POOL_ID,
               lend_asset: "BTC",
               borrow_asset: "USDT",
-              min_deposit_hint: "10000000",
+              collateralAmount: "10000000",
             },
           ],
         }),
@@ -4839,6 +4982,7 @@ describe("InstantLoansModule", () => {
         ref: publicIdFromInt(LOAN_ID),
         profileId: PROFILE_ID,
         collateralAsset: "BTC",
+        collateralAmount: 10_000_000n,
         borrowAsset: "USDT",
       }),
     ]);
@@ -4876,6 +5020,26 @@ describe("InstantLoansModule", () => {
       expires_at: [],
       deposit_detected_ts: [],
     };
+  }
+
+  function mockInstantLoanLookupFetch(
+    overrides: Partial<{
+      borrowAsset: string;
+      borrowPoolId: string;
+      collateralAmountHint: string;
+      collateralAsset: string;
+      collateralPoolId: string;
+    }> = {}
+  ) {
+    return vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          success: true,
+          collateralAmountHint: overrides.collateralAmountHint ?? "10000000",
+        }),
+        { status: 200, headers: { "content-type": "application/json" } }
+      )
+    );
   }
 
   function createBtcBorrowInstantLoan() {

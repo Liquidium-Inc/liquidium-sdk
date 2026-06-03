@@ -15,6 +15,7 @@ import {
   findInstantLoansByAddress,
   getInstantLoan,
   getLoanActivityStatus,
+  loadMarketData,
 } from "./sdk-example";
 
 const sdkConfig = getElement<HTMLDivElement>("sdk-config");
@@ -52,18 +53,21 @@ async function loadLoan(): Promise<void> {
   setStatus("Loading loan status...");
   loanOutput.textContent = "Loading loan...";
 
-  const loan = ref
-    ? await getInstantLoan({ ref })
-    : await getInstantLoan({
-        loanId: parsePositiveBigInt(loanIdText, "Loan id"),
-      });
+  const [loan, marketData] = await Promise.all([
+    ref
+      ? getInstantLoan({ ref })
+      : getInstantLoan({
+          loanId: parsePositiveBigInt(loanIdText, "Loan id"),
+        }),
+    loadMarketData(),
+  ]);
 
   loanRefInput.value = loan.ref;
   loanIdInput.value = loan.loanId.toString();
   saveRecentLoanRef(loan.ref);
   refreshRecentLoans();
 
-  loanOutput.textContent = formatInstantLoan(loan);
+  loanOutput.textContent = formatInstantLoan(loan, { pools: marketData.pools });
   setStatus(`Loaded instant loan ${loan.ref}.`);
 }
 
