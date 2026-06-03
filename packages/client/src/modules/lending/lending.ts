@@ -49,6 +49,7 @@ import {
   WalletExecutionKind,
 } from "../../core/wallet-actions";
 import { executeWith } from "../../execute";
+import { roundInflowFeeEstimate } from "./_internal/inflow-fee-rounding";
 import {
   getEthStablecoinContractAddress,
   isEthStablecoin,
@@ -609,7 +610,7 @@ export class LendingModule {
    * canister. BTC estimates include the ckBTC minter deposit fee and ledger fee.
    *
    * @param request - Asset and chain pair to estimate for.
-   * @returns Total fee estimate in the asset's base units.
+   * @returns Total fee estimate rounded up in the asset's base units.
    */
   async estimateInflowFee(
     request: EstimateInflowFeeRequest
@@ -623,11 +624,16 @@ export class LendingModule {
         throw mapDepositAccountErrorToLiquidiumError(result.Err);
       }
 
-      return { totalFee: result.Ok };
+      return {
+        totalFee: roundInflowFeeEstimate(request, result.Ok),
+      };
     }
 
     if (request.asset === Asset.BTC && request.chain === Chain.BTC) {
-      return await this.estimateBtcInflowFee();
+      const estimate = await this.estimateBtcInflowFee();
+      return {
+        totalFee: roundInflowFeeEstimate(request, estimate.totalFee),
+      };
     }
 
     throw new LiquidiumError(

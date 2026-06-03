@@ -2815,9 +2815,13 @@ describe("LendingModule", () => {
     expect(result.approvalStrategy).toBe("reset-then-approve-max");
   });
 
-  test("estimates eth usdt inflow fee from the deposit canister", async () => {
+  test("estimates eth usdt inflow fee by rounding up", async () => {
     // given
-    const estimateDepositFee = vi.fn().mockResolvedValue({ Ok: 12_345n });
+    const ETH_DEPOSIT_FEE_ESTIMATE = 1_198_098n;
+    const EXPECTED_ROUNDED_FEE = 1_200_000n;
+    const estimateDepositFee = vi.fn().mockResolvedValue({
+      Ok: ETH_DEPOSIT_FEE_ESTIMATE,
+    });
     vi.spyOn(Actor, "createActor").mockReturnValue({
       estimate_deposit_fee: estimateDepositFee,
     } as never);
@@ -2830,10 +2834,58 @@ describe("LendingModule", () => {
     });
 
     // then
-    expect(estimate.totalFee).toBe(12_345n);
+    expect(estimate.totalFee).toBe(EXPECTED_ROUNDED_FEE);
     expect(estimateDepositFee).toHaveBeenCalledWith([
       "0xdac17f958d2ee523a2206206994597c13d831ec7",
     ]);
+  });
+
+  test("rounds a four-cent eth usdt inflow fee up to ten cents", async () => {
+    // given
+    const FOUR_CENT_FEE_ESTIMATE = 40_000n;
+    const EXPECTED_TEN_CENT_FEE = 100_000n;
+    const estimateDepositFee = vi.fn().mockResolvedValue({
+      Ok: FOUR_CENT_FEE_ESTIMATE,
+    });
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      estimate_deposit_fee: estimateDepositFee,
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const estimate = await client.lending.estimateInflowFee({
+      asset: "USDT",
+      chain: "ETH",
+    });
+
+    // then
+    expect(estimate.totalFee).toBe(EXPECTED_TEN_CENT_FEE);
+  });
+
+  test("estimates btc inflow fee by rounding up to sat-level unit", async () => {
+    // given
+    const BTC_MINTER_DEPOSIT_FEE_SATS = 2_000n;
+    const CKBTC_LEDGER_FEE_SATS = 10n;
+    const EXPECTED_ROUNDED_FEE_SATS = 2_500n;
+    const getDepositFee = vi
+      .fn()
+      .mockResolvedValue(BTC_MINTER_DEPOSIT_FEE_SATS);
+    const icrc1Fee = vi.fn().mockResolvedValue(CKBTC_LEDGER_FEE_SATS);
+    vi.spyOn(Actor, "createActor")
+      .mockReturnValueOnce({ get_deposit_fee: getDepositFee } as never)
+      .mockReturnValueOnce({ icrc1_fee: icrc1Fee } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const estimate = await client.lending.estimateInflowFee({
+      asset: "BTC",
+      chain: "BTC",
+    });
+
+    // then
+    expect(estimate.totalFee).toBe(EXPECTED_ROUNDED_FEE_SATS);
+    expect(getDepositFee).toHaveBeenCalledWith();
+    expect(icrc1Fee).toHaveBeenCalledWith();
   });
 
   test("auto-executes eth usdt supply with a deposit address transfer", async () => {
@@ -4202,10 +4254,10 @@ describe("InstantLoansModule", () => {
     expect(loan).not.toHaveProperty("depositTarget");
     expect(loan).not.toHaveProperty("repayTarget");
     expect(loan.initialDeposit).toMatchObject({
-      amount: 10_002_010n,
+      amount: 10_002_500n,
       decimals: 8n,
       collateralAmount: 10_000_000n,
-      inflowFeeAmount: 2_010n,
+      inflowFeeAmount: 2_500n,
       asset: "BTC",
       chain: "BTC",
       target: expect.objectContaining({
@@ -4311,11 +4363,11 @@ describe("InstantLoansModule", () => {
 
     // then
     expect(loan.repayment).toMatchObject({
-      amount: 1_002_537n,
+      amount: 1_003_027n,
       decimals: 8n,
       debtAmount: 1_000_500n,
       interestBufferAmount: 27n,
-      inflowFeeAmount: 2_010n,
+      inflowFeeAmount: 2_500n,
       inflowFeeEstimateAvailable: true,
       asset: "BTC",
       chain: "BTC",
@@ -4473,7 +4525,7 @@ describe("InstantLoansModule", () => {
       asset: "USDT",
       chain: "ETH",
     });
-    expect(loan.initialDeposit.amount).toBe(10_002_010n);
+    expect(loan.initialDeposit.amount).toBe(10_002_500n);
     expect(loan.status).toBe("awaiting_deposit");
     expect(estimateDepositFee).not.toHaveBeenCalled();
   });
@@ -4641,8 +4693,7 @@ describe("InstantLoansModule", () => {
     });
 
     // then
-    const EXPECTED_INITIAL_DEPOSIT_AMOUNT_SATS =
-      10_000_000n + BTC_MINTER_DEPOSIT_FEE_SATS + CKBTC_LEDGER_FEE_SATS;
+    const EXPECTED_INITIAL_DEPOSIT_AMOUNT_SATS = 10_000_000n + 2_500n;
 
     expect(fetchSpy).toHaveBeenCalledWith(
       `${DEFAULT_API_BASE_URL}/v1/instant-loans`,
@@ -4688,7 +4739,7 @@ describe("InstantLoansModule", () => {
       amount: EXPECTED_INITIAL_DEPOSIT_AMOUNT_SATS,
       decimals: 8n,
       collateralAmount: 10_000_000n,
-      inflowFeeAmount: BTC_MINTER_DEPOSIT_FEE_SATS + CKBTC_LEDGER_FEE_SATS,
+      inflowFeeAmount: 2_500n,
       asset: "BTC",
       chain: "BTC",
       target: expect.objectContaining({

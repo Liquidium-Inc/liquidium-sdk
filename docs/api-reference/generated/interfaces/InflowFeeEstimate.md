@@ -8,7 +8,7 @@
 
 Defined in: [packages/client/src/modules/lending/types.ts:288](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L288)
 
-Fee estimate for an inflow target.
+Fee estimate for an inflow target, rounded up to the asset's fee unit.
 
 ## Properties
 
@@ -18,4 +18,4 @@ Fee estimate for an inflow target.
 
 Defined in: [packages/client/src/modules/lending/types.ts:290](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L290)
 
-Estimated total fee in the asset's base units.
+Estimated total fee rounded up in the asset's base units.

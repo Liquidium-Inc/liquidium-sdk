@@ -284,9 +284,9 @@ export interface EstimateInflowFeeRequest {
   chain: Chain;
 }
 
-/** Fee estimate for an inflow target. */
+/** Fee estimate for an inflow target, rounded up to the asset's fee unit. */
 export interface InflowFeeEstimate {
-  /** Estimated total fee in the asset's base units. */
+  /** Estimated total fee rounded up in the asset's base units. */
   totalFee: bigint;
 }
 
