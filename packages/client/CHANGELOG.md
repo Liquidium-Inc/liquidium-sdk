@@ -1,5 +1,12 @@
 # @liquidium/client
 
+## 0.2.0
+
+### Minor Changes
+
+- Add external Bitcoin address validation support and include Liquidium inflow fees in instant-loan deposit and BTC repayment estimates, rounding fee estimates up to avoid underfunding.
+- Breaking type change: restructure `InstantLoan` response fields by moving loan terms into `terms`, replacing top-level deposit/repay targets with `initialDeposit` and `repayment.target`, and renaming instant-loan candidate collateral hints to `collateralAmount`.
+
 ## 0.1.2
 
 ### Patch Changes
