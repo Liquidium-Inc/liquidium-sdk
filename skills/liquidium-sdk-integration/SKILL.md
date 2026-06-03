@@ -17,7 +17,7 @@ Priority: authless instant loans are the default product flow. Use `client.insta
 
 When the user asks for a simple borrow, loan, collateral deposit, repayment target, or Liquidium integration and does not explicitly ask to manage Liquidium profiles, implement the authless instant-loan flow with `client.instantLoans`.
 
-Do not require the user to create a Liquidium profile, sign a borrow message, or call `client.lending.borrow(...)` for the default flow. The SDK creates the backing lending profile and returns generated deposit and repayment targets.
+Do not require the user to create a Liquidium profile, sign a borrow message, or call `client.lending.borrow(...)` for the default flow. The SDK creates the backing lending profile and returns generated initial-deposit and repayment quote targets.
 
 Use profile-based `client.accounts` and `client.lending` only when the user explicitly asks for advanced profile management, existing profile positions, manual supply/repay tracking, signed borrow/withdraw flows, or lower-level wallet orchestration.
 
@@ -95,8 +95,8 @@ or route RPC calls through a server if the key must remain private.
 
 Authless instant loans. This is the default simple borrow UX: create a loan,
 show the fee-inclusive initial deposit quote and generated collateral deposit
-address, restore by reference, and show the actionable repayment amount when the
-user wants to close the loan.
+address, restore by reference, and show the actionable repayment amount after
+debt exists.
 
 ```ts
 client.instantLoans.create(...);
@@ -119,19 +119,27 @@ not confuse the quote module's `targetLtvBps` with `create(...)`'s `ltvMaxBps`. 
 from chosen borrow and collateral amounts before calling `create(...)`.
 
 `create(...)` and `get(...)` do not require a wallet adapter, profile ID, or
-message signing. The SDK returns deposit and repay targets for the generated
-`profileId`; `create(...)` and `get(...)` return `initialDeposit.amount` for
-the full amount to send to the deposit target, including the estimated inflow
-fee. `get(...)` also returns `position` plus nullable `repayment` details for
-the full amount to send to the repayment target, including inflow fee and
-interest buffer, when debt exists.
+message signing. The SDK returns quote targets for the generated `profileId`;
+`create(...)` and `get(...)` return `initialDeposit.amount` for the full amount
+to send to the deposit target, including the estimated inflow fee. They also
+return `position` plus a non-null `repayment` quote. Repayment amount fields are
+zero when no debt exists; once debt exists, `repayment.amount` is the full amount
+to send to the repayment target, including inflow fee and interest buffer.
 
 Deposit and repayment targets are distinct generated inflow targets. Show
 `loan.initialDeposit.target` only when asking the user to send collateral. Show
-`loan.repayment.target` only when `loan.repayment` is non-null and the user needs
-to repay debt. Do not assume these addresses/accounts match, do not reuse the
-collateral deposit target for repayment, and do not cache one target for both
-phases.
+`loan.repayment.target` only when `loan.repayment.amount > 0n` and the user
+needs to repay debt. Do not assume these addresses/accounts match, do not reuse
+the collateral deposit target for repayment, and do not cache one target for
+both phases.
+
+Hydrated instant loans use the current public shape: read terms from
+`loan.terms.ltvMaxBps` and `loan.terms.depositWindowSeconds`; read deposit
+instructions from `loan.initialDeposit.amount` and `loan.initialDeposit.target`;
+read repayment instructions from `loan.repayment.amount` and
+`loan.repayment.target`. Do not use removed top-level fields such as
+`loan.depositTarget`, `loan.repayTarget`, `loan.ltvMaxBps`, or
+`loan.depositWindowSeconds`.
 
 Reload with `client.instantLoans.get({ ref })` before displaying repayment
 instructions so the app uses the canonical repayment amount and target.
@@ -362,7 +370,7 @@ Default app sequence:
 2. Optionally call `client.quote.calculateLtv(...)` to show current LTV and the collateral pool's max allowed LTV.
 3. Call `client.instantLoans.create(...)` with direct base-unit amounts and external destination addresses.
 4. Persist or display `loan.ref` as the primary recovery key.
-5. Show `loan.initialDeposit.amount` plus `loan.initialDeposit.target` for collateral deposit and, when `loan.repayment` is non-null, `loan.repayment.target` plus `loan.repayment.amount` for repayment.
+5. Show `loan.initialDeposit.amount` plus `loan.initialDeposit.target` for collateral deposit and, when `loan.repayment.amount > 0n`, `loan.repayment.target` plus `loan.repayment.amount` for repayment.
 
 The default instant-loan flow does not need a wallet adapter. The user signs or
 broadcasts only the external wallet transfer to the generated deposit or repay
@@ -370,7 +378,7 @@ target outside the SDK.
 
 The deposit target and repayment target are not interchangeable. Collateral goes
 to `loan.initialDeposit.target`. Repayment goes to `loan.repayment.target` when
-`loan.repayment` is non-null. If a UI has separate deposit and repay screens,
+`loan.repayment.amount > 0n`. If a UI has separate deposit and repay screens,
 each screen must read the target for that exact phase instead of sharing one
 saved address.
 
@@ -405,7 +413,7 @@ const loan = await client.instantLoans.create({
 const ref = loan.ref;
 const initialDepositAmount = loan.initialDeposit.amount;
 const depositTarget = loan.initialDeposit.target;
-const repayTarget = loan.repayment?.target;
+const repayTarget = loan.repayment.amount > 0n ? loan.repayment.target : null;
 ```
 
 Create destinations are external-only. Pass an external address string or an
@@ -435,12 +443,13 @@ Restore a loan by `ref` whenever possible:
 
 ```ts
 const loan = await client.instantLoans.get({ ref: "8Y9AQQ" });
-const repayAmount = loan.repayment?.amount;
-const repayAddress = loan.repayment
-  ? loan.repayment.target.type === "nativeAddress"
-    ? loan.repayment.target.address
-    : loan.repayment.target.account
-  : undefined;
+const repayAmount = loan.repayment.amount;
+const repayAddress =
+  repayAmount === 0n
+    ? null
+    : loan.repayment.target.type === "nativeAddress"
+      ? loan.repayment.target.address
+      : loan.repayment.target.account;
 ```
 
 Use address lookup only as recovery when the user lost the loan reference:
@@ -709,6 +718,8 @@ const contractInteractionFlow = await client.lending.supply({
 16. Do not trust address lookup as canonical loan state. Use it to find candidates, then hydrate the selected loan through `instantLoans.get(...)`.
 17. Do not confuse deposit/supply targets with repayment targets. They are generated for different inflow actions and may be different addresses/accounts.
 18. Do not render raw `rateDecimals = 27` fixed-point values as percentages. Format scaled rates first or the UI can show scientific notation such as `3.7e+24%`.
+19. Do not model `loan.repayment` as nullable. It is always present; check `loan.repayment.amount > 0n` before prompting repayment.
+20. Do not use removed instant-loan fields: `loan.depositTarget`, `loan.repayTarget`, `loan.ltvMaxBps`, or `loan.depositWindowSeconds`.
 
 ## Preferred Style
 
