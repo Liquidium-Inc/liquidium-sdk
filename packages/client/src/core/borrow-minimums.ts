@@ -1,8 +1,8 @@
 /** Minimum borrow amounts in each asset's base units. */
 export const MIN_BORROW_AMOUNTS_BY_ASSET = {
-  BTC: 5_100n,
-  USDC: 1_000_000n,
-  USDT: 1_000_000n,
+  BTC: 5_100n, // 5,100 sats = 0.000051 BTC
+  USDC: 1_000_000n, // 1 USDC
+  USDT: 1_000_000n, // 1 USDT
 } as const;
 
 export type MinimumBorrowAsset = keyof typeof MIN_BORROW_AMOUNTS_BY_ASSET;
