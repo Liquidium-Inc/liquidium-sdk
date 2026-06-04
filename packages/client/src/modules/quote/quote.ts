@@ -427,6 +427,35 @@ function createQuoteResult(params: CreateQuoteResultParams): QuoteResult {
   };
 }
 
+function createBorrowAmountValidationError(params: {
+  amount: bigint;
+  asset: string;
+}): QuoteValidationError | null {
+  if (params.amount <= 0n) {
+    return {
+      code: QuoteValidationErrorCode.BORROW_AMOUNT_TOO_LOW,
+      message: "Borrow amount must be greater than 0",
+    };
+  }
+
+  const minimumBorrowAmount = getMinimumBorrowAmount(params.asset);
+  if (minimumBorrowAmount <= 0n) {
+    return null;
+  }
+
+  if (params.amount >= minimumBorrowAmount) {
+    return null;
+  }
+
+  return {
+    code: QuoteValidationErrorCode.BORROW_AMOUNT_TOO_LOW,
+    message: formatMinimumBorrowAmountMessage(
+      params.asset,
+      minimumBorrowAmount
+    ),
+  };
+}
+
 function computeUsdInternalFromBaseUnits(
   params: ComputeUsdInternalFromBaseUnitsParams
 ): bigint {
