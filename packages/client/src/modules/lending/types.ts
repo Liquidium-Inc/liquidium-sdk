@@ -15,11 +15,45 @@ import type {
   WalletExecutionKind,
 } from "../../core/wallet-actions";
 
+/** Wallet execution dependencies for borrow and withdraw convenience methods. */
+export interface WalletExecutionParams {
+  /** Chain used by the signing wallet. */
+  signerChain: Chain;
+  /** Wallet adapter used to execute the prepared action. */
+  signerWalletAdapter: WalletAdapter;
+}
+
+/** EVM transaction payload returned by lending transaction builders. */
+export interface EvmContractTransaction {
+  /** Contract address to call. */
+  to: string;
+  /** Hex-encoded calldata. */
+  data: string;
+}
+
+/** Parameters for an ERC-20 transfer transaction. */
+export interface CreateTransferErc20TransactionParams {
+  /** ERC-20 token contract address. */
+  tokenAddress: string;
+  /** Destination EVM address. */
+  recipientAddress: string;
+  /** Transfer amount in token base units. */
+  amount: bigint;
+}
+
 /** Destination account for a completed outflow. */
 export interface OutflowReceiver {
   /** Destination account type reported by the protocol. */
   type: "Native" | "External";
   /** Destination principal or external-chain address. */
+  account: string;
+}
+
+/** External-chain destination for a completed outflow. */
+export interface ExternalOutflowReceiver {
+  /** Destination account type reported by the protocol. */
+  type: "External";
+  /** External-chain destination address. */
   account: string;
 }
 
@@ -47,13 +81,13 @@ export interface OutflowDetails {
 /** Borrow receipt with an external-chain receiver. */
 export type BorrowOutflowDetails = OutflowDetails & {
   outflowType: "borrow";
-  receiver: { type: "External"; account: string };
+  receiver: ExternalOutflowReceiver;
 };
 
 /** Withdraw receipt with an external-chain receiver. */
 export type WithdrawOutflowDetails = OutflowDetails & {
   outflowType: "withdraw";
-  receiver: { type: "External"; account: string };
+  receiver: ExternalOutflowReceiver;
 };
 
 /** Signature payload for submitting a prepared borrow action. */
@@ -282,6 +316,18 @@ export interface EstimateInflowFeeRequest {
   asset: Asset;
   /** Chain to estimate for. */
   chain: Chain;
+}
+
+/** Request for an ETH stablecoin deposit address. */
+export interface GetDepositAddressRequest {
+  /** Liquidium profile principal text. */
+  profileId: string;
+  /** Pool principal text receiving the inflow. */
+  poolId: string;
+  /** ETH stablecoin asset. */
+  asset: string;
+  /** Deposit or repayment action for the inflow. */
+  action: SupplyAction;
 }
 
 /** Fee estimate for an inflow target, rounded up to the asset's fee unit. */

@@ -6,20 +6,38 @@ import type { OutflowDetails } from "./types";
 
 export type WalletChain = Chain;
 
-export type LendingChainVariant = { BTC: null } | { ETH: null };
+export interface LendingBtcChainVariant {
+  BTC: null;
+}
+
+export interface LendingEthChainVariant {
+  ETH: null;
+}
+
+export type LendingChainVariant =
+  | LendingBtcChainVariant
+  | LendingEthChainVariant;
+
+export interface CanisterNativeOutflowReceiver {
+  Native: Principal;
+}
+
+export interface CanisterExternalOutflowReceiver {
+  External: string;
+}
 
 export type CanisterOutflowReceiver =
-  | { Native: Principal }
-  | { External: string };
+  | CanisterNativeOutflowReceiver
+  | CanisterExternalOutflowReceiver;
 
-export type CanisterOutflowRecord = {
+export interface CanisterOutflowRecord {
   id: string;
   txid: [] | [string];
   outflow_type: Record<string, null>;
   outflow_ref: [] | [string];
   amount: bigint;
   receiver: CanisterOutflowReceiver;
-};
+}
 
 export function mapCanisterOutflowDetails(
   outflow: CanisterOutflowRecord

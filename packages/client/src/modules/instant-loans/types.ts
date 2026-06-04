@@ -132,8 +132,22 @@ export interface CreateInstantLoanRequest {
   refundDestination: string | ExternalAccount;
 }
 
+/** Lookup request for loading an instant loan by numeric canister id. */
+export interface InstantLoanGetByIdRequest {
+  /** Canister-assigned loan id. */
+  loanId: bigint;
+}
+
+/** Lookup request for loading an instant loan by short user-facing reference. */
+export interface InstantLoanGetByRefRequest {
+  /** Short user-facing reference derived from `loanId`. */
+  ref: string;
+}
+
 /** Lookup request for loading canonical instant-loan state. */
-export type InstantLoanGetRequest = { loanId: bigint } | { ref: string };
+export type InstantLoanGetRequest =
+  | InstantLoanGetByIdRequest
+  | InstantLoanGetByRefRequest;
 
 /** Page request for direct instant-loan canister event queries. */
 export interface InstantLoanListEventsRequest {
@@ -176,53 +190,88 @@ export interface InstantLoanEvent {
 /** Instant-loan leg used when stuck funds are withdrawn. */
 export type InstantLoanLeg = "Lend" | "Borrow";
 
+/** Loan-created instant-loan event payload. */
+export interface InstantLoanCreatedEventType {
+  type: "LoanCreated";
+  loanId: bigint;
+  borrowDestination: InstantLoanAccount;
+  collateralAsset: InstantLoanAsset;
+  borrowAmount: bigint;
+  collateralPoolId: string;
+  refundDestination: InstantLoanAccount;
+  ltvMaxBps: bigint;
+  depositWindowSeconds: bigint;
+  profileId: string;
+  borrowPoolId: string;
+  borrowAsset: InstantLoanAsset;
+}
+
+/** Full collateral withdrawal request event payload. */
+export interface InstantLoanFullLendWithdrawalRequestedEventType {
+  type: "FullLendWithdrawalRequested";
+  loanId: bigint;
+  account: InstantLoanAccount;
+  poolId: string;
+}
+
+/** Borrow request event payload. */
+export interface InstantLoanBorrowRequestedEventType {
+  type: "BorrowRequested";
+  loanId: bigint;
+  account: InstantLoanAccount;
+  poolId: string;
+  amount: bigint;
+}
+
+/** Deposit timer exceeded event payload. */
+export interface InstantLoanDepositTimerExceededEventType {
+  type: "DepositTimerExceeded";
+  loanId: bigint;
+}
+
+/** Stuck funds withdrawal request event payload. */
+export interface InstantLoanStuckFundsWithdrawalRequestedEventType {
+  type: "StuckFundsWithdrawalRequested";
+  leg: InstantLoanLeg;
+  loanId: bigint;
+  account: InstantLoanAccount;
+  poolId: string;
+  amount: bigint;
+}
+
+/** Profile-warmed event payload. */
+export interface InstantLoanProfileWarmedEventType {
+  type: "ProfileWarmed";
+  derivationIndex: Uint8Array;
+  warmedProfileId: bigint;
+  ethAddress: string;
+  profileId: string;
+}
+
+/** Repay-complete event payload. */
+export interface InstantLoanRepayCompleteEventType {
+  type: "RepayComplete";
+  loanId: bigint;
+  profileId: string;
+}
+
+/** Deposit timer started event payload. */
+export interface InstantLoanDepositTimerStartedEventType {
+  type: "DepositTimerStarted";
+  loanId: bigint;
+  timestamp: bigint;
+}
+
 /** Direct canister event payload returned by instant-loans event queries. */
 export type InstantLoanEventType =
-  | {
-      type: "LoanCreated";
-      loanId: bigint;
-      borrowDestination: InstantLoanAccount;
-      collateralAsset: InstantLoanAsset;
-      borrowAmount: bigint;
-      collateralPoolId: string;
-      refundDestination: InstantLoanAccount;
-      ltvMaxBps: bigint;
-      depositWindowSeconds: bigint;
-      profileId: string;
-      borrowPoolId: string;
-      borrowAsset: InstantLoanAsset;
-    }
-  | {
-      type: "FullLendWithdrawalRequested";
-      loanId: bigint;
-      account: InstantLoanAccount;
-      poolId: string;
-    }
-  | {
-      type: "BorrowRequested";
-      loanId: bigint;
-      account: InstantLoanAccount;
-      poolId: string;
-      amount: bigint;
-    }
-  | { type: "DepositTimerExceeded"; loanId: bigint }
-  | {
-      type: "StuckFundsWithdrawalRequested";
-      leg: InstantLoanLeg;
-      loanId: bigint;
-      account: InstantLoanAccount;
-      poolId: string;
-      amount: bigint;
-    }
-  | {
-      type: "ProfileWarmed";
-      derivationIndex: Uint8Array;
-      warmedProfileId: bigint;
-      ethAddress: string;
-      profileId: string;
-    }
-  | { type: "RepayComplete"; loanId: bigint; profileId: string }
-  | { type: "DepositTimerStarted"; loanId: bigint; timestamp: bigint };
+  | InstantLoanCreatedEventType
+  | InstantLoanFullLendWithdrawalRequestedEventType
+  | InstantLoanBorrowRequestedEventType
+  | InstantLoanDepositTimerExceededEventType
+  | InstantLoanStuckFundsWithdrawalRequestedEventType
+  | InstantLoanProfileWarmedEventType
+  | InstantLoanRepayCompleteEventType
+  | InstantLoanDepositTimerStartedEventType;
 
 /** Current amount to send to the repayment target to close the debt. */
 export interface InstantLoanRepayment {

@@ -1,4 +1,4 @@
-# Vite React SDK Method Query Example
+# SDK Method Query Example
 
 Use this example to call `@liquidium/client` methods from a Vite React app with Dynamic loaded.
 
@@ -23,7 +23,7 @@ pnpm install
 4. Run the example:
 
 ```bash
-pnpm --filter @liquidium/example-vite-react-dynamic dev
+pnpm --filter @liquidium/example-sdk-method-query dev
 ```
 
 ## What To Look At

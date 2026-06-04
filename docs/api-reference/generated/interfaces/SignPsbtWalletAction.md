@@ -6,7 +6,7 @@
 
 # Interface: SignPsbtWalletAction\<TResult\>
 
-Defined in: [packages/client/src/core/wallet-actions.ts:151](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L151)
+Defined in: [packages/client/src/core/wallet-actions.ts:163](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L163)
 
 Prepared action that requires BTC PSBT signing before submit.
 
@@ -22,7 +22,7 @@ Prepared action that requires BTC PSBT signing before submit.
 
 > `optional` **account?**: `string`
 
-Defined in: [packages/client/src/core/wallet-actions.ts:161](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L161)
+Defined in: [packages/client/src/core/wallet-actions.ts:173](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L173)
 
 Optional default account to pass to the wallet adapter.
 
@@ -32,7 +32,7 @@ Optional default account to pass to the wallet adapter.
 
 > **actionType**: `string`
 
-Defined in: [packages/client/src/core/wallet-actions.ts:157](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L157)
+Defined in: [packages/client/src/core/wallet-actions.ts:169](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L169)
 
 Adapter-facing action type.
 
@@ -42,7 +42,7 @@ Adapter-facing action type.
 
 > **executionKind**: `"sign-psbt"`
 
-Defined in: [packages/client/src/core/wallet-actions.ts:155](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L155)
+Defined in: [packages/client/src/core/wallet-actions.ts:167](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L167)
 
 Wallet capability required to execute the action.
 
@@ -52,7 +52,7 @@ Wallet capability required to execute the action.
 
 > **kind**: `string`
 
-Defined in: [packages/client/src/core/wallet-actions.ts:153](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L153)
+Defined in: [packages/client/src/core/wallet-actions.ts:165](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L165)
 
 Protocol action kind.
 
@@ -62,7 +62,7 @@ Protocol action kind.
 
 > **psbtBase64**: `string`
 
-Defined in: [packages/client/src/core/wallet-actions.ts:163](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L163)
+Defined in: [packages/client/src/core/wallet-actions.ts:175](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L175)
 
 Base64-encoded unsigned PSBT.
 
@@ -72,7 +72,7 @@ Base64-encoded unsigned PSBT.
 
 > **transferMode**: [`TransferMode`](../type-aliases/TransferMode.md)
 
-Defined in: [packages/client/src/core/wallet-actions.ts:159](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L159)
+Defined in: [packages/client/src/core/wallet-actions.ts:171](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L171)
 
 Transfer path associated with the action.
 
@@ -82,7 +82,7 @@ Transfer path associated with the action.
 
 > **submit**(`request`): `Promise`\<`TResult`\>
 
-Defined in: [packages/client/src/core/wallet-actions.ts:165](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L165)
+Defined in: [packages/client/src/core/wallet-actions.ts:177](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L177)
 
 Submits the signed PSBT and resolves the protocol result.
 
@@ -90,9 +90,7 @@ Submits the signed PSBT and resolves the protocol result.
 
 ##### request
 
-###### signedPsbtBase64
-
-`string`
+[`SignPsbtSubmitRequest`](SignPsbtSubmitRequest.md)
 
 #### Returns
 

@@ -13,12 +13,36 @@ export interface ApiClient {
   post<TResponse, TBody>(path: string, body: TBody): Promise<TResponse>;
 }
 
-export function createApiClient(opts: {
+interface CreateApiClientOptions {
   baseUrl: string;
   headers?: Record<string, string>;
   timeoutMs: number;
   fetchFn?: typeof fetch;
-}): ApiClient {
+}
+
+interface SendRequestOptions {
+  baseUrl: string;
+  fetchFn?: typeof fetch;
+  headers?: Record<string, string>;
+  timeoutMs: number;
+}
+
+interface ApiRequest {
+  path: string;
+  method: typeof HTTP_METHOD_GET | typeof HTTP_METHOD_POST;
+  body?: unknown;
+}
+
+interface ResponseErrorContext {
+  traceId?: string;
+  requestId?: string;
+}
+
+interface JsonErrorPayload {
+  message?: unknown;
+}
+
+export function createApiClient(opts: CreateApiClientOptions): ApiClient {
   const normalizedOpts = {
     ...opts,
     baseUrl: normalizeBaseUrl(opts.baseUrl),
@@ -49,17 +73,8 @@ function normalizeBaseUrl(baseUrl: string): string {
 }
 
 async function sendRequest<TResponse>(
-  opts: {
-    baseUrl: string;
-    fetchFn?: typeof fetch;
-    headers?: Record<string, string>;
-    timeoutMs: number;
-  },
-  request: {
-    path: string;
-    method: typeof HTTP_METHOD_GET | typeof HTTP_METHOD_POST;
-    body?: unknown;
-  }
+  opts: SendRequestOptions,
+  request: ApiRequest
 ): Promise<TResponse> {
   const url = `${opts.baseUrl}${request.path}`;
   const controller = new AbortController();
@@ -140,14 +155,11 @@ function getErrorMessage(payload: unknown): string | null {
     return null;
   }
 
-  const message = (payload as { message?: unknown }).message;
+  const message = (payload as JsonErrorPayload).message;
   return typeof message === "string" && message.length > 0 ? message : null;
 }
 
-function getResponseErrorContext(response: Response): {
-  traceId?: string;
-  requestId?: string;
-} {
+function getResponseErrorContext(response: Response): ResponseErrorContext {
   return {
     traceId: response.headers.get(HTTP_HEADER_TRACE_ID) ?? undefined,
     requestId: response.headers.get(HTTP_HEADER_REQUEST_ID) ?? undefined,
@@ -156,7 +168,7 @@ function getResponseErrorContext(response: Response): {
 
 function appendErrorContext(
   message: string,
-  context: { traceId?: string; requestId?: string }
+  context: ResponseErrorContext
 ): string {
   if (!context.traceId && !context.requestId) {
     return message;

@@ -6,7 +6,7 @@
 
 # Interface: SubmitInflowRequest
 
-Defined in: [packages/client/src/modules/lending/types.ts:262](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L262)
+Defined in: [packages/client/src/modules/lending/types.ts:296](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L296)
 
 Body for `SupplyFlow.submit` / `lending.submitInflow`.
 
@@ -16,7 +16,7 @@ Body for `SupplyFlow.submit` / `lending.submitInflow`.
 
 > `optional` **chain?**: [`Chain`](../type-aliases/Chain.md)
 
-Defined in: [packages/client/src/modules/lending/types.ts:266](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L266)
+Defined in: [packages/client/src/modules/lending/types.ts:300](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L300)
 
 Chain where the transaction was broadcast, when not implied by the flow.
 
@@ -26,7 +26,7 @@ Chain where the transaction was broadcast, when not implied by the flow.
 
 > **txid**: `string`
 
-Defined in: [packages/client/src/modules/lending/types.ts:264](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L264)
+Defined in: [packages/client/src/modules/lending/types.ts:298](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L298)
 
 Broadcast transaction id or hash.
 
@@ -36,6 +36,6 @@ Broadcast transaction id or hash.
 
 > `optional` **type?**: [`InflowSubmitType`](../type-aliases/InflowSubmitType.md)
 
-Defined in: [packages/client/src/modules/lending/types.ts:268](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L268)
+Defined in: [packages/client/src/modules/lending/types.ts:302](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L302)
 
 Deposit or repayment submit type, when not implied by the flow.

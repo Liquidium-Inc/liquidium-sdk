@@ -63,13 +63,13 @@ const SECONDS_PER_YEAR = 31_536_000n;
 const ETH_STABLECOIN_INFLOW_FEE_FALLBACK = 1_500_000n;
 const INSTANT_LOAN_MIN_SLIPPAGE_BUFFER_BPS = 200n;
 
-type InstantLoanLtvPolicy = {
+interface InstantLoanLtvPolicy {
   ltvBps: bigint;
   minLtvMaxBps: bigint;
   maxLtvMaxBps: bigint;
-};
+}
 
-type InstantLoanCandidateWire = {
+interface InstantLoanCandidateWire {
   loanId?: string;
   loan_id?: string;
   ref?: string;
@@ -87,9 +87,9 @@ type InstantLoanCandidateWire = {
   borrowAsset?: string;
   borrow_asset?: string;
   collateralAmount: string;
-};
+}
 
-type InstantLoanCreateRequestWire = {
+interface InstantLoanCreateRequestWire {
   collateralPoolId: string;
   borrowPoolId: string;
   collateralAsset: InstantLoanAsset;
@@ -100,43 +100,75 @@ type InstantLoanCreateRequestWire = {
   depositWindowSeconds: string;
   borrowDestination: InstantLoanCreateAccountWire;
   refundDestination: InstantLoanCreateAccountWire;
-};
+}
 
-type InstantLoanCollateralHintWire = {
+interface InstantLoanCollateralHintWire {
   collateralAmountHint: string;
-};
+}
 
-type InstantLoanCreateAccountWire = { External: string };
+interface InstantLoanAddressLookupResponseWire {
+  success?: true;
+  loans?: InstantLoanCandidateWire[];
+  candidates?: InstantLoanCandidateWire[];
+}
+
+interface InstantLoanCollateralHintResponseWire
+  extends InstantLoanCollateralHintWire {
+  success?: true;
+}
+
+interface InstantLoanCreateAccountWire {
+  External: string;
+}
+
+interface InstantLoanNativeAccountVariantWire {
+  Native: string;
+}
+
 type InstantLoanAccountVariantWire =
   | InstantLoanCreateAccountWire
-  | { Native: string };
+  | InstantLoanNativeAccountVariantWire;
+
+interface InstantLoanExternalAccountObjectWire {
+  address: string;
+  type: "External";
+}
+
+interface InstantLoanNativeAccountObjectWire {
+  principal: string;
+  type: "Native";
+}
 
 type InstantLoanAccountWire =
-  | { address: string; type: "External" }
-  | { principal: string; type: "Native" }
+  | InstantLoanExternalAccountObjectWire
+  | InstantLoanNativeAccountObjectWire
   | InstantLoanAccountVariantWire;
 
-type InstantLoanWire = {
+interface InstantLoanCollateralWire {
+  poolId: string;
+  asset: string;
+  amountHint: string;
+}
+
+interface InstantLoanBorrowWire {
+  poolId: string;
+  asset: string;
+  amount: string;
+  destination: InstantLoanAccountWire;
+}
+
+interface InstantLoanWire {
   loanId: string;
   ref?: string;
   profileId: string;
   ltvMaxBps: string;
   depositWindowSeconds: string;
-  collateral: {
-    poolId: string;
-    asset: string;
-    amountHint: string;
-  };
-  borrow: {
-    poolId: string;
-    asset: string;
-    amount: string;
-    destination: InstantLoanAccountWire;
-  };
+  collateral: InstantLoanCollateralWire;
+  borrow: InstantLoanBorrowWire;
   refundDestination: InstantLoanAccountWire;
-};
+}
 
-type InstantLoanHydrationInput = {
+interface InstantLoanHydrationInput {
   loanId: bigint;
   profileId: string;
   ltvMaxBps: bigint;
@@ -149,7 +181,31 @@ type InstantLoanHydrationInput = {
   borrowAmount: bigint;
   borrowDestination: InstantLoanAccount;
   refundDestination: InstantLoanAccount;
-};
+}
+
+interface InstantLoanInitialDepositQuoteInput {
+  collateralAmount: bigint;
+  decimals: bigint;
+  asset: string;
+  target: SupplyTarget;
+}
+
+interface RepaymentInflowFeeEstimate {
+  totalFee: bigint;
+  estimateAvailable: boolean;
+}
+
+interface DeriveInstantLoanStatusInput {
+  collateralAmount: bigint;
+  totalDebtAmount: bigint;
+}
+
+interface LtvCalculationErrorDetails {
+  code: QuoteValidationErrorCode;
+  message: string;
+}
+
+type CanisterVariantRecord = object;
 
 /** Accountless instant-loan creation, lookup, recovery, and canister query helpers. */
 export class InstantLoansModule {
@@ -377,11 +433,9 @@ export class InstantLoansModule {
     }
 
     const apiClient = this.requireApi("Instant loan address lookup");
-    const response = await apiClient.get<{
-      success?: true;
-      loans?: InstantLoanCandidateWire[];
-      candidates?: InstantLoanCandidateWire[];
-    }>(buildInstantLoanAddressLookupPath({ address: trimmedAddress }));
+    const response = await apiClient.get<InstantLoanAddressLookupResponseWire>(
+      buildInstantLoanAddressLookupPath({ address: trimmedAddress })
+    );
 
     return (response.candidates ?? response.loans ?? []).map(mapCandidateWire);
   }
@@ -408,11 +462,9 @@ export class InstantLoansModule {
 
   private async getCollateralAmountHint(loanId: bigint): Promise<bigint> {
     const apiClient = this.requireApi("Instant loan lookup");
-    const response = await apiClient.get<
-      {
-        success?: true;
-      } & InstantLoanCollateralHintWire
-    >(buildInstantLoanCollateralHintPath({ loanId }));
+    const response = await apiClient.get<InstantLoanCollateralHintResponseWire>(
+      buildInstantLoanCollateralHintPath({ loanId })
+    );
 
     return parseBigintWire(response.collateralAmountHint, "collateral amount");
   }
@@ -567,12 +619,9 @@ export class InstantLoansModule {
     };
   }
 
-  private async createInitialDepositQuote(input: {
-    collateralAmount: bigint;
-    decimals: bigint;
-    asset: string;
-    target: SupplyTarget;
-  }): Promise<InstantLoanInitialDeposit> {
+  private async createInitialDepositQuote(
+    input: InstantLoanInitialDepositQuoteInput
+  ): Promise<InstantLoanInitialDeposit> {
     const inflowFee = await this.lending.estimateInflowFee({
       asset: input.asset as Asset,
       chain: input.target.chain as Chain,
@@ -592,7 +641,7 @@ export class InstantLoansModule {
   private async estimateRepaymentInflowFee(
     asset: string,
     chain: string
-  ): Promise<{ totalFee: bigint; estimateAvailable: boolean }> {
+  ): Promise<RepaymentInflowFeeEstimate> {
     try {
       const fee = await this.lending.estimateInflowFee({
         asset: asset as Asset,
@@ -704,10 +753,9 @@ function calculateTotalDebtAmount(borrowPosition: Position | null): bigint {
   return borrowPosition.borrowed + borrowPosition.debtInterest;
 }
 
-function deriveInstantLoanStatus(input: {
-  collateralAmount: bigint;
-  totalDebtAmount: bigint;
-}): InstantLoanStatusValue {
+function deriveInstantLoanStatus(
+  input: DeriveInstantLoanStatusInput
+): InstantLoanStatusValue {
   if (input.totalDebtAmount > 0n) {
     return InstantLoanStatus.active;
   }
@@ -754,7 +802,7 @@ function validateCreateRequest(request: CreateInstantLoanRequest): void {
 }
 
 function throwLtvCalculationError(
-  error: { code: QuoteValidationErrorCode; message: string } | undefined
+  error: LtvCalculationErrorDetails | undefined
 ): never {
   throw new LiquidiumError(
     error?.code === QuoteValidationErrorCode.POOL_NOT_FOUND
@@ -919,7 +967,7 @@ function authorizationFromCanister(
   };
 }
 
-function assetFromCanister(asset: { [key: string]: null }): InstantLoanAsset {
+function assetFromCanister(asset: CanisterVariantRecord): InstantLoanAsset {
   return getVariantKey(asset) as InstantLoanAsset;
 }
 

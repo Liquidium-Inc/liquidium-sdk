@@ -11,6 +11,6 @@
     "@liquidium/example-contract-interaction-flow",
     "@liquidium/example-deposit-address-flow",
     "@liquidium/example-instant-loans-flow",
-    "@liquidium/example-vite-react-dynamic"
+    "@liquidium/example-sdk-method-query"
   ]
 }

@@ -6,7 +6,7 @@
 
 # Interface: BorrowSubmitSignatureInfo
 
-Defined in: [packages/client/src/modules/lending/types.ts:60](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L60)
+Defined in: [packages/client/src/modules/lending/types.ts:94](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L94)
 
 Signature payload for submitting a prepared borrow action.
 

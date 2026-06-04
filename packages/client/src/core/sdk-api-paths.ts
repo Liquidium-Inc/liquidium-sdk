@@ -22,23 +22,23 @@ export const SdkApiQueryParam = {
   types: "types",
 } as const;
 
-type BuildActivitiesPathRequest = {
+interface BuildActivitiesPathRequest {
   profileId: string;
   state?: string;
-};
+}
 
-type BuildActivityStatusPathRequest = {
+interface BuildActivityStatusPathRequest {
   profileId: string;
   id: string;
-};
+}
 
-type BuildInstantLoanAddressLookupPathRequest = {
+interface BuildInstantLoanAddressLookupPathRequest {
   address: string;
-};
+}
 
-type BuildInstantLoanCollateralHintPathRequest = {
+interface BuildInstantLoanCollateralHintPathRequest {
   loanId: bigint;
-};
+}
 
 const ACTIVITIES = `/${SDK_API_VERSION.activities}/activities`;
 const HISTORY_POOL = `/${SDK_API_VERSION.history}/history/pool`;

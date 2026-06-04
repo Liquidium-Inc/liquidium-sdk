@@ -4,7 +4,15 @@ import { Chain } from "../../core/types";
 import { normalizeHexSignature } from "../../core/utils/signature";
 import type { CreateAccountRequest } from "./types";
 
-type AccountChainVariant = { BTC: null } | { ETH: null };
+interface AccountBtcChainVariant {
+  BTC: null;
+}
+
+interface AccountEthChainVariant {
+  ETH: null;
+}
+
+type AccountChainVariant = AccountBtcChainVariant | AccountEthChainVariant;
 
 export function mapCreateAccountRequestToRegisterProfileRequest(
   request: CreateAccountRequest

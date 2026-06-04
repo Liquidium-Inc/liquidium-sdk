@@ -6,7 +6,7 @@
   "type": "module",
   "engines": {
     "node": ">=20",
-    "pnpm": ">=9"
+    "pnpm": ">=11"
   },
   "scripts": {
     "build": "turbo build",
@@ -14,9 +14,11 @@
     "clean": "rimraf packages/*/dist",
     "lint": "biome check",
     "lint:fix": "biome check --write",
+    "docs:changelog": "node scripts/generate-docs-changelog.mjs",
     "docs:api": "typedoc",
     "test": "vitest run",
     "typecheck": "turbo typecheck",
+    "release:version": "pnpm changeset version && pnpm docs:changelog",
     "release": "pnpm run build && pnpm changeset publish"
   },
   "license": "MIT",
@@ -30,10 +32,5 @@
     "typescript": "^5.9.3",
     "vitest": "^4.1.7"
   },
-  "packageManager": "pnpm@9.15.4",
-  "pnpm": {
-    "overrides": {
-      "@noble/hashes": "^1.8.0"
-    }
-  }
+  "packageManager": "pnpm@11.5.1"
 }

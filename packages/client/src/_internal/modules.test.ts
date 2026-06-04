@@ -16,6 +16,16 @@ import {
   RATE_SCALE,
 } from "../index";
 
+interface TestBtcAssetVariant {
+  BTC: null;
+}
+
+interface TestUsdtAssetVariant {
+  USDT: null;
+}
+
+type TestInstantLoanPositionAsset = TestBtcAssetVariant | TestUsdtAssetVariant;
+
 afterEach(() => {
   vi.restoreAllMocks();
   vi.useRealTimers();
@@ -5231,7 +5241,7 @@ describe("InstantLoansModule", () => {
 
   function createInstantLoanPosition(
     poolId: string,
-    asset: { BTC: null } | { USDT: null },
+    asset: TestInstantLoanPositionAsset,
     overrides: Record<string, unknown> = {}
   ) {
     return {
