@@ -13,7 +13,7 @@ export interface ApiClient {
   post<TResponse, TBody>(path: string, body: TBody): Promise<TResponse>;
 }
 
-export interface CreateApiClientOptions {
+interface CreateApiClientOptions {
   baseUrl: string;
   headers?: Record<string, string>;
   timeoutMs: number;

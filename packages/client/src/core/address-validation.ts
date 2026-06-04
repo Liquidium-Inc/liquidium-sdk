@@ -8,7 +8,7 @@ import { Asset, Chain } from "./types";
 
 export type EvmAddress = `0x${string}`;
 
-export interface NormalizeExternalAddressParams {
+interface NormalizeExternalAddressParams {
   address: string;
   asset: string;
   chain: string;

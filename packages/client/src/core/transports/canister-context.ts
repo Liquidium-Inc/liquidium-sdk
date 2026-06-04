@@ -8,7 +8,7 @@ export interface CanisterContext {
   canisterIds: CanisterIds;
 }
 
-export interface CreateCanisterContextOptions {
+interface CreateCanisterContextOptions {
   icHost?: string;
   identity?: Identity;
   canisterIds: CanisterIds;

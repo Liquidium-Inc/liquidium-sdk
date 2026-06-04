@@ -9,7 +9,7 @@ const SUBACCOUNT_LENGTH = 32;
 const PRINCIPAL_LENGTH_OFFSET = 2;
 const PRINCIPAL_START_OFFSET = 3;
 
-export interface EncodeInflowSubaccountRequest {
+interface EncodeInflowSubaccountRequest {
   action: SupplyAction;
   principal: Principal;
 }

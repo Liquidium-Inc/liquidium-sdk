@@ -1,9 +1,9 @@
-export interface MessageAccount {
+interface MessageAccount {
   type: "Native" | "External";
   data: string;
 }
 
-export interface OutflowMessageRequest {
+interface OutflowMessageRequest {
   pool_id: string;
   amount: string;
   account: MessageAccount;
