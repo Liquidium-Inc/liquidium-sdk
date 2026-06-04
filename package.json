@@ -14,9 +14,11 @@
     "clean": "rimraf packages/*/dist",
     "lint": "biome check",
     "lint:fix": "biome check --write",
+    "docs:changelog": "node scripts/generate-docs-changelog.mjs",
     "docs:api": "typedoc",
     "test": "vitest run",
     "typecheck": "turbo typecheck",
+    "release:version": "pnpm changeset version && pnpm docs:changelog",
     "release": "pnpm run build && pnpm changeset publish"
   },
   "license": "MIT",

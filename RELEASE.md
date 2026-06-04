@@ -11,10 +11,10 @@ pnpm changeset
 ```
 
 2. For missed changesets, add one catch-up changeset for changes since the last release tag.
-3. Create the release version and changelog:
+3. Create the release version, package changelog, and docs changelog:
 
 ```sh
-pnpm changeset version
+pnpm release:version
 ```
 
 4. Review and merge the release PR.
