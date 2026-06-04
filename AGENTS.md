@@ -15,6 +15,12 @@ When changing public SDK behavior, exported types, method names, request fields,
 
 If exported APIs changed, run `pnpm docs:api` to regenerate `docs/api-reference/generated/`.
 
+## TypeScript API Shape
+
+- Prefer named `interface` or `type` declarations over inline object types for public SDK request/response shapes, exported unions, and reusable helper parameter objects.
+- Name internal parameter objects when they clarify behavior or appear in method signatures; avoid anonymous `{ ... }` signatures once the shape has multiple fields or could surface in generated docs.
+- Keep inline object types only for small, strictly local shapes where naming would add noise.
+
 ## Releases
 
 When preparing an `@liquidium/client` release, follow `RELEASE.md`. Keep npm publishing manual unless the user explicitly requests automation.

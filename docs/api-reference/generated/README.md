@@ -174,6 +174,7 @@
 - [ListActivitiesRequest](type-aliases/ListActivitiesRequest.md)
 - [MarketAsset](type-aliases/MarketAsset.md)
 - [MarketChain](type-aliases/MarketChain.md)
+- [MinimumBorrowAsset](type-aliases/MinimumBorrowAsset.md)
 - [OutflowActivityKind](type-aliases/OutflowActivityKind.md)
 - [OutflowActivityStatus](type-aliases/OutflowActivityStatus.md)
 - [OutflowType](type-aliases/OutflowType.md)
@@ -208,6 +209,7 @@
 - [InflowSubmitType](variables/InflowSubmitType.md)
 - [InstantLoanStatus](variables/InstantLoanStatus.md)
 - [LiquidiumErrorCode](variables/LiquidiumErrorCode.md)
+- [MIN\_BORROW\_AMOUNTS\_BY\_ASSET](variables/MIN_BORROW_AMOUNTS_BY_ASSET.md)
 - [OutflowType](variables/OutflowType.md)
 - [RATE\_DECIMALS](variables/RATE_DECIMALS.md)
 - [RATE\_SCALE](variables/RATE_SCALE.md)
@@ -223,5 +225,6 @@
 
 - [createTransferErc20Transaction](functions/createTransferErc20Transaction.md)
 - [executeWith](functions/executeWith.md)
+- [getMinimumBorrowAmount](functions/getMinimumBorrowAmount.md)
 - [intFromPublicId](functions/intFromPublicId.md)
 - [publicIdFromInt](functions/publicIdFromInt.md)

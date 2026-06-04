@@ -8,6 +8,8 @@ order: 20
 
 Create an instant loan, show the deposit target, and restore the loan by reference.
 
+Borrow amounts must meet the SDK minimum for the selected asset. Use `getMinimumBorrowAmount(borrowPool.asset)` when your UI needs to show that minimum.
+
 ```ts
 import { LiquidiumClient, type Pool, type SupplyTarget } from "@liquidium/client";
 

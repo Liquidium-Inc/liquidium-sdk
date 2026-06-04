@@ -121,6 +121,26 @@ describe("QuoteModule", () => {
     ]);
   });
 
+  test("returns validation error when LTV borrow amount is below the asset minimum", () => {
+    // given
+    const request = {
+      borrowAmount: 5_000n,
+      borrowPoolId: usdtPool.id,
+      collateralAmount: 200_000n,
+      collateralPoolId: btcPool.id,
+    };
+
+    // when
+    const result = quoteModule.calculateLtv(request, pools, prices);
+
+    // then
+    expect(result.validationErrors).toHaveLength(1);
+    expect(result.validationErrors[0]).toMatchObject({
+      code: QuoteValidationErrorCode.BORROW_AMOUNT_TOO_LOW,
+      message: "Borrow amount must be at least 1000000 base units for USDT",
+    });
+  });
+
   test("calculates required collateral for valid cross-asset quote", () => {
     // given
     const request = {
@@ -373,10 +393,10 @@ describe("QuoteModule", () => {
     ).toBe(true);
   });
 
-  test("returns error when borrow amount too low", () => {
+  test("returns error when stablecoin borrow amount is below the asset minimum", () => {
     // given
     const request = {
-      borrowAmount: 1000n,
+      borrowAmount: 999_999n,
       borrowPoolId: "xxxxx-usdt-pool",
       collateralPoolId: "aaaaa-btc-pool",
       targetLtvBps: 5000n,
@@ -390,6 +410,45 @@ describe("QuoteModule", () => {
     expect(result.validationErrors[0]?.code).toBe(
       QuoteValidationErrorCode.BORROW_AMOUNT_TOO_LOW
     );
+    expect(result.validationErrors[0]?.message).toBe(
+      "Borrow amount must be at least 1000000 base units for USDT"
+    );
+  });
+
+  test("allows stablecoin borrow amount equal to the asset minimum", () => {
+    // given
+    const request = {
+      borrowAmount: 1_000_000n,
+      borrowPoolId: "xxxxx-usdt-pool",
+      collateralPoolId: "aaaaa-btc-pool",
+      targetLtvBps: 5000n,
+    };
+
+    // when
+    const result = quoteModule.getQuote(request, pools, prices);
+
+    // then
+    expect(result.validationErrors).toHaveLength(0);
+  });
+
+  test("returns error when BTC borrow amount is below the asset minimum", () => {
+    // given
+    const request = {
+      borrowAmount: 5_099n,
+      borrowPoolId: "aaaaa-btc-pool",
+      collateralPoolId: "xxxxx-usdt-pool",
+      targetLtvBps: 5000n,
+    };
+
+    // when
+    const result = quoteModule.getQuote(request, pools, prices);
+
+    // then
+    expect(result.validationErrors).toHaveLength(1);
+    expect(result.validationErrors[0]).toMatchObject({
+      code: QuoteValidationErrorCode.BORROW_AMOUNT_TOO_LOW,
+      message: "Borrow amount must be at least 5100 base units for BTC",
+    });
   });
 
   test("returns error when price not available", () => {
@@ -492,7 +551,7 @@ describe("QuoteModule", () => {
       QuoteValidationErrorCode.BORROW_AMOUNT_TOO_LOW
     );
     expect(result.validationErrors[0]?.message).toBe(
-      "Borrow amount must be non-negative"
+      "Borrow amount must be greater than 0"
     );
   });
 });

@@ -3868,6 +3868,58 @@ Nonce: 17`);
     });
   });
 
+  test("rejects a BTC borrow below the asset minimum before signing", async () => {
+    // given
+    const getNonce = vi.fn().mockResolvedValue(17n);
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord()]),
+      get_nonce: getNonce,
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const result = client.lending.prepareBorrow({
+      profileId: "aaaaa-aa",
+      poolId: BTC_POOL_ID,
+      amount: 5_099n,
+      receiverAddress: VALID_BTC_OUTFLOW_ADDRESS,
+      signerWalletAddress: "0xsigner",
+    });
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message: "Borrow amount must be at least 5100 base units for BTC",
+    });
+    expect(getNonce).not.toHaveBeenCalled();
+  });
+
+  test("rejects an ETH stablecoin borrow below the asset minimum before signing", async () => {
+    // given
+    const getNonce = vi.fn().mockResolvedValue(17n);
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi.fn().mockResolvedValue([createUsdtPoolRecord()]),
+      get_nonce: getNonce,
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const result = client.lending.prepareBorrow({
+      profileId: "aaaaa-aa",
+      poolId: USDT_POOL_ID,
+      amount: 999_999n,
+      receiverAddress: LOWERCASE_EVM_OUTFLOW_ADDRESS,
+      signerWalletAddress: "0xsigner",
+    });
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message: "Borrow amount must be at least 1000000 base units for USDT",
+    });
+    expect(getNonce).not.toHaveBeenCalled();
+  });
+
   test("rejects a borrow with an invalid BTC receiver address", async () => {
     // given
     const getNonce = vi.fn().mockResolvedValue(17n);
@@ -3903,7 +3955,7 @@ Nonce: 17`);
         txid: [],
         outflow_type: { Borrow: null },
         outflow_ref: [],
-        amount: 50_000n,
+        amount: 1_000_000n,
         receiver: { External: CHECKSUM_EVM_OUTFLOW_ADDRESS },
       },
     });
@@ -3918,7 +3970,7 @@ Nonce: 17`);
     const borrowAction = await client.lending.prepareBorrow({
       profileId: "aaaaa-aa",
       poolId: USDT_POOL_ID,
-      amount: 50_000n,
+      amount: 1_000_000n,
       receiverAddress: LOWERCASE_EVM_OUTFLOW_ADDRESS,
       signerWalletAddress: "0xsigner",
     });
@@ -4756,6 +4808,45 @@ describe("InstantLoansModule", () => {
         address: "bc1qinstantdeposit",
       }),
     });
+  });
+
+  test("rejects an instant loan with a borrow amount below the asset minimum", async () => {
+    // given
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    vi.spyOn(Actor, "createActor")
+      .mockReturnValueOnce({
+        list_pools: vi
+          .fn()
+          .mockResolvedValue([createBtcPoolRecord(), createUsdtPoolRecord()]),
+        get_pool_rate: vi
+          .fn()
+          .mockResolvedValue([[10_000_000_000_000_000_000_000_000n, 0n, 0n]]),
+      } as never)
+      .mockReturnValueOnce({
+        get_prices: vi.fn().mockResolvedValue(prices()),
+      } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const result = client.instantLoans.create({
+      collateralPoolId: BTC_POOL_ID,
+      borrowPoolId: USDT_POOL_ID,
+      collateralAsset: "BTC",
+      borrowAsset: "USDT",
+      collateralAmount: 10_000_000n,
+      borrowAmount: 999_999n,
+      ltvMaxBps: 6_000n,
+      depositWindowSeconds: 3_600n,
+      borrowDestination: CHECKSUM_EVM_BORROW_ADDRESS,
+      refundDestination: VALID_BTC_REFUND_ADDRESS,
+    });
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message: "Borrow amount must be at least 1000000 base units for USDT",
+    });
+    expect(fetchSpy).not.toHaveBeenCalled();
   });
 
   test("rejects an instant loan with an invalid BTC refund destination", async () => {
