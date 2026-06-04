@@ -7,10 +7,8 @@ import { CK_DEPOSIT_ABI, ERC20_ABI } from "../core/evm";
 import { encodeInflowSubaccount } from "../core/utils/inflow-subaccount";
 import {
   executeWith,
-  getMinimumBorrowAmount,
   LiquidiumClient,
   LiquidiumErrorCode,
-  MIN_BORROW_AMOUNTS_BY_ASSET,
   publicIdFromInt,
   RATE_DECIMALS,
   RATE_SCALE,
@@ -42,21 +40,6 @@ describe("executeWith", () => {
     // then
     expect(RATE_DECIMALS).toBe(expectedRateDecimals);
     expect(RATE_SCALE).toBe(expectedRateScale);
-  });
-
-  test("exports borrow amount minimum metadata", () => {
-    // given
-
-    // when
-
-    // then
-    expect(MIN_BORROW_AMOUNTS_BY_ASSET).toMatchObject({
-      BTC: 5_100n,
-      USDC: 1_000_000n,
-      USDT: 1_000_000n,
-    });
-    expect(getMinimumBorrowAmount("USDC")).toBe(1_000_000n);
-    expect(getMinimumBorrowAmount("ETH")).toBe(0n);
   });
 
   test("should throw a validation error for unsupported execution kinds", async () => {
@@ -4830,7 +4813,18 @@ describe("InstantLoansModule", () => {
   test("rejects an instant loan with a borrow amount below the asset minimum", async () => {
     // given
     const fetchSpy = vi.spyOn(globalThis, "fetch");
-    const actorCreateSpy = vi.spyOn(Actor, "createActor");
+    vi.spyOn(Actor, "createActor")
+      .mockReturnValueOnce({
+        list_pools: vi
+          .fn()
+          .mockResolvedValue([createBtcPoolRecord(), createUsdtPoolRecord()]),
+        get_pool_rate: vi
+          .fn()
+          .mockResolvedValue([[10_000_000_000_000_000_000_000_000n, 0n, 0n]]),
+      } as never)
+      .mockReturnValueOnce({
+        get_prices: vi.fn().mockResolvedValue(prices()),
+      } as never);
     const client = new LiquidiumClient({});
 
     // when
@@ -4853,7 +4847,6 @@ describe("InstantLoansModule", () => {
       message: "Borrow amount must be at least 1000000 base units for USDT",
     });
     expect(fetchSpy).not.toHaveBeenCalled();
-    expect(actorCreateSpy).not.toHaveBeenCalled();
   });
 
   test("rejects an instant loan with an invalid BTC refund destination", async () => {

@@ -1,8 +1,4 @@
 import {
-  formatMinimumBorrowAmountMessage,
-  getMinimumBorrowAmount,
-} from "../../core/borrow-minimums";
-import {
   createInstantLoansActor,
   type HeadlessLoanEvent,
   type HeadlessLoanEventType,
@@ -778,13 +774,6 @@ function validateCreateRequest(request: CreateInstantLoanRequest): void {
     throw new LiquidiumError(
       LiquidiumErrorCode.VALIDATION_ERROR,
       "Instant loan borrow amount must be greater than zero"
-    );
-  }
-  const minimumBorrowAmount = getMinimumBorrowAmount(request.borrowAsset);
-  if (minimumBorrowAmount > 0n && request.borrowAmount < minimumBorrowAmount) {
-    throw new LiquidiumError(
-      LiquidiumErrorCode.VALIDATION_ERROR,
-      formatMinimumBorrowAmountMessage(request.borrowAsset, minimumBorrowAmount)
     );
   }
   if (request.ltvMaxBps <= 0n) {

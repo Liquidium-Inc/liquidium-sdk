@@ -7,6 +7,17 @@ export const MIN_BORROW_AMOUNTS_BY_ASSET = {
 
 export type MinimumBorrowAsset = keyof typeof MIN_BORROW_AMOUNTS_BY_ASSET;
 
+export interface BorrowAmountMinimumValidationParams {
+  amount: bigint;
+  asset: string;
+}
+
+export interface BorrowAmountMinimumValidationError {
+  asset: string;
+  minimumAmount: bigint;
+  message: string;
+}
+
 /**
  * Returns the minimum borrow amount for an asset in base units.
  *
@@ -20,6 +31,21 @@ export function getMinimumBorrowAmount(asset: string): bigint {
   return MIN_BORROW_AMOUNTS_BY_ASSET[asset];
 }
 
+export function getBorrowAmountMinimumValidationError(
+  params: BorrowAmountMinimumValidationParams
+): BorrowAmountMinimumValidationError | null {
+  const minimumAmount = getMinimumBorrowAmount(params.asset);
+  if (minimumAmount <= 0n || params.amount >= minimumAmount) {
+    return null;
+  }
+
+  return {
+    asset: params.asset,
+    minimumAmount,
+    message: formatMinimumBorrowAmountMessage(params.asset, minimumAmount),
+  };
+}
+
 export function formatMinimumBorrowAmountMessage(
   asset: string,
   minimumAmount: bigint
@@ -28,5 +54,5 @@ export function formatMinimumBorrowAmountMessage(
 }
 
 function isMinimumBorrowAsset(asset: string): asset is MinimumBorrowAsset {
-  return asset in MIN_BORROW_AMOUNTS_BY_ASSET;
+  return Object.hasOwn(MIN_BORROW_AMOUNTS_BY_ASSET, asset);
 }

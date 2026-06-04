@@ -64,7 +64,7 @@ LTV calculation plus validation errors when inputs are unusable.
 
 > **getQuote**(`request`, `pools`, `prices`): [`QuoteResult`](../interfaces/QuoteResult.md)
 
-Defined in: [packages/client/src/modules/quote/quote.ts:209](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/quote/quote.ts#L209)
+Defined in: [packages/client/src/modules/quote/quote.ts:210](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/quote/quote.ts#L210)
 
 Calculates a loan quote based on borrow amount, LTV, and pool selections.
 

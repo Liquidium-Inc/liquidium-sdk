@@ -8,7 +8,7 @@
 
 > `const` **MIN\_BORROW\_AMOUNTS\_BY\_ASSET**: `object`
 
-Defined in: packages/client/src/core/borrow-minimums.ts:2
+Defined in: [packages/client/src/core/borrow-minimums.ts:2](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/borrow-minimums.ts#L2)
 
 Minimum borrow amounts in each asset's base units.
 

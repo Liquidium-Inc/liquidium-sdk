@@ -1,7 +1,4 @@
-import {
-  formatMinimumBorrowAmountMessage,
-  getMinimumBorrowAmount,
-} from "../../core/borrow-minimums";
+import { getBorrowAmountMinimumValidationError } from "../../core/borrow-minimums";
 import { ceilDivBigint } from "../../core/utils/bigint";
 import type { AssetPrices, Pool } from "../market/types";
 import type {
@@ -438,21 +435,15 @@ function createBorrowAmountValidationError(params: {
     };
   }
 
-  const minimumBorrowAmount = getMinimumBorrowAmount(params.asset);
-  if (minimumBorrowAmount <= 0n) {
-    return null;
-  }
-
-  if (params.amount >= minimumBorrowAmount) {
+  const minimumBorrowAmountError =
+    getBorrowAmountMinimumValidationError(params);
+  if (!minimumBorrowAmountError) {
     return null;
   }
 
   return {
     code: QuoteValidationErrorCode.BORROW_AMOUNT_TOO_LOW,
-    message: formatMinimumBorrowAmountMessage(
-      params.asset,
-      minimumBorrowAmount
-    ),
+    message: minimumBorrowAmountError.message,
   };
 }
 

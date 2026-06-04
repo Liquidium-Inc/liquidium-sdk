@@ -4,10 +4,7 @@ import {
   normalizeAndValidateEvmAddress,
   normalizeExternalAddress,
 } from "../../core/address-validation";
-import {
-  formatMinimumBorrowAmountMessage,
-  getMinimumBorrowAmount,
-} from "../../core/borrow-minimums";
+import { getBorrowAmountMinimumValidationError } from "../../core/borrow-minimums";
 import { createCkBtcLedgerActor } from "../../core/canisters/ckbtc/ledger";
 import { createCkBtcMinterActor } from "../../core/canisters/ckbtc/minter";
 import { createDepositAccountsActor } from "../../core/canisters/deposit-accounts/actor";
@@ -380,11 +377,14 @@ export class LendingModule {
     }
     const selectedPool = await this.getPoolById(request.poolId);
     const selectedAsset = getVariantKey(selectedPool.asset);
-    const minimumBorrowAmount = getMinimumBorrowAmount(selectedAsset);
-    if (minimumBorrowAmount > 0n && request.amount < minimumBorrowAmount) {
+    const minimumBorrowAmountError = getBorrowAmountMinimumValidationError({
+      amount: request.amount,
+      asset: selectedAsset,
+    });
+    if (minimumBorrowAmountError) {
       throw new LiquidiumError(
         LiquidiumErrorCode.VALIDATION_ERROR,
-        formatMinimumBorrowAmountMessage(selectedAsset, minimumBorrowAmount)
+        minimumBorrowAmountError.message
       );
     }
     const receiverAddress = normalizeExternalAddress({
