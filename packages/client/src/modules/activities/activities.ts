@@ -28,14 +28,15 @@ import { ActivityDirection, ActivityFilter } from "./types";
 
 const PRE_TERMINAL_ETH_ACTIVITY_ID_PREFIX = "pre_terminal_eth_";
 
-type ActivityTopUpWire = Omit<
-  ActivityTopUp,
-  "depositedAmount" | "feeAmount" | "shortfallAmount"
-> & {
+interface ActivityTopUpWire
+  extends Omit<
+    ActivityTopUp,
+    "depositedAmount" | "feeAmount" | "shortfallAmount"
+  > {
   depositedAmount: string;
   feeAmount: string;
   shortfallAmount: string;
-};
+}
 
 type ActivityWireStatus =
   | "requested"
@@ -51,7 +52,7 @@ type ActivityWireStage =
   | "pending"
   | "finalising";
 
-type ActivityWire = {
+interface ActivityWire {
   id: string;
   direction: Activity["direction"];
   kind: Activity["kind"];
@@ -67,24 +68,28 @@ type ActivityWire = {
   status: ActivityWireStatus;
   stage?: ActivityWireStage;
   topUp?: ActivityTopUpWire;
-};
+}
 
-type ListActivitiesResponseWire = {
+interface ListActivitiesResponseWire {
   success: true;
   activities: ActivityWire[];
-};
+}
+
+interface ActivityStatusFoundResponseWire {
+  success: true;
+  found: true;
+  activity: ActivityWire;
+}
+
+interface ActivityStatusNotFoundResponseWire {
+  success: true;
+  found: false;
+  id: string;
+}
 
 type ActivityStatusResponseWire =
-  | {
-      success: true;
-      found: true;
-      activity: ActivityWire;
-    }
-  | {
-      success: true;
-      found: false;
-      id: string;
-    };
+  | ActivityStatusFoundResponseWire
+  | ActivityStatusNotFoundResponseWire;
 
 /** Receipt-oriented activity list and status helpers. */
 export class ActivitiesModule {

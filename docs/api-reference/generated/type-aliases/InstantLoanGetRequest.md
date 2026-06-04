@@ -6,8 +6,8 @@
 
 # Type Alias: InstantLoanGetRequest
 
-> **InstantLoanGetRequest** = \{ `loanId`: `bigint`; \} \| \{ `ref`: `string`; \}
+> **InstantLoanGetRequest** = [`InstantLoanGetByIdRequest`](../interfaces/InstantLoanGetByIdRequest.md) \| [`InstantLoanGetByRefRequest`](../interfaces/InstantLoanGetByRefRequest.md)
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:136](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L136)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:148](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L148)
 
 Lookup request for loading canonical instant-loan state.

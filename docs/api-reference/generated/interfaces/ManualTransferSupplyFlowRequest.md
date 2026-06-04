@@ -6,7 +6,7 @@
 
 # Interface: ManualTransferSupplyFlowRequest
 
-Defined in: [packages/client/src/modules/lending/types.ts:187](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L187)
+Defined in: [packages/client/src/modules/lending/types.ts:221](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L221)
 
 Manual transfer-based `lending.supply` request.
 
@@ -20,7 +20,7 @@ Manual transfer-based `lending.supply` request.
 
 > `optional` **account?**: `undefined`
 
-Defined in: [packages/client/src/modules/lending/types.ts:193](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L193)
+Defined in: [packages/client/src/modules/lending/types.ts:227](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L227)
 
 Disallowed for manual transfer flows.
 
@@ -30,7 +30,7 @@ Disallowed for manual transfer flows.
 
 > **action**: [`SupplyAction`](../type-aliases/SupplyAction.md)
 
-Defined in: [packages/client/src/modules/lending/types.ts:183](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L183)
+Defined in: [packages/client/src/modules/lending/types.ts:217](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L217)
 
 #### Inherited from
 
@@ -42,7 +42,7 @@ Defined in: [packages/client/src/modules/lending/types.ts:183](https://github.co
 
 > `optional` **amount?**: `undefined`
 
-Defined in: [packages/client/src/modules/lending/types.ts:195](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L195)
+Defined in: [packages/client/src/modules/lending/types.ts:229](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L229)
 
 Disallowed for manual transfer flows.
 
@@ -52,7 +52,7 @@ Disallowed for manual transfer flows.
 
 > `optional` **mechanism?**: `"transfer"`
 
-Defined in: [packages/client/src/modules/lending/types.ts:189](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L189)
+Defined in: [packages/client/src/modules/lending/types.ts:223](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L223)
 
 Optional explicit transfer mechanism.
 
@@ -62,7 +62,7 @@ Optional explicit transfer mechanism.
 
 > **poolId**: `string`
 
-Defined in: [packages/client/src/modules/lending/types.ts:182](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L182)
+Defined in: [packages/client/src/modules/lending/types.ts:216](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L216)
 
 #### Inherited from
 
@@ -74,7 +74,7 @@ Defined in: [packages/client/src/modules/lending/types.ts:182](https://github.co
 
 > **profileId**: `string`
 
-Defined in: [packages/client/src/modules/lending/types.ts:181](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L181)
+Defined in: [packages/client/src/modules/lending/types.ts:215](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L215)
 
 #### Inherited from
 
@@ -86,6 +86,6 @@ Defined in: [packages/client/src/modules/lending/types.ts:181](https://github.co
 
 > `optional` **walletAdapter?**: `undefined`
 
-Defined in: [packages/client/src/modules/lending/types.ts:191](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L191)
+Defined in: [packages/client/src/modules/lending/types.ts:225](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L225)
 
 Disallowed for manual transfer flows.

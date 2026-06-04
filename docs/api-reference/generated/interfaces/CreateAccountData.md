@@ -6,7 +6,7 @@
 
 # Interface: CreateAccountData
 
-Defined in: [packages/client/src/modules/accounts/types.ts:11](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/accounts/types.ts#L11)
+Defined in: [packages/client/src/modules/accounts/types.ts:29](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/accounts/types.ts#L29)
 
 Data embedded in a prepared profile-creation action.
 
@@ -16,6 +16,6 @@ Data embedded in a prepared profile-creation action.
 
 > **expiryTimestamp**: `bigint`
 
-Defined in: [packages/client/src/modules/accounts/types.ts:13](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/accounts/types.ts#L13)
+Defined in: [packages/client/src/modules/accounts/types.ts:31](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/accounts/types.ts#L31)
 
 Expiry timestamp, in protocol nanoseconds, included in the signed message.

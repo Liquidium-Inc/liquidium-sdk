@@ -8,11 +8,15 @@ export interface CanisterContext {
   canisterIds: CanisterIds;
 }
 
-export function createCanisterContext(opts: {
+export interface CreateCanisterContextOptions {
   icHost?: string;
   identity?: Identity;
   canisterIds: CanisterIds;
-}): CanisterContext {
+}
+
+export function createCanisterContext(
+  opts: CreateCanisterContextOptions
+): CanisterContext {
   const host = resolveHost(opts.icHost);
 
   const agent = HttpAgent.createSync({

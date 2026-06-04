@@ -1,11 +1,29 @@
+import type { Chain } from "../../core/types";
 import type {
   SignatureInfo,
   SignMessageWalletAction,
   WalletActionKind,
+  WalletAdapter,
   WalletExecutionKind,
 } from "../../core/wallet-actions";
 
 export type { SignatureInfo } from "../../core/wallet-actions";
+
+/** Options for preparing a profile-creation action. */
+export interface PrepareCreateProfileOptions {
+  /** Wallet address that will own the new profile. */
+  account: string;
+}
+
+/** Parameters for creating a profile through a wallet adapter. */
+export interface CreateProfileParams {
+  /** Wallet address that will own the new profile. */
+  account: string;
+  /** Chain used to sign the profile-creation message. */
+  chain: Chain;
+  /** Wallet adapter used to sign the profile-creation message. */
+  walletAdapter: WalletAdapter;
+}
 
 /** Data embedded in a prepared profile-creation action. */
 export interface CreateAccountData {

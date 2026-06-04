@@ -8,6 +8,6 @@
 
 > **SupplyFlowRequest** = [`TransferSupplyFlowRequest`](TransferSupplyFlowRequest.md) \| [`ContractInteractionSupplyFlowRequest`](../interfaces/ContractInteractionSupplyFlowRequest.md)
 
-Defined in: [packages/client/src/modules/lending/types.ts:232](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L232)
+Defined in: [packages/client/src/modules/lending/types.ts:266](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L266)
 
 Request accepted by `lending.supply(...)`.

@@ -8,6 +8,6 @@
 
 > **SupplyTarget** = [`NativeAddressSupplyTarget`](../interfaces/NativeAddressSupplyTarget.md) \| [`IcrcAccountSupplyTarget`](../interfaces/IcrcAccountSupplyTarget.md)
 
-Defined in: [packages/client/src/modules/lending/types.ts:178](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L178)
+Defined in: [packages/client/src/modules/lending/types.ts:212](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L212)
 
 Supply destination returned by `lending.supply(...)`.

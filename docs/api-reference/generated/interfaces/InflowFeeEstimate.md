@@ -6,7 +6,7 @@
 
 # Interface: InflowFeeEstimate
 
-Defined in: [packages/client/src/modules/lending/types.ts:288](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L288)
+Defined in: [packages/client/src/modules/lending/types.ts:334](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L334)
 
 Fee estimate for an inflow target, rounded up to the asset's fee unit.
 
@@ -16,6 +16,6 @@ Fee estimate for an inflow target, rounded up to the asset's fee unit.
 
 > **totalFee**: `bigint`
 
-Defined in: [packages/client/src/modules/lending/types.ts:290](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L290)
+Defined in: [packages/client/src/modules/lending/types.ts:336](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L336)
 
 Estimated total fee rounded up in the asset's base units.

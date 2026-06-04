@@ -6,16 +6,8 @@
 
 # Type Alias: ListActivitiesRequest
 
-> **ListActivitiesRequest** = `object` & \{ `profileId`: `string`; \} \| \{ `shortRef`: `string`; \}
+> **ListActivitiesRequest** = [`ListActivitiesByProfileRequest`](../interfaces/ListActivitiesByProfileRequest.md) \| [`ListActivitiesByShortRefRequest`](../interfaces/ListActivitiesByShortRefRequest.md)
 
-Defined in: [packages/client/src/modules/activities/types.ts:124](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L124)
+Defined in: [packages/client/src/modules/activities/types.ts:144](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L144)
 
 Request for listing activities by profile id or instant-loan short reference.
-
-## Type Declaration
-
-### filter?
-
-> `optional` **filter?**: [`ActivityFilter`](ActivityFilter.md)
-
-Optional state filter; defaults to `all`.

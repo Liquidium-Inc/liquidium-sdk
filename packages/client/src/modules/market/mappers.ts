@@ -6,7 +6,7 @@ import type {
 import { RATE_DECIMALS } from "../../core/rates";
 import { getAssetNativeDecimals } from "../../core/utils/asset-decimals";
 import { getVariantKey } from "../../core/utils/variant";
-import type { AssetPrices, Pool } from "./types";
+import type { AssetPrices, Pool, PoolRate } from "./types";
 
 const DECIMAL_BASE = 10;
 const PAIR_SEPARATOR = "_";
@@ -77,12 +77,9 @@ export function mapGetPricesResponseToAssetPrices(
   return assetPrices;
 }
 
-export function mapGetPoolRateResponseToPoolRate(rate: PoolRateTuple): {
-  rateDecimals: bigint;
-  borrowRate: bigint;
-  lendRate: bigint;
-  utilizationRate: bigint;
-} {
+export function mapGetPoolRateResponseToPoolRate(
+  rate: PoolRateTuple
+): PoolRate {
   return {
     rateDecimals: RATE_DECIMALS,
     borrowRate: rate[0],

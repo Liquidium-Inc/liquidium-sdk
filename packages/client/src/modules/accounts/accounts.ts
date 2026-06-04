@@ -16,22 +16,16 @@ import { getVariantKey } from "../../core/utils/variant";
 import {
   TransferMode,
   WalletActionKind,
-  type WalletAdapter,
   WalletExecutionKind,
 } from "../../core/wallet-actions";
 import { executeWith } from "../../execute";
 import { mapCreateAccountRequestToRegisterProfileRequest } from "./mappers";
-import type { CreateAccountAction, CreateAccountRequest } from "./types";
-
-export type PrepareCreateProfileOptions = {
-  account: string;
-};
-
-export type CreateProfileParams = {
-  account: string;
-  chain: Chain;
-  walletAdapter: WalletAdapter;
-};
+import type {
+  CreateAccountAction,
+  CreateAccountRequest,
+  CreateProfileParams,
+  PrepareCreateProfileOptions,
+} from "./types";
 
 /** Profile lifecycle and linked-wallet helpers. */
 export class AccountsModule {

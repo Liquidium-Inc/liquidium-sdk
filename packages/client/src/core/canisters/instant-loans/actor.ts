@@ -5,22 +5,59 @@ import type { Principal } from "@icp-sdk/core/principal";
 import { LiquidiumError, LiquidiumErrorCode } from "../../errors";
 import type { CanisterContext } from "../../transports/canister-context";
 
+export interface InstantLoanNativeAccountType {
+  Native: Principal;
+}
+
+export interface InstantLoanExternalAccountType {
+  External: string;
+}
+
 export type InstantLoanAccountType =
-  | { Native: Principal }
-  | { External: string };
+  | InstantLoanNativeAccountType
+  | InstantLoanExternalAccountType;
+
+export interface InstantLoanBtcAsset {
+  BTC: null;
+}
+
+export interface InstantLoanSolAsset {
+  SOL: null;
+}
+
+export interface InstantLoanUsdcAsset {
+  USDC: null;
+}
+
+export interface InstantLoanUsdtAsset {
+  USDT: null;
+}
+
 export type InstantLoanAsset =
-  | { BTC: null }
-  | { SOL: null }
-  | { USDC: null }
-  | { USDT: null };
-export type InstantLoanLeg = { Lend: null } | { Borrow: null };
-export type InstantLoanAuthorisation = {
-  EthSignature: {
-    derivation_index: Uint8Array;
-    pubkey: Uint8Array;
-    address: string;
-  };
-};
+  | InstantLoanBtcAsset
+  | InstantLoanSolAsset
+  | InstantLoanUsdcAsset
+  | InstantLoanUsdtAsset;
+
+export interface InstantLoanLendLeg {
+  Lend: null;
+}
+
+export interface InstantLoanBorrowLeg {
+  Borrow: null;
+}
+
+export type InstantLoanLeg = InstantLoanLendLeg | InstantLoanBorrowLeg;
+
+export interface InstantLoanEthSignatureAuthorisation {
+  derivation_index: Uint8Array;
+  pubkey: Uint8Array;
+  address: string;
+}
+
+export interface InstantLoanAuthorisation {
+  EthSignature: InstantLoanEthSignatureAuthorisation;
+}
 
 export interface CreateInstantLoanCanisterRequest {
   borrow_destination: InstantLoanAccountType;
@@ -43,57 +80,98 @@ export interface HeadlessLoansConfig {
   lending_canister: Principal;
 }
 
+export interface HeadlessLoanCreatedEventPayload {
+  loan_id: bigint;
+  borrow_destination: InstantLoanAccountType;
+  lend_asset: InstantLoanAsset;
+  borrow_amount: bigint;
+  lend_pool_id: Principal;
+  refund_destination: InstantLoanAccountType;
+  ltv_max_bps: bigint;
+  ltv_timer_s: bigint;
+  lending_profile: Principal;
+  borrow_pool_id: Principal;
+  borrow_asset: InstantLoanAsset;
+}
+
+export interface HeadlessLoanCreatedEventType {
+  LoanCreated: HeadlessLoanCreatedEventPayload;
+}
+
+export interface HeadlessLoanFullLendWithdrawalRequestedEventPayload {
+  loan_id: bigint;
+  account: InstantLoanAccountType;
+  pool_id: Principal;
+}
+
+export interface HeadlessLoanFullLendWithdrawalRequestedEventType {
+  FullLendWithdrawalRequested: HeadlessLoanFullLendWithdrawalRequestedEventPayload;
+}
+
+export interface HeadlessLoanBorrowRequestedEventPayload {
+  loan_id: bigint;
+  account: InstantLoanAccountType;
+  pool_id: Principal;
+  amount: bigint;
+}
+
+export interface HeadlessLoanBorrowRequestedEventType {
+  BorrowRequested: HeadlessLoanBorrowRequestedEventPayload;
+}
+
+export interface HeadlessLoanDepositTimerExceededEventPayload {
+  loan_id: bigint;
+}
+
+export interface HeadlessLoanDepositTimerExceededEventType {
+  DepositTimerExceeded: HeadlessLoanDepositTimerExceededEventPayload;
+}
+
+export interface HeadlessLoanStuckFundsWithdrawalRequestedEventPayload {
+  leg: InstantLoanLeg;
+  loan_id: bigint;
+  account: InstantLoanAccountType;
+  pool_id: Principal;
+  amount: bigint;
+}
+
+export interface HeadlessLoanStuckFundsWithdrawalRequestedEventType {
+  StuckFundsWithdrawalRequested: HeadlessLoanStuckFundsWithdrawalRequestedEventPayload;
+}
+
+export interface HeadlessLoanProfileWarmedEventPayload {
+  derivation_index: Uint8Array;
+  warmed_profile_id: bigint;
+  eth_address: string;
+  lending_profile: Principal;
+}
+
+export interface HeadlessLoanProfileWarmedEventType {
+  ProfileWarmed: HeadlessLoanProfileWarmedEventPayload;
+}
+
+export interface HeadlessLoanRepayCompleteEventType {
+  RepayComplete: CreateInstantLoanCanisterResponse;
+}
+
+export interface HeadlessLoanDepositTimerStartedEventPayload {
+  loan_id: bigint;
+  timestamp: bigint;
+}
+
+export interface HeadlessLoanDepositTimerStartedEventType {
+  DepositTimerStarted: HeadlessLoanDepositTimerStartedEventPayload;
+}
+
 export type HeadlessLoanEventType =
-  | {
-      LoanCreated: {
-        loan_id: bigint;
-        borrow_destination: InstantLoanAccountType;
-        lend_asset: InstantLoanAsset;
-        borrow_amount: bigint;
-        lend_pool_id: Principal;
-        refund_destination: InstantLoanAccountType;
-        ltv_max_bps: bigint;
-        ltv_timer_s: bigint;
-        lending_profile: Principal;
-        borrow_pool_id: Principal;
-        borrow_asset: InstantLoanAsset;
-      };
-    }
-  | {
-      FullLendWithdrawalRequested: {
-        loan_id: bigint;
-        account: InstantLoanAccountType;
-        pool_id: Principal;
-      };
-    }
-  | {
-      BorrowRequested: {
-        loan_id: bigint;
-        account: InstantLoanAccountType;
-        pool_id: Principal;
-        amount: bigint;
-      };
-    }
-  | { DepositTimerExceeded: { loan_id: bigint } }
-  | {
-      StuckFundsWithdrawalRequested: {
-        leg: InstantLoanLeg;
-        loan_id: bigint;
-        account: InstantLoanAccountType;
-        pool_id: Principal;
-        amount: bigint;
-      };
-    }
-  | {
-      ProfileWarmed: {
-        derivation_index: Uint8Array;
-        warmed_profile_id: bigint;
-        eth_address: string;
-        lending_profile: Principal;
-      };
-    }
-  | { RepayComplete: CreateInstantLoanCanisterResponse }
-  | { DepositTimerStarted: { loan_id: bigint; timestamp: bigint } };
+  | HeadlessLoanCreatedEventType
+  | HeadlessLoanFullLendWithdrawalRequestedEventType
+  | HeadlessLoanBorrowRequestedEventType
+  | HeadlessLoanDepositTimerExceededEventType
+  | HeadlessLoanStuckFundsWithdrawalRequestedEventType
+  | HeadlessLoanProfileWarmedEventType
+  | HeadlessLoanRepayCompleteEventType
+  | HeadlessLoanDepositTimerStartedEventType;
 
 export interface HeadlessLoanEvent {
   id: bigint;
@@ -129,33 +207,168 @@ export interface WarmedProfile {
   lending_profile: Principal;
 }
 
+export interface LendingClientCallErrorPayload {
+  method: string;
+  reason: string;
+}
+
+interface LendingClientCallFailedError {
+  CallFailed: LendingClientCallErrorPayload;
+}
+
+interface LendingClientCallRejectedError {
+  CallRejected: LendingClientCallErrorPayload;
+}
+
+interface LendingClientDecodeFailedError {
+  DecodeFailed: LendingClientCallErrorPayload;
+}
+
 type LendingClientError =
-  | { CallFailed: { method: string; reason: string } }
-  | { CallRejected: { method: string; reason: string } }
-  | { DecodeFailed: { method: string; reason: string } };
+  | LendingClientCallFailedError
+  | LendingClientCallRejectedError
+  | LendingClientDecodeFailedError;
 
 export type InstantLoansCanisterError =
-  | { BorrowAmountRequired: null }
-  | { NoCollateralPosition: { loan_id: bigint } }
-  | { LtvTimerOutOfRange: { max: bigint } }
-  | { LtvMaxExceeded: { actual_bps: bigint; max_bps: bigint } }
-  | { MemoryLockFailed: { reason: string } }
-  | { UnauthorizedAccessListCaller: { caller: Principal } }
-  | { LendingClient: LendingClientError }
-  | { LtvMaxOutOfRange: { max: bigint } }
-  | { AccountRequired: { label: string } }
-  | { DepositTimerExceeded: { loan_id: bigint } }
-  | { LoanNotFound: { loan_id: bigint } }
-  | { LendingProtocolError: { error: unknown; operation: string } }
-  | { AuthorizationFailed: { reason: string } }
-  | { DepositAlreadyProcessed: { loan_id: bigint } }
-  | { MissingPrice: { symbol: string } }
-  | { InvalidLtvTimerS: null }
-  | { DebtNotFullyRepaid: { loan_id: bigint } }
-  | { EmptyCollateralPosition: null }
-  | { SigningFailed: { reason: string } };
+  | BorrowAmountRequiredError
+  | NoCollateralPositionError
+  | LtvTimerOutOfRangeError
+  | LtvMaxExceededError
+  | MemoryLockFailedError
+  | UnauthorizedAccessListCallerError
+  | LendingClientCanisterError
+  | LtvMaxOutOfRangeError
+  | AccountRequiredError
+  | DepositTimerExceededError
+  | LoanNotFoundError
+  | LendingProtocolError
+  | AuthorizationFailedError
+  | DepositAlreadyProcessedError
+  | MissingPriceError
+  | InvalidLtvTimerSError
+  | DebtNotFullyRepaidError
+  | EmptyCollateralPositionError
+  | SigningFailedError;
 
-type Result<T> = { Ok: T } | { Err: InstantLoansCanisterError };
+interface BorrowAmountRequiredError {
+  BorrowAmountRequired: null;
+}
+
+interface LoanIdErrorPayload {
+  loan_id: bigint;
+}
+
+interface NoCollateralPositionError {
+  NoCollateralPosition: LoanIdErrorPayload;
+}
+
+interface MaxValueErrorPayload {
+  max: bigint;
+}
+
+interface LtvTimerOutOfRangeError {
+  LtvTimerOutOfRange: MaxValueErrorPayload;
+}
+
+interface LtvMaxExceededPayload {
+  actual_bps: bigint;
+  max_bps: bigint;
+}
+
+interface LtvMaxExceededError {
+  LtvMaxExceeded: LtvMaxExceededPayload;
+}
+
+interface ReasonErrorPayload {
+  reason: string;
+}
+
+interface MemoryLockFailedError {
+  MemoryLockFailed: ReasonErrorPayload;
+}
+
+interface UnauthorizedAccessListCallerPayload {
+  caller: Principal;
+}
+
+interface UnauthorizedAccessListCallerError {
+  UnauthorizedAccessListCaller: UnauthorizedAccessListCallerPayload;
+}
+
+interface LendingClientCanisterError {
+  LendingClient: LendingClientError;
+}
+
+interface LtvMaxOutOfRangeError {
+  LtvMaxOutOfRange: MaxValueErrorPayload;
+}
+
+interface AccountRequiredPayload {
+  label: string;
+}
+
+interface AccountRequiredError {
+  AccountRequired: AccountRequiredPayload;
+}
+
+interface DepositTimerExceededError {
+  DepositTimerExceeded: LoanIdErrorPayload;
+}
+
+interface LoanNotFoundError {
+  LoanNotFound: LoanIdErrorPayload;
+}
+
+interface LendingProtocolErrorPayload {
+  error: unknown;
+  operation: string;
+}
+
+interface LendingProtocolError {
+  LendingProtocolError: LendingProtocolErrorPayload;
+}
+
+interface AuthorizationFailedError {
+  AuthorizationFailed: ReasonErrorPayload;
+}
+
+interface DepositAlreadyProcessedError {
+  DepositAlreadyProcessed: LoanIdErrorPayload;
+}
+
+interface MissingPricePayload {
+  symbol: string;
+}
+
+interface MissingPriceError {
+  MissingPrice: MissingPricePayload;
+}
+
+interface InvalidLtvTimerSError {
+  InvalidLtvTimerS: null;
+}
+
+interface DebtNotFullyRepaidError {
+  DebtNotFullyRepaid: LoanIdErrorPayload;
+}
+
+interface EmptyCollateralPositionError {
+  EmptyCollateralPosition: null;
+}
+
+interface SigningFailedError {
+  SigningFailed: ReasonErrorPayload;
+}
+
+interface OkResult<T> {
+  Ok: T;
+}
+
+interface ErrResult {
+  Err: InstantLoansCanisterError;
+}
+
+type Result<T> = OkResult<T> | ErrResult;
 
 export interface InstantLoansActor {
   create_loan: ActorMethod<

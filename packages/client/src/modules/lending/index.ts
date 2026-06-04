@@ -1,5 +1,4 @@
 export { createTransferErc20Transaction } from "./evm-transactions";
-export type { WalletExecutionParams } from "./lending";
 export { LendingModule } from "./lending";
 export type {
   BorrowAction,
@@ -8,10 +7,14 @@ export type {
   ContractInteractionSupplyFlowRequest,
   CreateBorrowData,
   CreateBorrowRequest,
+  CreateTransferErc20TransactionParams,
   CreateWithdrawData,
   CreateWithdrawRequest,
   EstimateInflowFeeRequest,
+  EvmContractTransaction,
   EvmSupplyContext,
+  ExternalOutflowReceiver,
+  GetDepositAddressRequest,
   GetEvmSupplyContextRequest,
   IcrcAccountSupplyTarget,
   InflowFeeEstimate,
@@ -25,6 +28,7 @@ export type {
   SupplyFlowRequest,
   SupplyTarget,
   TransferSupplyFlowRequest,
+  WalletExecutionParams,
   WalletTransferSupplyFlowRequest,
   WithdrawAction,
   WithdrawOutflowDetails,

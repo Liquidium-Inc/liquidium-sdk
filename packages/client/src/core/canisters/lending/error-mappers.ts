@@ -11,10 +11,10 @@ type UnionToIntersection<T> = (
   ? Intersection
   : never;
 
-type ErrorMapping = {
+interface ErrorMapping {
   code: LiquidiumErrorCode;
   fallbackMessage?: string;
-};
+}
 
 const LENDING_CANISTER_PROTOCOL_RESULT_ERROR_MAP = {
   InvalidTargetPrincipal: { code: LiquidiumErrorCode.INVALID_TARGET_PRINCIPAL },
