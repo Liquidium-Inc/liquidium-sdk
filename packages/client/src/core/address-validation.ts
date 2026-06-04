@@ -8,15 +8,19 @@ import { Asset, Chain } from "./types";
 
 export type EvmAddress = `0x${string}`;
 
+interface NormalizeExternalAddressParams {
+  address: string;
+  asset: string;
+  chain: string;
+}
+
 const BTC_MAINNET_ADDRESS_ERROR = "Address must be a valid mainnet BTC address";
 const EVM_ADDRESS_ERROR = "Address must be a valid EVM address";
 const ADDRESS_CHAIN_MISMATCH_ERROR = "Address chain must match asset";
 
-export function normalizeExternalAddress(params: {
-  address: string;
-  asset: string;
-  chain: string;
-}): string {
+export function normalizeExternalAddress(
+  params: NormalizeExternalAddressParams
+): string {
   if (params.asset === Asset.BTC) {
     if (params.chain !== Chain.BTC) {
       throw new LiquidiumError(

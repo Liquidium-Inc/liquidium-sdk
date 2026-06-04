@@ -6,6 +6,10 @@ import {
   WalletExecutionKind,
 } from "./core/wallet-actions";
 
+interface WalletExecutionKindCarrier {
+  executionKind?: unknown;
+}
+
 /**
  * Wallet wiring for {@link executeWith}.
  *
@@ -105,7 +109,7 @@ export function executeWith(options: ExecuteWithOptions) {
         throw new LiquidiumError(
           LiquidiumErrorCode.VALIDATION_ERROR,
           `Unsupported wallet execution kind: ${String(
-            (action as { executionKind?: unknown }).executionKind
+            (action as WalletExecutionKindCarrier).executionKind
           )}`
         );
     }

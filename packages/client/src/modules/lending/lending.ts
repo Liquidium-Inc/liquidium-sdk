@@ -43,6 +43,7 @@ import { normalizeHexSignature } from "../../core/utils/signature";
 import { computeExpiryTimestampFromNow } from "../../core/utils/time";
 import { getVariantKey } from "../../core/utils/variant";
 import {
+  type EthTransactionRequest,
   TransferMode,
   WalletActionKind,
   type WalletAdapter,
@@ -75,6 +76,7 @@ import {
   type EstimateInflowFeeRequest,
   EvmSupplyApprovalStrategy,
   type EvmSupplyContext,
+  type GetDepositAddressRequest,
   type GetEvmSupplyContextRequest,
   type InflowFeeEstimate,
   type OutflowDetails,
@@ -84,6 +86,7 @@ import {
   type SupplyFlowRequest,
   SupplyPlanType,
   type SupplyTarget,
+  type WalletExecutionParams,
   type WithdrawAction,
   type WithdrawOutflowDetails,
   type WithdrawSubmitSignatureInfo,
@@ -95,27 +98,105 @@ const SUBMIT_INFLOW_RETRY_BACKOFF_MULTIPLIER = 2;
 const ETH_APPROVAL_POLL_INTERVAL_MS = 2_000;
 const ETH_APPROVAL_MAX_POLLS = 30;
 
-export type WalletExecutionParams = {
-  signerChain: Chain;
-  signerWalletAdapter: WalletAdapter;
-};
+type SubmitInflowDefaults = Omit<SubmitInflowRequest, "txid">;
 
-type OutflowRequestData = {
+interface OutflowRequestData {
   profileId: string;
   poolId: string;
   amount: bigint;
   receiverAddress: string;
   signerWalletAddress: string;
   expiryTimestamp: bigint;
-};
+}
 
-type SupplyInstruction = {
+interface SupplyInstruction {
   poolId: string;
   asset: string;
   chain: string;
   action: SupplyAction;
   target: SupplyTarget;
-};
+}
+
+interface GetEvmSupplyContextForPoolParams {
+  request: GetEvmSupplyContextRequest;
+  asset: string;
+  chain: string;
+}
+
+interface SendAndSubmitNativeSupplyInflowParams {
+  request: SupplyFlowRequest;
+  instruction: SupplyInstruction;
+  defaultSubmitInflowRequest?: SubmitInflowDefaults;
+}
+
+interface SubmitSupplyFlowInflowParams {
+  instruction: SupplyInstruction;
+  mechanism: SupplyPlanType;
+  defaultSubmitInflowRequest?: SubmitInflowDefaults;
+  submitRequest: SubmitInflowRequest;
+}
+
+interface ExecuteContractSupplyParams {
+  request: SupplyFlowRequest;
+  instruction: SupplyInstruction;
+  defaultSubmitInflowRequest?: SubmitInflowDefaults;
+}
+
+interface SendNativeSupplyTransactionParams {
+  walletAdapter: Pick<
+    WalletAdapter,
+    "sendBtcTransaction" | "sendEthTransaction"
+  >;
+  chain: string;
+  asset: string;
+  toAddress: string;
+  amount: bigint;
+  senderAccount: string;
+  action: SupplyAction;
+}
+
+interface NormalizeOutflowReceiverAddressParams {
+  poolId: string;
+  receiverAddress: string;
+}
+
+interface WaitForExpectedAllowanceParams {
+  walletAddress: string;
+  tokenAddress: string;
+  spenderAddress: string;
+  amount: bigint;
+  expectation: AllowanceExpectation;
+}
+
+interface ReadErc20AllowanceParams {
+  evmReadClient: EvmReadClient;
+  tokenAddress: string;
+  ownerAddress: string;
+  spenderAddress: string;
+}
+
+interface ReadErc20BalanceParams {
+  evmReadClient: EvmReadClient;
+  tokenAddress: string;
+  ownerAddress: string;
+}
+
+interface ApprovalStrategyParams {
+  allowance: bigint;
+  amount: bigint;
+}
+
+interface DefaultSubmitInflowRequestParams {
+  action: SupplyAction;
+  chain: string;
+}
+
+interface ShouldSubmitInflowParams {
+  instruction: SupplyInstruction;
+  mechanism: SupplyPlanType;
+}
+
+type AllowanceExpectation = "zero" | "sufficient";
 
 /** Borrow, withdraw, supply, inflow reporting, and fee-estimation helpers. */
 export class LendingModule {
@@ -491,11 +572,9 @@ export class LendingModule {
     });
   }
 
-  private async getEvmSupplyContextForPool(params: {
-    request: GetEvmSupplyContextRequest;
-    asset: string;
-    chain: string;
-  }): Promise<EvmSupplyContext> {
+  private async getEvmSupplyContextForPool(
+    params: GetEvmSupplyContextForPoolParams
+  ): Promise<EvmSupplyContext> {
     const { request, asset, chain } = params;
     const evmReadClient = this.requireEvmReadClient(
       "EVM supply context requires an EVM RPC URL or public client"
@@ -567,12 +646,7 @@ export class LendingModule {
    * @param request - Profile, pool, asset, and supply action.
    * @returns The EVM deposit address for the derived account.
    */
-  async getDepositAddress(request: {
-    profileId: string;
-    poolId: string;
-    asset: string;
-    action: SupplyAction;
-  }): Promise<string> {
+  async getDepositAddress(request: GetDepositAddressRequest): Promise<string> {
     if (!isEthStablecoin(request.asset, Chain.ETH)) {
       throw new LiquidiumError(
         LiquidiumErrorCode.VALIDATION_ERROR,
@@ -651,11 +725,9 @@ export class LendingModule {
     return { totalFee: minterFee + ledgerFee };
   }
 
-  private async sendAndSubmitNativeSupplyInflow(params: {
-    request: SupplyFlowRequest;
-    instruction: SupplyInstruction;
-    defaultSubmitInflowRequest?: Omit<SubmitInflowRequest, "txid">;
-  }): Promise<string> {
+  private async sendAndSubmitNativeSupplyInflow(
+    params: SendAndSubmitNativeSupplyInflowParams
+  ): Promise<string> {
     const { request, instruction, defaultSubmitInflowRequest } = params;
 
     if (instruction.target.type !== "nativeAddress") {
@@ -706,12 +778,9 @@ export class LendingModule {
     return txid;
   }
 
-  private async submitSupplyFlowInflow(params: {
-    instruction: SupplyInstruction;
-    mechanism: SupplyPlanType;
-    defaultSubmitInflowRequest?: Omit<SubmitInflowRequest, "txid">;
-    submitRequest: SubmitInflowRequest;
-  }): Promise<SubmitInflowResponse> {
+  private async submitSupplyFlowInflow(
+    params: SubmitSupplyFlowInflowParams
+  ): Promise<SubmitInflowResponse> {
     if (!shouldSubmitInflow(params)) {
       return { success: true, txid: params.submitRequest.txid };
     }
@@ -722,11 +791,9 @@ export class LendingModule {
     });
   }
 
-  private async executeContractSupply(params: {
-    request: SupplyFlowRequest;
-    instruction: SupplyInstruction;
-    defaultSubmitInflowRequest?: Omit<SubmitInflowRequest, "txid">;
-  }): Promise<string> {
+  private async executeContractSupply(
+    params: ExecuteContractSupplyParams
+  ): Promise<string> {
     const { request, instruction, defaultSubmitInflowRequest } = params;
 
     if (
@@ -861,18 +928,9 @@ export class LendingModule {
     return depositTxid;
   }
 
-  private async sendNativeSupplyTransaction(params: {
-    walletAdapter: Pick<
-      WalletAdapter,
-      "sendBtcTransaction" | "sendEthTransaction"
-    >;
-    chain: string;
-    asset: string;
-    toAddress: string;
-    amount: bigint;
-    senderAccount: string;
-    action: SupplyAction;
-  }): Promise<string> {
+  private async sendNativeSupplyTransaction(
+    params: SendNativeSupplyTransactionParams
+  ): Promise<string> {
     switch (params.chain) {
       case Chain.BTC: {
         if (!params.walletAdapter.sendBtcTransaction) {
@@ -934,7 +992,7 @@ export class LendingModule {
 
   private async submitInflowWithRetry(
     txid: string,
-    extraRequest?: Omit<SubmitInflowRequest, "txid">
+    extraRequest?: SubmitInflowDefaults
   ): Promise<void> {
     await retryWithBackoff({
       execute: async () => {
@@ -1023,10 +1081,9 @@ export class LendingModule {
     return selectedPool;
   }
 
-  private async normalizeOutflowReceiverAddress(params: {
-    poolId: string;
-    receiverAddress: string;
-  }): Promise<string> {
+  private async normalizeOutflowReceiverAddress(
+    params: NormalizeOutflowReceiverAddressParams
+  ): Promise<string> {
     const selectedPool = await this.getPoolById(params.poolId);
 
     return normalizeExternalAddress({
@@ -1039,7 +1096,7 @@ export class LendingModule {
   private async sendEthContractTransaction(
     walletAdapter: Pick<WalletAdapter, "sendEthTransaction">,
     walletAddress: string,
-    request: { to: string; data: string },
+    request: EthTransactionRequest,
     actionType: string
   ): Promise<string> {
     if (!walletAdapter.sendEthTransaction) {
@@ -1058,13 +1115,9 @@ export class LendingModule {
     });
   }
 
-  private async waitForExpectedAllowance(params: {
-    walletAddress: string;
-    tokenAddress: string;
-    spenderAddress: string;
-    amount: bigint;
-    expectation: "zero" | "sufficient";
-  }): Promise<void> {
+  private async waitForExpectedAllowance(
+    params: WaitForExpectedAllowanceParams
+  ): Promise<void> {
     const evmReadClient = this.requireEvmReadClient(
       "Contract-interaction supply requires an EVM RPC URL or public client"
     );
@@ -1107,12 +1160,9 @@ export class LendingModule {
   }
 }
 
-async function readErc20Allowance(params: {
-  evmReadClient: EvmReadClient;
-  tokenAddress: string;
-  ownerAddress: string;
-  spenderAddress: string;
-}): Promise<bigint> {
+async function readErc20Allowance(
+  params: ReadErc20AllowanceParams
+): Promise<bigint> {
   const allowance = await params.evmReadClient.readContract({
     address: params.tokenAddress as EvmAddress,
     abi: ERC20_ABI,
@@ -1126,11 +1176,9 @@ async function readErc20Allowance(params: {
   return BigInt(allowance);
 }
 
-async function readErc20Balance(params: {
-  evmReadClient: EvmReadClient;
-  tokenAddress: string;
-  ownerAddress: string;
-}): Promise<bigint> {
+async function readErc20Balance(
+  params: ReadErc20BalanceParams
+): Promise<bigint> {
   const balance = await params.evmReadClient.readContract({
     address: params.tokenAddress as EvmAddress,
     abi: ERC20_ABI,
@@ -1141,10 +1189,9 @@ async function readErc20Balance(params: {
   return BigInt(balance);
 }
 
-function getApprovalStrategy(params: {
-  allowance: bigint;
-  amount: bigint;
-}): EvmSupplyApprovalStrategy {
+function getApprovalStrategy(
+  params: ApprovalStrategyParams
+): EvmSupplyApprovalStrategy {
   if (params.allowance >= params.amount) {
     return EvmSupplyApprovalStrategy.none;
   }
@@ -1212,10 +1259,9 @@ function getUnknownErrorMessage(error: unknown): string | null {
   return null;
 }
 
-function getDefaultSubmitInflowRequest(params: {
-  action: SupplyAction;
-  chain: string;
-}): Omit<SubmitInflowRequest, "txid"> | undefined {
+function getDefaultSubmitInflowRequest(
+  params: DefaultSubmitInflowRequestParams
+): SubmitInflowDefaults | undefined {
   if (params.chain !== Chain.BTC && params.chain !== Chain.ETH) {
     return undefined;
   }
@@ -1229,10 +1275,7 @@ function getDefaultSubmitInflowRequest(params: {
   };
 }
 
-function shouldSubmitInflow(params: {
-  instruction: SupplyInstruction;
-  mechanism: SupplyPlanType;
-}): boolean {
+function shouldSubmitInflow(params: ShouldSubmitInflowParams): boolean {
   if (params.mechanism !== SupplyPlanType.transfer) {
     return true;
   }

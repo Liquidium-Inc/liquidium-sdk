@@ -8,6 +8,6 @@
 
 > **InstantLoanStatus** = *typeof* [`InstantLoanStatus`](../variables/InstantLoanStatus.md)\[keyof *typeof* [`InstantLoanStatus`](../variables/InstantLoanStatus.md)\]
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:288](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L288)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:337](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L337)
 
 Simplified lifecycle status for consumer UIs.

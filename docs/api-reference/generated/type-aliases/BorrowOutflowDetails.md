@@ -8,7 +8,7 @@
 
 > **BorrowOutflowDetails** = [`OutflowDetails`](../interfaces/OutflowDetails.md) & `object`
 
-Defined in: [packages/client/src/modules/lending/types.ts:48](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L48)
+Defined in: [packages/client/src/modules/lending/types.ts:82](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L82)
 
 Borrow receipt with an external-chain receiver.
 
@@ -20,12 +20,4 @@ Borrow receipt with an external-chain receiver.
 
 ### receiver
 
-> **receiver**: `object`
-
-#### receiver.account
-
-> **account**: `string`
-
-#### receiver.type
-
-> **type**: `"External"`
+> **receiver**: [`ExternalOutflowReceiver`](../interfaces/ExternalOutflowReceiver.md)

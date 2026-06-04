@@ -9,10 +9,14 @@ const SUBACCOUNT_LENGTH = 32;
 const PRINCIPAL_LENGTH_OFFSET = 2;
 const PRINCIPAL_START_OFFSET = 3;
 
-export function encodeInflowSubaccount(request: {
+interface EncodeInflowSubaccountRequest {
   action: SupplyAction;
   principal: Principal;
-}): Uint8Array {
+}
+
+export function encodeInflowSubaccount(
+  request: EncodeInflowSubaccountRequest
+): Uint8Array {
   const subaccount = new Uint8Array(SUBACCOUNT_LENGTH);
   const principalBytes = request.principal.toUint8Array();
 

@@ -1,14 +1,14 @@
-export type MessageAccount = {
+interface MessageAccount {
   type: "Native" | "External";
   data: string;
-};
+}
 
-export type OutflowMessageRequest = {
+interface OutflowMessageRequest {
   pool_id: string;
   amount: string;
   account: MessageAccount;
   expiry_timestamp: bigint;
-};
+}
 
 export function createBorrowAssetMessage(
   request: OutflowMessageRequest,

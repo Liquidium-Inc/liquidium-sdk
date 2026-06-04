@@ -18,7 +18,7 @@ const MIN_BORROW_AMOUNT_BASE_UNITS = 5_000n;
 const INTERNAL_USD_DECIMAL_PLACES = 8;
 const PRICE_SCALE_DECIMAL_PLACES = 8;
 
-type CreateQuoteResultParams = {
+interface CreateQuoteResultParams {
   borrowAmount: bigint;
   borrowPoolId: string;
   collateralPoolId: string;
@@ -31,7 +31,30 @@ type CreateQuoteResultParams = {
   collateralAsset: string;
   validationErrors: QuoteValidationError[];
   warnings: QuoteWarning[];
-};
+}
+
+interface CreateLtvCalculationParams {
+  request: CalculateLtvRequest;
+  borrowUsd: bigint;
+  collateralUsd: bigint;
+  ltvBps: bigint;
+  maxAllowedLtvBps: bigint;
+  borrowAsset: string;
+  collateralAsset: string;
+  validationErrors: QuoteValidationError[];
+}
+
+interface ComputeUsdInternalFromBaseUnitsParams {
+  amountBaseUnits: bigint;
+  priceScaled: bigint;
+  assetDecimalPlaces: number;
+}
+
+interface ComputeBaseUnitsFromUsdInternalCeilParams {
+  usdInternal: bigint;
+  priceScaled: bigint;
+  assetDecimalPlaces: number;
+}
 
 /** Pure quote helpers for LTV and required-collateral calculations. */
 export class QuoteModule {
@@ -369,16 +392,9 @@ export class QuoteModule {
   }
 }
 
-function createLtvCalculation(params: {
-  request: CalculateLtvRequest;
-  borrowUsd: bigint;
-  collateralUsd: bigint;
-  ltvBps: bigint;
-  maxAllowedLtvBps: bigint;
-  borrowAsset: string;
-  collateralAsset: string;
-  validationErrors: QuoteValidationError[];
-}): LtvCalculation {
+function createLtvCalculation(
+  params: CreateLtvCalculationParams
+): LtvCalculation {
   return {
     borrowAmount: params.request.borrowAmount,
     collateralAmount: params.request.collateralAmount,
@@ -411,11 +427,9 @@ function createQuoteResult(params: CreateQuoteResultParams): QuoteResult {
   };
 }
 
-function computeUsdInternalFromBaseUnits(params: {
-  amountBaseUnits: bigint;
-  priceScaled: bigint;
-  assetDecimalPlaces: number;
-}): bigint {
+function computeUsdInternalFromBaseUnits(
+  params: ComputeUsdInternalFromBaseUnitsParams
+): bigint {
   const { amountBaseUnits, priceScaled, assetDecimalPlaces } = params;
   const scaleDiff = INTERNAL_USD_DECIMAL_PLACES - PRICE_SCALE_DECIMAL_PLACES;
   const numerator = amountBaseUnits * priceScaled;
@@ -428,11 +442,9 @@ function computeUsdInternalFromBaseUnits(params: {
   return numerator / (assetDecimalFactor * 10n ** BigInt(-scaleDiff));
 }
 
-function computeBaseUnitsFromUsdInternalCeil(params: {
-  usdInternal: bigint;
-  priceScaled: bigint;
-  assetDecimalPlaces: number;
-}): bigint {
+function computeBaseUnitsFromUsdInternalCeil(
+  params: ComputeBaseUnitsFromUsdInternalCeilParams
+): bigint {
   const { usdInternal, priceScaled, assetDecimalPlaces } = params;
   const scaleDiff = INTERNAL_USD_DECIMAL_PLACES - PRICE_SCALE_DECIMAL_PLACES;
   const assetDecimalFactor = 10n ** BigInt(assetDecimalPlaces);

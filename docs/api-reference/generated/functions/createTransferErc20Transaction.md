@@ -6,9 +6,9 @@
 
 # Function: createTransferErc20Transaction()
 
-> **createTransferErc20Transaction**(`params`): `object`
+> **createTransferErc20Transaction**(`params`): [`EvmContractTransaction`](../interfaces/EvmContractTransaction.md)
 
-Defined in: [packages/client/src/modules/lending/evm-transactions.ts:27](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/evm-transactions.ts#L27)
+Defined in: [packages/client/src/modules/lending/evm-transactions.ts:57](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/evm-transactions.ts#L57)
 
 Builds calldata for an ERC-20 `transfer(recipient, amount)` transaction.
 
@@ -16,26 +16,8 @@ Builds calldata for an ERC-20 `transfer(recipient, amount)` transaction.
 
 ### params
 
-#### amount
-
-`bigint`
-
-#### recipientAddress
-
-`string`
-
-#### tokenAddress
-
-`string`
+[`CreateTransferErc20TransactionParams`](../interfaces/CreateTransferErc20TransactionParams.md)
 
 ## Returns
 
-`object`
-
-### data
-
-> **data**: `string`
-
-### to
-
-> **to**: `string`
+[`EvmContractTransaction`](../interfaces/EvmContractTransaction.md)

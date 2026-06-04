@@ -127,6 +127,18 @@ export interface SignatureInfo {
   account?: string;
 }
 
+/** Request submitted after a BTC PSBT has been signed. */
+export interface SignPsbtSubmitRequest {
+  /** Base64-encoded signed PSBT. */
+  signedPsbtBase64: string;
+}
+
+/** Request submitted after an ETH transaction has been sent. */
+export interface SendEthTransactionSubmitRequest {
+  /** EVM transaction hash returned by the wallet. */
+  txHash: string;
+}
+
 /** Prepared action that requires message signing before submit. */
 export interface SignMessageWalletAction<TData, TResult> {
   /** Protocol action kind. */
@@ -162,7 +174,7 @@ export interface SignPsbtWalletAction<TResult> {
   /** Base64-encoded unsigned PSBT. */
   psbtBase64: string;
   /** Submits the signed PSBT and resolves the protocol result. */
-  submit(request: { signedPsbtBase64: string }): Promise<TResult>;
+  submit(request: SignPsbtSubmitRequest): Promise<TResult>;
 }
 
 /** Prepared action that requires sending an ETH transaction before submit. */
@@ -180,7 +192,7 @@ export interface SendEthTransactionWalletAction<TResult> {
   /** EVM transaction request to send. */
   transaction: EthTransactionRequest;
   /** Submits the transaction hash and resolves the protocol result. */
-  submit(request: { txHash: string }): Promise<TResult>;
+  submit(request: SendEthTransactionSubmitRequest): Promise<TResult>;
 }
 
 /** Any prepared action returned by SDK methods and executable by {@link executeWith}. */

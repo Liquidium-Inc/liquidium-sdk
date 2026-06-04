@@ -120,25 +120,73 @@ export interface OutflowActivity extends BaseActivity {
 /** Any activity returned by `activities.list` or `activities.getStatus`. */
 export type Activity = InflowActivity | OutflowActivity;
 
-/** Request for listing activities by profile id or instant-loan short reference. */
-export type ListActivitiesRequest = {
+/** Shared request fields for listing activities. */
+export interface BaseListActivitiesRequest {
   /** Optional state filter; defaults to `all`. */
   filter?: ActivityFilter;
-} & ({ profileId: string } | { shortRef: string });
+}
 
-/** Request for fetching one activity by id and owner identifier. */
-export type GetActivityStatusRequest = {
+/** Activity list request scoped to a Liquidium profile. */
+export interface ListActivitiesByProfileRequest
+  extends BaseListActivitiesRequest {
+  /** Profile principal text to list activities for. */
+  profileId: string;
+}
+
+/** Activity list request scoped to an instant-loan short reference. */
+export interface ListActivitiesByShortRefRequest
+  extends BaseListActivitiesRequest {
+  /** Instant-loan short reference to list activities for. */
+  shortRef: string;
+}
+
+/** Request for listing activities by profile id or instant-loan short reference. */
+export type ListActivitiesRequest =
+  | ListActivitiesByProfileRequest
+  | ListActivitiesByShortRefRequest;
+
+/** Shared request fields for an activity status lookup. */
+export interface BaseGetActivityStatusRequest {
   /** Activity or receipt id to look up. */
   id: string;
-} & ({ profileId: string } | { shortRef: string });
+}
+
+/** Activity status lookup scoped to a Liquidium profile. */
+export interface GetActivityStatusByProfileRequest
+  extends BaseGetActivityStatusRequest {
+  /** Profile principal text that owns the activity. */
+  profileId: string;
+}
+
+/** Activity status lookup scoped to an instant-loan short reference. */
+export interface GetActivityStatusByShortRefRequest
+  extends BaseGetActivityStatusRequest {
+  /** Instant-loan short reference that owns the activity. */
+  shortRef: string;
+}
+
+/** Request for fetching one activity by id and owner identifier. */
+export type GetActivityStatusRequest =
+  | GetActivityStatusByProfileRequest
+  | GetActivityStatusByShortRefRequest;
+
+/** Successful activity status lookup result. */
+export interface ActivityStatusFoundResponse {
+  /** Indicates the activity was found. */
+  found: true;
+  /** Matched activity. */
+  activity: Activity;
+}
+
+/** Missing activity status lookup result. */
+export interface ActivityStatusNotFoundResponse {
+  /** Indicates the activity was not found. */
+  found: false;
+  /** Requested activity or receipt id. */
+  id: string;
+}
 
 /** Result of an activity status lookup. */
 export type GetActivityStatusResponse =
-  | {
-      found: true;
-      activity: Activity;
-    }
-  | {
-      found: false;
-      id: string;
-    };
+  | ActivityStatusFoundResponse
+  | ActivityStatusNotFoundResponse;

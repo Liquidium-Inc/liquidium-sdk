@@ -6,13 +6,43 @@ import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
 import { CK_DEPOSIT_ABI, ERC20_ABI } from "../../core/evm";
 import type { SupplyAction } from "../../core/types";
 import { encodeInflowSubaccount } from "../../core/utils/inflow-subaccount";
+import type {
+  CreateTransferErc20TransactionParams,
+  EvmContractTransaction,
+} from "./types";
+
+/** Parameters for an ERC-20 approve transaction. */
+export interface CreateApproveTransactionParams {
+  /** ERC-20 token contract address. */
+  tokenAddress: string;
+  /** Contract address approved to spend tokens. */
+  spenderAddress: string;
+  /** Approval amount in token base units. */
+  amount: bigint;
+}
+
+/** Parameters for an ERC-20 deposit-helper transaction. */
+export interface CreateDepositErc20TransactionParams {
+  /** Deposit helper contract address. */
+  depositContractAddress: string;
+  /** ERC-20 token contract address. */
+  tokenAddress: string;
+  /** Deposit amount in token base units. */
+  amount: bigint;
+  /** Pool principal text receiving the inflow. */
+  poolId: string;
+  /** Liquidium profile principal text. */
+  profileId: string;
+  /** Expected ICRC destination account text. */
+  destinationAccount: string;
+  /** Deposit or repayment action for the inflow. */
+  action: SupplyAction;
+}
 
 /** Builds calldata for an ERC-20 `approve(spender, amount)` transaction. */
-export function createApproveTransaction(params: {
-  tokenAddress: string;
-  spenderAddress: string;
-  amount: bigint;
-}): { to: string; data: string } {
+export function createApproveTransaction(
+  params: CreateApproveTransactionParams
+): EvmContractTransaction {
   return {
     to: params.tokenAddress,
     data: encodeFunctionData({
@@ -24,11 +54,9 @@ export function createApproveTransaction(params: {
 }
 
 /** Builds calldata for an ERC-20 `transfer(recipient, amount)` transaction. */
-export function createTransferErc20Transaction(params: {
-  tokenAddress: string;
-  recipientAddress: string;
-  amount: bigint;
-}): { to: string; data: string } {
+export function createTransferErc20Transaction(
+  params: CreateTransferErc20TransactionParams
+): EvmContractTransaction {
   return {
     to: params.tokenAddress,
     data: encodeFunctionData({
@@ -40,15 +68,9 @@ export function createTransferErc20Transaction(params: {
 }
 
 /** Builds calldata for depositing ERC-20 funds into the ckETH deposit helper. */
-export function createDepositErc20Transaction(params: {
-  depositContractAddress: string;
-  tokenAddress: string;
-  amount: bigint;
-  poolId: string;
-  profileId: string;
-  destinationAccount: string;
-  action: SupplyAction;
-}): { to: string; data: string } {
+export function createDepositErc20Transaction(
+  params: CreateDepositErc20TransactionParams
+): EvmContractTransaction {
   const expectedDestinationAccount = encodeIcrcAccount({
     owner: DfinityPrincipal.fromText(params.poolId),
     subaccount: encodeInflowSubaccount({

@@ -42,6 +42,12 @@ interface SupplyTargetRequest {
   action: SupplyAction;
 }
 
+interface ResolveSupplyMechanismParams {
+  asset: string;
+  chain: string;
+  requestedMechanism?: SupplyMechanism;
+}
+
 export async function resolveSupplyTarget(
   canisterContext: CanisterContext,
   request: InternalSupplyTargetRequest
@@ -77,11 +83,9 @@ export async function resolveSupplyTarget(
   }
 }
 
-export function resolveSupplyMechanism(params: {
-  asset: string;
-  chain: string;
-  requestedMechanism?: SupplyMechanism;
-}): SupplyMechanism {
+export function resolveSupplyMechanism(
+  params: ResolveSupplyMechanismParams
+): SupplyMechanism {
   if (params.asset === Asset.BTC && params.chain === Chain.BTC) {
     if (params.requestedMechanism === SupplyPlanType.contractInteraction) {
       throw new LiquidiumError(
