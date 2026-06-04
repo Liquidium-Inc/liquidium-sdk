@@ -761,9 +761,9 @@ When unsure, check these first:
 - `examples/deposit-address-flow/src/sdk-example.ts`
 - `examples/contract-interaction-flow/src/dynamic-wallet.ts`
 - `examples/contract-interaction-flow/src/sdk-example.ts`
-- `examples/vite-react-dynamic/README.md`
-- `examples/vite-react-dynamic/src/lib/client.ts`
-- `examples/vite-react-dynamic/src/SdkMethodQueryPage.tsx`
+- `examples/sdk-method-query/README.md`
+- `examples/sdk-method-query/src/lib/client.ts`
+- `examples/sdk-method-query/src/SdkMethodQueryPage.tsx`
 
 ## Useful Resources
 

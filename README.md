@@ -14,7 +14,7 @@
 <p align="center">
   <a href="https://liquidium-inc.github.io/liquidium-sdk/"><b>SDK Docs</b></a> ·
   <a href="https://github.com/Liquidium-Inc/liquidium-sdk/tree/main/examples/instant-loans-flow"><b>Instant Loan Example</b></a> ·
-  <a href="https://github.com/Liquidium-Inc/liquidium-sdk/tree/main/examples/vite-react-dynamic"><b>SDK Method Query Example</b></a> ·
+  <a href="https://github.com/Liquidium-Inc/liquidium-sdk/tree/main/examples/sdk-method-query"><b>SDK Method Query Example</b></a> ·
   <a href="#core-api"><b>Core API</b></a>
 </p>
 
@@ -259,7 +259,7 @@ Start browser integrations with the examples.
 | Example | What it shows |
 | --- | --- |
 | [`examples/instant-loans-flow`](https://github.com/Liquidium-Inc/liquidium-sdk/tree/main/examples/instant-loans-flow) | Accountless instant loan UX with manual destination addresses, pool selection, LTV preview, loan creation, status reload, activity status, and address recovery |
-| [`examples/vite-react-dynamic`](https://github.com/Liquidium-Inc/liquidium-sdk/tree/main/examples/vite-react-dynamic) | Developer tool for calling SDK methods, including instant loan method templates |
+| [`examples/sdk-method-query`](https://github.com/Liquidium-Inc/liquidium-sdk/tree/main/examples/sdk-method-query) | Developer tool for calling SDK methods, including instant loan method templates |
 
 Run the instant loan example:
 

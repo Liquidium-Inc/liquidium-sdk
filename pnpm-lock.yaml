@@ -181,7 +181,7 @@ importers:
         specifier: ^7.3.3
         version: 7.3.3(@types/node@25.9.1)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.48.0)(tsx@4.21.0)(yaml@2.9.0)
 
-  examples/vite-react-dynamic:
+  examples/sdk-method-query:
     dependencies:
       '@dynamic-labs/ethereum':
         specifier: ^4.83.1

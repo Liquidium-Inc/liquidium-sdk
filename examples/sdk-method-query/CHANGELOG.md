@@ -1,4 +1,4 @@
-# @liquidium/example-vite-react-dynamic
+# @liquidium/example-sdk-method-query
 
 ## 0.0.1
 
