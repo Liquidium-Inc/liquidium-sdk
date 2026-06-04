@@ -8,7 +8,7 @@
 
 > `const` **InstantLoanStatus**: `object`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:337](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L337)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:341](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L341)
 
 Simplified lifecycle status for consumer UIs.
 

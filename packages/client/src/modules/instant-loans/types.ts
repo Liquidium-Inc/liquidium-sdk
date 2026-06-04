@@ -313,6 +313,10 @@ export interface InstantLoanInitialDeposit {
   chain: MarketChain;
   /** Address or ICRC account where the collateral should be sent. */
   target: SupplyTarget;
+  /** Unix timestamp in seconds when the collateral deposit was detected, or null before detection. */
+  detectedTimestamp: bigint | null;
+  /** Unix timestamp in seconds when the collateral deposit window expires, or null when unavailable. */
+  expiryTimestamp: bigint | null;
 }
 
 /** Current lending position backing the instant loan. */

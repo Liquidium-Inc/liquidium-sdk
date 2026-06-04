@@ -4224,7 +4224,16 @@ describe("InstantLoansModule", () => {
 
   test("gets canonical loan state by ref and derives flow targets", async () => {
     // given
-    const getLoan = vi.fn().mockResolvedValue({ Ok: createInstantLoan() });
+    const DEPOSIT_DETECTED_TIMESTAMP = 1_775_232_000n;
+    const EXPIRY_TIMESTAMP = 1_775_235_600n;
+    const DEPOSIT_DETECTED_AT_NS = DEPOSIT_DETECTED_TIMESTAMP * 1_000_000_000n;
+    const EXPIRES_AT_NS = EXPIRY_TIMESTAMP * 1_000_000_000n;
+    const getLoan = vi.fn().mockResolvedValue({
+      Ok: createInstantLoan({
+        deposit_detected_ts: [DEPOSIT_DETECTED_AT_NS],
+        expires_at: [EXPIRES_AT_NS],
+      }),
+    });
     const getBtcAddress = vi.fn().mockResolvedValue("bc1qinstantdeposit");
     const getDepositAddress = vi.fn().mockResolvedValue({
       Ok: "0x1111111111111111111111111111111111111111",
@@ -4322,6 +4331,8 @@ describe("InstantLoansModule", () => {
       inflowFeeAmount: 2_500n,
       asset: "BTC",
       chain: "BTC",
+      detectedTimestamp: DEPOSIT_DETECTED_TIMESTAMP,
+      expiryTimestamp: EXPIRY_TIMESTAMP,
       target: expect.objectContaining({
         address: "bc1qinstantdeposit",
       }),
@@ -5144,7 +5155,7 @@ describe("InstantLoansModule", () => {
     );
   });
 
-  function createInstantLoan() {
+  function createInstantLoan(overrides: Record<string, unknown> = {}) {
     return {
       id: LOAN_ID,
       authorisation: {
@@ -5171,6 +5182,7 @@ describe("InstantLoansModule", () => {
       borrow_asset: { USDT: null },
       expires_at: [],
       deposit_detected_ts: [],
+      ...overrides,
     };
   }
 

@@ -62,6 +62,26 @@ Decimal scale for `amount`, `collateralAmount`, and `inflowFeeAmount`.
 
 ***
 
+### detectedTimestamp
+
+> **detectedTimestamp**: `bigint` \| `null`
+
+Defined in: [packages/client/src/modules/instant-loans/types.ts:317](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L317)
+
+Unix timestamp in seconds when the collateral deposit was detected, or null before detection.
+
+***
+
+### expiryTimestamp
+
+> **expiryTimestamp**: `bigint` \| `null`
+
+Defined in: [packages/client/src/modules/instant-loans/types.ts:319](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L319)
+
+Unix timestamp in seconds when the collateral deposit window expires, or null when unavailable.
+
+***
+
 ### inflowFeeAmount
 
 > **inflowFeeAmount**: `bigint`
