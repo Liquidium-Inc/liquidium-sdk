@@ -4226,12 +4226,10 @@ describe("InstantLoansModule", () => {
     // given
     const DEPOSIT_DETECTED_TIMESTAMP = 1_775_232_000n;
     const EXPIRY_TIMESTAMP = 1_775_235_600n;
-    const DEPOSIT_DETECTED_AT_NS = DEPOSIT_DETECTED_TIMESTAMP * 1_000_000_000n;
-    const EXPIRES_AT_NS = EXPIRY_TIMESTAMP * 1_000_000_000n;
     const getLoan = vi.fn().mockResolvedValue({
       Ok: createInstantLoan({
-        deposit_detected_ts: [DEPOSIT_DETECTED_AT_NS],
-        expires_at: [EXPIRES_AT_NS],
+        deposit_detected_ts: [DEPOSIT_DETECTED_TIMESTAMP],
+        expires_at: [EXPIRY_TIMESTAMP],
       }),
     });
     const getBtcAddress = vi.fn().mockResolvedValue("bc1qinstantdeposit");

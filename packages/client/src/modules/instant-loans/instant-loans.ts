@@ -45,7 +45,6 @@ import type {
   InstantLoanEvent,
   InstantLoanEventType,
   InstantLoanGetRequest,
-  InstantLoanInitialDeposit,
   InstantLoanLeg,
   InstantLoanListEventsRequest,
   InstantLoanStatus as InstantLoanStatusValue,
@@ -58,7 +57,6 @@ const RATE_SCALE = 10n ** 27n;
 const SECONDS_PER_YEAR = 31_536_000n;
 const ETH_STABLECOIN_INFLOW_FEE_FALLBACK = 1_500_000n;
 const INSTANT_LOAN_MIN_SLIPPAGE_BUFFER_BPS = 200n;
-const NANOSECONDS_PER_SECOND = 1_000_000_000n;
 
 interface InstantLoanLtvPolicy {
   ltvBps: bigint;
@@ -160,10 +158,6 @@ interface InstantLoanWire {
   profileId: string;
   ltvMaxBps: string;
   depositWindowSeconds: string;
-  depositDetectedAt?: string | null;
-  deposit_detected_ts?: string | null;
-  expiresAt?: string | null;
-  expires_at?: string | null;
   collateral: InstantLoanCollateralWire;
   borrow: InstantLoanBorrowWire;
   refundDestination: InstantLoanAccountWire;
@@ -191,8 +185,16 @@ interface InstantLoanInitialDepositQuoteInput {
   decimals: bigint;
   asset: string;
   target: SupplyTarget;
-  detectedTimestamp: bigint | null;
-  expiryTimestamp: bigint | null;
+}
+
+interface InstantLoanInitialDepositQuote {
+  amount: bigint;
+  decimals: bigint;
+  collateralAmount: bigint;
+  inflowFeeAmount: bigint;
+  asset: string;
+  chain: string;
+  target: SupplyTarget;
 }
 
 interface RepaymentInflowFeeEstimate {
@@ -462,10 +464,8 @@ export class InstantLoansModule {
       borrowAmount: record.borrow_amount,
       borrowDestination: accountFromCanister(record.borrow_destination),
       refundDestination: accountFromCanister(record.refund_destination),
-      depositDetectedTimestamp: unixSecondsFromProtocolTimestampNs(
-        record.deposit_detected_ts[0]
-      ),
-      expiryTimestamp: unixSecondsFromProtocolTimestampNs(record.expires_at[0]),
+      depositDetectedTimestamp: record.deposit_detected_ts[0] ?? null,
+      expiryTimestamp: record.expires_at[0] ?? null,
     });
   }
 
@@ -500,14 +500,8 @@ export class InstantLoansModule {
       borrowAmount: parseBigintWire(loan.borrow.amount, "borrow amount"),
       borrowDestination: accountFromWire(loan.borrow.destination),
       refundDestination: accountFromWire(loan.refundDestination),
-      depositDetectedTimestamp: parseNullableUnixSecondsWire(
-        loan.depositDetectedAt ?? loan.deposit_detected_ts,
-        "deposit detected timestamp"
-      ),
-      expiryTimestamp: parseNullableUnixSecondsWire(
-        loan.expiresAt ?? loan.expires_at,
-        "expiry timestamp"
-      ),
+      depositDetectedTimestamp: null,
+      expiryTimestamp: null,
     });
   }
 
@@ -577,13 +571,11 @@ export class InstantLoansModule {
       totalDebtAmount,
     });
 
-    const initialDeposit = await this.createInitialDepositQuote({
+    const initialDepositQuote = await this.createInitialDepositQuote({
       collateralAmount,
       decimals: collateralDecimals,
       asset: collateralAsset,
       target: depositTarget,
-      detectedTimestamp: input.depositDetectedTimestamp,
-      expiryTimestamp: input.expiryTimestamp,
     });
 
     const repayment = {
@@ -624,7 +616,11 @@ export class InstantLoansModule {
         destination: input.borrowDestination,
       },
       refundDestination: input.refundDestination,
-      initialDeposit,
+      initialDeposit: {
+        ...initialDepositQuote,
+        detectedTimestamp: input.depositDetectedTimestamp,
+        expiryTimestamp: input.expiryTimestamp,
+      },
       repayment,
       position: {
         collateralAmount: currentCollateralAmount,
@@ -640,7 +636,7 @@ export class InstantLoansModule {
 
   private async createInitialDepositQuote(
     input: InstantLoanInitialDepositQuoteInput
-  ): Promise<InstantLoanInitialDeposit> {
+  ): Promise<InstantLoanInitialDepositQuote> {
     const inflowFee = await this.lending.estimateInflowFee({
       asset: input.asset as Asset,
       chain: input.target.chain as Chain,
@@ -654,8 +650,6 @@ export class InstantLoansModule {
       asset: input.asset,
       chain: input.target.chain,
       target: input.target,
-      detectedTimestamp: input.detectedTimestamp,
-      expiryTimestamp: input.expiryTimestamp,
     };
   }
 
@@ -1048,39 +1042,6 @@ function parseBigintWire(value: string | undefined, label: string): bigint {
   }
 
   return BigInt(value);
-}
-
-function parseNullableUnixSecondsWire(
-  value: string | null | undefined,
-  label: string
-): bigint | null {
-  if (value == null) {
-    return null;
-  }
-
-  if (/^\d+$/.test(value)) {
-    return unixSecondsFromProtocolTimestampNs(BigInt(value));
-  }
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    throw new LiquidiumError(
-      LiquidiumErrorCode.VALIDATION_ERROR,
-      `Invalid instant loan ${label}`
-    );
-  }
-
-  return BigInt(Math.floor(date.getTime() / 1_000));
-}
-
-function unixSecondsFromProtocolTimestampNs(
-  timestampNs: bigint | undefined
-): bigint | null {
-  if (timestampNs === undefined) {
-    return null;
-  }
-
-  return timestampNs / NANOSECONDS_PER_SECOND;
 }
 
 function requiredString(value: string | undefined, label: string): string {

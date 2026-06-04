@@ -175,6 +175,7 @@ export interface InstantLoanAuthorization {
 export interface InstantLoanWarmedProfile {
   id: bigint;
   authorization: InstantLoanAuthorization;
+  /** Unix creation timestamp in seconds. */
   createdAt: bigint;
   profileId: string;
 }
@@ -183,6 +184,7 @@ export interface InstantLoanWarmedProfile {
 export interface InstantLoanEvent {
   id: bigint;
   schemaVersion: number;
+  /** Unix event timestamp in seconds. */
   timestamp: bigint;
   eventType: InstantLoanEventType;
 }
@@ -259,6 +261,7 @@ export interface InstantLoanRepayCompleteEventType {
 export interface InstantLoanDepositTimerStartedEventType {
   type: "DepositTimerStarted";
   loanId: bigint;
+  /** Unix timestamp in seconds when the deposit timer started. */
   timestamp: bigint;
 }
 
