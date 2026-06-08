@@ -27,7 +27,7 @@ export interface CreateProfileParams {
 
 /** Data embedded in a prepared profile-creation action. */
 export interface CreateAccountData {
-  /** Expiry timestamp, in protocol nanoseconds, included in the signed message. */
+  /** Unix expiry timestamp in seconds, included in the signed message. */
   expiryTimestamp: bigint;
 }
 

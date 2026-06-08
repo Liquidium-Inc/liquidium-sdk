@@ -19,7 +19,7 @@ export interface Position {
   earnedInterest: bigint;
   /** Accrued borrow interest in base units. */
   debtInterest: bigint;
-  /** Protocol timestamp of the last position update. */
+  /** Unix timestamp in seconds of the last position update. */
   lastUpdate: bigint;
 }
 

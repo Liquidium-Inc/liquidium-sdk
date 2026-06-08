@@ -115,7 +115,7 @@ export interface CreateBorrowRequest {
 
 /** Prepared borrow request data embedded in the signable action. */
 export interface CreateBorrowData extends CreateBorrowRequest {
-  /** Expiry timestamp, in protocol nanoseconds, included in the signed message. */
+  /** Unix expiry timestamp in seconds, included in the signed message. */
   expiryTimestamp: bigint;
 }
 
@@ -148,7 +148,7 @@ export interface CreateWithdrawRequest {
 
 /** Prepared withdraw request data embedded in the signable action. */
 export interface CreateWithdrawData extends CreateWithdrawRequest {
-  /** Expiry timestamp, in protocol nanoseconds, included in the signed message. */
+  /** Unix expiry timestamp in seconds, included in the signed message. */
   expiryTimestamp: bigint;
 }
 

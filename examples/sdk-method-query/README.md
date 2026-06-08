@@ -47,4 +47,5 @@ history, quote, lending, and instant-loan methods:
 - `instantLoans.findByAddress`
 
 `instantLoans.get(...)` returns current loan state plus generated targets,
-position state, and the actionable repayment amount.
+initial deposit detection/expiry timestamps, position state, and the actionable
+repayment amount.

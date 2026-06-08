@@ -36,7 +36,7 @@ Amount to borrow in the borrow asset's base units.
 
 Defined in: [packages/client/src/modules/lending/types.ts:119](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L119)
 
-Expiry timestamp, in protocol nanoseconds, included in the signed message.
+Unix expiry timestamp in seconds, included in the signed message.
 
 ***
 

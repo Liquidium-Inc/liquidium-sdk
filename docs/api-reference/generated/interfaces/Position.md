@@ -88,7 +88,7 @@ Accrued supply interest in base units.
 
 Defined in: [packages/client/src/modules/positions/types.ts:23](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/types.ts#L23)
 
-Protocol timestamp of the last position update.
+Unix timestamp in seconds of the last position update.
 
 ***
 

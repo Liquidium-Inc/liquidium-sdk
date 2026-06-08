@@ -18,4 +18,4 @@ Data embedded in a prepared profile-creation action.
 
 Defined in: [packages/client/src/modules/accounts/types.ts:31](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/accounts/types.ts#L31)
 
-Expiry timestamp, in protocol nanoseconds, included in the signed message.
+Unix expiry timestamp in seconds, included in the signed message.

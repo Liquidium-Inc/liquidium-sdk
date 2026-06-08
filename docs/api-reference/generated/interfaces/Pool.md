@@ -118,7 +118,7 @@ Pool canister principal text.
 
 Defined in: [packages/client/src/modules/market/types.ts:58](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/types.ts#L58)
 
-Last pool update timestamp when available.
+Unix timestamp in seconds of the last pool update when available.
 
 ***
 

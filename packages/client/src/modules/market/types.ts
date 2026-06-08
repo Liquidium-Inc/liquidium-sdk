@@ -54,7 +54,7 @@ export interface Pool {
   borrowIndex: bigint;
   /** Whether borrowing the same asset as collateral is allowed. */
   sameAssetBorrowing: boolean;
-  /** Last pool update timestamp when available. */
+  /** Unix timestamp in seconds of the last pool update when available. */
   lastUpdated?: bigint;
 }
 
