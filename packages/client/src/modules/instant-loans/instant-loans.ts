@@ -162,6 +162,11 @@ interface DeriveInstantLoanStatusInput {
   totalDebtAmount: bigint;
 }
 
+interface DeriveDepositExpiryTimestampInput {
+  depositDetectedTimestamp: bigint | null;
+  depositWindowSeconds: bigint;
+}
+
 interface LtvCalculationErrorDetails {
   code: QuoteValidationErrorCode;
   message: string;
@@ -729,10 +734,9 @@ function deriveInstantLoanStatus(
   return InstantLoanStatus.awaitingDeposit;
 }
 
-function deriveDepositExpiryTimestamp(input: {
-  depositDetectedTimestamp: bigint | null;
-  depositWindowSeconds: bigint;
-}): bigint | null {
+function deriveDepositExpiryTimestamp(
+  input: DeriveDepositExpiryTimestampInput
+): bigint | null {
   if (input.depositDetectedTimestamp === null) {
     return null;
   }
