@@ -7,6 +7,7 @@ import {
   formatInstantLoan,
   formatPercentFromBps,
   formatPool,
+  formatUnixTimestampSeconds,
   getRecentLoanRefs,
   parseAmountToBaseUnits,
   parsePercentToBps,
@@ -159,6 +160,12 @@ export function App() {
           loan.initialDeposit.inflowFeeAmount,
           loan.initialDeposit.decimals
         )} ${collateralPool.asset}`,
+        `Deposit detected: ${formatUnixTimestampSeconds(
+          loan.initialDeposit.detectedTimestamp
+        )}`,
+        `Deposit expires: ${formatUnixTimestampSeconds(
+          loan.initialDeposit.expiryTimestamp
+        )}`,
         `Borrow amount: ${formatAmount(
           parsedBorrowAmount,
           borrowPool.decimals

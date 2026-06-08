@@ -78,7 +78,7 @@ Unix timestamp in seconds when the collateral deposit was detected, or null befo
 
 Defined in: [packages/client/src/modules/instant-loans/types.ts:322](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L322)
 
-Unix timestamp in seconds when the collateral deposit window expires, or null when unavailable.
+Unix timestamp in seconds when the collateral deposit window expires, or null before detection when unavailable.
 
 ***
 

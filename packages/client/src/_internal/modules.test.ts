@@ -4363,6 +4363,70 @@ describe("InstantLoansModule", () => {
     });
   });
 
+  test("should derive initial deposit expiry from detection timestamp when canister expiry is absent", async () => {
+    // given
+    const DEPOSIT_DETECTED_TIMESTAMP_SECONDS = 1_780_920_469n;
+    const DEPOSIT_WINDOW_SECONDS = 3_600n;
+    const EXPECTED_EXPIRY_TIMESTAMP_SECONDS =
+      DEPOSIT_DETECTED_TIMESTAMP_SECONDS + DEPOSIT_WINDOW_SECONDS;
+    const getLoan = vi.fn().mockResolvedValue({
+      Ok: createInstantLoan({
+        ltv_timer_s: DEPOSIT_WINDOW_SECONDS,
+        deposit_detected_ts: [DEPOSIT_DETECTED_TIMESTAMP_SECONDS],
+        expires_at: [],
+      }),
+    });
+    const getBtcAddress = vi.fn().mockResolvedValue("bc1qinstantdeposit");
+    const getDepositAddress = vi.fn().mockResolvedValue({
+      Ok: "0x1111111111111111111111111111111111111111",
+    });
+    const getPoolRate = vi
+      .fn()
+      .mockResolvedValue([[10_000_000_000_000_000_000_000_000n, 0n, 0n]]);
+    const getDepositFee = vi.fn().mockResolvedValue(2_000n);
+    const icrc1Fee = vi.fn().mockResolvedValue(10n);
+    mockInstantLoanLookupFetch({
+      collateralAmountHint: "10000000",
+    });
+
+    vi.spyOn(Actor, "createActor")
+      .mockReturnValueOnce({ get_loan: getLoan } as never)
+      .mockReturnValueOnce({
+        list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord()]),
+      } as never)
+      .mockReturnValueOnce({
+        list_pools: vi.fn().mockResolvedValue([createUsdtPoolRecord()]),
+      } as never)
+      .mockReturnValueOnce({
+        get_position: vi.fn().mockResolvedValue([]),
+      } as never)
+      .mockReturnValueOnce({
+        get_position: vi.fn().mockResolvedValue([]),
+      } as never)
+      .mockReturnValueOnce({ get_pool_rate: getPoolRate } as never)
+      .mockReturnValueOnce({ get_btc_address: getBtcAddress } as never)
+      .mockReturnValueOnce({ get_deposit_address: getDepositAddress } as never)
+      .mockReturnValueOnce({ get_deposit_fee: getDepositFee } as never)
+      .mockReturnValueOnce({ icrc1_fee: icrc1Fee } as never);
+    const client = new LiquidiumClient({
+      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
+      canisterIds: { instantLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
+    });
+
+    // when
+    const loan = await client.instantLoans.get({
+      ref: publicIdFromInt(LOAN_ID),
+    });
+
+    // then
+    expect(loan.initialDeposit.detectedTimestamp).toBe(
+      DEPOSIT_DETECTED_TIMESTAMP_SECONDS
+    );
+    expect(loan.initialDeposit.expiryTimestamp).toBe(
+      EXPECTED_EXPIRY_TIMESTAMP_SECONDS
+    );
+  });
+
   test("includes btc inflow fee in the instant loan repayment quote", async () => {
     // given
     const getLoan = vi.fn().mockResolvedValue({

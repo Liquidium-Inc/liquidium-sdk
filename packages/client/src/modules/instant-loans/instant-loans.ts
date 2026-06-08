@@ -434,7 +434,12 @@ export class InstantLoansModule {
       borrowDestination: accountFromCanister(record.borrow_destination),
       refundDestination: accountFromCanister(record.refund_destination),
       depositDetectedTimestamp: record.deposit_detected_ts[0] ?? null,
-      expiryTimestamp: record.expires_at[0] ?? null,
+      expiryTimestamp:
+        record.expires_at[0] ??
+        deriveDepositExpiryTimestamp({
+          depositDetectedTimestamp: record.deposit_detected_ts[0] ?? null,
+          depositWindowSeconds: record.ltv_timer_s,
+        }),
     });
   }
 
@@ -722,6 +727,17 @@ function deriveInstantLoanStatus(
   }
 
   return InstantLoanStatus.awaitingDeposit;
+}
+
+function deriveDepositExpiryTimestamp(input: {
+  depositDetectedTimestamp: bigint | null;
+  depositWindowSeconds: bigint;
+}): bigint | null {
+  if (input.depositDetectedTimestamp === null) {
+    return null;
+  }
+
+  return input.depositDetectedTimestamp + input.depositWindowSeconds;
 }
 
 function validateCreateRequest(request: CreateInstantLoanRequest): void {

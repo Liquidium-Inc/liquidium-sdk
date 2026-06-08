@@ -10,6 +10,7 @@ import type {
 const DISPLAY_DECIMALS = 6;
 const PERCENT_DECIMALS = 2n;
 const PERCENT_SCALE = 100n;
+const MILLISECONDS_PER_SECOND = 1_000n;
 const RECENT_LOANS_STORAGE_KEY = "liquidium-instant-loans.recentRefs";
 const MAX_RECENT_LOANS = 10;
 const ERROR_FIELD_EXCLUDE_LIST = new Set(["name", "message", "stack", "cause"]);
@@ -116,6 +117,20 @@ export function formatPercentFromBps(value: bigint): string {
   return `${formatAmount(value, 2n)}%`;
 }
 
+export function formatUnixTimestampSeconds(
+  timestampSeconds: bigint | null
+): string {
+  if (timestampSeconds === null) {
+    return "not set";
+  }
+
+  const timestampMilliseconds = Number(
+    timestampSeconds * MILLISECONDS_PER_SECOND
+  );
+
+  return `${timestampSeconds.toString()} (${new Date(timestampMilliseconds).toISOString()})`;
+}
+
 export function formatPool(pool: Pool): string {
   return [
     `${pool.asset} on ${pool.chain}`,
@@ -216,6 +231,12 @@ export function formatInstantLoan(
       loan.initialDeposit.inflowFeeAmount,
       collateralDecimals
     )} ${loan.initialDeposit.asset}`,
+    `Deposit detected: ${formatUnixTimestampSeconds(
+      loan.initialDeposit.detectedTimestamp
+    )}`,
+    `Deposit expires: ${formatUnixTimestampSeconds(
+      loan.initialDeposit.expiryTimestamp
+    )}`,
     "",
     "Current position:",
     `Collateral: ${formatAmount(

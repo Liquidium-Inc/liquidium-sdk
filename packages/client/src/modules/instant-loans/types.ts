@@ -318,7 +318,7 @@ export interface InstantLoanInitialDeposit {
   target: SupplyTarget;
   /** Unix timestamp in seconds when the collateral deposit was detected, or null before detection. */
   detectedTimestamp: bigint | null;
-  /** Unix timestamp in seconds when the collateral deposit window expires, or null when unavailable. */
+  /** Unix timestamp in seconds when the collateral deposit window expires, or null before detection when unavailable. */
   expiryTimestamp: bigint | null;
 }
 
