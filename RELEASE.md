@@ -17,7 +17,16 @@ pnpm changeset
 pnpm release:version
 ```
 
-4. Review and merge the release PR.
+4. Check for a generated docs changelog change. The Changesets commit can happen before `docs/changelog.mdx` is regenerated, so fold that file into the same release-prep commit if it is dirty:
+
+```sh
+git status --short
+git add docs/changelog.mdx
+git commit --amend --no-edit
+```
+
+5. Use one release-prep commit in the release PR, with a title like `chore(client): prepare 0.2.1 release`.
+6. Review and merge the release PR.
 
 ## Publish
 
@@ -40,7 +49,7 @@ pnpm changeset publish
 4. Push the package tag created by Changesets:
 
 ```sh
-git push origin @liquidium/client@0.2.0
+git push origin @liquidium/client@0.2.1
 ```
 
 Pushing the tag creates the GitHub Release from `packages/client/CHANGELOG.md`.
