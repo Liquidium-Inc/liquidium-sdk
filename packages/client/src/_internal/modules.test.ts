@@ -2,6 +2,7 @@ import { Actor } from "@icp-sdk/core/agent";
 import { Principal } from "@icp-sdk/core/principal";
 import { decodeFunctionData } from "viem";
 import { afterEach, describe, expect, test, vi } from "vitest";
+import type { InstantLoanCanisterRecord } from "../core/canisters/instant-loans/actor";
 import { DEFAULT_API_BASE_URL } from "../core/config";
 import { CK_DEPOSIT_ABI, ERC20_ABI } from "../core/evm";
 import { encodeInflowSubaccount } from "../core/utils/inflow-subaccount";
@@ -4224,12 +4225,12 @@ describe("InstantLoansModule", () => {
 
   test("gets canonical loan state by ref and derives flow targets", async () => {
     // given
-    const DEPOSIT_DETECTED_TIMESTAMP = 1_775_232_000n;
-    const EXPIRY_TIMESTAMP = 1_775_235_600n;
+    const DEPOSIT_DETECTED_TIMESTAMP_SECONDS = 1_775_232_000n;
+    const EXPIRY_TIMESTAMP_SECONDS = 1_775_235_600n;
     const getLoan = vi.fn().mockResolvedValue({
       Ok: createInstantLoan({
-        deposit_detected_ts: [DEPOSIT_DETECTED_TIMESTAMP],
-        expires_at: [EXPIRY_TIMESTAMP],
+        deposit_detected_ts: [DEPOSIT_DETECTED_TIMESTAMP_SECONDS],
+        expires_at: [EXPIRY_TIMESTAMP_SECONDS],
       }),
     });
     const getBtcAddress = vi.fn().mockResolvedValue("bc1qinstantdeposit");
@@ -4329,8 +4330,8 @@ describe("InstantLoansModule", () => {
       inflowFeeAmount: 2_500n,
       asset: "BTC",
       chain: "BTC",
-      detectedTimestamp: DEPOSIT_DETECTED_TIMESTAMP,
-      expiryTimestamp: EXPIRY_TIMESTAMP,
+      detectedTimestamp: DEPOSIT_DETECTED_TIMESTAMP_SECONDS,
+      expiryTimestamp: EXPIRY_TIMESTAMP_SECONDS,
       target: expect.objectContaining({
         address: "bc1qinstantdeposit",
       }),
@@ -4661,42 +4662,39 @@ describe("InstantLoansModule", () => {
     expect(estimateDepositFee).not.toHaveBeenCalled();
   });
 
-  test("creates a loan through the default SDK API without calling the instant-loans canister", async () => {
+  test("creates a loan through the default SDK API and hydrates canonical canister state", async () => {
     // given
     const BTC_MINTER_DEPOSIT_FEE_SATS = 2_000n;
     const CKBTC_LEDGER_FEE_SATS = 10n;
-    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(
-        JSON.stringify({
-          success: true,
-          loan: {
-            loanId: LOAN_ID.toString(),
-            ref: publicIdFromInt(LOAN_ID),
-            profileId: PROFILE_ID,
-            ltvMaxBps: "6800",
-            depositWindowSeconds: "3600",
-            collateral: {
-              poolId: BTC_POOL_ID,
-              asset: "BTC",
-              amountHint: "10000000",
-            },
-            borrow: {
-              poolId: USDT_POOL_ID,
-              asset: "USDT",
-              amount: "5726000000",
-              destination: {
-                External: "0x2222222222222222222222222222222222222222",
+    const EXPIRY_TIMESTAMP_SECONDS = 1_775_235_600n;
+    const getLoan = vi.fn().mockResolvedValue({
+      Ok: createInstantLoan({ expires_at: [EXPIRY_TIMESTAMP_SECONDS] }),
+    });
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation(async (_input, init) => {
+        if (init?.method === "POST") {
+          return new Response(
+            JSON.stringify({
+              success: true,
+              loan: {
+                loanId: LOAN_ID.toString(),
+                collateral: {
+                  amountHint: "10000000",
+                },
               },
-            },
-            refundDestination: { External: VALID_BTC_REFUND_ADDRESS },
-          },
-        }),
-        { status: 200, headers: { "content-type": "application/json" } }
-      )
-    );
+            }),
+            { status: 200, headers: { "content-type": "application/json" } }
+          );
+        }
 
-    const actorCreateSpy = vi
-      .spyOn(Actor, "createActor")
+        return new Response(JSON.stringify({ error: "not found" }), {
+          status: 404,
+          headers: { "content-type": "application/json" },
+        });
+      });
+
+    vi.spyOn(Actor, "createActor")
       .mockReturnValueOnce({
         list_pools: vi
           .fn()
@@ -4711,6 +4709,7 @@ describe("InstantLoansModule", () => {
       .mockReturnValueOnce({
         get_prices: vi.fn().mockResolvedValue(prices()),
       } as never)
+      .mockReturnValueOnce({ get_loan: getLoan } as never)
       .mockReturnValueOnce({
         list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord()]),
       } as never)
@@ -4786,10 +4785,8 @@ describe("InstantLoansModule", () => {
         method: "POST",
       })
     );
-    expect(actorCreateSpy).not.toHaveBeenCalledWith(
-      expect.anything(),
-      expect.objectContaining({ canisterId: "kzrva-ziaaa-aaaar-qamyq-cai" })
-    );
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    expect(getLoan).toHaveBeenCalledWith(LOAN_ID);
     expect(loan.loanId).toBe(LOAN_ID);
     expect(loan.status).toBe("awaiting_deposit");
     expect(loan.collateral.amount).toBe(10_000_000n);
@@ -4813,6 +4810,8 @@ describe("InstantLoansModule", () => {
       inflowFeeAmount: 2_500n,
       asset: "BTC",
       chain: "BTC",
+      detectedTimestamp: null,
+      expiryTimestamp: EXPIRY_TIMESTAMP_SECONDS,
       target: expect.objectContaining({
         address: "bc1qinstantdeposit",
       }),
@@ -5153,7 +5152,9 @@ describe("InstantLoansModule", () => {
     );
   });
 
-  function createInstantLoan(overrides: Record<string, unknown> = {}) {
+  function createInstantLoan(
+    overrides: Partial<InstantLoanCanisterRecord> = {}
+  ) {
     return {
       id: LOAN_ID,
       authorisation: {
