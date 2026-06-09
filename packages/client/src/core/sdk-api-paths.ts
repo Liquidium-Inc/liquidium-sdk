@@ -32,8 +32,8 @@ interface BuildActivityStatusPathRequest {
   id: string;
 }
 
-interface BuildInstantLoanAddressLookupPathRequest {
-  address: string;
+interface BuildInstantLoanLookupPathRequest {
+  query: string;
 }
 
 interface BuildInstantLoanCollateralHintPathRequest {
@@ -122,11 +122,11 @@ export function buildActivityStatusPath(
   )}/status?${query.toString()}`;
 }
 
-export function buildInstantLoanAddressLookupPath(
-  request: BuildInstantLoanAddressLookupPathRequest
+export function buildInstantLoanLookupPath(
+  request: BuildInstantLoanLookupPathRequest
 ): string {
-  const query = new URLSearchParams({ address: request.address });
-  return `${INSTANT_LOANS}/address?${query.toString()}`;
+  const query = new URLSearchParams({ query: request.query });
+  return `${INSTANT_LOANS}/lookup?${query.toString()}`;
 }
 
 export function buildInstantLoanCollateralHintPath(

@@ -3,8 +3,8 @@ import "./styles.css";
 import { formatConfig } from "./client";
 import {
   formatActivityStatus,
-  formatCandidate,
   formatError,
+  formatFindResult,
   formatInstantLoan,
   getElement,
   getRecentLoanRefs,
@@ -12,7 +12,7 @@ import {
   saveRecentLoanRef,
 } from "./format";
 import {
-  findInstantLoansByAddress,
+  findInstantLoans,
   getInstantLoan,
   getLoanActivityStatus,
   loadMarketData,
@@ -105,18 +105,16 @@ async function findLoansByAddress(): Promise<void> {
   setStatus("Finding candidate loans...");
   candidatesOutput.textContent = "Searching...";
 
-  const candidates = await findInstantLoansByAddress(address);
+  const results = await findInstantLoans(address);
 
-  if (candidates.length === 0) {
-    candidatesOutput.textContent = "No candidate loans found for this address.";
-    setStatus("No candidate loans found.");
+  if (results.length === 0) {
+    candidatesOutput.textContent = "No loans found for this query.";
+    setStatus("No loans found.");
     return;
   }
 
-  candidatesOutput.textContent = candidates.map(formatCandidate).join("\n\n");
-  setStatus(
-    `Found ${candidates.length} candidate loan(s). Use a ref or loan id above to load canonical state.`
-  );
+  candidatesOutput.textContent = results.map(formatFindResult).join("\n\n");
+  setStatus(`Found ${results.length} loan(s).`);
 }
 
 function prefillRefFromUrl(): void {

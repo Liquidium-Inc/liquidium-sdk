@@ -4363,6 +4363,105 @@ describe("InstantLoansModule", () => {
     });
   });
 
+  test("finds manage-ready loan results by numeric loan id string", async () => {
+    // given
+    const getLoan = vi.fn().mockResolvedValue({
+      Ok: createInstantLoan(),
+    });
+    const getBtcAddress = vi.fn().mockResolvedValue("bc1qinstantdeposit");
+    const getDepositAddress = vi.fn().mockResolvedValue({
+      Ok: "0x1111111111111111111111111111111111111111",
+    });
+    const getPoolRate = vi
+      .fn()
+      .mockResolvedValue([[10_000_000_000_000_000_000_000_000n, 0n, 0n]]);
+    const estimateDepositFee = vi.fn().mockResolvedValue({ Ok: 1_500_000n });
+    const getDepositFee = vi.fn().mockResolvedValue(2_000n);
+    const icrc1Fee = vi.fn().mockResolvedValue(10n);
+    const getCollateralPosition = vi.fn().mockResolvedValue([
+      createInstantLoanPosition(
+        BTC_POOL_ID,
+        { BTC: null },
+        {
+          deposited_native_now: 10_000_000n,
+        }
+      ),
+    ]);
+    const getBorrowPosition = vi.fn().mockResolvedValue([
+      createInstantLoanPosition(
+        USDT_POOL_ID,
+        { USDT: null },
+        {
+          debt_native_now: 2_000_000n,
+          total_debt_interest: 1_000n,
+        }
+      ),
+    ]);
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation(async (input) => {
+        const url = input.toString();
+        if (url.includes("/instant-loans/42/collateral-hint")) {
+          return new Response(
+            JSON.stringify({
+              success: true,
+              collateralAmountHint: "10000000",
+            }),
+            { status: 200, headers: { "content-type": "application/json" } }
+          );
+        }
+        if (url.includes("/activities?profileId=aaaaa-aa&state=all")) {
+          return new Response(
+            JSON.stringify({
+              success: true,
+              activities: [],
+            }),
+            { status: 200, headers: { "content-type": "application/json" } }
+          );
+        }
+
+        throw new Error(`Unexpected fetch URL: ${url}`);
+      });
+
+    vi.spyOn(Actor, "createActor")
+      .mockReturnValueOnce({ get_loan: getLoan } as never)
+      .mockReturnValueOnce({
+        list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord()]),
+      } as never)
+      .mockReturnValueOnce({
+        list_pools: vi.fn().mockResolvedValue([createUsdtPoolRecord()]),
+      } as never)
+      .mockReturnValueOnce({ get_position: getCollateralPosition } as never)
+      .mockReturnValueOnce({ get_position: getBorrowPosition } as never)
+      .mockReturnValueOnce({ get_pool_rate: getPoolRate } as never)
+      .mockReturnValueOnce({ get_btc_address: getBtcAddress } as never)
+      .mockReturnValueOnce({ get_deposit_address: getDepositAddress } as never)
+      .mockReturnValueOnce({
+        estimate_deposit_fee: estimateDepositFee,
+      } as never)
+      .mockReturnValueOnce({ get_deposit_fee: getDepositFee } as never)
+      .mockReturnValueOnce({ icrc1_fee: icrc1Fee } as never);
+    const client = new LiquidiumClient({
+      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
+      canisterIds: { instantLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
+    });
+
+    // when
+    const results = await client.instantLoans.find(LOAN_ID.toString());
+
+    // then
+    expect(results).toHaveLength(1);
+    expect(results[0]?.loan.loanId).toBe(LOAN_ID);
+    expect(results[0]?.loan.initialDeposit.target).toMatchObject({
+      address: "bc1qinstantdeposit",
+    });
+    expect(results[0]?.activities).toEqual([]);
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "https://app.liquidium.fi/api/sdk/v1/activities?profileId=aaaaa-aa&state=all",
+      expect.objectContaining({ method: "GET" })
+    );
+  });
+
   test("should derive initial deposit expiry from detection timestamp when canister expiry is absent", async () => {
     // given
     const DEPOSIT_DETECTED_TIMESTAMP_SECONDS = 1_780_920_469n;
@@ -5211,7 +5310,7 @@ describe("InstantLoansModule", () => {
       }),
     ]);
     expect(fetchSpy).toHaveBeenCalledWith(
-      "https://app.liquidium.fi/api/sdk/v1/instant-loans/address?address=bc1qrecover",
+      "https://app.liquidium.fi/api/sdk/v1/instant-loans/lookup?query=bc1qrecover",
       expect.objectContaining({ method: "GET" })
     );
   });

@@ -3,7 +3,7 @@ import type {
   GetActivityStatusResponse,
   InstantLoan,
   InstantLoanAsset,
-  InstantLoanCandidate,
+  InstantLoanFindResult,
   Pool,
 } from "@liquidium/client";
 import { client } from "./client";
@@ -127,10 +127,10 @@ export async function getLoanActivityStatus({
   });
 }
 
-export async function findInstantLoansByAddress(
-  address: string
-): Promise<InstantLoanCandidate[]> {
-  return await client.instantLoans.findByAddress(address);
+export async function findInstantLoans(
+  query: string
+): Promise<InstantLoanFindResult[]> {
+  return await client.instantLoans.find(query);
 }
 
 function toInstantLoanAsset(asset: string): InstantLoanAsset {

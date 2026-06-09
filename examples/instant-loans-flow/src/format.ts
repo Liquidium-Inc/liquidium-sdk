@@ -2,7 +2,7 @@ import type {
   Activity,
   GetActivityStatusResponse,
   InstantLoan,
-  InstantLoanCandidate,
+  InstantLoanFindResult,
   Pool,
   SupplyTarget,
 } from "@liquidium/client";
@@ -284,18 +284,14 @@ export function formatActivityStatus(
   return formatActivity(response.activity);
 }
 
-export function formatCandidate(candidate: InstantLoanCandidate): string {
+export function formatFindResult(result: InstantLoanFindResult): string {
+  const activities = result.activities.map(formatActivity);
+
   return [
-    `Reference: ${candidate.ref}`,
-    `Loan id: ${candidate.loanId.toString()}`,
-    `Profile id: ${candidate.profileId}`,
-    `Created at: ${candidate.createdAt?.toISOString() ?? "unknown"}`,
-    `Collateral: ${candidate.collateralAmount.toString()} base units of ${
-      candidate.collateralAsset
-    }`,
-    `Borrow asset: ${candidate.borrowAsset}`,
-    `Collateral pool: ${candidate.collateralPoolId}`,
-    `Borrow pool: ${candidate.borrowPoolId}`,
+    formatInstantLoan(result.loan),
+    "",
+    "Activities:",
+    activities.length > 0 ? activities.join("\n\n") : "No activities found.",
   ].join("\n");
 }
 

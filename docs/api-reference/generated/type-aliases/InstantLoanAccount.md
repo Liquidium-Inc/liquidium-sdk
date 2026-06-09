@@ -8,6 +8,6 @@
 
 > **InstantLoanAccount** = [`ExternalAccount`](../interfaces/ExternalAccount.md) \| [`NativeAccount`](../interfaces/NativeAccount.md)
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:41](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L41)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:42](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L42)
 
 Borrow destination or refund account associated with an instant loan.

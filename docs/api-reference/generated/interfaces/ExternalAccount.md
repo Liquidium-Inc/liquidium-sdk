@@ -6,7 +6,7 @@
 
 # Interface: ExternalAccount
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:8](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L8)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:9](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L9)
 
 External chain account used for borrow delivery or collateral refunds.
 
@@ -16,7 +16,7 @@ External chain account used for borrow delivery or collateral refunds.
 
 > **address**: `string`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:29](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L29)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:30](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L30)
 
 Destination address on the external chain.
 
@@ -29,7 +29,7 @@ For `borrowDestination`, this receives the borrowed asset. For
 
 > `optional` **chain?**: `string`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:22](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L22)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:23](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L23)
 
 Optional chain metadata for display and caller-side validation.
 
@@ -42,7 +42,7 @@ when your UI needs to remember which network the address belongs to.
 
 > **type**: `"External"`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:15](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L15)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:16](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L16)
 
 Account kind discriminator.
 

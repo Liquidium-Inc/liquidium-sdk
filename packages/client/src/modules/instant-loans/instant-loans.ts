@@ -12,8 +12,8 @@ import {
 import { mapCanisterCallErrorToLiquidiumError } from "../../core/canisters/lending/error-mappers";
 import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
 import {
-  buildInstantLoanAddressLookupPath,
   buildInstantLoanCollateralHintPath,
+  buildInstantLoanLookupPath,
   SdkApiPath,
 } from "../../core/sdk-api-paths";
 import type { ApiClient } from "../../core/transports/api-client";
@@ -21,6 +21,7 @@ import type { CanisterContext } from "../../core/transports/canister-context";
 import { type Asset, type Chain, SupplyAction } from "../../core/types";
 import { getAssetNativeDecimals } from "../../core/utils/asset-decimals";
 import { getVariantKey } from "../../core/utils/variant";
+import type { ActivitiesModule } from "../activities";
 import { resolveSupplyTarget } from "../lending/_internal/supply-targets";
 import type { LendingModule } from "../lending/lending";
 import { SupplyPlanType, type SupplyTarget } from "../lending/types";
@@ -44,6 +45,8 @@ import type {
   InstantLoanConfig,
   InstantLoanEvent,
   InstantLoanEventType,
+  InstantLoanFindRequest,
+  InstantLoanFindResult,
   InstantLoanGetRequest,
   InstantLoanInitialDeposit,
   InstantLoanLeg,
@@ -58,6 +61,7 @@ const RATE_SCALE = 10n ** 27n;
 const SECONDS_PER_YEAR = 31_536_000n;
 const ETH_STABLECOIN_INFLOW_FEE_FALLBACK = 1_500_000n;
 const INSTANT_LOAN_MIN_SLIPPAGE_BUFFER_BPS = 200n;
+const FIND_QUERY_MAX_LENGTH = 256;
 
 interface InstantLoanLtvPolicy {
   ltvBps: bigint;
@@ -102,7 +106,7 @@ interface InstantLoanCollateralHintWire {
   collateralAmountHint: string;
 }
 
-interface InstantLoanAddressLookupResponseWire {
+interface InstantLoanLookupResponseWire {
   success?: true;
   loans?: InstantLoanCandidateWire[];
   candidates?: InstantLoanCandidateWire[];
@@ -180,7 +184,8 @@ export class InstantLoansModule {
     private readonly canisterContext: CanisterContext,
     private readonly apiClient: ApiClient | undefined,
     private readonly lending: LendingModule,
-    private readonly positions: PositionsModule
+    private readonly positions: PositionsModule,
+    private readonly activities: ActivitiesModule
   ) {}
 
   /**
@@ -261,6 +266,41 @@ export class InstantLoansModule {
     const collateralAmount = await this.getCollateralAmountHint(loanId);
 
     return await this.mapLoanRecord(record, collateralAmount);
+  }
+
+  /**
+   * Finds instant loans by short reference, numeric loan id, address, or transaction id.
+   *
+   * String input first tries the short-reference path used by the web app, then
+   * numeric loan-id lookup for all-digit strings. If neither resolves, the SDK
+   * searches generated deposit/repay addresses, borrow/refund destinations, and
+   * indexed transaction ids through the SDK API.
+   *
+   * @param request - Short reference, address, transaction id/hash, numeric loan id, or explicit request object.
+   * @returns Hydrated loan state plus active and completed activities for each match.
+   */
+  async find(request: string | bigint): Promise<InstantLoanFindResult[]>;
+  async find(request: InstantLoanFindRequest): Promise<InstantLoanFindResult[]>;
+  async find(
+    request: string | bigint | InstantLoanFindRequest
+  ): Promise<InstantLoanFindResult[]> {
+    if (typeof request === "bigint") {
+      return await this.findByLoanId(request);
+    }
+
+    if (typeof request === "string") {
+      return await this.findByQuery(request);
+    }
+
+    if ("loanId" in request) {
+      return await this.findByLoanId(request.loanId);
+    }
+
+    if ("ref" in request) {
+      return await this.findByRef(request.ref);
+    }
+
+    return await this.findByQuery(request.query);
   }
 
   /**
@@ -381,6 +421,7 @@ export class InstantLoansModule {
    *
    * @param address - Borrow or refund address to search for.
    * @returns Lightweight loan candidates associated with the address.
+   * @deprecated Use `instantLoans.find(...)` for address, transaction id, short reference, or loan id lookup with hydrated loan state and activities.
    */
   async findByAddress(address: string): Promise<InstantLoanCandidate[]> {
     const trimmedAddress = address.trim();
@@ -390,13 +431,96 @@ export class InstantLoansModule {
         "Address lookup requires a non-empty address"
       );
     }
+    if (trimmedAddress.length > FIND_QUERY_MAX_LENGTH) {
+      throw new LiquidiumError(
+        LiquidiumErrorCode.VALIDATION_ERROR,
+        `Instant loan lookup query must be at most ${FIND_QUERY_MAX_LENGTH.toString()} characters`
+      );
+    }
 
-    const apiClient = this.requireApi("Instant loan address lookup");
-    const response = await apiClient.get<InstantLoanAddressLookupResponseWire>(
-      buildInstantLoanAddressLookupPath({ address: trimmedAddress })
+    const apiClient = this.requireApi("Instant loan lookup");
+    const response = await apiClient.get<InstantLoanLookupResponseWire>(
+      buildInstantLoanLookupPath({ query: trimmedAddress })
     );
 
     return (response.candidates ?? response.loans ?? []).map(mapCandidateWire);
+  }
+
+  private async findByQuery(query: string): Promise<InstantLoanFindResult[]> {
+    const trimmedQuery = validateFindQuery(query);
+
+    if (isShortRefCandidate(trimmedQuery)) {
+      const directResults = await this.findByRef(trimmedQuery);
+      if (directResults.length > 0) {
+        return directResults;
+      }
+    }
+
+    if (isNumericLoanIdCandidate(trimmedQuery)) {
+      const directResults = await this.findByLoanId(BigInt(trimmedQuery));
+      if (directResults.length > 0) {
+        return directResults;
+      }
+    }
+
+    const candidates = await this.findByAddress(trimmedQuery);
+    return await this.findByCandidates(candidates);
+  }
+
+  private async findByRef(ref: string): Promise<InstantLoanFindResult[]> {
+    validateFindQuery(ref);
+    return await this.findDirectLoan({ ref });
+  }
+
+  private async findByLoanId(loanId: bigint): Promise<InstantLoanFindResult[]> {
+    if (loanId < 0n) {
+      throw new LiquidiumError(
+        LiquidiumErrorCode.VALIDATION_ERROR,
+        "Instant loan ID must be non-negative"
+      );
+    }
+
+    return await this.findDirectLoan({ loanId });
+  }
+
+  private async findDirectLoan(
+    request: InstantLoanGetRequest
+  ): Promise<InstantLoanFindResult[]> {
+    try {
+      const loan = await this.get(request);
+      return [await this.createFindResult(loan)];
+    } catch (error) {
+      if (
+        error instanceof LiquidiumError &&
+        error.code === LiquidiumErrorCode.POSITION_NOT_FOUND
+      ) {
+        return [];
+      }
+
+      throw error;
+    }
+  }
+
+  private async findByCandidates(
+    candidates: InstantLoanCandidate[]
+  ): Promise<InstantLoanFindResult[]> {
+    const loanIds = uniqueBigints(
+      candidates.map((candidate) => candidate.loanId)
+    );
+    const loans = await Promise.all(
+      loanIds.map((loanId) => this.get({ loanId }))
+    );
+
+    return await Promise.all(loans.map((loan) => this.createFindResult(loan)));
+  }
+
+  private async createFindResult(
+    loan: InstantLoan
+  ): Promise<InstantLoanFindResult> {
+    return {
+      loan,
+      activities: await this.activities.list({ profileId: loan.profileId }),
+    };
   }
 
   private async getLoanRecord(
@@ -939,6 +1063,41 @@ function decodeRef(ref: string): bigint {
       error
     );
   }
+}
+
+function validateFindQuery(query: string): string {
+  const trimmedQuery = query.trim();
+  if (!trimmedQuery) {
+    throw new LiquidiumError(
+      LiquidiumErrorCode.VALIDATION_ERROR,
+      "Instant loan find query must be non-empty"
+    );
+  }
+  if (trimmedQuery.length > FIND_QUERY_MAX_LENGTH) {
+    throw new LiquidiumError(
+      LiquidiumErrorCode.VALIDATION_ERROR,
+      `Instant loan find query must be at most ${FIND_QUERY_MAX_LENGTH.toString()} characters`
+    );
+  }
+
+  return trimmedQuery;
+}
+
+function isShortRefCandidate(query: string): boolean {
+  try {
+    intFromPublicId(query);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function isNumericLoanIdCandidate(query: string): boolean {
+  return /^\d+$/.test(query);
+}
+
+function uniqueBigints(values: bigint[]): bigint[] {
+  return [...new Set(values)];
 }
 
 function mapCandidateWire(

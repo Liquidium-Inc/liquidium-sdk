@@ -1,4 +1,5 @@
 import type { Chain, MarketAsset, MarketChain } from "../../core/types";
+import type { Activity } from "../activities";
 import type { SupplyTarget } from "../lending";
 
 /** Asset symbols supported by the instant-loans canister. */
@@ -148,6 +149,18 @@ export interface InstantLoanGetByRefRequest {
 export type InstantLoanGetRequest =
   | InstantLoanGetByIdRequest
   | InstantLoanGetByRefRequest;
+
+/** Search request for loading manage-ready instant-loan results. */
+export type InstantLoanFindRequest =
+  | InstantLoanGetByIdRequest
+  | InstantLoanGetByRefRequest
+  | InstantLoanFindByQueryRequest;
+
+/** Free-form search request for address, transaction id, or short reference lookup. */
+export interface InstantLoanFindByQueryRequest {
+  /** Short reference, generated address, borrow/refund destination, or transaction id/hash. */
+  query: string;
+}
 
 /** Page request for direct instant-loan canister event queries. */
 export interface InstantLoanListEventsRequest {
@@ -414,6 +427,14 @@ export interface InstantLoan {
   repayment: InstantLoanRepayment;
   /** Current lending position state for the generated profile. */
   position: InstantLoanPositionSummary;
+}
+
+/** Hydrated instant-loan lookup result with production-style activity state. */
+export interface InstantLoanFindResult {
+  /** Canonical hydrated instant-loan state and transfer targets. */
+  loan: InstantLoan;
+  /** Active and completed deposit, borrow, repay, and withdraw activities. */
+  activities: Activity[];
 }
 
 /**

@@ -38,7 +38,7 @@ Liquidium supports two borrowing and lending integration paths:
 
 | Path | Use when | Main SDK calls |
 | --- | --- | --- |
-| Recommended: accountless instant loans | You want a short checkout-style flow where users borrow against collateral without creating a Liquidium profile first | `client.instantLoans.create(...)`, `client.instantLoans.get(...)`, `client.activities.list(...)` |
+| Recommended: accountless instant loans | You want a short checkout-style flow where users borrow against collateral without creating a Liquidium profile first | `client.instantLoans.create(...)`, `client.instantLoans.get(...)`, `client.instantLoans.find(...)`, `client.activities.list(...)` |
 | Account-based profile flows | You want users to keep a Liquidium profile, manage positions across sessions, supply funds, borrow, withdraw, or use ETH contract-interaction deposits | `client.accounts.createProfile(...)`, `client.lending.supply(...)`, `client.lending.borrow(...)`, `client.lending.withdraw(...)`, `client.positions.list(...)` |
 
 Use accountless instant loans for new borrow flows unless you need profile-level position management. Use account-based flows when your app owns the full lending dashboard experience.
@@ -118,6 +118,10 @@ const activities = await client.activities.list({ shortRef: loan.ref });
 
 console.log("Loan activities:", activities);
 
+const foundLoans = await client.instantLoans.find(loan.ref);
+
+console.log("Found loan with activities:", foundLoans[0]);
+
 function requirePool(pools: Pool[], asset: string): Pool {
   const pool = pools.find((candidatePool) => candidatePool.asset === asset);
 
@@ -150,7 +154,7 @@ Instant-loan integrations use this sequence:
 | Load market data | `client.market.listPools()` and `client.market.getAssetPrices()` | Show supported collateral and borrow assets |
 | Validate amounts | `client.quote.calculateLtv(...)` | Block too-small borrow amounts, invalid LTV, or frozen-pool input before creating a loan |
 | Create loan | `client.instantLoans.create(...)` | Store `loan.ref` and show `loan.initialDeposit.amount` plus `loan.initialDeposit.target` |
-| Track loan | `client.instantLoans.get({ ref })` and `client.activities.list({ shortRef: ref })` | Reload loan state, initial deposit quote, and repayment activity |
+| Track loan | `client.instantLoans.get({ ref })`, `client.instantLoans.find(...)`, and `client.activities.list({ shortRef: ref })` | Reload loan state, initial deposit quote, and repayment activity |
 | Repay loan | Read `loan.repayment` | Ask the user to send `loan.repayment.amount` to `loan.repayment.target`; amount is `0n` when no repayment is due |
 
 `client.instantLoans.create(...)` and `client.instantLoans.get(...)` return the generated Liquidium profile, current position state, an initial deposit quote with its transfer target, and a repayment quote with its transfer target. Repayment amount fields are zero when the loan has no debt. Users do not manage the generated profile.
@@ -188,11 +192,36 @@ Loads loan state by numeric canister loan id.
 
 Use this when your backend stores the numeric id instead of the short reference.
 
+### `client.instantLoans.find(query)`
+
+Finds instant loans by short reference, numeric canister loan id, generated deposit or repayment address, borrow or refund destination address, or indexed transaction id/hash.
+
+Use this for recovery and manage pages where the user may paste any loan identifier. The method returns an array because address and transaction-id lookups can match more than one loan.
+
+```ts
+const results = await client.instantLoans.find("bc1q...");
+const byRef = await client.instantLoans.find("ABC123");
+const byLoanId = await client.instantLoans.find("42");
+
+for (const result of results) {
+  console.log(result.loan.initialDeposit.target);
+  console.log(result.loan.repayment.target);
+  console.log(result.activities);
+}
+```
+
+Pass a `bigint` or explicit object when you already have a typed numeric canister loan id:
+
+```ts
+const results = await client.instantLoans.find(123n);
+const sameResults = await client.instantLoans.find({ loanId: 123n });
+```
+
 ### `client.instantLoans.findByAddress(address)`
 
-Finds candidate loans associated with a borrow or refund address.
+Deprecated. Finds lightweight candidate loans associated with a borrow or refund address.
 
-Use this only for recovery. The method returns candidate matches; call `client.instantLoans.get({ ref })` or `client.instantLoans.get({ loanId })` before showing loan state or transfer targets.
+Use `client.instantLoans.find(...)` for new integrations. The deprecated method returns candidate matches; call `client.instantLoans.get({ ref })` or `client.instantLoans.get({ loanId })` before showing loan state or transfer targets.
 
 ### `client.quote.calculateLtv(request, pools, prices)`
 
@@ -228,6 +257,8 @@ Most instant-loan UIs show or store these fields:
 | `loan.repayment.amount` | Full amount to repay, including fee and interest buffer. Zero when no repayment is due |
 | `loan.repayment.target` | Address or ICRC account where the user sends repayment |
 | `loan.position` | Current collateral, debt, and interest state for the generated profile |
+
+`client.instantLoans.find(...)` returns these fields as `result.loan` and includes active and completed flow activity as `result.activities`.
 
 ## Amounts
 
@@ -268,7 +299,7 @@ Start browser integrations with the examples.
 
 | Example | What it shows |
 | --- | --- |
-| [`examples/instant-loans-flow`](https://github.com/Liquidium-Inc/liquidium-sdk/tree/main/examples/instant-loans-flow) | Accountless instant loan UX with manual destination addresses, pool selection, LTV preview, loan creation, status reload, activity status, and address recovery |
+| [`examples/instant-loans-flow`](https://github.com/Liquidium-Inc/liquidium-sdk/tree/main/examples/instant-loans-flow) | Accountless instant loan UX with manual destination addresses, pool selection, LTV preview, loan creation, status reload, activity status, and loan recovery |
 | [`examples/sdk-method-query`](https://github.com/Liquidium-Inc/liquidium-sdk/tree/main/examples/sdk-method-query) | Developer tool for calling SDK methods, including instant loan method templates |
 
 Run the instant loan example:

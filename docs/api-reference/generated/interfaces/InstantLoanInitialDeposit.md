@@ -6,7 +6,7 @@
 
 # Interface: InstantLoanInitialDeposit
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:304](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L304)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:317](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L317)
 
 Initial collateral deposit quote returned when an instant loan is created.
 
@@ -16,7 +16,7 @@ Initial collateral deposit quote returned when an instant loan is created.
 
 > **amount**: `bigint`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:306](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L306)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:319](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L319)
 
 Full amount to send to the deposit target, including the estimated inflow fee.
 
@@ -26,7 +26,7 @@ Full amount to send to the deposit target, including the estimated inflow fee.
 
 > **asset**: `string`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:314](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L314)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:327](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L327)
 
 Collateral asset to deposit.
 
@@ -36,7 +36,7 @@ Collateral asset to deposit.
 
 > **chain**: `string`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:316](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L316)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:329](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L329)
 
 Chain used for the collateral deposit.
 
@@ -46,7 +46,7 @@ Chain used for the collateral deposit.
 
 > **collateralAmount**: `bigint`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:310](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L310)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:323](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L323)
 
 Intended credited collateral amount in base units, before inflow fees.
 
@@ -56,7 +56,7 @@ Intended credited collateral amount in base units, before inflow fees.
 
 > **decimals**: `bigint`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:308](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L308)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:321](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L321)
 
 Decimal scale for `amount`, `collateralAmount`, and `inflowFeeAmount`.
 
@@ -66,7 +66,7 @@ Decimal scale for `amount`, `collateralAmount`, and `inflowFeeAmount`.
 
 > **detectedTimestamp**: `bigint` \| `null`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:320](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L320)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:333](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L333)
 
 Unix timestamp in seconds when the collateral deposit was detected, or null before detection.
 
@@ -76,7 +76,7 @@ Unix timestamp in seconds when the collateral deposit was detected, or null befo
 
 > **expiryTimestamp**: `bigint` \| `null`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:322](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L322)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:335](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L335)
 
 Unix timestamp in seconds when the collateral deposit window expires, or null before detection when unavailable.
 
@@ -86,7 +86,7 @@ Unix timestamp in seconds when the collateral deposit window expires, or null be
 
 > **inflowFeeAmount**: `bigint`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:312](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L312)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:325](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L325)
 
 Inflow fee amount in base units added to the transfer amount.
 
@@ -96,6 +96,6 @@ Inflow fee amount in base units added to the transfer amount.
 
 > **target**: [`SupplyTarget`](../type-aliases/SupplyTarget.md)
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:318](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L318)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:331](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L331)
 
 Address or ICRC account where the collateral should be sent.
