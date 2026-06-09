@@ -67,7 +67,6 @@
 - [InstantLoanAuthorization](interfaces/InstantLoanAuthorization.md)
 - [InstantLoanBorrow](interfaces/InstantLoanBorrow.md)
 - [InstantLoanBorrowRequestedEventType](interfaces/InstantLoanBorrowRequestedEventType.md)
-- [InstantLoanCandidate](interfaces/InstantLoanCandidate.md)
 - [InstantLoanCollateral](interfaces/InstantLoanCollateral.md)
 - [InstantLoanConfig](interfaces/InstantLoanConfig.md)
 - [InstantLoanCreatedEventType](interfaces/InstantLoanCreatedEventType.md)

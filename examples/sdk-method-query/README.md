@@ -44,7 +44,7 @@ history, quote, lending, and instant-loan methods:
 - `instantLoans.create`
 - `instantLoans.get({ ref })`
 - `instantLoans.get({ loanId })`
-- `instantLoans.findByAddress`
+- `instantLoans.find`
 
 `instantLoans.get(...)` returns current loan state plus generated targets,
 initial deposit detection/expiry timestamps, position state, and the actionable

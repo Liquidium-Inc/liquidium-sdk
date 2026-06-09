@@ -35,7 +35,7 @@ import {
 } from "./_internal/address-validation";
 import {
   findInstantLoans,
-  validateInstantLoanFindQuery,
+  type InstantLoanFindCandidate,
 } from "./_internal/find-instant-loans";
 import { intFromPublicId, publicIdFromInt } from "./ref-code";
 import type {
@@ -45,7 +45,6 @@ import type {
   InstantLoanAccount,
   InstantLoanAsset,
   InstantLoanAuthorization,
-  InstantLoanCandidate,
   InstantLoanConfig,
   InstantLoanEvent,
   InstantLoanEventType,
@@ -72,24 +71,10 @@ interface InstantLoanLtvPolicy {
   maxLtvMaxBps: bigint;
 }
 
-interface InstantLoanCandidateWire {
+interface InstantLoanFindCandidateWire {
   loanId?: string;
   loan_id?: string;
-  ref?: string;
-  short_ref?: string;
-  profileId?: string;
-  lending_profile?: string;
-  createdAt?: string;
-  created_at?: string;
-  collateralPoolId?: string;
-  lend_pool_ic_id?: string;
-  borrowPoolId?: string;
-  borrow_pool_ic_id?: string;
-  collateralAsset?: string;
-  lend_asset?: string;
-  borrowAsset?: string;
-  borrow_asset?: string;
-  collateralAmount: string;
+  profile?: string;
 }
 
 interface InstantLoanCreateRequestWire {
@@ -111,8 +96,8 @@ interface InstantLoanCollateralHintWire {
 
 interface InstantLoanFindResponseWire {
   success?: true;
-  loans?: InstantLoanCandidateWire[];
-  candidates?: InstantLoanCandidateWire[];
+  loans?: InstantLoanFindCandidateWire[];
+  candidates?: InstantLoanFindCandidateWire[];
 }
 
 interface InstantLoanCollateralHintResponseWire
@@ -403,33 +388,9 @@ export class InstantLoansModule {
     }
   }
 
-  /**
-   * Finds candidate loans associated with an address through the Liquidium SDK
-   * API. Returns discovery candidates only; call `get(...)` to hydrate canister state.
-   *
-   * Candidates are useful for recovery flows where the user knows a borrow or
-   * refund address but not the loan reference.
-   *
-   * @param address - Borrow or refund address to search for.
-   * @returns Lightweight loan candidates associated with the address.
-   * @deprecated Use `instantLoans.find(...)` for address, transaction id, short reference, or loan id lookup with hydrated loan state and activities.
-   */
-  async findByAddress(address: string): Promise<InstantLoanCandidate[]> {
-    const trimmedAddress = address.trim();
-    if (!trimmedAddress) {
-      throw new LiquidiumError(
-        LiquidiumErrorCode.VALIDATION_ERROR,
-        "Address lookup requires a non-empty address"
-      );
-    }
-
-    validateInstantLoanFindQuery(trimmedAddress);
-    return await this.findCandidatesByQuery(trimmedAddress);
-  }
-
   private async findCandidatesByQuery(
     query: string
-  ): Promise<InstantLoanCandidate[]> {
+  ): Promise<InstantLoanFindCandidate[]> {
     const apiClient = this.requireApi("Instant loan find");
     const response = await apiClient.get<InstantLoanFindResponseWire>(
       buildInstantLoanFindPath({ query })
@@ -981,40 +942,12 @@ function decodeRef(ref: string): bigint {
 }
 
 function mapCandidateWire(
-  wire: InstantLoanCandidateWire
-): InstantLoanCandidate {
+  wire: InstantLoanFindCandidateWire
+): InstantLoanFindCandidate {
   const loanId = parseBigintWire(wire.loanId ?? wire.loan_id, "loan ID");
-  const ref = wire.ref ?? wire.short_ref ?? publicIdFromInt(loanId);
-  const createdAt = wire.createdAt ?? wire.created_at;
 
   return {
     loanId,
-    ref,
-    profileId: requiredString(
-      wire.profileId ?? wire.lending_profile,
-      "profile ID"
-    ),
-    ...(createdAt ? { createdAt: new Date(createdAt) } : {}),
-    collateralPoolId: requiredString(
-      wire.collateralPoolId ?? wire.lend_pool_ic_id,
-      "collateral pool ID"
-    ),
-    borrowPoolId: requiredString(
-      wire.borrowPoolId ?? wire.borrow_pool_ic_id,
-      "borrow pool ID"
-    ),
-    collateralAsset: requiredString(
-      wire.collateralAsset ?? wire.lend_asset,
-      "collateral asset"
-    ),
-    borrowAsset: requiredString(
-      wire.borrowAsset ?? wire.borrow_asset,
-      "borrow asset"
-    ),
-    collateralAmount: parseBigintWire(
-      wire.collateralAmount,
-      "collateral amount"
-    ),
   };
 }
 
@@ -1027,15 +960,6 @@ function parseBigintWire(value: string | undefined, label: string): bigint {
   }
 
   return BigInt(value);
-}
-
-function requiredString(value: string | undefined, label: string): string {
-  if (value?.trim()) return value;
-
-  throw new LiquidiumError(
-    LiquidiumErrorCode.VALIDATION_ERROR,
-    `Missing instant loan ${label}`
-  );
 }
 
 function mapInstantLoansErrorToLiquidiumError(

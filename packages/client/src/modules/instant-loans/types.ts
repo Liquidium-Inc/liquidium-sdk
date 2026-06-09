@@ -411,7 +411,7 @@ export interface InstantLoan {
   ref: string;
   /** Simplified lifecycle status for display and flow control. */
   status: InstantLoanStatus;
-  /** Generated lending profile principal used by the instant loan. */
+  /** Generated profile principal used by the instant loan. */
   profileId: string;
   /** Immutable loan terms. */
   terms: InstantLoanTerms;
@@ -435,31 +435,4 @@ export interface InstantLoanFindResult {
   loan: InstantLoan;
   /** Active and completed deposit, borrow, repay, and withdraw activities. */
   activities: Activity[];
-}
-
-/**
- * Discovery result returned by address lookup.
- *
- * Candidates are intentionally lightweight; call `instantLoans.get(...)` with
- * `loanId` or `ref` to load canonical canister state and transfer targets.
- */
-export interface InstantLoanCandidate {
-  /** Canister-assigned loan id. */
-  loanId: bigint;
-  /** Short user-facing reference derived from `loanId`. */
-  ref: string;
-  /** Generated lending profile principal used by the instant loan. */
-  profileId: string;
-  /** API-observed creation time, if provided by the indexer. */
-  createdAt?: Date;
-  /** Principal text of the collateral pool. */
-  collateralPoolId: string;
-  /** Principal text of the borrow pool. */
-  borrowPoolId: string;
-  /** Collateral asset symbol. */
-  collateralAsset: MarketAsset;
-  /** Borrow asset symbol. */
-  borrowAsset: MarketAsset;
-  /** Collateral amount in base units. */
-  collateralAmount: bigint;
 }

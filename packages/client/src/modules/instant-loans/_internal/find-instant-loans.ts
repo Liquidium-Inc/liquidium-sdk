@@ -2,7 +2,6 @@ import { LiquidiumError, LiquidiumErrorCode } from "../../../core/errors";
 import type { Activity } from "../../activities";
 import type {
   InstantLoan,
-  InstantLoanCandidate,
   InstantLoanFindRequest,
   InstantLoanFindResult,
   InstantLoanGetRequest,
@@ -10,9 +9,13 @@ import type {
 
 export const INSTANT_LOAN_FIND_QUERY_MAX_LENGTH = 256;
 
+export interface InstantLoanFindCandidate {
+  loanId: bigint;
+}
+
 export interface FindInstantLoansDependencies {
   getLoan(request: InstantLoanGetRequest): Promise<InstantLoan>;
-  findCandidatesByQuery(query: string): Promise<InstantLoanCandidate[]>;
+  findCandidatesByQuery(query: string): Promise<InstantLoanFindCandidate[]>;
   listActivitiesByProfileId(profileId: string): Promise<Activity[]>;
 }
 

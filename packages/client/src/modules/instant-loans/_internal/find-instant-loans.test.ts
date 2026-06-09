@@ -2,8 +2,11 @@ import { expect, test, vi } from "vitest";
 import { LiquidiumErrorCode } from "../../../core/errors";
 import { SupplyAction } from "../../../core/types";
 import type { SupplyTarget } from "../../lending";
-import type { InstantLoan, InstantLoanCandidate } from "../types";
-import { findInstantLoans } from "./find-instant-loans";
+import type { InstantLoan } from "../types";
+import {
+  findInstantLoans,
+  type InstantLoanFindCandidate,
+} from "./find-instant-loans";
 
 const LOAN_ID = 42n;
 const PROFILE_ID = "aaaaa-aa";
@@ -79,17 +82,10 @@ test("should reject empty free-form queries before orchestration", async () => {
 });
 
 function createCandidate(
-  overrides: Partial<InstantLoanCandidate> = {}
-): InstantLoanCandidate {
+  overrides: Partial<InstantLoanFindCandidate> = {}
+): InstantLoanFindCandidate {
   return {
     loanId: LOAN_ID,
-    ref: LOAN_REF,
-    profileId: PROFILE_ID,
-    collateralPoolId: POOL_ID,
-    borrowPoolId: POOL_ID,
-    collateralAsset: "BTC",
-    borrowAsset: "USDT",
-    collateralAmount: 10_000n,
     ...overrides,
   };
 }

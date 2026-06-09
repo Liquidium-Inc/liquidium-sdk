@@ -17,7 +17,7 @@ Priority: authless instant loans are the default product flow. Use `client.insta
 
 When the user asks for a simple borrow, loan, collateral deposit, repayment target, or Liquidium integration and does not explicitly ask to manage Liquidium profiles, implement the authless instant-loan flow with `client.instantLoans`.
 
-Do not require the user to create a Liquidium profile, sign a borrow message, or call `client.lending.borrow(...)` for the default flow. The SDK creates the backing lending profile and returns generated initial-deposit and repayment quote targets.
+Do not require the user to create a Liquidium profile, sign a borrow message, or call `client.lending.borrow(...)` for the default flow. The SDK creates the backing profile and returns generated initial-deposit and repayment quote targets.
 
 Use profile-based `client.accounts` and `client.lending` only when the user explicitly asks for advanced profile management, existing profile positions, manual supply/repay tracking, signed borrow/withdraw flows, or lower-level wallet orchestration.
 
@@ -66,7 +66,7 @@ const client = new LiquidiumClient({
 **Config requirements:**
 
 - `environment`: sets the canister preset. Only `mainnet` is bundled; pass `canisterIds` explicitly for custom deployments
-- `apiBaseUrl`: overrides the default Liquidium service root for history, activities, inflow reporting, `instantLoans.create(...)`, `instantLoans.get(...)`, and `instantLoans.findByAddress(...)`. It is not needed for `borrow(...)`, `withdraw(...)`, or default ETH stablecoin deposit-address supply/repay targets
+- `apiBaseUrl`: overrides the default Liquidium service root for history, activities, inflow reporting, `instantLoans.create(...)`, `instantLoans.get(...)`, and `instantLoans.find(...)`. It is not needed for `borrow(...)`, `withdraw(...)`, or default ETH stablecoin deposit-address supply/repay targets
 - `headers`: adds headers to Liquidium SDK HTTP API requests, for example app attribution or auth from a backend proxy
 - `fetch`: supplies a custom fetch implementation when the runtime needs one
 - `evmRpcUrl` / `evmPublicClient`: required for lower-level ETH contract-interaction supply planning and allowance polling. Use `evmRpcHeaders` when the RPC provider authenticates with HTTP headers
@@ -102,7 +102,7 @@ debt exists.
 client.instantLoans.create(...);
 client.instantLoans.get({ ref });
 client.instantLoans.get({ loanId });
-client.instantLoans.findByAddress(address);
+client.instantLoans.find(query);
 client.quote.calculateLtv(...); // pure helper for current LTV previews
 ```
 
@@ -119,7 +119,7 @@ not confuse the quote module's `targetLtvBps` with `create(...)`'s `ltvMaxBps`. 
 from chosen borrow and collateral amounts before calling `create(...)`.
 
 `create(...)` and `get(...)` do not require a wallet adapter, profile ID, or
-message signing. The SDK returns quote targets for the generated `profileId`;
+message signing. The SDK returns quote targets for the generated profile;
 `create(...)` and `get(...)` return `initialDeposit.amount` for the full amount
 to send to the deposit target, including the estimated inflow fee. They also
 return `position` plus a non-null `repayment` quote. Repayment amount fields are
@@ -149,8 +149,9 @@ When showing deposit progress, always pair `instantLoans.get({ ref })` with
 status may still be `awaiting_deposit` while the activity stream already shows
 detected or processing confirmations.
 
-`findByAddress(...)` is a recovery helper and returns candidates only. Follow it
-with `get({ loanId })` or `get({ ref })` before showing canonical loan state.
+Use `find(...)` for recovery screens where the user may paste a short reference,
+numeric loan id string, address, or transaction id. It returns hydrated loans with
+activities.
 
 ### market
 
@@ -457,21 +458,15 @@ const repayAddress =
       : loan.repayment.target.account;
 ```
 
-Use address lookup only as recovery when the user lost the loan reference:
+Use search only as recovery when the user lost the loan reference:
 
 ```ts
-const candidates = await client.instantLoans.findByAddress(
-  "bc1qrefunddestination"
-);
-
-const loan = await client.instantLoans.get({
-  loanId: candidates[0].loanId,
-});
+const results = await client.instantLoans.find("bc1qrefunddestination");
+const loan = results[0]?.loan;
 ```
 
-Reference lookup is canonical. Address lookup is discovery only: it may return
-multiple candidates and should be followed by `get({ loanId })` or
-`get({ ref })`.
+Reference lookup is canonical. Search may return multiple hydrated matches;
+prefer `get({ ref })` once the app has a saved reference.
 
 Do not use `client.lending.borrow(...)` for this flow. `lending.borrow(...)` is
 the profile-based signed borrow primitive. Instant loans automate the borrow

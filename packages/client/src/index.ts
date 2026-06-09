@@ -118,7 +118,6 @@ export type {
   InstantLoanAuthorization,
   InstantLoanBorrow,
   InstantLoanBorrowRequestedEventType,
-  InstantLoanCandidate,
   InstantLoanCollateral,
   InstantLoanConfig,
   InstantLoanCreatedEventType,

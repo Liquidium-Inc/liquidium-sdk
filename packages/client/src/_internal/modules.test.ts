@@ -4409,12 +4409,13 @@ describe("InstantLoansModule", () => {
                 {
                   loan_id: LOAN_ID.toString(),
                   short_ref: publicIdFromInt(LOAN_ID),
-                  lending_profile: PROFILE_ID,
-                  lend_pool_ic_id: BTC_POOL_ID,
-                  borrow_pool_ic_id: USDT_POOL_ID,
+                  profile: PROFILE_ID,
+                  created_at: "2026-05-27T08:16:26.194Z",
                   lend_asset: "BTC",
                   borrow_asset: "USDT",
-                  collateralAmount: "10000000",
+                  collateral_amount: "10000000",
+                  lend_pool_ic_id: BTC_POOL_ID,
+                  borrow_pool_ic_id: USDT_POOL_ID,
                 },
               ],
             }),
@@ -5291,52 +5292,6 @@ describe("InstantLoansModule", () => {
       code: LiquidiumErrorCode.MAX_LTV_EXCEEDED,
     });
     expect(fetchSpy).not.toHaveBeenCalled();
-  });
-
-  test("finds loan candidates by address through the SDK API", async () => {
-    // given
-    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(
-        JSON.stringify({
-          success: true,
-          candidates: [
-            {
-              loan_id: LOAN_ID.toString(),
-              short_ref: publicIdFromInt(LOAN_ID),
-              lending_profile: PROFILE_ID,
-              lend_pool_ic_id: BTC_POOL_ID,
-              borrow_pool_ic_id: USDT_POOL_ID,
-              lend_asset: "BTC",
-              borrow_asset: "USDT",
-              collateralAmount: "10000000",
-            },
-          ],
-        }),
-        { status: 200, headers: { "content-type": "application/json" } }
-      )
-    );
-    const client = new LiquidiumClient({
-      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
-    });
-
-    // when
-    const candidates = await client.instantLoans.findByAddress("bc1qrecover");
-
-    // then
-    expect(candidates).toEqual([
-      expect.objectContaining({
-        loanId: LOAN_ID,
-        ref: publicIdFromInt(LOAN_ID),
-        profileId: PROFILE_ID,
-        collateralAsset: "BTC",
-        collateralAmount: 10_000_000n,
-        borrowAsset: "USDT",
-      }),
-    ]);
-    expect(fetchSpy).toHaveBeenCalledWith(
-      "https://app.liquidium.fi/api/sdk/v1/instant-loans/find?query=bc1qrecover",
-      expect.objectContaining({ method: "GET" })
-    );
   });
 
   function createInstantLoan(

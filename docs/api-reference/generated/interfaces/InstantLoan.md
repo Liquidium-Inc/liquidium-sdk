@@ -68,7 +68,7 @@ Current lending position state for the generated profile.
 
 Defined in: [packages/client/src/modules/instant-loans/types.ts:415](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L415)
 
-Generated lending profile principal used by the instant loan.
+Generated profile principal used by the instant loan.
 
 ***
 

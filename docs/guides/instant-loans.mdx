@@ -69,8 +69,6 @@ const results = await client.instantLoans.find(addressOrTxidOrRef);
 
 String `find(...)` calls the SDK API search index and returns hydrated loans with activities. It supports short references, numeric canister loan id strings, generated deposit or repayment addresses, borrow or refund destination addresses, and indexed transaction ids. Pass `{ ref }`, `{ loanId }`, or a `bigint` when you already have an exact identifier and want direct canister lookup.
 
-`findByAddress(...)` is deprecated and remains available for legacy integrations that need lightweight candidate records.
-
 ## Response Fields
 
 Most UIs need these fields after `create(...)` or `get(...)`:

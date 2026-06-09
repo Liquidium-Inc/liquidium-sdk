@@ -218,12 +218,6 @@ const sameResults = await client.instantLoans.find({ loanId: 123n });
 const byRefDirect = await client.instantLoans.find({ ref: "ABC123" });
 ```
 
-### `client.instantLoans.findByAddress(address)`
-
-Deprecated. Finds lightweight candidate loans associated with a borrow or refund address.
-
-Use `client.instantLoans.find(...)` for new integrations. The deprecated method returns candidate matches; call `client.instantLoans.get({ ref })` or `client.instantLoans.get({ loanId })` before showing loan state or transfer targets.
-
 ### `client.quote.calculateLtv(request, pools, prices)`
 
 Calculates implied LTV from selected pools, prices, borrow amount, and collateral amount.
