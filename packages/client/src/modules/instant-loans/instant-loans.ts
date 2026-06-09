@@ -438,12 +438,7 @@ export class InstantLoansModule {
       );
     }
 
-    const apiClient = this.requireApi("Instant loan lookup");
-    const response = await apiClient.get<InstantLoanLookupResponseWire>(
-      buildInstantLoanLookupPath({ query: trimmedAddress })
-    );
-
-    return (response.candidates ?? response.loans ?? []).map(mapCandidateWire);
+    return await this.findCandidatesByLookupQuery(trimmedAddress);
   }
 
   private async findByQuery(query: string): Promise<InstantLoanFindResult[]> {
@@ -463,8 +458,19 @@ export class InstantLoansModule {
       }
     }
 
-    const candidates = await this.findByAddress(trimmedQuery);
+    const candidates = await this.findCandidatesByLookupQuery(trimmedQuery);
     return await this.findByCandidates(candidates);
+  }
+
+  private async findCandidatesByLookupQuery(
+    query: string
+  ): Promise<InstantLoanCandidate[]> {
+    const apiClient = this.requireApi("Instant loan lookup");
+    const response = await apiClient.get<InstantLoanLookupResponseWire>(
+      buildInstantLoanLookupPath({ query })
+    );
+
+    return (response.candidates ?? response.loans ?? []).map(mapCandidateWire);
   }
 
   private async findByRef(ref: string): Promise<InstantLoanFindResult[]> {
