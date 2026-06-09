@@ -156,7 +156,7 @@ export type InstantLoanFindRequest =
   | InstantLoanGetByRefRequest
   | InstantLoanFindByQueryRequest;
 
-/** Free-form search request for address, transaction id, or short reference lookup. */
+/** Free-form API search request for address, transaction id, or short reference lookup. */
 export interface InstantLoanFindByQueryRequest {
   /** Short reference, generated address, borrow/refund destination, or transaction id/hash. */
   query: string;

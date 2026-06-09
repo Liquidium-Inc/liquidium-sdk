@@ -4243,7 +4243,7 @@ describe("InstantLoansModule", () => {
     const estimateDepositFee = vi.fn().mockResolvedValue({ Ok: 1_500_000n });
     const getDepositFee = vi.fn().mockResolvedValue(2_000n);
     const icrc1Fee = vi.fn().mockResolvedValue(10n);
-    const fetchSpy = mockInstantLoanLookupFetch({
+    const fetchSpy = mockInstantLoanCollateralHintFetch({
       collateralAmountHint: "10000000",
     });
     const getCollateralPosition = vi.fn().mockResolvedValue([
@@ -4363,7 +4363,7 @@ describe("InstantLoansModule", () => {
     });
   });
 
-  test("finds manage-ready loan results by numeric loan id string", async () => {
+  test("finds manage-ready loan results by string query", async () => {
     // given
     const getLoan = vi.fn().mockResolvedValue({
       Ok: createInstantLoan(),
@@ -4401,6 +4401,26 @@ describe("InstantLoansModule", () => {
       .spyOn(globalThis, "fetch")
       .mockImplementation(async (input) => {
         const url = input.toString();
+        if (url.includes("/instant-loans/find?query=42")) {
+          return new Response(
+            JSON.stringify({
+              success: true,
+              candidates: [
+                {
+                  loan_id: LOAN_ID.toString(),
+                  short_ref: publicIdFromInt(LOAN_ID),
+                  lending_profile: PROFILE_ID,
+                  lend_pool_ic_id: BTC_POOL_ID,
+                  borrow_pool_ic_id: USDT_POOL_ID,
+                  lend_asset: "BTC",
+                  borrow_asset: "USDT",
+                  collateralAmount: "10000000",
+                },
+              ],
+            }),
+            { status: 200, headers: { "content-type": "application/json" } }
+          );
+        }
         if (url.includes("/instant-loans/42/collateral-hint")) {
           return new Response(
             JSON.stringify({
@@ -4457,6 +4477,10 @@ describe("InstantLoansModule", () => {
     });
     expect(results[0]?.activities).toEqual([]);
     expect(fetchSpy).toHaveBeenCalledWith(
+      "https://app.liquidium.fi/api/sdk/v1/instant-loans/find?query=42",
+      expect.objectContaining({ method: "GET" })
+    );
+    expect(fetchSpy).toHaveBeenCalledWith(
       "https://app.liquidium.fi/api/sdk/v1/activities?profileId=aaaaa-aa&state=all",
       expect.objectContaining({ method: "GET" })
     );
@@ -4484,7 +4508,7 @@ describe("InstantLoansModule", () => {
       .mockResolvedValue([[10_000_000_000_000_000_000_000_000n, 0n, 0n]]);
     const getDepositFee = vi.fn().mockResolvedValue(2_000n);
     const icrc1Fee = vi.fn().mockResolvedValue(10n);
-    mockInstantLoanLookupFetch({
+    mockInstantLoanCollateralHintFetch({
       collateralAmountHint: "10000000",
     });
 
@@ -4560,7 +4584,7 @@ describe("InstantLoansModule", () => {
     const getDepositFee = vi.fn().mockResolvedValue(2_000n);
     const icrc1Fee = vi.fn().mockResolvedValue(10n);
     const estimateDepositFee = vi.fn().mockResolvedValue({ Ok: 1_500_000n });
-    mockInstantLoanLookupFetch({
+    mockInstantLoanCollateralHintFetch({
       borrowAsset: "BTC",
       borrowPoolId: BTC_POOL_ID,
       collateralAmountHint: "5000000",
@@ -4717,7 +4741,7 @@ describe("InstantLoansModule", () => {
     const estimateDepositFee = vi.fn().mockResolvedValue({ Ok: 1_500_000n });
     const getDepositFee = vi.fn().mockResolvedValue(2_000n);
     const icrc1Fee = vi.fn().mockResolvedValue(10n);
-    mockInstantLoanLookupFetch({
+    mockInstantLoanCollateralHintFetch({
       collateralAmountHint: "10000000",
     });
 
@@ -4778,7 +4802,7 @@ describe("InstantLoansModule", () => {
     const estimateDepositFee = vi.fn().mockResolvedValue({ Ok: 1_500_000n });
     const getDepositFee = vi.fn().mockResolvedValue(2_000n);
     const icrc1Fee = vi.fn().mockResolvedValue(10n);
-    mockInstantLoanLookupFetch({
+    mockInstantLoanCollateralHintFetch({
       collateralAmountHint: "10000000",
     });
 
@@ -5310,7 +5334,7 @@ describe("InstantLoansModule", () => {
       }),
     ]);
     expect(fetchSpy).toHaveBeenCalledWith(
-      "https://app.liquidium.fi/api/sdk/v1/instant-loans/lookup?query=bc1qrecover",
+      "https://app.liquidium.fi/api/sdk/v1/instant-loans/find?query=bc1qrecover",
       expect.objectContaining({ method: "GET" })
     );
   });
@@ -5348,7 +5372,7 @@ describe("InstantLoansModule", () => {
     };
   }
 
-  function mockInstantLoanLookupFetch(
+  function mockInstantLoanCollateralHintFetch(
     overrides: Partial<{
       borrowAsset: string;
       borrowPoolId: string;

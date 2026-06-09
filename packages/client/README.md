@@ -194,7 +194,7 @@ Use this when your backend stores the numeric id instead of the short reference.
 
 ### `client.instantLoans.find(query)`
 
-Finds instant loans by short reference, numeric canister loan id, generated deposit or repayment address, borrow or refund destination address, or indexed transaction id/hash.
+Finds instant loans by short reference, numeric canister loan id string, generated deposit or repayment address, borrow or refund destination address, or indexed transaction id/hash through the SDK API search index.
 
 Use this for recovery and manage pages where the user may paste any loan identifier. The method returns an array because address and transaction-id lookups can match more than one loan.
 
@@ -210,11 +210,12 @@ for (const result of results) {
 }
 ```
 
-Pass a `bigint` or explicit object when you already have a typed numeric canister loan id:
+Pass a `bigint` or explicit object when you already have an exact canister identifier and want direct canister lookup:
 
 ```ts
 const results = await client.instantLoans.find(123n);
 const sameResults = await client.instantLoans.find({ loanId: 123n });
+const byRefDirect = await client.instantLoans.find({ ref: "ABC123" });
 ```
 
 ### `client.instantLoans.findByAddress(address)`

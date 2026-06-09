@@ -61,13 +61,13 @@ Use the numeric loan ID when your backend stores it:
 const loan = await client.instantLoans.get({ loanId });
 ```
 
-Use `find(...)` when the user has a short reference, numeric loan id, address, or transaction id:
+Use `find(...)` when the user may paste a short reference, numeric loan id string, address, or transaction id:
 
 ```ts
 const results = await client.instantLoans.find(addressOrTxidOrRef);
 ```
 
-`find(...)` returns hydrated loans and activities. It supports short references, numeric canister loan ids, generated deposit or repayment addresses, borrow or refund destination addresses, and indexed transaction ids.
+String `find(...)` calls the SDK API search index and returns hydrated loans with activities. It supports short references, numeric canister loan id strings, generated deposit or repayment addresses, borrow or refund destination addresses, and indexed transaction ids. Pass `{ ref }`, `{ loanId }`, or a `bigint` when you already have an exact identifier and want direct canister lookup.
 
 `findByAddress(...)` is deprecated and remains available for legacy integrations that need lightweight candidate records.
 

@@ -8,7 +8,7 @@
 
 Defined in: [packages/client/src/modules/instant-loans/types.ts:160](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L160)
 
-Free-form search request for address, transaction id, or short reference lookup.
+Free-form API search request for address, transaction id, or short reference lookup.
 
 ## Properties
 
