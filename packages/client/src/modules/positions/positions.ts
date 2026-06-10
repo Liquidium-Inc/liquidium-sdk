@@ -211,7 +211,7 @@ export class PositionsModule {
           pool,
           priceUsd,
           suppliedUsd: nativeAmountToUsdScaled(
-            position.deposited + position.earnedInterest,
+            position.deposited,
             position.depositedDecimals,
             priceUsd
           ),

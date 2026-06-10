@@ -1970,6 +1970,9 @@ describe("PositionsModule", () => {
     // given
     const BTC_POOL_ID = "pool-btc";
     const USDT_POOL_ID = "pool-usdt";
+    const BTC_DEPOSITED_NATIVE_NOW = 200_000_000n;
+    const BTC_TOTAL_EARNED_INTEREST = 10_000_000n;
+    const BTC_EARNED_SINCE_SNAPSHOT = 1_000_000n;
     vi.spyOn(Actor, "createActor").mockReturnValue({
       get_profile_stats: vi.fn().mockResolvedValue({
         debt: 0n,
@@ -1986,7 +1989,9 @@ describe("PositionsModule", () => {
         .fn()
         .mockResolvedValueOnce([
           makePositionView({
-            deposited_native_now: 200_000_000n,
+            deposited_native_now: BTC_DEPOSITED_NATIVE_NOW,
+            total_earned_interest: BTC_TOTAL_EARNED_INTEREST,
+            earned_since_snapshot: BTC_EARNED_SINCE_SNAPSHOT,
             debt_native_now: 0n,
             pool_id: { toText: () => BTC_POOL_ID },
           }),
