@@ -15,7 +15,7 @@ Use instant loans for a checkout-style borrow flow. The SDK creates a generated 
 | Load market data | `client.market.listPools()` and `client.market.getAssetPrices()` | Show supported collateral and borrow assets |
 | Validate amounts | `client.quote.calculateLtv(...)` | Block too-small borrow amounts, invalid LTV, or frozen-pool input before creation |
 | Create loan | `client.instantLoans.create(...)` | Store `loan.ref` and show `loan.initialDeposit.amount` plus `loan.initialDeposit.target` |
-| Track loan | `client.instantLoans.get({ ref })` and `client.activities.list({ shortRef: ref })` | Reload state and monitor deposits, borrows, and repayments |
+| Track loan | `client.instantLoans.get({ ref })`, `client.instantLoans.find(...)`, and `client.activities.list({ shortRef: ref })` | Reload state and monitor deposits, borrows, and repayments |
 | Repay loan | Read `loan.repayment` | If non-null, ask the user to send `loan.repayment.amount` to `loan.repayment.target` |
 
 ## Create Request
@@ -61,13 +61,13 @@ Use the numeric loan ID when your backend stores it:
 const loan = await client.instantLoans.get({ loanId });
 ```
 
-Use address recovery only when the user lost the reference:
+Use `find(...)` when the user may paste a short reference, numeric loan id string, address, or transaction id:
 
 ```ts
-const candidates = await client.instantLoans.findByAddress(address);
+const results = await client.instantLoans.find(addressOrTxidOrRef);
 ```
 
-Candidates are lightweight. Load canonical state with `client.instantLoans.get(...)` before you show transfer targets or repayment amounts.
+String `find(...)` calls the SDK API search index and returns lightweight matches without hydrating every loan. It supports short references, numeric canister loan id strings, generated deposit or repayment addresses, borrow or refund destination addresses, and indexed transaction ids. Use `get({ ref })` or `get({ loanId })` after the user selects a match.
 
 ## Response Fields
 
@@ -87,3 +87,5 @@ Most UIs need these fields after `create(...)` or `get(...)`:
 | `loan.repayment` | Repayment quote, or `null` when no debt exists |
 | `loan.repayment.amount` | Fee-inclusive repayment amount when `loan.repayment` is non-null |
 | `loan.repayment.target` | Address or account where the user sends repayment when `loan.repayment` is non-null |
+
+`client.instantLoans.find(...)` returns lightweight indexed fields, including `loanId`, `ref`, `profileId`, `createdAt`, `collateral`, and `borrow`. Use `client.instantLoans.get(...)` to load full loan fields for a selected match. Use `client.activities.list(...)` separately when you need active or completed flow activity.

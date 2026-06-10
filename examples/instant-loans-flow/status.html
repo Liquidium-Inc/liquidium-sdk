@@ -45,12 +45,14 @@
       </section>
 
       <section>
-        <h2>Recover By Address</h2>
-        <label for="address-input">Borrow or refund address</label>
-        <input id="address-input" placeholder="Address used on the loan" />
+        <h2>Find Loans</h2>
+        <p>Search by loan reference, generated address, destination address, or transaction id/hash. Results are loan matches only; use Activity Status when you need receipt details.</p>
+
+        <label for="query-input">Loan search query</label>
+        <input id="query-input" placeholder="Reference, address, txid, or hash" />
 
         <button id="find-loans-button" type="button">Find Candidate Loans</button>
-        <div id="candidates-output" class="result-box">Enter an address to find candidates.</div>
+        <div id="candidates-output" class="result-box">Enter a query to find candidate loans.</div>
       </section>
 
       <section>

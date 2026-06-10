@@ -2,7 +2,7 @@ import type {
   Activity,
   GetActivityStatusResponse,
   InstantLoan,
-  InstantLoanCandidate,
+  InstantLoanFindResult,
   Pool,
   SupplyTarget,
 } from "@liquidium/client";
@@ -284,18 +284,22 @@ export function formatActivityStatus(
   return formatActivity(response.activity);
 }
 
-export function formatCandidate(candidate: InstantLoanCandidate): string {
+export function formatFindResult(
+  result: InstantLoanFindResult,
+  index: number,
+  totalResults: number
+): string {
   return [
-    `Reference: ${candidate.ref}`,
-    `Loan id: ${candidate.loanId.toString()}`,
-    `Profile id: ${candidate.profileId}`,
-    `Created at: ${candidate.createdAt?.toISOString() ?? "unknown"}`,
-    `Collateral: ${candidate.collateralAmount.toString()} base units of ${
-      candidate.collateralAsset
-    }`,
-    `Borrow asset: ${candidate.borrowAsset}`,
-    `Collateral pool: ${candidate.collateralPoolId}`,
-    `Borrow pool: ${candidate.borrowPoolId}`,
+    `Result ${index.toString()} of ${totalResults.toString()}`,
+    `Reference: ${result.ref}`,
+    `Loan id: ${result.loanId.toString()}`,
+    `Created at: ${formatUnixTimestampSeconds(result.createdAt)}`,
+    `Profile id: ${result.profileId}`,
+    `Collateral: ${result.collateral.amount.toString()} ${result.collateral.asset}`,
+    `Borrow asset: ${result.borrow.asset}`,
+    `Collateral pool: ${result.collateral.poolId}`,
+    `Borrow pool: ${result.borrow.poolId}`,
+    "Use the reference or loan id above to load full loan details.",
   ].join("\n");
 }
 

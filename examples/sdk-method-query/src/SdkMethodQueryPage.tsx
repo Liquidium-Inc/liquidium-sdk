@@ -306,13 +306,13 @@ const SDK_METHODS: MethodDefinition[] = [
     },
   },
   {
-    id: "instantLoans.findByAddress",
-    label: "instantLoans.findByAddress",
-    defaultArgs: '{\n  "address": "bc1qYourRefundOrDepositAddress"\n}',
+    id: "instantLoans.find",
+    label: "instantLoans.find",
+    defaultArgs: '{\n  "query": "bc1qYourRefundOrDepositAddress"\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
-      return await client.instantLoans.findByAddress(
-        expectNonEmptyString(args.address, "address")
+      return await client.instantLoans.find(
+        expectNonEmptyString(args.query, "query")
       );
     },
   },

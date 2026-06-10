@@ -6,7 +6,7 @@
 
 # Interface: InstantLoanAuthorization
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:167](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L167)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:201](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L201)
 
 Authentication metadata for warmed instant-loan profiles.
 
@@ -16,7 +16,7 @@ Authentication metadata for warmed instant-loan profiles.
 
 > **address**: `string`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:171](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L171)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:205](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L205)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [packages/client/src/modules/instant-loans/types.ts:171](https://git
 
 > **derivationIndex**: `Uint8Array`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:169](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L169)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:203](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L203)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [packages/client/src/modules/instant-loans/types.ts:169](https://git
 
 > **publicKey**: `Uint8Array`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:170](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L170)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:204](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L204)
 
 ***
 
@@ -40,4 +40,4 @@ Defined in: [packages/client/src/modules/instant-loans/types.ts:170](https://git
 
 > **type**: `"EthSignature"`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:168](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L168)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:202](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L202)

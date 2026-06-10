@@ -192,11 +192,11 @@ Loads loan state by numeric canister loan id.
 
 Use this when your backend stores the numeric id instead of the short reference.
 
-### `client.instantLoans.findByAddress(address)`
+### `client.instantLoans.find(query)`
 
-Finds candidate loans associated with a borrow or refund address.
+Finds instant loans by short reference, numeric canister loan id string, generated deposit or repayment address, borrow or refund destination address, or indexed transaction id/hash through the SDK API search index.
 
-Use this only for recovery. The method returns candidate matches; call `client.instantLoans.get({ ref })` or `client.instantLoans.get({ loanId })` before showing loan state or transfer targets.
+Use this for recovery and manage pages where the user may paste any loan identifier. The method returns lightweight matches with nested `collateral` and `borrow` fields because address and transaction-id lookups can match many loans. Use `client.instantLoans.get(...)` after the user selects a match.
 
 ### `client.quote.calculateLtv(request, pools, prices)`
 
