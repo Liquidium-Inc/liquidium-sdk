@@ -120,7 +120,8 @@ console.log("Loan activities:", activities);
 
 const foundLoans = await client.instantLoans.find(loan.ref);
 
-console.log("Found loan with activities:", foundLoans[0]);
+console.log("Found loan reference:", foundLoans[0]?.ref);
+console.log("Found loan collateral:", foundLoans[0]?.collateral.amount.toString());
 
 function requirePool(pools: Pool[], asset: string): Pool {
   const pool = pools.find((candidatePool) => candidatePool.asset === asset);
@@ -196,7 +197,7 @@ Use this when your backend stores the numeric id instead of the short reference.
 
 Finds instant loans by short reference, numeric canister loan id string, generated deposit or repayment address, borrow or refund destination address, or indexed transaction id/hash through the SDK API search index.
 
-Use this for recovery and manage pages where the user may paste any loan identifier. The method returns an array because address and transaction-id lookups can match more than one loan.
+Use this for recovery and manage pages where the user may paste any loan identifier. The method returns lightweight matches because address and transaction-id lookups can match many loans. Use `client.instantLoans.get(...)` after the user selects a match.
 
 ```ts
 const results = await client.instantLoans.find("bc1q...");
@@ -204,18 +205,20 @@ const byRef = await client.instantLoans.find("ABC123");
 const byLoanId = await client.instantLoans.find("42");
 
 for (const result of results) {
-  console.log(result.loan.initialDeposit.target);
-  console.log(result.loan.repayment.target);
-  console.log(result.activities);
+  console.log(result.ref);
+  console.log(result.loanId);
+  console.log(result.collateral.asset, result.borrow.asset);
+  console.log(result.collateral.amount);
 }
+
+const selectedLoan = await client.instantLoans.get({ loanId: results[0].loanId });
 ```
 
-Pass a `bigint` or explicit object when you already have an exact canister identifier and want direct canister lookup:
+Call `get(...)` when you already have an exact canister identifier and want direct canister lookup without an array:
 
 ```ts
-const results = await client.instantLoans.find(123n);
-const sameResults = await client.instantLoans.find({ loanId: 123n });
-const byRefDirect = await client.instantLoans.find({ ref: "ABC123" });
+const loanById = await client.instantLoans.get({ loanId: 123n });
+const loanByRef = await client.instantLoans.get({ ref: "ABC123" });
 ```
 
 ### `client.quote.calculateLtv(request, pools, prices)`
@@ -243,7 +246,7 @@ Most instant-loan UIs show or store these fields:
 | Field | Use |
 | --- | --- |
 | `loan.ref` | Save and show this reference so the loan can be restored later |
-| `loan.status` | Show the lifecycle: `awaiting_deposit`, `deposit_detected`, `active`, `settling`, `closed`, or `expired` |
+| `loan.status` | Show the lifecycle: `awaiting_deposit`, `deposit_detected`, `active`, `settling`, `closed`, or `expired`. `active` means the canister has started the loan or live debt exists |
 | `loan.initialDeposit.amount` | Fee-inclusive collateral amount to send after creation or restore |
 | `loan.initialDeposit.collateralAmount` | Intended credited collateral target used for LTV |
 | `loan.initialDeposit.target` | Address or ICRC account where the user sends collateral |
@@ -253,7 +256,7 @@ Most instant-loan UIs show or store these fields:
 | `loan.repayment.target` | Address or ICRC account where the user sends repayment |
 | `loan.position` | Current collateral, debt, and interest state for the generated profile |
 
-`client.instantLoans.find(...)` returns these fields as `result.loan` and includes active and completed flow activity as `result.activities`.
+`client.instantLoans.find(...)` returns lightweight search matches with `loanId`, `ref`, `createdAt`, `profileId`, `collateral`, and `borrow`. Use `client.instantLoans.get(...)` to load full loan fields, and use `client.activities.list(...)` separately when you need deposit, borrow, repay, or withdraw activity.
 
 ## Amounts
 

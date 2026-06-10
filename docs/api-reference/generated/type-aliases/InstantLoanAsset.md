@@ -8,6 +8,6 @@
 
 > **InstantLoanAsset** = `"BTC"` \| `"SOL"` \| `"USDC"` \| `"USDT"`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:6](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L6)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:5](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L5)
 
 Asset symbols supported by the instant-loans canister.

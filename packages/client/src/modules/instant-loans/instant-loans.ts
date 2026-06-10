@@ -18,10 +18,20 @@ import {
 } from "../../core/sdk-api-paths";
 import type { ApiClient } from "../../core/transports/api-client";
 import type { CanisterContext } from "../../core/transports/canister-context";
-import { type Asset, type Chain, SupplyAction } from "../../core/types";
+import {
+  type Asset,
+  type Chain,
+  Asset as CoreAsset,
+  SupplyAction,
+} from "../../core/types";
+import {
+  parseApiStringUnion,
+  parseIsoApiTimestampToUnixSeconds,
+  parseNonEmptyApiString,
+  parseUnsignedApiBigint,
+} from "../../core/utils/api-response-parsers";
 import { getAssetNativeDecimals } from "../../core/utils/asset-decimals";
 import { getVariantKey } from "../../core/utils/variant";
-import type { ActivitiesModule } from "../activities";
 import { resolveSupplyTarget } from "../lending/_internal/supply-targets";
 import type { LendingModule } from "../lending/lending";
 import { SupplyPlanType, type SupplyTarget } from "../lending/types";
@@ -33,10 +43,6 @@ import {
   validateInstantLoanBorrowDestination,
   validateInstantLoanRefundDestination,
 } from "./_internal/address-validation";
-import {
-  findInstantLoans,
-  type InstantLoanFindCandidate,
-} from "./_internal/find-instant-loans";
 import { intFromPublicId, publicIdFromInt } from "./ref-code";
 import type {
   CreateInstantLoanRequest,
@@ -48,7 +54,8 @@ import type {
   InstantLoanConfig,
   InstantLoanEvent,
   InstantLoanEventType,
-  InstantLoanFindRequest,
+  InstantLoanFindBorrow,
+  InstantLoanFindCollateral,
   InstantLoanFindResult,
   InstantLoanGetRequest,
   InstantLoanInitialDeposit,
@@ -64,6 +71,14 @@ const RATE_SCALE = 10n ** 27n;
 const SECONDS_PER_YEAR = 31_536_000n;
 const ETH_STABLECOIN_INFLOW_FEE_FALLBACK = 1_500_000n;
 const INSTANT_LOAN_MIN_SLIPPAGE_BUFFER_BPS = 200n;
+const INSTANT_LOAN_FIND_QUERY_MAX_LENGTH = 256;
+const INSTANT_LOAN_WIRE_CONTEXT = "instant loan";
+const INSTANT_LOAN_ASSETS = [
+  CoreAsset.BTC,
+  CoreAsset.SOL,
+  CoreAsset.USDC,
+  CoreAsset.USDT,
+] as const satisfies readonly InstantLoanAsset[];
 
 interface InstantLoanLtvPolicy {
   ltvBps: bigint;
@@ -72,9 +87,24 @@ interface InstantLoanLtvPolicy {
 }
 
 interface InstantLoanFindCandidateWire {
-  loanId?: string;
-  loan_id?: string;
-  profile?: string;
+  loan_id: string;
+  short_ref: string;
+  created_at: string;
+  lend_asset: string;
+  borrow_asset: string;
+  collateral_amount: string;
+  lend_pool_ic_id: string;
+  borrow_pool_ic_id: string;
+  profile: string;
+}
+
+interface InstantLoanFindCandidate {
+  loanId: bigint;
+  ref: string;
+  createdAt: bigint;
+  collateral: InstantLoanFindCollateral;
+  borrow: InstantLoanFindBorrow;
+  profileId: string;
 }
 
 interface InstantLoanCreateRequestWire {
@@ -121,6 +151,7 @@ interface InstantLoanWire {
 interface InstantLoanHydrationInput {
   loanId: bigint;
   profileId: string;
+  started: boolean;
   ltvMaxBps: bigint;
   depositWindowSeconds: bigint;
   collateralPoolId: string;
@@ -150,6 +181,7 @@ interface RepaymentInflowFeeEstimate {
 }
 
 interface DeriveInstantLoanStatusInput {
+  started: boolean;
   collateralAmount: bigint;
   totalDebtAmount: bigint;
 }
@@ -172,8 +204,7 @@ export class InstantLoansModule {
     private readonly canisterContext: CanisterContext,
     private readonly apiClient: ApiClient | undefined,
     private readonly lending: LendingModule,
-    private readonly positions: PositionsModule,
-    private readonly activities: ActivitiesModule
+    private readonly positions: PositionsModule
   ) {}
 
   /**
@@ -227,10 +258,16 @@ export class InstantLoansModule {
       refundDestination,
     });
 
-    const loanId = parseBigintWire(response.loan.loanId, "loan ID");
-    const collateralAmount = parseBigintWire(
+    const loanId = parseUnsignedApiBigint(response.loan.loanId, {
+      context: INSTANT_LOAN_WIRE_CONTEXT,
+      label: "loan ID",
+    });
+    const collateralAmount = parseUnsignedApiBigint(
       response.loan.collateral.amountHint,
-      "collateral amount"
+      {
+        context: INSTANT_LOAN_WIRE_CONTEXT,
+        label: "collateral amount",
+      }
     );
     const record = await this.getLoanRecord(loanId);
 
@@ -257,26 +294,26 @@ export class InstantLoansModule {
   }
 
   /**
-   * Finds instant loans by short reference, numeric loan id, address, or transaction id.
+   * Finds instant loans by short reference, numeric loan id string, address, or transaction id.
    *
-   * String input uses the SDK API search path. Pass a `bigint`, `{ loanId }`,
-   * or `{ ref }` when you already have an exact canister identifier and want a
-   * direct canister lookup.
+   * Search returns lightweight matches. Call `get({ loanId })` or `get({ ref })`
+   * when the user selects a match and you need hydrated loan state.
    *
-   * @param request - Short reference, address, transaction id/hash, numeric loan id, or explicit request object.
-   * @returns Hydrated loan state plus active and completed activities for each match.
+   * @param query - Short reference, address, transaction id/hash, or numeric loan id string.
+   * @returns Matching loan ids and references from the search index.
    */
-  async find(request: string | bigint): Promise<InstantLoanFindResult[]>;
-  async find(request: InstantLoanFindRequest): Promise<InstantLoanFindResult[]>;
-  async find(
-    request: string | bigint | InstantLoanFindRequest
-  ): Promise<InstantLoanFindResult[]> {
-    return await findInstantLoans(request, {
-      getLoan: (getRequest) => this.get(getRequest),
-      findCandidatesByQuery: (query) => this.findCandidatesByQuery(query),
-      listActivitiesByProfileId: (profileId) =>
-        this.activities.list({ profileId }),
-    });
+  async find(query: string): Promise<InstantLoanFindResult[]> {
+    const validatedQuery = validateInstantLoanFindQuery(query);
+    const candidates = await this.findCandidateLoansByQuery(validatedQuery);
+
+    return uniqueInstantLoanFindCandidates(candidates).map((candidate) => ({
+      loanId: candidate.loanId,
+      ref: candidate.ref,
+      createdAt: candidate.createdAt,
+      collateral: candidate.collateral,
+      borrow: candidate.borrow,
+      profileId: candidate.profileId,
+    }));
   }
 
   /**
@@ -388,7 +425,7 @@ export class InstantLoansModule {
     }
   }
 
-  private async findCandidatesByQuery(
+  private async findCandidateLoansByQuery(
     query: string
   ): Promise<InstantLoanFindCandidate[]> {
     const apiClient = this.requireApi("Instant loan find");
@@ -428,6 +465,7 @@ export class InstantLoansModule {
     return await this.hydrateLoan({
       loanId: record.id,
       profileId: record.lending_profile.toText(),
+      started: record.started,
       ltvMaxBps: record.ltv_max_bps,
       depositWindowSeconds: record.ltv_timer_s,
       collateralPoolId: record.lend_pool_id.toText(),
@@ -454,7 +492,10 @@ export class InstantLoansModule {
       buildInstantLoanCollateralHintPath({ loanId })
     );
 
-    return parseBigintWire(response.collateralAmountHint, "collateral amount");
+    return parseUnsignedApiBigint(response.collateralAmountHint, {
+      context: INSTANT_LOAN_WIRE_CONTEXT,
+      label: "collateral amount",
+    });
   }
 
   private async hydrateLoan(
@@ -519,6 +560,7 @@ export class InstantLoansModule {
     const debtInterestAmount = borrowPosition?.debtInterest ?? 0n;
 
     const status = deriveInstantLoanStatus({
+      started: input.started,
       collateralAmount: currentCollateralAmount,
       totalDebtAmount,
     });
@@ -723,7 +765,7 @@ function calculateTotalDebtAmount(borrowPosition: Position | null): bigint {
 function deriveInstantLoanStatus(
   input: DeriveInstantLoanStatusInput
 ): InstantLoanStatusValue {
-  if (input.totalDebtAmount > 0n) {
+  if (input.started || input.totalDebtAmount > 0n) {
     return InstantLoanStatus.active;
   }
 
@@ -941,25 +983,90 @@ function decodeRef(ref: string): bigint {
   }
 }
 
-function mapCandidateWire(
-  wire: InstantLoanFindCandidateWire
-): InstantLoanFindCandidate {
-  const loanId = parseBigintWire(wire.loanId ?? wire.loan_id, "loan ID");
-
-  return {
-    loanId,
-  };
-}
-
-function parseBigintWire(value: string | undefined, label: string): bigint {
-  if (!value || !/^\d+$/.test(value)) {
+function validateInstantLoanFindQuery(query: unknown): string {
+  if (typeof query !== "string") {
     throw new LiquidiumError(
       LiquidiumErrorCode.VALIDATION_ERROR,
-      `Invalid instant loan ${label}`
+      "Instant loan find query must be a string"
     );
   }
 
-  return BigInt(value);
+  const trimmedQuery = query.trim();
+  if (!trimmedQuery) {
+    throw new LiquidiumError(
+      LiquidiumErrorCode.VALIDATION_ERROR,
+      "Instant loan find query must be non-empty"
+    );
+  }
+  if (trimmedQuery.length > INSTANT_LOAN_FIND_QUERY_MAX_LENGTH) {
+    throw new LiquidiumError(
+      LiquidiumErrorCode.VALIDATION_ERROR,
+      `Instant loan find query must be at most ${INSTANT_LOAN_FIND_QUERY_MAX_LENGTH.toString()} characters`
+    );
+  }
+
+  return trimmedQuery;
+}
+
+function uniqueInstantLoanFindCandidates(
+  candidates: InstantLoanFindCandidate[]
+): InstantLoanFindCandidate[] {
+  const candidatesByLoanId = new Map<bigint, InstantLoanFindCandidate>();
+
+  for (const candidate of candidates) {
+    if (!candidatesByLoanId.has(candidate.loanId)) {
+      candidatesByLoanId.set(candidate.loanId, candidate);
+    }
+  }
+
+  return [...candidatesByLoanId.values()];
+}
+
+function mapCandidateWire(
+  wire: InstantLoanFindCandidateWire
+): InstantLoanFindCandidate {
+  return {
+    loanId: parseUnsignedApiBigint(wire.loan_id, {
+      context: INSTANT_LOAN_WIRE_CONTEXT,
+      label: "loan ID",
+    }),
+    ref: parseNonEmptyApiString(wire.short_ref, {
+      context: INSTANT_LOAN_WIRE_CONTEXT,
+      label: "short reference",
+    }),
+    createdAt: parseIsoApiTimestampToUnixSeconds(wire.created_at, {
+      context: INSTANT_LOAN_WIRE_CONTEXT,
+      label: "creation timestamp",
+    }),
+    collateral: {
+      poolId: parseNonEmptyApiString(wire.lend_pool_ic_id, {
+        context: INSTANT_LOAN_WIRE_CONTEXT,
+        label: "lend pool ID",
+      }),
+      asset: parseApiStringUnion(wire.lend_asset, INSTANT_LOAN_ASSETS, {
+        context: INSTANT_LOAN_WIRE_CONTEXT,
+        label: "lend asset",
+      }),
+      amount: parseUnsignedApiBigint(wire.collateral_amount, {
+        context: INSTANT_LOAN_WIRE_CONTEXT,
+        label: "collateral amount",
+      }),
+    },
+    borrow: {
+      poolId: parseNonEmptyApiString(wire.borrow_pool_ic_id, {
+        context: INSTANT_LOAN_WIRE_CONTEXT,
+        label: "borrow pool ID",
+      }),
+      asset: parseApiStringUnion(wire.borrow_asset, INSTANT_LOAN_ASSETS, {
+        context: INSTANT_LOAN_WIRE_CONTEXT,
+        label: "borrow asset",
+      }),
+    },
+    profileId: parseNonEmptyApiString(wire.profile, {
+      context: INSTANT_LOAN_WIRE_CONTEXT,
+      label: "profile ID",
+    }),
+  };
 }
 
 function mapInstantLoansErrorToLiquidiumError(

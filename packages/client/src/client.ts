@@ -89,8 +89,7 @@ export class LiquidiumClient {
       this.canisterContext,
       this.apiClient,
       this.lending,
-      this.positions,
-      this.activities
+      this.positions
     );
     this.quote = new QuoteModule();
   }

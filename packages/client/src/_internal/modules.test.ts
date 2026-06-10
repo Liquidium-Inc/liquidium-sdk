@@ -4431,16 +4431,6 @@ describe("InstantLoansModule", () => {
             { status: 200, headers: { "content-type": "application/json" } }
           );
         }
-        if (url.includes("/activities?profileId=aaaaa-aa&state=all")) {
-          return new Response(
-            JSON.stringify({
-              success: true,
-              activities: [],
-            }),
-            { status: 200, headers: { "content-type": "application/json" } }
-          );
-        }
-
         throw new Error(`Unexpected fetch URL: ${url}`);
       });
 
@@ -4472,19 +4462,24 @@ describe("InstantLoansModule", () => {
 
     // then
     expect(results).toHaveLength(1);
-    expect(results[0]?.loan.loanId).toBe(LOAN_ID);
-    expect(results[0]?.loan.initialDeposit.target).toMatchObject({
-      address: "bc1qinstantdeposit",
+    expect(results[0]?.loanId).toBe(LOAN_ID);
+    expect(results[0]?.ref).toBe(publicIdFromInt(LOAN_ID));
+    expect(results[0]?.createdAt).toBe(1_779_869_786n);
+    expect(results[0]?.collateral).toEqual({
+      poolId: BTC_POOL_ID,
+      asset: "BTC",
+      amount: 10_000_000n,
     });
-    expect(results[0]?.activities).toEqual([]);
+    expect(results[0]?.borrow).toEqual({
+      poolId: USDT_POOL_ID,
+      asset: "USDT",
+    });
+    expect(results[0]?.profileId).toBe(PROFILE_ID);
     expect(fetchSpy).toHaveBeenCalledWith(
       "https://app.liquidium.fi/api/sdk/v1/instant-loans/find?query=42",
       expect.objectContaining({ method: "GET" })
     );
-    expect(fetchSpy).toHaveBeenCalledWith(
-      "https://app.liquidium.fi/api/sdk/v1/activities?profileId=aaaaa-aa&state=all",
-      expect.objectContaining({ method: "GET" })
-    );
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
   });
 
   test("should derive initial deposit expiry from detection timestamp when canister expiry is absent", async () => {
@@ -4848,6 +4843,57 @@ describe("InstantLoansModule", () => {
       chain: "ETH",
     });
     expect(estimateDepositFee).not.toHaveBeenCalled();
+  });
+
+  test("returns active status when canister marks the loan as started", async () => {
+    // given
+    const getLoan = vi.fn().mockResolvedValue({
+      Ok: createInstantLoan({ started: true }),
+    });
+    const getBtcAddress = vi.fn().mockResolvedValue("bc1qinstantdeposit");
+    const getDepositAddress = vi.fn().mockResolvedValue({
+      Ok: "0x1111111111111111111111111111111111111111",
+    });
+    const getPoolRate = vi
+      .fn()
+      .mockResolvedValue([[10_000_000_000_000_000_000_000_000n, 0n, 0n]]);
+    const getDepositFee = vi.fn().mockResolvedValue(2_000n);
+    const icrc1Fee = vi.fn().mockResolvedValue(10n);
+    mockInstantLoanCollateralHintFetch({
+      collateralAmountHint: "10000000",
+    });
+
+    vi.spyOn(Actor, "createActor")
+      .mockReturnValueOnce({ get_loan: getLoan } as never)
+      .mockReturnValueOnce({
+        list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord()]),
+      } as never)
+      .mockReturnValueOnce({
+        list_pools: vi.fn().mockResolvedValue([createUsdtPoolRecord()]),
+      } as never)
+      .mockReturnValueOnce({
+        get_position: vi.fn().mockResolvedValue([]),
+      } as never)
+      .mockReturnValueOnce({
+        get_position: vi.fn().mockResolvedValue([]),
+      } as never)
+      .mockReturnValueOnce({ get_pool_rate: getPoolRate } as never)
+      .mockReturnValueOnce({ get_btc_address: getBtcAddress } as never)
+      .mockReturnValueOnce({ get_deposit_address: getDepositAddress } as never)
+      .mockReturnValueOnce({ get_deposit_fee: getDepositFee } as never)
+      .mockReturnValueOnce({ icrc1_fee: icrc1Fee } as never);
+    const client = new LiquidiumClient({
+      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
+      canisterIds: { instantLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
+    });
+
+    // when
+    const loan = await client.instantLoans.get({
+      ref: publicIdFromInt(LOAN_ID),
+    });
+
+    // then
+    expect(loan.status).toBe("active");
   });
 
   test("creates a loan through the default SDK API and hydrates canonical canister state", async () => {

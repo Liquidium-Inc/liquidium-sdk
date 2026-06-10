@@ -150,8 +150,9 @@ status may still be `awaiting_deposit` while the activity stream already shows
 detected or processing confirmations.
 
 Use `find(...)` for recovery screens where the user may paste a short reference,
-numeric loan id string, address, or transaction id. It returns hydrated loans with
-activities.
+numeric loan id string, address, or transaction id. It returns lightweight loan
+matches with indexed loan fields; call `get({ loanId })` after the user selects
+one.
 
 ### market
 
@@ -462,11 +463,16 @@ Use search only as recovery when the user lost the loan reference:
 
 ```ts
 const results = await client.instantLoans.find("bc1qrefunddestination");
-const loan = results[0]?.loan;
+const firstMatch = results[0];
+const loan = firstMatch
+  ? await client.instantLoans.get({ loanId: firstMatch.loanId })
+  : null;
 ```
 
-Reference lookup is canonical. Search may return multiple hydrated matches;
-prefer `get({ ref })` once the app has a saved reference.
+Search results are lightweight: `loanId`, `ref`, `createdAt`, `profileId`,
+`collateral.poolId`, `collateral.asset`, `collateral.amount`, `borrow.poolId`,
+and `borrow.asset`. Reference lookup is canonical. Search may return multiple
+matches; prefer `get({ ref })` once the app has a saved reference.
 
 Do not use `client.lending.borrow(...)` for this flow. `lending.borrow(...)` is
 the profile-based signed borrow primitive. Instant loans automate the borrow

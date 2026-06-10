@@ -28,7 +28,7 @@ const loadActivityButton = getElement<HTMLButtonElement>(
   "load-activity-button"
 );
 const activityOutput = getElement<HTMLDivElement>("activity-output");
-const addressInput = getElement<HTMLInputElement>("address-input");
+const queryInput = getElement<HTMLInputElement>("query-input");
 const findLoansButton = getElement<HTMLButtonElement>("find-loans-button");
 const candidatesOutput = getElement<HTMLDivElement>("candidates-output");
 const recentLoansList = getElement<HTMLDivElement>("recent-loans-list");
@@ -40,7 +40,7 @@ refreshRecentLoans();
 
 loadLoanButton.addEventListener("click", () => run(loadLoan));
 loadActivityButton.addEventListener("click", () => run(loadActivityStatus));
-findLoansButton.addEventListener("click", () => run(findLoansByAddress));
+findLoansButton.addEventListener("click", () => run(findLoansByQuery));
 
 async function loadLoan(): Promise<void> {
   const ref = loanRefInput.value.trim();
@@ -95,17 +95,19 @@ async function loadActivityStatus(): Promise<void> {
   setStatus(`Loaded activity status for ${activityId}.`);
 }
 
-async function findLoansByAddress(): Promise<void> {
-  const address = addressInput.value.trim();
+async function findLoansByQuery(): Promise<void> {
+  const query = queryInput.value.trim();
 
-  if (!address) {
-    throw new Error("Enter an address to search.");
+  if (!query) {
+    throw new Error(
+      "Enter a loan reference, address, txid, or hash to search."
+    );
   }
 
   setStatus("Finding candidate loans...");
   candidatesOutput.textContent = "Searching...";
 
-  const results = await findInstantLoans(address);
+  const results = await findInstantLoans(query);
 
   if (results.length === 0) {
     candidatesOutput.textContent = "No loans found for this query.";
@@ -113,7 +115,9 @@ async function findLoansByAddress(): Promise<void> {
     return;
   }
 
-  candidatesOutput.textContent = results.map(formatFindResult).join("\n\n");
+  candidatesOutput.textContent = results
+    .map((result, index) => formatFindResult(result, index + 1, results.length))
+    .join("\n\n---\n\n");
   setStatus(`Found ${results.length} loan(s).`);
 }
 

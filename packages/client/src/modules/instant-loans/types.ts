@@ -1,5 +1,4 @@
 import type { Chain, MarketAsset, MarketChain } from "../../core/types";
-import type { Activity } from "../activities";
 import type { SupplyTarget } from "../lending";
 
 /** Asset symbols supported by the instant-loans canister. */
@@ -150,16 +149,38 @@ export type InstantLoanGetRequest =
   | InstantLoanGetByIdRequest
   | InstantLoanGetByRefRequest;
 
-/** Search request for loading manage-ready instant-loan results. */
-export type InstantLoanFindRequest =
-  | InstantLoanGetByIdRequest
-  | InstantLoanGetByRefRequest
-  | InstantLoanFindByQueryRequest;
+/** Collateral leg returned by instant-loan search. */
+export interface InstantLoanFindCollateral {
+  /** Principal text of the collateral pool. */
+  poolId: string;
+  /** Asset the user deposits as collateral. */
+  asset: InstantLoanAsset;
+  /** Intended credited collateral amount in base units, before inflow fees. */
+  amount: bigint;
+}
 
-/** Free-form API search request for address, transaction id, or short reference lookup. */
-export interface InstantLoanFindByQueryRequest {
-  /** Short reference, generated address, borrow/refund destination, or transaction id/hash. */
-  query: string;
+/** Borrow leg returned by instant-loan search. */
+export interface InstantLoanFindBorrow {
+  /** Principal text of the borrow pool. */
+  poolId: string;
+  /** Asset the user borrows. */
+  asset: InstantLoanAsset;
+}
+
+/** Lightweight search result for an instant loan match. */
+export interface InstantLoanFindResult {
+  /** Canister-assigned loan id. Use this with `client.instantLoans.get({ loanId })` to load full loan state. */
+  loanId: bigint;
+  /** Short user-facing reference derived from `loanId`. */
+  ref: string;
+  /** Unix creation timestamp in seconds. */
+  createdAt: bigint;
+  /** Collateral-side pool, asset, and requested credited amount. */
+  collateral: InstantLoanFindCollateral;
+  /** Borrow-side pool and asset. */
+  borrow: InstantLoanFindBorrow;
+  /** Generated profile principal from the search index. */
+  profileId: string;
 }
 
 /** Page request for direct instant-loan canister event queries. */
@@ -409,7 +430,7 @@ export interface InstantLoan {
   loanId: bigint;
   /** Short user-facing reference derived from `loanId`. */
   ref: string;
-  /** Simplified lifecycle status for display and flow control. */
+  /** Simplified lifecycle status for display and flow control. Active means the canister has started the loan or live debt exists. */
   status: InstantLoanStatus;
   /** Generated profile principal used by the instant loan. */
   profileId: string;
@@ -427,12 +448,4 @@ export interface InstantLoan {
   repayment: InstantLoanRepayment;
   /** Current lending position state for the generated profile. */
   position: InstantLoanPositionSummary;
-}
-
-/** Hydrated instant-loan lookup result with production-style activity state. */
-export interface InstantLoanFindResult {
-  /** Canonical hydrated instant-loan state and transfer targets. */
-  loan: InstantLoan;
-  /** Active and completed deposit, borrow, repay, and withdraw activities. */
-  activities: Activity[];
 }

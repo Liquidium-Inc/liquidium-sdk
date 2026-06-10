@@ -284,14 +284,22 @@ export function formatActivityStatus(
   return formatActivity(response.activity);
 }
 
-export function formatFindResult(result: InstantLoanFindResult): string {
-  const activities = result.activities.map(formatActivity);
-
+export function formatFindResult(
+  result: InstantLoanFindResult,
+  index: number,
+  totalResults: number
+): string {
   return [
-    formatInstantLoan(result.loan),
-    "",
-    "Activities:",
-    activities.length > 0 ? activities.join("\n\n") : "No activities found.",
+    `Result ${index.toString()} of ${totalResults.toString()}`,
+    `Reference: ${result.ref}`,
+    `Loan id: ${result.loanId.toString()}`,
+    `Created at: ${result.createdAt}`,
+    `Profile id: ${result.profileId}`,
+    `Collateral: ${result.collateral.amount.toString()} ${result.collateral.asset}`,
+    `Borrow asset: ${result.borrow.asset}`,
+    `Collateral pool: ${result.collateral.poolId}`,
+    `Borrow pool: ${result.borrow.poolId}`,
+    "Use the reference or loan id above to load full loan details.",
   ].join("\n");
 }
 

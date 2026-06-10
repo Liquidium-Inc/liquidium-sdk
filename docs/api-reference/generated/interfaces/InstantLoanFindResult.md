@@ -6,26 +6,66 @@
 
 # Interface: InstantLoanFindResult
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:433](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L433)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:171](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L171)
 
-Hydrated instant-loan lookup result with production-style activity state.
+Lightweight search result for an instant loan match.
 
 ## Properties
 
-### activities
+### borrow
 
-> **activities**: [`Activity`](../type-aliases/Activity.md)[]
+> **borrow**: [`InstantLoanFindBorrow`](InstantLoanFindBorrow.md)
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:437](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L437)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:181](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L181)
 
-Active and completed deposit, borrow, repay, and withdraw activities.
+Borrow-side pool and asset.
 
 ***
 
-### loan
+### collateral
 
-> **loan**: [`InstantLoan`](InstantLoan.md)
+> **collateral**: [`InstantLoanFindCollateral`](InstantLoanFindCollateral.md)
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:435](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L435)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:179](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L179)
 
-Canonical hydrated instant-loan state and transfer targets.
+Collateral-side pool, asset, and requested credited amount.
+
+***
+
+### createdAt
+
+> **createdAt**: `bigint`
+
+Defined in: [packages/client/src/modules/instant-loans/types.ts:177](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L177)
+
+Unix creation timestamp in seconds.
+
+***
+
+### loanId
+
+> **loanId**: `bigint`
+
+Defined in: [packages/client/src/modules/instant-loans/types.ts:173](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L173)
+
+Canister-assigned loan id. Use this with `client.instantLoans.get({ loanId })` to load full loan state.
+
+***
+
+### profileId
+
+> **profileId**: `string`
+
+Defined in: [packages/client/src/modules/instant-loans/types.ts:183](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L183)
+
+Generated profile principal from the search index.
+
+***
+
+### ref
+
+> **ref**: `string`
+
+Defined in: [packages/client/src/modules/instant-loans/types.ts:175](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L175)
+
+Short user-facing reference derived from `loanId`.

@@ -196,7 +196,7 @@ Use this when your backend stores the numeric id instead of the short reference.
 
 Finds instant loans by short reference, numeric canister loan id string, generated deposit or repayment address, borrow or refund destination address, or indexed transaction id/hash through the SDK API search index.
 
-Use this for recovery and manage pages where the user may paste any loan identifier. The method returns hydrated loan state and activities for each match.
+Use this for recovery and manage pages where the user may paste any loan identifier. The method returns lightweight matches with nested `collateral` and `borrow` fields because address and transaction-id lookups can match many loans. Use `client.instantLoans.get(...)` after the user selects a match.
 
 ### `client.quote.calculateLtv(request, pools, prices)`
 
@@ -223,7 +223,7 @@ Most instant-loan UIs show or store these fields:
 | Field | Use |
 | --- | --- |
 | `loan.ref` | Save and show this reference so the loan can be restored later |
-| `loan.status` | Show the lifecycle: `awaiting_deposit`, `deposit_detected`, `active`, `settling`, `closed`, or `expired` |
+| `loan.status` | Show the lifecycle: `awaiting_deposit`, `deposit_detected`, `active`, `settling`, `closed`, or `expired`. `active` means the canister has started the loan or live debt exists |
 | `loan.initialDeposit.amount` | Fee-inclusive collateral amount to send after creation or restore |
 | `loan.initialDeposit.collateralAmount` | Intended credited collateral target used for LTV |
 | `loan.initialDeposit.target` | Address or ICRC account where the user sends collateral |

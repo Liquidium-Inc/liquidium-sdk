@@ -6,7 +6,7 @@
 
 # Interface: InstantLoanPositionSummary
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:339](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L339)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:360](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L360)
 
 Current lending position backing the instant loan.
 
@@ -16,7 +16,7 @@ Current lending position backing the instant loan.
 
 > **borrowedAmount**: `bigint`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:347](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L347)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:368](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L368)
 
 Borrowed principal in the borrow asset's base units.
 
@@ -26,7 +26,7 @@ Borrowed principal in the borrow asset's base units.
 
 > **borrowedDecimals**: `bigint`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:349](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L349)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:370](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L370)
 
 Decimal scale for borrowed/debt amounts.
 
@@ -36,7 +36,7 @@ Decimal scale for borrowed/debt amounts.
 
 > **collateralAmount**: `bigint`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:341](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L341)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:362](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L362)
 
 Current collateral amount in the collateral asset's base units.
 
@@ -46,7 +46,7 @@ Current collateral amount in the collateral asset's base units.
 
 > **collateralDecimals**: `bigint`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:343](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L343)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:364](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L364)
 
 Decimal scale for `collateralAmount`.
 
@@ -56,7 +56,7 @@ Decimal scale for `collateralAmount`.
 
 > **collateralInterestAmount**: `bigint`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:345](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L345)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:366](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L366)
 
 Earned interest on the collateral side in base units.
 
@@ -66,7 +66,7 @@ Earned interest on the collateral side in base units.
 
 > **debtInterestAmount**: `bigint`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:351](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L351)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:372](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L372)
 
 Accrued borrow interest in base units.
 
@@ -76,6 +76,6 @@ Accrued borrow interest in base units.
 
 > **totalDebtAmount**: `bigint`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:353](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L353)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:374](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L374)
 
 Borrowed principal plus accrued interest in base units, before repayment buffer.
