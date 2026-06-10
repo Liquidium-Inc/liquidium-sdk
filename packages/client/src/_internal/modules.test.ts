@@ -1970,6 +1970,9 @@ describe("PositionsModule", () => {
     // given
     const BTC_POOL_ID = "pool-btc";
     const USDT_POOL_ID = "pool-usdt";
+    const BTC_DEPOSITED_NATIVE_NOW = 200_000_000n;
+    const BTC_TOTAL_EARNED_INTEREST = 10_000_000n;
+    const BTC_EARNED_SINCE_SNAPSHOT = 1_000_000n;
     vi.spyOn(Actor, "createActor").mockReturnValue({
       get_profile_stats: vi.fn().mockResolvedValue({
         debt: 0n,
@@ -1986,7 +1989,9 @@ describe("PositionsModule", () => {
         .fn()
         .mockResolvedValueOnce([
           makePositionView({
-            deposited_native_now: 200_000_000n,
+            deposited_native_now: BTC_DEPOSITED_NATIVE_NOW,
+            total_earned_interest: BTC_TOTAL_EARNED_INTEREST,
+            earned_since_snapshot: BTC_EARNED_SINCE_SNAPSHOT,
             debt_native_now: 0n,
             pool_id: { toText: () => BTC_POOL_ID },
           }),
@@ -2079,6 +2084,54 @@ describe("PositionsModule", () => {
     expect(usdtReserve?.suppliedUsd).toBe(0n);
     expect(usdtReserve?.borrowedUsd).toBe(EXPECTED_USDT_BORROWED_USD);
     expect(usdtReserve?.priceUsd).toBe(1);
+  });
+
+  test("returns zero full withdraw amount when no position exists", async () => {
+    // given
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      get_position: vi.fn().mockResolvedValue([]),
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const withdraw = await client.positions.getFullWithdrawAmount(
+      PROFILE_ID,
+      POOL_ID
+    );
+
+    // then
+    expect(withdraw).toEqual({ amount: 0n, decimals: 0n });
+  });
+
+  test("returns current deposited amount as full withdraw amount", async () => {
+    // given
+    const DEPOSITED_NATIVE_NOW = 1_100_000n;
+    const TOTAL_EARNED_INTEREST = 100_000n;
+    const EARNED_SINCE_SNAPSHOT = 10_000n;
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      get_position: vi.fn().mockResolvedValue([
+        makePositionView({
+          asset: { USDT: null },
+          deposited_native_now: DEPOSITED_NATIVE_NOW,
+          total_earned_interest: TOTAL_EARNED_INTEREST,
+          earned_since_snapshot: EARNED_SINCE_SNAPSHOT,
+        }),
+      ]),
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const withdraw = await client.positions.getFullWithdrawAmount(
+      PROFILE_ID,
+      POOL_ID
+    );
+
+    // then
+    const EXPECTED_DECIMALS = 6n;
+    expect(withdraw).toEqual({
+      amount: DEPOSITED_NATIVE_NOW,
+      decimals: EXPECTED_DECIMALS,
+    });
   });
 
   test("returns zero max repay amount when no position exists", async () => {

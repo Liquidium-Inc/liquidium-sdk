@@ -11,6 +11,7 @@ import {
   USD_VALUE_SCALE_DECIMALS,
 } from "./mappers";
 import type {
+  FullWithdrawAmount,
   HealthFactor,
   MaxRepayAmount,
   Position,
@@ -210,7 +211,7 @@ export class PositionsModule {
           pool,
           priceUsd,
           suppliedUsd: nativeAmountToUsdScaled(
-            position.deposited + position.earnedInterest,
+            position.deposited,
             position.depositedDecimals,
             priceUsd
           ),
@@ -252,6 +253,29 @@ export class PositionsModule {
     const buffered = (rawDebt * (BPS_SCALE + bufferBps)) / BPS_SCALE;
 
     return { amount: buffered, decimals: position.borrowedDecimals };
+  }
+
+  /**
+   * Returns the current full withdraw amount for a position.
+   *
+   * `Position.deposited` already reflects the current supplied balance at the
+   * latest lending index; do not add `earnedInterest` to this amount.
+   * Pass `amount` to withdraw calls and use `decimals` for display formatting.
+   *
+   * @param profileId - The Liquidium profile principal text.
+   * @param poolId - The pool principal text.
+   * @returns Full withdraw amount in the supplied asset's base units.
+   */
+  async getFullWithdrawAmount(
+    profileId: string,
+    poolId: string
+  ): Promise<FullWithdrawAmount> {
+    const position = await this.getPosition(profileId, poolId);
+    if (!position) {
+      return { amount: 0n, decimals: 0n };
+    }
+
+    return { amount: position.deposited, decimals: position.depositedDecimals };
   }
 }
 

@@ -55,6 +55,7 @@
 - [ExternalAccount](interfaces/ExternalAccount.md)
 - [ExternalOutflowReceiver](interfaces/ExternalOutflowReceiver.md)
 - [FindPoolQuery](interfaces/FindPoolQuery.md)
+- [FullWithdrawAmount](interfaces/FullWithdrawAmount.md)
 - [GetActivityStatusByProfileRequest](interfaces/GetActivityStatusByProfileRequest.md)
 - [GetActivityStatusByShortRefRequest](interfaces/GetActivityStatusByShortRefRequest.md)
 - [GetDepositAddressRequest](interfaces/GetDepositAddressRequest.md)

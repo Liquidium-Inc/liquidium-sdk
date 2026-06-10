@@ -199,6 +199,7 @@ export type {
 export { MarketModule } from "./modules/market";
 export type {
   BorrowingPower,
+  FullWithdrawAmount,
   HealthFactor,
   MaxRepayAmount,
   Position,
