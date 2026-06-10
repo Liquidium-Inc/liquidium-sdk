@@ -1,5 +1,14 @@
 # @liquidium/client
 
+## 0.3.0
+
+### Minor Changes
+
+- ff606ba: Expose a helper for reading a position's full withdraw amount, and avoid
+  double-counting supply interest in reserve USD valuations.
+- 8745bd4: Expose instant loan initial deposit detection and expiry timestamps.
+- d34ebd3: Return lightweight instant-loan search matches with grouped collateral and borrow fields.
+
 ## 0.2.1
 
 ### Patch Changes
