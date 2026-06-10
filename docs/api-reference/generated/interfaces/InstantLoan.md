@@ -108,7 +108,7 @@ Current repayment quote. Amount fields are zero when the loan has no debt.
 
 Defined in: [packages/client/src/modules/instant-loans/types.ts:434](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L434)
 
-Simplified lifecycle status for display and flow control. Active means the canister has started the loan or live debt exists.
+Simplified lifecycle status for display and flow control.
 
 ***
 

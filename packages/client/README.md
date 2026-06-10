@@ -246,7 +246,7 @@ Most instant-loan UIs show or store these fields:
 | Field | Use |
 | --- | --- |
 | `loan.ref` | Save and show this reference so the loan can be restored later |
-| `loan.status` | Show the lifecycle: `awaiting_deposit`, `deposit_detected`, `active`, `settling`, `closed`, or `expired`. `active` means the canister has started the loan or live debt exists |
+| `loan.status` | Show the lifecycle: `awaiting_deposit`, `deposit_detected`, `active`, `settling`, `closed`, or `expired` |
 | `loan.initialDeposit.amount` | Fee-inclusive collateral amount to send after creation or restore |
 | `loan.initialDeposit.collateralAmount` | Intended credited collateral target used for LTV |
 | `loan.initialDeposit.target` | Address or ICRC account where the user sends collateral |

@@ -4845,57 +4845,6 @@ describe("InstantLoansModule", () => {
     expect(estimateDepositFee).not.toHaveBeenCalled();
   });
 
-  test("returns active status when canister marks the loan as started", async () => {
-    // given
-    const getLoan = vi.fn().mockResolvedValue({
-      Ok: createInstantLoan({ started: true }),
-    });
-    const getBtcAddress = vi.fn().mockResolvedValue("bc1qinstantdeposit");
-    const getDepositAddress = vi.fn().mockResolvedValue({
-      Ok: "0x1111111111111111111111111111111111111111",
-    });
-    const getPoolRate = vi
-      .fn()
-      .mockResolvedValue([[10_000_000_000_000_000_000_000_000n, 0n, 0n]]);
-    const getDepositFee = vi.fn().mockResolvedValue(2_000n);
-    const icrc1Fee = vi.fn().mockResolvedValue(10n);
-    mockInstantLoanCollateralHintFetch({
-      collateralAmountHint: "10000000",
-    });
-
-    vi.spyOn(Actor, "createActor")
-      .mockReturnValueOnce({ get_loan: getLoan } as never)
-      .mockReturnValueOnce({
-        list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord()]),
-      } as never)
-      .mockReturnValueOnce({
-        list_pools: vi.fn().mockResolvedValue([createUsdtPoolRecord()]),
-      } as never)
-      .mockReturnValueOnce({
-        get_position: vi.fn().mockResolvedValue([]),
-      } as never)
-      .mockReturnValueOnce({
-        get_position: vi.fn().mockResolvedValue([]),
-      } as never)
-      .mockReturnValueOnce({ get_pool_rate: getPoolRate } as never)
-      .mockReturnValueOnce({ get_btc_address: getBtcAddress } as never)
-      .mockReturnValueOnce({ get_deposit_address: getDepositAddress } as never)
-      .mockReturnValueOnce({ get_deposit_fee: getDepositFee } as never)
-      .mockReturnValueOnce({ icrc1_fee: icrc1Fee } as never);
-    const client = new LiquidiumClient({
-      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
-      canisterIds: { instantLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
-    });
-
-    // when
-    const loan = await client.instantLoans.get({
-      ref: publicIdFromInt(LOAN_ID),
-    });
-
-    // then
-    expect(loan.status).toBe("active");
-  });
-
   test("creates a loan through the default SDK API and hydrates canonical canister state", async () => {
     // given
     const BTC_MINTER_DEPOSIT_FEE_SATS = 2_000n;

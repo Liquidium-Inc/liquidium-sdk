@@ -430,7 +430,7 @@ export interface InstantLoan {
   loanId: bigint;
   /** Short user-facing reference derived from `loanId`. */
   ref: string;
-  /** Simplified lifecycle status for display and flow control. Active means the canister has started the loan or live debt exists. */
+  /** Simplified lifecycle status for display and flow control. */
   status: InstantLoanStatus;
   /** Generated profile principal used by the instant loan. */
   profileId: string;

@@ -151,7 +151,6 @@ interface InstantLoanWire {
 interface InstantLoanHydrationInput {
   loanId: bigint;
   profileId: string;
-  started: boolean;
   ltvMaxBps: bigint;
   depositWindowSeconds: bigint;
   collateralPoolId: string;
@@ -181,7 +180,6 @@ interface RepaymentInflowFeeEstimate {
 }
 
 interface DeriveInstantLoanStatusInput {
-  started: boolean;
   collateralAmount: bigint;
   totalDebtAmount: bigint;
 }
@@ -465,7 +463,6 @@ export class InstantLoansModule {
     return await this.hydrateLoan({
       loanId: record.id,
       profileId: record.lending_profile.toText(),
-      started: record.started,
       ltvMaxBps: record.ltv_max_bps,
       depositWindowSeconds: record.ltv_timer_s,
       collateralPoolId: record.lend_pool_id.toText(),
@@ -560,7 +557,6 @@ export class InstantLoansModule {
     const debtInterestAmount = borrowPosition?.debtInterest ?? 0n;
 
     const status = deriveInstantLoanStatus({
-      started: input.started,
       collateralAmount: currentCollateralAmount,
       totalDebtAmount,
     });
@@ -765,7 +761,7 @@ function calculateTotalDebtAmount(borrowPosition: Position | null): bigint {
 function deriveInstantLoanStatus(
   input: DeriveInstantLoanStatusInput
 ): InstantLoanStatusValue {
-  if (input.started || input.totalDebtAmount > 0n) {
+  if (input.totalDebtAmount > 0n) {
     return InstantLoanStatus.active;
   }
 
