@@ -293,7 +293,7 @@ export function formatFindResult(
     `Result ${index.toString()} of ${totalResults.toString()}`,
     `Reference: ${result.ref}`,
     `Loan id: ${result.loanId.toString()}`,
-    `Created at: ${result.createdAt}`,
+    `Created at: ${formatUnixTimestampSeconds(result.createdAt)}`,
     `Profile id: ${result.profileId}`,
     `Collateral: ${result.collateral.amount.toString()} ${result.collateral.asset}`,
     `Borrow asset: ${result.borrow.asset}`,
