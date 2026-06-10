@@ -39,7 +39,7 @@ Liquidium supports two borrowing and lending integration paths:
 | Path | Use when | Main SDK calls |
 | --- | --- | --- |
 | Recommended: accountless instant loans | You want a short checkout-style flow where users borrow against collateral without creating a Liquidium profile first | `client.instantLoans.create(...)`, `client.instantLoans.get(...)`, `client.activities.list(...)` |
-| Account-based profile flows | You want users to keep a Liquidium profile, manage positions across sessions, supply funds, borrow, withdraw, or use ETH contract-interaction deposits | `client.accounts.createProfile(...)`, `client.lending.supply(...)`, `client.lending.borrow(...)`, `client.lending.withdraw(...)`, `client.positions.list(...)` |
+| Account-based profile flows | You want users to keep a Liquidium profile, manage positions across sessions, supply funds, borrow, withdraw, or use ETH contract-interaction deposits | `client.accounts.createProfile(...)`, `client.lending.supply(...)`, `client.lending.borrow(...)`, `client.lending.withdraw(...)`, `client.positions.listPositions(...)` |
 
 Use accountless instant loans for new borrow flows unless you need profile-level position management. Use account-based flows when your app owns the full lending dashboard experience.
 
@@ -215,6 +215,10 @@ The SDK enforces product minimums before borrow creation:
 | USDT | `1_000_000n` base units |
 
 Use `getMinimumBorrowAmount(asset)` to display the same minimum that `client.quote.calculateLtv(...)`, `client.quote.getQuote(...)`, `client.instantLoans.create(...)`, and `client.lending.prepareBorrow(...)` enforce.
+
+### Profile full withdraw amounts
+
+For profile-based withdraw flows, call `client.positions.getFullWithdrawAmount(profileId, poolId)` before building the withdraw request. The helper returns `{ amount, decimals }`: pass `amount` to `client.lending.withdraw(...)` or `client.lending.prepareWithdraw(...)`, and use `decimals` for display formatting. Do not add `earnedInterest`; the returned amount already uses the current supplied balance.
 
 ## Response Fields
 

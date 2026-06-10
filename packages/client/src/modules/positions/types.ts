@@ -7,7 +7,7 @@ export interface Position {
   poolId: string;
   /** Pool asset symbol. */
   asset: MarketAsset;
-  /** Supplied principal in base units. */
+  /** Current supplied amount in base units. */
   deposited: bigint;
   /** Decimal scale for supplied amounts. */
   depositedDecimals: bigint;
@@ -98,6 +98,14 @@ export interface UserReserve {
 /** Full repayment amount for a position, including any requested buffer. */
 export interface MaxRepayAmount {
   /** Amount to repay in the borrowed asset's base units. */
+  amount: bigint;
+  /** Decimal scale for `amount`. */
+  decimals: bigint;
+}
+
+/** Full withdraw amount for a position. */
+export interface FullWithdrawAmount {
+  /** Amount to withdraw in the supplied asset's base units. */
   amount: bigint;
   /** Decimal scale for `amount`. */
   decimals: bigint;

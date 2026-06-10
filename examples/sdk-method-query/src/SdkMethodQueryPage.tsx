@@ -224,6 +224,18 @@ const SDK_METHODS: MethodDefinition[] = [
     },
   },
   {
+    id: "positions.getFullWithdrawAmount",
+    label: "positions.getFullWithdrawAmount",
+    defaultArgs: '{\n  "profileId": "aaaaa-aa",\n  "poolId": "bbbbb-bb"\n}',
+    execute: async (client, input) => {
+      const args = expectObject(input);
+      return await client.positions.getFullWithdrawAmount(
+        expectNonEmptyString(args.profileId, "profileId"),
+        expectNonEmptyString(args.poolId, "poolId")
+      );
+    },
+  },
+  {
     id: "activities.list",
     label: "activities.list",
     defaultArgs: '{\n  "shortRef": "Y7R19F",\n  "filter": "all"\n}',

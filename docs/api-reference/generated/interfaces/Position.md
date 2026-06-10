@@ -58,7 +58,7 @@ Accrued borrow interest in base units.
 
 Defined in: [packages/client/src/modules/positions/types.ts:11](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/types.ts#L11)
 
-Supplied principal in base units.
+Current supplied amount in base units.
 
 ***
 

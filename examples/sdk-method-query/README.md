@@ -41,6 +41,7 @@ history, quote, lending, and instant-loan methods:
 
 - `history.getPoolHistory`
 - `history.getPoolConfigHistory`
+- `positions.getFullWithdrawAmount`
 - `instantLoans.create`
 - `instantLoans.get({ ref })`
 - `instantLoans.get({ loanId })`

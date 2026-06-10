@@ -232,7 +232,12 @@ client.positions.getUserStats(profileId);
 client.positions.getUserPositionSummary(profileId);  // aggregate: collateral, debt, availableBorrows, netWorth, LTV, HF
 client.positions.getUserReserves(profileId);         // per-reserve view joined with pool + price data
 client.positions.getMaxRepayAmount(profileId, poolId, bufferBps?); // full-repay amount with accrual buffer
+client.positions.getFullWithdrawAmount(profileId, poolId);         // current supplied balance for full withdraw
 ```
+
+`getFullWithdrawAmount(...)` returns `{ amount, decimals }`. Pass `amount` to
+`client.lending.withdraw(...)` or `prepareWithdraw(...)`; use `decimals` only
+for UI formatting. Do not add `earnedInterest` to the returned amount.
 
 ### activities
 
