@@ -4,6 +4,11 @@ import {
 } from "../../core/canisters/instant-loans/actor";
 import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
 import {
+  createLiquidiumStatus,
+  type LiquidiumOperation,
+  type LiquidiumState,
+} from "../../core/status";
+import {
   buildActivitiesPath,
   buildActivityStatusPath,
 } from "../../core/sdk-api-paths";
@@ -14,15 +19,12 @@ import { parseBigInt } from "../../core/utils/bigint";
 import { intFromPublicId } from "../instant-loans/ref-code";
 import type {
   Activity,
-  ActivityStatus,
   ActivityTopUp,
   GetActivityStatusRequest,
   GetActivityStatusResponse,
   InflowActivityKind,
-  InflowActivityStatus,
   ListActivitiesRequest,
   OutflowActivityKind,
-  OutflowActivityStatus,
 } from "./types";
 import { ActivityDirection, ActivityFilter } from "./types";
 
@@ -68,6 +70,16 @@ interface ActivityWire {
   status: ActivityWireStatus;
   stage?: ActivityWireStage;
   topUp?: ActivityTopUpWire;
+}
+
+interface MapActivityStatusParams {
+  direction: Activity["direction"];
+  kind: InflowActivityKind | OutflowActivityKind;
+  wireStatus: ActivityWireStatus;
+  stage?: ActivityWireStage;
+  confirmations: number | null;
+  requiredConfirmations: number | null;
+  topUp?: ActivityTopUp;
 }
 
 interface ListActivitiesResponseWire {
@@ -223,23 +235,40 @@ function mapActivity(wire: ActivityWire): Activity {
       : undefined;
 
   if (activity.direction === ActivityDirection.inflow) {
+    const kind = mapInflowActivityKind(activity.kind);
+
     return {
       ...activity,
       direction: ActivityDirection.inflow,
-      kind: mapInflowActivityKind(activity.kind),
-      status: mapInflowActivityStatus(
-        mapActivityStatus(status, effectiveStage)
-      ),
+      kind,
+      status: mapActivityStatus({
+        direction: ActivityDirection.inflow,
+        kind,
+        wireStatus: status,
+        stage: effectiveStage,
+        confirmations: activity.confirmations,
+        requiredConfirmations: activity.requiredConfirmations,
+        topUp,
+      }),
       ...(topUp ? { topUp } : {}),
       amount: parseBigInt(amount, "activity amount"),
     };
   }
 
+  const kind = mapOutflowActivityKind(activity.kind);
+
   return {
     ...activity,
     direction: ActivityDirection.outflow,
-    kind: mapOutflowActivityKind(activity.kind),
-    status: mapOutflowActivityStatus(mapActivityStatus(status, effectiveStage)),
+    kind,
+    status: mapActivityStatus({
+      direction: ActivityDirection.outflow,
+      kind,
+      wireStatus: status,
+      stage: effectiveStage,
+      confirmations: activity.confirmations,
+      requiredConfirmations: activity.requiredConfirmations,
+    }),
     amount: parseBigInt(amount, "activity amount"),
   };
 }
@@ -266,47 +295,96 @@ function mapOutflowActivityKind(kind: Activity["kind"]): OutflowActivityKind {
   );
 }
 
-function mapInflowActivityStatus(status: ActivityStatus): InflowActivityStatus {
-  if (status !== "sent") {
-    return status;
-  }
-
-  throw new LiquidiumError(
-    LiquidiumErrorCode.INTERNAL,
-    `Invalid inflow activity status: ${status}`
-  );
+function mapActivityStatus(params: MapActivityStatusParams) {
+  return createLiquidiumStatus({
+    operation: mapActivityOperation(params.kind),
+    state: mapActivityState(params),
+    confirmations: params.confirmations,
+    requiredConfirmations: params.requiredConfirmations,
+  });
 }
 
-function mapOutflowActivityStatus(
-  status: ActivityStatus
-): OutflowActivityStatus {
-  if (status !== "detected" && status !== "processing") {
-    return status;
+function mapActivityOperation(
+  kind: InflowActivityKind | OutflowActivityKind
+): LiquidiumOperation {
+  switch (kind) {
+    case "deposit":
+      return "deposit";
+    case "repayment":
+      return "repayment";
+    case "borrow":
+      return "borrow";
+    case "withdraw":
+      return "withdrawal";
   }
-
-  throw new LiquidiumError(
-    LiquidiumErrorCode.INTERNAL,
-    `Invalid outflow activity status: ${status}`
-  );
 }
 
-function mapActivityStatus(
-  status: ActivityWireStatus,
-  stage: ActivityWireStage | undefined
-): ActivityStatus {
-  if (status !== "pending") {
-    return status;
+function mapActivityState(params: MapActivityStatusParams): LiquidiumState {
+  if (params.wireStatus === "failed") {
+    return "failed";
   }
 
-  if (stage === "deposited") {
-    return "detected";
+  if (params.wireStatus === "confirmed") {
+    return "completed";
   }
 
-  if (stage === "confirmed" || stage === "finalising" || stage === "pending") {
+  if (params.topUp?.required) {
+    return "action_required";
+  }
+
+  if (params.direction === ActivityDirection.outflow) {
+    return mapOutflowActivityState(params.wireStatus);
+  }
+
+  return mapInflowActivityState(params);
+}
+
+function mapOutflowActivityState(status: ActivityWireStatus): LiquidiumState {
+  if (status === "sent") {
+    return "confirming";
+  }
+
+  return "processing";
+}
+
+function mapInflowActivityState(
+  params: MapActivityStatusParams
+): LiquidiumState {
+  if (params.wireStatus === "sent") {
+    throw new LiquidiumError(
+      LiquidiumErrorCode.INTERNAL,
+      "Invalid inflow activity status: sent"
+    );
+  }
+
+  if (params.wireStatus === "requested") {
+    return "action_required";
+  }
+
+  if (
+    params.stage === "confirmed" ||
+    params.stage === "finalising" ||
+    params.stage === "pending"
+  ) {
     return "processing";
   }
 
-  return "pending";
+  if (hasRequiredConfirmations(params)) {
+    return "processing";
+  }
+
+  return "confirming";
+}
+
+function hasRequiredConfirmations(params: {
+  confirmations: number | null;
+  requiredConfirmations: number | null;
+}): boolean {
+  if (params.confirmations === null || params.requiredConfirmations === null) {
+    return false;
+  }
+
+  return params.confirmations >= params.requiredConfirmations;
 }
 
 function mapActivityTopUp(wire: ActivityTopUpWire): ActivityTopUp {

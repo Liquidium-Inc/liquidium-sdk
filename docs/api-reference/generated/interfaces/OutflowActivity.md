@@ -6,7 +6,7 @@
 
 # Interface: OutflowActivity
 
-Defined in: [packages/client/src/modules/activities/types.ts:109](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L109)
+Defined in: [packages/client/src/modules/activities/types.ts:80](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L80)
 
 Borrow or withdraw activity returned by the activity API.
 
@@ -20,7 +20,7 @@ Borrow or withdraw activity returned by the activity API.
 
 > **amount**: `bigint`
 
-Defined in: [packages/client/src/modules/activities/types.ts:88](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L88)
+Defined in: [packages/client/src/modules/activities/types.ts:59](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L59)
 
 #### Inherited from
 
@@ -32,7 +32,7 @@ Defined in: [packages/client/src/modules/activities/types.ts:88](https://github.
 
 > **asset**: `string` \| `null`
 
-Defined in: [packages/client/src/modules/activities/types.ts:86](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L86)
+Defined in: [packages/client/src/modules/activities/types.ts:57](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L57)
 
 #### Inherited from
 
@@ -44,7 +44,7 @@ Defined in: [packages/client/src/modules/activities/types.ts:86](https://github.
 
 > **chain**: [`Chain`](../type-aliases/Chain.md) \| `null`
 
-Defined in: [packages/client/src/modules/activities/types.ts:87](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L87)
+Defined in: [packages/client/src/modules/activities/types.ts:58](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L58)
 
 #### Inherited from
 
@@ -56,7 +56,7 @@ Defined in: [packages/client/src/modules/activities/types.ts:87](https://github.
 
 > **confirmations**: `number` \| `null`
 
-Defined in: [packages/client/src/modules/activities/types.ts:92](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L92)
+Defined in: [packages/client/src/modules/activities/types.ts:63](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L63)
 
 #### Inherited from
 
@@ -68,7 +68,7 @@ Defined in: [packages/client/src/modules/activities/types.ts:92](https://github.
 
 > **direction**: `"outflow"`
 
-Defined in: [packages/client/src/modules/activities/types.ts:111](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L111)
+Defined in: [packages/client/src/modules/activities/types.ts:82](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L82)
 
 Direction discriminator.
 
@@ -78,7 +78,7 @@ Direction discriminator.
 
 > **id**: `string`
 
-Defined in: [packages/client/src/modules/activities/types.ts:84](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L84)
+Defined in: [packages/client/src/modules/activities/types.ts:55](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L55)
 
 #### Inherited from
 
@@ -90,7 +90,7 @@ Defined in: [packages/client/src/modules/activities/types.ts:84](https://github.
 
 > **kind**: [`OutflowActivityKind`](../type-aliases/OutflowActivityKind.md)
 
-Defined in: [packages/client/src/modules/activities/types.ts:113](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L113)
+Defined in: [packages/client/src/modules/activities/types.ts:84](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L84)
 
 Borrow or withdraw kind.
 
@@ -100,7 +100,7 @@ Borrow or withdraw kind.
 
 > **poolId**: `string`
 
-Defined in: [packages/client/src/modules/activities/types.ts:85](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L85)
+Defined in: [packages/client/src/modules/activities/types.ts:56](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L56)
 
 #### Inherited from
 
@@ -112,7 +112,7 @@ Defined in: [packages/client/src/modules/activities/types.ts:85](https://github.
 
 > **requiredConfirmations**: `number` \| `null`
 
-Defined in: [packages/client/src/modules/activities/types.ts:93](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L93)
+Defined in: [packages/client/src/modules/activities/types.ts:64](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L64)
 
 #### Inherited from
 
@@ -122,11 +122,11 @@ Defined in: [packages/client/src/modules/activities/types.ts:93](https://github.
 
 ### status
 
-> **status**: [`OutflowActivityStatus`](../type-aliases/OutflowActivityStatus.md)
+> **status**: [`LiquidiumStatus`](LiquidiumStatus.md)
 
-Defined in: [packages/client/src/modules/activities/types.ts:115](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L115)
+Defined in: [packages/client/src/modules/activities/types.ts:86](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L86)
 
-Single consumer-facing lifecycle status.
+Shared consumer-facing lifecycle status.
 
 ***
 
@@ -134,7 +134,7 @@ Single consumer-facing lifecycle status.
 
 > **timestampMs**: `number`
 
-Defined in: [packages/client/src/modules/activities/types.ts:89](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L89)
+Defined in: [packages/client/src/modules/activities/types.ts:60](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L60)
 
 #### Inherited from
 
@@ -146,7 +146,7 @@ Defined in: [packages/client/src/modules/activities/types.ts:89](https://github.
 
 > `optional` **topUp?**: `undefined`
 
-Defined in: [packages/client/src/modules/activities/types.ts:117](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L117)
+Defined in: [packages/client/src/modules/activities/types.ts:88](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L88)
 
 Outflows never carry top-up state.
 
@@ -156,7 +156,7 @@ Outflows never carry top-up state.
 
 > **txid**: `string` \| `null`
 
-Defined in: [packages/client/src/modules/activities/types.ts:90](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L90)
+Defined in: [packages/client/src/modules/activities/types.ts:61](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L61)
 
 #### Inherited from
 
@@ -168,7 +168,7 @@ Defined in: [packages/client/src/modules/activities/types.ts:90](https://github.
 
 > `optional` **txids?**: `string`[]
 
-Defined in: [packages/client/src/modules/activities/types.ts:91](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L91)
+Defined in: [packages/client/src/modules/activities/types.ts:62](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L62)
 
 #### Inherited from
 

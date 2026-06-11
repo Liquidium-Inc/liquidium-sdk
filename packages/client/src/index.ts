@@ -13,6 +13,11 @@ export {
 } from "./core/evm";
 export { RATE_DECIMALS, RATE_SCALE } from "./core/rates";
 export type {
+  LiquidiumOperation,
+  LiquidiumState,
+  LiquidiumStatus,
+} from "./core/status";
+export type {
   CanisterIds,
   EvmReadClient,
   LiquidiumClientConfig,
@@ -68,20 +73,17 @@ export type {
   GetActivityStatusResponse,
   InflowActivity,
   InflowActivityKind,
-  InflowActivityStatus,
   ListActivitiesByProfileRequest,
   ListActivitiesByShortRefRequest,
   ListActivitiesRequest,
   OutflowActivity,
   OutflowActivityKind,
-  OutflowActivityStatus,
 } from "./modules/activities";
 export {
   ActivitiesModule,
   ActivityDirection,
   ActivityFilter,
   ActivityKind,
-  ActivityStatus,
 } from "./modules/activities";
 export type {
   ActivitiesRequest,
@@ -108,7 +110,7 @@ export type {
   UserTransactionHistoryFilters,
   UserTransactionHistoryType,
 } from "./modules/history";
-export { HistoryModule, UserHistoryStatus } from "./modules/history";
+export { HistoryModule } from "./modules/history";
 export type {
   CreateInstantLoanRequest,
   ExternalAccount,
@@ -145,7 +147,6 @@ export type {
   NativeAccount,
 } from "./modules/instant-loans";
 export {
-  InstantLoanStatus,
   InstantLoansModule,
   intFromPublicId,
   publicIdFromInt,

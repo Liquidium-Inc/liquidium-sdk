@@ -8,7 +8,7 @@
 
 > `const` **ActivityDirection**: `object`
 
-Defined in: [packages/client/src/modules/activities/types.ts:14](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L14)
+Defined in: [packages/client/src/modules/activities/types.ts:15](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L15)
 
 Direction of value movement for an activity.
 

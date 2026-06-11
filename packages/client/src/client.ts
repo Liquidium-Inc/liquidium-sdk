@@ -88,6 +88,7 @@ export class LiquidiumClient {
     this.instantLoans = new InstantLoansModule(
       this.canisterContext,
       this.apiClient,
+      this.activities,
       this.lending,
       this.positions
     );

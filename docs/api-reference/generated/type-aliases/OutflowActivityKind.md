@@ -8,6 +8,6 @@
 
 > **OutflowActivityKind** = *typeof* [`borrow`](../variables/ActivityKind.md#borrow) \| *typeof* [`withdraw`](../variables/ActivityKind.md#withdraw)
 
-Defined in: [packages/client/src/modules/activities/types.ts:63](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L63)
+Defined in: [packages/client/src/modules/activities/types.ts:50](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L50)
 
 Activity kind emitted by borrow or withdraw outflows.

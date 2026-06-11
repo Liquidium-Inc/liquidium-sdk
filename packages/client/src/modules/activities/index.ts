@@ -12,17 +12,14 @@ export type {
   GetActivityStatusResponse,
   InflowActivity,
   InflowActivityKind,
-  InflowActivityStatus,
   ListActivitiesByProfileRequest,
   ListActivitiesByShortRefRequest,
   ListActivitiesRequest,
   OutflowActivity,
   OutflowActivityKind,
-  OutflowActivityStatus,
 } from "./types";
 export {
   ActivityDirection,
   ActivityFilter,
   ActivityKind,
-  ActivityStatus,
 } from "./types";

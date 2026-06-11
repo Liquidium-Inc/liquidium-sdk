@@ -144,10 +144,17 @@ read repayment instructions from `loan.repayment.amount` and
 Reload with `client.instantLoans.get({ ref })` before displaying repayment
 instructions so the app uses the canonical repayment amount and target.
 
-When showing deposit progress, always pair `instantLoans.get({ ref })` with
-`activities.list({ shortRef: ref, filter: "active" })`. The canonical loan
-status may still be `awaiting_deposit` while the activity stream already shows
-detected or processing confirmations.
+Status-returning methods use the shared `LiquidiumStatus` shape:
+`{ operation, state, confirmations, requiredConfirmations }`. `operation` is one
+of `deposit`, `borrow`, `repayment`, `withdrawal`, or `liquidation`. `state` is
+one of `action_required`, `confirming`, `processing`, `active`, `completed`,
+`failed`, or `expired`. `confirmations` and `requiredConfirmations` are always
+present and are `null` when unavailable or not applicable.
+
+When showing deposit progress, use `loan.status` from `instantLoans.get({ ref })`
+for the canonical current lifecycle state. Use
+`activities.list({ shortRef: ref, filter: "active" })` when the UI also needs
+receipt ids, txids, top-up details, or a full activity timeline.
 
 Use `find(...)` for recovery screens where the user may paste a short reference,
 numeric loan id string, address, or transaction id. It returns lightweight loan
@@ -483,14 +490,17 @@ Do not use `client.lending.borrow(...)` for this flow. `lending.borrow(...)` is
 the profile-based signed borrow primitive. Instant loans automate the borrow
 after collateral arrives.
 
-Instant loan status values are UI-facing:
+Instant loan status is UI-facing:
 
-- `awaiting_deposit`: show `loan.initialDeposit.target` and the deposit deadline
-- `deposit_detected`: keep polling and show a pending state
-- `active`: show `loan.repayment.amount` and `loan.repayment.target`
-- `settling`: keep polling and avoid duplicate user actions
-- `closed`: show final state and stop prompting for repayment
-- `expired`: show timeout state and stop prompting for collateral deposit
+- `{ operation: "deposit", state: "action_required" }`: show `loan.initialDeposit.target` and the deposit deadline
+- `{ operation: "deposit", state: "confirming" }`: show deposit confirmation progress
+- `{ operation: "deposit", state: "processing" }`: keep polling while Liquidium processes the confirmed collateral
+- `{ operation: "borrow", state: "processing" }`: keep polling while the borrow outflow is created
+- `{ operation: "repayment", state: "active" }`: show `loan.repayment.amount` and `loan.repayment.target`
+- `{ operation: "repayment", state: "confirming" }`: show repayment confirmation progress
+- `{ operation: "repayment", state: "processing" }`: keep polling while Liquidium applies the repayment
+- `{ operation: "repayment", state: "completed" }`: show final state and stop prompting for repayment
+- `{ operation: "deposit", state: "expired" }`: show timeout state and stop prompting for collateral deposit
 
 ### Advanced: create a profile
 

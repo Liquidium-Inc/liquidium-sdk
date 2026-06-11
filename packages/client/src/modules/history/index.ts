@@ -26,4 +26,3 @@ export type {
   UserTransactionHistoryFilters,
   UserTransactionHistoryType,
 } from "./types";
-export { UserHistoryStatus } from "./types";

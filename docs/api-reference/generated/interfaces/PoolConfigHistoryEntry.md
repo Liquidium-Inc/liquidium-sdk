@@ -6,7 +6,7 @@
 
 # Interface: PoolConfigHistoryEntry
 
-Defined in: [packages/client/src/modules/history/types.ts:183](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L183)
+Defined in: [packages/client/src/modules/history/types.ts:179](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L179)
 
 Pool configuration snapshot returned to SDK consumers.
 
@@ -16,7 +16,7 @@ Pool configuration snapshot returned to SDK consumers.
 
 > **asset**: `string`
 
-Defined in: [packages/client/src/modules/history/types.ts:186](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L186)
+Defined in: [packages/client/src/modules/history/types.ts:182](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L182)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [packages/client/src/modules/history/types.ts:186](https://github.co
 
 > **baseRate**: `bigint`
 
-Defined in: [packages/client/src/modules/history/types.ts:198](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L198)
+Defined in: [packages/client/src/modules/history/types.ts:194](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L194)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [packages/client/src/modules/history/types.ts:198](https://github.co
 
 > `optional` **borrowCap?**: `bigint`
 
-Defined in: [packages/client/src/modules/history/types.ts:192](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L192)
+Defined in: [packages/client/src/modules/history/types.ts:188](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L188)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [packages/client/src/modules/history/types.ts:192](https://github.co
 
 > **borrowIndex**: `bigint`
 
-Defined in: [packages/client/src/modules/history/types.ts:203](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L203)
+Defined in: [packages/client/src/modules/history/types.ts:199](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L199)
 
 ***
 
@@ -48,7 +48,7 @@ Defined in: [packages/client/src/modules/history/types.ts:203](https://github.co
 
 > **chain**: `string`
 
-Defined in: [packages/client/src/modules/history/types.ts:187](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L187)
+Defined in: [packages/client/src/modules/history/types.ts:183](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L183)
 
 ***
 
@@ -56,7 +56,7 @@ Defined in: [packages/client/src/modules/history/types.ts:187](https://github.co
 
 > **frozen**: `boolean`
 
-Defined in: [packages/client/src/modules/history/types.ts:205](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L205)
+Defined in: [packages/client/src/modules/history/types.ts:201](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L201)
 
 ***
 
@@ -64,7 +64,7 @@ Defined in: [packages/client/src/modules/history/types.ts:205](https://github.co
 
 > **lendingIndex**: `bigint`
 
-Defined in: [packages/client/src/modules/history/types.ts:202](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L202)
+Defined in: [packages/client/src/modules/history/types.ts:198](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L198)
 
 ***
 
@@ -72,7 +72,7 @@ Defined in: [packages/client/src/modules/history/types.ts:202](https://github.co
 
 > **liquidationBonus**: `bigint`
 
-Defined in: [packages/client/src/modules/history/types.ts:195](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L195)
+Defined in: [packages/client/src/modules/history/types.ts:191](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L191)
 
 ***
 
@@ -80,7 +80,7 @@ Defined in: [packages/client/src/modules/history/types.ts:195](https://github.co
 
 > **liquidationThreshold**: `bigint`
 
-Defined in: [packages/client/src/modules/history/types.ts:194](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L194)
+Defined in: [packages/client/src/modules/history/types.ts:190](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L190)
 
 ***
 
@@ -88,7 +88,7 @@ Defined in: [packages/client/src/modules/history/types.ts:194](https://github.co
 
 > **maxLtv**: `bigint`
 
-Defined in: [packages/client/src/modules/history/types.ts:193](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L193)
+Defined in: [packages/client/src/modules/history/types.ts:189](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L189)
 
 ***
 
@@ -96,7 +96,7 @@ Defined in: [packages/client/src/modules/history/types.ts:193](https://github.co
 
 > **optimalUtilizationRate**: `bigint`
 
-Defined in: [packages/client/src/modules/history/types.ts:199](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L199)
+Defined in: [packages/client/src/modules/history/types.ts:195](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L195)
 
 ***
 
@@ -104,7 +104,7 @@ Defined in: [packages/client/src/modules/history/types.ts:199](https://github.co
 
 > **poolId**: `string`
 
-Defined in: [packages/client/src/modules/history/types.ts:185](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L185)
+Defined in: [packages/client/src/modules/history/types.ts:181](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L181)
 
 ***
 
@@ -112,7 +112,7 @@ Defined in: [packages/client/src/modules/history/types.ts:185](https://github.co
 
 > **protocolLiquidationFee**: `bigint`
 
-Defined in: [packages/client/src/modules/history/types.ts:196](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L196)
+Defined in: [packages/client/src/modules/history/types.ts:192](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L192)
 
 ***
 
@@ -120,7 +120,7 @@ Defined in: [packages/client/src/modules/history/types.ts:196](https://github.co
 
 > **rateSlopeAfter**: `bigint`
 
-Defined in: [packages/client/src/modules/history/types.ts:201](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L201)
+Defined in: [packages/client/src/modules/history/types.ts:197](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L197)
 
 ***
 
@@ -128,7 +128,7 @@ Defined in: [packages/client/src/modules/history/types.ts:201](https://github.co
 
 > **rateSlopeBefore**: `bigint`
 
-Defined in: [packages/client/src/modules/history/types.ts:200](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L200)
+Defined in: [packages/client/src/modules/history/types.ts:196](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L196)
 
 ***
 
@@ -136,7 +136,7 @@ Defined in: [packages/client/src/modules/history/types.ts:200](https://github.co
 
 > **reserveFactor**: `bigint`
 
-Defined in: [packages/client/src/modules/history/types.ts:197](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L197)
+Defined in: [packages/client/src/modules/history/types.ts:193](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L193)
 
 ***
 
@@ -144,7 +144,7 @@ Defined in: [packages/client/src/modules/history/types.ts:197](https://github.co
 
 > **sameAssetBorrowing**: `boolean`
 
-Defined in: [packages/client/src/modules/history/types.ts:204](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L204)
+Defined in: [packages/client/src/modules/history/types.ts:200](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L200)
 
 ***
 
@@ -152,7 +152,7 @@ Defined in: [packages/client/src/modules/history/types.ts:204](https://github.co
 
 > `optional` **supplyCap?**: `bigint`
 
-Defined in: [packages/client/src/modules/history/types.ts:191](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L191)
+Defined in: [packages/client/src/modules/history/types.ts:187](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L187)
 
 ***
 
@@ -160,7 +160,7 @@ Defined in: [packages/client/src/modules/history/types.ts:191](https://github.co
 
 > **timestamp**: `string`
 
-Defined in: [packages/client/src/modules/history/types.ts:188](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L188)
+Defined in: [packages/client/src/modules/history/types.ts:184](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L184)
 
 ***
 
@@ -168,7 +168,7 @@ Defined in: [packages/client/src/modules/history/types.ts:188](https://github.co
 
 > **totalDebt**: `bigint`
 
-Defined in: [packages/client/src/modules/history/types.ts:190](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L190)
+Defined in: [packages/client/src/modules/history/types.ts:186](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L186)
 
 ***
 
@@ -176,7 +176,7 @@ Defined in: [packages/client/src/modules/history/types.ts:190](https://github.co
 
 > **totalSupply**: `bigint`
 
-Defined in: [packages/client/src/modules/history/types.ts:189](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L189)
+Defined in: [packages/client/src/modules/history/types.ts:185](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L185)
 
 ***
 
@@ -184,4 +184,4 @@ Defined in: [packages/client/src/modules/history/types.ts:189](https://github.co
 
 > **type**: `"configuration_change"`
 
-Defined in: [packages/client/src/modules/history/types.ts:184](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L184)
+Defined in: [packages/client/src/modules/history/types.ts:180](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L180)

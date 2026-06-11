@@ -22,6 +22,10 @@ import {
 } from "../../core/canisters/lending/messages";
 import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
 import {
+  createLiquidiumStatus,
+  type LiquidiumOperation,
+} from "../../core/status";
+import {
   CK_ETH_DEPOSIT_CONTRACT_ADDRESS,
   ERC20_ABI,
   MAX_UINT256,
@@ -196,6 +200,8 @@ interface ShouldSubmitInflowParams {
   instruction: SupplyInstruction;
   mechanism: SupplyPlanType;
 }
+
+type SubmitInflowResponseWire = Omit<SubmitInflowResponse, "status">;
 
 type AllowanceExpectation = "zero" | "sufficient";
 
@@ -560,6 +566,10 @@ export class LendingModule {
       type: mechanism,
       target: instruction.target,
       txid,
+      status: createLiquidiumStatus({
+        operation: mapSupplyActionToStatusOperation(request.action),
+        state: txid ? "confirming" : "action_required",
+      }),
       submit: async (submitRequest) => {
         return await this.submitSupplyFlowInflow({
           instruction,
@@ -802,7 +812,14 @@ export class LendingModule {
     params: SubmitSupplyFlowInflowParams
   ): Promise<SubmitInflowResponse> {
     if (!shouldSubmitInflow(params)) {
-      return { success: true, txid: params.submitRequest.txid };
+      return {
+        success: true,
+        txid: params.submitRequest.txid,
+        status: createLiquidiumStatus({
+          operation: mapSupplyActionToStatusOperation(params.instruction.action),
+          state: "confirming",
+        }),
+      };
     }
 
     return await this.submitInflow({
@@ -1038,10 +1055,21 @@ export class LendingModule {
   ): Promise<SubmitInflowResponse> {
     const apiClient = this.requireApi();
 
-    return await apiClient.post<SubmitInflowResponse, SubmitInflowRequest>(
+    const response = await apiClient.post<
+      SubmitInflowResponseWire,
+      SubmitInflowRequest
+    >(
       SdkApiPath.inflow,
       request
     );
+
+    return {
+      ...response,
+      status: createLiquidiumStatus({
+        operation: mapSubmitInflowTypeToStatusOperation(request.type),
+        state: "confirming",
+      }),
+    };
   }
 
   /**
@@ -1252,7 +1280,19 @@ function mapExpectedOutflowDetails(
     );
   }
 
-  return details as BorrowOutflowDetails | WithdrawOutflowDetails;
+  return {
+    ...details,
+    status: createLiquidiumStatus({
+      operation: mapOutflowTypeToStatusOperation(expectedOutflowType),
+      state: details.txid ? "confirming" : "processing",
+    }),
+  } as BorrowOutflowDetails | WithdrawOutflowDetails;
+}
+
+function mapOutflowTypeToStatusOperation(
+  outflowType: typeof OutflowType.borrow | typeof OutflowType.withdraw
+): LiquidiumOperation {
+  return outflowType === OutflowType.borrow ? "borrow" : "withdrawal";
 }
 
 async function delay(timeoutMs: number): Promise<void> {
@@ -1293,6 +1333,18 @@ function getDefaultSubmitInflowRequest(
         ? InflowSubmitType.REPAY
         : InflowSubmitType.DEPOSIT,
   };
+}
+
+function mapSupplyActionToStatusOperation(
+  action: SupplyAction
+): LiquidiumOperation {
+  return action === SupplyAction.repayment ? "repayment" : "deposit";
+}
+
+function mapSubmitInflowTypeToStatusOperation(
+  type: InflowSubmitType | undefined
+): LiquidiumOperation {
+  return type === InflowSubmitType.REPAY ? "repayment" : "deposit";
 }
 
 function shouldSubmitInflow(params: ShouldSubmitInflowParams): boolean {

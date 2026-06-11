@@ -6,7 +6,7 @@
 
 # Interface: OutflowReceiver
 
-Defined in: [packages/client/src/modules/lending/types.ts:45](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L45)
+Defined in: [packages/client/src/modules/lending/types.ts:46](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L46)
 
 Destination account for a completed outflow.
 
@@ -16,7 +16,7 @@ Destination account for a completed outflow.
 
 > **account**: `string`
 
-Defined in: [packages/client/src/modules/lending/types.ts:49](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L49)
+Defined in: [packages/client/src/modules/lending/types.ts:50](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L50)
 
 Destination principal or external-chain address.
 
@@ -26,6 +26,6 @@ Destination principal or external-chain address.
 
 > **type**: `"Native"` \| `"External"`
 
-Defined in: [packages/client/src/modules/lending/types.ts:47](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L47)
+Defined in: [packages/client/src/modules/lending/types.ts:48](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L48)
 
 Destination account type reported by the protocol.
