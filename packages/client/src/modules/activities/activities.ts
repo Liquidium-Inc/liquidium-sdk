@@ -4,14 +4,14 @@ import {
 } from "../../core/canisters/instant-loans/actor";
 import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
 import {
+  buildActivitiesPath,
+  buildActivityStatusPath,
+} from "../../core/sdk-api-paths";
+import {
   createLiquidiumStatus,
   type LiquidiumOperation,
   type LiquidiumState,
 } from "../../core/status";
-import {
-  buildActivitiesPath,
-  buildActivityStatusPath,
-} from "../../core/sdk-api-paths";
 import type { ApiClient } from "../../core/transports/api-client";
 import type { CanisterContext } from "../../core/transports/canister-context";
 import { Chain } from "../../core/types";

@@ -1,11 +1,6 @@
 import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
 import { RATE_DECIMALS } from "../../core/rates";
 import {
-  createLiquidiumStatus,
-  type LiquidiumOperation,
-  type LiquidiumState,
-} from "../../core/status";
-import {
   buildHistoryPoolConfigPath,
   buildHistoryPoolPath,
   buildHistoryRatesPath,
@@ -13,6 +8,11 @@ import {
   buildHistoryUserTransactionsPath,
   SdkApiQueryParam,
 } from "../../core/sdk-api-paths";
+import {
+  createLiquidiumStatus,
+  type LiquidiumOperation,
+  type LiquidiumState,
+} from "../../core/status";
 import type { ApiClient } from "../../core/transports/api-client";
 import { parseBigInt, parseOptionalBigInt } from "../../core/utils/bigint";
 import type {
@@ -445,7 +445,9 @@ function mapHistoryStateFiltersToApi(states: LiquidiumState[]): string {
   return [...new Set(states.map(mapHistoryStateFilterToApi))].join(",");
 }
 
-function mapHistoryStateFilterToApi(state: LiquidiumState): UserHistoryStatusApi {
+function mapHistoryStateFilterToApi(
+  state: LiquidiumState
+): UserHistoryStatusApi {
   switch (state) {
     case "action_required":
       return "REQUESTED";
