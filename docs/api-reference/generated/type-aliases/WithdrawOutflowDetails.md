@@ -8,7 +8,7 @@
 
 > **WithdrawOutflowDetails** = [`OutflowDetails`](../interfaces/OutflowDetails.md) & `object`
 
-Defined in: [packages/client/src/modules/lending/types.ts:88](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L88)
+Defined in: [packages/client/src/modules/lending/types.ts:91](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L91)
 
 Withdraw receipt with an external-chain receiver.
 
@@ -21,3 +21,9 @@ Withdraw receipt with an external-chain receiver.
 ### receiver
 
 > **receiver**: [`ExternalOutflowReceiver`](../interfaces/ExternalOutflowReceiver.md)
+
+### status
+
+> **status**: [`LiquidiumStatus`](../interfaces/LiquidiumStatus.md)
+
+Shared lifecycle status for the withdraw outflow receipt.

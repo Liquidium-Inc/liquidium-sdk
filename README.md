@@ -227,7 +227,7 @@ Most instant-loan UIs show or store these fields:
 | Field | Use |
 | --- | --- |
 | `loan.ref` | Save and show this reference so the loan can be restored later |
-| `loan.status` | Show the lifecycle: `awaiting_deposit`, `deposit_detected`, `active`, `settling`, `closed`, or `expired` |
+| `loan.status` | Shared lifecycle status: `{ operation, state, confirmations, requiredConfirmations }` |
 | `loan.initialDeposit.amount` | Fee-inclusive collateral amount to send after creation or restore |
 | `loan.initialDeposit.collateralAmount` | Intended credited collateral target used for LTV |
 | `loan.initialDeposit.target` | Address or ICRC account where the user sends collateral |
@@ -251,6 +251,19 @@ Use `Pool.decimals` from `client.market.listPools()` when converting user-entere
 ## Status And Activity Tracking
 
 Reload loans with `client.instantLoans.get({ ref })` when you need current state, transfer targets, or the latest repayment quote.
+
+Status-returning methods use the same `LiquidiumStatus` shape:
+
+```ts
+type LiquidiumStatus = {
+  operation: "deposit" | "borrow" | "repayment" | "withdrawal" | "liquidation";
+  state: "action_required" | "confirming" | "processing" | "active" | "completed" | "failed" | "expired";
+  confirmations: number | null;
+  requiredConfirmations: number | null;
+};
+```
+
+`action_required` means the user or app must do something, such as sending funds. `confirming` means a tx is known but still needs confirmations. `processing` means confirmations are sufficient and Liquidium or the protocol is still processing. `active` means the loan is live and waiting for the next repayment action.
 
 Use activities to track collateral deposits, borrow outflows, repayment deposits, confirmations, and fee top-ups. The activities module accepts the saved instant-loan reference and resolves the generated profile for you:
 

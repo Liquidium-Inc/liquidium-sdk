@@ -1,15 +1,11 @@
-/** Consumer-facing status for profile transaction history entries. */
-export const UserHistoryStatus = {
-  requested: "requested",
-  pending: "pending",
-  confirmed: "confirmed",
-  failed: "failed",
-} as const;
-/** Consumer-facing status for profile transaction history entries. */
-export type UserHistoryStatus =
-  (typeof UserHistoryStatus)[keyof typeof UserHistoryStatus];
+import type { LiquidiumState, LiquidiumStatus } from "../../core/status";
+
 /** Uppercase status value used by SDK API responses. */
-export type UserHistoryStatusApi = Uppercase<UserHistoryStatus>;
+export type UserHistoryStatusApi =
+  | "REQUESTED"
+  | "PENDING"
+  | "CONFIRMED"
+  | "FAILED";
 
 /** User transaction kinds returned by profile transaction history. */
 export type UserTransactionHistoryType =
@@ -37,15 +33,15 @@ export interface UserTransactionHistoryEntry extends BaseUserHistoryEntry {
   /** Transaction history kind. */
   type: UserTransactionHistoryType;
   /** Current lifecycle status. */
-  status: UserHistoryStatus;
+  status: LiquidiumStatus;
 }
 
 /** Liquidation entry in user history. */
 export interface UserLiquidationHistoryEntry extends BaseUserHistoryEntry {
   /** Liquidation kind discriminator. */
   type: UserLiquidationHistoryType;
-  /** Liquidations are only returned once confirmed. */
-  status: typeof UserHistoryStatus.confirmed;
+  /** Current lifecycle status. */
+  status: LiquidiumStatus;
 }
 
 /** Any consumer-facing profile history entry. */
@@ -65,8 +61,8 @@ export interface UserTransactionHistoryFilters {
   poolId?: string;
   /** Transaction kind filters. */
   types?: UserTransactionHistoryType[];
-  /** Status filters. */
-  statuses?: UserHistoryEntry["status"][];
+  /** Lifecycle state filters. */
+  states?: LiquidiumState[];
   /** Inclusive start timestamp filter accepted by the SDK API. */
   from?: string;
   /** Inclusive end timestamp filter accepted by the SDK API. */

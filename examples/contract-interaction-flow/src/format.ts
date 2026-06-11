@@ -1,6 +1,7 @@
 import type {
   Activity,
   GetActivityStatusResponse,
+  LiquidiumStatus,
   Pool,
   SupplyFlow,
   SupplyTarget,
@@ -11,6 +12,8 @@ const RECENT_ACTIVITY_IDS_STORAGE_KEY =
   "liquidium-contract-interaction.recentActivityIds";
 const MAX_RECENT_ACTIVITY_IDS = 10;
 const ERROR_FIELD_EXCLUDE_LIST = new Set(["name", "message", "stack", "cause"]);
+
+type StatusSubject = "Activity" | "Flow";
 
 export function parseAmountToBaseUnits(
   value: string,
@@ -93,6 +96,8 @@ export function formatSupplyFlow(flow: SupplyFlow): string {
     "Contract interaction supply submitted.",
     `Mechanism: ${flow.type}`,
     `Txid: ${flow.txid ?? "not set"}`,
+    "Status:",
+    formatStatus(flow.status, "Flow"),
     "",
     formatSupplyTarget(flow.target),
   ].join("\n");
@@ -132,7 +137,8 @@ export function formatActivity(activity: Activity): string {
     `Activity id: ${activity.id}`,
     `Direction: ${activity.direction}`,
     `Kind: ${activity.kind}`,
-    `Status: ${activity.status}`,
+    "Status:",
+    formatStatus(activity.status, "Activity"),
     `Pool: ${activity.poolId}`,
     `Asset: ${activity.asset ?? "not set"}`,
     `Chain: ${activity.chain ?? "not set"}`,
@@ -145,6 +151,17 @@ export function formatActivity(activity: Activity): string {
     activity.topUp
       ? formatActivityTopUp(activity.topUp)
       : "Top-up: not required",
+  ].join("\n");
+}
+
+function formatStatus(status: LiquidiumStatus, subject: StatusSubject): string {
+  const actionLabel = `${subject} action`;
+
+  return [
+    `${subject} state: ${status.state}`,
+    `${actionLabel}: ${status.operation}`,
+    `Confirmations: ${status.confirmations?.toString() ?? "not set"}`,
+    `Required confirmations: ${status.requiredConfirmations?.toString() ?? "not set"}`,
   ].join("\n");
 }
 

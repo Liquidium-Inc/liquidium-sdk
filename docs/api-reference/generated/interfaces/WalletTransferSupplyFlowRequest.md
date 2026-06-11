@@ -6,7 +6,7 @@
 
 # Interface: WalletTransferSupplyFlowRequest
 
-Defined in: [packages/client/src/modules/lending/types.ts:233](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L233)
+Defined in: [packages/client/src/modules/lending/types.ts:238](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L238)
 
 Wallet-executed transfer-based `lending.supply` request.
 
@@ -20,7 +20,7 @@ Wallet-executed transfer-based `lending.supply` request.
 
 > **account**: `string`
 
-Defined in: [packages/client/src/modules/lending/types.ts:242](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L242)
+Defined in: [packages/client/src/modules/lending/types.ts:247](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L247)
 
 Sender wallet account.
 
@@ -30,7 +30,7 @@ Sender wallet account.
 
 > **action**: [`SupplyAction`](../type-aliases/SupplyAction.md)
 
-Defined in: [packages/client/src/modules/lending/types.ts:217](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L217)
+Defined in: [packages/client/src/modules/lending/types.ts:222](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L222)
 
 #### Inherited from
 
@@ -42,7 +42,7 @@ Defined in: [packages/client/src/modules/lending/types.ts:217](https://github.co
 
 > **amount**: `bigint`
 
-Defined in: [packages/client/src/modules/lending/types.ts:244](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L244)
+Defined in: [packages/client/src/modules/lending/types.ts:249](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L249)
 
 Transfer amount in the target asset's base units.
 
@@ -52,7 +52,7 @@ Transfer amount in the target asset's base units.
 
 > `optional` **mechanism?**: `"transfer"`
 
-Defined in: [packages/client/src/modules/lending/types.ts:235](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L235)
+Defined in: [packages/client/src/modules/lending/types.ts:240](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L240)
 
 Optional explicit transfer mechanism.
 
@@ -62,7 +62,7 @@ Optional explicit transfer mechanism.
 
 > **poolId**: `string`
 
-Defined in: [packages/client/src/modules/lending/types.ts:216](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L216)
+Defined in: [packages/client/src/modules/lending/types.ts:221](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L221)
 
 #### Inherited from
 
@@ -74,7 +74,7 @@ Defined in: [packages/client/src/modules/lending/types.ts:216](https://github.co
 
 > **profileId**: `string`
 
-Defined in: [packages/client/src/modules/lending/types.ts:215](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L215)
+Defined in: [packages/client/src/modules/lending/types.ts:220](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L220)
 
 #### Inherited from
 
@@ -86,6 +86,6 @@ Defined in: [packages/client/src/modules/lending/types.ts:215](https://github.co
 
 > **walletAdapter**: `Pick`\<[`WalletAdapter`](WalletAdapter.md), `"sendBtcTransaction"` \| `"sendEthTransaction"`\>
 
-Defined in: [packages/client/src/modules/lending/types.ts:237](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L237)
+Defined in: [packages/client/src/modules/lending/types.ts:242](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L242)
 
 Wallet adapter used to broadcast the transfer.

@@ -6,7 +6,7 @@
 
 # Interface: InstantLoanConfig
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:195](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L195)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:196](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L196)
 
 Active instant-loans canister config.
 
@@ -16,6 +16,6 @@ Active instant-loans canister config.
 
 > **lendingCanisterId**: `string`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:197](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L197)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:198](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L198)
 
 Principal text of the lending canister used by instant loans.

@@ -8,6 +8,11 @@ import {
   buildHistoryUserTransactionsPath,
   SdkApiQueryParam,
 } from "../../core/sdk-api-paths";
+import {
+  createLiquidiumStatus,
+  type LiquidiumOperation,
+  type LiquidiumState,
+} from "../../core/status";
 import type { ApiClient } from "../../core/transports/api-client";
 import { parseBigInt, parseOptionalBigInt } from "../../core/utils/bigint";
 import type {
@@ -23,13 +28,13 @@ import type {
   UserHistoryEntry,
   UserHistoryResponse,
   UserHistoryStatusApi,
+  UserHistoryType,
   UserLiquidationHistoryEntry,
   UserLiquidationHistoryFilters,
   UserTransactionHistoryEntry,
   UserTransactionHistoryFilters,
   UserTransactionHistoryType,
 } from "./types";
-import { UserHistoryStatus } from "./types";
 
 /** Historical pool, rate, user transaction, and liquidation data helpers. */
 export class HistoryModule {
@@ -220,10 +225,10 @@ export class HistoryModule {
     if (normalizedFilters.types?.length) {
       query.set(SdkApiQueryParam.types, normalizedFilters.types.join(","));
     }
-    if (normalizedFilters.statuses?.length) {
+    if (normalizedFilters.states?.length) {
       query.set(
         SdkApiQueryParam.statuses,
-        normalizedFilters.statuses.map(mapHistoryStatusToApi).join(",")
+        mapHistoryStateFiltersToApi(normalizedFilters.states)
       );
     }
     if (normalizedFilters.from) {
@@ -304,13 +309,15 @@ export class HistoryModule {
 function mapUserTransactionHistoryEntry(
   item: UserHistoryResponse["items"][number]
 ): UserTransactionHistoryEntry {
+  const type = mapUserTransactionHistoryType(item.type);
+
   return {
     id: item.id,
-    type: mapUserTransactionHistoryType(item.type),
+    type,
     amount: parseBigInt(item.amount, "history user amount"),
     poolId: item.poolId,
     timestamp: item.timestamp,
-    status: mapHistoryStatusFromApi(item.status),
+    status: mapHistoryStatusFromApi(item.status, mapUserHistoryOperation(type)),
     txids: item.txids,
   };
 }
@@ -325,13 +332,21 @@ function mapUserLiquidationHistoryEntry(
     );
   }
 
+  const status = mapHistoryStatusFromApi(item.status, "liquidation");
+  if (status.state !== "completed") {
+    throw new LiquidiumError(
+      LiquidiumErrorCode.INTERNAL,
+      `Invalid liquidation history status: ${item.status}`
+    );
+  }
+
   return {
     id: item.id,
     type: "liquidation",
     amount: parseBigInt(item.amount, "history user amount"),
     poolId: item.poolId,
     timestamp: item.timestamp,
-    status: mapLiquidationHistoryStatus(item.status),
+    status,
     txids: item.txids,
   };
 }
@@ -346,21 +361,6 @@ function mapUserTransactionHistoryType(
   throw new LiquidiumError(
     LiquidiumErrorCode.INTERNAL,
     "Transaction history response included a liquidation entry"
-  );
-}
-
-function mapLiquidationHistoryStatus(
-  status: UserHistoryStatusApi
-): typeof UserHistoryStatus.confirmed {
-  const mappedStatus = mapHistoryStatusFromApi(status);
-
-  if (mappedStatus === UserHistoryStatus.confirmed) {
-    return mappedStatus;
-  }
-
-  throw new LiquidiumError(
-    LiquidiumErrorCode.INTERNAL,
-    `Invalid liquidation history status: ${status}`
   );
 }
 
@@ -400,14 +400,69 @@ function normalizeLiquidationHistoryFilters(
   return { ...(marketOrFilters ?? {}), ...filters };
 }
 
-function mapHistoryStatusFromApi(
-  status: UserHistoryStatusApi
-): UserHistoryStatus {
-  return status.toLowerCase() as UserHistoryStatus;
+function mapUserHistoryOperation(type: UserHistoryType): LiquidiumOperation {
+  switch (type) {
+    case "supply":
+      return "deposit";
+    case "borrow":
+      return "borrow";
+    case "repay":
+      return "repayment";
+    case "withdraw":
+      return "withdrawal";
+    case "liquidation":
+      return "liquidation";
+  }
 }
 
-function mapHistoryStatusToApi(
-  status: UserHistoryStatus
+function mapHistoryStatusFromApi(
+  status: UserHistoryStatusApi,
+  operation: LiquidiumOperation
+) {
+  switch (status) {
+    case "REQUESTED":
+      return createLiquidiumStatus({
+        operation,
+        state: isInflowOperation(operation) ? "action_required" : "processing",
+      });
+    case "PENDING":
+      return createLiquidiumStatus({
+        operation,
+        state: isInflowOperation(operation) ? "confirming" : "processing",
+      });
+    case "CONFIRMED":
+      return createLiquidiumStatus({ operation, state: "completed" });
+    case "FAILED":
+      return createLiquidiumStatus({ operation, state: "failed" });
+  }
+}
+
+function isInflowOperation(operation: LiquidiumOperation): boolean {
+  return operation === "deposit" || operation === "repayment";
+}
+
+function mapHistoryStateFiltersToApi(states: LiquidiumState[]): string {
+  return [...new Set(states.map(mapHistoryStateFilterToApi))].join(",");
+}
+
+function mapHistoryStateFilterToApi(
+  state: LiquidiumState
 ): UserHistoryStatusApi {
-  return status.toUpperCase() as UserHistoryStatusApi;
+  switch (state) {
+    case "action_required":
+      return "REQUESTED";
+    case "confirming":
+    case "processing":
+      return "PENDING";
+    case "completed":
+      return "CONFIRMED";
+    case "failed":
+      return "FAILED";
+    case "active":
+    case "expired":
+      throw new LiquidiumError(
+        LiquidiumErrorCode.VALIDATION_ERROR,
+        `History state filter is not supported: ${state}`
+      );
+  }
 }

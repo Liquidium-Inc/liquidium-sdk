@@ -420,7 +420,12 @@ describe("HistoryModule", () => {
           amount: 100000n,
           poolId: "pool-1",
           timestamp: "2026-04-01T00:00:00.000Z",
-          status: "confirmed",
+          status: {
+            operation: "deposit",
+            state: "completed",
+            confirmations: null,
+            requiredConfirmations: null,
+          },
           txids: ["tx-1"],
         },
       ],
@@ -617,7 +622,7 @@ describe("HistoryModule", () => {
       market: "pool-btc",
       poolId: "pool-btc",
       types: ["borrow"],
-      statuses: ["confirmed"],
+      states: ["completed"],
       from: "2026-04-01T00:00:00.000Z",
       to: "2026-04-03T00:00:00.000Z",
       limit: 1,
@@ -632,7 +637,12 @@ describe("HistoryModule", () => {
           amount: 50000n,
           poolId: "pool-btc",
           timestamp: "2026-04-02T00:00:00.000Z",
-          status: "confirmed",
+          status: {
+            operation: "borrow",
+            state: "completed",
+            confirmations: null,
+            requiredConfirmations: null,
+          },
           txids: ["tx-1"],
         },
       ],
@@ -839,7 +849,12 @@ describe("ActivitiesModule", () => {
         id: "activity-1",
         direction: "inflow",
         kind: "deposit",
-        status: "pending",
+        status: {
+          operation: "deposit",
+          state: "confirming",
+          confirmations: ACTIVITY_CONFIRMATIONS,
+          requiredConfirmations: ACTIVITY_REQUIRED_CONFIRMATIONS,
+        },
         poolId: "pool-1",
         asset: "BTC",
         chain: "BTC",
@@ -969,7 +984,12 @@ describe("ActivitiesModule", () => {
         id: "activity-1",
         direction: "outflow",
         kind: "borrow",
-        status: "sent",
+        status: {
+          operation: "borrow",
+          state: "confirming",
+          confirmations: ACTIVITY_CONFIRMATIONS,
+          requiredConfirmations: ACTIVITY_REQUIRED_CONFIRMATIONS,
+        },
         poolId: "pool-1",
         asset: "BTC",
         chain: "BTC",
@@ -1054,7 +1074,12 @@ describe("ActivitiesModule", () => {
         id: "activity-1",
         direction: "outflow",
         kind: "borrow",
-        status: "sent",
+        status: {
+          operation: "borrow",
+          state: "confirming",
+          confirmations: ACTIVITY_CONFIRMATIONS,
+          requiredConfirmations: ACTIVITY_REQUIRED_CONFIRMATIONS,
+        },
         poolId: "pool-1",
         asset: "BTC",
         chain: "BTC",
@@ -1076,7 +1101,7 @@ describe("ActivitiesModule", () => {
     );
   });
 
-  test("maps pre-terminal eth inflows to detected status", async () => {
+  test("maps pre-terminal eth inflows with required top-up to action required status", async () => {
     // given
     const ACTIVITY_AMOUNT = "4000000";
     const ACTIVITY_AMOUNT_BASE_UNITS = 4000000n;
@@ -1136,7 +1161,12 @@ describe("ActivitiesModule", () => {
         id: "pre_terminal_eth_36",
         direction: "inflow",
         kind: "deposit",
-        status: "detected",
+        status: {
+          operation: "deposit",
+          state: "action_required",
+          confirmations: ACTIVITY_CONFIRMATIONS,
+          requiredConfirmations: ACTIVITY_REQUIRED_CONFIRMATIONS,
+        },
         poolId: "7dcux-qqaaa-aaaae-qfc3a-cai",
         asset: "USDT",
         chain: "ETH",
@@ -2600,7 +2630,16 @@ describe("LendingModule", () => {
     const result = await supplyFlow.submit({ txid });
 
     // then
-    expect(result).toEqual({ success: true, txid });
+    expect(result).toEqual({
+      success: true,
+      txid,
+      status: {
+        operation: "deposit",
+        state: "confirming",
+        confirmations: null,
+        requiredConfirmations: null,
+      },
+    });
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
@@ -2781,7 +2820,16 @@ describe("LendingModule", () => {
     const result = await client.lending.submitInflow({ txid });
 
     // then
-    expect(result).toEqual({ success: true, txid });
+    expect(result).toEqual({
+      success: true,
+      txid,
+      status: {
+        operation: "deposit",
+        state: "confirming",
+        confirmations: null,
+        requiredConfirmations: null,
+      },
+    });
     expect(fetchSpy).toHaveBeenCalledWith(
       "https://app.liquidium.fi/api/sdk/v1/inflow",
       {
@@ -3620,7 +3668,16 @@ describe("LendingModule", () => {
     const result = await client.lending.submitInflow({ txid: TXID });
 
     // then
-    expect(result).toEqual({ success: true, txid: TXID });
+    expect(result).toEqual({
+      success: true,
+      txid: TXID,
+      status: {
+        operation: "deposit",
+        state: "confirming",
+        confirmations: null,
+        requiredConfirmations: null,
+      },
+    });
     expect(fetchSpy).toHaveBeenCalledWith(
       `${DEFAULT_API_BASE_URL}/v1/inflow`,
       expect.objectContaining({ method: "POST" })
@@ -3713,6 +3770,12 @@ Nonce: 17`);
       receiver: {
         type: "External",
         account: VALID_BTC_OUTFLOW_ADDRESS,
+      },
+      status: {
+        operation: "borrow",
+        state: "confirming",
+        confirmations: null,
+        requiredConfirmations: null,
       },
     });
   });
@@ -4127,6 +4190,12 @@ Nonce: 23`);
         type: "External",
         account: VALID_BTC_OUTFLOW_ADDRESS,
       },
+      status: {
+        operation: "withdrawal",
+        state: "confirming",
+        confirmations: null,
+        requiredConfirmations: null,
+      },
     });
   });
 
@@ -4355,7 +4424,12 @@ describe("InstantLoansModule", () => {
     );
     expect(loan.loanId).toBe(LOAN_ID);
     expect(loan.ref).toBe(publicIdFromInt(LOAN_ID));
-    expect(loan.status).toBe("active");
+    expect(loan.status).toEqual({
+      operation: "repayment",
+      state: "active",
+      confirmations: null,
+      requiredConfirmations: null,
+    });
     expect(loan.profileId).toBe(PROFILE_ID);
     expect(loan).not.toHaveProperty("started");
     expect(loan).not.toHaveProperty("depositDetectedTimestamp");
@@ -4481,6 +4555,12 @@ describe("InstantLoansModule", () => {
               success: true,
               collateralAmountHint: "10000000",
             }),
+            { status: 200, headers: { "content-type": "application/json" } }
+          );
+        }
+        if (url.includes("/activities?")) {
+          return new Response(
+            JSON.stringify({ success: true, activities: [] }),
             { status: 200, headers: { "content-type": "application/json" } }
           );
         }
@@ -4834,7 +4914,12 @@ describe("InstantLoansModule", () => {
       chain: "ETH",
     });
     expect(loan.initialDeposit.amount).toBe(10_002_500n);
-    expect(loan.status).toBe("awaiting_deposit");
+    expect(loan.status).toEqual({
+      operation: "deposit",
+      state: "action_required",
+      confirmations: null,
+      requiredConfirmations: null,
+    });
     expect(estimateDepositFee).not.toHaveBeenCalled();
   });
 
@@ -4885,7 +4970,12 @@ describe("InstantLoansModule", () => {
     });
 
     // then
-    expect(loan.status).toBe("awaiting_deposit");
+    expect(loan.status).toEqual({
+      operation: "deposit",
+      state: "action_required",
+      confirmations: null,
+      requiredConfirmations: null,
+    });
     expect(loan.repayment).toMatchObject({
       amount: 0n,
       debtAmount: 0n,
@@ -4908,7 +4998,8 @@ describe("InstantLoansModule", () => {
     });
     const fetchSpy = vi
       .spyOn(globalThis, "fetch")
-      .mockImplementation(async (_input, init) => {
+      .mockImplementation(async (input, init) => {
+        const url = input.toString();
         if (init?.method === "POST") {
           return new Response(
             JSON.stringify({
@@ -4920,6 +5011,12 @@ describe("InstantLoansModule", () => {
                 },
               },
             }),
+            { status: 200, headers: { "content-type": "application/json" } }
+          );
+        }
+        if (url.includes("/activities?")) {
+          return new Response(
+            JSON.stringify({ success: true, activities: [] }),
             { status: 200, headers: { "content-type": "application/json" } }
           );
         }
@@ -5021,10 +5118,15 @@ describe("InstantLoansModule", () => {
         method: "POST",
       })
     );
-    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
     expect(getLoan).toHaveBeenCalledWith(LOAN_ID);
     expect(loan.loanId).toBe(LOAN_ID);
-    expect(loan.status).toBe("awaiting_deposit");
+    expect(loan.status).toEqual({
+      operation: "deposit",
+      state: "action_required",
+      confirmations: null,
+      requiredConfirmations: null,
+    });
     expect(loan.collateral.amount).toBe(10_000_000n);
     expect(loan.terms).toEqual({
       ltvMaxBps: 6_800n,
@@ -5384,15 +5486,23 @@ describe("InstantLoansModule", () => {
       collateralPoolId: string;
     }> = {}
   ) {
-    return vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(
+    return vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
+      const url = input.toString();
+      if (url.includes("/activities?")) {
+        return new Response(JSON.stringify({ success: true, activities: [] }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        });
+      }
+
+      return new Response(
         JSON.stringify({
           success: true,
           collateralAmountHint: overrides.collateralAmountHint ?? "10000000",
         }),
         { status: 200, headers: { "content-type": "application/json" } }
-      )
-    );
+      );
+    });
   }
 
   function createBtcBorrowInstantLoan() {

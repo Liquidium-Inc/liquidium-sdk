@@ -1,3 +1,4 @@
+import type { LiquidiumStatus } from "../../core/status";
 import type { Chain } from "../../core/types";
 
 /** Activity list state filter. */
@@ -29,20 +30,6 @@ export const ActivityKind = {
 /** Consumer-facing activity kind. */
 export type ActivityKind = (typeof ActivityKind)[keyof typeof ActivityKind];
 
-/** Consumer-facing activity lifecycle status. */
-export const ActivityStatus = {
-  requested: "requested",
-  pending: "pending",
-  detected: "detected",
-  processing: "processing",
-  sent: "sent",
-  confirmed: "confirmed",
-  failed: "failed",
-} as const;
-/** Consumer-facing activity lifecycle status. */
-export type ActivityStatus =
-  (typeof ActivityStatus)[keyof typeof ActivityStatus];
-
 /** Fee top-up state for an inflow activity. */
 export interface ActivityTopUp {
   /** Whether another transfer is needed before processing can continue. */
@@ -64,22 +51,6 @@ export type OutflowActivityKind =
   | typeof ActivityKind.borrow
   | typeof ActivityKind.withdraw;
 
-/** Lifecycle status that can appear on an inflow activity. */
-export type InflowActivityStatus =
-  | typeof ActivityStatus.requested
-  | typeof ActivityStatus.pending
-  | typeof ActivityStatus.detected
-  | typeof ActivityStatus.processing
-  | typeof ActivityStatus.confirmed
-  | typeof ActivityStatus.failed;
-/** Lifecycle status that can appear on an outflow activity. */
-export type OutflowActivityStatus =
-  | typeof ActivityStatus.requested
-  | typeof ActivityStatus.pending
-  | typeof ActivityStatus.sent
-  | typeof ActivityStatus.confirmed
-  | typeof ActivityStatus.failed;
-
 interface BaseActivity {
   id: string;
   poolId: string;
@@ -99,8 +70,8 @@ export interface InflowActivity extends BaseActivity {
   direction: typeof ActivityDirection.inflow;
   /** Deposit or repayment kind. */
   kind: InflowActivityKind;
-  /** Single consumer-facing lifecycle status. */
-  status: InflowActivityStatus;
+  /** Shared consumer-facing lifecycle status. */
+  status: LiquidiumStatus;
   /** Fee top-up state when the inflow is below the current processing fee. */
   topUp?: ActivityTopUp;
 }
@@ -111,8 +82,8 @@ export interface OutflowActivity extends BaseActivity {
   direction: typeof ActivityDirection.outflow;
   /** Borrow or withdraw kind. */
   kind: OutflowActivityKind;
-  /** Single consumer-facing lifecycle status. */
-  status: OutflowActivityStatus;
+  /** Shared consumer-facing lifecycle status. */
+  status: LiquidiumStatus;
   /** Outflows never carry top-up state. */
   topUp?: never;
 }

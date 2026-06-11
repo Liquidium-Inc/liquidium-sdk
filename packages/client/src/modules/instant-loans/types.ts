@@ -1,3 +1,4 @@
+import type { LiquidiumStatus } from "../../core/status";
 import type { Chain, MarketAsset, MarketChain } from "../../core/types";
 import type { SupplyTarget } from "../lending";
 
@@ -374,18 +375,6 @@ export interface InstantLoanPositionSummary {
   totalDebtAmount: bigint;
 }
 
-/** Simplified lifecycle status for consumer UIs. */
-export const InstantLoanStatus = {
-  awaitingDeposit: "awaiting_deposit",
-  depositDetected: "deposit_detected",
-  active: "active",
-  settling: "settling",
-  closed: "closed",
-  expired: "expired",
-} as const;
-export type InstantLoanStatus =
-  (typeof InstantLoanStatus)[keyof typeof InstantLoanStatus];
-
 /** Immutable terms selected for an instant loan. */
 export interface InstantLoanTerms {
   /** Maximum loan-to-value ratio in basis points. */
@@ -430,8 +419,8 @@ export interface InstantLoan {
   loanId: bigint;
   /** Short user-facing reference derived from `loanId`. */
   ref: string;
-  /** Simplified lifecycle status for display and flow control. */
-  status: InstantLoanStatus;
+  /** Shared lifecycle status for display and flow control. */
+  status: LiquidiumStatus;
   /** Generated profile principal used by the instant loan. */
   profileId: string;
   /** Immutable loan terms. */

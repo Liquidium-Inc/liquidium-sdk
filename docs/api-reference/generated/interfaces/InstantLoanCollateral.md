@@ -6,7 +6,7 @@
 
 # Interface: InstantLoanCollateral
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:398](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L398)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:387](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L387)
 
 Collateral leg selected for an instant loan.
 
@@ -16,7 +16,7 @@ Collateral leg selected for an instant loan.
 
 > **amount**: `bigint`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:408](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L408)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:397](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L397)
 
 Intended credited collateral amount in base units, before inflow fees.
 
@@ -26,7 +26,7 @@ Intended credited collateral amount in base units, before inflow fees.
 
 > **asset**: `string`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:402](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L402)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:391](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L391)
 
 Collateral asset symbol.
 
@@ -36,7 +36,7 @@ Collateral asset symbol.
 
 > **chain**: `string`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:404](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L404)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:393](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L393)
 
 Chain used for collateral deposits.
 
@@ -46,7 +46,7 @@ Chain used for collateral deposits.
 
 > **decimals**: `bigint`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:406](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L406)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:395](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L395)
 
 Decimal scale for collateral amounts.
 
@@ -56,6 +56,6 @@ Decimal scale for collateral amounts.
 
 > **poolId**: `string`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:400](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L400)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:389](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L389)
 
 Principal text of the collateral pool.

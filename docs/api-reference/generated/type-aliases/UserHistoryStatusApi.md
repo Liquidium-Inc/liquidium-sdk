@@ -6,8 +6,8 @@
 
 # Type Alias: UserHistoryStatusApi
 
-> **UserHistoryStatusApi** = `Uppercase`\<[`UserHistoryStatus`](UserHistoryStatus.md)\>
+> **UserHistoryStatusApi** = `"REQUESTED"` \| `"PENDING"` \| `"CONFIRMED"` \| `"FAILED"`
 
-Defined in: [packages/client/src/modules/history/types.ts:12](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L12)
+Defined in: [packages/client/src/modules/history/types.ts:4](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L4)
 
 Uppercase status value used by SDK API responses.

@@ -6,7 +6,7 @@
 
 # Interface: PoolConfigHistoryResponse
 
-Defined in: [packages/client/src/modules/history/types.ts:235](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L235)
+Defined in: [packages/client/src/modules/history/types.ts:231](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L231)
 
 Wire-format pool configuration history page returned by the SDK API.
 
@@ -16,7 +16,7 @@ Wire-format pool configuration history page returned by the SDK API.
 
 > **items**: [`PoolConfigHistoryEntryApiItem`](PoolConfigHistoryEntryApiItem.md)[]
 
-Defined in: [packages/client/src/modules/history/types.ts:237](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L237)
+Defined in: [packages/client/src/modules/history/types.ts:233](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L233)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [packages/client/src/modules/history/types.ts:237](https://github.co
 
 > `optional` **nextCursor?**: `string`
 
-Defined in: [packages/client/src/modules/history/types.ts:238](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L238)
+Defined in: [packages/client/src/modules/history/types.ts:234](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L234)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [packages/client/src/modules/history/types.ts:238](https://github.co
 
 > **success**: `true`
 
-Defined in: [packages/client/src/modules/history/types.ts:236](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L236)
+Defined in: [packages/client/src/modules/history/types.ts:232](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L232)

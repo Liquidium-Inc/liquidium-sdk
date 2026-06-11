@@ -1,3 +1,4 @@
+import type { LiquidiumStatus } from "../../core/status";
 import type {
   Asset,
   Chain,
@@ -82,12 +83,16 @@ export interface OutflowDetails {
 export type BorrowOutflowDetails = OutflowDetails & {
   outflowType: "borrow";
   receiver: ExternalOutflowReceiver;
+  /** Shared lifecycle status for the borrow outflow receipt. */
+  status: LiquidiumStatus;
 };
 
 /** Withdraw receipt with an external-chain receiver. */
 export type WithdrawOutflowDetails = OutflowDetails & {
   outflowType: "withdraw";
   receiver: ExternalOutflowReceiver;
+  /** Shared lifecycle status for the withdraw outflow receipt. */
+  status: LiquidiumStatus;
 };
 
 /** Signature payload for submitting a prepared borrow action. */
@@ -288,6 +293,8 @@ export interface SupplyFlow {
   target: SupplyTarget;
   /** Transaction id when the SDK broadcast the transaction. */
   txid?: string;
+  /** Shared lifecycle status for the supply flow. */
+  status: LiquidiumStatus;
   /** Registers a broadcast transaction id when the flow requires an indexing hint. */
   submit(request: SubmitInflowRequest): Promise<SubmitInflowResponse>;
 }
@@ -308,6 +315,8 @@ export interface SubmitInflowResponse {
   success: true;
   /** Transaction id accepted by the SDK API. */
   txid: string;
+  /** Shared lifecycle status for the submitted inflow. */
+  status: LiquidiumStatus;
 }
 
 /** Request for estimating the fee needed for an inflow target. */

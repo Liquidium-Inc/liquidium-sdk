@@ -6,7 +6,7 @@
 
 # Interface: InstantLoanRepayment
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:314](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L314)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:315](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L315)
 
 Current amount to send to the repayment target to close the debt.
 
@@ -16,7 +16,7 @@ Current amount to send to the repayment target to close the debt.
 
 > **amount**: `bigint`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:316](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L316)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:317](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L317)
 
 Full amount to send to the repayment target, including fee and interest buffer.
 
@@ -26,7 +26,7 @@ Full amount to send to the repayment target, including fee and interest buffer.
 
 > **asset**: `string`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:330](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L330)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:331](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L331)
 
 Asset to repay.
 
@@ -36,7 +36,7 @@ Asset to repay.
 
 > **chain**: `string`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:332](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L332)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:333](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L333)
 
 Chain used for repayment.
 
@@ -46,7 +46,7 @@ Chain used for repayment.
 
 > **debtAmount**: `bigint`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:320](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L320)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:321](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L321)
 
 Current debt in base units, before fee and interest buffer.
 
@@ -56,7 +56,7 @@ Current debt in base units, before fee and interest buffer.
 
 > **decimals**: `bigint`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:318](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L318)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:319](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L319)
 
 Decimal scale for `amount`.
 
@@ -66,7 +66,7 @@ Decimal scale for `amount`.
 
 > **inflowFeeAmount**: `bigint`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:326](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L326)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:327](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L327)
 
 Inflow fee amount in base units added to the repayment transfer. Falls back to the protocol minimum when live estimation is unavailable.
 
@@ -76,7 +76,7 @@ Inflow fee amount in base units added to the repayment transfer. Falls back to t
 
 > **inflowFeeEstimateAvailable**: `boolean`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:328](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L328)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:329](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L329)
 
 Whether `inflowFeeAmount` came from a live fee estimate.
 
@@ -86,7 +86,7 @@ Whether `inflowFeeAmount` came from a live fee estimate.
 
 > **interestBufferAmount**: `bigint`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:322](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L322)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:323](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L323)
 
 Additional interest buffer in base units.
 
@@ -96,7 +96,7 @@ Additional interest buffer in base units.
 
 > **interestBufferSeconds**: `bigint`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:324](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L324)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:325](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L325)
 
 Seconds of interest accrual included in `interestBufferAmount`.
 
@@ -106,6 +106,6 @@ Seconds of interest accrual included in `interestBufferAmount`.
 
 > **target**: [`SupplyTarget`](../type-aliases/SupplyTarget.md)
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:334](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L334)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:335](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L335)
 
 Address or ICRC account where the repayment should be sent.
