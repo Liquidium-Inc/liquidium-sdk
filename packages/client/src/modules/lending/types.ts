@@ -1,3 +1,4 @@
+import type { LiquidiumStatus } from "../../core/status";
 import type {
   Asset,
   Chain,
@@ -7,7 +8,6 @@ import type {
   OutflowType,
   SupplyAction,
 } from "../../core/types";
-import type { LiquidiumStatus } from "../../core/status";
 import type {
   SignatureInfo,
   SignMessageWalletAction,

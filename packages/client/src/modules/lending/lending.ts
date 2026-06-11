@@ -22,16 +22,16 @@ import {
 } from "../../core/canisters/lending/messages";
 import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
 import {
-  createLiquidiumStatus,
-  type LiquidiumOperation,
-} from "../../core/status";
-import {
   CK_ETH_DEPOSIT_CONTRACT_ADDRESS,
   ERC20_ABI,
   MAX_UINT256,
   normalizeEvmAddress,
 } from "../../core/evm";
 import { SdkApiPath } from "../../core/sdk-api-paths";
+import {
+  createLiquidiumStatus,
+  type LiquidiumOperation,
+} from "../../core/status";
 import type { ApiClient } from "../../core/transports/api-client";
 import type { CanisterContext } from "../../core/transports/canister-context";
 import {
@@ -816,7 +816,9 @@ export class LendingModule {
         success: true,
         txid: params.submitRequest.txid,
         status: createLiquidiumStatus({
-          operation: mapSupplyActionToStatusOperation(params.instruction.action),
+          operation: mapSupplyActionToStatusOperation(
+            params.instruction.action
+          ),
           state: "confirming",
         }),
       };
@@ -1058,10 +1060,7 @@ export class LendingModule {
     const response = await apiClient.post<
       SubmitInflowResponseWire,
       SubmitInflowRequest
-    >(
-      SdkApiPath.inflow,
-      request
-    );
+    >(SdkApiPath.inflow, request);
 
     return {
       ...response,

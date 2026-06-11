@@ -1,5 +1,5 @@
-import type { Chain } from "../../core/types";
 import type { LiquidiumStatus } from "../../core/status";
+import type { Chain } from "../../core/types";
 
 /** Activity list state filter. */
 export const ActivityFilter = {

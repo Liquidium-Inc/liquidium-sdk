@@ -1,5 +1,5 @@
-import type { Chain, MarketAsset, MarketChain } from "../../core/types";
 import type { LiquidiumStatus } from "../../core/status";
+import type { Chain, MarketAsset, MarketChain } from "../../core/types";
 import type { SupplyTarget } from "../lending";
 
 /** Asset symbols supported by the instant-loans canister. */

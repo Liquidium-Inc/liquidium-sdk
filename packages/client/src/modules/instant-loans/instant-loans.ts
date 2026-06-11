@@ -12,14 +12,11 @@ import {
 import { mapCanisterCallErrorToLiquidiumError } from "../../core/canisters/lending/error-mappers";
 import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
 import {
-  createLiquidiumStatus,
-  type LiquidiumStatus,
-} from "../../core/status";
-import {
   buildInstantLoanCollateralHintPath,
   buildInstantLoanFindPath,
   SdkApiPath,
 } from "../../core/sdk-api-paths";
+import { createLiquidiumStatus, type LiquidiumStatus } from "../../core/status";
 import type { ApiClient } from "../../core/transports/api-client";
 import type { CanisterContext } from "../../core/transports/canister-context";
 import {
@@ -36,8 +33,8 @@ import {
 } from "../../core/utils/api-response-parsers";
 import { getAssetNativeDecimals } from "../../core/utils/asset-decimals";
 import { getVariantKey } from "../../core/utils/variant";
-import { ActivityFilter } from "../activities";
 import type { ActivitiesModule, Activity } from "../activities";
+import { ActivityFilter } from "../activities";
 import { resolveSupplyTarget } from "../lending/_internal/supply-targets";
 import type { LendingModule } from "../lending/lending";
 import { SupplyPlanType, type SupplyTarget } from "../lending/types";
@@ -832,7 +829,10 @@ function deriveActiveInstantLoanActivityStatus(
     return findActiveActivityStatus(input.activeActivities, "deposit");
   }
 
-  const borrowStatus = findActiveActivityStatus(input.activeActivities, "borrow");
+  const borrowStatus = findActiveActivityStatus(
+    input.activeActivities,
+    "borrow"
+  );
   if (borrowStatus) {
     return borrowStatus;
   }
