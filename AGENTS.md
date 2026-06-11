@@ -42,7 +42,7 @@ Rules:
 - Always run Graphify from the repo root with a relative path: `graphify update . --force`.
 - Never run Graphify with an absolute repo path, because that can write local `/Users/...` paths into generated metadata.
 - Use `.graphifyignore` for Graphify-only exclusions; it takes priority over `.gitignore` for graph extraction.
-- After regenerating, check for local paths before committing: e.g. `rg '/Users/|Development/liquidium-sdk`.
+- After regenerating, check for local paths before committing: e.g. `rg '/Users/|Development/liquidium-sdk'`.
 - Useful query command: `graphify query "what connects auth to the database?"`.
 - For docs, papers, or image changes, use `/graphify --update` in the AI assistant if semantic extraction is needed.
 - Commit only the allowlisted shared artifacts from `graphify-out/`; keep cache and local runtime files ignored.
