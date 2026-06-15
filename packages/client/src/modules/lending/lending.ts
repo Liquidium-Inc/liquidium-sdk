@@ -40,7 +40,7 @@ import {
 } from "../../core/types";
 import { encodeInflowSubaccount } from "../../core/utils/inflow-subaccount";
 import { retryWithBackoff } from "../../core/utils/retry";
-import { normalizeHexSignature } from "../../core/utils/signature";
+import { normalizeWalletSignature } from "../../core/utils/signature";
 import { computeExpiryTimestampFromNow } from "../../core/utils/time";
 import { getVariantKey } from "../../core/utils/variant";
 import {
@@ -298,7 +298,10 @@ export class LendingModule {
           },
           signature_info: {
             Wallet: {
-              signature: normalizeHexSignature(signatureInfo.signature),
+              signature: normalizeWalletSignature(
+                signatureInfo.signature,
+                signatureInfo.chain
+              ),
               chain: mapWalletChainToLendingChain(signatureInfo.chain),
               account: request.signerWalletAddress,
             },
@@ -452,7 +455,10 @@ export class LendingModule {
         },
         signature_info: {
           Wallet: {
-            signature: normalizeHexSignature(signatureInfo.signature),
+            signature: normalizeWalletSignature(
+              signatureInfo.signature,
+              signatureInfo.chain
+            ),
             chain: mapWalletChainToLendingChain(signatureInfo.chain),
             account: request.signerWalletAddress,
           },

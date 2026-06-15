@@ -210,6 +210,53 @@ describe("AccountsModule", () => {
     );
   });
 
+  test("should submit BTC profile signatures as hex bytes", async () => {
+    // given
+    const BTC_ADDRESS =
+      "bc1pyt9znef2papnhjq7wgt065gp9g6yxcg6z8waurq59t995f6ru0qq5nxp3r";
+    const BTC_SIGNATURE_BASE64 = "AQID/v8=";
+    const registerProfile = vi.fn().mockResolvedValue({
+      Ok: {
+        toText: () => "fffff-ff",
+      },
+    });
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      get_nonce: vi.fn().mockResolvedValue(17n),
+      get_wallet_profile: vi.fn().mockResolvedValue([]),
+      register_profile: registerProfile,
+    } as never);
+    const signMessage = vi.fn().mockResolvedValue(BTC_SIGNATURE_BASE64);
+    const client = new LiquidiumClient({});
+
+    // when
+    const profileId = await client.accounts.createProfile({
+      account: BTC_ADDRESS,
+      chain: "BTC",
+      walletAdapter: { signMessage },
+    });
+
+    // then
+    const EXPECTED_SIGNATURE_HEX = "010203feff";
+    expect(profileId).toBe("fffff-ff");
+    expect(signMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        account: BTC_ADDRESS,
+        chain: "BTC",
+      })
+    );
+    expect(registerProfile).toHaveBeenCalledWith(
+      expect.objectContaining({
+        signature_info: {
+          Wallet: {
+            signature: EXPECTED_SIGNATURE_HEX,
+            chain: { BTC: null },
+            account: BTC_ADDRESS,
+          },
+        },
+      })
+    );
+  });
+
   test("maps protocol errors when account creation fails", async () => {
     // given
     vi.spyOn(Actor, "createActor").mockReturnValue({
@@ -1391,6 +1438,51 @@ describe("MarketModule", () => {
     });
   });
 
+  test("maps ICP pools returned by the lending canister", async () => {
+    // given
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi.fn().mockResolvedValue([
+        {
+          optimal_utilization_rate: 80n,
+          principal: { toString: () => "pool-icp", toText: () => "pool-icp" },
+          total_generated_interest_snapshot: 0n,
+          supply_cap: [],
+          same_asset_borrowing: [],
+          asset: { ICP: null },
+          rate_slope_before: 1n,
+          borrow_cap: [],
+          total_debt_at_last_sync: 0n,
+          chain: { ICP: null },
+          rate_slope_after: 2n,
+          reserve_factor: 100n,
+          last_updated: [],
+          lending_index: 300n,
+          protocol_liquidation_fee: 50n,
+          borrow_index: 400n,
+          base_rate: 5n,
+          frozen: false,
+          liquidation_bonus: 200n,
+          liquidation_threshold: 7_500n,
+          max_ltv: 7_000n,
+          total_supply_at_last_sync: 50_000n,
+        },
+      ]),
+      get_pool_rate: vi.fn().mockResolvedValue([[10n, 20n, 30n]]),
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const pools = await client.market.listPools();
+
+    // then
+    const EXPECTED_ICP_DECIMALS = 8n;
+    expect(pools[0]).toMatchObject({
+      asset: "ICP",
+      chain: "ICP",
+      decimals: EXPECTED_ICP_DECIMALS,
+    });
+  });
+
   test("finds a single pool by asset and chain", async () => {
     // given
     const btcPoolPrincipal = "pool-btc";
@@ -2320,7 +2412,7 @@ describe("PositionsModule", () => {
 
   test("filters out positions with unknown assets in listPositions", async () => {
     // given
-    const ICP_POOL_ID = "icp-pool";
+    const UNKNOWN_ASSET_POOL_ID = "unknown-asset-pool";
     const getProfileStats = vi.fn().mockResolvedValue({
       debt: 0n,
       collateral: 0n,
@@ -2329,8 +2421,8 @@ describe("PositionsModule", () => {
       positions: [
         makePositionRecord({ pool_id: { toText: () => POOL_ID } }),
         makePositionRecord({
-          asset: { ICP: null },
-          pool_id: { toText: () => ICP_POOL_ID },
+          asset: { DOGE: null },
+          pool_id: { toText: () => UNKNOWN_ASSET_POOL_ID },
         }),
       ],
       weighted_liquidation_threshold: 0n,
@@ -2358,7 +2450,7 @@ describe("PositionsModule", () => {
     vi.spyOn(Actor, "createActor").mockReturnValue({
       get_position: vi
         .fn()
-        .mockResolvedValue([makePositionView({ asset: { ICP: null } })]),
+        .mockResolvedValue([makePositionView({ asset: { DOGE: null } })]),
     } as never);
     const client = new LiquidiumClient({});
 
@@ -2386,7 +2478,7 @@ describe("PositionsModule", () => {
           },
           positions: [
             makePositionRecord({ asset: { BTC: null } }),
-            makePositionRecord({ asset: { ICP: null } }),
+            makePositionRecord({ asset: { DOGE: null } }),
           ],
           weighted_liquidation_threshold: 7_500n,
         },
