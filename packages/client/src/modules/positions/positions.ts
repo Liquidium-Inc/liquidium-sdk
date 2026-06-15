@@ -1,13 +1,17 @@
 import { Principal } from "@icp-sdk/core/principal";
-import { createLendingActor } from "../../core/canisters/lending/actor";
 import { mapCanisterCallErrorToLiquidiumError } from "../../core/canisters/lending/error-mappers";
+import {
+  createFlexibleLendingActor,
+  decodeFlexiblePositionView,
+  decodeFlexibleUserStats,
+} from "../../core/canisters/lending/flexible-actor";
 import { LiquidiumError } from "../../core/errors";
 import type { CanisterContext } from "../../core/transports/canister-context";
 import type { MarketModule } from "../market/market";
 import type { Pool } from "../market/types";
 import {
-  mapPositionViewToPosition,
-  mapUserStatsRecordToUserStats,
+  mapDecodedPositionViewToPosition,
+  mapDecodedUserStatsToUserStats,
   USD_VALUE_SCALE_DECIMALS,
 } from "./mappers";
 import type {
@@ -42,7 +46,7 @@ export class PositionsModule {
     poolId: string
   ): Promise<Position | null> {
     try {
-      const result = await createLendingActor(
+      const result = await createFlexibleLendingActor(
         this.canisterContext
       ).get_position(Principal.fromText(profileId), Principal.fromText(poolId));
 
@@ -51,7 +55,12 @@ export class PositionsModule {
         return null;
       }
 
-      return mapPositionViewToPosition(view);
+      const decodedView = decodeFlexiblePositionView(view);
+      if (!decodedView) {
+        return null;
+      }
+
+      return mapDecodedPositionViewToPosition(decodedView);
     } catch (error) {
       if (error instanceof LiquidiumError) {
         throw error;
@@ -69,12 +78,13 @@ export class PositionsModule {
    */
   async listPositions(profileId: string): Promise<Position[]> {
     try {
-      const actor = createLendingActor(this.canisterContext);
+      const actor = createFlexibleLendingActor(this.canisterContext);
       const profilePrincipal = Principal.fromText(profileId);
       const stats = await actor.get_profile_stats(profilePrincipal);
+      const decodedStats = decodeFlexibleUserStats(stats);
 
       const positionViews = await Promise.all(
-        stats.positions.map((position) =>
+        decodedStats.positions.map((position) =>
           actor.get_position(profilePrincipal, position.pool_id)
         )
       );
@@ -82,7 +92,9 @@ export class PositionsModule {
       return positionViews
         .map((result) => result[0])
         .filter((view): view is NonNullable<typeof view> => view !== undefined)
-        .map(mapPositionViewToPosition);
+        .map(decodeFlexiblePositionView)
+        .filter((view): view is NonNullable<typeof view> => view !== null)
+        .map(mapDecodedPositionViewToPosition);
     } catch (error) {
       if (error instanceof LiquidiumError) {
         throw error;
@@ -100,13 +112,15 @@ export class PositionsModule {
    */
   async getHealthFactor(profileId: string): Promise<HealthFactor> {
     try {
-      const [healthFactor, userStatsRecord] = await createLendingActor(
+      const [healthFactor, userStatsRecord] = await createFlexibleLendingActor(
         this.canisterContext
       ).get_health_factor(Principal.fromText(profileId));
 
       return {
         healthFactor,
-        userStats: mapUserStatsRecordToUserStats(userStatsRecord),
+        userStats: mapDecodedUserStatsToUserStats(
+          decodeFlexibleUserStats(userStatsRecord)
+        ),
       };
     } catch (error) {
       if (error instanceof LiquidiumError) {
@@ -125,11 +139,11 @@ export class PositionsModule {
    */
   async getUserStats(profileId: string): Promise<UserStats> {
     try {
-      const result = await createLendingActor(
+      const result = await createFlexibleLendingActor(
         this.canisterContext
       ).get_profile_stats(Principal.fromText(profileId));
 
-      return mapUserStatsRecordToUserStats(result);
+      return mapDecodedUserStatsToUserStats(decodeFlexibleUserStats(result));
     } catch (error) {
       if (error instanceof LiquidiumError) {
         throw error;

@@ -3,6 +3,7 @@ import type {
   PoolRateTuple,
   PriceRecord,
 } from "../../core/canisters/lending/actor";
+import type { DecodedPool } from "../../core/canisters/lending/flexible-actor";
 import { RATE_DECIMALS } from "../../core/rates";
 import { getAssetNativeDecimals } from "../../core/utils/asset-decimals";
 import { getVariantKey } from "../../core/utils/variant";
@@ -16,7 +17,20 @@ export function mapLendingPoolRecordToPool(
   pool: LendingPoolRecord,
   rate: PoolRateTuple
 ): Pool {
-  const asset = getVariantKey(pool.asset);
+  return mapDecodedPoolToPool(
+    {
+      ...pool,
+      asset: getVariantKey(pool.asset),
+      chain: getVariantKey(pool.chain),
+    },
+    rate
+  );
+}
+
+export function mapDecodedPoolToPool(
+  pool: DecodedPool,
+  rate: PoolRateTuple
+): Pool {
   const totalSupply = pool.total_supply_at_last_sync;
   const totalDebt = pool.total_debt_at_last_sync;
   const availableLiquidity =
@@ -24,9 +38,9 @@ export function mapLendingPoolRecordToPool(
 
   return {
     id: pool.principal.toString(),
-    asset,
-    chain: getVariantKey(pool.chain),
-    decimals: getAssetNativeDecimals(asset),
+    asset: pool.asset,
+    chain: pool.chain,
+    decimals: getAssetNativeDecimals(pool.asset),
     frozen: pool.frozen,
     totalSupply,
     totalDebt,
