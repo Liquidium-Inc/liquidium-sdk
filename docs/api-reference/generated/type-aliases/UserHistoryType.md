@@ -8,6 +8,6 @@
 
 > **UserHistoryType** = [`UserTransactionHistoryType`](UserTransactionHistoryType.md) \| [`UserLiquidationHistoryType`](UserLiquidationHistoryType.md)
 
-Defined in: [packages/client/src/modules/history/types.ts:19](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L19)
+Defined in: [packages/client/src/modules/history/types.ts:12](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L12)
 
 Any user history kind returned by the history API.

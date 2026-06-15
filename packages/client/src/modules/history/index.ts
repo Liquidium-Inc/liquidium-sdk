@@ -17,7 +17,6 @@ export type {
   UserHistoryEntry,
   UserHistoryEntryApiItem,
   UserHistoryResponse,
-  UserHistoryStatusApi,
   UserHistoryType,
   UserLiquidationHistoryEntry,
   UserLiquidationHistoryFilters,

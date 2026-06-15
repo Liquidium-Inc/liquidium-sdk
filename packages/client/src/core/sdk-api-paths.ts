@@ -3,8 +3,9 @@
  */
 
 const SDK_API_VERSION = {
-  activities: "v1",
+  activities: "v2",
   history: "v1",
+  historyUsers: "v2",
   inflow: "v1",
   instantLoans: "v1",
 } as const;
@@ -12,11 +13,13 @@ const SDK_API_VERSION = {
 export const SdkApiQueryParam = {
   cursor: "cursor",
   from: "from",
+  filter: "filter",
   limit: "limit",
   market: "market",
   poolId: "poolId",
   profileId: "profileId",
   state: "state",
+  states: "states",
   statuses: "statuses",
   to: "to",
   types: "types",
@@ -24,7 +27,7 @@ export const SdkApiQueryParam = {
 
 interface BuildActivitiesPathRequest {
   profileId: string;
-  state?: string;
+  filter?: string;
 }
 
 interface BuildActivityStatusPathRequest {
@@ -44,7 +47,7 @@ const ACTIVITIES = `/${SDK_API_VERSION.activities}/activities`;
 const HISTORY_POOL = `/${SDK_API_VERSION.history}/history/pool`;
 const HISTORY_POOL_CONFIG = `/${SDK_API_VERSION.history}/history/pool-config`;
 const HISTORY_RATES = `/${SDK_API_VERSION.history}/history/rates`;
-const HISTORY_USERS = `/${SDK_API_VERSION.history}/history/users`;
+const HISTORY_USERS = `/${SDK_API_VERSION.historyUsers}/history/users`;
 const INFLOW = `/${SDK_API_VERSION.inflow}/inflow`;
 const INSTANT_LOANS = `/${SDK_API_VERSION.instantLoans}/instant-loans`;
 
@@ -103,8 +106,8 @@ export function buildActivitiesPath(
   const query = new URLSearchParams({
     [SdkApiQueryParam.profileId]: request.profileId,
   });
-  if (request.state) {
-    query.set(SdkApiQueryParam.state, request.state);
+  if (request.filter) {
+    query.set(SdkApiQueryParam.filter, request.filter);
   }
 
   return `${ACTIVITIES}?${query.toString()}`;

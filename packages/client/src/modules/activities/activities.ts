@@ -7,14 +7,10 @@ import {
   buildActivitiesPath,
   buildActivityStatusPath,
 } from "../../core/sdk-api-paths";
-import {
-  createLiquidiumStatus,
-  type LiquidiumOperation,
-  type LiquidiumState,
-} from "../../core/status";
+import type { LiquidiumStatus } from "../../core/status";
 import type { ApiClient } from "../../core/transports/api-client";
 import type { CanisterContext } from "../../core/transports/canister-context";
-import { Chain } from "../../core/types";
+import type { Chain } from "../../core/types";
 import { parseBigInt } from "../../core/utils/bigint";
 import { intFromPublicId } from "../instant-loans/ref-code";
 import type {
@@ -28,8 +24,6 @@ import type {
 } from "./types";
 import { ActivityDirection, ActivityFilter } from "./types";
 
-const PRE_TERMINAL_ETH_ACTIVITY_ID_PREFIX = "pre_terminal_eth_";
-
 interface ActivityTopUpWire
   extends Omit<
     ActivityTopUp,
@@ -39,20 +33,6 @@ interface ActivityTopUpWire
   feeAmount: string;
   shortfallAmount: string;
 }
-
-type ActivityWireStatus =
-  | "requested"
-  | "pending"
-  | "sent"
-  | "confirmed"
-  | "failed";
-
-type ActivityWireStage =
-  | "logged"
-  | "deposited"
-  | "confirmed"
-  | "pending"
-  | "finalising";
 
 interface ActivityWire {
   id: string;
@@ -65,21 +45,8 @@ interface ActivityWire {
   timestampMs: number;
   txid: string | null;
   txids?: string[];
-  confirmations: number | null;
-  requiredConfirmations: number | null;
-  status: ActivityWireStatus;
-  stage?: ActivityWireStage;
+  status: LiquidiumStatus;
   topUp?: ActivityTopUpWire;
-}
-
-interface MapActivityStatusParams {
-  direction: Activity["direction"];
-  kind: InflowActivityKind | OutflowActivityKind;
-  wireStatus: ActivityWireStatus;
-  stage?: ActivityWireStage;
-  confirmations: number | null;
-  requiredConfirmations: number | null;
-  topUp?: ActivityTopUp;
 }
 
 interface ListActivitiesResponseWire {
@@ -124,7 +91,7 @@ export class ActivitiesModule {
     const response = await apiClient.get<ListActivitiesResponseWire>(
       buildActivitiesPath({
         profileId,
-        state: request.filter ?? ActivityFilter.all,
+        filter: request.filter ?? ActivityFilter.all,
       })
     );
 
@@ -227,8 +194,7 @@ function mapInstantLoanLookupError(
 }
 
 function mapActivity(wire: ActivityWire): Activity {
-  const { amount, stage, status, topUp: topUpWire, ...activity } = wire;
-  const effectiveStage = stage ?? deriveActivityStage(wire);
+  const { amount, status, topUp: topUpWire, ...activity } = wire;
   const topUp =
     activity.direction === ActivityDirection.inflow && topUpWire
       ? mapActivityTopUp(topUpWire)
@@ -241,15 +207,9 @@ function mapActivity(wire: ActivityWire): Activity {
       ...activity,
       direction: ActivityDirection.inflow,
       kind,
-      status: mapActivityStatus({
-        direction: ActivityDirection.inflow,
-        kind,
-        wireStatus: status,
-        stage: effectiveStage,
-        confirmations: activity.confirmations,
-        requiredConfirmations: activity.requiredConfirmations,
-        topUp,
-      }),
+      status,
+      confirmations: status.confirmations,
+      requiredConfirmations: status.requiredConfirmations,
       ...(topUp ? { topUp } : {}),
       amount: parseBigInt(amount, "activity amount"),
     };
@@ -261,14 +221,9 @@ function mapActivity(wire: ActivityWire): Activity {
     ...activity,
     direction: ActivityDirection.outflow,
     kind,
-    status: mapActivityStatus({
-      direction: ActivityDirection.outflow,
-      kind,
-      wireStatus: status,
-      stage: effectiveStage,
-      confirmations: activity.confirmations,
-      requiredConfirmations: activity.requiredConfirmations,
-    }),
+    status,
+    confirmations: status.confirmations,
+    requiredConfirmations: status.requiredConfirmations,
     amount: parseBigInt(amount, "activity amount"),
   };
 }
@@ -295,98 +250,6 @@ function mapOutflowActivityKind(kind: Activity["kind"]): OutflowActivityKind {
   );
 }
 
-function mapActivityStatus(params: MapActivityStatusParams) {
-  return createLiquidiumStatus({
-    operation: mapActivityOperation(params.kind),
-    state: mapActivityState(params),
-    confirmations: params.confirmations,
-    requiredConfirmations: params.requiredConfirmations,
-  });
-}
-
-function mapActivityOperation(
-  kind: InflowActivityKind | OutflowActivityKind
-): LiquidiumOperation {
-  switch (kind) {
-    case "deposit":
-      return "deposit";
-    case "repayment":
-      return "repayment";
-    case "borrow":
-      return "borrow";
-    case "withdraw":
-      return "withdrawal";
-  }
-}
-
-function mapActivityState(params: MapActivityStatusParams): LiquidiumState {
-  if (params.wireStatus === "failed") {
-    return "failed";
-  }
-
-  if (params.wireStatus === "confirmed") {
-    return "completed";
-  }
-
-  if (params.topUp?.required) {
-    return "action_required";
-  }
-
-  if (params.direction === ActivityDirection.outflow) {
-    return mapOutflowActivityState(params.wireStatus);
-  }
-
-  return mapInflowActivityState(params);
-}
-
-function mapOutflowActivityState(status: ActivityWireStatus): LiquidiumState {
-  if (status === "sent") {
-    return "confirming";
-  }
-
-  return "processing";
-}
-
-function mapInflowActivityState(
-  params: MapActivityStatusParams
-): LiquidiumState {
-  if (params.wireStatus === "sent") {
-    throw new LiquidiumError(
-      LiquidiumErrorCode.INTERNAL,
-      "Invalid inflow activity status: sent"
-    );
-  }
-
-  if (params.wireStatus === "requested") {
-    return "action_required";
-  }
-
-  if (
-    params.stage === "confirmed" ||
-    params.stage === "finalising" ||
-    params.stage === "pending"
-  ) {
-    return "processing";
-  }
-
-  if (hasRequiredConfirmations(params)) {
-    return "processing";
-  }
-
-  return "confirming";
-}
-
-function hasRequiredConfirmations(params: {
-  confirmations: number | null;
-  requiredConfirmations: number | null;
-}): boolean {
-  if (params.confirmations === null || params.requiredConfirmations === null) {
-    return false;
-  }
-
-  return params.confirmations >= params.requiredConfirmations;
-}
-
 function mapActivityTopUp(wire: ActivityTopUpWire): ActivityTopUp {
   return {
     required: wire.required,
@@ -400,18 +263,4 @@ function mapActivityTopUp(wire: ActivityTopUpWire): ActivityTopUp {
       "activity top-up shortfall amount"
     ),
   };
-}
-
-function deriveActivityStage(
-  wire: ActivityWire
-): ActivityWireStage | undefined {
-  if (
-    wire.id.startsWith(PRE_TERMINAL_ETH_ACTIVITY_ID_PREFIX) &&
-    wire.direction === ActivityDirection.inflow &&
-    wire.chain === Chain.ETH
-  ) {
-    return "deposited";
-  }
-
-  return undefined;
 }

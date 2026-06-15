@@ -6,7 +6,7 @@
 
 # Interface: ApySample
 
-Defined in: [packages/client/src/modules/history/types.ts:107](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L107)
+Defined in: [packages/client/src/modules/history/types.ts:100](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L100)
 
 Borrow APY sample returned to SDK consumers.
 
@@ -16,7 +16,7 @@ Borrow APY sample returned to SDK consumers.
 
 > **avgRate**: `bigint`
 
-Defined in: [packages/client/src/modules/history/types.ts:113](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L113)
+Defined in: [packages/client/src/modules/history/types.ts:106](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L106)
 
 Average borrow rate for the sample, scaled by `rateDecimals`.
 
@@ -26,7 +26,7 @@ Average borrow rate for the sample, scaled by `rateDecimals`.
 
 > **date**: `string`
 
-Defined in: [packages/client/src/modules/history/types.ts:109](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L109)
+Defined in: [packages/client/src/modules/history/types.ts:102](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L102)
 
 Sample date from the SDK API.
 
@@ -36,6 +36,6 @@ Sample date from the SDK API.
 
 > **rateDecimals**: `bigint`
 
-Defined in: [packages/client/src/modules/history/types.ts:111](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L111)
+Defined in: [packages/client/src/modules/history/types.ts:104](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L104)
 
 Decimal scale for `avgRate`.

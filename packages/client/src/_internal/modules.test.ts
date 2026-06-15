@@ -370,7 +370,7 @@ describe("HistoryModule", () => {
     // then
     expect(result).toEqual({ items: [], nextCursor: undefined });
     expect(fetchSpy).toHaveBeenCalledWith(
-      `${DEFAULT_API_BASE_URL}/v1/history/users/profile-1/transactions`,
+      `${DEFAULT_API_BASE_URL}/v2/history/users/profile-1/transactions`,
       expect.objectContaining({ method: "GET" })
     );
   });
@@ -386,7 +386,12 @@ describe("HistoryModule", () => {
           amount: "100000",
           poolId: "pool-1",
           timestamp: "2026-04-01T00:00:00.000Z",
-          status: "CONFIRMED" as const,
+          status: {
+            operation: "deposit" as const,
+            state: "completed" as const,
+            confirmations: null,
+            requiredConfirmations: null,
+          },
           txids: ["tx-1"],
         },
       ],
@@ -432,7 +437,7 @@ describe("HistoryModule", () => {
       nextCursor: "2026-04-01T00:00:00.000Z::history-1",
     });
     expect(fetchSpy).toHaveBeenCalledWith(
-      "https://app.liquidium.fi/api/sdk/v1/history/users/profile-1/transactions?cursor=2026-03-31T00%3A00%3A00.000Z%3A%3Ahistory-0",
+      "https://app.liquidium.fi/api/sdk/v2/history/users/profile-1/transactions?cursor=2026-03-31T00%3A00%3A00.000Z%3A%3Ahistory-0",
       {
         method: "GET",
         headers: undefined,
@@ -598,7 +603,12 @@ describe("HistoryModule", () => {
           amount: "50000",
           poolId: "pool-btc",
           timestamp: "2026-04-02T00:00:00.000Z",
-          status: "CONFIRMED" as const,
+          status: {
+            operation: "borrow" as const,
+            state: "completed" as const,
+            confirmations: null,
+            requiredConfirmations: null,
+          },
           txids: ["tx-1"],
         },
       ],
@@ -649,7 +659,7 @@ describe("HistoryModule", () => {
       nextCursor: "2026-04-02T00:00:00.000Z::history-1",
     });
     expect(fetchSpy).toHaveBeenCalledWith(
-      "https://app.liquidium.fi/api/sdk/v1/history/users/profile-1/transactions?cursor=2026-03-31T00%3A00%3A00.000Z%3A%3Ahistory-0&market=pool-btc&poolId=pool-btc&types=borrow&statuses=CONFIRMED&from=2026-04-01T00%3A00%3A00.000Z&to=2026-04-03T00%3A00%3A00.000Z&limit=1",
+      "https://app.liquidium.fi/api/sdk/v2/history/users/profile-1/transactions?cursor=2026-03-31T00%3A00%3A00.000Z%3A%3Ahistory-0&market=pool-btc&poolId=pool-btc&types=borrow&states=completed&from=2026-04-01T00%3A00%3A00.000Z&to=2026-04-03T00%3A00%3A00.000Z&limit=1",
       {
         method: "GET",
         headers: undefined,
@@ -670,7 +680,12 @@ describe("HistoryModule", () => {
           amount: "12345",
           poolId: "pool-btc",
           timestamp: "2026-04-04T00:00:00.000Z",
-          status: "CONFIRMED" as const,
+          status: {
+            operation: "liquidation" as const,
+            state: "completed" as const,
+            confirmations: null,
+            requiredConfirmations: null,
+          },
         },
       ],
       nextCursor: "2026-04-04T00:00:00.000Z::history-9",
@@ -703,7 +718,7 @@ describe("HistoryModule", () => {
       poolId: "pool-btc",
     });
     expect(fetchSpy).toHaveBeenCalledWith(
-      "https://app.liquidium.fi/api/sdk/v1/history/users/profile-1/liquidations?cursor=2026-04-03T00%3A00%3A00.000Z%3A%3Ahistory-8&market=pool-btc&from=2026-04-01T00%3A00%3A00.000Z&to=2026-04-05T00%3A00%3A00.000Z&limit=1",
+      "https://app.liquidium.fi/api/sdk/v2/history/users/profile-1/liquidations?cursor=2026-04-03T00%3A00%3A00.000Z%3A%3Ahistory-8&market=pool-btc&from=2026-04-01T00%3A00%3A00.000Z&to=2026-04-05T00%3A00%3A00.000Z&limit=1",
       {
         method: "GET",
         headers: undefined,
@@ -794,7 +809,7 @@ describe("ActivitiesModule", () => {
     // then
     expect(result).toEqual([]);
     expect(fetchSpy).toHaveBeenCalledWith(
-      `${DEFAULT_API_BASE_URL}/v1/activities?profileId=profile-1&state=all`,
+      `${DEFAULT_API_BASE_URL}/v2/activities?profileId=profile-1&filter=all`,
       expect.objectContaining({ method: "GET" })
     );
   });
@@ -813,16 +828,18 @@ describe("ActivitiesModule", () => {
           id: "activity-1",
           direction: "inflow" as const,
           kind: "deposit" as const,
-          status: "pending" as const,
-          stage: "logged" as const,
+          status: {
+            operation: "deposit" as const,
+            state: "confirming" as const,
+            confirmations: ACTIVITY_CONFIRMATIONS,
+            requiredConfirmations: ACTIVITY_REQUIRED_CONFIRMATIONS,
+          },
           poolId: "pool-1",
           asset: "BTC",
           chain: "BTC" as const,
           amount: ACTIVITY_AMOUNT,
           timestampMs: ACTIVITY_TIMESTAMP_MS,
           txid: "tx-1",
-          confirmations: ACTIVITY_CONFIRMATIONS,
-          requiredConfirmations: ACTIVITY_REQUIRED_CONFIRMATIONS,
         },
       ],
     };
@@ -866,7 +883,7 @@ describe("ActivitiesModule", () => {
       },
     ]);
     expect(fetchSpy).toHaveBeenCalledWith(
-      "https://app.liquidium.fi/api/sdk/v1/activities?profileId=profile-1&state=all",
+      "https://app.liquidium.fi/api/sdk/v2/activities?profileId=profile-1&filter=all",
       {
         method: "GET",
         headers: undefined,
@@ -918,7 +935,7 @@ describe("ActivitiesModule", () => {
     expect(getLoan).toHaveBeenCalledWith(LOAN_ID);
     expect(result).toEqual([]);
     expect(fetchSpy).toHaveBeenCalledWith(
-      "https://app.liquidium.fi/api/sdk/v1/activities?profileId=aaaaa-aa&state=active",
+      "https://app.liquidium.fi/api/sdk/v2/activities?profileId=aaaaa-aa&filter=active",
       {
         method: "GET",
         headers: undefined,
@@ -942,21 +959,18 @@ describe("ActivitiesModule", () => {
         id: "activity-1",
         direction: "outflow" as const,
         kind: "borrow" as const,
-        status: "sent" as const,
+        status: {
+          operation: "borrow" as const,
+          state: "confirming" as const,
+          confirmations: ACTIVITY_CONFIRMATIONS,
+          requiredConfirmations: ACTIVITY_REQUIRED_CONFIRMATIONS,
+        },
         poolId: "pool-1",
         asset: "BTC",
         chain: "BTC" as const,
         amount: ACTIVITY_AMOUNT,
         timestampMs: ACTIVITY_TIMESTAMP_MS,
         txid: "tx-1",
-        confirmations: ACTIVITY_CONFIRMATIONS,
-        requiredConfirmations: ACTIVITY_REQUIRED_CONFIRMATIONS,
-        topUp: {
-          required: true,
-          depositedAmount: "1000",
-          feeAmount: "2000",
-          shortfallAmount: "1000",
-        },
       },
     };
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
@@ -1001,7 +1015,7 @@ describe("ActivitiesModule", () => {
       },
     });
     expect(fetchSpy).toHaveBeenCalledWith(
-      "https://app.liquidium.fi/api/sdk/v1/activities/activity-1/status?profileId=profile-1",
+      "https://app.liquidium.fi/api/sdk/v2/activities/activity-1/status?profileId=profile-1",
       {
         method: "GET",
         headers: undefined,
@@ -1033,15 +1047,18 @@ describe("ActivitiesModule", () => {
         id: "activity-1",
         direction: "outflow" as const,
         kind: "borrow" as const,
-        status: "sent" as const,
+        status: {
+          operation: "borrow" as const,
+          state: "confirming" as const,
+          confirmations: ACTIVITY_CONFIRMATIONS,
+          requiredConfirmations: ACTIVITY_REQUIRED_CONFIRMATIONS,
+        },
         poolId: "pool-1",
         asset: "BTC",
         chain: "BTC" as const,
         amount: ACTIVITY_AMOUNT,
         timestampMs: ACTIVITY_TIMESTAMP_MS,
         txid: "tx-1",
-        confirmations: ACTIVITY_CONFIRMATIONS,
-        requiredConfirmations: ACTIVITY_REQUIRED_CONFIRMATIONS,
       },
     };
     vi.spyOn(Actor, "createActor").mockReturnValue({
@@ -1091,7 +1108,7 @@ describe("ActivitiesModule", () => {
       },
     });
     expect(fetchSpy).toHaveBeenCalledWith(
-      "https://app.liquidium.fi/api/sdk/v1/activities/activity-1/status?profileId=aaaaa-aa",
+      "https://app.liquidium.fi/api/sdk/v2/activities/activity-1/status?profileId=aaaaa-aa",
       {
         method: "GET",
         headers: undefined,
@@ -1119,15 +1136,18 @@ describe("ActivitiesModule", () => {
         id: "pre_terminal_eth_36",
         direction: "inflow" as const,
         kind: "deposit" as const,
-        status: "pending" as const,
+        status: {
+          operation: "deposit" as const,
+          state: "action_required" as const,
+          confirmations: ACTIVITY_CONFIRMATIONS,
+          requiredConfirmations: ACTIVITY_REQUIRED_CONFIRMATIONS,
+        },
         poolId: "7dcux-qqaaa-aaaae-qfc3a-cai",
         asset: "USDT",
         chain: "ETH" as const,
         amount: ACTIVITY_AMOUNT,
         timestampMs: ACTIVITY_TIMESTAMP_MS,
         txid: "0x624f47a2d993c01b20d3fddcf8e5e8afe774d6e29d3702674f564fe825ae472c",
-        confirmations: ACTIVITY_CONFIRMATIONS,
-        requiredConfirmations: ACTIVITY_REQUIRED_CONFIRMATIONS,
         topUp: {
           required: true,
           depositedAmount: ACTIVITY_AMOUNT,

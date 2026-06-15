@@ -1,12 +1,5 @@
 import type { LiquidiumState, LiquidiumStatus } from "../../core/status";
 
-/** Uppercase status value used by SDK API responses. */
-export type UserHistoryStatusApi =
-  | "REQUESTED"
-  | "PENDING"
-  | "CONFIRMED"
-  | "FAILED";
-
 /** User transaction kinds returned by profile transaction history. */
 export type UserTransactionHistoryType =
   | "supply"
@@ -134,7 +127,7 @@ export interface UserHistoryEntryApiItem {
   amount: string;
   poolId: string;
   timestamp: string;
-  status: UserHistoryStatusApi;
+  status: LiquidiumStatus;
   txids?: string[];
 }
 

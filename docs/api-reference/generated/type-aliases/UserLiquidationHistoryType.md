@@ -8,6 +8,6 @@
 
 > **UserLiquidationHistoryType** = `"liquidation"`
 
-Defined in: [packages/client/src/modules/history/types.ts:17](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L17)
+Defined in: [packages/client/src/modules/history/types.ts:10](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L10)
 
 User liquidation history kind.

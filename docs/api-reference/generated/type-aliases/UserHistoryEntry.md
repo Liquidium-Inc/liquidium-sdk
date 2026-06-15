@@ -8,6 +8,6 @@
 
 > **UserHistoryEntry** = [`UserTransactionHistoryEntry`](../interfaces/UserTransactionHistoryEntry.md) \| [`UserLiquidationHistoryEntry`](../interfaces/UserLiquidationHistoryEntry.md)
 
-Defined in: [packages/client/src/modules/history/types.ts:48](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L48)
+Defined in: [packages/client/src/modules/history/types.ts:41](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L41)
 
 Any consumer-facing profile history entry.

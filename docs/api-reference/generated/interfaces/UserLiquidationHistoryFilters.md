@@ -6,7 +6,7 @@
 
 # Interface: UserLiquidationHistoryFilters
 
-Defined in: [packages/client/src/modules/history/types.ts:73](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L73)
+Defined in: [packages/client/src/modules/history/types.ts:66](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L66)
 
 Filters for profile liquidation history requests.
 
@@ -16,7 +16,7 @@ Filters for profile liquidation history requests.
 
 > `optional` **cursor?**: `string`
 
-Defined in: [packages/client/src/modules/history/types.ts:75](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L75)
+Defined in: [packages/client/src/modules/history/types.ts:68](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L68)
 
 Pagination cursor from a previous response.
 
@@ -26,7 +26,7 @@ Pagination cursor from a previous response.
 
 > `optional` **from?**: `string`
 
-Defined in: [packages/client/src/modules/history/types.ts:83](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L83)
+Defined in: [packages/client/src/modules/history/types.ts:76](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L76)
 
 Inclusive start timestamp filter accepted by the SDK API.
 
@@ -36,7 +36,7 @@ Inclusive start timestamp filter accepted by the SDK API.
 
 > `optional` **limit?**: `number`
 
-Defined in: [packages/client/src/modules/history/types.ts:77](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L77)
+Defined in: [packages/client/src/modules/history/types.ts:70](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L70)
 
 Maximum number of entries to return.
 
@@ -46,7 +46,7 @@ Maximum number of entries to return.
 
 > `optional` **market?**: `string`
 
-Defined in: [packages/client/src/modules/history/types.ts:79](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L79)
+Defined in: [packages/client/src/modules/history/types.ts:72](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L72)
 
 Market filter accepted by the SDK API.
 
@@ -56,7 +56,7 @@ Market filter accepted by the SDK API.
 
 > `optional` **poolId?**: `string`
 
-Defined in: [packages/client/src/modules/history/types.ts:81](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L81)
+Defined in: [packages/client/src/modules/history/types.ts:74](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L74)
 
 Pool principal text filter.
 
@@ -66,6 +66,6 @@ Pool principal text filter.
 
 > `optional` **to?**: `string`
 
-Defined in: [packages/client/src/modules/history/types.ts:85](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L85)
+Defined in: [packages/client/src/modules/history/types.ts:78](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L78)
 
 Inclusive end timestamp filter accepted by the SDK API.

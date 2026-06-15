@@ -6,7 +6,7 @@
 
 # Class: InstantLoansModule
 
-Defined in: [packages/client/src/modules/instant-loans/instant-loans.ts:210](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/instant-loans.ts#L210)
+Defined in: [packages/client/src/modules/instant-loans/instant-loans.ts:207](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/instant-loans.ts#L207)
 
 Accountless instant-loan creation, lookup, recovery, and canister query helpers.
 
@@ -16,7 +16,7 @@ Accountless instant-loan creation, lookup, recovery, and canister query helpers.
 
 > **new InstantLoansModule**(`canisterContext`, `apiClient`, `activities`, `lending`, `positions`): `InstantLoansModule`
 
-Defined in: [packages/client/src/modules/instant-loans/instant-loans.ts:211](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/instant-loans.ts#L211)
+Defined in: [packages/client/src/modules/instant-loans/instant-loans.ts:208](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/instant-loans.ts#L208)
 
 #### Parameters
 
@@ -50,7 +50,7 @@ Defined in: [packages/client/src/modules/instant-loans/instant-loans.ts:211](htt
 
 > **countWarmedProfiles**(): `Promise`\<`bigint`\>
 
-Defined in: [packages/client/src/modules/instant-loans/instant-loans.ts:407](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/instant-loans.ts#L407)
+Defined in: [packages/client/src/modules/instant-loans/instant-loans.ts:404](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/instant-loans.ts#L404)
 
 Returns the current size of the warmed-profile pool via direct query.
 
@@ -66,7 +66,7 @@ Number of warmed profiles available on the canister.
 
 > **create**(`request`): `Promise`\<[`InstantLoan`](../interfaces/InstantLoan.md)\>
 
-Defined in: [packages/client/src/modules/instant-loans/instant-loans.ts:236](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/instant-loans.ts#L236)
+Defined in: [packages/client/src/modules/instant-loans/instant-loans.ts:233](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/instant-loans.ts#L233)
 
 Creates a profileless instant loan and returns canonical canister state plus
 generated initial-deposit and repayment quote targets.
@@ -101,7 +101,7 @@ Hydrated loan state plus generated initial-deposit and repayment quote targets.
 
 > **find**(`query`): `Promise`\<[`InstantLoanFindResult`](../interfaces/InstantLoanFindResult.md)[]\>
 
-Defined in: [packages/client/src/modules/instant-loans/instant-loans.ts:314](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/instant-loans.ts#L314)
+Defined in: [packages/client/src/modules/instant-loans/instant-loans.ts:311](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/instant-loans.ts#L311)
 
 Finds instant loans by short reference, numeric loan id string, address, or transaction id.
 
@@ -128,7 +128,7 @@ Matching loan ids and references from the search index.
 
 > **get**(`request`): `Promise`\<[`InstantLoan`](../interfaces/InstantLoan.md)\>
 
-Defined in: [packages/client/src/modules/instant-loans/instant-loans.ts:295](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/instant-loans.ts#L295)
+Defined in: [packages/client/src/modules/instant-loans/instant-loans.ts:292](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/instant-loans.ts#L292)
 
 Resolves canonical canister state by loan id or short reference.
 
@@ -155,7 +155,7 @@ Hydrated loan state plus generated initial-deposit and repayment quote targets.
 
 > **getConfig**(): `Promise`\<[`InstantLoanConfig`](../interfaces/InstantLoanConfig.md)\>
 
-Defined in: [packages/client/src/modules/instant-loans/instant-loans.ts:333](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/instant-loans.ts#L333)
+Defined in: [packages/client/src/modules/instant-loans/instant-loans.ts:330](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/instant-loans.ts#L330)
 
 Returns the active instant-loans canister config via direct query.
 
@@ -171,7 +171,7 @@ Active canister configuration.
 
 > **getEvent**(`eventId`): `Promise`\<[`InstantLoanEvent`](../interfaces/InstantLoanEvent.md) \| `null`\>
 
-Defined in: [packages/client/src/modules/instant-loans/instant-loans.ts:353](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/instant-loans.ts#L353)
+Defined in: [packages/client/src/modules/instant-loans/instant-loans.ts:350](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/instant-loans.ts#L350)
 
 Returns a single canister event by id via direct query.
 
@@ -195,7 +195,7 @@ The event when found, otherwise `null`.
 
 > **listAccessList**(): `Promise`\<`string`[]\>
 
-Defined in: [packages/client/src/modules/instant-loans/instant-loans.ts:390](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/instant-loans.ts#L390)
+Defined in: [packages/client/src/modules/instant-loans/instant-loans.ts:387](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/instant-loans.ts#L387)
 
 Returns principals authorized for protected update callbacks.
 
@@ -211,7 +211,7 @@ Principal text values on the canister access list.
 
 > **listEvents**(`request`): `Promise`\<[`InstantLoanEvent`](../interfaces/InstantLoanEvent.md)[]\>
 
-Defined in: [packages/client/src/modules/instant-loans/instant-loans.ts:371](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/instant-loans.ts#L371)
+Defined in: [packages/client/src/modules/instant-loans/instant-loans.ts:368](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/instant-loans.ts#L368)
 
 Returns a page of canister events via direct query.
 
@@ -235,7 +235,7 @@ Canister events in ascending id order.
 
 > **listWarmedProfiles**(): `Promise`\<[`InstantLoanWarmedProfile`](../interfaces/InstantLoanWarmedProfile.md)[]\>
 
-Defined in: [packages/client/src/modules/instant-loans/instant-loans.ts:425](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/instant-loans.ts#L425)
+Defined in: [packages/client/src/modules/instant-loans/instant-loans.ts:422](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/instant-loans.ts#L422)
 
 Returns warmed profiles currently available for future instant loans.
 

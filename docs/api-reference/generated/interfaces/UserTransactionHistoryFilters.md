@@ -6,7 +6,7 @@
 
 # Interface: UserTransactionHistoryFilters
 
-Defined in: [packages/client/src/modules/history/types.ts:53](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L53)
+Defined in: [packages/client/src/modules/history/types.ts:46](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L46)
 
 Filters for profile transaction history requests.
 
@@ -16,7 +16,7 @@ Filters for profile transaction history requests.
 
 > `optional` **cursor?**: `string`
 
-Defined in: [packages/client/src/modules/history/types.ts:55](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L55)
+Defined in: [packages/client/src/modules/history/types.ts:48](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L48)
 
 Pagination cursor from a previous response.
 
@@ -26,7 +26,7 @@ Pagination cursor from a previous response.
 
 > `optional` **from?**: `string`
 
-Defined in: [packages/client/src/modules/history/types.ts:67](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L67)
+Defined in: [packages/client/src/modules/history/types.ts:60](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L60)
 
 Inclusive start timestamp filter accepted by the SDK API.
 
@@ -36,7 +36,7 @@ Inclusive start timestamp filter accepted by the SDK API.
 
 > `optional` **limit?**: `number`
 
-Defined in: [packages/client/src/modules/history/types.ts:57](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L57)
+Defined in: [packages/client/src/modules/history/types.ts:50](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L50)
 
 Maximum number of entries to return.
 
@@ -46,7 +46,7 @@ Maximum number of entries to return.
 
 > `optional` **market?**: `string`
 
-Defined in: [packages/client/src/modules/history/types.ts:59](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L59)
+Defined in: [packages/client/src/modules/history/types.ts:52](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L52)
 
 Market filter accepted by the SDK API.
 
@@ -56,7 +56,7 @@ Market filter accepted by the SDK API.
 
 > `optional` **poolId?**: `string`
 
-Defined in: [packages/client/src/modules/history/types.ts:61](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L61)
+Defined in: [packages/client/src/modules/history/types.ts:54](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L54)
 
 Pool principal text filter.
 
@@ -66,7 +66,7 @@ Pool principal text filter.
 
 > `optional` **states?**: [`LiquidiumState`](../type-aliases/LiquidiumState.md)[]
 
-Defined in: [packages/client/src/modules/history/types.ts:65](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L65)
+Defined in: [packages/client/src/modules/history/types.ts:58](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L58)
 
 Lifecycle state filters.
 
@@ -76,7 +76,7 @@ Lifecycle state filters.
 
 > `optional` **to?**: `string`
 
-Defined in: [packages/client/src/modules/history/types.ts:69](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L69)
+Defined in: [packages/client/src/modules/history/types.ts:62](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L62)
 
 Inclusive end timestamp filter accepted by the SDK API.
 
@@ -86,6 +86,6 @@ Inclusive end timestamp filter accepted by the SDK API.
 
 > `optional` **types?**: [`UserTransactionHistoryType`](../type-aliases/UserTransactionHistoryType.md)[]
 
-Defined in: [packages/client/src/modules/history/types.ts:63](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L63)
+Defined in: [packages/client/src/modules/history/types.ts:56](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L56)
 
 Transaction kind filters.

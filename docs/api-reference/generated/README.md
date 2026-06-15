@@ -188,7 +188,6 @@
 - [TransferMode](type-aliases/TransferMode.md)
 - [TransferSupplyFlowRequest](type-aliases/TransferSupplyFlowRequest.md)
 - [UserHistoryEntry](type-aliases/UserHistoryEntry.md)
-- [UserHistoryStatusApi](type-aliases/UserHistoryStatusApi.md)
 - [UserHistoryType](type-aliases/UserHistoryType.md)
 - [UserLiquidationHistoryType](type-aliases/UserLiquidationHistoryType.md)
 - [UserTransactionHistoryType](type-aliases/UserTransactionHistoryType.md)

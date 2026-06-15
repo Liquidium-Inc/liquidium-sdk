@@ -8,11 +8,7 @@ import {
   buildHistoryUserTransactionsPath,
   SdkApiQueryParam,
 } from "../../core/sdk-api-paths";
-import {
-  createLiquidiumStatus,
-  type LiquidiumOperation,
-  type LiquidiumState,
-} from "../../core/status";
+import type { LiquidiumState } from "../../core/status";
 import type { ApiClient } from "../../core/transports/api-client";
 import { parseBigInt, parseOptionalBigInt } from "../../core/utils/bigint";
 import type {
@@ -27,8 +23,6 @@ import type {
   PoolHistoryResponse,
   UserHistoryEntry,
   UserHistoryResponse,
-  UserHistoryStatusApi,
-  UserHistoryType,
   UserLiquidationHistoryEntry,
   UserLiquidationHistoryFilters,
   UserTransactionHistoryEntry,
@@ -227,8 +221,8 @@ export class HistoryModule {
     }
     if (normalizedFilters.states?.length) {
       query.set(
-        SdkApiQueryParam.statuses,
-        mapHistoryStateFiltersToApi(normalizedFilters.states)
+        SdkApiQueryParam.states,
+        createHistoryStateFilterParam(normalizedFilters.states)
       );
     }
     if (normalizedFilters.from) {
@@ -317,7 +311,7 @@ function mapUserTransactionHistoryEntry(
     amount: parseBigInt(item.amount, "history user amount"),
     poolId: item.poolId,
     timestamp: item.timestamp,
-    status: mapHistoryStatusFromApi(item.status, mapUserHistoryOperation(type)),
+    status: item.status,
     txids: item.txids,
   };
 }
@@ -332,11 +326,13 @@ function mapUserLiquidationHistoryEntry(
     );
   }
 
-  const status = mapHistoryStatusFromApi(item.status, "liquidation");
-  if (status.state !== "completed") {
+  if (
+    item.status.operation !== "liquidation" ||
+    item.status.state !== "completed"
+  ) {
     throw new LiquidiumError(
       LiquidiumErrorCode.INTERNAL,
-      `Invalid liquidation history status: ${item.status}`
+      `Invalid liquidation history status: ${item.status.state}`
     );
   }
 
@@ -346,7 +342,7 @@ function mapUserLiquidationHistoryEntry(
     amount: parseBigInt(item.amount, "history user amount"),
     poolId: item.poolId,
     timestamp: item.timestamp,
-    status,
+    status: item.status,
     txids: item.txids,
   };
 }
@@ -400,64 +396,22 @@ function normalizeLiquidationHistoryFilters(
   return { ...(marketOrFilters ?? {}), ...filters };
 }
 
-function mapUserHistoryOperation(type: UserHistoryType): LiquidiumOperation {
-  switch (type) {
-    case "supply":
-      return "deposit";
-    case "borrow":
-      return "borrow";
-    case "repay":
-      return "repayment";
-    case "withdraw":
-      return "withdrawal";
-    case "liquidation":
-      return "liquidation";
+function createHistoryStateFilterParam(states: LiquidiumState[]): string {
+  for (const state of states) {
+    validateHistoryStateFilter(state);
   }
+
+  return [...new Set(states)].join(",");
 }
 
-function mapHistoryStatusFromApi(
-  status: UserHistoryStatusApi,
-  operation: LiquidiumOperation
-) {
-  switch (status) {
-    case "REQUESTED":
-      return createLiquidiumStatus({
-        operation,
-        state: isInflowOperation(operation) ? "action_required" : "processing",
-      });
-    case "PENDING":
-      return createLiquidiumStatus({
-        operation,
-        state: isInflowOperation(operation) ? "confirming" : "processing",
-      });
-    case "CONFIRMED":
-      return createLiquidiumStatus({ operation, state: "completed" });
-    case "FAILED":
-      return createLiquidiumStatus({ operation, state: "failed" });
-  }
-}
-
-function isInflowOperation(operation: LiquidiumOperation): boolean {
-  return operation === "deposit" || operation === "repayment";
-}
-
-function mapHistoryStateFiltersToApi(states: LiquidiumState[]): string {
-  return [...new Set(states.map(mapHistoryStateFilterToApi))].join(",");
-}
-
-function mapHistoryStateFilterToApi(
-  state: LiquidiumState
-): UserHistoryStatusApi {
+function validateHistoryStateFilter(state: LiquidiumState): void {
   switch (state) {
     case "action_required":
-      return "REQUESTED";
     case "confirming":
     case "processing":
-      return "PENDING";
     case "completed":
-      return "CONFIRMED";
     case "failed":
-      return "FAILED";
+      return;
     case "active":
     case "expired":
       throw new LiquidiumError(
