@@ -204,7 +204,7 @@ describe("decodeFlexiblePosition", () => {
 
   test("should return null for an unknown asset tag", () => {
     // given
-    const position = createFlexiblePosition({ asset: { DOGE: null } });
+    const position = createFlexiblePosition({ asset: { ICP: null } });
 
     // when
     const decoded = decodeFlexiblePosition(position);
@@ -230,7 +230,7 @@ describe("decodeFlexiblePositionView", () => {
 
   test("should return null for an unknown asset tag", () => {
     // given
-    const view = createFlexiblePositionView({ asset: { DOGE: null } });
+    const view = createFlexiblePositionView({ asset: { ICP: null } });
 
     // when
     const decoded = decodeFlexiblePositionView(view);
@@ -264,7 +264,7 @@ describe("decodeFlexibleUserStats", () => {
     const stats = createFlexibleUserStats({
       positions: [
         createFlexiblePosition({ asset: { BTC: null } }),
-        createFlexiblePosition({ asset: { DOGE: null } }),
+        createFlexiblePosition({ asset: { ICP: null } }),
         createFlexiblePosition({ asset: { USDC: null } }),
       ],
     });
@@ -283,7 +283,7 @@ describe("decodeFlexibleUserStats", () => {
   test("should return an empty positions array when all assets are unknown", () => {
     // given
     const stats = createFlexibleUserStats({
-      positions: [createFlexiblePosition({ asset: { DOGE: null } })],
+      positions: [createFlexiblePosition({ asset: { ICP: null } })],
     });
 
     // when

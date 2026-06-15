@@ -1438,51 +1438,6 @@ describe("MarketModule", () => {
     });
   });
 
-  test("maps ICP pools returned by the lending canister", async () => {
-    // given
-    vi.spyOn(Actor, "createActor").mockReturnValue({
-      list_pools: vi.fn().mockResolvedValue([
-        {
-          optimal_utilization_rate: 80n,
-          principal: { toString: () => "pool-icp", toText: () => "pool-icp" },
-          total_generated_interest_snapshot: 0n,
-          supply_cap: [],
-          same_asset_borrowing: [],
-          asset: { ICP: null },
-          rate_slope_before: 1n,
-          borrow_cap: [],
-          total_debt_at_last_sync: 0n,
-          chain: { ICP: null },
-          rate_slope_after: 2n,
-          reserve_factor: 100n,
-          last_updated: [],
-          lending_index: 300n,
-          protocol_liquidation_fee: 50n,
-          borrow_index: 400n,
-          base_rate: 5n,
-          frozen: false,
-          liquidation_bonus: 200n,
-          liquidation_threshold: 7_500n,
-          max_ltv: 7_000n,
-          total_supply_at_last_sync: 50_000n,
-        },
-      ]),
-      get_pool_rate: vi.fn().mockResolvedValue([[10n, 20n, 30n]]),
-    } as never);
-    const client = new LiquidiumClient({});
-
-    // when
-    const pools = await client.market.listPools();
-
-    // then
-    const EXPECTED_ICP_DECIMALS = 8n;
-    expect(pools[0]).toMatchObject({
-      asset: "ICP",
-      chain: "ICP",
-      decimals: EXPECTED_ICP_DECIMALS,
-    });
-  });
-
   test("finds a single pool by asset and chain", async () => {
     // given
     const btcPoolPrincipal = "pool-btc";
