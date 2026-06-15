@@ -1,14 +1,13 @@
 import { Actor } from "@icp-sdk/core/agent";
 import type { IDL } from "@icp-sdk/core/candid";
-import { idlLabelToId } from "@icp-sdk/core/candid";
 import type { Principal } from "@icp-sdk/core/principal";
 import { LiquidiumError, LiquidiumErrorCode } from "../../errors";
 import type { CanisterContext } from "../../transports/canister-context";
-
-// Asset and chain tags supported by this SDK version. Unknown tags returned by
-// the canister are ignored rather than causing the whole call to fail.
-const KNOWN_ASSET_TAGS = ["BTC", "SOL", "USDC", "USDT"] as const;
-const KNOWN_CHAIN_TAGS = ["BTC", "ETH", "SOL"] as const;
+import {
+  extractVariantTag,
+  KNOWN_ASSET_TAGS,
+  KNOWN_CHAIN_TAGS,
+} from "../../utils/variant-tags";
 
 const flexibleLendingIdlFactory: IDL.InterfaceFactory = ({ IDL }) => {
   const PoolRecord = IDL.Record({
@@ -372,36 +371,4 @@ export function decodeFlexibleUserStats(
       .filter((position): position is DecodedPosition => position !== null),
     weighted_liquidation_threshold: stats.weighted_liquidation_threshold,
   };
-}
-
-function extractVariantTag(
-  variant: object,
-  knownTags: readonly string[]
-): string | null {
-  const [key] = Object.keys(variant);
-
-  if (!key) {
-    return null;
-  }
-
-  // Known variants decoded by a matching IDL already use the tag name.
-  if (knownTags.includes(key)) {
-    return key;
-  }
-
-  // IDL.Unknown returns variants with hashed field names: _${hash}_
-  const hashMatch = /^_(\d+)_$/.exec(key);
-  if (!hashMatch) {
-    return null;
-  }
-
-  const hash = Number(hashMatch[1]);
-
-  for (const tag of knownTags) {
-    if (idlLabelToId(tag) === hash) {
-      return tag;
-    }
-  }
-
-  return null;
 }

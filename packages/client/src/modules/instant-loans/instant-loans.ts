@@ -1,14 +1,18 @@
-import {
-  createInstantLoansActor,
-  type HeadlessLoanEvent,
-  type HeadlessLoanEventType,
-  type InstantLoanAccountType,
-  type InstantLoanAuthorisation,
-  type InstantLoanLeg as InstantLoanCanisterLeg,
-  type InstantLoanCanisterRecord,
-  type InstantLoansCanisterError,
-  type WarmedProfile,
+import type {
+  InstantLoanAccountType,
+  InstantLoanAuthorisation,
+  InstantLoanLeg as InstantLoanCanisterLeg,
+  InstantLoansCanisterError,
+  WarmedProfile,
 } from "../../core/canisters/instant-loans/actor";
+import {
+  createFlexibleInstantLoansActor,
+  type DecodedHeadlessLoanEvent,
+  type DecodedHeadlessLoanEventType,
+  type DecodedInstantLoanCanisterRecord,
+  decodeFlexibleHeadlessLoanEvent,
+  decodeFlexibleInstantLoanRecord,
+} from "../../core/canisters/instant-loans/flexible-actor";
 import { mapCanisterCallErrorToLiquidiumError } from "../../core/canisters/lending/error-mappers";
 import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
 import {
@@ -194,8 +198,6 @@ interface LtvCalculationErrorDetails {
   message: string;
 }
 
-type CanisterVariantRecord = object;
-
 /** Accountless instant-loan creation, lookup, recovery, and canister query helpers. */
 export class InstantLoansModule {
   constructor(
@@ -321,7 +323,7 @@ export class InstantLoansModule {
    */
   async getConfig(): Promise<InstantLoanConfig> {
     try {
-      const config = await createInstantLoansActor(
+      const config = await createFlexibleInstantLoansActor(
         this.canisterContext
       ).get_config();
 
@@ -341,11 +343,15 @@ export class InstantLoansModule {
    */
   async getEvent(eventId: bigint): Promise<InstantLoanEvent | null> {
     try {
-      const event = await createInstantLoansActor(
+      const event = await createFlexibleInstantLoansActor(
         this.canisterContext
       ).get_event(eventId);
 
-      return event[0] ? mapInstantLoanEvent(event[0]) : null;
+      const decoded = event[0]
+        ? decodeFlexibleHeadlessLoanEvent(event[0])
+        : null;
+
+      return decoded ? mapInstantLoanEvent(decoded) : null;
     } catch (error) {
       throw mapCanisterCallErrorToLiquidiumError("get_event", error);
     }
@@ -361,11 +367,14 @@ export class InstantLoansModule {
     request: InstantLoanListEventsRequest
   ): Promise<InstantLoanEvent[]> {
     try {
-      const events = await createInstantLoansActor(
+      const events = await createFlexibleInstantLoansActor(
         this.canisterContext
       ).list_events(request.start, request.limit);
 
-      return events.map(([, event]) => mapInstantLoanEvent(event));
+      return events
+        .map(([, event]) => decodeFlexibleHeadlessLoanEvent(event))
+        .filter((event): event is DecodedHeadlessLoanEvent => event !== null)
+        .map((event) => mapInstantLoanEvent(event));
     } catch (error) {
       throw mapCanisterCallErrorToLiquidiumError("list_events", error);
     }
@@ -378,7 +387,7 @@ export class InstantLoansModule {
    */
   async listAccessList(): Promise<string[]> {
     try {
-      const principals = await createInstantLoansActor(
+      const principals = await createFlexibleInstantLoansActor(
         this.canisterContext
       ).list_access_list();
 
@@ -395,7 +404,7 @@ export class InstantLoansModule {
    */
   async countWarmedProfiles(): Promise<bigint> {
     try {
-      return await createInstantLoansActor(
+      return await createFlexibleInstantLoansActor(
         this.canisterContext
       ).count_warmed_profiles();
     } catch (error) {
@@ -413,7 +422,7 @@ export class InstantLoansModule {
    */
   async listWarmedProfiles(): Promise<InstantLoanWarmedProfile[]> {
     try {
-      const profiles = await createInstantLoansActor(
+      const profiles = await createFlexibleInstantLoansActor(
         this.canisterContext
       ).list_warmed_profiles();
 
@@ -436,9 +445,9 @@ export class InstantLoansModule {
 
   private async getLoanRecord(
     loanId: bigint
-  ): Promise<InstantLoanCanisterRecord> {
+  ): Promise<DecodedInstantLoanCanisterRecord> {
     try {
-      const result = await createInstantLoansActor(
+      const result = await createFlexibleInstantLoansActor(
         this.canisterContext
       ).get_loan(loanId);
 
@@ -446,7 +455,15 @@ export class InstantLoansModule {
         throw mapInstantLoansErrorToLiquidiumError(result.Err);
       }
 
-      return result.Ok;
+      const decoded = decodeFlexibleInstantLoanRecord(result.Ok);
+      if (!decoded) {
+        throw new LiquidiumError(
+          LiquidiumErrorCode.POOL_NOT_FOUND,
+          `Instant loan ${loanId.toString()} uses an unsupported asset`
+        );
+      }
+
+      return decoded;
     } catch (error) {
       if (error instanceof LiquidiumError) {
         throw error;
@@ -457,7 +474,7 @@ export class InstantLoansModule {
   }
 
   private async mapLoanRecord(
-    record: InstantLoanCanisterRecord,
+    record: DecodedInstantLoanCanisterRecord,
     collateralAmount: bigint
   ): Promise<InstantLoan> {
     return await this.hydrateLoan({
@@ -468,8 +485,8 @@ export class InstantLoansModule {
       collateralPoolId: record.lend_pool_id.toText(),
       collateralAmount,
       borrowPoolId: record.borrow_pool_id.toText(),
-      collateralAsset: getVariantKey(record.lend_asset),
-      borrowAsset: getVariantKey(record.borrow_asset),
+      collateralAsset: record.lend_asset,
+      borrowAsset: record.borrow_asset,
       borrowAmount: record.borrow_amount,
       borrowDestination: accountFromCanister(record.borrow_destination),
       refundDestination: accountFromCanister(record.refund_destination),
@@ -843,7 +860,9 @@ function accountFromCanister(
   return { type: "External", address: account.External };
 }
 
-function mapInstantLoanEvent(event: HeadlessLoanEvent): InstantLoanEvent {
+function mapInstantLoanEvent(
+  event: DecodedHeadlessLoanEvent
+): InstantLoanEvent {
   return {
     id: event.id,
     schemaVersion: event.schema_version,
@@ -853,7 +872,7 @@ function mapInstantLoanEvent(event: HeadlessLoanEvent): InstantLoanEvent {
 }
 
 function mapInstantLoanEventType(
-  eventType: HeadlessLoanEventType
+  eventType: DecodedHeadlessLoanEventType
 ): InstantLoanEventType {
   if ("LoanCreated" in eventType) {
     const event = eventType.LoanCreated;
@@ -861,7 +880,7 @@ function mapInstantLoanEventType(
       type: "LoanCreated",
       loanId: event.loan_id,
       borrowDestination: accountFromCanister(event.borrow_destination),
-      collateralAsset: assetFromCanister(event.lend_asset),
+      collateralAsset: event.lend_asset as InstantLoanAsset,
       borrowAmount: event.borrow_amount,
       collateralPoolId: event.lend_pool_id.toText(),
       refundDestination: accountFromCanister(event.refund_destination),
@@ -869,7 +888,7 @@ function mapInstantLoanEventType(
       depositWindowSeconds: event.ltv_timer_s,
       profileId: event.lending_profile.toText(),
       borrowPoolId: event.borrow_pool_id.toText(),
-      borrowAsset: assetFromCanister(event.borrow_asset),
+      borrowAsset: event.borrow_asset as InstantLoanAsset,
     };
   }
 
@@ -957,10 +976,6 @@ function authorizationFromCanister(
     publicKey: authorization.EthSignature.pubkey,
     address: authorization.EthSignature.address,
   };
-}
-
-function assetFromCanister(asset: CanisterVariantRecord): InstantLoanAsset {
-  return getVariantKey(asset) as InstantLoanAsset;
 }
 
 function legFromCanister(leg: InstantLoanCanisterLeg): InstantLoanLeg {
