@@ -3,13 +3,18 @@ import {
   createLendingActor,
   type PoolRateTuple,
 } from "../../core/canisters/lending/actor";
+import {
+  createFlexibleLendingActor,
+  type DecodedPool,
+  decodeFlexiblePool,
+} from "../../core/canisters/lending/flexible-actor";
 import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
 import type { ApiClient } from "../../core/transports/api-client";
 import type { CanisterContext } from "../../core/transports/canister-context";
 import {
+  mapDecodedPoolToPool,
   mapGetPoolRateResponseToPoolRate,
   mapGetPricesResponseToAssetPrices,
-  mapLendingPoolRecordToPool,
 } from "./mappers";
 import type { AssetPrices, FindPoolQuery, Pool, PoolRate } from "./types";
 
@@ -31,15 +36,19 @@ export class MarketModule {
     void this.apiClient;
 
     try {
-      const lendingActor = createLendingActor(this.canisterContext);
-      const lendingPools = await lendingActor.list_pools();
+      const flexibleActor = createFlexibleLendingActor(this.canisterContext);
+      const rawPools = await flexibleActor.list_pools();
+
+      const decodedPools = rawPools
+        .map(decodeFlexiblePool)
+        .filter((pool): pool is DecodedPool => pool !== null);
 
       return await Promise.all(
-        lendingPools.map(async (pool) => {
-          const poolRate = await lendingActor.get_pool_rate(pool.principal);
+        decodedPools.map(async (pool) => {
+          const poolRate = await flexibleActor.get_pool_rate(pool.principal);
           const resolvedPoolRate = poolRate[0] ?? ZERO_POOL_RATE;
 
-          return mapLendingPoolRecordToPool(pool, resolvedPoolRate);
+          return mapDecodedPoolToPool(pool, resolvedPoolRate);
         })
       );
     } catch (error) {

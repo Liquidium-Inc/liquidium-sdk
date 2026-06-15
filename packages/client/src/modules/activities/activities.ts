@@ -1,7 +1,5 @@
-import {
-  createInstantLoansActor,
-  type InstantLoansCanisterError,
-} from "../../core/canisters/instant-loans/actor";
+import type { InstantLoansCanisterError } from "../../core/canisters/instant-loans/actor";
+import { createFlexibleInstantLoansActor } from "../../core/canisters/instant-loans/flexible-actor";
 import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
 import {
   buildActivitiesPath,
@@ -176,7 +174,7 @@ export class ActivitiesModule {
     }
 
     try {
-      const result = await createInstantLoansActor(
+      const result = await createFlexibleInstantLoansActor(
         this.canisterContext
       ).get_loan(loanId);
 
