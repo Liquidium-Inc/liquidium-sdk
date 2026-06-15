@@ -1,5 +1,11 @@
 # @liquidium/client
 
+## 0.3.1
+
+### Patch Changes
+
+- 5a49cef: Fix loan loading for canisters that use dynamic asset variant tags.
+
 ## 0.3.0
 
 ### Minor Changes
