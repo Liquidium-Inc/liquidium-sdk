@@ -258,12 +258,12 @@ importers:
 
   packages/client:
     dependencies:
-      '@dfinity/ledger-icrc':
-        specifier: 2.1.3
-        version: 2.1.3(@dfinity/agent@2.1.3(@dfinity/candid@2.1.3(@dfinity/principal@2.1.3))(@dfinity/principal@2.1.3))(@dfinity/candid@2.1.3(@dfinity/principal@2.1.3))(@dfinity/principal@2.1.3)(@dfinity/utils@2.14.0(@dfinity/agent@2.1.3(@dfinity/candid@2.1.3(@dfinity/principal@2.1.3))(@dfinity/principal@2.1.3))(@dfinity/candid@2.1.3(@dfinity/principal@2.1.3))(@dfinity/principal@2.1.3))
-      '@dfinity/principal':
-        specifier: 2.1.3
-        version: 2.1.3
+      '@dfinity/utils':
+        specifier: ^4.2.1
+        version: 4.2.1(@icp-sdk/core@5.4.0)
+      '@icp-sdk/canisters':
+        specifier: ^3.6.0
+        version: 3.6.0(@dfinity/utils@4.2.1(@icp-sdk/core@5.4.0))(@icp-sdk/core@5.4.0)
       '@icp-sdk/core':
         specifier: ^5.4.0
         version: 5.4.0
@@ -1446,40 +1446,13 @@ packages:
     peerDependencies:
       postcss: ^8.4
 
-  '@dfinity/agent@2.1.3':
-    resolution: {integrity: sha512-4XmqhFR3GQSUrmx7lMFx7DyHEhFkM6nz4O9FeYJ/WpkmPe8tulKaAfgWbWdTSCjbd8meCgKVHo+QYj+JHXagcw==}
-    deprecated: 'This package has been deprecated. Use @icp-sdk/core/agent instead. Migration guide: https://js.icp.build/core/latest/upgrading/v5'
-    peerDependencies:
-      '@dfinity/candid': ^2.1.3
-      '@dfinity/principal': ^2.1.3
-
-  '@dfinity/candid@2.1.3':
-    resolution: {integrity: sha512-Asn7AfydLhhk7E5z9oW+5UL6ne11gxFlYTxHuhrIc7FdqYlM5Flcq1Wfg9EzRa6Btdol3w58Bcph7Brwh1bcIQ==}
-    deprecated: 'This package has been deprecated. Use @icp-sdk/core/candid instead. Migration guide: https://js.icp.build/core/latest/upgrading/v5'
-    peerDependencies:
-      '@dfinity/principal': ^2.1.3
-
   '@dfinity/cbor@0.2.3':
     resolution: {integrity: sha512-5GX+9tAf29r94Pxv8nCzrv2/t+AkOfem/c/G61+FA2Wadq7THvc5cvr/AVLH0LpukVfNSWRRHvl1fkCdiB9MMQ==}
 
-  '@dfinity/ledger-icrc@2.1.3':
-    resolution: {integrity: sha512-MJWm05EJlA596ekG0OfGrW7JTwC++XrNFy8H2VZYVjPzLB22DZNp4oBtxZ4gX6BByPvSru2z0ZLo3a/Jzk9CBA==}
+  '@dfinity/utils@4.2.1':
+    resolution: {integrity: sha512-5Rd0fflQzBf3h/doVvllJC0X+mrZPwbe6s9qfJm5jyJz07SEkN+cGmqY0HHMPDlCOohZgjDoAG6uwv+6cOMA+w==}
     peerDependencies:
-      '@dfinity/agent': ^1.0.1
-      '@dfinity/candid': ^1.0.1
-      '@dfinity/principal': ^1.0.1
-      '@dfinity/utils': ^2.1.2
-
-  '@dfinity/principal@2.1.3':
-    resolution: {integrity: sha512-HtiAfZcs+ToPYFepVJdFlorIfPA56KzC6J97ZuH2lGNMTAfJA+NEBzLe476B4wVCAwZ0TiGJ27J4ks9O79DFEg==}
-    deprecated: 'This package has been deprecated. Use @icp-sdk/core/principal instead. Migration guide: https://js.icp.build/core/latest/upgrading/v5'
-
-  '@dfinity/utils@2.14.0':
-    resolution: {integrity: sha512-WGwME4891K9TU7SXchhUVtdSbU3jUxnndblcrNJH0/QLPuQGnvP/7YhFL1b6MhI5GRpTWh0qLsyvMpEpdw7Faw==}
-    peerDependencies:
-      '@dfinity/agent': ^2.0.0
-      '@dfinity/candid': ^2.0.0
-      '@dfinity/principal': ^2.0.0
+      '@icp-sdk/core': ^5
 
   '@discoveryjs/json-ext@0.5.7':
     resolution: {integrity: sha512-dBVuXR082gk3jsFp7Rd/JI4kytwGHecnCoTtXFb7DB6CNHp4rg5k1bhg0nWdLGLnOV71lmDzGQaLMy8iPLY0pw==}
@@ -2083,6 +2056,12 @@ packages:
   '@hpke/dhkem-x448@1.8.0':
     resolution: {integrity: sha512-mFfnZfgp4OKkUIS/FKikfUgdnDKRy25ytCKBQiV+N+HbYy3I4v4ZCPBQ69QL+TYmKmCZJeUEnYeS5K+OBRP+Eg==}
     engines: {node: '>=16.0.0'}
+
+  '@icp-sdk/canisters@3.6.0':
+    resolution: {integrity: sha512-GALqQiywObRabz98etHccTq1DpLy5Sbx3adrYO27ffbDgZGLY5sZcAQfR0CkP0Da6KUEauzZk3gBi8UDzbydHg==}
+    peerDependencies:
+      '@dfinity/utils': ^4.1
+      '@icp-sdk/core': ^5
 
   '@icp-sdk/core@5.4.0':
     resolution: {integrity: sha512-yedhCkHIhCxI65W8id99Mi8fUgSyqKSTbD57AphquNcFV2/3Rjykng0/6H08mHswKydDcv6Y0+e8aPdrznewCw==}
@@ -3928,10 +3907,6 @@ packages:
     resolution: {integrity: sha512-3hf42BysHnUqmZO7mK6e5X/hs1AvyEJIhdVLbG/Mxn/fhFnhGxOO37mWbMHg1RT4TxqcPKXgqj9/bp1YG0GBXA==}
     engines: {node: '>=16.0.0', npm: '>=7.0.0'}
 
-  base64-arraybuffer@0.2.0:
-    resolution: {integrity: sha512-7emyCsu1/xiBXgQZrscw/8KPRT44I4Yq9Pe6EGs3aPRTsWuggML1/1DTuZUuIaJPIm1FTDUVXl4x/yW8s0kQDQ==}
-    engines: {node: '>= 0.6.0'}
-
   base64-js@1.0.2:
     resolution: {integrity: sha512-ZXBDPMt/v/8fsIqn+Z5VwrhdR6jVka0bYobHdGia0Nxi7BJ9i/Uvml3AocHIBtIIBhZjBw5MR0aR4ROs/8+SNg==}
     engines: {node: '>= 0.4'}
@@ -4006,10 +3981,6 @@ packages:
 
   bops@1.0.1:
     resolution: {integrity: sha512-qCMBuZKP36tELrrgXpAfM+gHzqa0nLsWZ+L37ncsb8txYlnAoxOPpVp+g7fK0sGkMXfA0wl8uQkESqw3v4HNag==}
-
-  borc@2.1.2:
-    resolution: {integrity: sha512-Sy9eoUi4OiKzq7VovMn246iTo17kzuyHJKomCfpWMlI6RpfN1gk95w7d7gH264nApVLg0HZfcpz62/g4VH1Y4w==}
-    engines: {node: '>=4'}
 
   borsh@0.7.0:
     resolution: {integrity: sha512-CLCsZGIBCFnPtkNnieW/a8wmreDmfUtjU2m9yHrzPXIlNbqVs0AQrSatSG6vdNYUqdc83tkQi2eHfF98ubzQLA==}
@@ -4693,9 +4664,6 @@ packages:
   delayed-stream@1.0.0:
     resolution: {integrity: sha512-ZySD7Nf91aLB0RxL4KGrKHBXl7Eds1DAmEdcoVawXnLD7SDhpNgtuII2aAkg7a7QS41jxPSZ17p4VdGnMHk3MQ==}
     engines: {node: '>=0.4.0'}
-
-  delimit-stream@0.1.0:
-    resolution: {integrity: sha512-a02fiQ7poS5CnjiJBAsjGLPp5EwVoGHNeu9sziBd9huppRfsAFIpv5zNLv0V1gbop53ilngAf5Kf331AwcoRBQ==}
 
   depd@1.1.2:
     resolution: {integrity: sha512-7emPTl6Dpo6JRXOXjLRxck+FlLRX5847cLKEn00PLAgc3g2hTZZgr+e4c2v6QpSmLeFP3n5yUo7ft6avBK/5jQ==}
@@ -5765,10 +5733,6 @@ packages:
   isexe@2.0.0:
     resolution: {integrity: sha512-RHxMLp9lnKHGHRng9QFhRCMbYAcVpn69smSGcq3f36xjgVVWThj4qqLbTLlq7Ssj8B+fIQ1EuCEGI2lKsyQeIw==}
 
-  iso-url@0.4.7:
-    resolution: {integrity: sha512-27fFRDnPAMnHGLq36bWTpKET+eiXct3ENlCcdcMdk+mjXrb2kw3mhBUg1B7ewAC0kVzlOPhADzQgz1SE6Tglog==}
-    engines: {node: '>=10'}
-
   isobject@3.0.1:
     resolution: {integrity: sha512-WhB9zCku7EGTj/HQQRz5aUQEUeoQZH2bWcltRErOpymJ4boYE6wL9Tbr23krRPSZ+C5zqNSrSw+Cc7sZZ4b7vg==}
     engines: {node: '>=0.10.0'}
@@ -5854,9 +5818,6 @@ packages:
 
   json-stringify-safe@5.0.1:
     resolution: {integrity: sha512-ZClg6AaYvamvYEE82d3Iyd3vSSIjQ+odgjaTzRuO3s7toCdFKczob2i0zCh7JE8kWn17yvAWhUVxvqGwUalsRA==}
-
-  json-text-sequence@0.1.1:
-    resolution: {integrity: sha512-L3mEegEWHRekSHjc7+sc8eJhba9Clq1PZ8kMkzf8OxElhXc8O4TS5MwcVlj9aEbm5dr81N90WHC5nAz3UO971w==}
 
   json5@2.2.3:
     resolution: {integrity: sha512-XmOWe7eyHYH14cLdVPoyg+GOH3rYX++KpzrylJwSW98t3Nk+U8XOl8FWKOgwtzdb8lXGf6zYwDUzeHMWfxasyg==}
@@ -6328,6 +6289,11 @@ packages:
   mime@1.6.0:
     resolution: {integrity: sha512-x0Vn8spI+wuJ1O6S7gnbaQg8Pxh4NNHb7KSINmEWKiPE4RKOplvijn+NkmYmmRgP68mc70j2EbeTFRsrswaQeg==}
     engines: {node: '>=4'}
+    hasBin: true
+
+  mime@3.0.0:
+    resolution: {integrity: sha512-jSCU7/VB1loIWBZe14aEYHU/+1UMEHoaO7qxCOVJOw9GgH72VAWppxNcjU+x9a2k3GSIBXNKxXQFqRvvZ7vr3A==}
+    engines: {node: '>=10.0.0'}
     hasBin: true
 
   mimic-fn@2.1.0:
@@ -7804,9 +7770,6 @@ packages:
   signal-exit@4.1.0:
     resolution: {integrity: sha512-bzyZ1e88w9O1iNJbKnOlvYTrWPDl46O1bG0D3XInv+9tkPrxrN8jUUTiFlDkkmKWgn1M6CfIA13SuGqOa9Korw==}
     engines: {node: '>=14'}
-
-  simple-cbor@0.4.1:
-    resolution: {integrity: sha512-rijcxtwx2b4Bje3sqeIqw5EeW7UlOIC4YfOdwqIKacpvRQ/D78bWg/4/0m5e0U91oKvlGh7LlJuZCu07ISCC7w==}
 
   simple-swizzle@0.2.4:
     resolution: {integrity: sha512-nAu1WFPQSMNr2Zn9PGSZK9AGn4t/y97lEm+MXTtUDwfP0ksAIX4nO+6ruD9Jwut4C49SB1Ws+fbXsm/yScWOHw==}
@@ -10478,39 +10441,11 @@ snapshots:
     dependencies:
       postcss: 8.5.15
 
-  '@dfinity/agent@2.1.3(@dfinity/candid@2.1.3(@dfinity/principal@2.1.3))(@dfinity/principal@2.1.3)':
-    dependencies:
-      '@dfinity/candid': 2.1.3(@dfinity/principal@2.1.3)
-      '@dfinity/principal': 2.1.3
-      '@noble/curves': 1.9.7
-      '@noble/hashes': 1.8.0
-      base64-arraybuffer: 0.2.0
-      borc: 2.1.2
-      buffer: 6.0.3
-      simple-cbor: 0.4.1
-
-  '@dfinity/candid@2.1.3(@dfinity/principal@2.1.3)':
-    dependencies:
-      '@dfinity/principal': 2.1.3
-
   '@dfinity/cbor@0.2.3': {}
 
-  '@dfinity/ledger-icrc@2.1.3(@dfinity/agent@2.1.3(@dfinity/candid@2.1.3(@dfinity/principal@2.1.3))(@dfinity/principal@2.1.3))(@dfinity/candid@2.1.3(@dfinity/principal@2.1.3))(@dfinity/principal@2.1.3)(@dfinity/utils@2.14.0(@dfinity/agent@2.1.3(@dfinity/candid@2.1.3(@dfinity/principal@2.1.3))(@dfinity/principal@2.1.3))(@dfinity/candid@2.1.3(@dfinity/principal@2.1.3))(@dfinity/principal@2.1.3))':
+  '@dfinity/utils@4.2.1(@icp-sdk/core@5.4.0)':
     dependencies:
-      '@dfinity/agent': 2.1.3(@dfinity/candid@2.1.3(@dfinity/principal@2.1.3))(@dfinity/principal@2.1.3)
-      '@dfinity/candid': 2.1.3(@dfinity/principal@2.1.3)
-      '@dfinity/principal': 2.1.3
-      '@dfinity/utils': 2.14.0(@dfinity/agent@2.1.3(@dfinity/candid@2.1.3(@dfinity/principal@2.1.3))(@dfinity/principal@2.1.3))(@dfinity/candid@2.1.3(@dfinity/principal@2.1.3))(@dfinity/principal@2.1.3)
-
-  '@dfinity/principal@2.1.3':
-    dependencies:
-      '@noble/hashes': 1.8.0
-
-  '@dfinity/utils@2.14.0(@dfinity/agent@2.1.3(@dfinity/candid@2.1.3(@dfinity/principal@2.1.3))(@dfinity/principal@2.1.3))(@dfinity/candid@2.1.3(@dfinity/principal@2.1.3))(@dfinity/principal@2.1.3)':
-    dependencies:
-      '@dfinity/agent': 2.1.3(@dfinity/candid@2.1.3(@dfinity/principal@2.1.3))(@dfinity/principal@2.1.3)
-      '@dfinity/candid': 2.1.3(@dfinity/principal@2.1.3)
-      '@dfinity/principal': 2.1.3
+      '@icp-sdk/core': 5.4.0
 
   '@discoveryjs/json-ext@0.5.7': {}
 
@@ -12389,6 +12324,15 @@ snapshots:
   '@hpke/dhkem-x448@1.8.0':
     dependencies:
       '@hpke/common': 1.10.1
+
+  '@icp-sdk/canisters@3.6.0(@dfinity/utils@4.2.1(@icp-sdk/core@5.4.0))(@icp-sdk/core@5.4.0)':
+    dependencies:
+      '@dfinity/utils': 4.2.1(@icp-sdk/core@5.4.0)
+      '@icp-sdk/core': 5.4.0
+      '@noble/hashes': 1.8.0
+      base58-js: 3.0.3
+      bech32: 2.0.0
+      mime: 3.0.0
 
   '@icp-sdk/core@5.4.0':
     dependencies:
@@ -15270,8 +15214,6 @@ snapshots:
 
   base58-js@3.0.3: {}
 
-  base64-arraybuffer@0.2.0: {}
-
   base64-js@1.0.2: {}
 
   base64-js@1.5.1: {}
@@ -15353,16 +15295,6 @@ snapshots:
     dependencies:
       base64-js: 1.0.2
       to-utf8: 0.0.1
-
-  borc@2.1.2:
-    dependencies:
-      bignumber.js: 9.3.1
-      buffer: 5.7.1
-      commander: 2.20.3
-      ieee754: 1.2.1
-      iso-url: 0.4.7
-      json-text-sequence: 0.1.1
-      readable-stream: 3.6.2
 
   borsh@0.7.0:
     dependencies:
@@ -16107,8 +16039,6 @@ snapshots:
   delay@5.0.0: {}
 
   delayed-stream@1.0.0: {}
-
-  delimit-stream@0.1.0: {}
 
   depd@1.1.2: {}
 
@@ -17333,8 +17263,6 @@ snapshots:
 
   isexe@2.0.0: {}
 
-  iso-url@0.4.7: {}
-
   isobject@3.0.1: {}
 
   isomorphic-timers-promises@1.0.1: {}
@@ -17458,10 +17386,6 @@ snapshots:
   json-schema-traverse@1.0.0: {}
 
   json-stringify-safe@5.0.1: {}
-
-  json-text-sequence@0.1.1:
-    dependencies:
-      delimit-stream: 0.1.0
 
   json5@2.2.3: {}
 
@@ -18203,6 +18127,8 @@ snapshots:
       mime-db: 1.54.0
 
   mime@1.6.0: {}
+
+  mime@3.0.0: {}
 
   mimic-fn@2.1.0: {}
 
@@ -19951,8 +19877,6 @@ snapshots:
   signal-exit@3.0.7: {}
 
   signal-exit@4.1.0: {}
-
-  simple-cbor@0.4.1: {}
 
   simple-swizzle@0.2.4:
     dependencies:

@@ -9,6 +9,7 @@ export default defineConfig({
   clean: true,
   treeshake: true,
   external: [
+    "@icp-sdk/canisters/ledger/icrc",
     "@icp-sdk/core/agent",
     "@icp-sdk/core/candid",
     "@icp-sdk/core/principal",
