@@ -1,5 +1,11 @@
 # @liquidium/client
 
+## 0.3.3
+
+### Patch Changes
+
+- 7bb5e2c: Replace deprecated DFINITY ICRC account dependencies with current ICP SDK packages.
+
 ## 0.3.2
 
 ### Patch Changes
