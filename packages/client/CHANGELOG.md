@@ -1,5 +1,12 @@
 # @liquidium/client
 
+## 0.3.2
+
+### Patch Changes
+
+- 6fbcb9b: Normalize BTC wallet signatures from base64 or hex before submitting signed actions.
+- 6fbcb9b: Use package-backed encoding helpers for wallet signature normalization.
+
 ## 0.3.1
 
 ### Patch Changes
