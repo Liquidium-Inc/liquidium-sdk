@@ -68,7 +68,7 @@ describe("normalizeWalletSignature", () => {
     expect(result).toBe(EXPECTED_SIGNATURE_HEX);
   });
 
-  test("should keep eth signature normalization unchanged", () => {
+  test("should strip 0x prefix from eth hex signatures", () => {
     // given
     const ETH_SIGNATURE_HEX = "0xabcdef";
 
