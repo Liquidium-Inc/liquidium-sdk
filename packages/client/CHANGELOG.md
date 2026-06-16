@@ -1,5 +1,24 @@
 # @liquidium/client
 
+## 0.3.3
+
+### Patch Changes
+
+- 7bb5e2c: Replace deprecated DFINITY ICRC account dependencies with current ICP SDK packages.
+
+## 0.3.2
+
+### Patch Changes
+
+- 6fbcb9b: Normalize BTC wallet signatures from base64 or hex before submitting signed actions.
+- 6fbcb9b: Use package-backed encoding helpers for wallet signature normalization.
+
+## 0.3.1
+
+### Patch Changes
+
+- 5a49cef: Fix loan loading for canisters that use dynamic asset variant tags.
+
 ## 0.3.0
 
 ### Minor Changes

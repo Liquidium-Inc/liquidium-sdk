@@ -107,7 +107,7 @@ export interface SendBtcTransactionRequest {
  * - `signPsbt` - reserved for PSBT-based actions when exposed
  */
 export interface WalletAdapter {
-  /** Signs an SDK plaintext message and returns the wallet signature. */
+  /** Signs an SDK plaintext message and returns the wallet signature. BTC adapters may return base64 BIP-322 or hex-encoded signature bytes. */
   signMessage?: (request: SignMessageRequest) => Promise<string>;
   /** Signs an SDK-provided BTC PSBT and returns the signed PSBT as base64. */
   signPsbt?: (request: SignPsbtRequest) => Promise<string>;
@@ -119,7 +119,7 @@ export interface WalletAdapter {
 
 /** Signature payload submitted to a sign-message action. */
 export interface SignatureInfo {
-  /** Wallet signature over the action message. */
+  /** Wallet signature over the action message. BTC signatures may be base64 BIP-322 or hex-encoded bytes. */
   signature: string;
   /** Chain used to produce the signature. */
   chain: Chain;

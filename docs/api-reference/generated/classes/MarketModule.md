@@ -6,7 +6,7 @@
 
 # Class: MarketModule
 
-Defined in: [packages/client/src/modules/market/market.ts:19](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/market.ts#L19)
+Defined in: [packages/client/src/modules/market/market.ts:24](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/market.ts#L24)
 
 Pool metadata, prices, and current rate helpers.
 
@@ -16,7 +16,7 @@ Pool metadata, prices, and current rate helpers.
 
 > **new MarketModule**(`canisterContext`, `apiClient`): `MarketModule`
 
-Defined in: [packages/client/src/modules/market/market.ts:20](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/market.ts#L20)
+Defined in: [packages/client/src/modules/market/market.ts:25](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/market.ts#L25)
 
 #### Parameters
 
@@ -38,7 +38,7 @@ Defined in: [packages/client/src/modules/market/market.ts:20](https://github.com
 
 > **findPool**(`query`): `Promise`\<[`Pool`](../interfaces/Pool.md)\>
 
-Defined in: [packages/client/src/modules/market/market.ts:87](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/market.ts#L87)
+Defined in: [packages/client/src/modules/market/market.ts:96](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/market.ts#L96)
 
 Resolves a single pool for the given asset and chain pair.
 
@@ -62,7 +62,7 @@ The single pool that matches the requested asset and chain.
 
 > **getAssetPrices**(): `Promise`\<[`AssetPrices`](../type-aliases/AssetPrices.md)\>
 
-Defined in: [packages/client/src/modules/market/market.ts:63](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/market.ts#L63)
+Defined in: [packages/client/src/modules/market/market.ts:72](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/market.ts#L72)
 
 Returns the latest asset prices reported by the protocol.
 
@@ -78,7 +78,7 @@ The latest protocol price map keyed by market asset symbol.
 
 > **getPoolRate**(`poolId`): `Promise`\<[`PoolRate`](../interfaces/PoolRate.md)\>
 
-Defined in: [packages/client/src/modules/market/market.ts:129](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/market.ts#L129)
+Defined in: [packages/client/src/modules/market/market.ts:138](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/market.ts#L138)
 
 Returns the current borrow, lend, and utilization rates for a pool.
 
@@ -102,7 +102,7 @@ The borrow, lend, and utilization rates for the requested pool.
 
 > **getReserveData**(`query`): `Promise`\<[`Pool`](../interfaces/Pool.md)\>
 
-Defined in: [packages/client/src/modules/market/market.ts:119](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/market.ts#L119)
+Defined in: [packages/client/src/modules/market/market.ts:128](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/market.ts#L128)
 
 Returns the full pool record for the given asset and chain pair.
 
@@ -129,7 +129,7 @@ The matching pool enriched with current rate data.
 
 > **listPools**(): `Promise`\<[`Pool`](../interfaces/Pool.md)[]\>
 
-Defined in: [packages/client/src/modules/market/market.ts:30](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/market.ts#L30)
+Defined in: [packages/client/src/modules/market/market.ts:35](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/market.ts#L35)
 
 Lists all pools with their current rates.
 

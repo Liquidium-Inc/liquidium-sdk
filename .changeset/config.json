@@ -8,6 +8,7 @@
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
   "ignore": [
+    "@liquidium/example-btc-interactions-flow",
     "@liquidium/example-contract-interaction-flow",
     "@liquidium/example-deposit-address-flow",
     "@liquidium/example-instant-loans-flow",

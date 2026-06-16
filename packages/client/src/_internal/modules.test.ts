@@ -210,6 +210,53 @@ describe("AccountsModule", () => {
     );
   });
 
+  test("should submit BTC profile signatures as hex bytes", async () => {
+    // given
+    const BTC_ADDRESS =
+      "bc1pyt9znef2papnhjq7wgt065gp9g6yxcg6z8waurq59t995f6ru0qq5nxp3r";
+    const BTC_SIGNATURE_BASE64 = "AQID/v8=";
+    const registerProfile = vi.fn().mockResolvedValue({
+      Ok: {
+        toText: () => "fffff-ff",
+      },
+    });
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      get_nonce: vi.fn().mockResolvedValue(17n),
+      get_wallet_profile: vi.fn().mockResolvedValue([]),
+      register_profile: registerProfile,
+    } as never);
+    const signMessage = vi.fn().mockResolvedValue(BTC_SIGNATURE_BASE64);
+    const client = new LiquidiumClient({});
+
+    // when
+    const profileId = await client.accounts.createProfile({
+      account: BTC_ADDRESS,
+      chain: "BTC",
+      walletAdapter: { signMessage },
+    });
+
+    // then
+    const EXPECTED_SIGNATURE_HEX = "010203feff";
+    expect(profileId).toBe("fffff-ff");
+    expect(signMessage).toHaveBeenCalledWith(
+      expect.objectContaining({
+        account: BTC_ADDRESS,
+        chain: "BTC",
+      })
+    );
+    expect(registerProfile).toHaveBeenCalledWith(
+      expect.objectContaining({
+        signature_info: {
+          Wallet: {
+            signature: EXPECTED_SIGNATURE_HEX,
+            chain: { BTC: null },
+            account: BTC_ADDRESS,
+          },
+        },
+      })
+    );
+  });
+
   test("maps protocol errors when account creation fails", async () => {
     // given
     vi.spyOn(Actor, "createActor").mockReturnValue({
@@ -1369,6 +1416,78 @@ describe("MarketModule", () => {
     });
   });
 
+  test("ignores pools with unsupported assets instead of failing", async () => {
+    // given
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi.fn().mockResolvedValue([
+        {
+          optimal_utilization_rate: 80n,
+          principal: { toString: () => "pool-btc", toText: () => "pool-btc" },
+          total_generated_interest_snapshot: 0n,
+          supply_cap: [],
+          same_asset_borrowing: [],
+          asset: { BTC: null },
+          rate_slope_before: 1n,
+          borrow_cap: [],
+          total_debt_at_last_sync: 0n,
+          chain: { BTC: null },
+          rate_slope_after: 2n,
+          reserve_factor: 100n,
+          last_updated: [],
+          lending_index: 300n,
+          protocol_liquidation_fee: 50n,
+          borrow_index: 400n,
+          base_rate: 5n,
+          frozen: false,
+          liquidation_bonus: 200n,
+          liquidation_threshold: 7_500n,
+          max_ltv: 7_000n,
+          total_supply_at_last_sync: 50_000n,
+        },
+        {
+          optimal_utilization_rate: 80n,
+          principal: {
+            toString: () => "pool-unknown",
+            toText: () => "pool-unknown",
+          },
+          total_generated_interest_snapshot: 0n,
+          supply_cap: [],
+          same_asset_borrowing: [],
+          asset: { NEWCOIN: null },
+          rate_slope_before: 1n,
+          borrow_cap: [],
+          total_debt_at_last_sync: 0n,
+          chain: { BTC: null },
+          rate_slope_after: 2n,
+          reserve_factor: 100n,
+          last_updated: [],
+          lending_index: 300n,
+          protocol_liquidation_fee: 50n,
+          borrow_index: 400n,
+          base_rate: 5n,
+          frozen: false,
+          liquidation_bonus: 200n,
+          liquidation_threshold: 7_500n,
+          max_ltv: 7_000n,
+          total_supply_at_last_sync: 50_000n,
+        },
+      ]),
+      get_pool_rate: vi.fn().mockResolvedValue([[10n, 20n, 30n]]),
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const pools = await client.market.listPools();
+
+    // then
+    expect(pools).toHaveLength(1);
+    expect(pools[0]).toMatchObject({
+      id: "pool-btc",
+      asset: "BTC",
+      chain: "BTC",
+    });
+  });
+
   test("finds a single pool by asset and chain", async () => {
     // given
     const btcPoolPrincipal = "pool-btc";
@@ -1700,6 +1819,27 @@ describe("PositionsModule", () => {
     };
   }
 
+  function makePositionRecord(overrides: Record<string, unknown> = {}) {
+    return {
+      asset: { BTC: null },
+      total_debt_interest: 0n,
+      borrow_index_snapshot: 0n,
+      lending_index_snapshot: 0n,
+      debt_scaled: 0n,
+      total_earned_interest: 0n,
+      deposit_scaled: 0n,
+      pool_id: {
+        toText: () => POOL_ID,
+      },
+      unpaid_debt_interest: 0n,
+      last_update: 0n,
+      user_profile: {
+        toText: () => PROFILE_ID,
+      },
+      ...overrides,
+    };
+  }
+
   test("returns a mapped position when the canister reports one", async () => {
     // given
     const getPosition = vi.fn().mockResolvedValue([
@@ -1765,8 +1905,11 @@ describe("PositionsModule", () => {
         weighted_max_ltv: 0n,
       },
       positions: [
-        { pool_id: { toText: () => POOL_ID } },
-        { pool_id: { toText: () => SECOND_POOL_ID } },
+        makePositionRecord({ pool_id: { toText: () => POOL_ID } }),
+        makePositionRecord({
+          asset: { USDT: null },
+          pool_id: { toText: () => SECOND_POOL_ID },
+        }),
       ],
       weighted_liquidation_threshold: 0n,
     });
@@ -1830,7 +1973,7 @@ describe("PositionsModule", () => {
       collateral: 0n,
       acumulated_interest: 0n,
       borrowing_power: { max_borrowable_usd: 0n, weighted_max_ltv: 0n },
-      positions: [{ pool_id: { toText: () => POOL_ID } }],
+      positions: [makePositionRecord()],
       weighted_liquidation_threshold: 0n,
     });
     vi.spyOn(Actor, "createActor").mockReturnValue({
@@ -2030,8 +2173,11 @@ describe("PositionsModule", () => {
         acumulated_interest: 0n,
         borrowing_power: { max_borrowable_usd: 0n, weighted_max_ltv: 0n },
         positions: [
-          { pool_id: { toText: () => BTC_POOL_ID } },
-          { pool_id: { toText: () => USDT_POOL_ID } },
+          makePositionRecord({ pool_id: { toText: () => BTC_POOL_ID } }),
+          makePositionRecord({
+            asset: { USDT: null },
+            pool_id: { toText: () => USDT_POOL_ID },
+          }),
         ],
         weighted_liquidation_threshold: 0n,
       }),
@@ -2267,6 +2413,91 @@ describe("PositionsModule", () => {
     // then
     const EXPECTED_AMOUNT = 1_050_000n;
     expect(repay.amount).toBe(EXPECTED_AMOUNT);
+  });
+
+  test("filters out positions with unknown assets in listPositions", async () => {
+    // given
+    const UNKNOWN_ASSET_POOL_ID = "unknown-asset-pool";
+    const getProfileStats = vi.fn().mockResolvedValue({
+      debt: 0n,
+      collateral: 0n,
+      acumulated_interest: 0n,
+      borrowing_power: { max_borrowable_usd: 0n, weighted_max_ltv: 0n },
+      positions: [
+        makePositionRecord({ pool_id: { toText: () => POOL_ID } }),
+        makePositionRecord({
+          asset: { DOGE: null },
+          pool_id: { toText: () => UNKNOWN_ASSET_POOL_ID },
+        }),
+      ],
+      weighted_liquidation_threshold: 0n,
+    });
+    const getPosition = vi
+      .fn()
+      .mockResolvedValue([makePositionView({ deposited_native_now: 100n })]);
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      get_profile_stats: getProfileStats,
+      get_position: getPosition,
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const positions = await client.positions.listPositions(PROFILE_ID);
+
+    // then
+    expect(positions).toHaveLength(1);
+    expect(positions[0]?.poolId).toBe(POOL_ID);
+    expect(getPosition).toHaveBeenCalledTimes(1);
+  });
+
+  test("returns null from getPosition when the canister reports an unknown asset", async () => {
+    // given
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      get_position: vi
+        .fn()
+        .mockResolvedValue([makePositionView({ asset: { DOGE: null } })]),
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const position = await client.positions.getPosition(PROFILE_ID, POOL_ID);
+
+    // then
+    expect(position).toBeNull();
+  });
+
+  test("keeps aggregate stats and filters unknown positions in getHealthFactor", async () => {
+    // given
+    const COLLATERAL_USD = 1_000n;
+    const DEBT_USD = 100n;
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      get_health_factor: vi.fn().mockResolvedValue([
+        1_500n,
+        {
+          debt: DEBT_USD,
+          collateral: COLLATERAL_USD,
+          acumulated_interest: 0n,
+          borrowing_power: {
+            max_borrowable_usd: 500n,
+            weighted_max_ltv: 7_000n,
+          },
+          positions: [
+            makePositionRecord({ asset: { BTC: null } }),
+            makePositionRecord({ asset: { DOGE: null } }),
+          ],
+          weighted_liquidation_threshold: 7_500n,
+        },
+      ]),
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const health = await client.positions.getHealthFactor(PROFILE_ID);
+
+    // then
+    expect(health.healthFactor).toBe(1_500n);
+    expect(health.userStats.collateral).toBe(COLLATERAL_USD);
+    expect(health.userStats.debt).toBe(DEBT_USD);
   });
 });
 
@@ -3947,6 +4178,7 @@ Nonce: 17`);
         Err: { BorrowingDisabled: null },
       }),
     } as never);
+    const BTC_SIGNATURE_BASE64 = "AQID/v8=";
     const client = new LiquidiumClient({});
 
     // when
@@ -3963,7 +4195,7 @@ Nonce: 17`);
         })
         .then((borrowAction) =>
           borrowAction.submit({
-            signature: "signed",
+            signature: BTC_SIGNATURE_BASE64,
             chain: "BTC",
           })
         )
@@ -4269,6 +4501,7 @@ Nonce: 23`);
         Err: { InsufficientFunds: null },
       }),
     } as never);
+    const BTC_SIGNATURE_BASE64 = "AQID/v8=";
     const client = new LiquidiumClient({});
 
     // when
@@ -4285,7 +4518,7 @@ Nonce: 23`);
         })
         .then((withdrawAction) =>
           withdrawAction.submit({
-            signature: "signed",
+            signature: BTC_SIGNATURE_BASE64,
             chain: "BTC",
           })
         )
