@@ -4095,6 +4095,7 @@ Nonce: 17`);
         Err: { BorrowingDisabled: null },
       }),
     } as never);
+    const BTC_SIGNATURE_BASE64 = "AQID/v8=";
     const client = new LiquidiumClient({});
 
     // when
@@ -4111,7 +4112,7 @@ Nonce: 17`);
         })
         .then((borrowAction) =>
           borrowAction.submit({
-            signature: "signed",
+            signature: BTC_SIGNATURE_BASE64,
             chain: "BTC",
           })
         )
@@ -4411,6 +4412,7 @@ Nonce: 23`);
         Err: { InsufficientFunds: null },
       }),
     } as never);
+    const BTC_SIGNATURE_BASE64 = "AQID/v8=";
     const client = new LiquidiumClient({});
 
     // when
@@ -4427,7 +4429,7 @@ Nonce: 23`);
         })
         .then((withdrawAction) =>
           withdrawAction.submit({
-            signature: "signed",
+            signature: BTC_SIGNATURE_BASE64,
             chain: "BTC",
           })
         )

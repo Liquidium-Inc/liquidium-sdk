@@ -1,7 +1,11 @@
+import { base64, base64nopad } from "@scure/base";
+import { bytesToHex as encodeBytesToHex, isHex } from "viem";
 import { LiquidiumError, LiquidiumErrorCode } from "../errors";
 import { Chain, type Chain as ChainName } from "../types";
 
-const HEX_SIGNATURE_PATTERN = /^[0-9a-fA-F]+$/;
+const HEX_PREFIX = "0x";
+const HEX_BYTE_CHAR_LENGTH = 2;
+const BASE64_PADDING = "=";
 
 export function normalizeWalletSignature(
   signature: string,
@@ -16,55 +20,40 @@ export function normalizeWalletSignature(
 }
 
 export function normalizeHexSignature(signature: string): string {
-  if (!signature.startsWith("0x")) {
+  if (!isPrefixedHex(signature)) {
     return signature;
   }
 
-  const signatureWithoutPrefix = signature.slice(2);
-
-  if (!HEX_SIGNATURE_PATTERN.test(signatureWithoutPrefix)) {
-    return signature;
-  }
-
-  return signatureWithoutPrefix;
+  return signature.slice(HEX_PREFIX.length);
 }
 
 function normalizeBtcSignature(signature: string): string {
-  const signatureWithoutPrefix = signature.startsWith("0x")
-    ? signature.slice(2)
+  const signatureWithoutPrefix = signature.startsWith(HEX_PREFIX)
+    ? signature.slice(HEX_PREFIX.length)
     : signature;
 
   if (isHexBytes(signatureWithoutPrefix)) {
     return signatureWithoutPrefix;
   }
 
-  if (signature.startsWith("0x")) {
+  if (signature.startsWith(HEX_PREFIX)) {
     throw invalidBtcSignatureFormatError();
   }
 
-  return bytesToHex(decodeBase64Signature(signature));
+  return bytesToUnprefixedHex(decodeBase64Signature(signature));
 }
 
 function isHexBytes(signature: string): boolean {
   return (
     signature.length > 0 &&
-    signature.length % 2 === 0 &&
-    HEX_SIGNATURE_PATTERN.test(signature)
+    signature.length % HEX_BYTE_CHAR_LENGTH === 0 &&
+    isHex(`${HEX_PREFIX}${signature}`)
   );
 }
 
 function decodeBase64Signature(signature: string): Uint8Array {
   try {
-    const paddedSignature = signature.padEnd(
-      signature.length + ((4 - (signature.length % 4)) % 4),
-      "="
-    );
-    const binarySignature = globalThis.atob(paddedSignature);
-    const bytes = new Uint8Array(binarySignature.length);
-
-    for (let index = 0; index < binarySignature.length; index += 1) {
-      bytes[index] = binarySignature.charCodeAt(index);
-    }
+    const bytes = decodeBase64Bytes(signature);
 
     if (bytes.length === 0) {
       throw invalidBtcSignatureFormatError();
@@ -80,10 +69,20 @@ function decodeBase64Signature(signature: string): Uint8Array {
   }
 }
 
-function bytesToHex(bytes: Uint8Array): string {
-  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join(
-    ""
-  );
+function bytesToUnprefixedHex(bytes: Uint8Array): string {
+  return normalizeHexSignature(encodeBytesToHex(bytes));
+}
+
+function isPrefixedHex(signature: string): boolean {
+  return signature.length > HEX_PREFIX.length && isHex(signature);
+}
+
+function decodeBase64Bytes(signature: string): Uint8Array {
+  if (signature.includes(BASE64_PADDING)) {
+    return base64.decode(signature);
+  }
+
+  return base64nopad.decode(signature);
 }
 
 function invalidBtcSignatureFormatError(cause?: unknown): LiquidiumError {

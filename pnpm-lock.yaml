@@ -267,6 +267,9 @@ importers:
       '@icp-sdk/core':
         specifier: ^5.4.0
         version: 5.4.0
+      '@scure/base':
+        specifier: ^2.2.0
+        version: 2.2.0
       bitcoin-address-validation:
         specifier: ^3.0.0
         version: 3.0.0
@@ -2913,6 +2916,9 @@ packages:
 
   '@scure/base@1.2.6':
     resolution: {integrity: sha512-g/nm5FgUa//MCj1gV09zTJTaM6KBAHqLN907YVQqf7zC49+DcO4B1so4ZX07Ef10Twr6nuqYEH9GEggFXA4Fmg==}
+
+  '@scure/base@2.2.0':
+    resolution: {integrity: sha512-b8XEupJibegiXV+tDUseI8oLQc8ei3d/4Jkb2RpbHh3MfE054ov3uIz2dhFkB3FI8iwYkEh0gGCApkrYggkPNg==}
 
   '@scure/bip32@1.4.0':
     resolution: {integrity: sha512-sVUpc0Vq3tXCkDGYVWGIZTRfnvu8LoTDaev7vbwh0omSvVORONr960MQWdKqJDCReIEmTj3PAr73O3aoxz7OPg==}
@@ -13499,6 +13505,8 @@ snapshots:
   '@scure/base@1.1.9': {}
 
   '@scure/base@1.2.6': {}
+
+  '@scure/base@2.2.0': {}
 
   '@scure/bip32@1.4.0':
     dependencies:
