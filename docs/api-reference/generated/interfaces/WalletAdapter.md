@@ -63,7 +63,7 @@ Sends an EVM transaction and returns its transaction hash.
 
 Defined in: [packages/client/src/core/wallet-actions.ts:111](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L111)
 
-Signs an SDK plaintext message and returns the wallet signature.
+Signs an SDK plaintext message and returns the wallet signature. BTC adapters may return base64 BIP-322 or hex-encoded signature bytes.
 
 #### Parameters
 

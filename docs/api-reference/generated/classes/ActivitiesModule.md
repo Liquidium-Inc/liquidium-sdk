@@ -6,7 +6,7 @@
 
 # Class: ActivitiesModule
 
-Defined in: [packages/client/src/modules/activities/activities.ts:95](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/activities.ts#L95)
+Defined in: [packages/client/src/modules/activities/activities.ts:93](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/activities.ts#L93)
 
 Receipt-oriented activity list and status helpers.
 
@@ -16,7 +16,7 @@ Receipt-oriented activity list and status helpers.
 
 > **new ActivitiesModule**(`apiClient`, `canisterContext`): `ActivitiesModule`
 
-Defined in: [packages/client/src/modules/activities/activities.ts:96](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/activities.ts#L96)
+Defined in: [packages/client/src/modules/activities/activities.ts:94](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/activities.ts#L94)
 
 #### Parameters
 
@@ -38,7 +38,7 @@ Defined in: [packages/client/src/modules/activities/activities.ts:96](https://gi
 
 > **getStatus**(`request`): `Promise`\<[`GetActivityStatusResponse`](../type-aliases/GetActivityStatusResponse.md)\>
 
-Defined in: [packages/client/src/modules/activities/activities.ts:130](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/activities.ts#L130)
+Defined in: [packages/client/src/modules/activities/activities.ts:128](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/activities.ts#L128)
 
 Fetches the latest status for a single receipt/activity id.
 
@@ -64,7 +64,7 @@ The activity when found, otherwise `{ found: false }` with the requested id.
 
 > **list**(`request`): `Promise`\<[`Activity`](../type-aliases/Activity.md)[]\>
 
-Defined in: [packages/client/src/modules/activities/activities.ts:109](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/activities.ts#L109)
+Defined in: [packages/client/src/modules/activities/activities.ts:107](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/activities.ts#L107)
 
 Lists profile activities. Defaults to all activities.
 

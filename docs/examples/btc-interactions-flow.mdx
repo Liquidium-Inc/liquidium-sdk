@@ -1,0 +1,26 @@
+---
+title: BTC Interactions Flow Example
+description: Run the BTC profile and supply interaction example.
+order: 325
+---
+
+# BTC Interactions Flow Example
+
+Use `examples/btc-interactions-flow` to inspect Bitcoin wallet profile and supply flows.
+
+It covers:
+
+| Area | What to inspect |
+| --- | --- |
+| Wallet connection | Dynamic-powered Bitcoin wallet setup |
+| Profile setup | `client.accounts.createProfile(...)` with BTC signatures |
+| Pool selection | BTC pool loading and amount formatting |
+| Supply interaction | `client.lending.supply(...)` with BTC transfer execution |
+| Activity tracking | Status lookup for submitted BTC activity ids |
+
+Run it from the SDK root:
+
+```bash
+pnpm install
+pnpm --filter @liquidium/example-btc-interactions-flow dev
+```

@@ -13,3 +13,4 @@ allowBuilds:
 
 overrides:
   '@noble/hashes': ^1.8.0
+  '@dynamic-labs-wallet/primitives': 0.0.337

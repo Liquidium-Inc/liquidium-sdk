@@ -37,7 +37,6 @@ ${clientReleaseNotes}
 | Package | Changelog |
 | --- | --- |
 | \`@liquidium/client\` | [\`${clientChangelogPath}\`](${REPOSITORY_URL}/blob/main/${clientChangelogPath}) |
-| Examples | [\`examples/*/CHANGELOG.md\`](${REPOSITORY_URL}/tree/main/examples) |
 
 When a public SDK change affects usage, update the relevant guide or API reference in the same pull request.
 `;
