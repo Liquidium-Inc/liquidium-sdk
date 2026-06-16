@@ -1,6 +1,6 @@
 {
   "name": "@liquidium/client",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "The official client for the Liquidium protocol",
   "keywords": [
     "liquidium",
@@ -53,6 +53,7 @@
     "@dfinity/utils": "^4.2.1",
     "@icp-sdk/canisters": "^3.6.0",
     "@icp-sdk/core": "^5.4.0",
+    "@scure/base": "^2.2.0",
     "bitcoin-address-validation": "^3.0.0",
     "viem": "^2.50.4"
   },

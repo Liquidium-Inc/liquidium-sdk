@@ -1,7 +1,7 @@
 import type { RegisterProfileRequest } from "../../core/canisters/lending/actor";
 import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
 import { Chain } from "../../core/types";
-import { normalizeHexSignature } from "../../core/utils/signature";
+import { normalizeWalletSignature } from "../../core/utils/signature";
 import type { CreateAccountRequest } from "./types";
 
 interface AccountBtcChainVariant {
@@ -31,7 +31,10 @@ export function mapCreateAccountRequestToRegisterProfileRequest(
     },
     signature_info: {
       Wallet: {
-        signature: normalizeHexSignature(request.signatureInfo.signature),
+        signature: normalizeWalletSignature(
+          request.signatureInfo.signature,
+          request.signatureInfo.chain
+        ),
         chain: mapAccountChainToLendingChainVariant(
           request.signatureInfo.chain
         ),

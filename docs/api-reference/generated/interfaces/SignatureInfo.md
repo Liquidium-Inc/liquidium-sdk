@@ -43,4 +43,4 @@ Chain used to produce the signature.
 
 Defined in: [packages/client/src/core/wallet-actions.ts:123](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L123)
 
-Wallet signature over the action message.
+Wallet signature over the action message. BTC signatures may be base64 BIP-322 or hex-encoded bytes.

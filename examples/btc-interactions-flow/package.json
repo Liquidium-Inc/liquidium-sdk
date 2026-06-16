@@ -1,0 +1,27 @@
+{
+  "name": "@liquidium/example-btc-interactions-flow",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@dynamic-labs/bitcoin": "4.83.1",
+    "@dynamic-labs/sdk-react-core": "4.83.1",
+    "@liquidium/client": "workspace:*",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.15",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.2.0",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.3",
+    "vite-plugin-node-polyfills": "^0.24.0"
+  }
+}
