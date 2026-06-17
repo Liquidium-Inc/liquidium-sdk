@@ -6,7 +6,7 @@
 
 # Interface: CreateBorrowRequest
 
-Defined in: [packages/client/src/modules/lending/types.ts:103](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L103)
+Defined in: [packages/client/src/modules/lending/types.ts:128](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L128)
 
 Fields to build a borrow request. `amount` is in the borrow pool asset's base units
 (e.g. satoshis, token smallest units).
@@ -21,7 +21,7 @@ Fields to build a borrow request. `amount` is in the borrow pool asset's base un
 
 > **amount**: `bigint`
 
-Defined in: [packages/client/src/modules/lending/types.ts:109](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L109)
+Defined in: [packages/client/src/modules/lending/types.ts:134](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L134)
 
 Amount to borrow in the borrow asset's base units.
 
@@ -31,7 +31,7 @@ Amount to borrow in the borrow asset's base units.
 
 > **poolId**: `string`
 
-Defined in: [packages/client/src/modules/lending/types.ts:107](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L107)
+Defined in: [packages/client/src/modules/lending/types.ts:132](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L132)
 
 Borrow pool principal text.
 
@@ -41,7 +41,7 @@ Borrow pool principal text.
 
 > **profileId**: `string`
 
-Defined in: [packages/client/src/modules/lending/types.ts:105](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L105)
+Defined in: [packages/client/src/modules/lending/types.ts:130](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L130)
 
 Liquidium profile principal text.
 
@@ -51,7 +51,7 @@ Liquidium profile principal text.
 
 > **receiverAddress**: `string`
 
-Defined in: [packages/client/src/modules/lending/types.ts:111](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L111)
+Defined in: [packages/client/src/modules/lending/types.ts:136](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L136)
 
 External-chain address that receives the borrowed asset. Must match the borrow pool chain.
 
@@ -61,6 +61,6 @@ External-chain address that receives the borrowed asset. Must match the borrow p
 
 > **signerWalletAddress**: `string`
 
-Defined in: [packages/client/src/modules/lending/types.ts:113](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L113)
+Defined in: [packages/client/src/modules/lending/types.ts:138](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L138)
 
 Wallet address that signs the borrow authorization.

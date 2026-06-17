@@ -1,8 +1,10 @@
 export { InstantLoansModule } from "./instant-loans";
 export { intFromPublicId, publicIdFromInt } from "./ref-code";
 export type {
+  AccountIdentifierAccount,
   CreateInstantLoanRequest,
   ExternalAccount,
+  IcrcAccount,
   InstantLoan,
   InstantLoanAccount,
   InstantLoanAsset,

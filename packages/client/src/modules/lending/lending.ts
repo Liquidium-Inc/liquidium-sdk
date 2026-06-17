@@ -8,14 +8,16 @@ import { getBorrowAmountMinimumValidationError } from "../../core/borrow-minimum
 import { createCkBtcLedgerActor } from "../../core/canisters/ckbtc/ledger";
 import { createCkBtcMinterActor } from "../../core/canisters/ckbtc/minter";
 import { createDepositAccountsActor } from "../../core/canisters/deposit-accounts/actor";
-import {
-  createLendingActor,
-  type LendingPoolRecord,
-} from "../../core/canisters/lending/actor";
+import { createLendingActor } from "../../core/canisters/lending/actor";
 import {
   mapCanisterCallErrorToLiquidiumError,
   mapLendingProtocolErrorToLiquidiumError,
 } from "../../core/canisters/lending/error-mappers";
+import {
+  createFlexibleLendingActor,
+  type DecodedPool,
+  decodeFlexiblePool,
+} from "../../core/canisters/lending/flexible-actor";
 import {
   createBorrowAssetMessage,
   createWithdrawAssetMessage,
@@ -42,7 +44,6 @@ import { encodeInflowSubaccount } from "../../core/utils/inflow-subaccount";
 import { retryWithBackoff } from "../../core/utils/retry";
 import { normalizeWalletSignature } from "../../core/utils/signature";
 import { computeExpiryTimestampFromNow } from "../../core/utils/time";
-import { getVariantKey } from "../../core/utils/variant";
 import {
   type EthTransactionRequest,
   TransferMode,
@@ -379,7 +380,7 @@ export class LendingModule {
       );
     }
     const selectedPool = await this.getPoolById(request.poolId);
-    const selectedAsset = getVariantKey(selectedPool.asset);
+    const selectedAsset = selectedPool.asset;
     const minimumBorrowAmountError = getBorrowAmountMinimumValidationError({
       amount: request.amount,
       asset: selectedAsset,
@@ -393,7 +394,7 @@ export class LendingModule {
     const receiverAddress = normalizeExternalAddress({
       address: destinationAccount,
       asset: selectedAsset,
-      chain: getVariantKey(selectedPool.chain),
+      chain: selectedPool.chain,
     });
 
     const lendingActor = createLendingActor(this.canisterContext);
@@ -593,8 +594,8 @@ export class LendingModule {
 
     return await this.getEvmSupplyContextForPool({
       request,
-      asset: getVariantKey(selectedPool.asset),
-      chain: getVariantKey(selectedPool.chain),
+      asset: selectedPool.asset,
+      chain: selectedPool.chain,
     });
   }
 
@@ -1091,20 +1092,23 @@ export class LendingModule {
     return this.evmReadClient;
   }
 
-  private async getPoolById(poolId: string): Promise<LendingPoolRecord> {
-    const pools = await createLendingActor(this.canisterContext).list_pools();
+  private async getPoolById(poolId: string): Promise<DecodedPool> {
+    const pools = await createFlexibleLendingActor(
+      this.canisterContext
+    ).list_pools();
     const selectedPool = pools.find(
       (pool) => pool.principal.toText() === poolId
     );
 
-    if (!selectedPool) {
+    const decodedPool = selectedPool ? decodeFlexiblePool(selectedPool) : null;
+    if (!decodedPool) {
       throw new LiquidiumError(
         LiquidiumErrorCode.POOL_NOT_FOUND,
         `Pool not found: ${poolId}`
       );
     }
 
-    return selectedPool;
+    return decodedPool;
   }
 
   private async normalizeOutflowReceiverAddress(
@@ -1114,8 +1118,8 @@ export class LendingModule {
 
     return normalizeExternalAddress({
       address: params.receiverAddress,
-      asset: getVariantKey(selectedPool.asset),
-      chain: getVariantKey(selectedPool.chain),
+      asset: selectedPool.asset,
+      chain: selectedPool.chain,
     });
   }
 
@@ -1248,13 +1252,6 @@ function mapExpectedOutflowDetails(
     throw new LiquidiumError(
       LiquidiumErrorCode.INTERNAL,
       `${operation} returned unexpected outflow type ${details.outflowType}`
-    );
-  }
-
-  if (details.receiver.type !== "External") {
-    throw new LiquidiumError(
-      LiquidiumErrorCode.INTERNAL,
-      `${operation} returned unexpected receiver type ${details.receiver.type}`
     );
   }
 

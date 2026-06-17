@@ -121,6 +121,20 @@ describe("decodeFlexiblePool", () => {
     expect(decoded?.chain).toBe("BTC");
   });
 
+  test("should return null for an unsupported ICP pool", () => {
+    // given
+    const pool = createFlexiblePool({
+      asset: { ICP: null },
+      chain: { ICP: null },
+    });
+
+    // when
+    const decoded = decodeFlexiblePool(pool);
+
+    // then
+    expect(decoded).toBeNull();
+  });
+
   test("should decode a pool with hashed variant keys from IDL.Unknown", () => {
     // given
     const assetHash = idlLabelToId("SOL");
@@ -202,9 +216,20 @@ describe("decodeFlexiblePosition", () => {
     expect(decoded?.asset).toBe("SOL");
   });
 
-  test("should return null for an unknown asset tag", () => {
+  test("should return null for an unsupported ICP position", () => {
     // given
     const position = createFlexiblePosition({ asset: { ICP: null } });
+
+    // when
+    const decoded = decodeFlexiblePosition(position);
+
+    // then
+    expect(decoded).toBeNull();
+  });
+
+  test("should return null for an unknown asset tag", () => {
+    // given
+    const position = createFlexiblePosition({ asset: { DOGE: null } });
 
     // when
     const decoded = decodeFlexiblePosition(position);
@@ -228,9 +253,20 @@ describe("decodeFlexiblePositionView", () => {
     expect(decoded?.deposited_native_now).toBe(50_000n);
   });
 
-  test("should return null for an unknown asset tag", () => {
+  test("should return null for an unsupported ICP position view", () => {
     // given
     const view = createFlexiblePositionView({ asset: { ICP: null } });
+
+    // when
+    const decoded = decodeFlexiblePositionView(view);
+
+    // then
+    expect(decoded).toBeNull();
+  });
+
+  test("should return null for an unknown asset tag", () => {
+    // given
+    const view = createFlexiblePositionView({ asset: { DOGE: null } });
 
     // when
     const decoded = decodeFlexiblePositionView(view);
@@ -259,12 +295,13 @@ describe("decodeFlexibleUserStats", () => {
     expect(decoded.positions[0]?.asset).toBe("BTC");
   });
 
-  test("should filter out positions with unknown assets", () => {
+  test("should filter out unsupported ICP positions and unknown assets", () => {
     // given
     const stats = createFlexibleUserStats({
       positions: [
         createFlexiblePosition({ asset: { BTC: null } }),
         createFlexiblePosition({ asset: { ICP: null } }),
+        createFlexiblePosition({ asset: { DOGE: null } }),
         createFlexiblePosition({ asset: { USDC: null } }),
       ],
     });
@@ -283,7 +320,7 @@ describe("decodeFlexibleUserStats", () => {
   test("should return an empty positions array when all assets are unknown", () => {
     // given
     const stats = createFlexibleUserStats({
-      positions: [createFlexiblePosition({ asset: { ICP: null } })],
+      positions: [createFlexiblePosition({ asset: { DOGE: null } })],
     });
 
     // when
