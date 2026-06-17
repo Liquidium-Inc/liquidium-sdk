@@ -1,3 +1,4 @@
+import { encodeIcrcAccount } from "@icp-sdk/canisters/ledger/icrc";
 import type { Principal } from "@icp-sdk/core/principal";
 import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
 import { Chain, OutflowType } from "../../core/types";
@@ -26,9 +27,22 @@ export interface CanisterExternalOutflowReceiver {
   External: string;
 }
 
+export interface CanisterAccountIdentifierOutflowReceiver {
+  AccountIdentifier: string;
+}
+
+export interface CanisterIcrcOutflowReceiver {
+  Icrc: {
+    owner: Principal;
+    subaccount: [] | [Uint8Array | number[]];
+  };
+}
+
 export type CanisterOutflowReceiver =
   | CanisterNativeOutflowReceiver
-  | CanisterExternalOutflowReceiver;
+  | CanisterExternalOutflowReceiver
+  | CanisterAccountIdentifierOutflowReceiver
+  | CanisterIcrcOutflowReceiver;
 
 export interface CanisterOutflowRecord {
   id: string;
@@ -63,11 +77,42 @@ export function mapCanisterAccountType(
       account: receiver.Native.toText(),
     };
   }
+  if ("AccountIdentifier" in receiver) {
+    return {
+      type: "AccountIdentifier",
+      account: receiver.AccountIdentifier,
+    };
+  }
+  if ("Icrc" in receiver) {
+    const subaccount = normalizeOptionalSubaccount(receiver.Icrc.subaccount[0]);
+
+    return {
+      type: "Icrc",
+      owner: receiver.Icrc.owner.toText(),
+      subaccount,
+      account: encodeIcrcAccount({
+        owner: receiver.Icrc.owner,
+        subaccount,
+      }),
+    };
+  }
 
   return {
     type: "External",
     account: receiver.External,
   };
+}
+
+function normalizeOptionalSubaccount(
+  subaccount: Uint8Array | number[] | undefined
+): Uint8Array | undefined {
+  if (!subaccount) {
+    return undefined;
+  }
+
+  return subaccount instanceof Uint8Array
+    ? subaccount
+    : Uint8Array.from(subaccount);
 }
 
 export function normalizeOutflowType(

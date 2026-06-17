@@ -6,7 +6,7 @@
 
 # Interface: ExternalOutflowReceiver
 
-Defined in: [packages/client/src/modules/lending/types.ts:53](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L53)
+Defined in: [packages/client/src/modules/lending/types.ts:60](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L60)
 
 External-chain destination for a completed outflow.
 
@@ -16,7 +16,7 @@ External-chain destination for a completed outflow.
 
 > **account**: `string`
 
-Defined in: [packages/client/src/modules/lending/types.ts:57](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L57)
+Defined in: [packages/client/src/modules/lending/types.ts:64](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L64)
 
 External-chain destination address.
 
@@ -26,6 +26,6 @@ External-chain destination address.
 
 > **type**: `"External"`
 
-Defined in: [packages/client/src/modules/lending/types.ts:55](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L55)
+Defined in: [packages/client/src/modules/lending/types.ts:62](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L62)
 
 Destination account type reported by the protocol.

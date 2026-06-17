@@ -2,6 +2,7 @@ export const idlFactory = ({ IDL }) => {
   const Chains = IDL.Variant({
     'BTC' : IDL.Null,
     'ETH' : IDL.Null,
+    'ICP' : IDL.Null,
     'SOL' : IDL.Null,
   });
   const WalletType = IDL.Variant({ 'Wallet' : Chains });
@@ -59,8 +60,14 @@ export const idlFactory = ({ IDL }) => {
     'InsufficientFunds' : IDL.Null,
   });
   const Result = IDL.Variant({ 'Ok' : IDL.Null, 'Err' : ProtocolError });
+  const IcrcAccount = IDL.Record({
+    'owner' : IDL.Principal,
+    'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+  });
   const AccountType = IDL.Variant({
+    'Icrc' : IcrcAccount,
     'Native' : IDL.Principal,
+    'AccountIdentifier' : IDL.Text,
     'External' : IDL.Text,
   });
   const BorrowAssetRequest = IDL.Record({
@@ -97,6 +104,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const Assets = IDL.Variant({
     'BTC' : IDL.Null,
+    'ICP' : IDL.Null,
     'SOL' : IDL.Null,
     'USDC' : IDL.Null,
     'USDT' : IDL.Null,

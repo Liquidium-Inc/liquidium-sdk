@@ -1,6 +1,7 @@
 export { createTransferErc20Transaction } from "./evm-transactions";
 export { LendingModule } from "./lending";
 export type {
+  AccountIdentifierOutflowReceiver,
   BorrowAction,
   BorrowOutflowDetails,
   BorrowSubmitSignatureInfo,
@@ -17,10 +18,12 @@ export type {
   GetDepositAddressRequest,
   GetEvmSupplyContextRequest,
   IcrcAccountSupplyTarget,
+  IcrcOutflowReceiver,
   InflowFeeEstimate,
   InflowOperation,
   ManualTransferSupplyFlowRequest,
   NativeAddressSupplyTarget,
+  NativeOutflowReceiver,
   OutflowDetails,
   OutflowReceiver,
   SubmitInflowRequest,

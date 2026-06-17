@@ -1,8 +1,9 @@
+import { encodeIcrcAccount } from "@icp-sdk/canisters/ledger/icrc";
 import { Actor } from "@icp-sdk/core/agent";
 import { Principal } from "@icp-sdk/core/principal";
 import { decodeFunctionData } from "viem";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import type { InstantLoanCanisterRecord } from "../core/canisters/instant-loans/actor";
+import type { FlexibleInstantLoanCanisterRecord } from "../core/canisters/instant-loans/flexible-actor";
 import { DEFAULT_API_BASE_URL } from "../core/config";
 import { CK_DEPOSIT_ABI, ERC20_ABI } from "../core/evm";
 import { encodeInflowSubaccount } from "../core/utils/inflow-subaccount";
@@ -2748,7 +2749,7 @@ describe("LendingModule", () => {
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
-  test("rejects supply when no supply mechanism is configured", async () => {
+  test("rejects supply when the selected pool asset is unsupported", async () => {
     // given
     vi.spyOn(Actor, "createActor").mockReturnValue({
       list_pools: vi.fn().mockResolvedValue([
@@ -2793,8 +2794,8 @@ describe("LendingModule", () => {
         action: "deposit",
       })
     ).rejects.toMatchObject({
-      code: LiquidiumErrorCode.VALIDATION_ERROR,
-      message: "No supply mechanism is configured for ICP on ETH",
+      code: LiquidiumErrorCode.POOL_NOT_FOUND,
+      message: `Pool not found: ${USDT_POOL_ID}`,
     });
   });
 
@@ -3891,6 +3892,104 @@ Nonce: 17`);
     });
   });
 
+  test("maps an ICRC receiver returned by a lending outflow", async () => {
+    // given
+    vi.setSystemTime(new Date("2026-04-01T00:00:00.000Z"));
+    const profileId = "aaaaa-aa";
+    const poolId = "rrkah-fqaaa-aaaaa-aaaaq-cai";
+    const ICRC_SUBACCOUNT = new Uint8Array(32).fill(9);
+    const getNonce = vi.fn().mockResolvedValue(17n);
+    const borrowAssets = vi.fn().mockResolvedValue({
+      Ok: {
+        id: "outflow-icrc",
+        txid: [],
+        outflow_type: { Borrow: null },
+        outflow_ref: [],
+        amount: 50_000n,
+        receiver: {
+          Icrc: {
+            owner: Principal.fromText(profileId),
+            subaccount: [ICRC_SUBACCOUNT],
+          },
+        },
+      },
+    });
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord(poolId)]),
+      get_nonce: getNonce,
+      borrow_assets: borrowAssets,
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const borrowAction = await client.lending.prepareBorrow({
+      profileId,
+      poolId,
+      amount: 50_000n,
+      receiverAddress: VALID_BTC_OUTFLOW_ADDRESS,
+      signerWalletAddress: "0xsigner",
+    });
+    const outflow = await borrowAction.submit({
+      signature: "0xsigned",
+      chain: "ETH",
+    });
+
+    // then
+    expect(outflow.receiver).toEqual({
+      type: "Icrc",
+      owner: profileId,
+      subaccount: ICRC_SUBACCOUNT,
+      account: encodeIcrcAccount({
+        owner: Principal.fromText(profileId),
+        subaccount: ICRC_SUBACCOUNT,
+      }),
+    });
+  });
+
+  test("maps an account identifier receiver returned by a lending outflow", async () => {
+    // given
+    vi.setSystemTime(new Date("2026-04-01T00:00:00.000Z"));
+    const profileId = "aaaaa-aa";
+    const poolId = "rrkah-fqaaa-aaaaa-aaaaq-cai";
+    const ACCOUNT_IDENTIFIER =
+      "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+    const borrowAssets = vi.fn().mockResolvedValue({
+      Ok: {
+        id: "outflow-account-id",
+        txid: [],
+        outflow_type: { Borrow: null },
+        outflow_ref: [],
+        amount: 50_000n,
+        receiver: { AccountIdentifier: ACCOUNT_IDENTIFIER },
+      },
+    });
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord(poolId)]),
+      get_nonce: vi.fn().mockResolvedValue(17n),
+      borrow_assets: borrowAssets,
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const borrowAction = await client.lending.prepareBorrow({
+      profileId,
+      poolId,
+      amount: 50_000n,
+      receiverAddress: VALID_BTC_OUTFLOW_ADDRESS,
+      signerWalletAddress: "0xsigner",
+    });
+    const outflow = await borrowAction.submit({
+      signature: "0xsigned",
+      chain: "ETH",
+    });
+
+    // then
+    expect(outflow.receiver).toEqual({
+      type: "AccountIdentifier",
+      account: ACCOUNT_IDENTIFIER,
+    });
+  });
+
   test("creates and executes a borrow request directly", async () => {
     // given
     vi.spyOn(Actor, "createActor").mockReturnValue({
@@ -4453,6 +4552,9 @@ describe("InstantLoansModule", () => {
   const USDT_POOL_ID = "hnnn4-iyaaa-aaaar-qb4bq-cai";
   const LOAN_ID = 42n;
   const VALID_BTC_REFUND_ADDRESS = "1BoatSLRHtKNngkdXEeobR76b53LETtpyT";
+  const ACCOUNT_IDENTIFIER =
+    "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+  const ICRC_SUBACCOUNT = new Uint8Array(32).fill(7);
   const LOWERCASE_EVM_BORROW_ADDRESS =
     "0x52908400098527886e0f7030069857d2e4169ee7";
   const CHECKSUM_EVM_BORROW_ADDRESS =
@@ -4464,6 +4566,13 @@ describe("InstantLoansModule", () => {
     const EXPIRY_TIMESTAMP_SECONDS = 1_775_235_600n;
     const getLoan = vi.fn().mockResolvedValue({
       Ok: createInstantLoan({
+        borrow_destination: { AccountIdentifier: ACCOUNT_IDENTIFIER },
+        refund_destination: {
+          Icrc: {
+            owner: Principal.fromText(PROFILE_ID),
+            subaccount: [ICRC_SUBACCOUNT],
+          },
+        },
         deposit_detected_ts: [DEPOSIT_DETECTED_TIMESTAMP_SECONDS],
         expires_at: [EXPIRY_TIMESTAMP_SECONDS],
       }),
@@ -4560,6 +4669,19 @@ describe("InstantLoansModule", () => {
     expect(loan.borrow).toMatchObject({
       amount: 2_000_000n,
       decimals: 6n,
+      destination: {
+        type: "AccountIdentifier",
+        address: ACCOUNT_IDENTIFIER,
+      },
+    });
+    expect(loan.refundDestination).toEqual({
+      type: "Icrc",
+      owner: PROFILE_ID,
+      subaccount: ICRC_SUBACCOUNT,
+      address: encodeIcrcAccount({
+        owner: Principal.fromText(PROFILE_ID),
+        subaccount: ICRC_SUBACCOUNT,
+      }),
     });
     expect(loan).not.toHaveProperty("depositTarget");
     expect(loan).not.toHaveProperty("repayTarget");
@@ -5558,7 +5680,7 @@ describe("InstantLoansModule", () => {
   });
 
   function createInstantLoan(
-    overrides: Partial<InstantLoanCanisterRecord> = {}
+    overrides: Partial<FlexibleInstantLoanCanisterRecord> = {}
   ) {
     return {
       id: LOAN_ID,

@@ -42,10 +42,17 @@ export interface CreateTransferErc20TransactionParams {
 }
 
 /** Destination account for a completed outflow. */
-export interface OutflowReceiver {
+export type OutflowReceiver =
+  | NativeOutflowReceiver
+  | ExternalOutflowReceiver
+  | AccountIdentifierOutflowReceiver
+  | IcrcOutflowReceiver;
+
+/** IC principal destination for a completed outflow. */
+export interface NativeOutflowReceiver {
   /** Destination account type reported by the protocol. */
-  type: "Native" | "External";
-  /** Destination principal or external-chain address. */
+  type: "Native";
+  /** Destination principal. */
   account: string;
 }
 
@@ -54,6 +61,26 @@ export interface ExternalOutflowReceiver {
   /** Destination account type reported by the protocol. */
   type: "External";
   /** External-chain destination address. */
+  account: string;
+}
+
+/** Legacy ICP ledger account identifier destination for a completed outflow. */
+export interface AccountIdentifierOutflowReceiver {
+  /** Destination account type reported by the protocol. */
+  type: "AccountIdentifier";
+  /** ICP ledger account identifier text, displayed as the destination address. */
+  account: string;
+}
+
+/** ICRC account destination for a completed outflow. */
+export interface IcrcOutflowReceiver {
+  /** Destination account type reported by the protocol. */
+  type: "Icrc";
+  /** ICRC account owner principal text. */
+  owner: string;
+  /** Optional ICRC subaccount bytes. */
+  subaccount?: Uint8Array;
+  /** Text-encoded ICRC account for display. */
   account: string;
 }
 
@@ -78,18 +105,16 @@ export interface OutflowDetails {
   receiver: OutflowReceiver;
 }
 
-/** Borrow receipt with an external-chain receiver. */
+/** Borrow receipt. */
 export type BorrowOutflowDetails = OutflowDetails & {
   outflowType: "borrow";
-  receiver: ExternalOutflowReceiver;
   /** Shared lifecycle status for the borrow outflow receipt. */
   status: LiquidiumStatus;
 };
 
-/** Withdraw receipt with an external-chain receiver. */
+/** Withdraw receipt. */
 export type WithdrawOutflowDetails = OutflowDetails & {
   outflowType: "withdrawal";
-  receiver: ExternalOutflowReceiver;
   /** Shared lifecycle status for the withdraw outflow receipt. */
   status: LiquidiumStatus;
 };

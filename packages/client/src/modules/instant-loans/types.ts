@@ -38,8 +38,32 @@ export interface NativeAccount {
   principal: string;
 }
 
+/** Legacy ICP ledger account identifier returned by existing canister state. */
+export interface AccountIdentifierAccount {
+  /** Account kind discriminator. */
+  type: "AccountIdentifier";
+  /** ICP ledger account identifier text, displayed as the destination address. */
+  address: string;
+}
+
+/** ICRC account returned by existing or future canister state. */
+export interface IcrcAccount {
+  /** Account kind discriminator. */
+  type: "Icrc";
+  /** ICRC account owner principal text. */
+  owner: string;
+  /** Optional ICRC subaccount bytes. */
+  subaccount?: Uint8Array;
+  /** Text-encoded ICRC account for display. */
+  address: string;
+}
+
 /** Borrow destination or refund account associated with an instant loan. */
-export type InstantLoanAccount = ExternalAccount | NativeAccount;
+export type InstantLoanAccount =
+  | ExternalAccount
+  | NativeAccount
+  | AccountIdentifierAccount
+  | IcrcAccount;
 
 /**
  * Parameters for creating an accountless instant loan.

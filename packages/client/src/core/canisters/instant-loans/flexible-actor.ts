@@ -16,6 +16,24 @@ import type {
   WarmedProfile,
 } from "./actor";
 
+interface FlexibleInstantLoanAccountIdentifierAccountType {
+  AccountIdentifier: string;
+}
+
+interface FlexibleInstantLoanIcrcAccount {
+  owner: Principal;
+  subaccount: [] | [Uint8Array];
+}
+
+interface FlexibleInstantLoanIcrcAccountType {
+  Icrc: FlexibleInstantLoanIcrcAccount;
+}
+
+type FlexibleInstantLoanAccountType =
+  | InstantLoanAccountType
+  | FlexibleInstantLoanAccountIdentifierAccountType
+  | FlexibleInstantLoanIcrcAccountType;
+
 export interface FlexibleCreateInstantLoanCanisterResponse {
   loan_id: bigint;
   lending_profile: Principal;
@@ -23,11 +41,11 @@ export interface FlexibleCreateInstantLoanCanisterResponse {
 
 export interface FlexibleHeadlessLoanCreatedEventPayload {
   loan_id: bigint;
-  borrow_destination: InstantLoanAccountType;
+  borrow_destination: FlexibleInstantLoanAccountType;
   lend_asset: object;
   borrow_amount: bigint;
   lend_pool_id: Principal;
-  refund_destination: InstantLoanAccountType;
+  refund_destination: FlexibleInstantLoanAccountType;
   ltv_max_bps: bigint;
   ltv_timer_s: bigint;
   lending_profile: Principal;
@@ -58,14 +76,14 @@ export interface FlexibleHeadlessLoanEvent {
 export interface FlexibleInstantLoanCanisterRecord {
   id: bigint;
   authorisation: InstantLoanAuthorisation;
-  borrow_destination: InstantLoanAccountType;
+  borrow_destination: FlexibleInstantLoanAccountType;
   started: boolean;
   lend_asset: object;
   created_at: bigint;
   schema_version: number;
   borrow_amount: bigint;
   lend_pool_id: Principal;
-  refund_destination: InstantLoanAccountType;
+  refund_destination: FlexibleInstantLoanAccountType;
   ltv_max_bps: bigint;
   ltv_timer_s: bigint;
   lending_profile: Principal;
@@ -77,11 +95,11 @@ export interface FlexibleInstantLoanCanisterRecord {
 
 export interface DecodedHeadlessLoanCreatedEventPayload {
   loan_id: bigint;
-  borrow_destination: InstantLoanAccountType;
+  borrow_destination: FlexibleInstantLoanAccountType;
   lend_asset: string;
   borrow_amount: bigint;
   lend_pool_id: Principal;
-  refund_destination: InstantLoanAccountType;
+  refund_destination: FlexibleInstantLoanAccountType;
   ltv_max_bps: bigint;
   ltv_timer_s: bigint;
   lending_profile: Principal;
@@ -103,14 +121,14 @@ export interface DecodedHeadlessLoanEvent {
 export interface DecodedInstantLoanCanisterRecord {
   id: bigint;
   authorisation: InstantLoanAuthorisation;
-  borrow_destination: InstantLoanAccountType;
+  borrow_destination: FlexibleInstantLoanAccountType;
   started: boolean;
   lend_asset: string;
   created_at: bigint;
   schema_version: number;
   borrow_amount: bigint;
   lend_pool_id: Principal;
-  refund_destination: InstantLoanAccountType;
+  refund_destination: FlexibleInstantLoanAccountType;
   ltv_max_bps: bigint;
   ltv_timer_s: bigint;
   lending_profile: Principal;
@@ -143,8 +161,14 @@ export interface FlexibleInstantLoansActor {
 }
 
 const flexibleInstantLoansIdlFactory: IDL.InterfaceFactory = ({ IDL }) => {
+  const IcrcAccount = IDL.Record({
+    owner: IDL.Principal,
+    subaccount: IDL.Opt(IDL.Vec(IDL.Nat8)),
+  });
   const AccountType = IDL.Variant({
+    Icrc: IcrcAccount,
     Native: IDL.Principal,
+    AccountIdentifier: IDL.Text,
     External: IDL.Text,
   });
   const SignatureVerificationError = IDL.Variant({

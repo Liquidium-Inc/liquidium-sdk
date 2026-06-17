@@ -103,8 +103,10 @@ export type {
 } from "./modules/history";
 export { HistoryModule } from "./modules/history";
 export type {
+  AccountIdentifierAccount,
   CreateInstantLoanRequest,
   ExternalAccount,
+  IcrcAccount,
   InstantLoan,
   InstantLoanAccount,
   InstantLoanAsset,
@@ -143,6 +145,7 @@ export {
   publicIdFromInt,
 } from "./modules/instant-loans";
 export type {
+  AccountIdentifierOutflowReceiver,
   BorrowAction,
   BorrowOutflowDetails,
   BorrowSubmitSignatureInfo,
@@ -159,10 +162,12 @@ export type {
   GetDepositAddressRequest,
   GetEvmSupplyContextRequest,
   IcrcAccountSupplyTarget,
+  IcrcOutflowReceiver,
   InflowFeeEstimate,
   InflowOperation,
   ManualTransferSupplyFlowRequest,
   NativeAddressSupplyTarget,
+  NativeOutflowReceiver,
   OutflowDetails,
   OutflowReceiver,
   SubmitInflowRequest,

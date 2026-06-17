@@ -1,4 +1,10 @@
-type AccountType = variant { Native : principal; External : text };
+type IcrcAccount = record { owner : principal; subaccount : opt vec nat8 };
+type AccountType = variant {
+  Icrc : IcrcAccount;
+  Native : principal;
+  AccountIdentifier : text;
+  External : text;
+};
 type AddAccountRequest = record {
   target_principal : principal;
   chain : WalletType;
@@ -6,7 +12,7 @@ type AddAccountRequest = record {
   expiry_timestamp : nat64;
 };
 type AssetType = variant { CkAsset : principal; Unknown };
-type Assets = variant { BTC; SOL; USDC; USDT };
+type Assets = variant { BTC; ICP; SOL; USDC; USDT };
 type BorrowAssetRequest = record {
   expiry_timestamp : nat64;
   account : AccountType;
@@ -17,7 +23,7 @@ type BorrowingPower = record {
   max_borrowable_usd : nat;
   weighted_max_ltv : nat;
 };
-type Chains = variant { BTC; ETH; SOL };
+type Chains = variant { BTC; ETH; ICP; SOL };
 type ClaimFeeRequest = record { pool_id : principal };
 type InflowDetails = record {
   id : text;

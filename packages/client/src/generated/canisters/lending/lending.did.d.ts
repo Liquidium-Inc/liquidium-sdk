@@ -2,7 +2,9 @@ import type { Principal } from '@icp-sdk/core/principal';
 import type { ActorMethod } from '@icp-sdk/core/agent';
 import type { IDL } from '@icp-sdk/core/candid';
 
-export type AccountType = { 'Native' : Principal } |
+export type AccountType = { 'Icrc' : IcrcAccount } |
+  { 'Native' : Principal } |
+  { 'AccountIdentifier' : string } |
   { 'External' : string };
 export interface AddAccountRequest {
   'target_principal' : Principal,
@@ -13,6 +15,7 @@ export interface AddAccountRequest {
 export type AssetType = { 'CkAsset' : Principal } |
   { 'Unknown' : null };
 export type Assets = { 'BTC' : null } |
+  { 'ICP' : null } |
   { 'SOL' : null } |
   { 'USDC' : null } |
   { 'USDT' : null };
@@ -28,8 +31,13 @@ export interface BorrowingPower {
 }
 export type Chains = { 'BTC' : null } |
   { 'ETH' : null } |
+  { 'ICP' : null } |
   { 'SOL' : null };
 export interface ClaimFeeRequest { 'pool_id' : Principal }
+export interface IcrcAccount {
+  'owner' : Principal,
+  'subaccount' : [] | [Uint8Array | number[]],
+}
 export interface InflowDetails {
   'id' : string,
   'inflow_type' : InflowType,
