@@ -1,5 +1,11 @@
 # @liquidium/client
 
+## 0.3.4
+
+### Patch Changes
+
+- 810ca23: Handle ICRC and account identifier destinations returned by lending and instant loan canisters.
+
 ## 0.3.3
 
 ### Patch Changes
