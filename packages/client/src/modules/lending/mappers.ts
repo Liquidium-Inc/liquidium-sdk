@@ -75,7 +75,7 @@ export function normalizeOutflowType(
 ): OutflowDetails["outflowType"] {
   switch (rawOutflowType) {
     case "Withdraw":
-      return OutflowType.withdraw;
+      return OutflowType.withdrawal;
     case "Borrow":
       return OutflowType.borrow;
     case "FeeClaim":

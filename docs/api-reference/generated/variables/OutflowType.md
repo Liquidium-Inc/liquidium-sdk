@@ -22,6 +22,6 @@ Outflow operation reported by the lending canister.
 
 > `readonly` **feeClaim**: `"feeClaim"` = `"feeClaim"`
 
-### withdraw
+### withdrawal
 
-> `readonly` **withdraw**: `"withdraw"` = `"withdraw"`
+> `readonly` **withdrawal**: `"withdrawal"` = `"withdrawal"`

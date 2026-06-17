@@ -6,7 +6,7 @@
 
 # Interface: CreateTransferErc20TransactionParams
 
-Defined in: [packages/client/src/modules/lending/types.ts:36](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L36)
+Defined in: [packages/client/src/modules/lending/types.ts:35](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L35)
 
 Parameters for an ERC-20 transfer transaction.
 
@@ -16,7 +16,7 @@ Parameters for an ERC-20 transfer transaction.
 
 > **amount**: `bigint`
 
-Defined in: [packages/client/src/modules/lending/types.ts:42](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L42)
+Defined in: [packages/client/src/modules/lending/types.ts:41](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L41)
 
 Transfer amount in token base units.
 
@@ -26,7 +26,7 @@ Transfer amount in token base units.
 
 > **recipientAddress**: `string`
 
-Defined in: [packages/client/src/modules/lending/types.ts:40](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L40)
+Defined in: [packages/client/src/modules/lending/types.ts:39](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L39)
 
 Destination EVM address.
 
@@ -36,6 +36,6 @@ Destination EVM address.
 
 > **tokenAddress**: `string`
 
-Defined in: [packages/client/src/modules/lending/types.ts:38](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L38)
+Defined in: [packages/client/src/modules/lending/types.ts:37](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L37)
 
 ERC-20 token contract address.

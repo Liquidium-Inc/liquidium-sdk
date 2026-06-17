@@ -6,7 +6,7 @@
 
 # Type Alias: UserTransactionHistoryType
 
-> **UserTransactionHistoryType** = `"supply"` \| `"borrow"` \| `"repay"` \| `"withdraw"` \| `"liquidation"`
+> **UserTransactionHistoryType** = `"deposit"` \| `"borrow"` \| `"repayment"` \| `"withdrawal"` \| `"liquidation"`
 
 Defined in: [packages/client/src/modules/history/types.ts:4](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L4)
 

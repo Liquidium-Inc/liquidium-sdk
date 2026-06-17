@@ -2,13 +2,19 @@ import type { LiquidiumState, LiquidiumStatus } from "../../core/status";
 
 /** User transaction kinds returned by profile transaction history. */
 export type UserTransactionHistoryType =
-  | "supply"
+  | "deposit"
   | "borrow"
-  | "repay"
-  | "withdraw"
+  | "repayment"
+  | "withdrawal"
   | "liquidation";
 /** Any user history kind returned by the history API. */
 export type UserHistoryType = UserTransactionHistoryType;
+
+/** Lifecycle states accepted by profile transaction history filters. */
+export type UserTransactionHistoryState = Exclude<
+  LiquidiumState,
+  "active" | "expired"
+>;
 
 interface BaseUserHistoryEntry {
   id: string;
@@ -18,7 +24,7 @@ interface BaseUserHistoryEntry {
   txids?: string[];
 }
 
-/** Supply, borrow, repay, withdraw, or liquidation entry in user history. */
+/** Deposit, borrow, repayment, withdrawal, or liquidation entry in user history. */
 export interface UserTransactionHistoryEntry extends BaseUserHistoryEntry {
   /** Transaction history kind. */
   type: UserTransactionHistoryType;
@@ -52,7 +58,7 @@ export interface UserTransactionHistoryFilters {
   /** Transaction kind filters. */
   types?: UserTransactionHistoryType[];
   /** Lifecycle state filters. */
-  states?: LiquidiumState[];
+  states?: UserTransactionHistoryState[];
   /** Inclusive start timestamp filter accepted by the SDK API. */
   from?: string;
   /** Inclusive end timestamp filter accepted by the SDK API. */
@@ -75,45 +81,6 @@ export interface UserLiquidationHistoryFilters {
   to?: string;
 }
 
-/** Time-window and pagination options for borrow APY history. */
-export interface BorrowApyHistoryRequest {
-  /** Pagination cursor from a previous response. */
-  cursor?: string;
-  /** Maximum number of samples to return. */
-  limit?: number;
-  /** Inclusive start timestamp filter accepted by the SDK API. */
-  from?: string;
-  /** Inclusive end timestamp filter accepted by the SDK API. */
-  to?: string;
-}
-
-/** Time-window and pagination options for pool rate history. */
-export type PoolHistoryRequest = BorrowApyHistoryRequest;
-
-/** Borrow APY sample returned to SDK consumers. */
-export interface ApySample {
-  /** Sample date from the SDK API. */
-  date: string;
-  /** Decimal scale for `avgRate`. */
-  rateDecimals: bigint;
-  /** Average borrow rate for the sample, scaled by `rateDecimals`. */
-  avgRate: bigint;
-}
-
-/** Wire-format borrow APY sample returned by the SDK API. */
-export interface ApySampleApiItem {
-  date: string;
-  rateDecimals: number;
-  avgRate: string;
-}
-
-/** Wire-format borrow rate history response returned by the SDK API. */
-export interface BorrowRateHistoryResponse {
-  success: true;
-  items: ApySampleApiItem[];
-  nextCursor?: string;
-}
-
 /** Wire-format user history item returned by the SDK API. */
 export interface UserHistoryEntryApiItem {
   id: string;
@@ -131,101 +98,6 @@ export interface UserHistoryResponse {
   items: UserHistoryEntryApiItem[];
   nextCursor?: string;
 }
-
-/** Pool rate and utilization history entry returned to SDK consumers. */
-export interface PoolHistoryEntry {
-  /** Sample date from the SDK API. */
-  date: string;
-  /** Decimal scale for rate fields. */
-  rateDecimals: bigint;
-  /** Average borrow rate for the sample, scaled by `rateDecimals`. */
-  avgBorrowRate: bigint;
-  /** Average lend rate for the sample, scaled by `rateDecimals`. */
-  avgLendRate: bigint;
-  /** Average utilization rate for the sample, scaled by `rateDecimals`. */
-  avgUtilizationRate: bigint;
-}
-
-/** Wire-format pool rate history item returned by the SDK API. */
-export interface PoolHistoryEntryApiItem {
-  date: string;
-  rateDecimals: number;
-  avgBorrowRate: string;
-  avgLendRate: string;
-  avgUtilizationRate: string;
-}
-
-/** Wire-format pool rate history page returned by the SDK API. */
-export interface PoolHistoryResponse {
-  success: true;
-  items: PoolHistoryEntryApiItem[];
-  nextCursor?: string;
-}
-
-/** Pool configuration snapshot returned to SDK consumers. */
-export interface PoolConfigHistoryEntry {
-  type: "configuration_change";
-  poolId: string;
-  asset: string;
-  chain: string;
-  timestamp: string;
-  totalSupply: bigint;
-  totalDebt: bigint;
-  supplyCap?: bigint;
-  borrowCap?: bigint;
-  maxLtv: bigint;
-  liquidationThreshold: bigint;
-  liquidationBonus: bigint;
-  protocolLiquidationFee: bigint;
-  reserveFactor: bigint;
-  baseRate: bigint;
-  optimalUtilizationRate: bigint;
-  rateSlopeBefore: bigint;
-  rateSlopeAfter: bigint;
-  lendingIndex: bigint;
-  borrowIndex: bigint;
-  sameAssetBorrowing: boolean;
-  frozen: boolean;
-}
-
-/** Wire-format pool configuration history item returned by the SDK API. */
-export interface PoolConfigHistoryEntryApiItem {
-  type: "configuration_change";
-  poolId: string;
-  asset: string;
-  chain: string;
-  timestamp: string;
-  totalSupply: string;
-  totalDebt: string;
-  supplyCap?: string;
-  borrowCap?: string;
-  maxLtv: string;
-  liquidationThreshold: string;
-  liquidationBonus: string;
-  protocolLiquidationFee: string;
-  reserveFactor: string;
-  baseRate: string;
-  optimalUtilizationRate: string;
-  rateSlopeBefore: string;
-  rateSlopeAfter: string;
-  lendingIndex: string;
-  borrowIndex: string;
-  sameAssetBorrowing: boolean;
-  frozen: boolean;
-}
-
-/** Wire-format pool configuration history page returned by the SDK API. */
-export interface PoolConfigHistoryResponse {
-  success: true;
-  items: PoolConfigHistoryEntryApiItem[];
-  nextCursor?: string;
-}
-
-/** Any history entry returned by history module methods. */
-export type HistoryEntry =
-  | UserHistoryEntry
-  | PoolHistoryEntry
-  | PoolConfigHistoryEntry;
 
 /** Generic SDK API paginated response. */
 export interface PaginatedResponse<T> {

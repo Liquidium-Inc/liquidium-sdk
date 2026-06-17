@@ -6,7 +6,7 @@
 
 # Interface: EvmSupplyContext
 
-Defined in: [packages/client/src/modules/lending/types.ts:373](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L373)
+Defined in: [packages/client/src/modules/lending/types.ts:382](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L382)
 
 ERC-20 supply planning data returned by `lending.getEvmSupplyContext(...)`.
 
@@ -16,7 +16,7 @@ ERC-20 supply planning data returned by `lending.getEvmSupplyContext(...)`.
 
 > **action**: [`SupplyAction`](../type-aliases/SupplyAction.md)
 
-Defined in: [packages/client/src/modules/lending/types.ts:383](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L383)
+Defined in: [packages/client/src/modules/lending/types.ts:392](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L392)
 
 Deposit or repayment action for the inflow.
 
@@ -26,7 +26,7 @@ Deposit or repayment action for the inflow.
 
 > **allowance**: `string`
 
-Defined in: [packages/client/src/modules/lending/types.ts:399](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L399)
+Defined in: [packages/client/src/modules/lending/types.ts:408](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L408)
 
 Current allowance serialized in base units.
 
@@ -36,7 +36,7 @@ Current allowance serialized in base units.
 
 > **amount**: `string`
 
-Defined in: [packages/client/src/modules/lending/types.ts:389](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L389)
+Defined in: [packages/client/src/modules/lending/types.ts:398](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L398)
 
 Requested amount serialized in token base units.
 
@@ -46,7 +46,7 @@ Requested amount serialized in token base units.
 
 > **approvalStrategy**: [`EvmSupplyApprovalStrategy`](../type-aliases/EvmSupplyApprovalStrategy.md)
 
-Defined in: [packages/client/src/modules/lending/types.ts:403](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L403)
+Defined in: [packages/client/src/modules/lending/types.ts:412](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L412)
 
 Approval sequence the caller should perform.
 
@@ -56,7 +56,7 @@ Approval sequence the caller should perform.
 
 > **asset**: `"USDC"` \| `"USDT"`
 
-Defined in: [packages/client/src/modules/lending/types.ts:385](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L385)
+Defined in: [packages/client/src/modules/lending/types.ts:394](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L394)
 
 Supported ETH stablecoin asset.
 
@@ -66,7 +66,7 @@ Supported ETH stablecoin asset.
 
 > **balance**: `string`
 
-Defined in: [packages/client/src/modules/lending/types.ts:397](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L397)
+Defined in: [packages/client/src/modules/lending/types.ts:406](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L406)
 
 Current token balance serialized in base units.
 
@@ -76,7 +76,7 @@ Current token balance serialized in base units.
 
 > **chain**: `"ETH"`
 
-Defined in: [packages/client/src/modules/lending/types.ts:387](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L387)
+Defined in: [packages/client/src/modules/lending/types.ts:396](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L396)
 
 ETH chain discriminator.
 
@@ -86,7 +86,7 @@ ETH chain discriminator.
 
 > **depositContractAddress**: `string`
 
-Defined in: [packages/client/src/modules/lending/types.ts:395](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L395)
+Defined in: [packages/client/src/modules/lending/types.ts:404](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L404)
 
 Deposit helper contract address.
 
@@ -96,7 +96,7 @@ Deposit helper contract address.
 
 > **poolId**: `string`
 
-Defined in: [packages/client/src/modules/lending/types.ts:379](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L379)
+Defined in: [packages/client/src/modules/lending/types.ts:388](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L388)
 
 Pool principal text receiving the inflow.
 
@@ -106,7 +106,7 @@ Pool principal text receiving the inflow.
 
 > **profileId**: `string`
 
-Defined in: [packages/client/src/modules/lending/types.ts:377](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L377)
+Defined in: [packages/client/src/modules/lending/types.ts:386](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L386)
 
 Liquidium profile principal text.
 
@@ -116,7 +116,7 @@ Liquidium profile principal text.
 
 > **requiresApproval**: `boolean`
 
-Defined in: [packages/client/src/modules/lending/types.ts:401](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L401)
+Defined in: [packages/client/src/modules/lending/types.ts:410](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L410)
 
 Whether an approval transaction is needed before deposit.
 
@@ -126,7 +126,7 @@ Whether an approval transaction is needed before deposit.
 
 > **spenderAddress**: `string`
 
-Defined in: [packages/client/src/modules/lending/types.ts:393](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L393)
+Defined in: [packages/client/src/modules/lending/types.ts:402](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L402)
 
 Contract address that must be approved as spender.
 
@@ -136,7 +136,7 @@ Contract address that must be approved as spender.
 
 > **success**: `true`
 
-Defined in: [packages/client/src/modules/lending/types.ts:375](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L375)
+Defined in: [packages/client/src/modules/lending/types.ts:384](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L384)
 
 Indicates the context was computed successfully.
 
@@ -146,7 +146,7 @@ Indicates the context was computed successfully.
 
 > **tokenAddress**: `string`
 
-Defined in: [packages/client/src/modules/lending/types.ts:391](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L391)
+Defined in: [packages/client/src/modules/lending/types.ts:400](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L400)
 
 ERC-20 token contract address.
 
@@ -156,6 +156,6 @@ ERC-20 token contract address.
 
 > **walletAddress**: `string`
 
-Defined in: [packages/client/src/modules/lending/types.ts:381](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L381)
+Defined in: [packages/client/src/modules/lending/types.ts:390](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L390)
 
 Normalized EVM wallet address.

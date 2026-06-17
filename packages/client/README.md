@@ -260,7 +260,7 @@ Most instant-loan UIs show or store these fields:
 | `loan.repayment.target` | Address or ICRC account where the user sends repayment |
 | `loan.position` | Current collateral, debt, and interest state for the generated profile |
 
-`client.instantLoans.find(...)` returns lightweight search matches with `loanId`, `ref`, `createdAt`, `profileId`, `collateral`, and `borrow`. Use `client.instantLoans.get(...)` to load full loan fields, and use `client.activities.list(...)` separately when you need deposit, borrow, repay, or withdraw activity.
+`client.instantLoans.find(...)` returns lightweight search matches with `loanId`, `ref`, `createdAt`, `profileId`, `collateral`, and `borrow`. Use `client.instantLoans.get(...)` to load full loan fields, and use `client.activities.list(...)` separately when you need deposit, borrow, repayment, or withdrawal activity.
 
 ## Amounts
 
@@ -290,7 +290,7 @@ type LiquidiumStatus = {
 
 `action_required` means the user or app must do something, such as sending funds. `confirming` means a tx is known but still needs confirmations. `processing` means confirmations are sufficient and Liquidium or the protocol is still processing. `active` means the loan is live and waiting for the next repayment action.
 
-Use activities to track collateral deposits, borrow outflows, repayment deposits, confirmations, and fee top-ups. Activity confirmations are exposed on `activity.status`. Activity lists default to all items; pass `filter: "active"` for active-only polling. The activities module accepts the saved instant-loan reference and resolves the generated profile for you:
+Use activities to track collateral deposits, borrow outflows, repayment deposits, confirmations, and fee top-ups. Activity confirmations are exposed on `activity.status`. Activity lists default to active items; pass `filter: "all"` when you need completed activity too. The activities module accepts the saved instant-loan reference and resolves the generated profile for you:
 
 ```ts
 const activities = await client.activities.list({

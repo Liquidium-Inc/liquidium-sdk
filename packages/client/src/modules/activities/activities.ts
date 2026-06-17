@@ -35,7 +35,7 @@ interface ActivityTopUpWire
 interface ActivityWire {
   id: string;
   direction: Activity["direction"];
-  kind: Activity["kind"];
+  kind: string;
   poolId: string;
   asset: string | null;
   chain: Chain | null;
@@ -76,7 +76,7 @@ export class ActivitiesModule {
   ) {}
 
   /**
-   * Lists profile activities. Defaults to all activities.
+   * Lists profile activities. Defaults to active activities.
    *
    * Uses the Liquidium SDK API.
    *
@@ -89,7 +89,7 @@ export class ActivitiesModule {
     const response = await apiClient.get<ListActivitiesResponseWire>(
       buildActivitiesPath({
         profileId,
-        filter: request.filter ?? ActivityFilter.all,
+        filter: request.filter ?? ActivityFilter.active,
       })
     );
 
@@ -222,7 +222,7 @@ function mapActivity(wire: ActivityWire): Activity {
   };
 }
 
-function mapInflowActivityKind(kind: Activity["kind"]): InflowActivityKind {
+function mapInflowActivityKind(kind: string): InflowActivityKind {
   if (kind === "deposit" || kind === "repayment") {
     return kind;
   }
@@ -233,8 +233,8 @@ function mapInflowActivityKind(kind: Activity["kind"]): InflowActivityKind {
   );
 }
 
-function mapOutflowActivityKind(kind: Activity["kind"]): OutflowActivityKind {
-  if (kind === "borrow" || kind === "withdraw") {
+function mapOutflowActivityKind(kind: string): OutflowActivityKind {
+  if (kind === "borrow" || kind === "withdrawal") {
     return kind;
   }
 

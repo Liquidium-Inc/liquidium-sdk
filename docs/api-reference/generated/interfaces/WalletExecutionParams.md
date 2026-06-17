@@ -6,7 +6,7 @@
 
 # Interface: WalletExecutionParams
 
-Defined in: [packages/client/src/modules/lending/types.ts:20](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L20)
+Defined in: [packages/client/src/modules/lending/types.ts:19](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L19)
 
 Wallet execution dependencies for borrow and withdraw convenience methods.
 
@@ -16,7 +16,7 @@ Wallet execution dependencies for borrow and withdraw convenience methods.
 
 > **signerChain**: [`Chain`](../type-aliases/Chain.md)
 
-Defined in: [packages/client/src/modules/lending/types.ts:22](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L22)
+Defined in: [packages/client/src/modules/lending/types.ts:21](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L21)
 
 Chain used by the signing wallet.
 
@@ -26,6 +26,6 @@ Chain used by the signing wallet.
 
 > **signerWalletAdapter**: [`WalletAdapter`](WalletAdapter.md)
 
-Defined in: [packages/client/src/modules/lending/types.ts:24](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L24)
+Defined in: [packages/client/src/modules/lending/types.ts:23](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L23)
 
 Wallet adapter used to execute the prepared action.

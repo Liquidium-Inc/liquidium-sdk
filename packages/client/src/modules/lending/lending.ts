@@ -38,7 +38,6 @@ import {
   Asset,
   Chain,
   type EvmReadClient,
-  InflowSubmitType,
   OutflowType,
   SupplyAction,
 } from "../../core/types";
@@ -84,9 +83,11 @@ import {
   type GetDepositAddressRequest,
   type GetEvmSupplyContextRequest,
   type InflowFeeEstimate,
+  type InflowOperation,
   type OutflowDetails,
   type SubmitInflowRequest,
   type SubmitInflowResponse,
+  type SubmitSupplyFlowInflowRequest,
   type SupplyFlow,
   type SupplyFlowRequest,
   SupplyPlanType,
@@ -138,7 +139,7 @@ interface SubmitSupplyFlowInflowParams {
   instruction: SupplyInstruction;
   mechanism: SupplyPlanType;
   defaultSubmitInflowRequest?: SubmitInflowDefaults;
-  submitRequest: SubmitInflowRequest;
+  submitRequest: SubmitSupplyFlowInflowRequest;
 }
 
 interface ExecuteContractSupplyParams {
@@ -321,7 +322,7 @@ export class LendingModule {
 
       return mapExpectedOutflowDetails(
         mapCanisterOutflowDetails(result.Ok),
-        OutflowType.withdraw,
+        OutflowType.withdrawal,
         "withdraw"
       );
     } catch (error) {
@@ -830,8 +831,16 @@ export class LendingModule {
       };
     }
 
+    const defaultSubmitInflowRequest = params.defaultSubmitInflowRequest;
+    if (!defaultSubmitInflowRequest) {
+      throw new LiquidiumError(
+        LiquidiumErrorCode.VALIDATION_ERROR,
+        "Supply flow submit requires an inflow operation"
+      );
+    }
+
     return await this.submitInflow({
-      ...params.defaultSubmitInflowRequest,
+      ...defaultSubmitInflowRequest,
       ...params.submitRequest,
     });
   }
@@ -1039,6 +1048,13 @@ export class LendingModule {
     txid: string,
     extraRequest?: SubmitInflowDefaults
   ): Promise<void> {
+    if (!extraRequest) {
+      throw new LiquidiumError(
+        LiquidiumErrorCode.VALIDATION_ERROR,
+        "Inflow submission requires an operation"
+      );
+    }
+
     await retryWithBackoff({
       execute: async () => {
         await this.submitInflow({ txid, ...extraRequest });
@@ -1055,7 +1071,7 @@ export class LendingModule {
    *
    * Uses the Liquidium SDK API.
    *
-   * @param request - Broadcast `txid` plus optional `chain` and inflow `type`.
+   * @param request - Broadcast `txid` plus inflow `operation` and optional `chain`.
    * @returns Acknowledgement including the submitted `txid`.
    */
   async submitInflow(
@@ -1071,7 +1087,7 @@ export class LendingModule {
     return {
       ...response,
       status: createLiquidiumStatus({
-        operation: mapSubmitInflowTypeToStatusOperation(request.type),
+        operation: request.operation,
         state: "confirming",
       }),
     };
@@ -1263,12 +1279,14 @@ function mapExpectedOutflowDetails(
 ): BorrowOutflowDetails;
 function mapExpectedOutflowDetails(
   details: OutflowDetails,
-  expectedOutflowType: typeof OutflowType.withdraw,
+  expectedOutflowType: typeof OutflowType.withdrawal,
   operation: string
 ): WithdrawOutflowDetails;
 function mapExpectedOutflowDetails(
   details: OutflowDetails,
-  expectedOutflowType: typeof OutflowType.borrow | typeof OutflowType.withdraw,
+  expectedOutflowType:
+    | typeof OutflowType.borrow
+    | typeof OutflowType.withdrawal,
   operation: string
 ): BorrowOutflowDetails | WithdrawOutflowDetails {
   if (details.outflowType !== expectedOutflowType) {
@@ -1295,9 +1313,9 @@ function mapExpectedOutflowDetails(
 }
 
 function mapOutflowTypeToStatusOperation(
-  outflowType: typeof OutflowType.borrow | typeof OutflowType.withdraw
+  outflowType: typeof OutflowType.borrow | typeof OutflowType.withdrawal
 ): LiquidiumOperation {
-  return outflowType === OutflowType.borrow ? "borrow" : "withdrawal";
+  return outflowType;
 }
 
 async function delay(timeoutMs: number): Promise<void> {
@@ -1333,23 +1351,14 @@ function getDefaultSubmitInflowRequest(
 
   return {
     chain: params.chain,
-    type:
-      params.action === SupplyAction.repayment
-        ? InflowSubmitType.REPAY
-        : InflowSubmitType.DEPOSIT,
+    operation: mapSupplyActionToStatusOperation(params.action),
   };
 }
 
 function mapSupplyActionToStatusOperation(
   action: SupplyAction
-): LiquidiumOperation {
+): InflowOperation {
   return action === SupplyAction.repayment ? "repayment" : "deposit";
-}
-
-function mapSubmitInflowTypeToStatusOperation(
-  type: InflowSubmitType | undefined
-): LiquidiumOperation {
-  return type === InflowSubmitType.REPAY ? "repayment" : "deposit";
 }
 
 function shouldSubmitInflow(params: ShouldSubmitInflowParams): boolean {

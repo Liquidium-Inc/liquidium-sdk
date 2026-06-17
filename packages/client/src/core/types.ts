@@ -95,19 +95,10 @@ export type SupplyAction = (typeof SupplyAction)[keyof typeof SupplyAction];
 export const OutflowType = {
   borrow: "borrow",
   feeClaim: "feeClaim",
-  withdraw: "withdraw",
+  withdrawal: "withdrawal",
 } as const;
 /** Outflow operation reported by the lending canister. */
 export type OutflowType = (typeof OutflowType)[keyof typeof OutflowType];
-
-/** Inflow submit type expected by the SDK API. */
-export const InflowSubmitType = {
-  DEPOSIT: "DEPOSIT",
-  REPAY: "REPAY",
-} as const;
-/** Inflow submit type expected by the SDK API. */
-export type InflowSubmitType =
-  (typeof InflowSubmitType)[keyof typeof InflowSubmitType];
 
 /** Wallet address and chain pair linked to a Liquidium profile. */
 export interface Wallet {

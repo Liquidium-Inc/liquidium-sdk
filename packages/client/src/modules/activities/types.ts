@@ -25,7 +25,7 @@ export const ActivityKind = {
   deposit: "deposit",
   repayment: "repayment",
   borrow: "borrow",
-  withdraw: "withdraw",
+  withdrawal: "withdrawal",
 } as const;
 /** Consumer-facing activity kind. */
 export type ActivityKind = (typeof ActivityKind)[keyof typeof ActivityKind];
@@ -46,10 +46,10 @@ export interface ActivityTopUp {
 export type InflowActivityKind =
   | typeof ActivityKind.deposit
   | typeof ActivityKind.repayment;
-/** Activity kind emitted by borrow or withdraw outflows. */
+/** Activity kind emitted by borrow or withdrawal outflows. */
 export type OutflowActivityKind =
   | typeof ActivityKind.borrow
-  | typeof ActivityKind.withdraw;
+  | typeof ActivityKind.withdrawal;
 
 interface BaseActivity {
   id: string;
@@ -74,11 +74,11 @@ export interface InflowActivity extends BaseActivity {
   topUp?: ActivityTopUp;
 }
 
-/** Borrow or withdraw activity returned by the activity API. */
+/** Borrow or withdrawal activity returned by the activity API. */
 export interface OutflowActivity extends BaseActivity {
   /** Direction discriminator. */
   direction: typeof ActivityDirection.outflow;
-  /** Borrow or withdraw kind. */
+  /** Borrow or withdrawal kind. */
   kind: OutflowActivityKind;
   /** Shared consumer-facing lifecycle status. */
   status: LiquidiumStatus;
@@ -91,7 +91,7 @@ export type Activity = InflowActivity | OutflowActivity;
 
 /** Shared request fields for listing activities. */
 export interface BaseListActivitiesRequest {
-  /** Optional lifecycle filter; defaults to `all`. */
+  /** Optional lifecycle filter; defaults to `active`. */
   filter?: ActivityFilter;
 }
 

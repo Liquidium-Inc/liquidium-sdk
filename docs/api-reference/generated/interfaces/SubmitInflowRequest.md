@@ -6,9 +6,13 @@
 
 # Interface: SubmitInflowRequest
 
-Defined in: [packages/client/src/modules/lending/types.ts:303](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L303)
+Defined in: [packages/client/src/modules/lending/types.ts:316](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L316)
 
-Body for `SupplyFlow.submit` / `lending.submitInflow`.
+Body for direct `lending.submitInflow`.
+
+## Extends
+
+- [`SubmitSupplyFlowInflowRequest`](SubmitSupplyFlowInflowRequest.md)
 
 ## Properties
 
@@ -16,9 +20,23 @@ Body for `SupplyFlow.submit` / `lending.submitInflow`.
 
 > `optional` **chain?**: [`Chain`](../type-aliases/Chain.md)
 
-Defined in: [packages/client/src/modules/lending/types.ts:307](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L307)
+Defined in: [packages/client/src/modules/lending/types.ts:312](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L312)
 
 Chain where the transaction was broadcast, when not implied by the flow.
+
+#### Inherited from
+
+[`SubmitSupplyFlowInflowRequest`](SubmitSupplyFlowInflowRequest.md).[`chain`](SubmitSupplyFlowInflowRequest.md#chain)
+
+***
+
+### operation
+
+> **operation**: [`InflowOperation`](../type-aliases/InflowOperation.md)
+
+Defined in: [packages/client/src/modules/lending/types.ts:318](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L318)
+
+Deposit or repayment operation represented by the transaction.
 
 ***
 
@@ -26,16 +44,10 @@ Chain where the transaction was broadcast, when not implied by the flow.
 
 > **txid**: `string`
 
-Defined in: [packages/client/src/modules/lending/types.ts:305](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L305)
+Defined in: [packages/client/src/modules/lending/types.ts:310](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L310)
 
 Broadcast transaction id or hash.
 
-***
+#### Inherited from
 
-### type?
-
-> `optional` **type?**: [`InflowSubmitType`](../type-aliases/InflowSubmitType.md)
-
-Defined in: [packages/client/src/modules/lending/types.ts:309](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L309)
-
-Deposit or repayment submit type, when not implied by the flow.
+[`SubmitSupplyFlowInflowRequest`](SubmitSupplyFlowInflowRequest.md).[`txid`](SubmitSupplyFlowInflowRequest.md#txid)

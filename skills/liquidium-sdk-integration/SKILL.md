@@ -224,7 +224,7 @@ client.lending.borrow(...);
 client.lending.withdraw(...);
 client.lending.supply(...);
 client.lending.estimateInflowFee({ asset: "USDT", chain: "ETH" });
-client.lending.submitInflow({ txid, chain: "BTC", type: "DEPOSIT" });
+client.lending.submitInflow({ txid, chain: "BTC", operation: "deposit" });
 ```
 
 ### positions
@@ -248,7 +248,7 @@ for UI formatting. Do not add `earnedInterest` to the returned amount.
 
 ### activities
 
-Receipt status and active/completed/all activity lists. Lists default to all activities. Requires `apiBaseUrl`.
+Receipt status and active/completed/all activity lists. Lists default to active activities. Requires `apiBaseUrl`.
 
 ```ts
 client.activities.list({ profileId });
@@ -258,21 +258,16 @@ client.activities.getStatus({ profileId, id });
 
 ### history
 
-User or pool history. Requires `apiBaseUrl`.
+User transaction and liquidation history. Requires `apiBaseUrl`.
 
 ```ts
 client.history.getUserTransactionHistory(profileId, filters?);
 client.history.getLiquidationHistory(profileId, filters?);
-client.history.getPoolHistory(poolId, window?);
-client.history.getPoolConfigHistory(poolId, cursor?);
-client.history.getBorrowRateHistory(poolId, window?);
 ```
 
 User history entries expose `txids?: string[]`; do not expect separate inbound
-or outbound txid fields. Pool history entries are rate/utilization samples.
-Pool config history entries are reserve configuration-change snapshots
-(`type: "configuration_change"`) with pool config, caps, indexes, liquidity,
-debt, and `sameAssetBorrowing` fields.
+or outbound txid fields. Transaction history uses canonical operation names:
+`deposit`, `borrow`, `repayment`, `withdrawal`, and `liquidation`.
 
 ## Rate and Amount Formatting
 
@@ -280,8 +275,7 @@ Amount fields are `bigint` base units. Format them with the asset or pool
 `decimals`; do not display raw base-unit values as user amounts.
 
 Rate and risk-ratio fields such as `lendingRate`, `borrowingRate`,
-`utilizationRate`, `maxLtv`, `liquidationThreshold`, pool-history rates, and
-reserve-history rates are fixed-point values scaled by `rateDecimals`, usually
+`utilizationRate`, `maxLtv`, and `liquidationThreshold` are fixed-point values scaled by `rateDecimals`, usually
 `27`. Do not render raw scaled values as percentages.
 
 Never convert a raw scaled rate directly to display text or append `%` to it.

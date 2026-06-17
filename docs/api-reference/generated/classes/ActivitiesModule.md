@@ -66,7 +66,7 @@ The activity when found, otherwise `{ found: false }` with the requested id.
 
 Defined in: [packages/client/src/modules/activities/activities.ts:86](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/activities.ts#L86)
 
-Lists profile activities. Defaults to all activities.
+Lists profile activities. Defaults to active activities.
 
 Uses the Liquidium SDK API.
 

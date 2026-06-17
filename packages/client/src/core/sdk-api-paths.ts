@@ -2,13 +2,7 @@
  * Path and query key constants for the Liquidium SDK HTTP API.
  */
 
-const SDK_API_VERSION = {
-  activities: "v2",
-  history: "v1",
-  historyUsers: "v2",
-  inflow: "v1",
-  instantLoans: "v1",
-} as const;
+const SDK_API_VERSION = "v2";
 
 export const SdkApiQueryParam = {
   cursor: "cursor",
@@ -41,44 +35,10 @@ interface BuildInstantLoanCollateralHintPathRequest {
   loanId: bigint;
 }
 
-const ACTIVITIES = `/${SDK_API_VERSION.activities}/activities`;
-const HISTORY_POOL = `/${SDK_API_VERSION.history}/history/pool`;
-const HISTORY_POOL_CONFIG = `/${SDK_API_VERSION.history}/history/pool-config`;
-const HISTORY_RATES = `/${SDK_API_VERSION.history}/history/rates`;
-const HISTORY_USERS = `/${SDK_API_VERSION.historyUsers}/history/users`;
-const INFLOW = `/${SDK_API_VERSION.inflow}/inflow`;
-const INSTANT_LOANS = `/${SDK_API_VERSION.instantLoans}/instant-loans`;
-
-export function buildHistoryPoolPath(
-  poolId: string,
-  query: URLSearchParams
-): string {
-  const base = `${HISTORY_POOL}/${encodeURIComponent(poolId)}`;
-  const qs = query.toString();
-  return qs ? `${base}?${qs}` : base;
-}
-
-export function buildHistoryPoolConfigPath(
-  poolId: string,
-  cursor?: string
-): string {
-  const base = `${HISTORY_POOL_CONFIG}/${encodeURIComponent(poolId)}`;
-  if (!cursor) {
-    return base;
-  }
-
-  const query = new URLSearchParams({ [SdkApiQueryParam.cursor]: cursor });
-  return `${base}?${query.toString()}`;
-}
-
-export function buildHistoryRatesPath(
-  poolId: string,
-  query: URLSearchParams
-): string {
-  const base = `${HISTORY_RATES}/${encodeURIComponent(poolId)}`;
-  const qs = query.toString();
-  return qs ? `${base}?${qs}` : base;
-}
+const ACTIVITIES = `/${SDK_API_VERSION}/activities`;
+const HISTORY_USERS = `/${SDK_API_VERSION}/history/users`;
+const INFLOW = `/${SDK_API_VERSION}/inflow`;
+const INSTANT_LOANS = `/${SDK_API_VERSION}/instant-loans`;
 
 export function buildHistoryUserTransactionsPath(
   user: string,

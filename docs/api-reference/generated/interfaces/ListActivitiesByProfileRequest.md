@@ -22,7 +22,7 @@ Activity list request scoped to a Liquidium profile.
 
 Defined in: [packages/client/src/modules/activities/types.ts:95](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L95)
 
-Optional lifecycle filter; defaults to `all`.
+Optional lifecycle filter; defaults to `active`.
 
 #### Inherited from
 

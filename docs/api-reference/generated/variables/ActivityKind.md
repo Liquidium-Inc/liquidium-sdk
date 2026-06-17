@@ -26,6 +26,6 @@ Consumer-facing activity kind.
 
 > `readonly` **repayment**: `"repayment"` = `"repayment"`
 
-### withdraw
+### withdrawal
 
-> `readonly` **withdraw**: `"withdraw"` = `"withdraw"`
+> `readonly` **withdrawal**: `"withdrawal"` = `"withdrawal"`

@@ -1,8 +1,7 @@
-import type { LiquidiumStatus } from "../../core/status";
+import type { LiquidiumOperation, LiquidiumStatus } from "../../core/status";
 import type {
   Asset,
   Chain,
-  InflowSubmitType,
   MarketAsset,
   MarketChain,
   OutflowType,
@@ -59,7 +58,7 @@ export interface ExternalOutflowReceiver {
 }
 
 /**
- * Receipt for a borrow or withdraw submitted to the lending canister.
+ * Receipt for a borrow or withdrawal outflow submitted to the lending canister.
  *
  * `id` is the outflow reference to show users immediately. `txid` may be unset until
  * the protocol assigns a chain transaction id. `outflowRef` is an optional protocol reference.
@@ -67,7 +66,7 @@ export interface ExternalOutflowReceiver {
 export interface OutflowDetails {
   /** Protocol outflow id. */
   id: string;
-  /** Borrow, withdraw, or fee-claim discriminator. */
+  /** Borrow, withdrawal, or fee-claim discriminator. */
   outflowType: OutflowType;
   /** Optional protocol outflow reference. */
   outflowRef?: string;
@@ -89,7 +88,7 @@ export type BorrowOutflowDetails = OutflowDetails & {
 
 /** Withdraw receipt with an external-chain receiver. */
 export type WithdrawOutflowDetails = OutflowDetails & {
-  outflowType: "withdraw";
+  outflowType: "withdrawal";
   receiver: ExternalOutflowReceiver;
   /** Shared lifecycle status for the withdraw outflow receipt. */
   status: LiquidiumStatus;
@@ -296,17 +295,27 @@ export interface SupplyFlow {
   /** Shared lifecycle status for the supply flow. */
   status: LiquidiumStatus;
   /** Registers a broadcast transaction id when the flow requires an indexing hint. */
-  submit(request: SubmitInflowRequest): Promise<SubmitInflowResponse>;
+  submit(request: SubmitSupplyFlowInflowRequest): Promise<SubmitInflowResponse>;
 }
 
-/** Body for `SupplyFlow.submit` / `lending.submitInflow`. */
-export interface SubmitInflowRequest {
+/** Canonical inflow operation accepted by direct inflow submission. */
+export type InflowOperation = Extract<
+  LiquidiumOperation,
+  "deposit" | "repayment"
+>;
+
+/** Body for `SupplyFlow.submit`. The supply flow supplies the inflow operation. */
+export interface SubmitSupplyFlowInflowRequest {
   /** Broadcast transaction id or hash. */
   txid: string;
   /** Chain where the transaction was broadcast, when not implied by the flow. */
   chain?: Chain;
-  /** Deposit or repayment submit type, when not implied by the flow. */
-  type?: InflowSubmitType;
+}
+
+/** Body for direct `lending.submitInflow`. */
+export interface SubmitInflowRequest extends SubmitSupplyFlowInflowRequest {
+  /** Deposit or repayment operation represented by the transaction. */
+  operation: InflowOperation;
 }
 
 /** Acknowledgement from the SDK API after submitting an inflow hint. */

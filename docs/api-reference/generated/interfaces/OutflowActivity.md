@@ -8,7 +8,7 @@
 
 Defined in: [packages/client/src/modules/activities/types.ts:78](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L78)
 
-Borrow or withdraw activity returned by the activity API.
+Borrow or withdrawal activity returned by the activity API.
 
 ## Extends
 
@@ -80,7 +80,7 @@ Defined in: [packages/client/src/modules/activities/types.ts:55](https://github.
 
 Defined in: [packages/client/src/modules/activities/types.ts:82](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L82)
 
-Borrow or withdraw kind.
+Borrow or withdrawal kind.
 
 ***
 

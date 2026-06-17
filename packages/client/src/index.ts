@@ -29,7 +29,6 @@ export {
   Asset,
   Chain,
   Environment,
-  InflowSubmitType,
   OutflowType,
   SupplyAction,
 } from "./core/types";
@@ -86,17 +85,7 @@ export {
   ActivityKind,
 } from "./modules/activities";
 export type {
-  ApySample,
-  BorrowApyHistoryRequest,
-  HistoryEntry,
   PaginatedResponse,
-  PoolConfigHistoryEntry,
-  PoolConfigHistoryEntryApiItem,
-  PoolConfigHistoryResponse,
-  PoolHistoryEntry,
-  PoolHistoryEntryApiItem,
-  PoolHistoryRequest,
-  PoolHistoryResponse,
   UserHistoryEntry,
   UserHistoryEntryApiItem,
   UserHistoryResponse,
@@ -105,6 +94,7 @@ export type {
   UserLiquidationHistoryFilters,
   UserTransactionHistoryEntry,
   UserTransactionHistoryFilters,
+  UserTransactionHistoryState,
   UserTransactionHistoryType,
 } from "./modules/history";
 export { HistoryModule } from "./modules/history";
@@ -166,12 +156,14 @@ export type {
   GetEvmSupplyContextRequest,
   IcrcAccountSupplyTarget,
   InflowFeeEstimate,
+  InflowOperation,
   ManualTransferSupplyFlowRequest,
   NativeAddressSupplyTarget,
   OutflowDetails,
   OutflowReceiver,
   SubmitInflowRequest,
   SubmitInflowResponse,
+  SubmitSupplyFlowInflowRequest,
   SupplyFlow,
   SupplyFlowRequest,
   SupplyTarget,
