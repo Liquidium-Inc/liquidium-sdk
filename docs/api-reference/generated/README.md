@@ -24,6 +24,8 @@
 
 ## Interfaces
 
+- [AccountIdentifierAccount](interfaces/AccountIdentifierAccount.md)
+- [AccountIdentifierOutflowReceiver](interfaces/AccountIdentifierOutflowReceiver.md)
 - [ActivityStatusFoundResponse](interfaces/ActivityStatusFoundResponse.md)
 - [ActivityStatusNotFoundResponse](interfaces/ActivityStatusNotFoundResponse.md)
 - [ActivityTopUp](interfaces/ActivityTopUp.md)
@@ -61,7 +63,9 @@
 - [GetDepositAddressRequest](interfaces/GetDepositAddressRequest.md)
 - [GetEvmSupplyContextRequest](interfaces/GetEvmSupplyContextRequest.md)
 - [HealthFactor](interfaces/HealthFactor.md)
+- [IcrcAccount](interfaces/IcrcAccount.md)
 - [IcrcAccountSupplyTarget](interfaces/IcrcAccountSupplyTarget.md)
+- [IcrcOutflowReceiver](interfaces/IcrcOutflowReceiver.md)
 - [InflowActivity](interfaces/InflowActivity.md)
 - [InflowFeeEstimate](interfaces/InflowFeeEstimate.md)
 - [InstantLoan](interfaces/InstantLoan.md)
@@ -98,9 +102,9 @@
 - [MaxRepayAmount](interfaces/MaxRepayAmount.md)
 - [NativeAccount](interfaces/NativeAccount.md)
 - [NativeAddressSupplyTarget](interfaces/NativeAddressSupplyTarget.md)
+- [NativeOutflowReceiver](interfaces/NativeOutflowReceiver.md)
 - [OutflowActivity](interfaces/OutflowActivity.md)
 - [OutflowDetails](interfaces/OutflowDetails.md)
-- [OutflowReceiver](interfaces/OutflowReceiver.md)
 - [PaginatedResponse](interfaces/PaginatedResponse.md)
 - [Pool](interfaces/Pool.md)
 - [PoolConfigHistoryEntry](interfaces/PoolConfigHistoryEntry.md)
@@ -180,6 +184,7 @@
 - [MinimumBorrowAsset](type-aliases/MinimumBorrowAsset.md)
 - [OutflowActivityKind](type-aliases/OutflowActivityKind.md)
 - [OutflowActivityStatus](type-aliases/OutflowActivityStatus.md)
+- [OutflowReceiver](type-aliases/OutflowReceiver.md)
 - [OutflowType](type-aliases/OutflowType.md)
 - [PoolHistoryRequest](type-aliases/PoolHistoryRequest.md)
 - [SupplyAction](type-aliases/SupplyAction.md)

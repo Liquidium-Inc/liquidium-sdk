@@ -8,6 +8,6 @@
 
 > **InstantLoanEventType** = [`InstantLoanCreatedEventType`](../interfaces/InstantLoanCreatedEventType.md) \| [`InstantLoanFullLendWithdrawalRequestedEventType`](../interfaces/InstantLoanFullLendWithdrawalRequestedEventType.md) \| [`InstantLoanBorrowRequestedEventType`](../interfaces/InstantLoanBorrowRequestedEventType.md) \| [`InstantLoanDepositTimerExceededEventType`](../interfaces/InstantLoanDepositTimerExceededEventType.md) \| [`InstantLoanStuckFundsWithdrawalRequestedEventType`](../interfaces/InstantLoanStuckFundsWithdrawalRequestedEventType.md) \| [`InstantLoanProfileWarmedEventType`](../interfaces/InstantLoanProfileWarmedEventType.md) \| [`InstantLoanRepayCompleteEventType`](../interfaces/InstantLoanRepayCompleteEventType.md) \| [`InstantLoanDepositTimerStartedEventType`](../interfaces/InstantLoanDepositTimerStartedEventType.md)
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:303](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L303)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:327](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L327)
 
 Direct canister event payload returned by instant-loans event queries.

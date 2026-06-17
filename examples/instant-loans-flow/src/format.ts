@@ -446,6 +446,12 @@ function formatInstantLoanAccount(
   if (account.type === "External") {
     return `${account.chain ?? "external"}: ${account.address}`;
   }
+  if (account.type === "AccountIdentifier") {
+    return `ICP account identifier: ${account.address}`;
+  }
+  if (account.type === "Icrc") {
+    return `ICRC account: ${account.address}`;
+  }
 
   return `Native principal: ${account.principal}`;
 }

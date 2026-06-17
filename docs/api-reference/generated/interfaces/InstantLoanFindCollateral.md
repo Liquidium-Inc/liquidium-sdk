@@ -6,7 +6,7 @@
 
 # Interface: InstantLoanFindCollateral
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:153](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L153)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:177](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L177)
 
 Collateral leg returned by instant-loan search.
 
@@ -16,7 +16,7 @@ Collateral leg returned by instant-loan search.
 
 > **amount**: `bigint`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:159](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L159)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:183](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L183)
 
 Intended credited collateral amount in base units, before inflow fees.
 
@@ -26,7 +26,7 @@ Intended credited collateral amount in base units, before inflow fees.
 
 > **asset**: [`InstantLoanAsset`](../type-aliases/InstantLoanAsset.md)
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:157](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L157)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:181](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L181)
 
 Asset the user deposits as collateral.
 
@@ -36,6 +36,6 @@ Asset the user deposits as collateral.
 
 > **poolId**: `string`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:155](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L155)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:179](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L179)
 
 Principal text of the collateral pool.

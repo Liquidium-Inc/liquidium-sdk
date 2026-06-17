@@ -1,5 +1,5 @@
+import { encodeIcrcAccount } from "@icp-sdk/canisters/ledger/icrc";
 import type {
-  InstantLoanAccountType,
   InstantLoanAuthorisation,
   InstantLoanLeg as InstantLoanCanisterLeg,
   InstantLoansCanisterError,
@@ -851,13 +851,44 @@ function addressFromAccountInput(account: string | ExternalAccount): string {
 }
 
 function accountFromCanister(
-  account: InstantLoanAccountType
+  account: DecodedInstantLoanCanisterRecord["borrow_destination"]
 ): InstantLoanAccount {
   if ("Native" in account) {
     return { type: "Native", principal: account.Native.toText() };
   }
+  if ("AccountIdentifier" in account) {
+    return {
+      type: "AccountIdentifier",
+      address: account.AccountIdentifier,
+    };
+  }
+  if ("Icrc" in account) {
+    const subaccount = normalizeOptionalSubaccount(account.Icrc.subaccount[0]);
+
+    return {
+      type: "Icrc",
+      owner: account.Icrc.owner.toText(),
+      subaccount,
+      address: encodeIcrcAccount({
+        owner: account.Icrc.owner,
+        subaccount,
+      }),
+    };
+  }
 
   return { type: "External", address: account.External };
+}
+
+function normalizeOptionalSubaccount(
+  subaccount: Uint8Array | number[] | undefined
+): Uint8Array | undefined {
+  if (!subaccount) {
+    return undefined;
+  }
+
+  return subaccount instanceof Uint8Array
+    ? subaccount
+    : Uint8Array.from(subaccount);
 }
 
 function mapInstantLoanEvent(

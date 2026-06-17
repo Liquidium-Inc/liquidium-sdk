@@ -6,9 +6,10 @@ import {
   type DepositAccountErrors,
 } from "../../../core/canisters/deposit-accounts/actor";
 import {
-  createLendingActor,
-  type LendingPoolRecord,
-} from "../../../core/canisters/lending/actor";
+  createFlexibleLendingActor,
+  type DecodedPool,
+  decodeFlexiblePool,
+} from "../../../core/canisters/lending/flexible-actor";
 import { LiquidiumError, LiquidiumErrorCode } from "../../../core/errors";
 import {
   USDC_CONTRACT_ADDRESS,
@@ -17,7 +18,6 @@ import {
 import type { CanisterContext } from "../../../core/transports/canister-context";
 import { Asset, Chain, type SupplyAction } from "../../../core/types";
 import { encodeInflowSubaccount } from "../../../core/utils/inflow-subaccount";
-import { getVariantKey } from "../../../core/utils/variant";
 import {
   type IcrcAccountSupplyTarget,
   type NativeAddressSupplyTarget,
@@ -52,8 +52,8 @@ export async function resolveSupplyTarget(
   request: InternalSupplyTargetRequest
 ): Promise<SupplyTarget> {
   const selectedPool = await getPoolById(canisterContext, request.poolId);
-  const asset = getVariantKey(selectedPool.asset);
-  const chain = getVariantKey(selectedPool.chain);
+  const asset = selectedPool.asset;
+  const chain = selectedPool.chain;
   const mechanism = resolveSupplyMechanism({
     asset,
     chain,
@@ -183,18 +183,19 @@ export function mapDepositAccountErrorToLiquidiumError(
 async function getPoolById(
   canisterContext: CanisterContext,
   poolId: string
-): Promise<LendingPoolRecord> {
-  const pools = await createLendingActor(canisterContext).list_pools();
+): Promise<DecodedPool> {
+  const pools = await createFlexibleLendingActor(canisterContext).list_pools();
   const selectedPool = pools.find((pool) => pool.principal.toText() === poolId);
 
-  if (!selectedPool) {
+  const decodedPool = selectedPool ? decodeFlexiblePool(selectedPool) : null;
+  if (!decodedPool) {
     throw new LiquidiumError(
       LiquidiumErrorCode.POOL_NOT_FOUND,
       `Pool not found: ${poolId}`
     );
   }
 
-  return selectedPool;
+  return decodedPool;
 }
 
 async function getNativeAddressSupplyTarget(

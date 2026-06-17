@@ -6,7 +6,7 @@
 
 # Interface: InstantLoanTerms
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:390](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L390)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:414](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L414)
 
 Immutable terms selected for an instant loan.
 
@@ -16,7 +16,7 @@ Immutable terms selected for an instant loan.
 
 > **depositWindowSeconds**: `bigint`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:394](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L394)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:418](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L418)
 
 Seconds allowed for the collateral deposit before timeout.
 
@@ -26,6 +26,6 @@ Seconds allowed for the collateral deposit before timeout.
 
 > **ltvMaxBps**: `bigint`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:392](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L392)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:416](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L416)
 
 Maximum loan-to-value ratio in basis points.

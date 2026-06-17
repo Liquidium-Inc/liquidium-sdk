@@ -6,7 +6,7 @@
 
 # Interface: InstantLoanEvent
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:218](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L218)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:242](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L242)
 
 Direct canister event returned by the instant-loans query API.
 
@@ -16,7 +16,7 @@ Direct canister event returned by the instant-loans query API.
 
 > **eventType**: [`InstantLoanEventType`](../type-aliases/InstantLoanEventType.md)
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:223](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L223)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:247](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L247)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [packages/client/src/modules/instant-loans/types.ts:223](https://git
 
 > **id**: `bigint`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:219](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L219)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:243](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L243)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [packages/client/src/modules/instant-loans/types.ts:219](https://git
 
 > **schemaVersion**: `number`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:220](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L220)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:244](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L244)
 
 ***
 
@@ -40,6 +40,6 @@ Defined in: [packages/client/src/modules/instant-loans/types.ts:220](https://git
 
 > **timestamp**: `bigint`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:222](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L222)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:246](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L246)
 
 Unix event timestamp in seconds.
