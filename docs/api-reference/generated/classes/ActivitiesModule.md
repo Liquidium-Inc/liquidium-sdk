@@ -76,7 +76,7 @@ Uses the Liquidium SDK API.
 
 [`ListActivitiesRequest`](../type-aliases/ListActivitiesRequest.md)
 
-Profile id or instant-loan short reference plus optional state filter.
+Profile id or instant-loan short reference plus optional lifecycle filter.
 
 #### Returns
 

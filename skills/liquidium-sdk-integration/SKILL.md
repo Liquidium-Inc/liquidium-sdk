@@ -248,9 +248,10 @@ for UI formatting. Do not add `earnedInterest` to the returned amount.
 
 ### activities
 
-Receipt status and active/completed/all activity lists. Requires `apiBaseUrl`.
+Receipt status and active/completed/all activity lists. Lists default to all activities. Requires `apiBaseUrl`.
 
 ```ts
+client.activities.list({ profileId });
 client.activities.list({ profileId, filter: "all" });
 client.activities.getStatus({ profileId, id });
 ```

@@ -80,7 +80,7 @@ export class ActivitiesModule {
    *
    * Uses the Liquidium SDK API.
    *
-   * @param request - Profile id or instant-loan short reference plus optional state filter.
+   * @param request - Profile id or instant-loan short reference plus optional lifecycle filter.
    * @returns Activities owned by the resolved profile.
    */
   async list(request: ListActivitiesRequest): Promise<Activity[]> {
@@ -206,8 +206,6 @@ function mapActivity(wire: ActivityWire): Activity {
       direction: ActivityDirection.inflow,
       kind,
       status,
-      confirmations: status.confirmations,
-      requiredConfirmations: status.requiredConfirmations,
       ...(topUp ? { topUp } : {}),
       amount: parseBigInt(amount, "activity amount"),
     };
@@ -220,8 +218,6 @@ function mapActivity(wire: ActivityWire): Activity {
     direction: ActivityDirection.outflow,
     kind,
     status,
-    confirmations: status.confirmations,
-    requiredConfirmations: status.requiredConfirmations,
     amount: parseBigInt(amount, "activity amount"),
   };
 }

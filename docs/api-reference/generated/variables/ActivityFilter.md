@@ -10,7 +10,7 @@
 
 Defined in: [packages/client/src/modules/activities/types.ts:5](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L5)
 
-Activity list state filter.
+Activity list lifecycle filter.
 
 ## Type Declaration
 

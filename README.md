@@ -265,7 +265,7 @@ type LiquidiumStatus = {
 
 `action_required` means the user or app must do something, such as sending funds. `confirming` means a tx is known but still needs confirmations. `processing` means confirmations are sufficient and Liquidium or the protocol is still processing. `active` means the loan is live and waiting for the next repayment action.
 
-Use activities to track collateral deposits, borrow outflows, repayment deposits, confirmations, and fee top-ups. The activities module accepts the saved instant-loan reference and resolves the generated profile for you:
+Use activities to track collateral deposits, borrow outflows, repayment deposits, confirmations, and fee top-ups. Activity confirmations are exposed on `activity.status`. Activity lists default to all items; pass `filter: "active"` for active-only polling. The activities module accepts the saved instant-loan reference and resolves the generated profile for you:
 
 ```ts
 const activities = await client.activities.list({

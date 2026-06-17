@@ -386,16 +386,16 @@ const SDK_METHODS: MethodDefinition[] = [
     id: "history.getUserTransactionHistory",
     label: "history.getUserTransactionHistory",
     defaultArgs:
-      '{\n  "user": "aaaaa-aa",\n  "market": "",\n  "filters": {\n    "limit": 20\n  }\n}',
+      '{\n  "user": "aaaaa-aa",\n  "filters": {\n    "market": "",\n    "limit": 20\n  }\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
       const filters = expectOptionalObject(args.filters, "filters");
 
       return await client.history.getUserTransactionHistory(
         expectNonEmptyString(args.user, "user"),
-        expectOptionalString(args.market, "market"),
         filters
           ? {
+              market: expectOptionalString(filters.market, "filters.market"),
               cursor: expectOptionalString(filters.cursor, "filters.cursor"),
               from: expectOptionalString(filters.from, "filters.from"),
               to: expectOptionalString(filters.to, "filters.to"),
@@ -408,12 +408,19 @@ const SDK_METHODS: MethodDefinition[] = [
   {
     id: "history.getLiquidationHistory",
     label: "history.getLiquidationHistory",
-    defaultArgs: '{\n  "user": "aaaaa-aa",\n  "market": ""\n}',
+    defaultArgs:
+      '{\n  "user": "aaaaa-aa",\n  "filters": {\n    "market": ""\n  }\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
+      const filters = expectOptionalObject(args.filters, "filters");
+
       return await client.history.getLiquidationHistory(
         expectNonEmptyString(args.user, "user"),
-        expectOptionalString(args.market, "market")
+        filters
+          ? {
+              market: expectOptionalString(filters.market, "filters.market"),
+            }
+          : {}
       );
     },
   },

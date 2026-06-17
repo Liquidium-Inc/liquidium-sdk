@@ -149,7 +149,6 @@
 
 ## Type Aliases
 
-- [ActivitiesRequest](type-aliases/ActivitiesRequest.md)
 - [Activity](type-aliases/Activity.md)
 - [ActivityDirection](type-aliases/ActivityDirection.md)
 - [ActivityFilter](type-aliases/ActivityFilter.md)
@@ -189,7 +188,6 @@
 - [TransferSupplyFlowRequest](type-aliases/TransferSupplyFlowRequest.md)
 - [UserHistoryEntry](type-aliases/UserHistoryEntry.md)
 - [UserHistoryType](type-aliases/UserHistoryType.md)
-- [UserLiquidationHistoryType](type-aliases/UserLiquidationHistoryType.md)
 - [UserTransactionHistoryType](type-aliases/UserTransactionHistoryType.md)
 - [WalletAction](type-aliases/WalletAction.md)
 - [WalletExecutionKind](type-aliases/WalletExecutionKind.md)

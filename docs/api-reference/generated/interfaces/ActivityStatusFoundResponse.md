@@ -6,7 +6,7 @@
 
 # Interface: ActivityStatusFoundResponse
 
-Defined in: [packages/client/src/modules/activities/types.ts:145](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L145)
+Defined in: [packages/client/src/modules/activities/types.ts:143](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L143)
 
 Successful activity status lookup result.
 
@@ -16,7 +16,7 @@ Successful activity status lookup result.
 
 > **activity**: [`Activity`](../type-aliases/Activity.md)
 
-Defined in: [packages/client/src/modules/activities/types.ts:149](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L149)
+Defined in: [packages/client/src/modules/activities/types.ts:147](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L147)
 
 Matched activity.
 
@@ -26,6 +26,6 @@ Matched activity.
 
 > **found**: `true`
 
-Defined in: [packages/client/src/modules/activities/types.ts:147](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L147)
+Defined in: [packages/client/src/modules/activities/types.ts:145](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L145)
 
 Indicates the activity was found.

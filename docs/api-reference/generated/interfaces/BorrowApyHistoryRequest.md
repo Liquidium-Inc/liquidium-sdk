@@ -6,7 +6,7 @@
 
 # Interface: BorrowApyHistoryRequest
 
-Defined in: [packages/client/src/modules/history/types.ts:85](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L85)
+Defined in: [packages/client/src/modules/history/types.ts:79](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L79)
 
 Time-window and pagination options for borrow APY history.
 
@@ -16,7 +16,7 @@ Time-window and pagination options for borrow APY history.
 
 > `optional` **cursor?**: `string`
 
-Defined in: [packages/client/src/modules/history/types.ts:87](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L87)
+Defined in: [packages/client/src/modules/history/types.ts:81](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L81)
 
 Pagination cursor from a previous response.
 
@@ -26,7 +26,7 @@ Pagination cursor from a previous response.
 
 > `optional` **from?**: `string`
 
-Defined in: [packages/client/src/modules/history/types.ts:91](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L91)
+Defined in: [packages/client/src/modules/history/types.ts:85](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L85)
 
 Inclusive start timestamp filter accepted by the SDK API.
 
@@ -36,7 +36,7 @@ Inclusive start timestamp filter accepted by the SDK API.
 
 > `optional` **limit?**: `number`
 
-Defined in: [packages/client/src/modules/history/types.ts:89](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L89)
+Defined in: [packages/client/src/modules/history/types.ts:83](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L83)
 
 Maximum number of samples to return.
 
@@ -46,6 +46,6 @@ Maximum number of samples to return.
 
 > `optional` **to?**: `string`
 
-Defined in: [packages/client/src/modules/history/types.ts:93](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L93)
+Defined in: [packages/client/src/modules/history/types.ts:87](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L87)
 
 Inclusive end timestamp filter accepted by the SDK API.

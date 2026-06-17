@@ -18,9 +18,7 @@ export const SdkApiQueryParam = {
   market: "market",
   poolId: "poolId",
   profileId: "profileId",
-  state: "state",
   states: "states",
-  statuses: "statuses",
   to: "to",
   types: "types",
 } as const;

@@ -6,7 +6,7 @@
 
 # Interface: GetActivityStatusByProfileRequest
 
-Defined in: [packages/client/src/modules/activities/types.ts:126](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L126)
+Defined in: [packages/client/src/modules/activities/types.ts:124](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L124)
 
 Activity status lookup scoped to a Liquidium profile.
 
@@ -20,7 +20,7 @@ Activity status lookup scoped to a Liquidium profile.
 
 > **id**: `string`
 
-Defined in: [packages/client/src/modules/activities/types.ts:122](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L122)
+Defined in: [packages/client/src/modules/activities/types.ts:120](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L120)
 
 Activity or receipt id to look up.
 
@@ -34,6 +34,6 @@ Activity or receipt id to look up.
 
 > **profileId**: `string`
 
-Defined in: [packages/client/src/modules/activities/types.ts:129](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L129)
+Defined in: [packages/client/src/modules/activities/types.ts:127](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L127)
 
 Profile principal text that owns the activity.

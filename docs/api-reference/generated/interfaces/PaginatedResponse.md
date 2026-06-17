@@ -6,7 +6,7 @@
 
 # Interface: PaginatedResponse\<T\>
 
-Defined in: [packages/client/src/modules/history/types.ts:237](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L237)
+Defined in: [packages/client/src/modules/history/types.ts:231](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L231)
 
 Generic SDK API paginated response.
 
@@ -22,7 +22,7 @@ Generic SDK API paginated response.
 
 > **items**: `T`[]
 
-Defined in: [packages/client/src/modules/history/types.ts:239](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L239)
+Defined in: [packages/client/src/modules/history/types.ts:233](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L233)
 
 Items in the current page.
 
@@ -32,6 +32,6 @@ Items in the current page.
 
 > `optional` **nextCursor?**: `string`
 
-Defined in: [packages/client/src/modules/history/types.ts:241](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L241)
+Defined in: [packages/client/src/modules/history/types.ts:235](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L235)
 
 Cursor for the next page when more results are available.

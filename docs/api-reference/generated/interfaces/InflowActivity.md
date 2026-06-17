@@ -6,7 +6,7 @@
 
 # Interface: InflowActivity
 
-Defined in: [packages/client/src/modules/activities/types.ts:68](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L68)
+Defined in: [packages/client/src/modules/activities/types.ts:66](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L66)
 
 Deposit or repayment activity returned by the activity API.
 
@@ -52,23 +52,11 @@ Defined in: [packages/client/src/modules/activities/types.ts:58](https://github.
 
 ***
 
-### confirmations
-
-> **confirmations**: `number` \| `null`
-
-Defined in: [packages/client/src/modules/activities/types.ts:63](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L63)
-
-#### Inherited from
-
-`BaseActivity.confirmations`
-
-***
-
 ### direction
 
 > **direction**: `"inflow"`
 
-Defined in: [packages/client/src/modules/activities/types.ts:70](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L70)
+Defined in: [packages/client/src/modules/activities/types.ts:68](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L68)
 
 Direction discriminator.
 
@@ -90,7 +78,7 @@ Defined in: [packages/client/src/modules/activities/types.ts:55](https://github.
 
 > **kind**: [`InflowActivityKind`](../type-aliases/InflowActivityKind.md)
 
-Defined in: [packages/client/src/modules/activities/types.ts:72](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L72)
+Defined in: [packages/client/src/modules/activities/types.ts:70](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L70)
 
 Deposit or repayment kind.
 
@@ -108,23 +96,11 @@ Defined in: [packages/client/src/modules/activities/types.ts:56](https://github.
 
 ***
 
-### requiredConfirmations
-
-> **requiredConfirmations**: `number` \| `null`
-
-Defined in: [packages/client/src/modules/activities/types.ts:64](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L64)
-
-#### Inherited from
-
-`BaseActivity.requiredConfirmations`
-
-***
-
 ### status
 
 > **status**: [`LiquidiumStatus`](LiquidiumStatus.md)
 
-Defined in: [packages/client/src/modules/activities/types.ts:74](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L74)
+Defined in: [packages/client/src/modules/activities/types.ts:72](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L72)
 
 Shared consumer-facing lifecycle status.
 
@@ -146,7 +122,7 @@ Defined in: [packages/client/src/modules/activities/types.ts:60](https://github.
 
 > `optional` **topUp?**: [`ActivityTopUp`](ActivityTopUp.md)
 
-Defined in: [packages/client/src/modules/activities/types.ts:76](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L76)
+Defined in: [packages/client/src/modules/activities/types.ts:74](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L74)
 
 Fee top-up state when the inflow is below the current processing fee.
 

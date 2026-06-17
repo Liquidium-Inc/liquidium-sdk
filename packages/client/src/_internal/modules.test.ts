@@ -457,11 +457,9 @@ describe("HistoryModule", () => {
     });
 
     // when
-    const result = await client.history.getUserTransactionHistory(
-      "profile-1",
-      undefined,
-      { cursor: "2026-03-31T00:00:00.000Z::history-0" }
-    );
+    const result = await client.history.getUserTransactionHistory("profile-1", {
+      cursor: "2026-03-31T00:00:00.000Z::history-0",
+    });
 
     // then
     expect(result).toEqual({
@@ -639,7 +637,7 @@ describe("HistoryModule", () => {
     );
   });
 
-  test("passes activities filters to the sdk api", async () => {
+  test("passes transaction history filters to the sdk api", async () => {
     // given
     const responsePayload = {
       success: true as const,
@@ -707,6 +705,75 @@ describe("HistoryModule", () => {
     });
     expect(fetchSpy).toHaveBeenCalledWith(
       "https://app.liquidium.fi/api/sdk/v2/history/users/profile-1/transactions?cursor=2026-03-31T00%3A00%3A00.000Z%3A%3Ahistory-0&market=pool-btc&poolId=pool-btc&types=borrow&states=completed&from=2026-04-01T00%3A00%3A00.000Z&to=2026-04-03T00%3A00%3A00.000Z&limit=1",
+      {
+        method: "GET",
+        headers: undefined,
+        body: undefined,
+        signal: expect.any(AbortSignal),
+      }
+    );
+  });
+
+  test("passes liquidation type to transaction history", async () => {
+    // given
+    const responsePayload = {
+      success: true as const,
+      items: [
+        {
+          id: "history-9",
+          type: "liquidation" as const,
+          amount: "12345",
+          poolId: "pool-btc",
+          timestamp: "2026-04-04T00:00:00.000Z",
+          status: {
+            operation: "liquidation" as const,
+            state: "completed" as const,
+            confirmations: null,
+            requiredConfirmations: null,
+          },
+          txids: ["tx-9"],
+        },
+      ],
+    };
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify(responsePayload), {
+        status: 200,
+        headers: {
+          "content-type": "application/json",
+        },
+      })
+    );
+    const client = new LiquidiumClient({
+      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
+    });
+
+    // when
+    const result = await client.history.getUserTransactionHistory("profile-1", {
+      types: ["liquidation"],
+    });
+
+    // then
+    expect(result).toEqual({
+      items: [
+        {
+          id: "history-9",
+          type: "liquidation",
+          amount: 12345n,
+          poolId: "pool-btc",
+          timestamp: "2026-04-04T00:00:00.000Z",
+          status: {
+            operation: "liquidation",
+            state: "completed",
+            confirmations: null,
+            requiredConfirmations: null,
+          },
+          txids: ["tx-9"],
+        },
+      ],
+      nextCursor: undefined,
+    });
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "https://app.liquidium.fi/api/sdk/v2/history/users/profile-1/transactions?types=liquidation",
       {
         method: "GET",
         headers: undefined,
@@ -925,8 +992,6 @@ describe("ActivitiesModule", () => {
         amount: ACTIVITY_AMOUNT_BASE_UNITS,
         timestampMs: ACTIVITY_TIMESTAMP_MS,
         txid: "tx-1",
-        confirmations: ACTIVITY_CONFIRMATIONS,
-        requiredConfirmations: ACTIVITY_REQUIRED_CONFIRMATIONS,
       },
     ]);
     expect(fetchSpy).toHaveBeenCalledWith(
@@ -1057,8 +1122,6 @@ describe("ActivitiesModule", () => {
         amount: ACTIVITY_AMOUNT_BASE_UNITS,
         timestampMs: ACTIVITY_TIMESTAMP_MS,
         txid: "tx-1",
-        confirmations: ACTIVITY_CONFIRMATIONS,
-        requiredConfirmations: ACTIVITY_REQUIRED_CONFIRMATIONS,
       },
     });
     expect(fetchSpy).toHaveBeenCalledWith(
@@ -1150,8 +1213,6 @@ describe("ActivitiesModule", () => {
         amount: ACTIVITY_AMOUNT_BASE_UNITS,
         timestampMs: ACTIVITY_TIMESTAMP_MS,
         txid: "tx-1",
-        confirmations: ACTIVITY_CONFIRMATIONS,
-        requiredConfirmations: ACTIVITY_REQUIRED_CONFIRMATIONS,
       },
     });
     expect(fetchSpy).toHaveBeenCalledWith(
@@ -1240,8 +1301,6 @@ describe("ActivitiesModule", () => {
         amount: ACTIVITY_AMOUNT_BASE_UNITS,
         timestampMs: ACTIVITY_TIMESTAMP_MS,
         txid: "0x624f47a2d993c01b20d3fddcf8e5e8afe774d6e29d3702674f564fe825ae472c",
-        confirmations: ACTIVITY_CONFIRMATIONS,
-        requiredConfirmations: ACTIVITY_REQUIRED_CONFIRMATIONS,
         topUp: {
           required: true,
           depositedAmount: ACTIVITY_AMOUNT_BASE_UNITS,

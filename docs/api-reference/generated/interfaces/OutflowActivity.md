@@ -6,7 +6,7 @@
 
 # Interface: OutflowActivity
 
-Defined in: [packages/client/src/modules/activities/types.ts:80](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L80)
+Defined in: [packages/client/src/modules/activities/types.ts:78](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L78)
 
 Borrow or withdraw activity returned by the activity API.
 
@@ -52,23 +52,11 @@ Defined in: [packages/client/src/modules/activities/types.ts:58](https://github.
 
 ***
 
-### confirmations
-
-> **confirmations**: `number` \| `null`
-
-Defined in: [packages/client/src/modules/activities/types.ts:63](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L63)
-
-#### Inherited from
-
-`BaseActivity.confirmations`
-
-***
-
 ### direction
 
 > **direction**: `"outflow"`
 
-Defined in: [packages/client/src/modules/activities/types.ts:82](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L82)
+Defined in: [packages/client/src/modules/activities/types.ts:80](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L80)
 
 Direction discriminator.
 
@@ -90,7 +78,7 @@ Defined in: [packages/client/src/modules/activities/types.ts:55](https://github.
 
 > **kind**: [`OutflowActivityKind`](../type-aliases/OutflowActivityKind.md)
 
-Defined in: [packages/client/src/modules/activities/types.ts:84](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L84)
+Defined in: [packages/client/src/modules/activities/types.ts:82](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L82)
 
 Borrow or withdraw kind.
 
@@ -108,23 +96,11 @@ Defined in: [packages/client/src/modules/activities/types.ts:56](https://github.
 
 ***
 
-### requiredConfirmations
-
-> **requiredConfirmations**: `number` \| `null`
-
-Defined in: [packages/client/src/modules/activities/types.ts:64](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L64)
-
-#### Inherited from
-
-`BaseActivity.requiredConfirmations`
-
-***
-
 ### status
 
 > **status**: [`LiquidiumStatus`](LiquidiumStatus.md)
 
-Defined in: [packages/client/src/modules/activities/types.ts:86](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L86)
+Defined in: [packages/client/src/modules/activities/types.ts:84](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L84)
 
 Shared consumer-facing lifecycle status.
 
@@ -146,7 +122,7 @@ Defined in: [packages/client/src/modules/activities/types.ts:60](https://github.
 
 > `optional` **topUp?**: `undefined`
 
-Defined in: [packages/client/src/modules/activities/types.ts:88](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L88)
+Defined in: [packages/client/src/modules/activities/types.ts:86](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L86)
 
 Outflows never carry top-up state.
 

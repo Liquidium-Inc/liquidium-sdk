@@ -86,7 +86,6 @@ export {
   ActivityKind,
 } from "./modules/activities";
 export type {
-  ActivitiesRequest,
   ApySample,
   BorrowApyHistoryRequest,
   HistoryEntry,
@@ -104,7 +103,6 @@ export type {
   UserHistoryType,
   UserLiquidationHistoryEntry,
   UserLiquidationHistoryFilters,
-  UserLiquidationHistoryType,
   UserTransactionHistoryEntry,
   UserTransactionHistoryFilters,
   UserTransactionHistoryType,

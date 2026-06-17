@@ -21,13 +21,11 @@ import type {
   PoolHistoryEntry,
   PoolHistoryRequest,
   PoolHistoryResponse,
-  UserHistoryEntry,
   UserHistoryResponse,
   UserLiquidationHistoryEntry,
   UserLiquidationHistoryFilters,
   UserTransactionHistoryEntry,
   UserTransactionHistoryFilters,
-  UserTransactionHistoryType,
 } from "./types";
 
 /** Historical pool, rate, user transaction, and liquidation data helpers. */
@@ -183,56 +181,42 @@ export class HistoryModule {
    * Returns transaction history for a user.
    *
    * @param user - The Liquidium profile principal text.
-   * @param filters - Optional pool, type, status, time range, and pagination filters.
+   * @param filters - Optional pool, type, state, time range, and pagination filters.
    * @returns Paginated user history entries.
    */
   async getUserTransactionHistory(
     user: string,
-    filters?: UserTransactionHistoryFilters
-  ): Promise<PaginatedResponse<UserTransactionHistoryEntry>>;
-  async getUserTransactionHistory(
-    user: string,
-    market?: string,
-    filters?: UserTransactionHistoryFilters
-  ): Promise<PaginatedResponse<UserTransactionHistoryEntry>>;
-  async getUserTransactionHistory(
-    user: string,
-    marketOrFilters?: string | UserTransactionHistoryFilters,
     filters: UserTransactionHistoryFilters = {}
   ): Promise<PaginatedResponse<UserTransactionHistoryEntry>> {
     const apiClient = this.requireApi();
-    const normalizedFilters = normalizeTransactionHistoryFilters(
-      marketOrFilters,
-      filters
-    );
     const query = new URLSearchParams();
 
-    if (normalizedFilters.cursor) {
-      query.set(SdkApiQueryParam.cursor, normalizedFilters.cursor);
+    if (filters.cursor) {
+      query.set(SdkApiQueryParam.cursor, filters.cursor);
     }
-    if (normalizedFilters.market) {
-      query.set(SdkApiQueryParam.market, normalizedFilters.market);
+    if (filters.market) {
+      query.set(SdkApiQueryParam.market, filters.market);
     }
-    if (normalizedFilters.poolId) {
-      query.set(SdkApiQueryParam.poolId, normalizedFilters.poolId);
+    if (filters.poolId) {
+      query.set(SdkApiQueryParam.poolId, filters.poolId);
     }
-    if (normalizedFilters.types?.length) {
-      query.set(SdkApiQueryParam.types, normalizedFilters.types.join(","));
+    if (filters.types?.length) {
+      query.set(SdkApiQueryParam.types, filters.types.join(","));
     }
-    if (normalizedFilters.states?.length) {
+    if (filters.states?.length) {
       query.set(
         SdkApiQueryParam.states,
-        createHistoryStateFilterParam(normalizedFilters.states)
+        createHistoryStateFilterParam(filters.states)
       );
     }
-    if (normalizedFilters.from) {
-      query.set(SdkApiQueryParam.from, normalizedFilters.from);
+    if (filters.from) {
+      query.set(SdkApiQueryParam.from, filters.from);
     }
-    if (normalizedFilters.to) {
-      query.set(SdkApiQueryParam.to, normalizedFilters.to);
+    if (filters.to) {
+      query.set(SdkApiQueryParam.to, filters.to);
     }
-    if (normalizedFilters.limit !== undefined) {
-      query.set(SdkApiQueryParam.limit, String(normalizedFilters.limit));
+    if (filters.limit !== undefined) {
+      query.set(SdkApiQueryParam.limit, String(filters.limit));
     }
 
     const requestPath = buildHistoryUserTransactionsPath(user, query);
@@ -253,41 +237,27 @@ export class HistoryModule {
    */
   async getLiquidationHistory(
     user: string,
-    filters?: UserLiquidationHistoryFilters
-  ): Promise<PaginatedResponse<UserLiquidationHistoryEntry>>;
-  async getLiquidationHistory(
-    user: string,
-    market?: string,
-    filters?: UserLiquidationHistoryFilters
-  ): Promise<PaginatedResponse<UserLiquidationHistoryEntry>>;
-  async getLiquidationHistory(
-    user: string,
-    marketOrFilters?: string | UserLiquidationHistoryFilters,
     filters: UserLiquidationHistoryFilters = {}
   ): Promise<PaginatedResponse<UserLiquidationHistoryEntry>> {
     const apiClient = this.requireApi();
-    const normalizedFilters = normalizeLiquidationHistoryFilters(
-      marketOrFilters,
-      filters
-    );
     const query = new URLSearchParams();
-    if (normalizedFilters.cursor) {
-      query.set(SdkApiQueryParam.cursor, normalizedFilters.cursor);
+    if (filters.cursor) {
+      query.set(SdkApiQueryParam.cursor, filters.cursor);
     }
-    if (normalizedFilters.market) {
-      query.set(SdkApiQueryParam.market, normalizedFilters.market);
+    if (filters.market) {
+      query.set(SdkApiQueryParam.market, filters.market);
     }
-    if (normalizedFilters.poolId) {
-      query.set(SdkApiQueryParam.poolId, normalizedFilters.poolId);
+    if (filters.poolId) {
+      query.set(SdkApiQueryParam.poolId, filters.poolId);
     }
-    if (normalizedFilters.from) {
-      query.set(SdkApiQueryParam.from, normalizedFilters.from);
+    if (filters.from) {
+      query.set(SdkApiQueryParam.from, filters.from);
     }
-    if (normalizedFilters.to) {
-      query.set(SdkApiQueryParam.to, normalizedFilters.to);
+    if (filters.to) {
+      query.set(SdkApiQueryParam.to, filters.to);
     }
-    if (normalizedFilters.limit !== undefined) {
-      query.set(SdkApiQueryParam.limit, String(normalizedFilters.limit));
+    if (filters.limit !== undefined) {
+      query.set(SdkApiQueryParam.limit, String(filters.limit));
     }
 
     const requestPath = buildHistoryUserLiquidationsPath(user, query);
@@ -303,11 +273,9 @@ export class HistoryModule {
 function mapUserTransactionHistoryEntry(
   item: UserHistoryResponse["items"][number]
 ): UserTransactionHistoryEntry {
-  const type = mapUserTransactionHistoryType(item.type);
-
   return {
     id: item.id,
-    type,
+    type: item.type,
     amount: parseBigInt(item.amount, "history user amount"),
     poolId: item.poolId,
     timestamp: item.timestamp,
@@ -347,19 +315,6 @@ function mapUserLiquidationHistoryEntry(
   };
 }
 
-function mapUserTransactionHistoryType(
-  type: UserHistoryEntry["type"]
-): UserTransactionHistoryType {
-  if (type !== "liquidation") {
-    return type;
-  }
-
-  throw new LiquidiumError(
-    LiquidiumErrorCode.INTERNAL,
-    "Transaction history response included a liquidation entry"
-  );
-}
-
 function createHistoryWindowQuery(
   window: BorrowApyHistoryRequest
 ): URLSearchParams {
@@ -372,28 +327,6 @@ function createHistoryWindowQuery(
   }
 
   return query;
-}
-
-function normalizeTransactionHistoryFilters(
-  marketOrFilters: string | UserTransactionHistoryFilters | undefined,
-  filters: UserTransactionHistoryFilters
-): UserTransactionHistoryFilters {
-  if (typeof marketOrFilters === "string") {
-    return { ...filters, market: marketOrFilters };
-  }
-
-  return { ...(marketOrFilters ?? {}), ...filters };
-}
-
-function normalizeLiquidationHistoryFilters(
-  marketOrFilters: string | UserLiquidationHistoryFilters | undefined,
-  filters: UserLiquidationHistoryFilters
-): UserLiquidationHistoryFilters {
-  if (typeof marketOrFilters === "string") {
-    return { ...filters, market: marketOrFilters };
-  }
-
-  return { ...(marketOrFilters ?? {}), ...filters };
 }
 
 function createHistoryStateFilterParam(states: LiquidiumState[]): string {

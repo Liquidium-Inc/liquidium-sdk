@@ -6,7 +6,7 @@
 
 # Interface: PoolHistoryEntry
 
-Defined in: [packages/client/src/modules/history/types.ts:142](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L142)
+Defined in: [packages/client/src/modules/history/types.ts:136](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L136)
 
 Pool rate and utilization history entry returned to SDK consumers.
 
@@ -16,7 +16,7 @@ Pool rate and utilization history entry returned to SDK consumers.
 
 > **avgBorrowRate**: `bigint`
 
-Defined in: [packages/client/src/modules/history/types.ts:148](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L148)
+Defined in: [packages/client/src/modules/history/types.ts:142](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L142)
 
 Average borrow rate for the sample, scaled by `rateDecimals`.
 
@@ -26,7 +26,7 @@ Average borrow rate for the sample, scaled by `rateDecimals`.
 
 > **avgLendRate**: `bigint`
 
-Defined in: [packages/client/src/modules/history/types.ts:150](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L150)
+Defined in: [packages/client/src/modules/history/types.ts:144](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L144)
 
 Average lend rate for the sample, scaled by `rateDecimals`.
 
@@ -36,7 +36,7 @@ Average lend rate for the sample, scaled by `rateDecimals`.
 
 > **avgUtilizationRate**: `bigint`
 
-Defined in: [packages/client/src/modules/history/types.ts:152](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L152)
+Defined in: [packages/client/src/modules/history/types.ts:146](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L146)
 
 Average utilization rate for the sample, scaled by `rateDecimals`.
 
@@ -46,7 +46,7 @@ Average utilization rate for the sample, scaled by `rateDecimals`.
 
 > **date**: `string`
 
-Defined in: [packages/client/src/modules/history/types.ts:144](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L144)
+Defined in: [packages/client/src/modules/history/types.ts:138](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L138)
 
 Sample date from the SDK API.
 
@@ -56,6 +56,6 @@ Sample date from the SDK API.
 
 > **rateDecimals**: `bigint`
 
-Defined in: [packages/client/src/modules/history/types.ts:146](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L146)
+Defined in: [packages/client/src/modules/history/types.ts:140](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L140)
 
 Decimal scale for rate fields.

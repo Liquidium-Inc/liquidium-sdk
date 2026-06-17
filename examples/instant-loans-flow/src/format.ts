@@ -321,10 +321,6 @@ function formatActivity(activity: Activity): string {
     `Timestamp ms: ${activity.timestampMs.toString()}`,
     `Txid: ${activity.txid ?? "not set"}`,
     `Txids: ${activity.txids?.join(", ") ?? "not set"}`,
-    `Confirmations: ${activity.confirmations?.toString() ?? "not set"}`,
-    `Required confirmations: ${
-      activity.requiredConfirmations?.toString() ?? "not set"
-    }`,
     activity.topUp
       ? formatActivityTopUp(activity.topUp)
       : "Top-up: not required",

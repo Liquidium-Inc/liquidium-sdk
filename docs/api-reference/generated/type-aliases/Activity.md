@@ -8,6 +8,6 @@
 
 > **Activity** = [`InflowActivity`](../interfaces/InflowActivity.md) \| [`OutflowActivity`](../interfaces/OutflowActivity.md)
 
-Defined in: [packages/client/src/modules/activities/types.ts:92](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L92)
+Defined in: [packages/client/src/modules/activities/types.ts:90](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L90)
 
 Any activity returned by `activities.list` or `activities.getStatus`.

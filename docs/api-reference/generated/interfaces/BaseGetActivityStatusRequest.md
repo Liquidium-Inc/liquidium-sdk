@@ -6,7 +6,7 @@
 
 # Interface: BaseGetActivityStatusRequest
 
-Defined in: [packages/client/src/modules/activities/types.ts:120](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L120)
+Defined in: [packages/client/src/modules/activities/types.ts:118](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L118)
 
 Shared request fields for an activity status lookup.
 
@@ -21,6 +21,6 @@ Shared request fields for an activity status lookup.
 
 > **id**: `string`
 
-Defined in: [packages/client/src/modules/activities/types.ts:122](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L122)
+Defined in: [packages/client/src/modules/activities/types.ts:120](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L120)
 
 Activity or receipt id to look up.

@@ -6,7 +6,7 @@
 
 # Class: HistoryModule
 
-Defined in: [packages/client/src/modules/history/history.ts:34](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/history.ts#L34)
+Defined in: [packages/client/src/modules/history/history.ts:32](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/history.ts#L32)
 
 Historical pool, rate, user transaction, and liquidation data helpers.
 
@@ -16,7 +16,7 @@ Historical pool, rate, user transaction, and liquidation data helpers.
 
 > **new HistoryModule**(`apiClient`): `HistoryModule`
 
-Defined in: [packages/client/src/modules/history/history.ts:35](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/history.ts#L35)
+Defined in: [packages/client/src/modules/history/history.ts:33](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/history.ts#L33)
 
 #### Parameters
 
@@ -34,7 +34,7 @@ Defined in: [packages/client/src/modules/history/history.ts:35](https://github.c
 
 > **getBorrowRateHistory**(`poolId`, `window?`): `Promise`\<[`PaginatedResponse`](../interfaces/PaginatedResponse.md)\<[`ApySample`](../interfaces/ApySample.md)\>\>
 
-Defined in: [packages/client/src/modules/history/history.ts:161](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/history.ts#L161)
+Defined in: [packages/client/src/modules/history/history.ts:159](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/history.ts#L159)
 
 Returns borrow rate history for a pool.
 
@@ -62,61 +62,27 @@ Paginated APY samples.
 
 ### getLiquidationHistory()
 
-#### Call Signature
-
 > **getLiquidationHistory**(`user`, `filters?`): `Promise`\<[`PaginatedResponse`](../interfaces/PaginatedResponse.md)\<[`UserLiquidationHistoryEntry`](../interfaces/UserLiquidationHistoryEntry.md)\>\>
 
-Defined in: [packages/client/src/modules/history/history.ts:254](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/history.ts#L254)
+Defined in: [packages/client/src/modules/history/history.ts:238](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/history.ts#L238)
 
 Returns liquidation history for a user.
 
-##### Parameters
+#### Parameters
 
-###### user
+##### user
 
 `string`
 
 The Liquidium profile principal text.
 
-###### filters?
+##### filters?
 
-[`UserLiquidationHistoryFilters`](../interfaces/UserLiquidationHistoryFilters.md)
-
-Optional pool, time range, and pagination filters.
-
-##### Returns
-
-`Promise`\<[`PaginatedResponse`](../interfaces/PaginatedResponse.md)\<[`UserLiquidationHistoryEntry`](../interfaces/UserLiquidationHistoryEntry.md)\>\>
-
-Paginated liquidation history entries.
-
-#### Call Signature
-
-> **getLiquidationHistory**(`user`, `market?`, `filters?`): `Promise`\<[`PaginatedResponse`](../interfaces/PaginatedResponse.md)\<[`UserLiquidationHistoryEntry`](../interfaces/UserLiquidationHistoryEntry.md)\>\>
-
-Defined in: [packages/client/src/modules/history/history.ts:258](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/history.ts#L258)
-
-Returns liquidation history for a user.
-
-##### Parameters
-
-###### user
-
-`string`
-
-The Liquidium profile principal text.
-
-###### market?
-
-`string`
-
-###### filters?
-
-[`UserLiquidationHistoryFilters`](../interfaces/UserLiquidationHistoryFilters.md)
+[`UserLiquidationHistoryFilters`](../interfaces/UserLiquidationHistoryFilters.md) = `{}`
 
 Optional pool, time range, and pagination filters.
 
-##### Returns
+#### Returns
 
 `Promise`\<[`PaginatedResponse`](../interfaces/PaginatedResponse.md)\<[`UserLiquidationHistoryEntry`](../interfaces/UserLiquidationHistoryEntry.md)\>\>
 
@@ -128,7 +94,7 @@ Paginated liquidation history entries.
 
 > **getPoolConfigHistory**(`poolId`, `cursor?`): `Promise`\<[`PaginatedResponse`](../interfaces/PaginatedResponse.md)\<[`PoolConfigHistoryEntry`](../interfaces/PoolConfigHistoryEntry.md)\>\>
 
-Defined in: [packages/client/src/modules/history/history.ts:86](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/history.ts#L86)
+Defined in: [packages/client/src/modules/history/history.ts:84](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/history.ts#L84)
 
 Returns paginated configuration change history for a pool.
 
@@ -158,7 +124,7 @@ A page of pool configuration changes and the next cursor when more results are a
 
 > **getPoolHistory**(`poolId`, `window?`): `Promise`\<[`PaginatedResponse`](../interfaces/PaginatedResponse.md)\<[`PoolHistoryEntry`](../interfaces/PoolHistoryEntry.md)\>\>
 
-Defined in: [packages/client/src/modules/history/history.ts:55](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/history.ts#L55)
+Defined in: [packages/client/src/modules/history/history.ts:53](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/history.ts#L53)
 
 Returns paginated rate and utilization history for a pool.
 
@@ -186,61 +152,27 @@ A page of pool rate history entries and the next cursor when more results are av
 
 ### getUserTransactionHistory()
 
-#### Call Signature
-
 > **getUserTransactionHistory**(`user`, `filters?`): `Promise`\<[`PaginatedResponse`](../interfaces/PaginatedResponse.md)\<[`UserTransactionHistoryEntry`](../interfaces/UserTransactionHistoryEntry.md)\>\>
 
-Defined in: [packages/client/src/modules/history/history.ts:189](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/history.ts#L189)
+Defined in: [packages/client/src/modules/history/history.ts:187](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/history.ts#L187)
 
 Returns transaction history for a user.
 
-##### Parameters
+#### Parameters
 
-###### user
+##### user
 
 `string`
 
 The Liquidium profile principal text.
 
-###### filters?
+##### filters?
 
-[`UserTransactionHistoryFilters`](../interfaces/UserTransactionHistoryFilters.md)
+[`UserTransactionHistoryFilters`](../interfaces/UserTransactionHistoryFilters.md) = `{}`
 
-Optional pool, type, status, time range, and pagination filters.
+Optional pool, type, state, time range, and pagination filters.
 
-##### Returns
-
-`Promise`\<[`PaginatedResponse`](../interfaces/PaginatedResponse.md)\<[`UserTransactionHistoryEntry`](../interfaces/UserTransactionHistoryEntry.md)\>\>
-
-Paginated user history entries.
-
-#### Call Signature
-
-> **getUserTransactionHistory**(`user`, `market?`, `filters?`): `Promise`\<[`PaginatedResponse`](../interfaces/PaginatedResponse.md)\<[`UserTransactionHistoryEntry`](../interfaces/UserTransactionHistoryEntry.md)\>\>
-
-Defined in: [packages/client/src/modules/history/history.ts:193](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/history.ts#L193)
-
-Returns transaction history for a user.
-
-##### Parameters
-
-###### user
-
-`string`
-
-The Liquidium profile principal text.
-
-###### market?
-
-`string`
-
-###### filters?
-
-[`UserTransactionHistoryFilters`](../interfaces/UserTransactionHistoryFilters.md)
-
-Optional pool, type, status, time range, and pagination filters.
-
-##### Returns
+#### Returns
 
 `Promise`\<[`PaginatedResponse`](../interfaces/PaginatedResponse.md)\<[`UserTransactionHistoryEntry`](../interfaces/UserTransactionHistoryEntry.md)\>\>
 

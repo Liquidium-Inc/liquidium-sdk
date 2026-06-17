@@ -5,13 +5,10 @@ export type UserTransactionHistoryType =
   | "supply"
   | "borrow"
   | "repay"
-  | "withdraw";
-/** User liquidation history kind. */
-export type UserLiquidationHistoryType = "liquidation";
+  | "withdraw"
+  | "liquidation";
 /** Any user history kind returned by the history API. */
-export type UserHistoryType =
-  | UserTransactionHistoryType
-  | UserLiquidationHistoryType;
+export type UserHistoryType = UserTransactionHistoryType;
 
 interface BaseUserHistoryEntry {
   id: string;
@@ -21,7 +18,7 @@ interface BaseUserHistoryEntry {
   txids?: string[];
 }
 
-/** Supply, borrow, repay, or withdraw entry in user history. */
+/** Supply, borrow, repay, withdraw, or liquidation entry in user history. */
 export interface UserTransactionHistoryEntry extends BaseUserHistoryEntry {
   /** Transaction history kind. */
   type: UserTransactionHistoryType;
@@ -32,7 +29,7 @@ export interface UserTransactionHistoryEntry extends BaseUserHistoryEntry {
 /** Liquidation entry in user history. */
 export interface UserLiquidationHistoryEntry extends BaseUserHistoryEntry {
   /** Liquidation kind discriminator. */
-  type: UserLiquidationHistoryType;
+  type: "liquidation";
   /** Current lifecycle status. */
   status: LiquidiumStatus;
 }
@@ -77,9 +74,6 @@ export interface UserLiquidationHistoryFilters {
   /** Inclusive end timestamp filter accepted by the SDK API. */
   to?: string;
 }
-
-/** Backwards-compatible alias for user transaction history filters. */
-export type ActivitiesRequest = UserTransactionHistoryFilters;
 
 /** Time-window and pagination options for borrow APY history. */
 export interface BorrowApyHistoryRequest {

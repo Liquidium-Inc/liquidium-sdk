@@ -6,7 +6,7 @@
 
 # Interface: ListActivitiesByProfileRequest
 
-Defined in: [packages/client/src/modules/activities/types.ts:101](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L101)
+Defined in: [packages/client/src/modules/activities/types.ts:99](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L99)
 
 Activity list request scoped to a Liquidium profile.
 
@@ -20,9 +20,9 @@ Activity list request scoped to a Liquidium profile.
 
 > `optional` **filter?**: [`ActivityFilter`](../type-aliases/ActivityFilter.md)
 
-Defined in: [packages/client/src/modules/activities/types.ts:97](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L97)
+Defined in: [packages/client/src/modules/activities/types.ts:95](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L95)
 
-Optional state filter; defaults to `all`.
+Optional lifecycle filter; defaults to `all`.
 
 #### Inherited from
 
@@ -34,6 +34,6 @@ Optional state filter; defaults to `all`.
 
 > **profileId**: `string`
 
-Defined in: [packages/client/src/modules/activities/types.ts:104](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L104)
+Defined in: [packages/client/src/modules/activities/types.ts:102](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L102)
 
 Profile principal text to list activities for.

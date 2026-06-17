@@ -1,13 +1,13 @@
 import type { LiquidiumStatus } from "../../core/status";
 import type { Chain } from "../../core/types";
 
-/** Activity list state filter. */
+/** Activity list lifecycle filter. */
 export const ActivityFilter = {
   active: "active",
   completed: "completed",
   all: "all",
 } as const;
-/** Activity list state filter. */
+/** Activity list lifecycle filter. */
 export type ActivityFilter =
   (typeof ActivityFilter)[keyof typeof ActivityFilter];
 
@@ -60,8 +60,6 @@ interface BaseActivity {
   timestampMs: number;
   txid: string | null;
   txids?: string[];
-  confirmations: number | null;
-  requiredConfirmations: number | null;
 }
 
 /** Deposit or repayment activity returned by the activity API. */
@@ -93,7 +91,7 @@ export type Activity = InflowActivity | OutflowActivity;
 
 /** Shared request fields for listing activities. */
 export interface BaseListActivitiesRequest {
-  /** Optional state filter; defaults to `all`. */
+  /** Optional lifecycle filter; defaults to `all`. */
   filter?: ActivityFilter;
 }
 
