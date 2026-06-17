@@ -88,7 +88,7 @@ Wallet capability required to execute the action.
 
 ### kind
 
-> **kind**: `string`
+> **kind**: [`WalletActionKind`](../type-aliases/WalletActionKind.md)
 
 Defined in: [packages/client/src/core/wallet-actions.ts:145](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L145)
 

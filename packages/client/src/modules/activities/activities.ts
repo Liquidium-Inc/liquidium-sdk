@@ -35,13 +35,12 @@ interface ActivityTopUpWire
 interface ActivityWire {
   id: string;
   direction: Activity["direction"];
-  kind: string;
+  kind: Activity["kind"];
   poolId: string;
   asset: string | null;
   chain: Chain | null;
   amount: string;
   timestampMs: number;
-  txid: string | null;
   txids?: string[];
   status: LiquidiumStatus;
   topUp?: ActivityTopUpWire;
@@ -192,37 +191,54 @@ function mapInstantLoanLookupError(
 }
 
 function mapActivity(wire: ActivityWire): Activity {
-  const { amount, status, topUp: topUpWire, ...activity } = wire;
-  const topUp =
-    activity.direction === ActivityDirection.inflow && topUpWire
-      ? mapActivityTopUp(topUpWire)
-      : undefined;
+  const amount = parseBigInt(wire.amount, "activity amount");
 
-  if (activity.direction === ActivityDirection.inflow) {
-    const kind = mapInflowActivityKind(activity.kind);
-
-    return {
-      ...activity,
+  if (wire.direction === ActivityDirection.inflow) {
+    const kind = mapInflowActivityKind(wire.kind);
+    const activity: Activity = {
+      id: wire.id,
+      poolId: wire.poolId,
+      asset: wire.asset,
+      chain: wire.chain,
+      amount,
+      timestampMs: wire.timestampMs,
       direction: ActivityDirection.inflow,
       kind,
-      status,
-      ...(topUp ? { topUp } : {}),
-      amount: parseBigInt(amount, "activity amount"),
+      status: wire.status,
     };
+
+    if (wire.txids) {
+      activity.txids = wire.txids;
+    }
+
+    if (wire.topUp) {
+      activity.topUp = mapActivityTopUp(wire.topUp);
+    }
+
+    return activity;
   }
 
-  const kind = mapOutflowActivityKind(activity.kind);
-
-  return {
-    ...activity,
+  const kind = mapOutflowActivityKind(wire.kind);
+  const activity: Activity = {
+    id: wire.id,
+    poolId: wire.poolId,
+    asset: wire.asset,
+    chain: wire.chain,
+    amount,
+    timestampMs: wire.timestampMs,
     direction: ActivityDirection.outflow,
     kind,
-    status,
-    amount: parseBigInt(amount, "activity amount"),
+    status: wire.status,
   };
+
+  if (wire.txids) {
+    activity.txids = wire.txids;
+  }
+
+  return activity;
 }
 
-function mapInflowActivityKind(kind: string): InflowActivityKind {
+function mapInflowActivityKind(kind: Activity["kind"]): InflowActivityKind {
   if (kind === "deposit" || kind === "repayment") {
     return kind;
   }
@@ -233,7 +249,7 @@ function mapInflowActivityKind(kind: string): InflowActivityKind {
   );
 }
 
-function mapOutflowActivityKind(kind: string): OutflowActivityKind {
+function mapOutflowActivityKind(kind: Activity["kind"]): OutflowActivityKind {
   if (kind === "borrow" || kind === "withdrawal") {
     return kind;
   }

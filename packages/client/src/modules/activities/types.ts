@@ -58,7 +58,7 @@ interface BaseActivity {
   chain: Chain | null;
   amount: bigint;
   timestampMs: number;
-  txid: string | null;
+  /** Chain transaction ids associated with the activity when available. */
   txids?: string[];
 }
 

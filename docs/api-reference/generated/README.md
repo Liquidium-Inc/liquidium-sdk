@@ -182,6 +182,7 @@
 - [UserTransactionHistoryState](type-aliases/UserTransactionHistoryState.md)
 - [UserTransactionHistoryType](type-aliases/UserTransactionHistoryType.md)
 - [WalletAction](type-aliases/WalletAction.md)
+- [WalletActionKind](type-aliases/WalletActionKind.md)
 - [WalletExecutionKind](type-aliases/WalletExecutionKind.md)
 - [WithdrawOutflowDetails](type-aliases/WithdrawOutflowDetails.md)
 
@@ -205,6 +206,7 @@
 - [TransferMode](variables/TransferMode.md)
 - [USDC\_CONTRACT\_ADDRESS](variables/USDC_CONTRACT_ADDRESS.md)
 - [USDT\_CONTRACT\_ADDRESS](variables/USDT_CONTRACT_ADDRESS.md)
+- [WalletActionKind](variables/WalletActionKind.md)
 - [WalletExecutionKind](variables/WalletExecutionKind.md)
 
 ## Functions

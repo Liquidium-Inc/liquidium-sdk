@@ -265,8 +265,9 @@ client.history.getUserTransactionHistory(profileId, filters?);
 client.history.getLiquidationHistory(profileId, filters?);
 ```
 
-User history entries expose `txids?: string[]`; do not expect separate inbound
-or outbound txid fields. Transaction history uses canonical operation names:
+Activities and user history entries expose `txids?: string[]`; do not expect
+legacy singular or direction-specific txid fields. Transaction history uses
+canonical operation names:
 `deposit`, `borrow`, `repayment`, `withdrawal`, and `liquidation`.
 
 ## Rate and Amount Formatting

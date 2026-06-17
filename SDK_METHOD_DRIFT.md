@@ -47,6 +47,18 @@ References:
 - `packages/client/src/modules/lending/types.ts`
 - `packages/client/src/modules/lending/lending.ts`
 
+### Activity Transaction Ids
+
+Activities now expose chain transaction ids only through `txids?: string[]`.
+The legacy singular `activity.txid` field was removed from the public SDK
+shape because the v2 SDK API no longer emits it.
+
+References:
+
+- `packages/client/src/modules/activities/types.ts`
+- `packages/client/src/modules/activities/activities.ts`
+- `examples/*/src/format.ts`
+
 ### Instant-Loan Repayment Shape
 
 The root `README.md` now matches the SDK source, package README, examples, generated API docs, and skill guidance:

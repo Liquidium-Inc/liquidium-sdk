@@ -144,7 +144,6 @@ export function formatActivity(activity: Activity): string {
     `Chain: ${activity.chain ?? "not set"}`,
     `Amount: ${activity.amount.toString()} base units`,
     `Timestamp ms: ${activity.timestampMs.toString()}`,
-    `Txid: ${activity.txid ?? "not set"}`,
     `Txids: ${activity.txids?.join(", ") ?? "not set"}`,
     activity.topUp
       ? formatActivityTopUp(activity.topUp)

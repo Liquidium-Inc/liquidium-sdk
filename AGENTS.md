@@ -20,6 +20,8 @@ If exported APIs changed, run `pnpm docs:api` to regenerate `docs/api-reference/
 - Prefer named `interface` or `type` declarations over inline object types for public SDK request/response shapes, exported unions, and reusable helper parameter objects.
 - Name internal parameter objects when they clarify behavior or appear in method signatures; avoid anonymous `{ ... }` signatures once the shape has multiple fields or could surface in generated docs.
 - Keep inline object types only for small, strictly local shapes where naming would add noise.
+- In SDK API mappers, prefer explicit return objects or direct property assignment over shared base objects with conditional spreads. Avoid patterns like `...(condition ? { field } : {})` for public response shapes; they hide fields, leak wire properties easily, and read like generated code.
+- When removing a wire field from a public type, construct the public object explicitly instead of spreading the wire object minus exclusions.
 
 ## Releases
 

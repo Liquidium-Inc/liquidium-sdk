@@ -46,7 +46,11 @@ export type {
   WalletAction,
   WalletAdapter,
 } from "./core/wallet-actions";
-export { TransferMode, WalletExecutionKind } from "./core/wallet-actions";
+export {
+  TransferMode,
+  WalletActionKind,
+  WalletExecutionKind,
+} from "./core/wallet-actions";
 export type { ExecuteWithOptions } from "./execute";
 export { executeWith } from "./execute";
 export type {

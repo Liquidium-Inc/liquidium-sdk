@@ -292,6 +292,8 @@ type LiquidiumStatus = {
 
 Use activities to track collateral deposits, borrow outflows, repayment deposits, confirmations, and fee top-ups. Activity confirmations are exposed on `activity.status`. Activity lists default to active items; pass `filter: "all"` when you need completed activity too. The activities module accepts the saved instant-loan reference and resolves the generated profile for you:
 
+Activities expose chain transaction ids on `activity.txids` when ids are available.
+
 ```ts
 const activities = await client.activities.list({
   shortRef: loan.ref,

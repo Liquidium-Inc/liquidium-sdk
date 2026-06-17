@@ -128,23 +128,13 @@ Fee top-up state when the inflow is below the current processing fee.
 
 ***
 
-### txid
-
-> **txid**: `string` \| `null`
-
-Defined in: [packages/client/src/modules/activities/types.ts:61](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L61)
-
-#### Inherited from
-
-`BaseActivity.txid`
-
-***
-
 ### txids?
 
 > `optional` **txids?**: `string`[]
 
 Defined in: [packages/client/src/modules/activities/types.ts:62](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L62)
+
+Chain transaction ids associated with the activity when available.
 
 #### Inherited from
 

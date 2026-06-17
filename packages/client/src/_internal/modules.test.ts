@@ -744,7 +744,7 @@ describe("ActivitiesModule", () => {
           chain: "BTC" as const,
           amount: ACTIVITY_AMOUNT,
           timestampMs: ACTIVITY_TIMESTAMP_MS,
-          txid: "tx-1",
+          txids: ["tx-1"],
         },
       ],
     };
@@ -782,7 +782,7 @@ describe("ActivitiesModule", () => {
         chain: "BTC",
         amount: ACTIVITY_AMOUNT_BASE_UNITS,
         timestampMs: ACTIVITY_TIMESTAMP_MS,
-        txid: "tx-1",
+        txids: ["tx-1"],
       },
     ]);
     expect(fetchSpy).toHaveBeenCalledWith(
@@ -873,7 +873,7 @@ describe("ActivitiesModule", () => {
         chain: "BTC" as const,
         amount: ACTIVITY_AMOUNT,
         timestampMs: ACTIVITY_TIMESTAMP_MS,
-        txid: "tx-1",
+        txids: ["tx-1"],
       },
     };
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
@@ -912,7 +912,7 @@ describe("ActivitiesModule", () => {
         chain: "BTC",
         amount: ACTIVITY_AMOUNT_BASE_UNITS,
         timestampMs: ACTIVITY_TIMESTAMP_MS,
-        txid: "tx-1",
+        txids: ["tx-1"],
       },
     });
     expect(fetchSpy).toHaveBeenCalledWith(
@@ -959,7 +959,7 @@ describe("ActivitiesModule", () => {
         chain: "BTC" as const,
         amount: ACTIVITY_AMOUNT,
         timestampMs: ACTIVITY_TIMESTAMP_MS,
-        txid: "tx-1",
+        txids: ["tx-1"],
       },
     };
     vi.spyOn(Actor, "createActor").mockReturnValue({
@@ -1003,7 +1003,7 @@ describe("ActivitiesModule", () => {
         chain: "BTC",
         amount: ACTIVITY_AMOUNT_BASE_UNITS,
         timestampMs: ACTIVITY_TIMESTAMP_MS,
-        txid: "tx-1",
+        txids: ["tx-1"],
       },
     });
     expect(fetchSpy).toHaveBeenCalledWith(
@@ -1046,7 +1046,9 @@ describe("ActivitiesModule", () => {
         chain: "ETH" as const,
         amount: ACTIVITY_AMOUNT,
         timestampMs: ACTIVITY_TIMESTAMP_MS,
-        txid: "0x624f47a2d993c01b20d3fddcf8e5e8afe774d6e29d3702674f564fe825ae472c",
+        txids: [
+          "0x624f47a2d993c01b20d3fddcf8e5e8afe774d6e29d3702674f564fe825ae472c",
+        ],
         topUp: {
           required: true,
           depositedAmount: ACTIVITY_AMOUNT,
@@ -1091,7 +1093,9 @@ describe("ActivitiesModule", () => {
         chain: "ETH",
         amount: ACTIVITY_AMOUNT_BASE_UNITS,
         timestampMs: ACTIVITY_TIMESTAMP_MS,
-        txid: "0x624f47a2d993c01b20d3fddcf8e5e8afe774d6e29d3702674f564fe825ae472c",
+        txids: [
+          "0x624f47a2d993c01b20d3fddcf8e5e8afe774d6e29d3702674f564fe825ae472c",
+        ],
         topUp: {
           required: true,
           depositedAmount: ACTIVITY_AMOUNT_BASE_UNITS,
