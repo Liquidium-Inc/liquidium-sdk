@@ -154,7 +154,7 @@ Locally computed [EvmSupplyContext](../interfaces/EvmSupplyContext.md) for appro
 
 > **isBorrowingDisabled**(): `Promise`\<`boolean`\>
 
-Defined in: [packages/client/src/modules/lending/lending.ts:1102](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/lending.ts#L1102)
+Defined in: [packages/client/src/modules/lending/lending.ts:1107](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/lending.ts#L1107)
 
 Returns whether borrowing is currently disabled by the protocol.
 
@@ -222,7 +222,7 @@ A signable [WithdrawAction](../interfaces/WithdrawAction.md) with `submit` wired
 
 > **submitInflow**(`request`): `Promise`\<[`SubmitInflowResponse`](../interfaces/SubmitInflowResponse.md)\>
 
-Defined in: [packages/client/src/modules/lending/lending.ts:1078](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/lending.ts#L1078)
+Defined in: [packages/client/src/modules/lending/lending.ts:1083](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/lending.ts#L1083)
 
 Submits an inflow transaction id for faster indexing.
 

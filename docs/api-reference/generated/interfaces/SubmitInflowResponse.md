@@ -6,7 +6,7 @@
 
 # Interface: SubmitInflowResponse
 
-Defined in: [packages/client/src/modules/lending/types.ts:347](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L347)
+Defined in: [packages/client/src/modules/lending/types.ts:349](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L349)
 
 Acknowledgement from the SDK API after submitting an inflow hint.
 
@@ -16,7 +16,7 @@ Acknowledgement from the SDK API after submitting an inflow hint.
 
 > **status**: [`LiquidiumStatus`](LiquidiumStatus.md)
 
-Defined in: [packages/client/src/modules/lending/types.ts:353](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L353)
+Defined in: [packages/client/src/modules/lending/types.ts:355](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L355)
 
 Shared lifecycle status for the submitted inflow.
 
@@ -26,7 +26,7 @@ Shared lifecycle status for the submitted inflow.
 
 > **success**: `true`
 
-Defined in: [packages/client/src/modules/lending/types.ts:349](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L349)
+Defined in: [packages/client/src/modules/lending/types.ts:351](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L351)
 
 Indicates the submit request was accepted by the SDK API.
 
@@ -36,6 +36,6 @@ Indicates the submit request was accepted by the SDK API.
 
 > **txid**: `string`
 
-Defined in: [packages/client/src/modules/lending/types.ts:351](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L351)
+Defined in: [packages/client/src/modules/lending/types.ts:353](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L353)
 
 Transaction id accepted by the SDK API.

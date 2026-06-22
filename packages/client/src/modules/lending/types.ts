@@ -303,6 +303,8 @@ export type SupplyFlowRequest =
  *   (wallet-adapter path). When undefined, the caller is expected to broadcast
  *   themselves and call {@link SupplyFlow.submit} for flows that require txid
  *   registration.
+ * - If post-broadcast inflow registration fails after the SDK broadcasts the
+ *   transaction, `txid` is still returned so callers can track the transaction.
  * - `submit` registers a broadcast txid with the SDK API when needed. ETH
  *   stablecoin deposit-address transfers are indexed from ERC-20 transfer logs,
  *   so `submit` acknowledges the txid without posting it to the inflow endpoint.

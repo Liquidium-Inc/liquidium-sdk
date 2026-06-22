@@ -26,6 +26,8 @@ interface TestUsdtAssetVariant {
 
 type TestInstantLoanPositionAsset = TestBtcAssetVariant | TestUsdtAssetVariant;
 
+const LONG_RETRY_TEST_TIMEOUT_MS = 15_000;
+
 afterEach(() => {
   vi.restoreAllMocks();
   vi.useRealTimers();
@@ -3616,6 +3618,93 @@ describe("LendingModule", () => {
       })
     );
   });
+
+  test("should return BTC txid when inflow registration fails after broadcast", async () => {
+    // given
+    const txid = "post-broadcast-registration-failed-txid";
+    vi.spyOn(Actor, "createActor")
+      .mockReturnValueOnce({
+        list_pools: vi.fn().mockResolvedValue([
+          {
+            optimal_utilization_rate: 80n,
+            principal: {
+              toString: () => BTC_POOL_ID,
+              toText: () => BTC_POOL_ID,
+            },
+            total_generated_interest_snapshot: 0n,
+            supply_cap: [],
+            same_asset_borrowing: [],
+            asset: { BTC: null },
+            rate_slope_before: 1n,
+            borrow_cap: [],
+            total_debt_at_last_sync: 0n,
+            chain: { BTC: null },
+            rate_slope_after: 2n,
+            reserve_factor: 100n,
+            last_updated: [],
+            lending_index: 300n,
+            protocol_liquidation_fee: 50n,
+            borrow_index: 400n,
+            base_rate: 5n,
+            frozen: false,
+            liquidation_bonus: 200n,
+            liquidation_threshold: 7_500n,
+            max_ltv: 7_000n,
+            total_supply_at_last_sync: 50_000n,
+          },
+        ]),
+      } as never)
+      .mockReturnValueOnce({
+        get_btc_address: vi.fn().mockResolvedValue("bc1qexampledepositaddress"),
+      } as never);
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          message: "Resource not found",
+        }),
+        {
+          status: 503,
+          headers: {
+            "content-type": "application/json",
+          },
+        }
+      )
+    );
+    const sendBtcTransaction = vi.fn().mockResolvedValue(txid);
+    const client = new LiquidiumClient({
+      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
+    });
+
+    // when
+    const flow = await client.lending.supply({
+      profileId: "aaaaa-aa",
+      poolId: BTC_POOL_ID,
+      action: "deposit",
+      amount: 100_000n,
+      walletAdapter: {
+        sendBtcTransaction,
+      },
+      account: "bc1qsender",
+    });
+
+    // then
+    const EXPECTED_SUBMIT_ATTEMPTS = 4;
+    expect(flow.type).toBe("transfer");
+    expect(flow.txid).toBe(txid);
+    expect(sendBtcTransaction).toHaveBeenCalledTimes(1);
+    expect(fetchSpy).toHaveBeenCalledTimes(EXPECTED_SUBMIT_ATTEMPTS);
+    expect(fetchSpy).toHaveBeenNthCalledWith(
+      1,
+      "https://app.liquidium.fi/api/sdk/v2/inflow",
+      expect.objectContaining({
+        body: JSON.stringify({
+          txid,
+          chain: "BTC",
+          operation: "deposit",
+        }),
+      })
+    );
+  }, LONG_RETRY_TEST_TIMEOUT_MS);
 
   test("auto-submits BTC repayment inflows with the REPAY submit type", async () => {
     // given

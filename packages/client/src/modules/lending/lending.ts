@@ -810,7 +810,12 @@ export class LendingModule {
     if (
       shouldSubmitInflow({ instruction, mechanism: SupplyPlanType.transfer })
     ) {
-      await this.submitInflowWithRetry(txid, defaultSubmitInflowRequest);
+      try {
+        await this.submitInflowWithRetry(txid, defaultSubmitInflowRequest);
+      } catch {
+        // The transfer is already broadcast and cannot be rolled back.
+        // Return the txid so callers can track it even if the indexing hint fails.
+      }
     }
 
     return txid;
