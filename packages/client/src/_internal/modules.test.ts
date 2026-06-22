@@ -4730,7 +4730,7 @@ describe("InstantLoansModule", () => {
     // then
     expect(getLoan).toHaveBeenCalledWith(LOAN_ID);
     expect(fetchSpy).toHaveBeenCalledWith(
-      `${DEFAULT_API_BASE_URL}/v2/instant-loans/${LOAN_ID.toString()}/collateral-hint`,
+      `${DEFAULT_API_BASE_URL}/v1/instant-loans/${LOAN_ID.toString()}/collateral-hint`,
       expect.objectContaining({ method: "GET" })
     );
     expect(loan.loanId).toBe(LOAN_ID);
@@ -4933,7 +4933,7 @@ describe("InstantLoansModule", () => {
     });
     expect(results[0]?.profileId).toBe(PROFILE_ID);
     expect(fetchSpy).toHaveBeenCalledWith(
-      "https://app.liquidium.fi/api/sdk/v2/instant-loans/find?query=42",
+      "https://app.liquidium.fi/api/sdk/v1/instant-loans/find?query=42",
       expect.objectContaining({ method: "GET" })
     );
     expect(fetchSpy).toHaveBeenCalledTimes(1);
@@ -5423,7 +5423,7 @@ describe("InstantLoansModule", () => {
     const EXPECTED_INITIAL_DEPOSIT_AMOUNT_SATS = 10_000_000n + 2_500n;
 
     expect(fetchSpy).toHaveBeenCalledWith(
-      `${DEFAULT_API_BASE_URL}/v2/instant-loans`,
+      `${DEFAULT_API_BASE_URL}/v1/instant-loans`,
       expect.objectContaining({
         body: JSON.stringify({
           collateralPoolId: BTC_POOL_ID,

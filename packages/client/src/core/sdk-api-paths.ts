@@ -2,7 +2,8 @@
  * Path and query key constants for the Liquidium SDK HTTP API.
  */
 
-const SDK_API_VERSION = "v2";
+const SDK_API_V1_PATH = "/v1";
+const SDK_API_V2_PATH = "/v2";
 
 export const SdkApiQueryParam = {
   cursor: "cursor",
@@ -35,10 +36,10 @@ interface BuildInstantLoanCollateralHintPathRequest {
   loanId: bigint;
 }
 
-const ACTIVITIES = `/${SDK_API_VERSION}/activities`;
-const HISTORY_USERS = `/${SDK_API_VERSION}/history/users`;
-const INFLOW = `/${SDK_API_VERSION}/inflow`;
-const INSTANT_LOANS = `/${SDK_API_VERSION}/instant-loans`;
+const ACTIVITIES = `${SDK_API_V2_PATH}/activities`;
+const HISTORY_USERS = `${SDK_API_V2_PATH}/history/users`;
+const INFLOW = `${SDK_API_V2_PATH}/inflow`;
+const INSTANT_LOANS = `${SDK_API_V1_PATH}/instant-loans`;
 
 export function buildHistoryUserTransactionsPath(
   user: string,
