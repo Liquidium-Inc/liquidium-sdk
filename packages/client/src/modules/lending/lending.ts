@@ -1091,7 +1091,8 @@ export class LendingModule {
     >(SdkApiPath.inflow, request);
 
     return {
-      ...response,
+      success: response.success,
+      txid: response.txid,
       status: createLiquidiumStatus({
         operation: request.operation,
         state: "confirming",
