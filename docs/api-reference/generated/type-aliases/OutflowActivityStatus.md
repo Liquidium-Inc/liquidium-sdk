@@ -6,8 +6,12 @@
 
 # Type Alias: OutflowActivityStatus
 
-> **OutflowActivityStatus** = *typeof* [`requested`](../variables/ActivityStatus.md#requested) \| *typeof* [`pending`](../variables/ActivityStatus.md#pending) \| *typeof* [`sent`](../variables/ActivityStatus.md#sent) \| *typeof* [`confirmed`](../variables/ActivityStatus.md#confirmed) \| *typeof* [`failed`](../variables/ActivityStatus.md#failed)
+> **OutflowActivityStatus** = [`LiquidiumStatus`](../interfaces/LiquidiumStatus.md) & `object`
 
-Defined in: [packages/client/src/modules/activities/types.ts:76](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L76)
+Defined in: [packages/client/src/modules/activities/types.ts:40](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L40)
 
-Lifecycle status that can appear on an outflow activity.
+## Type Declaration
+
+### operation
+
+> **operation**: [`OutflowActivityOperation`](OutflowActivityOperation.md)

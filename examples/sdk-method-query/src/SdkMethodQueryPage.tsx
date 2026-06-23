@@ -6,7 +6,7 @@ import type {
   AssetPrices,
   Chain,
   ExternalAccount,
-  InflowSubmitType,
+  InflowOperation,
   LiquidiumClient,
   Pool,
   QuoteRequest,
@@ -341,61 +341,19 @@ const SDK_METHODS: MethodDefinition[] = [
     },
   },
   {
-    id: "history.getPoolHistory",
-    label: "history.getPoolHistory",
-    defaultArgs:
-      '{\n  "poolId": "aaaaa-aa",\n  "window": {\n    "limit": 20\n  }\n}',
-    execute: async (client, input) => {
-      const args = expectObject(input);
-      const window = expectOptionalObject(args.window, "window");
-
-      return await client.history.getPoolHistory(
-        expectNonEmptyString(args.poolId, "poolId"),
-        parseHistoryWindow(window, "window")
-      );
-    },
-  },
-  {
-    id: "history.getPoolConfigHistory",
-    label: "history.getPoolConfigHistory",
-    defaultArgs: '{\n  "poolId": "aaaaa-aa",\n  "cursor": ""\n}',
-    execute: async (client, input) => {
-      const args = expectObject(input);
-      return await client.history.getPoolConfigHistory(
-        expectNonEmptyString(args.poolId, "poolId"),
-        expectOptionalString(args.cursor, "cursor")
-      );
-    },
-  },
-  {
-    id: "history.getBorrowRateHistory",
-    label: "history.getBorrowRateHistory",
-    defaultArgs:
-      '{\n  "poolId": "aaaaa-aa",\n  "window": {\n    "limit": 20\n  }\n}',
-    execute: async (client, input) => {
-      const args = expectObject(input);
-      const window = expectOptionalObject(args.window, "window");
-
-      return await client.history.getBorrowRateHistory(
-        expectNonEmptyString(args.poolId, "poolId"),
-        parseHistoryWindow(window, "window")
-      );
-    },
-  },
-  {
     id: "history.getUserTransactionHistory",
     label: "history.getUserTransactionHistory",
     defaultArgs:
-      '{\n  "user": "aaaaa-aa",\n  "market": "",\n  "filters": {\n    "limit": 20\n  }\n}',
+      '{\n  "user": "aaaaa-aa",\n  "filters": {\n    "market": "",\n    "limit": 20\n  }\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
       const filters = expectOptionalObject(args.filters, "filters");
 
       return await client.history.getUserTransactionHistory(
         expectNonEmptyString(args.user, "user"),
-        expectOptionalString(args.market, "market"),
         filters
           ? {
+              market: expectOptionalString(filters.market, "filters.market"),
               cursor: expectOptionalString(filters.cursor, "filters.cursor"),
               from: expectOptionalString(filters.from, "filters.from"),
               to: expectOptionalString(filters.to, "filters.to"),
@@ -408,12 +366,19 @@ const SDK_METHODS: MethodDefinition[] = [
   {
     id: "history.getLiquidationHistory",
     label: "history.getLiquidationHistory",
-    defaultArgs: '{\n  "user": "aaaaa-aa",\n  "market": ""\n}',
+    defaultArgs:
+      '{\n  "user": "aaaaa-aa",\n  "filters": {\n    "market": ""\n  }\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
+      const filters = expectOptionalObject(args.filters, "filters");
+
       return await client.history.getLiquidationHistory(
         expectNonEmptyString(args.user, "user"),
-        expectOptionalString(args.market, "market")
+        filters
+          ? {
+              market: expectOptionalString(filters.market, "filters.market"),
+            }
+          : {}
       );
     },
   },
@@ -622,13 +587,13 @@ const SDK_METHODS: MethodDefinition[] = [
     id: "lending.submitInflow",
     label: "lending.submitInflow",
     defaultArgs:
-      '{\n  "txid": "replace-with-txid",\n  "chain": "BTC",\n  "type": "DEPOSIT"\n}',
+      '{\n  "txid": "replace-with-txid",\n  "chain": "BTC",\n  "operation": "deposit"\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
       return await client.lending.submitInflow({
         txid: expectNonEmptyString(args.txid, "txid"),
         chain: expectOptionalChain(args.chain, "chain"),
-        type: expectOptionalInflowSubmitType(args.type, "type"),
+        operation: expectInflowOperation(args.operation, "operation"),
       });
     },
   },
@@ -1067,22 +1032,6 @@ function expectOptionalLimit(
   return value;
 }
 
-function parseHistoryWindow(
-  value: Record<string, unknown> | undefined,
-  fieldName: string
-) {
-  if (!value) {
-    return {};
-  }
-
-  return {
-    cursor: expectOptionalString(value.cursor, `${fieldName}.cursor`),
-    from: expectOptionalString(value.from, `${fieldName}.from`),
-    to: expectOptionalString(value.to, `${fieldName}.to`),
-    limit: expectOptionalLimit(value.limit, `${fieldName}.limit`),
-  };
-}
-
 function expectChain(value: unknown, fieldName: string): "BTC" | "ETH" {
   const chain = expectNonEmptyString(value, fieldName).toUpperCase();
 
@@ -1185,20 +1134,17 @@ function expectOptionalSupplyMechanism(
   throw new Error(`${fieldName} must be transfer or contractInteraction.`);
 }
 
-function expectOptionalInflowSubmitType(
+function expectInflowOperation(
   value: unknown,
   fieldName: string
-): InflowSubmitType | undefined {
-  const type = expectOptionalString(value, fieldName)?.toUpperCase();
-  if (!type) {
-    return undefined;
+): InflowOperation {
+  const operation = expectNonEmptyString(value, fieldName).toLowerCase();
+
+  if (operation === "deposit" || operation === "repayment") {
+    return operation;
   }
 
-  if (type === "DEPOSIT" || type === "REPAY") {
-    return type;
-  }
-
-  throw new Error(`${fieldName} must be DEPOSIT or REPAY.`);
+  throw new Error(`${fieldName} must be deposit or repayment.`);
 }
 
 function expectOptionalActivityFilter(

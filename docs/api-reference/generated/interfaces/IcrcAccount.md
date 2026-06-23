@@ -6,7 +6,7 @@
 
 # Interface: IcrcAccount
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:49](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L49)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:50](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L50)
 
 ICRC account returned by existing or future canister state.
 
@@ -16,7 +16,7 @@ ICRC account returned by existing or future canister state.
 
 > **address**: `string`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:57](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L57)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:58](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L58)
 
 Text-encoded ICRC account for display.
 
@@ -26,7 +26,7 @@ Text-encoded ICRC account for display.
 
 > **owner**: `string`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:53](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L53)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:54](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L54)
 
 ICRC account owner principal text.
 
@@ -36,7 +36,7 @@ ICRC account owner principal text.
 
 > `optional` **subaccount?**: `Uint8Array`\<`ArrayBufferLike`\>
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:55](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L55)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:56](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L56)
 
 Optional ICRC subaccount bytes.
 
@@ -46,6 +46,6 @@ Optional ICRC subaccount bytes.
 
 > **type**: `"Icrc"`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:51](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L51)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:52](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L52)
 
 Account kind discriminator.

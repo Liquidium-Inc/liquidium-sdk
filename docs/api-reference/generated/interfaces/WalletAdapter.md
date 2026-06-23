@@ -13,7 +13,7 @@ Optional wallet capabilities. Implement only what your flow uses:
 - `signMessage` - account creation, borrow, withdraw
 - `sendBtcTransaction` / `sendEthTransaction` - automated transfer-path supply
 - `sendEthTransaction` - contract-interaction supply and ETH native sends
-- `signPsbt` - reserved for PSBT-based actions when exposed
+- `signPsbt` - reserved; no current SDK flow emits PSBT-signing actions
 
 ## Properties
 
@@ -83,7 +83,7 @@ Signs an SDK plaintext message and returns the wallet signature. BTC adapters ma
 
 Defined in: [packages/client/src/core/wallet-actions.ts:113](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L113)
 
-Signs an SDK-provided BTC PSBT and returns the signed PSBT as base64.
+Reserved for future PSBT-signing flows; no current SDK method calls this.
 
 #### Parameters
 

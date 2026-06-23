@@ -5,26 +5,24 @@ import {
   buildActivitiesPath,
   buildActivityStatusPath,
 } from "../../core/sdk-api-paths";
+import type { LiquidiumStatus } from "../../core/status";
 import type { ApiClient } from "../../core/transports/api-client";
 import type { CanisterContext } from "../../core/transports/canister-context";
-import { Chain } from "../../core/types";
+import type { Chain } from "../../core/types";
 import { parseBigInt } from "../../core/utils/bigint";
 import { intFromPublicId } from "../instant-loans/ref-code";
 import type {
   Activity,
-  ActivityStatus,
   ActivityTopUp,
   GetActivityStatusRequest,
   GetActivityStatusResponse,
-  InflowActivityKind,
+  InflowActivity,
   InflowActivityStatus,
   ListActivitiesRequest,
-  OutflowActivityKind,
+  OutflowActivity,
   OutflowActivityStatus,
 } from "./types";
-import { ActivityDirection, ActivityFilter } from "./types";
-
-const PRE_TERMINAL_ETH_ACTIVITY_ID_PREFIX = "pre_terminal_eth_";
+import { ActivityFilter } from "./types";
 
 interface ActivityTopUpWire
   extends Omit<
@@ -36,51 +34,28 @@ interface ActivityTopUpWire
   shortfallAmount: string;
 }
 
-type ActivityWireStatus =
-  | "requested"
-  | "pending"
-  | "sent"
-  | "confirmed"
-  | "failed";
-
-type ActivityWireStage =
-  | "logged"
-  | "deposited"
-  | "confirmed"
-  | "pending"
-  | "finalising";
-
 interface ActivityWire {
   id: string;
-  direction: Activity["direction"];
-  kind: Activity["kind"];
   poolId: string;
   asset: string | null;
   chain: Chain | null;
   amount: string;
   timestampMs: number;
-  txid: string | null;
   txids?: string[];
-  confirmations: number | null;
-  requiredConfirmations: number | null;
-  status: ActivityWireStatus;
-  stage?: ActivityWireStage;
+  status: LiquidiumStatus;
   topUp?: ActivityTopUpWire;
 }
 
 interface ListActivitiesResponseWire {
-  success: true;
   activities: ActivityWire[];
 }
 
 interface ActivityStatusFoundResponseWire {
-  success: true;
   found: true;
   activity: ActivityWire;
 }
 
 interface ActivityStatusNotFoundResponseWire {
-  success: true;
   found: false;
   id: string;
 }
@@ -97,11 +72,11 @@ export class ActivitiesModule {
   ) {}
 
   /**
-   * Lists profile activities. Defaults to all activities.
+   * Lists profile activities. Defaults to active activities.
    *
    * Uses the Liquidium SDK API.
    *
-   * @param request - Profile id or instant-loan short reference plus optional state filter.
+   * @param request - Profile id or instant-loan short reference plus optional lifecycle filter.
    * @returns Activities owned by the resolved profile.
    */
   async list(request: ListActivitiesRequest): Promise<Activity[]> {
@@ -110,7 +85,7 @@ export class ActivitiesModule {
     const response = await apiClient.get<ListActivitiesResponseWire>(
       buildActivitiesPath({
         profileId,
-        state: request.filter ?? ActivityFilter.all,
+        filter: request.filter ?? ActivityFilter.active,
       })
     );
 
@@ -213,98 +188,58 @@ function mapInstantLoanLookupError(
 }
 
 function mapActivity(wire: ActivityWire): Activity {
-  const { amount, stage, status, topUp: topUpWire, ...activity } = wire;
-  const effectiveStage = stage ?? deriveActivityStage(wire);
-  const topUp =
-    activity.direction === ActivityDirection.inflow && topUpWire
-      ? mapActivityTopUp(topUpWire)
-      : undefined;
-
-  if (activity.direction === ActivityDirection.inflow) {
-    return {
-      ...activity,
-      direction: ActivityDirection.inflow,
-      kind: mapInflowActivityKind(activity.kind),
-      status: mapInflowActivityStatus(
-        mapActivityStatus(status, effectiveStage)
-      ),
-      ...(topUp ? { topUp } : {}),
-      amount: parseBigInt(amount, "activity amount"),
-    };
-  }
-
-  return {
-    ...activity,
-    direction: ActivityDirection.outflow,
-    kind: mapOutflowActivityKind(activity.kind),
-    status: mapOutflowActivityStatus(mapActivityStatus(status, effectiveStage)),
-    amount: parseBigInt(amount, "activity amount"),
+  const amount = parseBigInt(wire.amount, "activity amount");
+  const activityBase = {
+    id: wire.id,
+    poolId: wire.poolId,
+    asset: wire.asset,
+    chain: wire.chain,
+    amount,
+    timestampMs: wire.timestampMs,
   };
-}
 
-function mapInflowActivityKind(kind: Activity["kind"]): InflowActivityKind {
-  if (kind === "deposit" || kind === "repayment") {
-    return kind;
+  if (isInflowOperation(wire.status.operation)) {
+    const activity: InflowActivity = {
+      ...activityBase,
+      status: wire.status as InflowActivityStatus,
+    };
+
+    if (wire.txids) {
+      activity.txids = wire.txids;
+    }
+
+    if (wire.topUp) {
+      activity.topUp = mapActivityTopUp(wire.topUp);
+    }
+
+    return activity;
+  }
+
+  if (isOutflowOperation(wire.status.operation)) {
+    const activity: OutflowActivity = {
+      ...activityBase,
+      status: wire.status as OutflowActivityStatus,
+    };
+
+    if (wire.txids) {
+      activity.txids = wire.txids;
+    }
+
+    return activity;
   }
 
   throw new LiquidiumError(
     LiquidiumErrorCode.INTERNAL,
-    `Invalid inflow activity kind: ${kind}`
+    `Invalid activity operation: ${wire.status.operation}`
   );
 }
 
-function mapOutflowActivityKind(kind: Activity["kind"]): OutflowActivityKind {
-  if (kind === "borrow" || kind === "withdraw") {
-    return kind;
-  }
-
-  throw new LiquidiumError(
-    LiquidiumErrorCode.INTERNAL,
-    `Invalid outflow activity kind: ${kind}`
-  );
+function isInflowOperation(operation: LiquidiumStatus["operation"]): boolean {
+  return operation === "deposit" || operation === "repayment";
 }
 
-function mapInflowActivityStatus(status: ActivityStatus): InflowActivityStatus {
-  if (status !== "sent") {
-    return status;
-  }
-
-  throw new LiquidiumError(
-    LiquidiumErrorCode.INTERNAL,
-    `Invalid inflow activity status: ${status}`
-  );
-}
-
-function mapOutflowActivityStatus(
-  status: ActivityStatus
-): OutflowActivityStatus {
-  if (status !== "detected" && status !== "processing") {
-    return status;
-  }
-
-  throw new LiquidiumError(
-    LiquidiumErrorCode.INTERNAL,
-    `Invalid outflow activity status: ${status}`
-  );
-}
-
-function mapActivityStatus(
-  status: ActivityWireStatus,
-  stage: ActivityWireStage | undefined
-): ActivityStatus {
-  if (status !== "pending") {
-    return status;
-  }
-
-  if (stage === "deposited") {
-    return "detected";
-  }
-
-  if (stage === "confirmed" || stage === "finalising" || stage === "pending") {
-    return "processing";
-  }
-
-  return "pending";
+function isOutflowOperation(operation: LiquidiumStatus["operation"]): boolean {
+  return operation === "borrow" || operation === "withdrawal";
 }
 
 function mapActivityTopUp(wire: ActivityTopUpWire): ActivityTopUp {
@@ -320,18 +255,4 @@ function mapActivityTopUp(wire: ActivityTopUpWire): ActivityTopUp {
       "activity top-up shortfall amount"
     ),
   };
-}
-
-function deriveActivityStage(
-  wire: ActivityWire
-): ActivityWireStage | undefined {
-  if (
-    wire.id.startsWith(PRE_TERMINAL_ETH_ACTIVITY_ID_PREFIX) &&
-    wire.direction === ActivityDirection.inflow &&
-    wire.chain === Chain.ETH
-  ) {
-    return "deposited";
-  }
-
-  return undefined;
 }

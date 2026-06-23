@@ -104,12 +104,12 @@ export interface SendBtcTransactionRequest {
  * - `signMessage` - account creation, borrow, withdraw
  * - `sendBtcTransaction` / `sendEthTransaction` - automated transfer-path supply
  * - `sendEthTransaction` - contract-interaction supply and ETH native sends
- * - `signPsbt` - reserved for PSBT-based actions when exposed
+ * - `signPsbt` - reserved; no current SDK flow emits PSBT-signing actions
  */
 export interface WalletAdapter {
   /** Signs an SDK plaintext message and returns the wallet signature. BTC adapters may return base64 BIP-322 or hex-encoded signature bytes. */
   signMessage?: (request: SignMessageRequest) => Promise<string>;
-  /** Signs an SDK-provided BTC PSBT and returns the signed PSBT as base64. */
+  /** Reserved for future PSBT-signing flows; no current SDK method calls this. */
   signPsbt?: (request: SignPsbtRequest) => Promise<string>;
   /** Sends an EVM transaction and returns its transaction hash. */
   sendEthTransaction?: (request: SendEthTransactionRequest) => Promise<string>;
@@ -142,7 +142,7 @@ export interface SendEthTransactionSubmitRequest {
 /** Prepared action that requires message signing before submit. */
 export interface SignMessageWalletAction<TData, TResult> {
   /** Protocol action kind. */
-  kind: string;
+  kind: WalletActionKind;
   /** Wallet capability required to execute the action. */
   executionKind: typeof WalletExecutionKind.signMessage;
   /** Adapter-facing action type. */
@@ -159,10 +159,10 @@ export interface SignMessageWalletAction<TData, TResult> {
   submit(signatureInfo: SignatureInfo): Promise<TResult>;
 }
 
-/** Prepared action that requires BTC PSBT signing before submit. */
+/** Reserved prepared action for future BTC PSBT-signing flows. */
 export interface SignPsbtWalletAction<TResult> {
   /** Protocol action kind. */
-  kind: string;
+  kind: WalletActionKind;
   /** Wallet capability required to execute the action. */
   executionKind: typeof WalletExecutionKind.signPsbt;
   /** Adapter-facing action type. */
@@ -180,7 +180,7 @@ export interface SignPsbtWalletAction<TResult> {
 /** Prepared action that requires sending an ETH transaction before submit. */
 export interface SendEthTransactionWalletAction<TResult> {
   /** Protocol action kind. */
-  kind: string;
+  kind: WalletActionKind;
   /** Wallet capability required to execute the action. */
   executionKind: typeof WalletExecutionKind.sendEthTransaction;
   /** Adapter-facing action type. */

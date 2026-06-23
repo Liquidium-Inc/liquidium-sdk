@@ -2,29 +2,25 @@
  * Path and query key constants for the Liquidium SDK HTTP API.
  */
 
-const SDK_API_VERSION = {
-  activities: "v1",
-  history: "v1",
-  inflow: "v1",
-  instantLoans: "v1",
-} as const;
+const SDK_API_V1_PATH = "/v1";
+const SDK_API_V2_PATH = "/v2";
 
 export const SdkApiQueryParam = {
   cursor: "cursor",
   from: "from",
+  filter: "filter",
   limit: "limit",
   market: "market",
+  operations: "operations",
   poolId: "poolId",
   profileId: "profileId",
-  state: "state",
-  statuses: "statuses",
+  states: "states",
   to: "to",
-  types: "types",
 } as const;
 
 interface BuildActivitiesPathRequest {
   profileId: string;
-  state?: string;
+  filter?: string;
 }
 
 interface BuildActivityStatusPathRequest {
@@ -40,44 +36,10 @@ interface BuildInstantLoanCollateralHintPathRequest {
   loanId: bigint;
 }
 
-const ACTIVITIES = `/${SDK_API_VERSION.activities}/activities`;
-const HISTORY_POOL = `/${SDK_API_VERSION.history}/history/pool`;
-const HISTORY_POOL_CONFIG = `/${SDK_API_VERSION.history}/history/pool-config`;
-const HISTORY_RATES = `/${SDK_API_VERSION.history}/history/rates`;
-const HISTORY_USERS = `/${SDK_API_VERSION.history}/history/users`;
-const INFLOW = `/${SDK_API_VERSION.inflow}/inflow`;
-const INSTANT_LOANS = `/${SDK_API_VERSION.instantLoans}/instant-loans`;
-
-export function buildHistoryPoolPath(
-  poolId: string,
-  query: URLSearchParams
-): string {
-  const base = `${HISTORY_POOL}/${encodeURIComponent(poolId)}`;
-  const qs = query.toString();
-  return qs ? `${base}?${qs}` : base;
-}
-
-export function buildHistoryPoolConfigPath(
-  poolId: string,
-  cursor?: string
-): string {
-  const base = `${HISTORY_POOL_CONFIG}/${encodeURIComponent(poolId)}`;
-  if (!cursor) {
-    return base;
-  }
-
-  const query = new URLSearchParams({ [SdkApiQueryParam.cursor]: cursor });
-  return `${base}?${query.toString()}`;
-}
-
-export function buildHistoryRatesPath(
-  poolId: string,
-  query: URLSearchParams
-): string {
-  const base = `${HISTORY_RATES}/${encodeURIComponent(poolId)}`;
-  const qs = query.toString();
-  return qs ? `${base}?${qs}` : base;
-}
+const ACTIVITIES = `${SDK_API_V2_PATH}/activities`;
+const HISTORY_USERS = `${SDK_API_V2_PATH}/history/users`;
+const INFLOW = `${SDK_API_V2_PATH}/inflow`;
+const INSTANT_LOANS = `${SDK_API_V1_PATH}/instant-loans`;
 
 export function buildHistoryUserTransactionsPath(
   user: string,
@@ -103,8 +65,8 @@ export function buildActivitiesPath(
   const query = new URLSearchParams({
     [SdkApiQueryParam.profileId]: request.profileId,
   });
-  if (request.state) {
-    query.set(SdkApiQueryParam.state, request.state);
+  if (request.filter) {
+    query.set(SdkApiQueryParam.filter, request.filter);
   }
 
   return `${ACTIVITIES}?${query.toString()}`;

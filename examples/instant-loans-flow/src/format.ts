@@ -3,6 +3,7 @@ import type {
   GetActivityStatusResponse,
   InstantLoan,
   InstantLoanFindResult,
+  LiquidiumStatus,
   Pool,
   SupplyTarget,
 } from "@liquidium/client";
@@ -18,6 +19,8 @@ const ERROR_FIELD_EXCLUDE_LIST = new Set(["name", "message", "stack", "cause"]);
 type InstantLoanFormatOptions = {
   pools?: Pool[];
 };
+
+type StatusSubject = "Activity" | "Loan";
 
 export function getElement<T extends HTMLElement>(id: string): T {
   const element = document.getElementById(id);
@@ -195,7 +198,8 @@ export function formatInstantLoan(
   return [
     `Reference: ${loan.ref}`,
     `Loan id: ${loan.loanId.toString()}`,
-    `Status: ${loan.status}`,
+    "Status:",
+    formatStatus(loan.status, "Loan"),
     `Profile id: ${loan.profileId}`,
     `Max LTV: ${formatPercentFromBps(loan.terms.ltvMaxBps)}`,
     `Deposit window seconds: ${loan.terms.depositWindowSeconds.toString()}`,
@@ -306,20 +310,15 @@ export function formatFindResult(
 function formatActivity(activity: Activity): string {
   return [
     `Activity id: ${activity.id}`,
-    `Direction: ${activity.direction}`,
-    `Kind: ${activity.kind}`,
-    `Status: ${activity.status}`,
+    `Operation: ${activity.status.operation}`,
+    "Status:",
+    formatStatus(activity.status, "Activity"),
     `Pool: ${activity.poolId}`,
     `Asset: ${activity.asset ?? "not set"}`,
     `Chain: ${activity.chain ?? "not set"}`,
     `Amount: ${activity.amount.toString()} base units`,
     `Timestamp ms: ${activity.timestampMs.toString()}`,
-    `Txid: ${activity.txid ?? "not set"}`,
     `Txids: ${activity.txids?.join(", ") ?? "not set"}`,
-    `Confirmations: ${activity.confirmations?.toString() ?? "not set"}`,
-    `Required confirmations: ${
-      activity.requiredConfirmations?.toString() ?? "not set"
-    }`,
     activity.topUp
       ? formatActivityTopUp(activity.topUp)
       : "Top-up: not required",
@@ -338,6 +337,34 @@ function formatActivityTopUp(topUp: Activity["topUp"]): string {
     `Fee amount: ${topUp.feeAmount.toString()} base units`,
     `Shortfall amount: ${topUp.shortfallAmount.toString()} base units`,
   ].join("\n");
+}
+
+function formatStatus(status: LiquidiumStatus, subject: StatusSubject): string {
+  const actionLine =
+    subject === "Loan"
+      ? formatLoanStatusDetail(status)
+      : `Activity action: ${status.operation}`;
+
+  return [
+    `${subject} state: ${status.state}`,
+    actionLine,
+    `Confirmations: ${status.confirmations?.toString() ?? "not set"}`,
+    `Required confirmations: ${
+      status.requiredConfirmations?.toString() ?? "not set"
+    }`,
+  ].join("\n");
+}
+
+function formatLoanStatusDetail(status: LiquidiumStatus): string {
+  if (status.operation === "repayment" && status.state === "active") {
+    return "Repayment due: yes";
+  }
+
+  if (status.operation === "repayment" && status.state === "completed") {
+    return "Repayment: complete";
+  }
+
+  return `Related action: ${status.operation}`;
 }
 
 export function stringifyForDisplay(value: unknown): string {

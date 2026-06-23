@@ -26,12 +26,12 @@ describe("ApiClient", () => {
     });
 
     // when
-    const result = await client.get("/v1/markets/pools");
+    const result = await client.get("/v2/markets/pools");
 
     // then
     expect(result).toEqual(expected);
     expect(fetch).toHaveBeenCalledWith(
-      `${MOCK_BASE_URL}/v1/markets/pools`,
+      `${MOCK_BASE_URL}/v2/markets/pools`,
       expect.objectContaining({ signal: expect.any(AbortSignal) })
     );
   });
@@ -48,12 +48,12 @@ describe("ApiClient", () => {
     });
 
     // when
-    const result = await client.get("/v1/markets/pools");
+    const result = await client.get("/v2/markets/pools");
 
     // then
     expect(result).toEqual(expected);
     expect(fetch).toHaveBeenCalledWith(
-      `${MOCK_BASE_URL}/v1/markets/pools`,
+      `${MOCK_BASE_URL}/v2/markets/pools`,
       expect.objectContaining({ signal: expect.any(AbortSignal) })
     );
   });
@@ -71,8 +71,8 @@ describe("ApiClient", () => {
     // when
 
     // then
-    await expect(client.get("/v1/missing")).rejects.toThrow(LiquidiumError);
-    await expect(client.get("/v1/missing")).rejects.toMatchObject({
+    await expect(client.get("/v2/missing")).rejects.toThrow(LiquidiumError);
+    await expect(client.get("/v2/missing")).rejects.toMatchObject({
       code: LiquidiumErrorCode.SERVICE_UNAVAILABLE,
     });
   });
@@ -98,7 +98,7 @@ describe("ApiClient", () => {
     // when
 
     // then
-    await expect(client.get("/v1/test")).rejects.toMatchObject({
+    await expect(client.get("/v2/test")).rejects.toMatchObject({
       code: LiquidiumErrorCode.SERVICE_UNAVAILABLE,
       message: `Invalid request (traceId=${TRACE_ID}, requestId=${REQUEST_ID})`,
       requestId: REQUEST_ID,
@@ -117,8 +117,8 @@ describe("ApiClient", () => {
     // when
 
     // then
-    await expect(client.get("/v1/test")).rejects.toThrow(LiquidiumError);
-    await expect(client.get("/v1/test")).rejects.toMatchObject({
+    await expect(client.get("/v2/test")).rejects.toThrow(LiquidiumError);
+    await expect(client.get("/v2/test")).rejects.toMatchObject({
       code: LiquidiumErrorCode.NETWORK_ERROR,
     });
   });
@@ -137,11 +137,11 @@ describe("ApiClient", () => {
     });
 
     // when
-    await client.post("/v1/test", { ok: true });
+    await client.post("/v2/test", { ok: true });
 
     // then
     expect(fetch).toHaveBeenCalledWith(
-      `${MOCK_BASE_URL}/v1/test`,
+      `${MOCK_BASE_URL}/v2/test`,
       expect.objectContaining({
         headers: {
           authorization: "Bearer token",
@@ -165,12 +165,12 @@ describe("ApiClient", () => {
     });
 
     // when
-    const result = await client.get("/v1/custom-fetch");
+    const result = await client.get("/v2/custom-fetch");
 
     // then
     expect(result).toEqual({ ok: true });
     expect(customFetch).toHaveBeenCalledWith(
-      `${MOCK_BASE_URL}/v1/custom-fetch`,
+      `${MOCK_BASE_URL}/v2/custom-fetch`,
       expect.objectContaining({ method: "GET" })
     );
   });

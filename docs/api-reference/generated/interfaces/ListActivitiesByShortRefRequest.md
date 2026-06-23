@@ -6,7 +6,7 @@
 
 # Interface: ListActivitiesByShortRefRequest
 
-Defined in: [packages/client/src/modules/activities/types.ts:137](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L137)
+Defined in: [packages/client/src/modules/activities/types.ts:88](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L88)
 
 Activity list request scoped to an instant-loan short reference.
 
@@ -20,9 +20,9 @@ Activity list request scoped to an instant-loan short reference.
 
 > `optional` **filter?**: [`ActivityFilter`](../type-aliases/ActivityFilter.md)
 
-Defined in: [packages/client/src/modules/activities/types.ts:126](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L126)
+Defined in: [packages/client/src/modules/activities/types.ts:77](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L77)
 
-Optional state filter; defaults to `all`.
+Optional lifecycle filter; defaults to `active`.
 
 #### Inherited from
 
@@ -34,6 +34,6 @@ Optional state filter; defaults to `all`.
 
 > **shortRef**: `string`
 
-Defined in: [packages/client/src/modules/activities/types.ts:140](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L140)
+Defined in: [packages/client/src/modules/activities/types.ts:91](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L91)
 
 Instant-loan short reference to list activities for.

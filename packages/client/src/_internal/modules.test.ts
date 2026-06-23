@@ -26,6 +26,8 @@ interface TestUsdtAssetVariant {
 
 type TestInstantLoanPositionAsset = TestBtcAssetVariant | TestUsdtAssetVariant;
 
+const LONG_RETRY_TEST_TIMEOUT_MS = 15_000;
+
 afterEach(() => {
   vi.restoreAllMocks();
   vi.useRealTimers();
@@ -402,14 +404,11 @@ describe("AccountsModule", () => {
 describe("HistoryModule", () => {
   test("uses default prod API base URL when no apiBaseUrl configured", async () => {
     // given
-    const fetchSpy = vi
-      .spyOn(globalThis, "fetch")
-      .mockResolvedValue(
-        new Response(
-          JSON.stringify({ success: true, items: [], nextCursor: undefined }),
-          { status: 200 }
-        )
-      );
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ items: [], nextCursor: undefined }), {
+        status: 200,
+      })
+    );
     const client = new LiquidiumClient({});
 
     // when
@@ -418,7 +417,7 @@ describe("HistoryModule", () => {
     // then
     expect(result).toEqual({ items: [], nextCursor: undefined });
     expect(fetchSpy).toHaveBeenCalledWith(
-      `${DEFAULT_API_BASE_URL}/v1/history/users/profile-1/transactions`,
+      `${DEFAULT_API_BASE_URL}/v2/history/users/profile-1/transactions`,
       expect.objectContaining({ method: "GET" })
     );
   });
@@ -426,15 +425,18 @@ describe("HistoryModule", () => {
   test("fetches user history through the sdk api", async () => {
     // given
     const responsePayload = {
-      success: true as const,
       items: [
         {
           id: "history-1",
-          type: "supply" as const,
           amount: "100000",
           poolId: "pool-1",
           timestamp: "2026-04-01T00:00:00.000Z",
-          status: "CONFIRMED" as const,
+          status: {
+            operation: "deposit" as const,
+            state: "completed" as const,
+            confirmations: null,
+            requiredConfirmations: null,
+          },
           txids: ["tx-1"],
         },
       ],
@@ -453,29 +455,31 @@ describe("HistoryModule", () => {
     });
 
     // when
-    const result = await client.history.getUserTransactionHistory(
-      "profile-1",
-      undefined,
-      { cursor: "2026-03-31T00:00:00.000Z::history-0" }
-    );
+    const result = await client.history.getUserTransactionHistory("profile-1", {
+      cursor: "2026-03-31T00:00:00.000Z::history-0",
+    });
 
     // then
     expect(result).toEqual({
       items: [
         {
           id: "history-1",
-          type: "supply",
           amount: 100000n,
           poolId: "pool-1",
           timestamp: "2026-04-01T00:00:00.000Z",
-          status: "confirmed",
+          status: {
+            operation: "deposit",
+            state: "completed",
+            confirmations: null,
+            requiredConfirmations: null,
+          },
           txids: ["tx-1"],
         },
       ],
       nextCursor: "2026-04-01T00:00:00.000Z::history-1",
     });
     expect(fetchSpy).toHaveBeenCalledWith(
-      "https://app.liquidium.fi/api/sdk/v1/history/users/profile-1/transactions?cursor=2026-03-31T00%3A00%3A00.000Z%3A%3Ahistory-0",
+      "https://app.liquidium.fi/api/sdk/v2/history/users/profile-1/transactions?cursor=2026-03-31T00%3A00%3A00.000Z%3A%3Ahistory-0",
       {
         method: "GET",
         headers: undefined,
@@ -485,163 +489,21 @@ describe("HistoryModule", () => {
     );
   });
 
-  test("fetches pool rate history through the sdk api", async () => {
-    // given
-    const apiRateDecimals = Number(RATE_DECIMALS);
-    const responsePayload = {
-      success: true as const,
-      items: [
-        {
-          date: "2026-04-01T00:00:00.000Z",
-          rateDecimals: apiRateDecimals,
-          avgBorrowRate: "1000",
-          avgLendRate: "500",
-          avgUtilizationRate: "8000",
-        },
-      ],
-      nextCursor: "2026-04-01T00:00:00.000Z::1",
-    };
-    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(JSON.stringify(responsePayload), {
-        status: 200,
-        headers: {
-          "content-type": "application/json",
-        },
-      })
-    );
-    const client = new LiquidiumClient({
-      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
-    });
-
-    // when
-    const result = await client.history.getPoolHistory("pool-1", {
-      from: "2026-04-01T00:00:00.000Z",
-      limit: 1,
-    });
-
-    // then
-    expect(result).toEqual({
-      items: [
-        {
-          date: "2026-04-01T00:00:00.000Z",
-          rateDecimals: RATE_DECIMALS,
-          avgBorrowRate: 1000n,
-          avgLendRate: 500n,
-          avgUtilizationRate: 8000n,
-        },
-      ],
-      nextCursor: "2026-04-01T00:00:00.000Z::1",
-    });
-    expect(fetchSpy).toHaveBeenCalledWith(
-      "https://app.liquidium.fi/api/sdk/v1/history/pool/pool-1?from=2026-04-01T00%3A00%3A00.000Z&limit=1",
-      {
-        method: "GET",
-        headers: undefined,
-        body: undefined,
-        signal: expect.any(AbortSignal),
-      }
-    );
-  });
-
-  test("fetches pool config history through the sdk api", async () => {
+  test("passes transaction history filters to the sdk api", async () => {
     // given
     const responsePayload = {
-      success: true as const,
-      items: [
-        {
-          type: "configuration_change" as const,
-          poolId: "pool-1",
-          asset: "BTC",
-          chain: "BTC",
-          timestamp: "2026-04-01T00:00:00.000Z",
-          totalSupply: "1000",
-          totalDebt: "100",
-          supplyCap: "5000",
-          borrowCap: "2000",
-          maxLtv: "7000",
-          liquidationThreshold: "7500",
-          liquidationBonus: "200",
-          protocolLiquidationFee: "50",
-          reserveFactor: "100",
-          baseRate: "5",
-          optimalUtilizationRate: "8000",
-          rateSlopeBefore: "1",
-          rateSlopeAfter: "2",
-          lendingIndex: "300",
-          borrowIndex: "400",
-          sameAssetBorrowing: true,
-          frozen: false,
-        },
-      ],
-    };
-    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(JSON.stringify(responsePayload), {
-        status: 200,
-        headers: {
-          "content-type": "application/json",
-        },
-      })
-    );
-    const client = new LiquidiumClient({
-      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
-    });
-
-    // when
-    const result = await client.history.getPoolConfigHistory("pool-1");
-
-    // then
-    expect(result).toEqual({
-      items: [
-        {
-          type: "configuration_change",
-          poolId: "pool-1",
-          asset: "BTC",
-          chain: "BTC",
-          timestamp: "2026-04-01T00:00:00.000Z",
-          totalSupply: 1000n,
-          totalDebt: 100n,
-          supplyCap: 5000n,
-          borrowCap: 2000n,
-          maxLtv: 7000n,
-          liquidationThreshold: 7500n,
-          liquidationBonus: 200n,
-          protocolLiquidationFee: 50n,
-          reserveFactor: 100n,
-          baseRate: 5n,
-          optimalUtilizationRate: 8000n,
-          rateSlopeBefore: 1n,
-          rateSlopeAfter: 2n,
-          lendingIndex: 300n,
-          borrowIndex: 400n,
-          sameAssetBorrowing: true,
-          frozen: false,
-        },
-      ],
-      nextCursor: undefined,
-    });
-    expect(fetchSpy).toHaveBeenCalledWith(
-      "https://app.liquidium.fi/api/sdk/v1/history/pool-config/pool-1",
-      {
-        method: "GET",
-        headers: undefined,
-        body: undefined,
-        signal: expect.any(AbortSignal),
-      }
-    );
-  });
-
-  test("passes activities filters to the sdk api", async () => {
-    // given
-    const responsePayload = {
-      success: true as const,
       items: [
         {
           id: "history-1",
-          type: "borrow" as const,
           amount: "50000",
           poolId: "pool-btc",
           timestamp: "2026-04-02T00:00:00.000Z",
-          status: "CONFIRMED" as const,
+          status: {
+            operation: "borrow" as const,
+            state: "completed" as const,
+            confirmations: null,
+            requiredConfirmations: null,
+          },
           txids: ["tx-1"],
         },
       ],
@@ -664,8 +526,8 @@ describe("HistoryModule", () => {
       cursor: "2026-03-31T00:00:00.000Z::history-0",
       market: "pool-btc",
       poolId: "pool-btc",
-      types: ["borrow"],
-      statuses: ["confirmed"],
+      operations: ["borrow"],
+      states: ["completed"],
       from: "2026-04-01T00:00:00.000Z",
       to: "2026-04-03T00:00:00.000Z",
       limit: 1,
@@ -676,18 +538,22 @@ describe("HistoryModule", () => {
       items: [
         {
           id: "history-1",
-          type: "borrow",
           amount: 50000n,
           poolId: "pool-btc",
           timestamp: "2026-04-02T00:00:00.000Z",
-          status: "confirmed",
+          status: {
+            operation: "borrow",
+            state: "completed",
+            confirmations: null,
+            requiredConfirmations: null,
+          },
           txids: ["tx-1"],
         },
       ],
       nextCursor: "2026-04-02T00:00:00.000Z::history-1",
     });
     expect(fetchSpy).toHaveBeenCalledWith(
-      "https://app.liquidium.fi/api/sdk/v1/history/users/profile-1/transactions?cursor=2026-03-31T00%3A00%3A00.000Z%3A%3Ahistory-0&market=pool-btc&poolId=pool-btc&types=borrow&statuses=CONFIRMED&from=2026-04-01T00%3A00%3A00.000Z&to=2026-04-03T00%3A00%3A00.000Z&limit=1",
+      "https://app.liquidium.fi/api/sdk/v2/history/users/profile-1/transactions?cursor=2026-03-31T00%3A00%3A00.000Z%3A%3Ahistory-0&market=pool-btc&poolId=pool-btc&operations=borrow&states=completed&from=2026-04-01T00%3A00%3A00.000Z&to=2026-04-03T00%3A00%3A00.000Z&limit=1",
       {
         method: "GET",
         headers: undefined,
@@ -697,18 +563,87 @@ describe("HistoryModule", () => {
     );
   });
 
-  test("requests liquidation activities with liquidation type", async () => {
+  test("passes liquidation operation to transaction history", async () => {
     // given
     const responsePayload = {
-      success: true as const,
       items: [
         {
           id: "history-9",
-          type: "liquidation" as const,
           amount: "12345",
           poolId: "pool-btc",
           timestamp: "2026-04-04T00:00:00.000Z",
-          status: "CONFIRMED" as const,
+          status: {
+            operation: "liquidation" as const,
+            state: "completed" as const,
+            confirmations: null,
+            requiredConfirmations: null,
+          },
+          txids: ["tx-9"],
+        },
+      ],
+    };
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify(responsePayload), {
+        status: 200,
+        headers: {
+          "content-type": "application/json",
+        },
+      })
+    );
+    const client = new LiquidiumClient({
+      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
+    });
+
+    // when
+    const result = await client.history.getUserTransactionHistory("profile-1", {
+      operations: ["liquidation"],
+    });
+
+    // then
+    expect(result).toEqual({
+      items: [
+        {
+          id: "history-9",
+          amount: 12345n,
+          poolId: "pool-btc",
+          timestamp: "2026-04-04T00:00:00.000Z",
+          status: {
+            operation: "liquidation",
+            state: "completed",
+            confirmations: null,
+            requiredConfirmations: null,
+          },
+          txids: ["tx-9"],
+        },
+      ],
+      nextCursor: undefined,
+    });
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "https://app.liquidium.fi/api/sdk/v2/history/users/profile-1/transactions?operations=liquidation",
+      {
+        method: "GET",
+        headers: undefined,
+        body: undefined,
+        signal: expect.any(AbortSignal),
+      }
+    );
+  });
+
+  test("requests liquidation history with liquidation status operation", async () => {
+    // given
+    const responsePayload = {
+      items: [
+        {
+          id: "history-9",
+          amount: "12345",
+          poolId: "pool-btc",
+          timestamp: "2026-04-04T00:00:00.000Z",
+          status: {
+            operation: "liquidation" as const,
+            state: "completed" as const,
+            confirmations: null,
+            requiredConfirmations: null,
+          },
         },
       ],
       nextCursor: "2026-04-04T00:00:00.000Z::history-9",
@@ -736,76 +671,14 @@ describe("HistoryModule", () => {
 
     // then
     expect(result.items[0]).toMatchObject({
-      type: "liquidation",
       amount: 12345n,
       poolId: "pool-btc",
+      status: {
+        operation: "liquidation",
+      },
     });
     expect(fetchSpy).toHaveBeenCalledWith(
-      "https://app.liquidium.fi/api/sdk/v1/history/users/profile-1/liquidations?cursor=2026-04-03T00%3A00%3A00.000Z%3A%3Ahistory-8&market=pool-btc&from=2026-04-01T00%3A00%3A00.000Z&to=2026-04-05T00%3A00%3A00.000Z&limit=1",
-      {
-        method: "GET",
-        headers: undefined,
-        body: undefined,
-        signal: expect.any(AbortSignal),
-      }
-    );
-  });
-
-  test("maps pool snapshots to borrow apy history samples", async () => {
-    // given
-    const apiRateDecimals = Number(RATE_DECIMALS);
-    const responsePayload = {
-      success: true as const,
-      items: [
-        {
-          date: "2026-04-02T00:00:00.000Z",
-          rateDecimals: apiRateDecimals,
-          avgRate: "15",
-        },
-        {
-          date: "2026-04-01T00:00:00.000Z",
-          rateDecimals: apiRateDecimals,
-          avgRate: "10",
-        },
-      ],
-      nextCursor: "2026-04-01T00:00:00.000Z::snapshot-1",
-    };
-    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(JSON.stringify(responsePayload), {
-        status: 200,
-        headers: {
-          "content-type": "application/json",
-        },
-      })
-    );
-    const client = new LiquidiumClient({
-      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
-    });
-
-    // when
-    const result = await client.history.getBorrowRateHistory("pool-1", {
-      from: "2026-04-02T00:00:00.000Z",
-      limit: 1,
-    });
-
-    // then
-    expect(result).toEqual({
-      items: [
-        {
-          date: "2026-04-02T00:00:00.000Z",
-          rateDecimals: RATE_DECIMALS,
-          avgRate: 15n,
-        },
-        {
-          date: "2026-04-01T00:00:00.000Z",
-          rateDecimals: RATE_DECIMALS,
-          avgRate: 10n,
-        },
-      ],
-      nextCursor: "2026-04-01T00:00:00.000Z::snapshot-1",
-    });
-    expect(fetchSpy).toHaveBeenCalledWith(
-      "https://app.liquidium.fi/api/sdk/v1/history/rates/pool-1?from=2026-04-02T00%3A00%3A00.000Z&limit=1",
+      "https://app.liquidium.fi/api/sdk/v2/history/users/profile-1/liquidations?cursor=2026-04-03T00%3A00%3A00.000Z%3A%3Ahistory-8&market=pool-btc&from=2026-04-01T00%3A00%3A00.000Z&to=2026-04-05T00%3A00%3A00.000Z&limit=1",
       {
         method: "GET",
         headers: undefined,
@@ -820,7 +693,7 @@ describe("ActivitiesModule", () => {
   test("uses default prod API base URL when no apiBaseUrl configured", async () => {
     // given
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(JSON.stringify({ success: true, activities: [] }), {
+      new Response(JSON.stringify({ activities: [] }), {
         status: 200,
       })
     );
@@ -832,12 +705,12 @@ describe("ActivitiesModule", () => {
     // then
     expect(result).toEqual([]);
     expect(fetchSpy).toHaveBeenCalledWith(
-      `${DEFAULT_API_BASE_URL}/v1/activities?profileId=profile-1&state=all`,
+      `${DEFAULT_API_BASE_URL}/v2/activities?profileId=profile-1&filter=active`,
       expect.objectContaining({ method: "GET" })
     );
   });
 
-  test("lists all activities by default through the sdk api", async () => {
+  test("lists active activities by default through the sdk api", async () => {
     // given
     const ACTIVITY_AMOUNT = "100000";
     const ACTIVITY_AMOUNT_BASE_UNITS = 100000n;
@@ -845,22 +718,21 @@ describe("ActivitiesModule", () => {
     const ACTIVITY_CONFIRMATIONS = 1;
     const ACTIVITY_REQUIRED_CONFIRMATIONS = 6;
     const responsePayload = {
-      success: true as const,
       activities: [
         {
           id: "activity-1",
-          direction: "inflow" as const,
-          kind: "deposit" as const,
-          status: "pending" as const,
-          stage: "logged" as const,
+          status: {
+            operation: "deposit" as const,
+            state: "confirming" as const,
+            confirmations: ACTIVITY_CONFIRMATIONS,
+            requiredConfirmations: ACTIVITY_REQUIRED_CONFIRMATIONS,
+          },
           poolId: "pool-1",
           asset: "BTC",
           chain: "BTC" as const,
           amount: ACTIVITY_AMOUNT,
           timestampMs: ACTIVITY_TIMESTAMP_MS,
-          txid: "tx-1",
-          confirmations: ACTIVITY_CONFIRMATIONS,
-          requiredConfirmations: ACTIVITY_REQUIRED_CONFIRMATIONS,
+          txids: ["tx-1"],
         },
       ],
     };
@@ -885,21 +757,22 @@ describe("ActivitiesModule", () => {
     expect(result).toEqual([
       {
         id: "activity-1",
-        direction: "inflow",
-        kind: "deposit",
-        status: "pending",
+        status: {
+          operation: "deposit",
+          state: "confirming",
+          confirmations: ACTIVITY_CONFIRMATIONS,
+          requiredConfirmations: ACTIVITY_REQUIRED_CONFIRMATIONS,
+        },
         poolId: "pool-1",
         asset: "BTC",
         chain: "BTC",
         amount: ACTIVITY_AMOUNT_BASE_UNITS,
         timestampMs: ACTIVITY_TIMESTAMP_MS,
-        txid: "tx-1",
-        confirmations: ACTIVITY_CONFIRMATIONS,
-        requiredConfirmations: ACTIVITY_REQUIRED_CONFIRMATIONS,
+        txids: ["tx-1"],
       },
     ]);
     expect(fetchSpy).toHaveBeenCalledWith(
-      "https://app.liquidium.fi/api/sdk/v1/activities?profileId=profile-1&state=all",
+      "https://app.liquidium.fi/api/sdk/v2/activities?profileId=profile-1&filter=active",
       {
         method: "GET",
         headers: undefined,
@@ -925,7 +798,6 @@ describe("ActivitiesModule", () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(
         JSON.stringify({
-          success: true,
           activities: [],
         }),
         {
@@ -951,7 +823,7 @@ describe("ActivitiesModule", () => {
     expect(getLoan).toHaveBeenCalledWith(LOAN_ID);
     expect(result).toEqual([]);
     expect(fetchSpy).toHaveBeenCalledWith(
-      "https://app.liquidium.fi/api/sdk/v1/activities?profileId=aaaaa-aa&state=active",
+      "https://app.liquidium.fi/api/sdk/v2/activities?profileId=aaaaa-aa&filter=active",
       {
         method: "GET",
         headers: undefined,
@@ -969,27 +841,21 @@ describe("ActivitiesModule", () => {
     const ACTIVITY_CONFIRMATIONS = 0;
     const ACTIVITY_REQUIRED_CONFIRMATIONS = 1;
     const responsePayload = {
-      success: true as const,
       found: true as const,
       activity: {
         id: "activity-1",
-        direction: "outflow" as const,
-        kind: "borrow" as const,
-        status: "sent" as const,
+        status: {
+          operation: "borrow" as const,
+          state: "confirming" as const,
+          confirmations: ACTIVITY_CONFIRMATIONS,
+          requiredConfirmations: ACTIVITY_REQUIRED_CONFIRMATIONS,
+        },
         poolId: "pool-1",
         asset: "BTC",
         chain: "BTC" as const,
         amount: ACTIVITY_AMOUNT,
         timestampMs: ACTIVITY_TIMESTAMP_MS,
-        txid: "tx-1",
-        confirmations: ACTIVITY_CONFIRMATIONS,
-        requiredConfirmations: ACTIVITY_REQUIRED_CONFIRMATIONS,
-        topUp: {
-          required: true,
-          depositedAmount: "1000",
-          feeAmount: "2000",
-          shortfallAmount: "1000",
-        },
+        txids: ["tx-1"],
       },
     };
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
@@ -1015,21 +881,22 @@ describe("ActivitiesModule", () => {
       found: true,
       activity: {
         id: "activity-1",
-        direction: "outflow",
-        kind: "borrow",
-        status: "sent",
+        status: {
+          operation: "borrow",
+          state: "confirming",
+          confirmations: ACTIVITY_CONFIRMATIONS,
+          requiredConfirmations: ACTIVITY_REQUIRED_CONFIRMATIONS,
+        },
         poolId: "pool-1",
         asset: "BTC",
         chain: "BTC",
         amount: ACTIVITY_AMOUNT_BASE_UNITS,
         timestampMs: ACTIVITY_TIMESTAMP_MS,
-        txid: "tx-1",
-        confirmations: ACTIVITY_CONFIRMATIONS,
-        requiredConfirmations: ACTIVITY_REQUIRED_CONFIRMATIONS,
+        txids: ["tx-1"],
       },
     });
     expect(fetchSpy).toHaveBeenCalledWith(
-      "https://app.liquidium.fi/api/sdk/v1/activities/activity-1/status?profileId=profile-1",
+      "https://app.liquidium.fi/api/sdk/v2/activities/activity-1/status?profileId=profile-1",
       {
         method: "GET",
         headers: undefined,
@@ -1055,21 +922,21 @@ describe("ActivitiesModule", () => {
       },
     });
     const responsePayload = {
-      success: true as const,
       found: true as const,
       activity: {
         id: "activity-1",
-        direction: "outflow" as const,
-        kind: "borrow" as const,
-        status: "sent" as const,
+        status: {
+          operation: "borrow" as const,
+          state: "confirming" as const,
+          confirmations: ACTIVITY_CONFIRMATIONS,
+          requiredConfirmations: ACTIVITY_REQUIRED_CONFIRMATIONS,
+        },
         poolId: "pool-1",
         asset: "BTC",
         chain: "BTC" as const,
         amount: ACTIVITY_AMOUNT,
         timestampMs: ACTIVITY_TIMESTAMP_MS,
-        txid: "tx-1",
-        confirmations: ACTIVITY_CONFIRMATIONS,
-        requiredConfirmations: ACTIVITY_REQUIRED_CONFIRMATIONS,
+        txids: ["tx-1"],
       },
     };
     vi.spyOn(Actor, "createActor").mockReturnValue({
@@ -1100,21 +967,22 @@ describe("ActivitiesModule", () => {
       found: true,
       activity: {
         id: "activity-1",
-        direction: "outflow",
-        kind: "borrow",
-        status: "sent",
+        status: {
+          operation: "borrow",
+          state: "confirming",
+          confirmations: ACTIVITY_CONFIRMATIONS,
+          requiredConfirmations: ACTIVITY_REQUIRED_CONFIRMATIONS,
+        },
         poolId: "pool-1",
         asset: "BTC",
         chain: "BTC",
         amount: ACTIVITY_AMOUNT_BASE_UNITS,
         timestampMs: ACTIVITY_TIMESTAMP_MS,
-        txid: "tx-1",
-        confirmations: ACTIVITY_CONFIRMATIONS,
-        requiredConfirmations: ACTIVITY_REQUIRED_CONFIRMATIONS,
+        txids: ["tx-1"],
       },
     });
     expect(fetchSpy).toHaveBeenCalledWith(
-      "https://app.liquidium.fi/api/sdk/v1/activities/activity-1/status?profileId=aaaaa-aa",
+      "https://app.liquidium.fi/api/sdk/v2/activities/activity-1/status?profileId=aaaaa-aa",
       {
         method: "GET",
         headers: undefined,
@@ -1124,7 +992,7 @@ describe("ActivitiesModule", () => {
     );
   });
 
-  test("maps pre-terminal eth inflows to detected status", async () => {
+  test("maps pre-terminal eth inflows with required top-up to action required status", async () => {
     // given
     const ACTIVITY_AMOUNT = "4000000";
     const ACTIVITY_AMOUNT_BASE_UNITS = 4000000n;
@@ -1136,21 +1004,23 @@ describe("ActivitiesModule", () => {
     const TOP_UP_SHORTFALL_AMOUNT = "1740000";
     const TOP_UP_SHORTFALL_AMOUNT_BASE_UNITS = 1740000n;
     const responsePayload = {
-      success: true as const,
       found: true as const,
       activity: {
         id: "pre_terminal_eth_36",
-        direction: "inflow" as const,
-        kind: "deposit" as const,
-        status: "pending" as const,
+        status: {
+          operation: "deposit" as const,
+          state: "action_required" as const,
+          confirmations: ACTIVITY_CONFIRMATIONS,
+          requiredConfirmations: ACTIVITY_REQUIRED_CONFIRMATIONS,
+        },
         poolId: "7dcux-qqaaa-aaaae-qfc3a-cai",
         asset: "USDT",
         chain: "ETH" as const,
         amount: ACTIVITY_AMOUNT,
         timestampMs: ACTIVITY_TIMESTAMP_MS,
-        txid: "0x624f47a2d993c01b20d3fddcf8e5e8afe774d6e29d3702674f564fe825ae472c",
-        confirmations: ACTIVITY_CONFIRMATIONS,
-        requiredConfirmations: ACTIVITY_REQUIRED_CONFIRMATIONS,
+        txids: [
+          "0x624f47a2d993c01b20d3fddcf8e5e8afe774d6e29d3702674f564fe825ae472c",
+        ],
         topUp: {
           required: true,
           depositedAmount: ACTIVITY_AMOUNT,
@@ -1182,17 +1052,20 @@ describe("ActivitiesModule", () => {
       found: true,
       activity: {
         id: "pre_terminal_eth_36",
-        direction: "inflow",
-        kind: "deposit",
-        status: "detected",
+        status: {
+          operation: "deposit",
+          state: "action_required",
+          confirmations: ACTIVITY_CONFIRMATIONS,
+          requiredConfirmations: ACTIVITY_REQUIRED_CONFIRMATIONS,
+        },
         poolId: "7dcux-qqaaa-aaaae-qfc3a-cai",
         asset: "USDT",
         chain: "ETH",
         amount: ACTIVITY_AMOUNT_BASE_UNITS,
         timestampMs: ACTIVITY_TIMESTAMP_MS,
-        txid: "0x624f47a2d993c01b20d3fddcf8e5e8afe774d6e29d3702674f564fe825ae472c",
-        confirmations: ACTIVITY_CONFIRMATIONS,
-        requiredConfirmations: ACTIVITY_REQUIRED_CONFIRMATIONS,
+        txids: [
+          "0x624f47a2d993c01b20d3fddcf8e5e8afe774d6e29d3702674f564fe825ae472c",
+        ],
         topUp: {
           required: true,
           depositedAmount: ACTIVITY_AMOUNT_BASE_UNITS,
@@ -2832,7 +2705,9 @@ describe("LendingModule", () => {
     const result = await supplyFlow.submit({ txid });
 
     // then
-    expect(result).toEqual({ success: true, txid });
+    expect(result).toEqual({
+      txid,
+    });
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
@@ -2998,7 +2873,7 @@ describe("LendingModule", () => {
     // given
     const txid = "7f4f3c2b1a";
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(JSON.stringify({ success: true, txid }), {
+      new Response(JSON.stringify({ txid }), {
         status: 200,
         headers: {
           "content-type": "application/json",
@@ -3010,18 +2885,23 @@ describe("LendingModule", () => {
     });
 
     // when
-    const result = await client.lending.submitInflow({ txid });
+    const result = await client.lending.submitInflow({
+      txid,
+      operation: "deposit",
+    });
 
     // then
-    expect(result).toEqual({ success: true, txid });
+    expect(result).toEqual({
+      txid,
+    });
     expect(fetchSpy).toHaveBeenCalledWith(
-      "https://app.liquidium.fi/api/sdk/v1/inflow",
+      "https://app.liquidium.fi/api/sdk/v2/inflow",
       {
         method: "POST",
         headers: {
           "content-type": "application/json",
         },
-        body: JSON.stringify({ txid }),
+        body: JSON.stringify({ txid, operation: "deposit" }),
         signal: expect.any(AbortSignal),
       }
     );
@@ -3049,7 +2929,6 @@ describe("LendingModule", () => {
 
     // then
     expect(result).toMatchObject({
-      success: true,
       profileId: "aaaaa-aa",
       poolId: USDT_POOL_ID,
       walletAddress: "0x1234567890123456789012345678901234567890",
@@ -3279,7 +3158,7 @@ describe("LendingModule", () => {
     mockUsdtPoolList();
     const fetchSpy = vi.spyOn(globalThis, "fetch");
     fetchSpy.mockResolvedValueOnce(
-      new Response(JSON.stringify({ success: true, txid: depositTxid }), {
+      new Response(JSON.stringify({ txid: depositTxid }), {
         status: 200,
         headers: {
           "content-type": "application/json",
@@ -3352,13 +3231,13 @@ describe("LendingModule", () => {
     expect(readContract).toHaveBeenCalledTimes(2);
     expect(fetchSpy).toHaveBeenNthCalledWith(
       1,
-      "https://app.liquidium.fi/api/sdk/v1/inflow",
+      "https://app.liquidium.fi/api/sdk/v2/inflow",
       expect.objectContaining({
         method: "POST",
         body: JSON.stringify({
           txid: depositTxid,
           chain: "ETH",
-          type: "DEPOSIT",
+          operation: "deposit",
         }),
       })
     );
@@ -3472,7 +3351,7 @@ describe("LendingModule", () => {
         get_btc_address: vi.fn().mockResolvedValue("bc1qexampledepositaddress"),
       } as never);
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
-      new Response(JSON.stringify({ success: true, txid }), {
+      new Response(JSON.stringify({ txid }), {
         status: 200,
         headers: {
           "content-type": "application/json",
@@ -3498,12 +3377,12 @@ describe("LendingModule", () => {
       address: "bc1qexampledepositaddress",
     });
     expect(fetchSpy).toHaveBeenCalledWith(
-      "https://app.liquidium.fi/api/sdk/v1/inflow",
+      "https://app.liquidium.fi/api/sdk/v2/inflow",
       expect.objectContaining({
         method: "POST",
         body: JSON.stringify({
           chain: "BTC",
-          type: "DEPOSIT",
+          operation: "deposit",
           txid,
         }),
       })
@@ -3549,7 +3428,7 @@ describe("LendingModule", () => {
         get_btc_address: vi.fn().mockResolvedValue("bc1qexampledepositaddress"),
       } as never);
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
-      new Response(JSON.stringify({ success: true, txid }), {
+      new Response(JSON.stringify({ txid }), {
         status: 200,
         headers: {
           "content-type": "application/json",
@@ -3585,13 +3464,13 @@ describe("LendingModule", () => {
       transferMode: "native",
     });
     expect(fetchSpy).toHaveBeenCalledWith(
-      "https://app.liquidium.fi/api/sdk/v1/inflow",
+      "https://app.liquidium.fi/api/sdk/v2/inflow",
       expect.objectContaining({
         method: "POST",
         body: JSON.stringify({
           txid,
           chain: "BTC",
-          type: "DEPOSIT",
+          operation: "deposit",
         }),
       })
     );
@@ -3650,7 +3529,7 @@ describe("LendingModule", () => {
       )
     );
     fetchSpy.mockResolvedValueOnce(
-      new Response(JSON.stringify({ success: true, txid }), {
+      new Response(JSON.stringify({ txid }), {
         status: 200,
         headers: {
           "content-type": "application/json",
@@ -3681,16 +3560,109 @@ describe("LendingModule", () => {
     expect(fetchSpy).toHaveBeenCalledTimes(2);
     expect(fetchSpy).toHaveBeenNthCalledWith(
       1,
-      "https://app.liquidium.fi/api/sdk/v1/inflow",
+      "https://app.liquidium.fi/api/sdk/v2/inflow",
       expect.objectContaining({
         body: JSON.stringify({
           txid,
           chain: "BTC",
-          type: "DEPOSIT",
+          operation: "deposit",
         }),
       })
     );
   });
+
+  test(
+    "should return BTC txid when inflow registration fails after broadcast",
+    async () => {
+      // given
+      const txid = "post-broadcast-registration-failed-txid";
+      vi.spyOn(Actor, "createActor")
+        .mockReturnValueOnce({
+          list_pools: vi.fn().mockResolvedValue([
+            {
+              optimal_utilization_rate: 80n,
+              principal: {
+                toString: () => BTC_POOL_ID,
+                toText: () => BTC_POOL_ID,
+              },
+              total_generated_interest_snapshot: 0n,
+              supply_cap: [],
+              same_asset_borrowing: [],
+              asset: { BTC: null },
+              rate_slope_before: 1n,
+              borrow_cap: [],
+              total_debt_at_last_sync: 0n,
+              chain: { BTC: null },
+              rate_slope_after: 2n,
+              reserve_factor: 100n,
+              last_updated: [],
+              lending_index: 300n,
+              protocol_liquidation_fee: 50n,
+              borrow_index: 400n,
+              base_rate: 5n,
+              frozen: false,
+              liquidation_bonus: 200n,
+              liquidation_threshold: 7_500n,
+              max_ltv: 7_000n,
+              total_supply_at_last_sync: 50_000n,
+            },
+          ]),
+        } as never)
+        .mockReturnValueOnce({
+          get_btc_address: vi
+            .fn()
+            .mockResolvedValue("bc1qexampledepositaddress"),
+        } as never);
+      const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            message: "Resource not found",
+          }),
+          {
+            status: 503,
+            headers: {
+              "content-type": "application/json",
+            },
+          }
+        )
+      );
+      const sendBtcTransaction = vi.fn().mockResolvedValue(txid);
+      const client = new LiquidiumClient({
+        apiBaseUrl: "https://app.liquidium.fi/api/sdk",
+      });
+
+      // when
+      const flow = await client.lending.supply({
+        profileId: "aaaaa-aa",
+        poolId: BTC_POOL_ID,
+        action: "deposit",
+        amount: 100_000n,
+        walletAdapter: {
+          sendBtcTransaction,
+        },
+        account: "bc1qsender",
+      });
+
+      // then
+      const EXPECTED_SUBMIT_ATTEMPTS = 4;
+      expect(flow.type).toBe("transfer");
+      expect(flow.txid).toBe(txid);
+      expect(sendBtcTransaction).toHaveBeenCalledTimes(1);
+      expect(fetchSpy).toHaveBeenCalledTimes(EXPECTED_SUBMIT_ATTEMPTS);
+      expect(fetchSpy).toHaveBeenNthCalledWith(
+        1,
+        "https://app.liquidium.fi/api/sdk/v2/inflow",
+        expect.objectContaining({
+          body: JSON.stringify({
+            txid,
+            chain: "BTC",
+            operation: "deposit",
+          }),
+        })
+      );
+    },
+    LONG_RETRY_TEST_TIMEOUT_MS
+  );
 
   test("auto-submits BTC repayment inflows with the REPAY submit type", async () => {
     // given
@@ -3731,7 +3703,7 @@ describe("LendingModule", () => {
         get_btc_address: vi.fn().mockResolvedValue("bc1qexamplerepayaddress"),
       } as never);
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
-      new Response(JSON.stringify({ success: true, txid }), {
+      new Response(JSON.stringify({ txid }), {
         status: 200,
         headers: {
           "content-type": "application/json",
@@ -3768,12 +3740,12 @@ describe("LendingModule", () => {
       transferMode: "native",
     });
     expect(fetchSpy).toHaveBeenCalledWith(
-      "https://app.liquidium.fi/api/sdk/v1/inflow",
+      "https://app.liquidium.fi/api/sdk/v2/inflow",
       expect.objectContaining({
         body: JSON.stringify({
           txid,
           chain: "BTC",
-          type: "REPAY",
+          operation: "repayment",
         }),
       })
     );
@@ -3842,19 +3814,24 @@ describe("LendingModule", () => {
     // given
     const TXID = "abc";
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(JSON.stringify({ success: true, txid: TXID }), {
+      new Response(JSON.stringify({ txid: TXID }), {
         status: 200,
       })
     );
     const client = new LiquidiumClient({});
 
     // when
-    const result = await client.lending.submitInflow({ txid: TXID });
+    const result = await client.lending.submitInflow({
+      txid: TXID,
+      operation: "deposit",
+    });
 
     // then
-    expect(result).toEqual({ success: true, txid: TXID });
+    expect(result).toEqual({
+      txid: TXID,
+    });
     expect(fetchSpy).toHaveBeenCalledWith(
-      `${DEFAULT_API_BASE_URL}/v1/inflow`,
+      `${DEFAULT_API_BASE_URL}/v2/inflow`,
       expect.objectContaining({ method: "POST" })
     );
   });
@@ -3945,6 +3922,12 @@ Nonce: 17`);
       receiver: {
         type: "External",
         account: VALID_BTC_OUTFLOW_ADDRESS,
+      },
+      status: {
+        operation: "borrow",
+        state: "confirming",
+        confirmations: null,
+        requiredConfirmations: null,
       },
     });
   });
@@ -4450,13 +4433,19 @@ Nonce: 23`);
     });
     expect(outflow).toEqual({
       id: "outflow-2",
-      outflowType: "withdraw",
+      outflowType: "withdrawal",
       outflowRef: "ref-2",
       txid: "txid-2",
       amount: 10_000n,
       receiver: {
         type: "External",
         account: VALID_BTC_OUTFLOW_ADDRESS,
+      },
+      status: {
+        operation: "withdrawal",
+        state: "confirming",
+        confirmations: null,
+        requiredConfirmations: null,
       },
     });
   });
@@ -4492,7 +4481,7 @@ Nonce: 23`);
     });
 
     // then
-    expect(outflow.outflowType).toBe("withdraw");
+    expect(outflow.outflowType).toBe("withdrawal");
     expect(signMessage).toHaveBeenCalledWith({
       actionType: "create-withdraw",
       transferMode: "native",
@@ -4697,7 +4686,12 @@ describe("InstantLoansModule", () => {
     );
     expect(loan.loanId).toBe(LOAN_ID);
     expect(loan.ref).toBe(publicIdFromInt(LOAN_ID));
-    expect(loan.status).toBe("active");
+    expect(loan.status).toEqual({
+      operation: "repayment",
+      state: "active",
+      confirmations: null,
+      requiredConfirmations: null,
+    });
     expect(loan.profileId).toBe(PROFILE_ID);
     expect(loan).not.toHaveProperty("started");
     expect(loan).not.toHaveProperty("depositDetectedTimestamp");
@@ -4838,6 +4832,12 @@ describe("InstantLoansModule", () => {
             }),
             { status: 200, headers: { "content-type": "application/json" } }
           );
+        }
+        if (url.includes("/activities?")) {
+          return new Response(JSON.stringify({ activities: [] }), {
+            status: 200,
+            headers: { "content-type": "application/json" },
+          });
         }
         throw new Error(`Unexpected fetch URL: ${url}`);
       });
@@ -5189,7 +5189,12 @@ describe("InstantLoansModule", () => {
       chain: "ETH",
     });
     expect(loan.initialDeposit.amount).toBe(10_002_500n);
-    expect(loan.status).toBe("awaiting_deposit");
+    expect(loan.status).toEqual({
+      operation: "deposit",
+      state: "action_required",
+      confirmations: null,
+      requiredConfirmations: null,
+    });
     expect(estimateDepositFee).not.toHaveBeenCalled();
   });
 
@@ -5240,7 +5245,12 @@ describe("InstantLoansModule", () => {
     });
 
     // then
-    expect(loan.status).toBe("awaiting_deposit");
+    expect(loan.status).toEqual({
+      operation: "deposit",
+      state: "action_required",
+      confirmations: null,
+      requiredConfirmations: null,
+    });
     expect(loan.repayment).toMatchObject({
       amount: 0n,
       debtAmount: 0n,
@@ -5263,7 +5273,8 @@ describe("InstantLoansModule", () => {
     });
     const fetchSpy = vi
       .spyOn(globalThis, "fetch")
-      .mockImplementation(async (_input, init) => {
+      .mockImplementation(async (input, init) => {
+        const url = input.toString();
         if (init?.method === "POST") {
           return new Response(
             JSON.stringify({
@@ -5277,6 +5288,12 @@ describe("InstantLoansModule", () => {
             }),
             { status: 200, headers: { "content-type": "application/json" } }
           );
+        }
+        if (url.includes("/activities?")) {
+          return new Response(JSON.stringify({ activities: [] }), {
+            status: 200,
+            headers: { "content-type": "application/json" },
+          });
         }
 
         return new Response(JSON.stringify({ error: "not found" }), {
@@ -5376,10 +5393,15 @@ describe("InstantLoansModule", () => {
         method: "POST",
       })
     );
-    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
     expect(getLoan).toHaveBeenCalledWith(LOAN_ID);
     expect(loan.loanId).toBe(LOAN_ID);
-    expect(loan.status).toBe("awaiting_deposit");
+    expect(loan.status).toEqual({
+      operation: "deposit",
+      state: "action_required",
+      confirmations: null,
+      requiredConfirmations: null,
+    });
     expect(loan.collateral.amount).toBe(10_000_000n);
     expect(loan.terms).toEqual({
       ltvMaxBps: 6_800n,
@@ -5739,15 +5761,23 @@ describe("InstantLoansModule", () => {
       collateralPoolId: string;
     }> = {}
   ) {
-    return vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(
+    return vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
+      const url = input.toString();
+      if (url.includes("/activities?")) {
+        return new Response(JSON.stringify({ activities: [] }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        });
+      }
+
+      return new Response(
         JSON.stringify({
           success: true,
           collateralAmountHint: overrides.collateralAmountHint ?? "10000000",
         }),
         { status: 200, headers: { "content-type": "application/json" } }
-      )
-    );
+      );
+    });
   }
 
   function createBtcBorrowInstantLoan() {

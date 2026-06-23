@@ -13,6 +13,11 @@ export {
 } from "./core/evm";
 export { RATE_DECIMALS, RATE_SCALE } from "./core/rates";
 export type {
+  LiquidiumOperation,
+  LiquidiumState,
+  LiquidiumStatus,
+} from "./core/status";
+export type {
   CanisterIds,
   EvmReadClient,
   LiquidiumClientConfig,
@@ -24,7 +29,6 @@ export {
   Asset,
   Chain,
   Environment,
-  InflowSubmitType,
   OutflowType,
   SupplyAction,
 } from "./core/types";
@@ -42,7 +46,11 @@ export type {
   WalletAction,
   WalletAdapter,
 } from "./core/wallet-actions";
-export { TransferMode, WalletExecutionKind } from "./core/wallet-actions";
+export {
+  TransferMode,
+  WalletActionKind,
+  WalletExecutionKind,
+} from "./core/wallet-actions";
 export type { ExecuteWithOptions } from "./execute";
 export { executeWith } from "./execute";
 export type {
@@ -67,48 +75,30 @@ export type {
   GetActivityStatusRequest,
   GetActivityStatusResponse,
   InflowActivity,
-  InflowActivityKind,
+  InflowActivityOperation,
   InflowActivityStatus,
   ListActivitiesByProfileRequest,
   ListActivitiesByShortRefRequest,
   ListActivitiesRequest,
   OutflowActivity,
-  OutflowActivityKind,
+  OutflowActivityOperation,
   OutflowActivityStatus,
 } from "./modules/activities";
-export {
-  ActivitiesModule,
-  ActivityDirection,
-  ActivityFilter,
-  ActivityKind,
-  ActivityStatus,
-} from "./modules/activities";
+export { ActivitiesModule, ActivityFilter } from "./modules/activities";
 export type {
-  ActivitiesRequest,
-  ApySample,
-  BorrowApyHistoryRequest,
-  HistoryEntry,
   PaginatedResponse,
-  PoolConfigHistoryEntry,
-  PoolConfigHistoryEntryApiItem,
-  PoolConfigHistoryResponse,
-  PoolHistoryEntry,
-  PoolHistoryEntryApiItem,
-  PoolHistoryRequest,
-  PoolHistoryResponse,
   UserHistoryEntry,
   UserHistoryEntryApiItem,
+  UserHistoryOperation,
   UserHistoryResponse,
-  UserHistoryStatusApi,
-  UserHistoryType,
   UserLiquidationHistoryEntry,
   UserLiquidationHistoryFilters,
-  UserLiquidationHistoryType,
   UserTransactionHistoryEntry,
   UserTransactionHistoryFilters,
-  UserTransactionHistoryType,
+  UserTransactionHistoryOperation,
+  UserTransactionHistoryState,
 } from "./modules/history";
-export { HistoryModule, UserHistoryStatus } from "./modules/history";
+export { HistoryModule } from "./modules/history";
 export type {
   AccountIdentifierAccount,
   CreateInstantLoanRequest,
@@ -147,7 +137,6 @@ export type {
   NativeAccount,
 } from "./modules/instant-loans";
 export {
-  InstantLoanStatus,
   InstantLoansModule,
   intFromPublicId,
   publicIdFromInt,
@@ -172,6 +161,7 @@ export type {
   IcrcAccountSupplyTarget,
   IcrcOutflowReceiver,
   InflowFeeEstimate,
+  InflowOperation,
   ManualTransferSupplyFlowRequest,
   NativeAddressSupplyTarget,
   NativeOutflowReceiver,
@@ -179,6 +169,7 @@ export type {
   OutflowReceiver,
   SubmitInflowRequest,
   SubmitInflowResponse,
+  SubmitSupplyFlowInflowRequest,
   SupplyFlow,
   SupplyFlowRequest,
   SupplyTarget,

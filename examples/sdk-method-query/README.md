@@ -39,8 +39,8 @@ pnpm --filter @liquidium/example-sdk-method-query dev
 The query page includes templates for account, market, position, activity,
 history, quote, lending, and instant-loan methods:
 
-- `history.getPoolHistory`
-- `history.getPoolConfigHistory`
+- `history.getUserTransactionHistory`
+- `history.getLiquidationHistory`
 - `positions.getFullWithdrawAmount`
 - `instantLoans.create`
 - `instantLoans.get({ ref })`

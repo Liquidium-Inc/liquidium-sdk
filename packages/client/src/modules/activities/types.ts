@@ -1,47 +1,15 @@
+import type { LiquidiumOperation, LiquidiumStatus } from "../../core/status";
 import type { Chain } from "../../core/types";
 
-/** Activity list state filter. */
+/** Activity list lifecycle filter. */
 export const ActivityFilter = {
   active: "active",
   completed: "completed",
   all: "all",
 } as const;
-/** Activity list state filter. */
+/** Activity list lifecycle filter. */
 export type ActivityFilter =
   (typeof ActivityFilter)[keyof typeof ActivityFilter];
-
-/** Direction of value movement for an activity. */
-export const ActivityDirection = {
-  inflow: "inflow",
-  outflow: "outflow",
-} as const;
-/** Direction of value movement for an activity. */
-export type ActivityDirection =
-  (typeof ActivityDirection)[keyof typeof ActivityDirection];
-
-/** Consumer-facing activity kind. */
-export const ActivityKind = {
-  deposit: "deposit",
-  repayment: "repayment",
-  borrow: "borrow",
-  withdraw: "withdraw",
-} as const;
-/** Consumer-facing activity kind. */
-export type ActivityKind = (typeof ActivityKind)[keyof typeof ActivityKind];
-
-/** Consumer-facing activity lifecycle status. */
-export const ActivityStatus = {
-  requested: "requested",
-  pending: "pending",
-  detected: "detected",
-  processing: "processing",
-  sent: "sent",
-  confirmed: "confirmed",
-  failed: "failed",
-} as const;
-/** Consumer-facing activity lifecycle status. */
-export type ActivityStatus =
-  (typeof ActivityStatus)[keyof typeof ActivityStatus];
 
 /** Fee top-up state for an inflow activity. */
 export interface ActivityTopUp {
@@ -55,30 +23,23 @@ export interface ActivityTopUp {
   shortfallAmount: bigint;
 }
 
-/** Activity kind emitted by deposit or repayment inflows. */
-export type InflowActivityKind =
-  | typeof ActivityKind.deposit
-  | typeof ActivityKind.repayment;
-/** Activity kind emitted by borrow or withdraw outflows. */
-export type OutflowActivityKind =
-  | typeof ActivityKind.borrow
-  | typeof ActivityKind.withdraw;
+/** Operation emitted by deposit or repayment inflows. */
+export type InflowActivityOperation = Extract<
+  LiquidiumOperation,
+  "deposit" | "repayment"
+>;
+/** Operation emitted by borrow or withdrawal outflows. */
+export type OutflowActivityOperation = Extract<
+  LiquidiumOperation,
+  "borrow" | "withdrawal"
+>;
 
-/** Lifecycle status that can appear on an inflow activity. */
-export type InflowActivityStatus =
-  | typeof ActivityStatus.requested
-  | typeof ActivityStatus.pending
-  | typeof ActivityStatus.detected
-  | typeof ActivityStatus.processing
-  | typeof ActivityStatus.confirmed
-  | typeof ActivityStatus.failed;
-/** Lifecycle status that can appear on an outflow activity. */
-export type OutflowActivityStatus =
-  | typeof ActivityStatus.requested
-  | typeof ActivityStatus.pending
-  | typeof ActivityStatus.sent
-  | typeof ActivityStatus.confirmed
-  | typeof ActivityStatus.failed;
+export type InflowActivityStatus = LiquidiumStatus & {
+  operation: InflowActivityOperation;
+};
+export type OutflowActivityStatus = LiquidiumStatus & {
+  operation: OutflowActivityOperation;
+};
 
 interface BaseActivity {
   id: string;
@@ -87,31 +48,21 @@ interface BaseActivity {
   chain: Chain | null;
   amount: bigint;
   timestampMs: number;
-  txid: string | null;
+  /** Chain transaction ids associated with the activity when available. */
   txids?: string[];
-  confirmations: number | null;
-  requiredConfirmations: number | null;
 }
 
 /** Deposit or repayment activity returned by the activity API. */
 export interface InflowActivity extends BaseActivity {
-  /** Direction discriminator. */
-  direction: typeof ActivityDirection.inflow;
-  /** Deposit or repayment kind. */
-  kind: InflowActivityKind;
-  /** Single consumer-facing lifecycle status. */
+  /** Shared consumer-facing lifecycle status. */
   status: InflowActivityStatus;
   /** Fee top-up state when the inflow is below the current processing fee. */
   topUp?: ActivityTopUp;
 }
 
-/** Borrow or withdraw activity returned by the activity API. */
+/** Borrow or withdrawal activity returned by the activity API. */
 export interface OutflowActivity extends BaseActivity {
-  /** Direction discriminator. */
-  direction: typeof ActivityDirection.outflow;
-  /** Borrow or withdraw kind. */
-  kind: OutflowActivityKind;
-  /** Single consumer-facing lifecycle status. */
+  /** Shared consumer-facing lifecycle status. */
   status: OutflowActivityStatus;
   /** Outflows never carry top-up state. */
   topUp?: never;
@@ -122,7 +73,7 @@ export type Activity = InflowActivity | OutflowActivity;
 
 /** Shared request fields for listing activities. */
 export interface BaseListActivitiesRequest {
-  /** Optional state filter; defaults to `all`. */
+  /** Optional lifecycle filter; defaults to `active`. */
   filter?: ActivityFilter;
 }
 

@@ -8,6 +8,6 @@
 
 > **SupplyPlanType** = *typeof* [`SupplyPlanType`](../variables/SupplyPlanType.md)\[keyof *typeof* [`SupplyPlanType`](../variables/SupplyPlanType.md)\]
 
-Defined in: [packages/client/src/modules/lending/types.ts:192](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L192)
+Defined in: [packages/client/src/modules/lending/types.ts:196](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L196)
 
 Supply execution plan selected by the SDK.

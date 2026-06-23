@@ -6,26 +6,16 @@
 
 # Interface: SubmitInflowResponse
 
-Defined in: [packages/client/src/modules/lending/types.ts:331](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L331)
+Defined in: [packages/client/src/modules/lending/types.ts:349](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L349)
 
 Acknowledgement from the SDK API after submitting an inflow hint.
 
 ## Properties
 
-### success
-
-> **success**: `true`
-
-Defined in: [packages/client/src/modules/lending/types.ts:333](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L333)
-
-Indicates the submit request was accepted by the SDK API.
-
-***
-
 ### txid
 
 > **txid**: `string`
 
-Defined in: [packages/client/src/modules/lending/types.ts:335](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L335)
+Defined in: [packages/client/src/modules/lending/types.ts:351](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L351)
 
 Transaction id accepted by the SDK API.

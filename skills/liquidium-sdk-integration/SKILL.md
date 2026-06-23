@@ -144,10 +144,17 @@ read repayment instructions from `loan.repayment.amount` and
 Reload with `client.instantLoans.get({ ref })` before displaying repayment
 instructions so the app uses the canonical repayment amount and target.
 
-When showing deposit progress, always pair `instantLoans.get({ ref })` with
-`activities.list({ shortRef: ref, filter: "active" })`. The canonical loan
-status may still be `awaiting_deposit` while the activity stream already shows
-detected or processing confirmations.
+Status-returning methods use the shared `LiquidiumStatus` shape:
+`{ operation, state, confirmations, requiredConfirmations }`. `operation` is one
+of `deposit`, `borrow`, `repayment`, `withdrawal`, or `liquidation`. `state` is
+one of `action_required`, `confirming`, `processing`, `active`, `completed`,
+`failed`, or `expired`. `confirmations` and `requiredConfirmations` are always
+present and are `null` when unavailable or not applicable.
+
+When showing deposit progress, use `loan.status` from `instantLoans.get({ ref })`
+for the canonical current lifecycle state. Use
+`activities.list({ shortRef: ref, filter: "active" })` when the UI also needs
+receipt ids, txids, top-up details, or a full activity timeline.
 
 Use `find(...)` for recovery screens where the user may paste a short reference,
 numeric loan id string, address, or transaction id. It returns lightweight loan
@@ -217,7 +224,7 @@ client.lending.borrow(...);
 client.lending.withdraw(...);
 client.lending.supply(...);
 client.lending.estimateInflowFee({ asset: "USDT", chain: "ETH" });
-client.lending.submitInflow({ txid, chain: "BTC", type: "DEPOSIT" });
+client.lending.submitInflow({ txid, chain: "BTC", operation: "deposit" });
 ```
 
 ### positions
@@ -241,30 +248,29 @@ for UI formatting. Do not add `earnedInterest` to the returned amount.
 
 ### activities
 
-Receipt status and active/completed/all activity lists. Requires `apiBaseUrl`.
+Receipt status and active/completed/all activity lists. Lists default to active activities. Requires `apiBaseUrl`.
 
 ```ts
+client.activities.list({ profileId });
 client.activities.list({ profileId, filter: "all" });
 client.activities.getStatus({ profileId, id });
 ```
 
 ### history
 
-User or pool history. Requires `apiBaseUrl`.
+User transaction and liquidation history. Requires `apiBaseUrl`.
 
 ```ts
 client.history.getUserTransactionHistory(profileId, filters?);
 client.history.getLiquidationHistory(profileId, filters?);
-client.history.getPoolHistory(poolId, window?);
-client.history.getPoolConfigHistory(poolId, cursor?);
-client.history.getBorrowRateHistory(poolId, window?);
 ```
 
-User history entries expose `txids?: string[]`; do not expect separate inbound
-or outbound txid fields. Pool history entries are rate/utilization samples.
-Pool config history entries are reserve configuration-change snapshots
-(`type: "configuration_change"`) with pool config, caps, indexes, liquidity,
-debt, and `sameAssetBorrowing` fields.
+Activities and user history entries expose `txids?: string[]`; do not expect
+legacy singular or direction-specific txid fields. Transaction history uses
+canonical operation names:
+`deposit`, `borrow`, `repayment`, `withdrawal`, and `liquidation`.
+Use `operations` for operation filters and `states` for lifecycle-state filters;
+do not use removed `type`, `status`, or `kind` filters.
 
 ## Rate and Amount Formatting
 
@@ -272,8 +278,7 @@ Amount fields are `bigint` base units. Format them with the asset or pool
 `decimals`; do not display raw base-unit values as user amounts.
 
 Rate and risk-ratio fields such as `lendingRate`, `borrowingRate`,
-`utilizationRate`, `maxLtv`, `liquidationThreshold`, pool-history rates, and
-reserve-history rates are fixed-point values scaled by `rateDecimals`, usually
+`utilizationRate`, `maxLtv`, and `liquidationThreshold` are fixed-point values scaled by `rateDecimals`, usually
 `27`. Do not render raw scaled values as percentages.
 
 Never convert a raw scaled rate directly to display text or append `%` to it.
@@ -483,14 +488,17 @@ Do not use `client.lending.borrow(...)` for this flow. `lending.borrow(...)` is
 the profile-based signed borrow primitive. Instant loans automate the borrow
 after collateral arrives.
 
-Instant loan status values are UI-facing:
+Instant loan status is UI-facing:
 
-- `awaiting_deposit`: show `loan.initialDeposit.target` and the deposit deadline
-- `deposit_detected`: keep polling and show a pending state
-- `active`: show `loan.repayment.amount` and `loan.repayment.target`
-- `settling`: keep polling and avoid duplicate user actions
-- `closed`: show final state and stop prompting for repayment
-- `expired`: show timeout state and stop prompting for collateral deposit
+- `{ operation: "deposit", state: "action_required" }`: show `loan.initialDeposit.target` and the deposit deadline
+- `{ operation: "deposit", state: "confirming" }`: show deposit confirmation progress
+- `{ operation: "deposit", state: "processing" }`: keep polling while Liquidium processes the confirmed collateral
+- `{ operation: "borrow", state: "processing" }`: keep polling while the borrow outflow is created
+- `{ operation: "repayment", state: "active" }`: show `loan.repayment.amount` and `loan.repayment.target`
+- `{ operation: "repayment", state: "confirming" }`: show repayment confirmation progress
+- `{ operation: "repayment", state: "processing" }`: keep polling while Liquidium applies the repayment
+- `{ operation: "repayment", state: "completed" }`: show final state and stop prompting for repayment
+- `{ operation: "deposit", state: "expired" }`: show timeout state and stop prompting for collateral deposit
 
 ### Advanced: create a profile
 

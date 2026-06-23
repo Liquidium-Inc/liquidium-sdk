@@ -6,7 +6,7 @@
 
 # Interface: InstantLoanGetByRefRequest
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:166](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L166)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:167](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L167)
 
 Lookup request for loading an instant loan by short user-facing reference.
 
@@ -16,6 +16,6 @@ Lookup request for loading an instant loan by short user-facing reference.
 
 > **ref**: `string`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:168](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L168)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:169](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L169)
 
 Short user-facing reference derived from `loanId`.

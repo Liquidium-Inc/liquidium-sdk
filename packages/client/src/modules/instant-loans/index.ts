@@ -37,4 +37,3 @@ export type {
   InstantLoanWarmedProfile,
   NativeAccount,
 } from "./types";
-export { InstantLoanStatus } from "./types";

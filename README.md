@@ -111,7 +111,7 @@ const restoredLoan = await client.instantLoans.get({ ref: loan.ref });
 
 console.log("Loan status:", restoredLoan.status);
 console.log("Restored initial deposit amount:", restoredLoan.initialDeposit.amount.toString());
-if (restoredLoan.repayment) {
+if (restoredLoan.repayment.amount > 0n) {
   console.log("Repay amount:", restoredLoan.repayment.amount.toString());
   console.log("Repay target:", formatSupplyTarget(restoredLoan.repayment.target));
 } else {
@@ -155,9 +155,9 @@ Instant-loan integrations use this sequence:
 | Validate amounts | `client.quote.calculateLtv(...)` | Block too-small borrow amounts, invalid LTV, or frozen-pool input before creating a loan |
 | Create loan | `client.instantLoans.create(...)` | Store `loan.ref` and show `loan.initialDeposit.amount` plus `loan.initialDeposit.target` |
 | Track loan | `client.instantLoans.get({ ref })` and `client.activities.list({ shortRef: ref })` | Reload loan state, initial deposit quote, and repayment activity |
-| Repay loan | Read `loan.repayment` | If non-null, ask the user to send `loan.repayment.amount` to `loan.repayment.target` |
+| Repay loan | Read `loan.repayment` | Ask the user to send `loan.repayment.amount` to `loan.repayment.target`; amount is `0n` when no repayment is due |
 
-`client.instantLoans.create(...)` and `client.instantLoans.get(...)` return the generated Liquidium profile, current position state, an initial deposit quote with its transfer target, and a nullable repayment quote with its transfer target. Users do not manage the generated profile.
+`client.instantLoans.create(...)` and `client.instantLoans.get(...)` return the generated Liquidium profile, current position state, an initial deposit quote with its transfer target, and a repayment quote with its transfer target. Repayment amount fields are zero when the loan has no debt. Users do not manage the generated profile.
 
 ## Core API
 
@@ -227,14 +227,14 @@ Most instant-loan UIs show or store these fields:
 | Field | Use |
 | --- | --- |
 | `loan.ref` | Save and show this reference so the loan can be restored later |
-| `loan.status` | Show the lifecycle: `awaiting_deposit`, `deposit_detected`, `active`, `settling`, `closed`, or `expired` |
+| `loan.status` | Shared lifecycle status: `{ operation, state, confirmations, requiredConfirmations }` |
 | `loan.initialDeposit.amount` | Fee-inclusive collateral amount to send after creation or restore |
 | `loan.initialDeposit.collateralAmount` | Intended credited collateral target used for LTV |
 | `loan.initialDeposit.target` | Address or ICRC account where the user sends collateral |
 | `loan.initialDeposit.detectedTimestamp` | Unix timestamp in seconds when the collateral deposit was detected, or `null` before detection |
 | `loan.initialDeposit.expiryTimestamp` | Unix timestamp in seconds when the collateral deposit window expires, or `null` before detection when unavailable |
-| `loan.repayment?.amount` | Full amount to repay, including fee and interest buffer, when debt exists |
-| `loan.repayment?.target` | Address or ICRC account where the user sends repayment, when debt exists |
+| `loan.repayment.amount` | Full amount to repay, including fee and interest buffer. Zero when no repayment is due |
+| `loan.repayment.target` | Address or ICRC account where the user sends repayment |
 | `loan.position` | Current collateral, debt, and interest state for the generated profile |
 
 ## Amounts
@@ -252,7 +252,22 @@ Use `Pool.decimals` from `client.market.listPools()` when converting user-entere
 
 Reload loans with `client.instantLoans.get({ ref })` when you need current state, transfer targets, or the latest repayment quote.
 
-Use activities to track collateral deposits, borrow outflows, repayment deposits, confirmations, and fee top-ups. The activities module accepts the saved instant-loan reference and resolves the generated profile for you:
+Status-returning methods use the same `LiquidiumStatus` shape:
+
+```ts
+type LiquidiumStatus = {
+  operation: "deposit" | "borrow" | "repayment" | "withdrawal" | "liquidation";
+  state: "action_required" | "confirming" | "processing" | "active" | "completed" | "failed" | "expired";
+  confirmations: number | null;
+  requiredConfirmations: number | null;
+};
+```
+
+`action_required` means the user or app must do something, such as sending funds. `confirming` means a tx is known but still needs confirmations. `processing` means confirmations are sufficient and Liquidium or the protocol is still processing. `active` means the loan is live and waiting for the next repayment action.
+
+Use activities to track collateral deposits, borrow outflows, repayment deposits, confirmations, and fee top-ups. Activity confirmations are exposed on `activity.status`. Activity lists default to active items; pass `filter: "all"` when you need completed activity too. The activities module accepts the saved instant-loan reference and resolves the generated profile for you:
+
+Activities expose chain transaction ids on `activity.txids` when ids are available.
 
 ```ts
 const activities = await client.activities.list({

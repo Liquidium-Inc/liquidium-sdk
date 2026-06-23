@@ -1,6 +1,7 @@
 import type {
   Activity,
   GetActivityStatusResponse,
+  LiquidiumStatus,
   Pool,
   SupplyAction,
   SupplyFlow,
@@ -143,8 +144,7 @@ export function formatActivityStatus(
 export function formatActivity(activity: Activity): string {
   return [
     `Activity id: ${activity.id}`,
-    `Direction: ${activity.direction}`,
-    `Kind: ${activity.kind}`,
+    `Operation: ${activity.status.operation}`,
     "Status:",
     formatStatus(activity.status, "Activity"),
     `Pool: ${activity.poolId}`,
@@ -152,10 +152,7 @@ export function formatActivity(activity: Activity): string {
     `Chain: ${activity.chain ?? "not set"}`,
     `Amount: ${activity.amount.toString()} base units`,
     `Timestamp ms: ${activity.timestampMs.toString()}`,
-    `Txid: ${activity.txid ?? "not set"}`,
     `Txids: ${activity.txids?.join(", ") ?? "not set"}`,
-    `Confirmations: ${activity.confirmations?.toString() ?? "not set"}`,
-    `Required confirmations: ${activity.requiredConfirmations?.toString() ?? "not set"}`,
     activity.topUp
       ? formatActivityTopUp(activity.topUp)
       : "Top-up: not required",
@@ -205,11 +202,13 @@ export function formatError(error: unknown): string {
   return formatErrorWithDetails(error, seenErrors);
 }
 
-function formatStatus(
-  status: Activity["status"],
-  subject: StatusSubject
-): string {
-  return `${subject} status: ${status}`;
+function formatStatus(status: LiquidiumStatus, subject: StatusSubject): string {
+  return [
+    `${subject} state: ${status.state}`,
+    `${subject} action: ${status.operation}`,
+    `Confirmations: ${status.confirmations?.toString() ?? "not set"}`,
+    `Required confirmations: ${status.requiredConfirmations?.toString() ?? "not set"}`,
+  ].join("\n");
 }
 
 function formatActivityTopUp(topUp: Activity["topUp"]): string {

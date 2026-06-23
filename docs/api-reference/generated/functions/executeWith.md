@@ -13,7 +13,7 @@ Defined in: [packages/client/src/execute.ts:38](https://github.com/Liquidium-Inc
 Returns an async function that runs a [WalletAction](../type-aliases/WalletAction.md) end-to-end.
 
 - `sign-message`: needs `walletAdapter.signMessage` and `options.chain`.
-- `sign-psbt`: needs `walletAdapter.signPsbt`.
+- `sign-psbt`: reserved; no current SDK flow emits this action.
 - `send-eth-transaction`: needs `walletAdapter.sendEthTransaction`.
 
 ## Parameters

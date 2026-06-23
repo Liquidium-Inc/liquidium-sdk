@@ -8,6 +8,6 @@
 
 > **GetActivityStatusRequest** = [`GetActivityStatusByProfileRequest`](../interfaces/GetActivityStatusByProfileRequest.md) \| [`GetActivityStatusByShortRefRequest`](../interfaces/GetActivityStatusByShortRefRequest.md)
 
-Defined in: [packages/client/src/modules/activities/types.ts:169](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L169)
+Defined in: [packages/client/src/modules/activities/types.ts:120](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L120)
 
 Request for fetching one activity by id and owner identifier.

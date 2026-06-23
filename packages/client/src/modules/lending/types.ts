@@ -1,7 +1,7 @@
+import type { LiquidiumOperation, LiquidiumStatus } from "../../core/status";
 import type {
   Asset,
   Chain,
-  InflowSubmitType,
   MarketAsset,
   MarketChain,
   OutflowType,
@@ -85,7 +85,7 @@ export interface IcrcOutflowReceiver {
 }
 
 /**
- * Receipt for a borrow or withdraw submitted to the lending canister.
+ * Receipt for a borrow or withdrawal outflow submitted to the lending canister.
  *
  * `id` is the outflow reference to show users immediately. `txid` may be unset until
  * the protocol assigns a chain transaction id. `outflowRef` is an optional protocol reference.
@@ -93,7 +93,7 @@ export interface IcrcOutflowReceiver {
 export interface OutflowDetails {
   /** Protocol outflow id. */
   id: string;
-  /** Borrow, withdraw, or fee-claim discriminator. */
+  /** Borrow, withdrawal, or fee-claim discriminator. */
   outflowType: OutflowType;
   /** Optional protocol outflow reference. */
   outflowRef?: string;
@@ -108,11 +108,15 @@ export interface OutflowDetails {
 /** Borrow receipt. */
 export type BorrowOutflowDetails = OutflowDetails & {
   outflowType: "borrow";
+  /** Shared lifecycle status for the borrow outflow receipt. */
+  status: LiquidiumStatus;
 };
 
 /** Withdraw receipt. */
 export type WithdrawOutflowDetails = OutflowDetails & {
-  outflowType: "withdraw";
+  outflowType: "withdrawal";
+  /** Shared lifecycle status for the withdraw outflow receipt. */
+  status: LiquidiumStatus;
 };
 
 /** Signature payload for submitting a prepared borrow action. */
@@ -299,6 +303,8 @@ export type SupplyFlowRequest =
  *   (wallet-adapter path). When undefined, the caller is expected to broadcast
  *   themselves and call {@link SupplyFlow.submit} for flows that require txid
  *   registration.
+ * - If post-broadcast inflow registration fails after the SDK broadcasts the
+ *   transaction, `txid` is still returned so callers can track the transaction.
  * - `submit` registers a broadcast txid with the SDK API when needed. ETH
  *   stablecoin deposit-address transfers are indexed from ERC-20 transfer logs,
  *   so `submit` acknowledges the txid without posting it to the inflow endpoint.
@@ -313,24 +319,34 @@ export interface SupplyFlow {
   target: SupplyTarget;
   /** Transaction id when the SDK broadcast the transaction. */
   txid?: string;
+  /** Shared lifecycle status for the supply flow. */
+  status: LiquidiumStatus;
   /** Registers a broadcast transaction id when the flow requires an indexing hint. */
-  submit(request: SubmitInflowRequest): Promise<SubmitInflowResponse>;
+  submit(request: SubmitSupplyFlowInflowRequest): Promise<SubmitInflowResponse>;
 }
 
-/** Body for `SupplyFlow.submit` / `lending.submitInflow`. */
-export interface SubmitInflowRequest {
+/** Canonical inflow operation accepted by direct inflow submission. */
+export type InflowOperation = Extract<
+  LiquidiumOperation,
+  "deposit" | "repayment"
+>;
+
+/** Body for `SupplyFlow.submit`. The supply flow supplies the inflow operation. */
+export interface SubmitSupplyFlowInflowRequest {
   /** Broadcast transaction id or hash. */
   txid: string;
   /** Chain where the transaction was broadcast, when not implied by the flow. */
   chain?: Chain;
-  /** Deposit or repayment submit type, when not implied by the flow. */
-  type?: InflowSubmitType;
+}
+
+/** Body for direct `lending.submitInflow`. */
+export interface SubmitInflowRequest extends SubmitSupplyFlowInflowRequest {
+  /** Deposit or repayment operation represented by the transaction. */
+  operation: InflowOperation;
 }
 
 /** Acknowledgement from the SDK API after submitting an inflow hint. */
 export interface SubmitInflowResponse {
-  /** Indicates the submit request was accepted by the SDK API. */
-  success: true;
   /** Transaction id accepted by the SDK API. */
   txid: string;
 }
@@ -387,8 +403,6 @@ export type EvmSupplyApprovalStrategy =
 
 /** ERC-20 supply planning data returned by `lending.getEvmSupplyContext(...)`. */
 export interface EvmSupplyContext {
-  /** Indicates the context was computed successfully. */
-  success: true;
   /** Liquidium profile principal text. */
   profileId: string;
   /** Pool principal text receiving the inflow. */

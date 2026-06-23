@@ -17,3 +17,9 @@ Borrow receipt.
 ### outflowType
 
 > **outflowType**: `"borrow"`
+
+### status
+
+> **status**: [`LiquidiumStatus`](../interfaces/LiquidiumStatus.md)
+
+Shared lifecycle status for the borrow outflow receipt.

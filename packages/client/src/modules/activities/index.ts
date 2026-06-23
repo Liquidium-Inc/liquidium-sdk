@@ -11,18 +11,13 @@ export type {
   GetActivityStatusRequest,
   GetActivityStatusResponse,
   InflowActivity,
-  InflowActivityKind,
+  InflowActivityOperation,
   InflowActivityStatus,
   ListActivitiesByProfileRequest,
   ListActivitiesByShortRefRequest,
   ListActivitiesRequest,
   OutflowActivity,
-  OutflowActivityKind,
+  OutflowActivityOperation,
   OutflowActivityStatus,
 } from "./types";
-export {
-  ActivityDirection,
-  ActivityFilter,
-  ActivityKind,
-  ActivityStatus,
-} from "./types";
+export { ActivityFilter } from "./types";

@@ -8,7 +8,7 @@
 
 Defined in: [packages/client/src/modules/lending/types.ts:93](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L93)
 
-Receipt for a borrow or withdraw submitted to the lending canister.
+Receipt for a borrow or withdrawal outflow submitted to the lending canister.
 
 `id` is the outflow reference to show users immediately. `txid` may be unset until
 the protocol assigns a chain transaction id. `outflowRef` is an optional protocol reference.
@@ -51,7 +51,7 @@ Optional protocol outflow reference.
 
 Defined in: [packages/client/src/modules/lending/types.ts:97](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L97)
 
-Borrow, withdraw, or fee-claim discriminator.
+Borrow, withdrawal, or fee-claim discriminator.
 
 ***
 
