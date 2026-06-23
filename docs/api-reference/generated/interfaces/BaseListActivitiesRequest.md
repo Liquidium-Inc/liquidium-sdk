@@ -6,7 +6,7 @@
 
 # Interface: BaseListActivitiesRequest
 
-Defined in: [packages/client/src/modules/activities/types.ts:93](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L93)
+Defined in: [packages/client/src/modules/activities/types.ts:75](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L75)
 
 Shared request fields for listing activities.
 
@@ -21,6 +21,6 @@ Shared request fields for listing activities.
 
 > `optional` **filter?**: [`ActivityFilter`](../type-aliases/ActivityFilter.md)
 
-Defined in: [packages/client/src/modules/activities/types.ts:95](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L95)
+Defined in: [packages/client/src/modules/activities/types.ts:77](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L77)
 
 Optional lifecycle filter; defaults to `active`.

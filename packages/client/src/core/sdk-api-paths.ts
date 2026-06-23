@@ -11,11 +11,11 @@ export const SdkApiQueryParam = {
   filter: "filter",
   limit: "limit",
   market: "market",
+  operations: "operations",
   poolId: "poolId",
   profileId: "profileId",
   states: "states",
   to: "to",
-  types: "types",
 } as const;
 
 interface BuildActivitiesPathRequest {

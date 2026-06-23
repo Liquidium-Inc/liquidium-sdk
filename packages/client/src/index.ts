@@ -75,31 +75,28 @@ export type {
   GetActivityStatusRequest,
   GetActivityStatusResponse,
   InflowActivity,
-  InflowActivityKind,
+  InflowActivityOperation,
+  InflowActivityStatus,
   ListActivitiesByProfileRequest,
   ListActivitiesByShortRefRequest,
   ListActivitiesRequest,
   OutflowActivity,
-  OutflowActivityKind,
+  OutflowActivityOperation,
+  OutflowActivityStatus,
 } from "./modules/activities";
-export {
-  ActivitiesModule,
-  ActivityDirection,
-  ActivityFilter,
-  ActivityKind,
-} from "./modules/activities";
+export { ActivitiesModule, ActivityFilter } from "./modules/activities";
 export type {
   PaginatedResponse,
   UserHistoryEntry,
   UserHistoryEntryApiItem,
+  UserHistoryOperation,
   UserHistoryResponse,
-  UserHistoryType,
   UserLiquidationHistoryEntry,
   UserLiquidationHistoryFilters,
   UserTransactionHistoryEntry,
   UserTransactionHistoryFilters,
+  UserTransactionHistoryOperation,
   UserTransactionHistoryState,
-  UserTransactionHistoryType,
 } from "./modules/history";
 export { HistoryModule } from "./modules/history";
 export type {

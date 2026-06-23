@@ -6,7 +6,7 @@
 
 # Interface: GetActivityStatusByShortRefRequest
 
-Defined in: [packages/client/src/modules/activities/types.ts:131](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L131)
+Defined in: [packages/client/src/modules/activities/types.ts:113](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L113)
 
 Activity status lookup scoped to an instant-loan short reference.
 
@@ -20,7 +20,7 @@ Activity status lookup scoped to an instant-loan short reference.
 
 > **id**: `string`
 
-Defined in: [packages/client/src/modules/activities/types.ts:120](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L120)
+Defined in: [packages/client/src/modules/activities/types.ts:102](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L102)
 
 Activity or receipt id to look up.
 
@@ -34,6 +34,6 @@ Activity or receipt id to look up.
 
 > **shortRef**: `string`
 
-Defined in: [packages/client/src/modules/activities/types.ts:134](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L134)
+Defined in: [packages/client/src/modules/activities/types.ts:116](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L116)
 
 Instant-loan short reference that owns the activity.

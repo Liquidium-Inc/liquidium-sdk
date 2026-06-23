@@ -6,7 +6,7 @@
 
 # Interface: ActivityTopUp
 
-Defined in: [packages/client/src/modules/activities/types.ts:34](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L34)
+Defined in: [packages/client/src/modules/activities/types.ts:15](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L15)
 
 Fee top-up state for an inflow activity.
 
@@ -16,7 +16,7 @@ Fee top-up state for an inflow activity.
 
 > **depositedAmount**: `bigint`
 
-Defined in: [packages/client/src/modules/activities/types.ts:38](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L38)
+Defined in: [packages/client/src/modules/activities/types.ts:19](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L19)
 
 Total same-token deposited amount counted toward the current fee.
 
@@ -26,7 +26,7 @@ Total same-token deposited amount counted toward the current fee.
 
 > **feeAmount**: `bigint`
 
-Defined in: [packages/client/src/modules/activities/types.ts:40](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L40)
+Defined in: [packages/client/src/modules/activities/types.ts:21](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L21)
 
 Current deposit-address processing fee.
 
@@ -36,7 +36,7 @@ Current deposit-address processing fee.
 
 > **required**: `boolean`
 
-Defined in: [packages/client/src/modules/activities/types.ts:36](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L36)
+Defined in: [packages/client/src/modules/activities/types.ts:17](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L17)
 
 Whether another transfer is needed before processing can continue.
 
@@ -46,6 +46,6 @@ Whether another transfer is needed before processing can continue.
 
 > **shortfallAmount**: `bigint`
 
-Defined in: [packages/client/src/modules/activities/types.ts:42](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L42)
+Defined in: [packages/client/src/modules/activities/types.ts:23](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L23)
 
 Additional amount needed before processing can start.

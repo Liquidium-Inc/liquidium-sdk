@@ -144,8 +144,7 @@ export function formatActivityStatus(
 export function formatActivity(activity: Activity): string {
   return [
     `Activity id: ${activity.id}`,
-    `Direction: ${activity.direction}`,
-    `Kind: ${activity.kind}`,
+    `Operation: ${activity.status.operation}`,
     "Status:",
     formatStatus(activity.status, "Activity"),
     `Pool: ${activity.poolId}`,

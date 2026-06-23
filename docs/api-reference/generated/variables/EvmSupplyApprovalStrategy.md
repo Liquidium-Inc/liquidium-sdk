@@ -8,7 +8,7 @@
 
 > `const` **EvmSupplyApprovalStrategy**: `object`
 
-Defined in: [packages/client/src/modules/lending/types.ts:399](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L399)
+Defined in: [packages/client/src/modules/lending/types.ts:395](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L395)
 
 Approval strategy required before an ERC-20 deposit contract call.
 

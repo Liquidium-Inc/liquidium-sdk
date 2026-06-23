@@ -147,9 +147,7 @@
 ## Type Aliases
 
 - [Activity](type-aliases/Activity.md)
-- [ActivityDirection](type-aliases/ActivityDirection.md)
 - [ActivityFilter](type-aliases/ActivityFilter.md)
-- [ActivityKind](type-aliases/ActivityKind.md)
 - [Asset](type-aliases/Asset.md)
 - [AssetPrices](type-aliases/AssetPrices.md)
 - [BorrowOutflowDetails](type-aliases/BorrowOutflowDetails.md)
@@ -159,7 +157,8 @@
 - [EvmSupplyApprovalStrategy](type-aliases/EvmSupplyApprovalStrategy.md)
 - [GetActivityStatusRequest](type-aliases/GetActivityStatusRequest.md)
 - [GetActivityStatusResponse](type-aliases/GetActivityStatusResponse.md)
-- [InflowActivityKind](type-aliases/InflowActivityKind.md)
+- [InflowActivityOperation](type-aliases/InflowActivityOperation.md)
+- [InflowActivityStatus](type-aliases/InflowActivityStatus.md)
 - [InflowOperation](type-aliases/InflowOperation.md)
 - [InstantLoanAccount](type-aliases/InstantLoanAccount.md)
 - [InstantLoanAsset](type-aliases/InstantLoanAsset.md)
@@ -173,7 +172,8 @@
 - [MarketAsset](type-aliases/MarketAsset.md)
 - [MarketChain](type-aliases/MarketChain.md)
 - [MinimumBorrowAsset](type-aliases/MinimumBorrowAsset.md)
-- [OutflowActivityKind](type-aliases/OutflowActivityKind.md)
+- [OutflowActivityOperation](type-aliases/OutflowActivityOperation.md)
+- [OutflowActivityStatus](type-aliases/OutflowActivityStatus.md)
 - [OutflowReceiver](type-aliases/OutflowReceiver.md)
 - [OutflowType](type-aliases/OutflowType.md)
 - [SupplyAction](type-aliases/SupplyAction.md)
@@ -183,9 +183,9 @@
 - [TransferMode](type-aliases/TransferMode.md)
 - [TransferSupplyFlowRequest](type-aliases/TransferSupplyFlowRequest.md)
 - [UserHistoryEntry](type-aliases/UserHistoryEntry.md)
-- [UserHistoryType](type-aliases/UserHistoryType.md)
+- [UserHistoryOperation](type-aliases/UserHistoryOperation.md)
+- [UserTransactionHistoryOperation](type-aliases/UserTransactionHistoryOperation.md)
 - [UserTransactionHistoryState](type-aliases/UserTransactionHistoryState.md)
-- [UserTransactionHistoryType](type-aliases/UserTransactionHistoryType.md)
 - [WalletAction](type-aliases/WalletAction.md)
 - [WalletActionKind](type-aliases/WalletActionKind.md)
 - [WalletExecutionKind](type-aliases/WalletExecutionKind.md)
@@ -193,9 +193,7 @@
 
 ## Variables
 
-- [ActivityDirection](variables/ActivityDirection.md)
 - [ActivityFilter](variables/ActivityFilter.md)
-- [ActivityKind](variables/ActivityKind.md)
 - [Asset](variables/Asset.md)
 - [Chain](variables/Chain.md)
 - [CK\_ETH\_DEPOSIT\_CONTRACT\_ADDRESS](variables/CK_ETH_DEPOSIT_CONTRACT_ADDRESS.md)

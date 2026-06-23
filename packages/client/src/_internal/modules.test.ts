@@ -404,14 +404,11 @@ describe("AccountsModule", () => {
 describe("HistoryModule", () => {
   test("uses default prod API base URL when no apiBaseUrl configured", async () => {
     // given
-    const fetchSpy = vi
-      .spyOn(globalThis, "fetch")
-      .mockResolvedValue(
-        new Response(
-          JSON.stringify({ success: true, items: [], nextCursor: undefined }),
-          { status: 200 }
-        )
-      );
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ items: [], nextCursor: undefined }), {
+        status: 200,
+      })
+    );
     const client = new LiquidiumClient({});
 
     // when
@@ -428,11 +425,9 @@ describe("HistoryModule", () => {
   test("fetches user history through the sdk api", async () => {
     // given
     const responsePayload = {
-      success: true as const,
       items: [
         {
           id: "history-1",
-          type: "deposit" as const,
           amount: "100000",
           poolId: "pool-1",
           timestamp: "2026-04-01T00:00:00.000Z",
@@ -469,7 +464,6 @@ describe("HistoryModule", () => {
       items: [
         {
           id: "history-1",
-          type: "deposit",
           amount: 100000n,
           poolId: "pool-1",
           timestamp: "2026-04-01T00:00:00.000Z",
@@ -498,11 +492,9 @@ describe("HistoryModule", () => {
   test("passes transaction history filters to the sdk api", async () => {
     // given
     const responsePayload = {
-      success: true as const,
       items: [
         {
           id: "history-1",
-          type: "borrow" as const,
           amount: "50000",
           poolId: "pool-btc",
           timestamp: "2026-04-02T00:00:00.000Z",
@@ -534,7 +526,7 @@ describe("HistoryModule", () => {
       cursor: "2026-03-31T00:00:00.000Z::history-0",
       market: "pool-btc",
       poolId: "pool-btc",
-      types: ["borrow"],
+      operations: ["borrow"],
       states: ["completed"],
       from: "2026-04-01T00:00:00.000Z",
       to: "2026-04-03T00:00:00.000Z",
@@ -546,7 +538,6 @@ describe("HistoryModule", () => {
       items: [
         {
           id: "history-1",
-          type: "borrow",
           amount: 50000n,
           poolId: "pool-btc",
           timestamp: "2026-04-02T00:00:00.000Z",
@@ -562,7 +553,7 @@ describe("HistoryModule", () => {
       nextCursor: "2026-04-02T00:00:00.000Z::history-1",
     });
     expect(fetchSpy).toHaveBeenCalledWith(
-      "https://app.liquidium.fi/api/sdk/v2/history/users/profile-1/transactions?cursor=2026-03-31T00%3A00%3A00.000Z%3A%3Ahistory-0&market=pool-btc&poolId=pool-btc&types=borrow&states=completed&from=2026-04-01T00%3A00%3A00.000Z&to=2026-04-03T00%3A00%3A00.000Z&limit=1",
+      "https://app.liquidium.fi/api/sdk/v2/history/users/profile-1/transactions?cursor=2026-03-31T00%3A00%3A00.000Z%3A%3Ahistory-0&market=pool-btc&poolId=pool-btc&operations=borrow&states=completed&from=2026-04-01T00%3A00%3A00.000Z&to=2026-04-03T00%3A00%3A00.000Z&limit=1",
       {
         method: "GET",
         headers: undefined,
@@ -572,14 +563,12 @@ describe("HistoryModule", () => {
     );
   });
 
-  test("passes liquidation type to transaction history", async () => {
+  test("passes liquidation operation to transaction history", async () => {
     // given
     const responsePayload = {
-      success: true as const,
       items: [
         {
           id: "history-9",
-          type: "liquidation" as const,
           amount: "12345",
           poolId: "pool-btc",
           timestamp: "2026-04-04T00:00:00.000Z",
@@ -607,7 +596,7 @@ describe("HistoryModule", () => {
 
     // when
     const result = await client.history.getUserTransactionHistory("profile-1", {
-      types: ["liquidation"],
+      operations: ["liquidation"],
     });
 
     // then
@@ -615,7 +604,6 @@ describe("HistoryModule", () => {
       items: [
         {
           id: "history-9",
-          type: "liquidation",
           amount: 12345n,
           poolId: "pool-btc",
           timestamp: "2026-04-04T00:00:00.000Z",
@@ -631,7 +619,7 @@ describe("HistoryModule", () => {
       nextCursor: undefined,
     });
     expect(fetchSpy).toHaveBeenCalledWith(
-      "https://app.liquidium.fi/api/sdk/v2/history/users/profile-1/transactions?types=liquidation",
+      "https://app.liquidium.fi/api/sdk/v2/history/users/profile-1/transactions?operations=liquidation",
       {
         method: "GET",
         headers: undefined,
@@ -641,14 +629,12 @@ describe("HistoryModule", () => {
     );
   });
 
-  test("requests liquidation activities with liquidation type", async () => {
+  test("requests liquidation history with liquidation status operation", async () => {
     // given
     const responsePayload = {
-      success: true as const,
       items: [
         {
           id: "history-9",
-          type: "liquidation" as const,
           amount: "12345",
           poolId: "pool-btc",
           timestamp: "2026-04-04T00:00:00.000Z",
@@ -685,9 +671,11 @@ describe("HistoryModule", () => {
 
     // then
     expect(result.items[0]).toMatchObject({
-      type: "liquidation",
       amount: 12345n,
       poolId: "pool-btc",
+      status: {
+        operation: "liquidation",
+      },
     });
     expect(fetchSpy).toHaveBeenCalledWith(
       "https://app.liquidium.fi/api/sdk/v2/history/users/profile-1/liquidations?cursor=2026-04-03T00%3A00%3A00.000Z%3A%3Ahistory-8&market=pool-btc&from=2026-04-01T00%3A00%3A00.000Z&to=2026-04-05T00%3A00%3A00.000Z&limit=1",
@@ -705,7 +693,7 @@ describe("ActivitiesModule", () => {
   test("uses default prod API base URL when no apiBaseUrl configured", async () => {
     // given
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(JSON.stringify({ success: true, activities: [] }), {
+      new Response(JSON.stringify({ activities: [] }), {
         status: 200,
       })
     );
@@ -730,12 +718,9 @@ describe("ActivitiesModule", () => {
     const ACTIVITY_CONFIRMATIONS = 1;
     const ACTIVITY_REQUIRED_CONFIRMATIONS = 6;
     const responsePayload = {
-      success: true as const,
       activities: [
         {
           id: "activity-1",
-          direction: "inflow" as const,
-          kind: "deposit" as const,
           status: {
             operation: "deposit" as const,
             state: "confirming" as const,
@@ -772,8 +757,6 @@ describe("ActivitiesModule", () => {
     expect(result).toEqual([
       {
         id: "activity-1",
-        direction: "inflow",
-        kind: "deposit",
         status: {
           operation: "deposit",
           state: "confirming",
@@ -815,7 +798,6 @@ describe("ActivitiesModule", () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(
         JSON.stringify({
-          success: true,
           activities: [],
         }),
         {
@@ -859,12 +841,9 @@ describe("ActivitiesModule", () => {
     const ACTIVITY_CONFIRMATIONS = 0;
     const ACTIVITY_REQUIRED_CONFIRMATIONS = 1;
     const responsePayload = {
-      success: true as const,
       found: true as const,
       activity: {
         id: "activity-1",
-        direction: "outflow" as const,
-        kind: "borrow" as const,
         status: {
           operation: "borrow" as const,
           state: "confirming" as const,
@@ -902,8 +881,6 @@ describe("ActivitiesModule", () => {
       found: true,
       activity: {
         id: "activity-1",
-        direction: "outflow",
-        kind: "borrow",
         status: {
           operation: "borrow",
           state: "confirming",
@@ -945,12 +922,9 @@ describe("ActivitiesModule", () => {
       },
     });
     const responsePayload = {
-      success: true as const,
       found: true as const,
       activity: {
         id: "activity-1",
-        direction: "outflow" as const,
-        kind: "borrow" as const,
         status: {
           operation: "borrow" as const,
           state: "confirming" as const,
@@ -993,8 +967,6 @@ describe("ActivitiesModule", () => {
       found: true,
       activity: {
         id: "activity-1",
-        direction: "outflow",
-        kind: "borrow",
         status: {
           operation: "borrow",
           state: "confirming",
@@ -1032,12 +1004,9 @@ describe("ActivitiesModule", () => {
     const TOP_UP_SHORTFALL_AMOUNT = "1740000";
     const TOP_UP_SHORTFALL_AMOUNT_BASE_UNITS = 1740000n;
     const responsePayload = {
-      success: true as const,
       found: true as const,
       activity: {
         id: "pre_terminal_eth_36",
-        direction: "inflow" as const,
-        kind: "deposit" as const,
         status: {
           operation: "deposit" as const,
           state: "action_required" as const,
@@ -1083,8 +1052,6 @@ describe("ActivitiesModule", () => {
       found: true,
       activity: {
         id: "pre_terminal_eth_36",
-        direction: "inflow",
-        kind: "deposit",
         status: {
           operation: "deposit",
           state: "action_required",
@@ -2739,14 +2706,7 @@ describe("LendingModule", () => {
 
     // then
     expect(result).toEqual({
-      success: true,
       txid,
-      status: {
-        operation: "deposit",
-        state: "confirming",
-        confirmations: null,
-        requiredConfirmations: null,
-      },
     });
     expect(fetchSpy).not.toHaveBeenCalled();
   });
@@ -2913,7 +2873,7 @@ describe("LendingModule", () => {
     // given
     const txid = "7f4f3c2b1a";
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(JSON.stringify({ success: true, txid }), {
+      new Response(JSON.stringify({ txid }), {
         status: 200,
         headers: {
           "content-type": "application/json",
@@ -2932,14 +2892,7 @@ describe("LendingModule", () => {
 
     // then
     expect(result).toEqual({
-      success: true,
       txid,
-      status: {
-        operation: "deposit",
-        state: "confirming",
-        confirmations: null,
-        requiredConfirmations: null,
-      },
     });
     expect(fetchSpy).toHaveBeenCalledWith(
       "https://app.liquidium.fi/api/sdk/v2/inflow",
@@ -2976,7 +2929,6 @@ describe("LendingModule", () => {
 
     // then
     expect(result).toMatchObject({
-      success: true,
       profileId: "aaaaa-aa",
       poolId: USDT_POOL_ID,
       walletAddress: "0x1234567890123456789012345678901234567890",
@@ -3206,7 +3158,7 @@ describe("LendingModule", () => {
     mockUsdtPoolList();
     const fetchSpy = vi.spyOn(globalThis, "fetch");
     fetchSpy.mockResolvedValueOnce(
-      new Response(JSON.stringify({ success: true, txid: depositTxid }), {
+      new Response(JSON.stringify({ txid: depositTxid }), {
         status: 200,
         headers: {
           "content-type": "application/json",
@@ -3399,7 +3351,7 @@ describe("LendingModule", () => {
         get_btc_address: vi.fn().mockResolvedValue("bc1qexampledepositaddress"),
       } as never);
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
-      new Response(JSON.stringify({ success: true, txid }), {
+      new Response(JSON.stringify({ txid }), {
         status: 200,
         headers: {
           "content-type": "application/json",
@@ -3476,7 +3428,7 @@ describe("LendingModule", () => {
         get_btc_address: vi.fn().mockResolvedValue("bc1qexampledepositaddress"),
       } as never);
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
-      new Response(JSON.stringify({ success: true, txid }), {
+      new Response(JSON.stringify({ txid }), {
         status: 200,
         headers: {
           "content-type": "application/json",
@@ -3577,7 +3529,7 @@ describe("LendingModule", () => {
       )
     );
     fetchSpy.mockResolvedValueOnce(
-      new Response(JSON.stringify({ success: true, txid }), {
+      new Response(JSON.stringify({ txid }), {
         status: 200,
         headers: {
           "content-type": "application/json",
@@ -3751,7 +3703,7 @@ describe("LendingModule", () => {
         get_btc_address: vi.fn().mockResolvedValue("bc1qexamplerepayaddress"),
       } as never);
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
-      new Response(JSON.stringify({ success: true, txid }), {
+      new Response(JSON.stringify({ txid }), {
         status: 200,
         headers: {
           "content-type": "application/json",
@@ -3862,7 +3814,7 @@ describe("LendingModule", () => {
     // given
     const TXID = "abc";
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
-      new Response(JSON.stringify({ success: true, txid: TXID }), {
+      new Response(JSON.stringify({ txid: TXID }), {
         status: 200,
       })
     );
@@ -3876,14 +3828,7 @@ describe("LendingModule", () => {
 
     // then
     expect(result).toEqual({
-      success: true,
       txid: TXID,
-      status: {
-        operation: "deposit",
-        state: "confirming",
-        confirmations: null,
-        requiredConfirmations: null,
-      },
     });
     expect(fetchSpy).toHaveBeenCalledWith(
       `${DEFAULT_API_BASE_URL}/v2/inflow`,
@@ -4889,10 +4834,10 @@ describe("InstantLoansModule", () => {
           );
         }
         if (url.includes("/activities?")) {
-          return new Response(
-            JSON.stringify({ success: true, activities: [] }),
-            { status: 200, headers: { "content-type": "application/json" } }
-          );
+          return new Response(JSON.stringify({ activities: [] }), {
+            status: 200,
+            headers: { "content-type": "application/json" },
+          });
         }
         throw new Error(`Unexpected fetch URL: ${url}`);
       });
@@ -5345,10 +5290,10 @@ describe("InstantLoansModule", () => {
           );
         }
         if (url.includes("/activities?")) {
-          return new Response(
-            JSON.stringify({ success: true, activities: [] }),
-            { status: 200, headers: { "content-type": "application/json" } }
-          );
+          return new Response(JSON.stringify({ activities: [] }), {
+            status: 200,
+            headers: { "content-type": "application/json" },
+          });
         }
 
         return new Response(JSON.stringify({ error: "not found" }), {
@@ -5819,7 +5764,7 @@ describe("InstantLoansModule", () => {
     return vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
       const url = input.toString();
       if (url.includes("/activities?")) {
-        return new Response(JSON.stringify({ success: true, activities: [] }), {
+        return new Response(JSON.stringify({ activities: [] }), {
           status: 200,
           headers: { "content-type": "application/json" },
         });

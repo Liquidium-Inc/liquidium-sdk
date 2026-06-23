@@ -347,12 +347,8 @@ export interface SubmitInflowRequest extends SubmitSupplyFlowInflowRequest {
 
 /** Acknowledgement from the SDK API after submitting an inflow hint. */
 export interface SubmitInflowResponse {
-  /** Indicates the submit request was accepted by the SDK API. */
-  success: true;
   /** Transaction id accepted by the SDK API. */
   txid: string;
-  /** Shared lifecycle status for the submitted inflow. */
-  status: LiquidiumStatus;
 }
 
 /** Request for estimating the fee needed for an inflow target. */
@@ -407,8 +403,6 @@ export type EvmSupplyApprovalStrategy =
 
 /** ERC-20 supply planning data returned by `lending.getEvmSupplyContext(...)`. */
 export interface EvmSupplyContext {
-  /** Indicates the context was computed successfully. */
-  success: true;
   /** Liquidium profile principal text. */
   profileId: string;
   /** Pool principal text receiving the inflow. */

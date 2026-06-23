@@ -130,15 +130,28 @@ interface InstantLoanCollateralHintWire {
   collateralAmountHint: string;
 }
 
-interface InstantLoanFindResponseWire {
-  success?: true;
-  loans?: InstantLoanFindCandidateWire[];
-  candidates?: InstantLoanFindCandidateWire[];
+interface V1InstantLoanFindResponseWire {
+  success: true;
+  candidates: InstantLoanFindCandidateWire[];
 }
 
-interface InstantLoanCollateralHintResponseWire
+interface LegacyInstantLoanFindResponseWire {
+  success: true;
+  loans: InstantLoanFindCandidateWire[];
+}
+
+type InstantLoanFindResponseWire =
+  | V1InstantLoanFindResponseWire
+  | LegacyInstantLoanFindResponseWire;
+
+interface V1InstantLoanCollateralHintResponseWire
   extends InstantLoanCollateralHintWire {
-  success?: true;
+  success: true;
+}
+
+interface V1InstantLoanCreateResponseWire {
+  success: true;
+  loan: InstantLoanWire;
 }
 
 interface InstantLoanCreateAccountWire {
@@ -251,7 +264,7 @@ export class InstantLoansModule {
     await this.validateInstantLoanLtvPolicy(request);
 
     const response = await apiClient.post<
-      { loan: InstantLoanWire; success?: true },
+      V1InstantLoanCreateResponseWire,
       InstantLoanCreateRequestWire
     >(SdkApiPath.instantLoans, {
       collateralPoolId: request.collateralPoolId,
@@ -448,7 +461,10 @@ export class InstantLoansModule {
       buildInstantLoanFindPath({ query })
     );
 
-    return (response.candidates ?? response.loans ?? []).map(mapCandidateWire);
+    const candidates =
+      "candidates" in response ? response.candidates : response.loans;
+
+    return candidates.map(mapCandidateWire);
   }
 
   private async getLoanRecord(
@@ -511,9 +527,10 @@ export class InstantLoansModule {
 
   private async getCollateralAmountHint(loanId: bigint): Promise<bigint> {
     const apiClient = this.requireApi("Instant loan collateral hint");
-    const response = await apiClient.get<InstantLoanCollateralHintResponseWire>(
-      buildInstantLoanCollateralHintPath({ loanId })
-    );
+    const response =
+      await apiClient.get<V1InstantLoanCollateralHintResponseWire>(
+        buildInstantLoanCollateralHintPath({ loanId })
+      );
 
     return parseUnsignedApiBigint(response.collateralAmountHint, {
       context: INSTANT_LOAN_WIRE_CONTEXT,

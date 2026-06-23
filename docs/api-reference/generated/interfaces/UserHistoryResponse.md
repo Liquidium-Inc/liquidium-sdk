@@ -6,7 +6,7 @@
 
 # Interface: UserHistoryResponse
 
-Defined in: [packages/client/src/modules/history/types.ts:96](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L96)
+Defined in: [packages/client/src/modules/history/types.ts:90](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L90)
 
 Wire-format user history page returned by the SDK API.
 
@@ -16,7 +16,7 @@ Wire-format user history page returned by the SDK API.
 
 > **items**: [`UserHistoryEntryApiItem`](UserHistoryEntryApiItem.md)[]
 
-Defined in: [packages/client/src/modules/history/types.ts:98](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L98)
+Defined in: [packages/client/src/modules/history/types.ts:91](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L91)
 
 ***
 
@@ -24,12 +24,4 @@ Defined in: [packages/client/src/modules/history/types.ts:98](https://github.com
 
 > `optional` **nextCursor?**: `string`
 
-Defined in: [packages/client/src/modules/history/types.ts:99](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L99)
-
-***
-
-### success
-
-> **success**: `true`
-
-Defined in: [packages/client/src/modules/history/types.ts:97](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L97)
+Defined in: [packages/client/src/modules/history/types.ts:92](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L92)

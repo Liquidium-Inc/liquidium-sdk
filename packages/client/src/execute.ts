@@ -29,7 +29,7 @@ export interface ExecuteWithOptions {
  * Returns an async function that runs a {@link WalletAction} end-to-end.
  *
  * - `sign-message`: needs `walletAdapter.signMessage` and `options.chain`.
- * - `sign-psbt`: needs `walletAdapter.signPsbt`.
+ * - `sign-psbt`: reserved; no current SDK flow emits this action.
  * - `send-eth-transaction`: needs `walletAdapter.sendEthTransaction`.
  *
  * @param options - Adapter and optional chain/account overrides.

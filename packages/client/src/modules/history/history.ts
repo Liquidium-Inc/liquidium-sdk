@@ -13,7 +13,6 @@ import type {
   UserLiquidationHistoryFilters,
   UserTransactionHistoryEntry,
   UserTransactionHistoryFilters,
-  UserTransactionHistoryState,
 } from "./types";
 
 /** Historical user transaction and liquidation data helpers. */
@@ -54,8 +53,8 @@ export class HistoryModule {
     if (filters.poolId) {
       query.set(SdkApiQueryParam.poolId, filters.poolId);
     }
-    if (filters.types?.length) {
-      query.set(SdkApiQueryParam.types, filters.types.join(","));
+    if (filters.operations?.length) {
+      query.set(SdkApiQueryParam.operations, filters.operations.join(","));
     }
     if (filters.states?.length) {
       query.set(
@@ -129,7 +128,6 @@ function mapUserTransactionHistoryEntry(
 ): UserTransactionHistoryEntry {
   return {
     id: item.id,
-    type: item.type,
     amount: parseBigInt(item.amount, "history user amount"),
     poolId: item.poolId,
     timestamp: item.timestamp,
@@ -141,13 +139,6 @@ function mapUserTransactionHistoryEntry(
 function mapUserLiquidationHistoryEntry(
   item: UserHistoryResponse["items"][number]
 ): UserLiquidationHistoryEntry {
-  if (item.type !== "liquidation") {
-    throw new LiquidiumError(
-      LiquidiumErrorCode.INTERNAL,
-      `Invalid liquidation history type: ${item.type}`
-    );
-  }
-
   if (
     item.status.operation !== "liquidation" ||
     item.status.state !== "completed"
@@ -160,7 +151,6 @@ function mapUserLiquidationHistoryEntry(
 
   return {
     id: item.id,
-    type: "liquidation",
     amount: parseBigInt(item.amount, "history user amount"),
     poolId: item.poolId,
     timestamp: item.timestamp,
@@ -169,9 +159,7 @@ function mapUserLiquidationHistoryEntry(
   };
 }
 
-function createHistoryStateFilterParam(
-  states: UserTransactionHistoryState[]
-): string {
+function createHistoryStateFilterParam(states: string[]): string {
   for (const state of states) {
     validateHistoryStateFilter(state);
   }

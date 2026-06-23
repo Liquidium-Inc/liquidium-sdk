@@ -16,11 +16,13 @@ import type {
   ActivityTopUp,
   GetActivityStatusRequest,
   GetActivityStatusResponse,
-  InflowActivityKind,
+  InflowActivity,
+  InflowActivityStatus,
   ListActivitiesRequest,
-  OutflowActivityKind,
+  OutflowActivity,
+  OutflowActivityStatus,
 } from "./types";
-import { ActivityDirection, ActivityFilter } from "./types";
+import { ActivityFilter } from "./types";
 
 interface ActivityTopUpWire
   extends Omit<
@@ -34,8 +36,6 @@ interface ActivityTopUpWire
 
 interface ActivityWire {
   id: string;
-  direction: Activity["direction"];
-  kind: Activity["kind"];
   poolId: string;
   asset: string | null;
   chain: Chain | null;
@@ -47,18 +47,15 @@ interface ActivityWire {
 }
 
 interface ListActivitiesResponseWire {
-  success: true;
   activities: ActivityWire[];
 }
 
 interface ActivityStatusFoundResponseWire {
-  success: true;
   found: true;
   activity: ActivityWire;
 }
 
 interface ActivityStatusNotFoundResponseWire {
-  success: true;
   found: false;
   id: string;
 }
@@ -192,19 +189,19 @@ function mapInstantLoanLookupError(
 
 function mapActivity(wire: ActivityWire): Activity {
   const amount = parseBigInt(wire.amount, "activity amount");
+  const activityBase = {
+    id: wire.id,
+    poolId: wire.poolId,
+    asset: wire.asset,
+    chain: wire.chain,
+    amount,
+    timestampMs: wire.timestampMs,
+  };
 
-  if (wire.direction === ActivityDirection.inflow) {
-    const kind = mapInflowActivityKind(wire.kind);
-    const activity: Activity = {
-      id: wire.id,
-      poolId: wire.poolId,
-      asset: wire.asset,
-      chain: wire.chain,
-      amount,
-      timestampMs: wire.timestampMs,
-      direction: ActivityDirection.inflow,
-      kind,
-      status: wire.status,
+  if (isInflowOperation(wire.status.operation)) {
+    const activity: InflowActivity = {
+      ...activityBase,
+      status: wire.status as InflowActivityStatus,
     };
 
     if (wire.txids) {
@@ -218,46 +215,31 @@ function mapActivity(wire: ActivityWire): Activity {
     return activity;
   }
 
-  const kind = mapOutflowActivityKind(wire.kind);
-  const activity: Activity = {
-    id: wire.id,
-    poolId: wire.poolId,
-    asset: wire.asset,
-    chain: wire.chain,
-    amount,
-    timestampMs: wire.timestampMs,
-    direction: ActivityDirection.outflow,
-    kind,
-    status: wire.status,
-  };
+  if (isOutflowOperation(wire.status.operation)) {
+    const activity: OutflowActivity = {
+      ...activityBase,
+      status: wire.status as OutflowActivityStatus,
+    };
 
-  if (wire.txids) {
-    activity.txids = wire.txids;
-  }
+    if (wire.txids) {
+      activity.txids = wire.txids;
+    }
 
-  return activity;
-}
-
-function mapInflowActivityKind(kind: Activity["kind"]): InflowActivityKind {
-  if (kind === "deposit" || kind === "repayment") {
-    return kind;
+    return activity;
   }
 
   throw new LiquidiumError(
     LiquidiumErrorCode.INTERNAL,
-    `Invalid inflow activity kind: ${kind}`
+    `Invalid activity operation: ${wire.status.operation}`
   );
 }
 
-function mapOutflowActivityKind(kind: Activity["kind"]): OutflowActivityKind {
-  if (kind === "borrow" || kind === "withdrawal") {
-    return kind;
-  }
+function isInflowOperation(operation: LiquidiumStatus["operation"]): boolean {
+  return operation === "deposit" || operation === "repayment";
+}
 
-  throw new LiquidiumError(
-    LiquidiumErrorCode.INTERNAL,
-    `Invalid outflow activity kind: ${kind}`
-  );
+function isOutflowOperation(operation: LiquidiumStatus["operation"]): boolean {
+  return operation === "borrow" || operation === "withdrawal";
 }
 
 function mapActivityTopUp(wire: ActivityTopUpWire): ActivityTopUp {

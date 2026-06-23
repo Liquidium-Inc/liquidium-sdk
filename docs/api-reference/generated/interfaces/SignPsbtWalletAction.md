@@ -8,7 +8,7 @@
 
 Defined in: [packages/client/src/core/wallet-actions.ts:163](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L163)
 
-Prepared action that requires BTC PSBT signing before submit.
+Reserved prepared action for future BTC PSBT-signing flows.
 
 ## Type Parameters
 

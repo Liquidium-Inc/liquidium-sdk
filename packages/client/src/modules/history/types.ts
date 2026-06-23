@@ -1,14 +1,13 @@
-import type { LiquidiumState, LiquidiumStatus } from "../../core/status";
+import type {
+  LiquidiumOperation,
+  LiquidiumState,
+  LiquidiumStatus,
+} from "../../core/status";
 
-/** User transaction kinds returned by profile transaction history. */
-export type UserTransactionHistoryType =
-  | "deposit"
-  | "borrow"
-  | "repayment"
-  | "withdrawal"
-  | "liquidation";
-/** Any user history kind returned by the history API. */
-export type UserHistoryType = UserTransactionHistoryType;
+/** User transaction operations returned by profile transaction history. */
+export type UserTransactionHistoryOperation = LiquidiumOperation;
+/** Any user history operation returned by the history API. */
+export type UserHistoryOperation = UserTransactionHistoryOperation;
 
 /** Lifecycle states accepted by profile transaction history filters. */
 export type UserTransactionHistoryState = Exclude<
@@ -26,16 +25,12 @@ interface BaseUserHistoryEntry {
 
 /** Deposit, borrow, repayment, withdrawal, or liquidation entry in user history. */
 export interface UserTransactionHistoryEntry extends BaseUserHistoryEntry {
-  /** Transaction history kind. */
-  type: UserTransactionHistoryType;
   /** Current lifecycle status. */
   status: LiquidiumStatus;
 }
 
 /** Liquidation entry in user history. */
 export interface UserLiquidationHistoryEntry extends BaseUserHistoryEntry {
-  /** Liquidation kind discriminator. */
-  type: "liquidation";
   /** Current lifecycle status. */
   status: LiquidiumStatus;
 }
@@ -55,8 +50,8 @@ export interface UserTransactionHistoryFilters {
   market?: string;
   /** Pool principal text filter. */
   poolId?: string;
-  /** Transaction kind filters. */
-  types?: UserTransactionHistoryType[];
+  /** Transaction operation filters. */
+  operations?: UserTransactionHistoryOperation[];
   /** Lifecycle state filters. */
   states?: UserTransactionHistoryState[];
   /** Inclusive start timestamp filter accepted by the SDK API. */
@@ -84,7 +79,6 @@ export interface UserLiquidationHistoryFilters {
 /** Wire-format user history item returned by the SDK API. */
 export interface UserHistoryEntryApiItem {
   id: string;
-  type: UserHistoryType;
   amount: string;
   poolId: string;
   timestamp: string;
@@ -94,7 +88,6 @@ export interface UserHistoryEntryApiItem {
 
 /** Wire-format user history page returned by the SDK API. */
 export interface UserHistoryResponse {
-  success: true;
   items: UserHistoryEntryApiItem[];
   nextCursor?: string;
 }

@@ -203,8 +203,6 @@ interface ShouldSubmitInflowParams {
   mechanism: SupplyPlanType;
 }
 
-type SubmitInflowResponseWire = Omit<SubmitInflowResponse, "status">;
-
 type AllowanceExpectation = "zero" | "sufficient";
 
 /** Borrow, withdraw, supply, inflow reporting, and fee-estimation helpers. */
@@ -657,7 +655,6 @@ export class LendingModule {
     });
 
     return {
-      success: true,
       profileId: request.profileId,
       poolId: request.poolId,
       walletAddress,
@@ -826,14 +823,7 @@ export class LendingModule {
   ): Promise<SubmitInflowResponse> {
     if (!shouldSubmitInflow(params)) {
       return {
-        success: true,
         txid: params.submitRequest.txid,
-        status: createLiquidiumStatus({
-          operation: mapSupplyActionToStatusOperation(
-            params.instruction.action
-          ),
-          state: "confirming",
-        }),
       };
     }
 
@@ -1086,17 +1076,12 @@ export class LendingModule {
     const apiClient = this.requireApi();
 
     const response = await apiClient.post<
-      SubmitInflowResponseWire,
+      SubmitInflowResponse,
       SubmitInflowRequest
     >(SdkApiPath.inflow, request);
 
     return {
-      success: response.success,
       txid: response.txid,
-      status: createLiquidiumStatus({
-        operation: request.operation,
-        state: "confirming",
-      }),
     };
   }
 

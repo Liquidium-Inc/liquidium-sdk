@@ -6,7 +6,7 @@
 
 # Interface: UserHistoryEntryApiItem
 
-Defined in: [packages/client/src/modules/history/types.ts:85](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L85)
+Defined in: [packages/client/src/modules/history/types.ts:80](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L80)
 
 Wire-format user history item returned by the SDK API.
 
@@ -16,7 +16,7 @@ Wire-format user history item returned by the SDK API.
 
 > **amount**: `string`
 
-Defined in: [packages/client/src/modules/history/types.ts:88](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L88)
+Defined in: [packages/client/src/modules/history/types.ts:82](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L82)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [packages/client/src/modules/history/types.ts:88](https://github.com
 
 > **id**: `string`
 
-Defined in: [packages/client/src/modules/history/types.ts:86](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L86)
+Defined in: [packages/client/src/modules/history/types.ts:81](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L81)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [packages/client/src/modules/history/types.ts:86](https://github.com
 
 > **poolId**: `string`
 
-Defined in: [packages/client/src/modules/history/types.ts:89](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L89)
+Defined in: [packages/client/src/modules/history/types.ts:83](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L83)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [packages/client/src/modules/history/types.ts:89](https://github.com
 
 > **status**: [`LiquidiumStatus`](LiquidiumStatus.md)
 
-Defined in: [packages/client/src/modules/history/types.ts:91](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L91)
+Defined in: [packages/client/src/modules/history/types.ts:85](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L85)
 
 ***
 
@@ -48,7 +48,7 @@ Defined in: [packages/client/src/modules/history/types.ts:91](https://github.com
 
 > **timestamp**: `string`
 
-Defined in: [packages/client/src/modules/history/types.ts:90](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L90)
+Defined in: [packages/client/src/modules/history/types.ts:84](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L84)
 
 ***
 
@@ -56,12 +56,4 @@ Defined in: [packages/client/src/modules/history/types.ts:90](https://github.com
 
 > `optional` **txids?**: `string`[]
 
-Defined in: [packages/client/src/modules/history/types.ts:92](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L92)
-
-***
-
-### type
-
-> **type**: [`UserTransactionHistoryType`](../type-aliases/UserTransactionHistoryType.md)
-
-Defined in: [packages/client/src/modules/history/types.ts:87](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L87)
+Defined in: [packages/client/src/modules/history/types.ts:86](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L86)
