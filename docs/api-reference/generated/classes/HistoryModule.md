@@ -80,7 +80,7 @@ The Liquidium profile principal text.
 
 [`UserTransactionHistoryFilters`](../interfaces/UserTransactionHistoryFilters.md) = `{}`
 
-Optional pool, type, state, time range, and pagination filters.
+Optional pool, operation, state, time range, and pagination filters.
 
 #### Returns
 

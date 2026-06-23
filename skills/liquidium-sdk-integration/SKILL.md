@@ -269,6 +269,8 @@ Activities and user history entries expose `txids?: string[]`; do not expect
 legacy singular or direction-specific txid fields. Transaction history uses
 canonical operation names:
 `deposit`, `borrow`, `repayment`, `withdrawal`, and `liquidation`.
+Use `operations` for operation filters and `states` for lifecycle-state filters;
+do not use removed `type`, `status`, or `kind` filters.
 
 ## Rate and Amount Formatting
 

@@ -34,7 +34,7 @@ export class HistoryModule {
    * Returns transaction history for a user.
    *
    * @param user - The Liquidium profile principal text.
-   * @param filters - Optional pool, type, state, time range, and pagination filters.
+   * @param filters - Optional pool, operation, state, time range, and pagination filters.
    * @returns Paginated user history entries.
    */
   async getUserTransactionHistory(
