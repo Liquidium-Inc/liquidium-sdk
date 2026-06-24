@@ -7,6 +7,7 @@ import {
   createFlexibleLendingActor,
   type DecodedPool,
   decodeFlexiblePool,
+  type FlexiblePool,
 } from "../../core/canisters/lending/flexible-actor";
 import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
 import type { ApiClient } from "../../core/transports/api-client";
@@ -28,9 +29,11 @@ export class MarketModule {
   ) {}
 
   /**
-   * Lists all pools with their current rates.
+   * Lists SDK-supported pools with their current rates.
    *
-   * @returns All configured lending pools enriched with their current rate data.
+   * Unsupported asset or chain variants returned by the canister are omitted.
+   *
+   * @returns Supported lending pools enriched with their current rate data.
    */
   async listPools(): Promise<Pool[]> {
     void this.apiClient;
@@ -39,9 +42,7 @@ export class MarketModule {
       const flexibleActor = createFlexibleLendingActor(this.canisterContext);
       const rawPools = await flexibleActor.list_pools();
 
-      const decodedPools = rawPools
-        .map(decodeFlexiblePool)
-        .filter((pool): pool is DecodedPool => pool !== null);
+      const decodedPools = decodeSupportedFlexiblePools(rawPools);
 
       return await Promise.all(
         decodedPools.map(async (pool) => {
@@ -161,4 +162,22 @@ export class MarketModule {
       );
     }
   }
+}
+
+function decodeSupportedFlexiblePools(rawPools: FlexiblePool[]): DecodedPool[] {
+  const decodedPools: DecodedPool[] = [];
+
+  for (const rawPool of rawPools) {
+    const decodedPool = decodeFlexiblePool(rawPool);
+
+    // The canister may expose assets/chains before the SDK supports their flows.
+    // Keep market.listPools() scoped to pools this SDK can safely map and use.
+    if (!decodedPool) {
+      continue;
+    }
+
+    decodedPools.push(decodedPool);
+  }
+
+  return decodedPools;
 }

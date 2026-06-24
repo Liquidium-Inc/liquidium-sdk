@@ -135,9 +135,23 @@ describe("decodeFlexiblePool", () => {
     expect(decoded).toBeNull();
   });
 
+  test("should return null for an unsupported SOL pool", () => {
+    // given
+    const pool = createFlexiblePool({
+      asset: { SOL: null },
+      chain: { SOL: null },
+    });
+
+    // when
+    const decoded = decodeFlexiblePool(pool);
+
+    // then
+    expect(decoded).toBeNull();
+  });
+
   test("should decode a pool with hashed variant keys from IDL.Unknown", () => {
     // given
-    const assetHash = idlLabelToId("SOL");
+    const assetHash = idlLabelToId("USDC");
     const chainHash = idlLabelToId("ETH");
     const pool = createFlexiblePool({
       asset: { [`_${assetHash}_`]: null },
@@ -149,7 +163,7 @@ describe("decodeFlexiblePool", () => {
 
     // then
     expect(decoded).not.toBeNull();
-    expect(decoded?.asset).toBe("SOL");
+    expect(decoded?.asset).toBe("USDC");
     expect(decoded?.chain).toBe("ETH");
   });
 
@@ -203,7 +217,7 @@ describe("decodeFlexiblePosition", () => {
 
   test("should decode a position with a hashed variant key", () => {
     // given
-    const assetHash = idlLabelToId("SOL");
+    const assetHash = idlLabelToId("USDT");
     const position = createFlexiblePosition({
       asset: { [`_${assetHash}_`]: null },
     });
@@ -213,7 +227,7 @@ describe("decodeFlexiblePosition", () => {
 
     // then
     expect(decoded).not.toBeNull();
-    expect(decoded?.asset).toBe("SOL");
+    expect(decoded?.asset).toBe("USDT");
   });
 
   test("should return null for an unsupported ICP position", () => {

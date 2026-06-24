@@ -91,7 +91,7 @@ describe("decodeFlexibleInstantLoanRecord", () => {
 
   test("should decode a loan with hashed variant keys from IDL.Unknown", () => {
     // given
-    const lendHash = idlLabelToId("SOL");
+    const lendHash = idlLabelToId("USDT");
     const borrowHash = idlLabelToId("USDT");
     const record = createFlexibleInstantLoanRecord({
       lend_asset: { [`_${lendHash}_`]: null },
@@ -103,8 +103,21 @@ describe("decodeFlexibleInstantLoanRecord", () => {
 
     // then
     expect(decoded).not.toBeNull();
-    expect(decoded?.lend_asset).toBe("SOL");
+    expect(decoded?.lend_asset).toBe("USDT");
     expect(decoded?.borrow_asset).toBe("USDT");
+  });
+
+  test("should return null for an unsupported SOL asset tag", () => {
+    // given
+    const record = createFlexibleInstantLoanRecord({
+      lend_asset: { SOL: null },
+    });
+
+    // when
+    const decoded = decodeFlexibleInstantLoanRecord(record);
+
+    // then
+    expect(decoded).toBeNull();
   });
 
   test("should return null for an unknown lend asset tag", () => {
@@ -165,7 +178,7 @@ describe("decodeFlexibleHeadlessLoanEvent", () => {
 
   test("should decode a LoanCreated event with hashed variant keys", () => {
     // given
-    const lendHash = idlLabelToId("SOL");
+    const lendHash = idlLabelToId("USDT");
     const borrowHash = idlLabelToId("USDT");
     const event = createFlexibleHeadlessLoanEvent({
       event_type: {
@@ -193,7 +206,7 @@ describe("decodeFlexibleHeadlessLoanEvent", () => {
     const eventType = decoded?.event_type;
     expect(eventType).toBeDefined();
     if (eventType && "LoanCreated" in eventType) {
-      expect(eventType.LoanCreated.lend_asset).toBe("SOL");
+      expect(eventType.LoanCreated.lend_asset).toBe("USDT");
       expect(eventType.LoanCreated.borrow_asset).toBe("USDT");
     }
   });

@@ -131,7 +131,7 @@ describe("MarketModule", () => {
     });
   });
 
-  test("returns dynamic asset and chain values from the canister", async () => {
+  test("excludes unsupported SOL pools returned by the canister", async () => {
     // given
     vi.spyOn(Actor, "createActor").mockReturnValue({
       list_pools: vi.fn().mockResolvedValue([
@@ -168,10 +168,7 @@ describe("MarketModule", () => {
     const pools = await client.market.listPools();
 
     // then
-    expect(pools[0]).toMatchObject({
-      asset: "SOL",
-      chain: "SOL",
-    });
+    expect(pools).toHaveLength(0);
   });
 
   test("ignores pools with unsupported assets instead of failing", async () => {
