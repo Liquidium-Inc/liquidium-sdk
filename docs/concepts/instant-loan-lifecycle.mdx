@@ -14,7 +14,7 @@ An instant loan reports `loan.status` as a `LiquidiumStatus`. Read `status.opera
 | `{ operation: "deposit", state: "confirming" }` | Liquidium detected a deposit and waits for confirmations | Show pending confirmation copy |
 | `{ operation: "deposit", state: "processing" }` | Liquidium is processing collateral after detection | Keep polling and block duplicate deposits |
 | `{ operation: "borrow", state: "confirming" }` or `{ operation: "borrow", state: "processing" }` | Liquidium is sending borrowed funds | Show borrow payout progress |
-| `{ operation: "repayment", state: "active" }` | Debt exists and the user can repay | Show `loan.repayment.amount` and `loan.repayment.target` when `loan.repayment` is non-null |
+| `{ operation: "repayment", state: "active" }` | Debt exists and the user can repay | Show `loan.repayment.amount` and `loan.repayment.target` |
 | `{ operation: "repayment", state: "confirming" }` or `{ operation: "repayment", state: "processing" }` | Liquidium is confirming or processing repayment | Keep polling and avoid duplicate repayment prompts |
 | `{ operation: "repayment", state: "completed" }` | The loan closed | Show final state and stop prompting for repayment |
 | `{ operation: "deposit", state: "expired" }` | The deposit window passed before collateral arrived | Show timeout copy and stop prompting for collateral deposit |

@@ -2,7 +2,6 @@ import type { Chain } from "./types";
 
 /** Asset transfer path used for wallet-executed actions. */
 export const TransferMode = {
-  ck: "ck",
   native: "native",
 } as const;
 /** Asset transfer path used for wallet-executed actions. */
@@ -10,9 +9,7 @@ export type TransferMode = (typeof TransferMode)[keyof typeof TransferMode];
 
 /** Wallet capability required to execute a prepared SDK action. */
 export const WalletExecutionKind = {
-  sendEthTransaction: "send-eth-transaction",
   signMessage: "sign-message",
-  signPsbt: "sign-psbt",
 } as const;
 /** Wallet capability required to execute a prepared SDK action. */
 export type WalletExecutionKind =
@@ -47,20 +44,6 @@ export interface SignMessageRequest {
   /** Plaintext message to sign. */
   message: string;
   /** Optional account override for the signing wallet. */
-  account?: string;
-  /** SDK action type that produced this request. */
-  actionType: string;
-  /** Transfer path associated with the action. */
-  transferMode: TransferMode;
-}
-
-/** PSBT-signing request passed to BTC wallet adapters. */
-export interface SignPsbtRequest {
-  /** BTC chain discriminator. */
-  chain: Extract<Chain, "BTC">;
-  /** Base64-encoded unsigned PSBT. */
-  psbtBase64: string;
-  /** Optional BTC account override. */
   account?: string;
   /** SDK action type that produced this request. */
   actionType: string;
@@ -104,13 +87,10 @@ export interface SendBtcTransactionRequest {
  * - `signMessage` - account creation, borrow, withdraw
  * - `sendBtcTransaction` / `sendEthTransaction` - automated transfer-path supply
  * - `sendEthTransaction` - contract-interaction supply and ETH native sends
- * - `signPsbt` - reserved; no current SDK flow emits PSBT-signing actions
  */
 export interface WalletAdapter {
   /** Signs an SDK plaintext message and returns the wallet signature. BTC adapters may return base64 BIP-322 or hex-encoded signature bytes. */
   signMessage?: (request: SignMessageRequest) => Promise<string>;
-  /** Reserved for future PSBT-signing flows; no current SDK method calls this. */
-  signPsbt?: (request: SignPsbtRequest) => Promise<string>;
   /** Sends an EVM transaction and returns its transaction hash. */
   sendEthTransaction?: (request: SendEthTransactionRequest) => Promise<string>;
   /** Sends a BTC transaction and returns its transaction id. */
@@ -125,18 +105,6 @@ export interface SignatureInfo {
   chain: Chain;
   /** Account that produced the signature, when different from the action default. */
   account?: string;
-}
-
-/** Request submitted after a BTC PSBT has been signed. */
-export interface SignPsbtSubmitRequest {
-  /** Base64-encoded signed PSBT. */
-  signedPsbtBase64: string;
-}
-
-/** Request submitted after an ETH transaction has been sent. */
-export interface SendEthTransactionSubmitRequest {
-  /** EVM transaction hash returned by the wallet. */
-  txHash: string;
 }
 
 /** Prepared action that requires message signing before submit. */
@@ -159,50 +127,9 @@ export interface SignMessageWalletAction<TData, TResult> {
   submit(signatureInfo: SignatureInfo): Promise<TResult>;
 }
 
-/** Reserved prepared action for future BTC PSBT-signing flows. */
-export interface SignPsbtWalletAction<TResult> {
-  /** Protocol action kind. */
-  kind: WalletActionKind;
-  /** Wallet capability required to execute the action. */
-  executionKind: typeof WalletExecutionKind.signPsbt;
-  /** Adapter-facing action type. */
-  actionType: string;
-  /** Transfer path associated with the action. */
-  transferMode: TransferMode;
-  /** Optional default account to pass to the wallet adapter. */
-  account?: string;
-  /** Base64-encoded unsigned PSBT. */
-  psbtBase64: string;
-  /** Submits the signed PSBT and resolves the protocol result. */
-  submit(request: SignPsbtSubmitRequest): Promise<TResult>;
-}
-
-/** Prepared action that requires sending an ETH transaction before submit. */
-export interface SendEthTransactionWalletAction<TResult> {
-  /** Protocol action kind. */
-  kind: WalletActionKind;
-  /** Wallet capability required to execute the action. */
-  executionKind: typeof WalletExecutionKind.sendEthTransaction;
-  /** Adapter-facing action type. */
-  actionType: string;
-  /** Transfer path associated with the action. */
-  transferMode: TransferMode;
-  /** Optional default account to pass to the wallet adapter. */
-  account?: string;
-  /** EVM transaction request to send. */
-  transaction: EthTransactionRequest;
-  /** Submits the transaction hash and resolves the protocol result. */
-  submit(request: SendEthTransactionSubmitRequest): Promise<TResult>;
-}
-
 /** Any prepared action returned by SDK methods and executable by {@link executeWith}. */
-export type WalletAction<TResult> =
-  | SignMessageWalletAction<unknown, TResult>
-  | SignPsbtWalletAction<TResult>
-  | SendEthTransactionWalletAction<TResult>;
+export type WalletAction<TResult> = SignMessageWalletAction<unknown, TResult>;
 
 // Future extension point:
 // native ICP and native Solana wallet capabilities will be added in a later
 // version once those chains are supported by the SDK.
-// Wallet actions currently default to native asset flows. ck-asset execution
-// paths will be added in a later version for borrow, withdraw, and supply.

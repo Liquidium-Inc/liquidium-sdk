@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { LiquidiumError, LiquidiumErrorCode } from "../errors";
-import { ceilDivBigint, parseBigInt, parseOptionalBigInt } from "./bigint";
+import { ceilDivBigint, parseBigInt } from "./bigint";
 
 describe("ceilDivBigint", () => {
   test("returns exact quotient when evenly divisible", () => {
@@ -119,30 +119,5 @@ describe("parseBigInt", () => {
       expect(error).toBeInstanceOf(LiquidiumError);
       expect((error as LiquidiumError).code).toBe(LiquidiumErrorCode.INTERNAL);
     }
-  });
-});
-
-describe("parseOptionalBigInt", () => {
-  test("should return undefined when value is undefined", () => {
-    // given
-    const optionalValue = undefined;
-
-    // when
-    const parsedValue = parseOptionalBigInt(optionalValue, "optional bigint");
-
-    // then
-    expect(parsedValue).toBeUndefined();
-  });
-
-  test("should parse a valid optional bigint string", () => {
-    // given
-    const optionalValue = "42";
-
-    // when
-    const parsedValue = parseOptionalBigInt(optionalValue, "optional bigint");
-
-    // then
-    const EXPECTED_VALUE = 42n;
-    expect(parsedValue).toBe(EXPECTED_VALUE);
   });
 });

@@ -15,16 +15,6 @@ const ERROR_FIELD_EXCLUDE_LIST = new Set(["name", "message", "stack", "cause"]);
 
 type StatusSubject = "Activity";
 
-export function getElement<T extends HTMLElement>(id: string): T {
-  const element = document.getElementById(id);
-
-  if (!element) {
-    throw new Error(`Missing element: ${id}`);
-  }
-
-  return element as T;
-}
-
 export function parseAmountToBaseUnits(
   value: string,
   decimals: bigint

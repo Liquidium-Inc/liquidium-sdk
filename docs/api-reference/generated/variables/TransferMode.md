@@ -14,10 +14,6 @@ Asset transfer path used for wallet-executed actions.
 
 ## Type Declaration
 
-### ck
-
-> `readonly` **ck**: `"ck"` = `"ck"`
-
 ### native
 
 > `readonly` **native**: `"native"` = `"native"`

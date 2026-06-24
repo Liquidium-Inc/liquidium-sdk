@@ -1,5 +1,5 @@
 import { LiquidiumError, LiquidiumErrorCode } from "./core/errors";
-import { Chain } from "./core/types";
+import type { Chain } from "./core/types";
 import {
   type WalletAction,
   type WalletAdapter,
@@ -29,8 +29,6 @@ export interface ExecuteWithOptions {
  * Returns an async function that runs a {@link WalletAction} end-to-end.
  *
  * - `sign-message`: needs `walletAdapter.signMessage` and `options.chain`.
- * - `sign-psbt`: reserved; no current SDK flow emits this action.
- * - `send-eth-transaction`: needs `walletAdapter.sendEthTransaction`.
  *
  * @param options - Adapter and optional chain/account overrides.
  * @returns A function that accepts a `WalletAction` and resolves with its submit result.
@@ -68,42 +66,6 @@ export function executeWith(options: ExecuteWithOptions) {
           chain: options.chain,
           account: options.account ?? action.account,
         });
-      }
-      case WalletExecutionKind.signPsbt: {
-        if (!options.walletAdapter.signPsbt) {
-          throw new LiquidiumError(
-            LiquidiumErrorCode.VALIDATION_ERROR,
-            "Wallet adapter does not support PSBT signing"
-          );
-        }
-
-        const signedPsbtBase64 = await options.walletAdapter.signPsbt({
-          chain: Chain.BTC,
-          psbtBase64: action.psbtBase64,
-          account: options.account ?? action.account,
-          actionType: action.actionType,
-          transferMode: action.transferMode,
-        });
-
-        return action.submit({ signedPsbtBase64 });
-      }
-      case WalletExecutionKind.sendEthTransaction: {
-        if (!options.walletAdapter.sendEthTransaction) {
-          throw new LiquidiumError(
-            LiquidiumErrorCode.VALIDATION_ERROR,
-            "Wallet adapter does not support ETH transaction sending"
-          );
-        }
-
-        const txHash = await options.walletAdapter.sendEthTransaction({
-          chain: Chain.ETH,
-          transaction: action.transaction,
-          account: options.account ?? action.account,
-          actionType: action.actionType,
-          transferMode: action.transferMode,
-        });
-
-        return action.submit({ txHash });
       }
       default:
         throw new LiquidiumError(

@@ -37,14 +37,3 @@ export function parseBigInt(value: string, label: string): bigint {
     );
   }
 }
-
-export function parseOptionalBigInt(
-  value: string | undefined,
-  label: string
-): bigint | undefined {
-  if (value === undefined) {
-    return undefined;
-  }
-
-  return parseBigInt(value, label);
-}

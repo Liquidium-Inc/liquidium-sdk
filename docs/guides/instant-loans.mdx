@@ -16,7 +16,7 @@ Use instant loans for a checkout-style borrow flow. The SDK creates a generated 
 | Validate amounts | `client.quote.calculateLtv(...)` | Block too-small borrow amounts, invalid LTV, or frozen-pool input before creation |
 | Create loan | `client.instantLoans.create(...)` | Store `loan.ref` and show `loan.initialDeposit.amount` plus `loan.initialDeposit.target` |
 | Track loan | `client.instantLoans.get({ ref })`, `client.instantLoans.find(...)`, and `client.activities.list({ shortRef: ref })` | Reload state and monitor deposits, borrows, and repayments |
-| Repay loan | Read `loan.repayment` | If non-null, ask the user to send `loan.repayment.amount` to `loan.repayment.target` |
+| Repay loan | Read `loan.repayment` | If `loan.repayment.amount > 0n`, ask the user to send it to `loan.repayment.target` |
 
 ## Create Request
 
@@ -84,9 +84,9 @@ Most UIs need these fields after `create(...)` or `get(...)`:
 | `loan.initialDeposit.amount` | Fee-inclusive collateral transfer amount |
 | `loan.initialDeposit.decimals` | Decimal scale for initial deposit amounts |
 | `loan.initialDeposit.target` | Address or account where the user sends collateral |
-| `loan.repayment` | Repayment quote, or `null` when no debt exists |
-| `loan.repayment.amount` | Fee-inclusive repayment amount when `loan.repayment` is non-null |
-| `loan.repayment.target` | Address or account where the user sends repayment when `loan.repayment` is non-null |
+| `loan.repayment` | Repayment quote. Amount fields are zero when no debt exists. |
+| `loan.repayment.amount` | Fee-inclusive repayment amount |
+| `loan.repayment.target` | Address or account where the user sends repayment |
 
 `client.instantLoans.find(...)` returns lightweight indexed fields, including `loanId`, `ref`, `profileId`, `createdAt`, `collateral`, and `borrow`. Use `client.instantLoans.get(...)` to load full loan fields for a selected match. Use `client.activities.list(...)` separately when you need active or completed flow activity.
 

@@ -1,31 +1,15 @@
 import type {
-  LendingPoolRecord,
   PoolRateTuple,
   PriceRecord,
 } from "../../core/canisters/lending/actor";
 import type { DecodedPool } from "../../core/canisters/lending/flexible-actor";
 import { RATE_DECIMALS } from "../../core/rates";
 import { getAssetNativeDecimals } from "../../core/utils/asset-decimals";
-import { getVariantKey } from "../../core/utils/variant";
 import type { AssetPrices, Pool, PoolRate } from "./types";
 
 const DECIMAL_BASE = 10;
 const PAIR_SEPARATOR = "_";
 const USDT_SYMBOL = "USDT";
-
-export function mapLendingPoolRecordToPool(
-  pool: LendingPoolRecord,
-  rate: PoolRateTuple
-): Pool {
-  return mapDecodedPoolToPool(
-    {
-      ...pool,
-      asset: getVariantKey(pool.asset),
-      chain: getVariantKey(pool.chain),
-    },
-    rate
-  );
-}
 
 export function mapDecodedPoolToPool(
   pool: DecodedPool,
