@@ -36,13 +36,8 @@ export type {
   EthTransactionRequest,
   SendBtcTransactionRequest,
   SendEthTransactionRequest,
-  SendEthTransactionSubmitRequest,
-  SendEthTransactionWalletAction,
   SignMessageRequest,
   SignMessageWalletAction,
-  SignPsbtRequest,
-  SignPsbtSubmitRequest,
-  SignPsbtWalletAction,
   WalletAction,
   WalletAdapter,
 } from "./core/wallet-actions";

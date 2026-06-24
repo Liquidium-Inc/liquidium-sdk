@@ -8,13 +8,11 @@
 
 > **executeWith**(`options`): \<`TResult`\>(`action`) => `Promise`\<`TResult`\>
 
-Defined in: [packages/client/src/execute.ts:38](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/execute.ts#L38)
+Defined in: [packages/client/src/execute.ts:36](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/execute.ts#L36)
 
 Returns an async function that runs a [WalletAction](../type-aliases/WalletAction.md) end-to-end.
 
 - `sign-message`: needs `walletAdapter.signMessage` and `options.chain`.
-- `sign-psbt`: reserved; no current SDK flow emits this action.
-- `send-eth-transaction`: needs `walletAdapter.sendEthTransaction`.
 
 ## Parameters
 

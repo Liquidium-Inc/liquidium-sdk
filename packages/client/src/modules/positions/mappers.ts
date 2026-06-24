@@ -1,14 +1,9 @@
-import type {
-  BorrowingPowerRecord,
-  UserStatsRecord,
-} from "../../core/canisters/lending/actor";
+import type { BorrowingPowerRecord } from "../../core/canisters/lending/actor";
 import type {
   DecodedPositionView,
   DecodedUserStats,
 } from "../../core/canisters/lending/flexible-actor";
 import { getAssetNativeDecimals } from "../../core/utils/asset-decimals";
-import { getVariantKey } from "../../core/utils/variant";
-import type { PositionView } from "../../generated/canisters/lending/lending.did";
 import type { BorrowingPower, Position, UserStats } from "./types";
 
 export const USD_VALUE_SCALE_DECIMALS = 27n;
@@ -18,13 +13,6 @@ interface UserStatsLike {
   collateral: bigint;
   weighted_liquidation_threshold: bigint;
   borrowing_power: BorrowingPowerRecord;
-}
-
-export function mapPositionViewToPosition(view: PositionView): Position {
-  return mapDecodedPositionViewToPosition({
-    ...view,
-    asset: getVariantKey(view.asset),
-  });
 }
 
 export function mapDecodedPositionViewToPosition(
@@ -53,12 +41,6 @@ export function mapBorrowingPowerRecordToBorrowingPower(
     maxBorrowableUsd: record.max_borrowable_usd,
     maxBorrowableUsdDecimals: USD_VALUE_SCALE_DECIMALS,
   };
-}
-
-export function mapUserStatsRecordToUserStats(
-  record: UserStatsRecord
-): UserStats {
-  return mapUserStatsLikeToUserStats(record);
 }
 
 export function mapDecodedUserStatsToUserStats(

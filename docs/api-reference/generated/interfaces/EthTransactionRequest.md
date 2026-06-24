@@ -6,7 +6,7 @@
 
 # Interface: EthTransactionRequest
 
-Defined in: [packages/client/src/core/wallet-actions.ts:32](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L32)
+Defined in: [packages/client/src/core/wallet-actions.ts:29](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L29)
 
 EVM transaction request passed to wallet adapters.
 
@@ -16,7 +16,7 @@ EVM transaction request passed to wallet adapters.
 
 > `optional` **chainId?**: `number`
 
-Defined in: [packages/client/src/core/wallet-actions.ts:40](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L40)
+Defined in: [packages/client/src/core/wallet-actions.ts:37](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L37)
 
 Optional EVM chain id for wallet implementations that require it.
 
@@ -26,7 +26,7 @@ Optional EVM chain id for wallet implementations that require it.
 
 > `optional` **data?**: `string`
 
-Defined in: [packages/client/src/core/wallet-actions.ts:36](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L36)
+Defined in: [packages/client/src/core/wallet-actions.ts:33](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L33)
 
 Hex-encoded calldata for contract interactions.
 
@@ -36,7 +36,7 @@ Hex-encoded calldata for contract interactions.
 
 > **to**: `string`
 
-Defined in: [packages/client/src/core/wallet-actions.ts:34](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L34)
+Defined in: [packages/client/src/core/wallet-actions.ts:31](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L31)
 
 Destination address or contract address.
 
@@ -46,6 +46,6 @@ Destination address or contract address.
 
 > `optional` **value?**: `string`
 
-Defined in: [packages/client/src/core/wallet-actions.ts:38](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L38)
+Defined in: [packages/client/src/core/wallet-actions.ts:35](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L35)
 
 Native ETH value in wei, serialized as a decimal string.

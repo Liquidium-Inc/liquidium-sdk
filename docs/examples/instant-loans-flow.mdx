@@ -12,7 +12,7 @@ It covers:
 
 | Area | What to inspect |
 | --- | --- |
-| Wallet connection | Dynamic-powered browser wallet setup |
+| App setup | Browser flow using bundled SDK defaults |
 | Pool selection | Market data and frozen-pool handling |
 | LTV preview | Client-side quote validation before creation |
 | Loan creation | `client.instantLoans.create(...)` request shape |
@@ -24,8 +24,5 @@ Run it from the SDK root:
 
 ```bash
 pnpm install
-cp examples/instant-loans-flow/.env.example examples/instant-loans-flow/.env
 pnpm --filter @liquidium/example-instant-loans-flow dev
 ```
-
-Set `VITE_INFURA_API_KEY` when your flow needs Ethereum reads through Infura.

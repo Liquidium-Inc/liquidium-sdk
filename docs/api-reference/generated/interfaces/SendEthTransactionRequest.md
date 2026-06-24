@@ -6,7 +6,7 @@
 
 # Interface: SendEthTransactionRequest
 
-Defined in: [packages/client/src/core/wallet-actions.ts:72](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L72)
+Defined in: [packages/client/src/core/wallet-actions.ts:55](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L55)
 
 ETH transaction-sending request passed to wallet adapters.
 
@@ -16,7 +16,7 @@ ETH transaction-sending request passed to wallet adapters.
 
 > `optional` **account?**: `string`
 
-Defined in: [packages/client/src/core/wallet-actions.ts:78](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L78)
+Defined in: [packages/client/src/core/wallet-actions.ts:61](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L61)
 
 Optional account override for the sending wallet.
 
@@ -26,7 +26,7 @@ Optional account override for the sending wallet.
 
 > **actionType**: `string`
 
-Defined in: [packages/client/src/core/wallet-actions.ts:80](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L80)
+Defined in: [packages/client/src/core/wallet-actions.ts:63](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L63)
 
 SDK action type that produced this request.
 
@@ -36,7 +36,7 @@ SDK action type that produced this request.
 
 > **chain**: `"ETH"`
 
-Defined in: [packages/client/src/core/wallet-actions.ts:74](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L74)
+Defined in: [packages/client/src/core/wallet-actions.ts:57](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L57)
 
 ETH chain discriminator.
 
@@ -46,7 +46,7 @@ ETH chain discriminator.
 
 > **transaction**: [`EthTransactionRequest`](EthTransactionRequest.md)
 
-Defined in: [packages/client/src/core/wallet-actions.ts:76](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L76)
+Defined in: [packages/client/src/core/wallet-actions.ts:59](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L59)
 
 Transaction payload to send.
 
@@ -54,8 +54,8 @@ Transaction payload to send.
 
 ### transferMode
 
-> **transferMode**: [`TransferMode`](../type-aliases/TransferMode.md)
+> **transferMode**: `"native"`
 
-Defined in: [packages/client/src/core/wallet-actions.ts:82](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L82)
+Defined in: [packages/client/src/core/wallet-actions.ts:65](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L65)
 
 Transfer path associated with the action.

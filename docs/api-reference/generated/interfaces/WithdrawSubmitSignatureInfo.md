@@ -20,7 +20,7 @@ Signature payload for submitting a prepared withdraw action.
 
 > `optional` **account?**: `string`
 
-Defined in: [packages/client/src/core/wallet-actions.ts:127](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L127)
+Defined in: [packages/client/src/core/wallet-actions.ts:107](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L107)
 
 Account that produced the signature, when different from the action default.
 
@@ -34,7 +34,7 @@ Account that produced the signature, when different from the action default.
 
 > **chain**: [`Chain`](../type-aliases/Chain.md)
 
-Defined in: [packages/client/src/core/wallet-actions.ts:125](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L125)
+Defined in: [packages/client/src/core/wallet-actions.ts:105](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L105)
 
 Chain used to produce the signature.
 
@@ -48,7 +48,7 @@ Chain used to produce the signature.
 
 > **signature**: `string`
 
-Defined in: [packages/client/src/core/wallet-actions.ts:123](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L123)
+Defined in: [packages/client/src/core/wallet-actions.ts:103](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L103)
 
 Wallet signature over the action message. BTC signatures may be base64 BIP-322 or hex-encoded bytes.
 
