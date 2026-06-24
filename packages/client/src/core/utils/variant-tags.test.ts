@@ -18,7 +18,19 @@ describe("extractVariantTag", () => {
     expect(tag).toBe("BTC");
   });
 
-  test("should decode a hashed variant key from IDL.Unknown", () => {
+  test("should decode a supported hashed variant key from IDL.Unknown", () => {
+    // given
+    const hash = idlLabelToId("USDT");
+    const variant = { [`_${hash}_`]: null };
+
+    // when
+    const tag = extractVariantTag(variant, KNOWN_ASSET_TAGS);
+
+    // then
+    expect(tag).toBe("USDT");
+  });
+
+  test("should return null for an unsupported hashed tag", () => {
     // given
     const hash = idlLabelToId("SOL");
     const variant = { [`_${hash}_`]: null };
@@ -27,7 +39,7 @@ describe("extractVariantTag", () => {
     const tag = extractVariantTag(variant, KNOWN_ASSET_TAGS);
 
     // then
-    expect(tag).toBe("SOL");
+    expect(tag).toBeNull();
   });
 
   test("should return null for an unknown tag", () => {

@@ -160,6 +160,8 @@ Instant-loan integrations use this sequence:
 
 `client.instantLoans.create(...)` and `client.instantLoans.get(...)` return the generated Liquidium profile, current position state, an initial deposit quote with its transfer target, and a repayment quote with its transfer target. Repayment amount fields are zero when the loan has no debt. Users do not manage the generated profile.
 
+`client.market.listPools()` returns only pools whose asset and chain variants are supported by this SDK version. Canister pools for unsupported variants such as `ICP` or `SOL` are omitted from the returned list.
+
 ## Core API
 
 ### `client.instantLoans.create(request)`
