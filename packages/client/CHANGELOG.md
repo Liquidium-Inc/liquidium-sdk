@@ -1,5 +1,13 @@
 # @liquidium/client
 
+## 0.4.0
+
+### Minor Changes
+
+- 1d89aa1: Normalize SDK operation names, remove deprecated v1 history methods, require
+  explicit inflow operations, remove legacy activity txid fields, and use
+  `status.operation` as the canonical activity and history operation field.
+
 ## 0.3.4
 
 ### Patch Changes
