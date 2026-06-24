@@ -76,7 +76,7 @@ Most UIs need these fields after `create(...)` or `get(...)`:
 | Field | Description |
 | --- | --- |
 | `loan.ref` | Short reference to save and show the user |
-| `loan.status` | Lifecycle state, including `awaiting_deposit`, `deposit_detected`, `active`, `settling`, `closed`, or `expired` |
+| `loan.status` | Shared `LiquidiumStatus` with `operation`, `state`, `confirmations`, and `requiredConfirmations` |
 | `loan.terms.ltvMaxBps` | Maximum LTV selected at creation |
 | `loan.terms.depositWindowSeconds` | Deposit timeout selected at creation |
 | `loan.collateral.decimals` | Decimal scale for collateral display |
@@ -89,3 +89,5 @@ Most UIs need these fields after `create(...)` or `get(...)`:
 | `loan.repayment.target` | Address or account where the user sends repayment when `loan.repayment` is non-null |
 
 `client.instantLoans.find(...)` returns lightweight indexed fields, including `loanId`, `ref`, `profileId`, `createdAt`, `collateral`, and `borrow`. Use `client.instantLoans.get(...)` to load full loan fields for a selected match. Use `client.activities.list(...)` separately when you need active or completed flow activity.
+
+See [Status System](../concepts/status-system.mdx) for `loan.status`, activity status, confirmation fields, and top-up handling.

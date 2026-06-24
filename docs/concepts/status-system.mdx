@@ -1,0 +1,98 @@
+---
+title: Status System
+description: Read Liquidium operation states across loans, activities, and history.
+order: 205
+---
+
+# Status System
+
+SDK responses that expose flow state use `LiquidiumStatus`:
+
+```ts
+type LiquidiumStatus = {
+  operation: "deposit" | "borrow" | "repayment" | "withdrawal" | "liquidation";
+  state:
+    | "action_required"
+    | "confirming"
+    | "processing"
+    | "active"
+    | "completed"
+    | "failed"
+    | "expired";
+  confirmations: number | null;
+  requiredConfirmations: number | null;
+};
+```
+
+Use `status.operation` to decide which user action or receipt type you are showing. Use `status.state` to decide the UI treatment.
+
+## Operations
+
+| Operation | Meaning |
+| --- | --- |
+| `deposit` | The user sends funds into Liquidium for supply or initial instant-loan collateral |
+| `borrow` | Liquidium sends borrowed funds to the configured destination |
+| `repayment` | The user sends funds back to repay debt |
+| `withdrawal` | Liquidium sends supplied funds or collateral out |
+| `liquidation` | A liquidation entry from profile history |
+
+Activities narrow the operation by direction. Inflow activities use `deposit` or `repayment`; outflow activities use `borrow` or `withdrawal`.
+
+## States
+
+| State | Meaning | UI treatment |
+| --- | --- | --- |
+| `action_required` | The app needs the user to send funds, sign, or complete the next step | Show the transfer target or wallet action |
+| `confirming` | Liquidium has a transaction id or detected chain activity and waits for confirmations | Show pending confirmations when present |
+| `processing` | Liquidium is processing the operation after detection or submission | Keep polling and block duplicate submissions |
+| `active` | The operation has opened a live position or debt remains | Show the active position and next repayment or withdrawal action |
+| `completed` | The operation finished | Stop prompting for the operation |
+| `failed` | The operation failed | Show recovery copy and let the user retry when the flow supports it |
+| `expired` | The user missed the allowed time window | Stop showing the expired transfer target |
+
+`confirmations` and `requiredConfirmations` are `null` when the SDK cannot report chain confirmation progress or the state does not need confirmations.
+
+## Where Status Appears
+
+| Surface | Field |
+| --- | --- |
+| `client.instantLoans.create(...)` and `client.instantLoans.get(...)` | `loan.status` |
+| `client.activities.list(...)` | `activity.status` |
+| `client.activities.getStatus(...)` | `result.activity.status` when `result.found` is `true` |
+| `client.history.getUserTransactionHistory(...)` | `item.status` |
+| `client.history.getLiquidationHistory(...)` | `item.status` |
+| `client.lending.supply(...)` | `flow.status` |
+| `client.lending.borrow(...)` and `client.lending.withdraw(...)` | `details.status` |
+
+## Poll A Single Activity
+
+Use `client.activities.getStatus(...)` when your app has a receipt or activity id and needs one latest state.
+
+```ts
+const result = await client.activities.getStatus({
+  shortRef: loan.ref,
+  id: activityId,
+});
+
+if (result.found) {
+  const { operation, state, confirmations, requiredConfirmations } =
+    result.activity.status;
+
+  console.log(operation, state, confirmations, requiredConfirmations);
+}
+```
+
+Pass `profileId` instead of `shortRef` for account-based profile flows.
+
+## List Active Work
+
+`client.activities.list(...)` defaults to active activities. Pass `filter: "completed"` for finished work or `filter: "all"` for both.
+
+```ts
+const activities = await client.activities.list({
+  shortRef: loan.ref,
+  filter: "active",
+});
+```
+
+For inflow activities, check `activity.topUp`. When `topUp.required` is `true`, the user must send `topUp.shortfallAmount` more before processing can continue.
