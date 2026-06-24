@@ -21,6 +21,20 @@ The SDK exports `LiquidiumClient`, error types, constants, module request types,
 | `client.positions` | Per-pool positions, health, and aggregate stats |
 | `client.quote` | Pure quote helpers from market inputs |
 
+## Shared Status Types
+
+Use [`LiquidiumStatus`](./generated/interfaces/LiquidiumStatus.md) for flow state across instant loans, activities, lending responses, and history entries.
+
+| Type | Purpose |
+| --- | --- |
+| [`LiquidiumStatus`](./generated/interfaces/LiquidiumStatus.md) | Operation, state, and optional confirmation progress |
+| [`LiquidiumOperation`](./generated/type-aliases/LiquidiumOperation.md) | `deposit`, `borrow`, `repayment`, `withdrawal`, or `liquidation` |
+| [`LiquidiumState`](./generated/type-aliases/LiquidiumState.md) | `action_required`, `confirming`, `processing`, `active`, `completed`, `failed`, or `expired` |
+| [`Activity`](./generated/type-aliases/Activity.md) | Inflow or outflow activity returned by activity APIs |
+| [`GetActivityStatusResponse`](./generated/type-aliases/GetActivityStatusResponse.md) | Found or missing result from `client.activities.getStatus(...)` |
+
+See [Status System](../concepts/status-system.mdx) for UI guidance.
+
 ## Generated Reference
 
 Generated API reference files should live in `api-reference/generated/`.

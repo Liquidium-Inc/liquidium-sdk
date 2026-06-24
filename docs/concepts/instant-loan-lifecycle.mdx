@@ -6,16 +6,18 @@ order: 210
 
 # Instant Loan Lifecycle
 
-An instant loan moves through a small set of UI-facing states.
+An instant loan reports `loan.status` as a `LiquidiumStatus`. Read `status.operation` for the current phase and `status.state` for the UI state.
 
 | Status | Meaning | UI action |
 | --- | --- | --- |
-| `awaiting_deposit` | The loan exists and waits for collateral | Show `loan.initialDeposit.amount`, `loan.initialDeposit.target`, and the deposit deadline |
-| `deposit_detected` | The protocol detected collateral and is processing the borrow | Keep polling and show a pending state |
-| `active` | The borrow is active and the user can repay | If `loan.repayment` is non-null, show `loan.repayment.amount` and `loan.repayment.target` |
-| `settling` | The protocol is closing the loan | Keep polling and avoid duplicate user actions |
-| `closed` | The loan finished | Show final state and stop prompting for repayment |
-| `expired` | The deposit window passed before collateral arrived | Show timeout state and stop prompting for collateral deposit |
+| `{ operation: "deposit", state: "action_required" }` | The loan exists and waits for collateral | Show `loan.initialDeposit.amount`, `loan.initialDeposit.target`, and the deposit deadline |
+| `{ operation: "deposit", state: "confirming" }` | Liquidium detected a deposit and waits for confirmations | Show pending confirmation copy |
+| `{ operation: "deposit", state: "processing" }` | Liquidium is processing collateral after detection | Keep polling and block duplicate deposits |
+| `{ operation: "borrow", state: "confirming" }` or `{ operation: "borrow", state: "processing" }` | Liquidium is sending borrowed funds | Show borrow payout progress |
+| `{ operation: "repayment", state: "active" }` | Debt exists and the user can repay | Show `loan.repayment.amount` and `loan.repayment.target` when `loan.repayment` is non-null |
+| `{ operation: "repayment", state: "confirming" }` or `{ operation: "repayment", state: "processing" }` | Liquidium is confirming or processing repayment | Keep polling and avoid duplicate repayment prompts |
+| `{ operation: "repayment", state: "completed" }` | The loan closed | Show final state and stop prompting for repayment |
+| `{ operation: "deposit", state: "expired" }` | The deposit window passed before collateral arrived | Show timeout copy and stop prompting for collateral deposit |
 
 Reload state with:
 
@@ -24,3 +26,5 @@ const loan = await client.instantLoans.get({ ref });
 ```
 
 Use activities when your UI needs more detail about deposits, borrow outflows, repayment deposits, confirmations, or fee top-ups.
+
+See [Status System](./status-system.mdx) for the shared operation and state model.
