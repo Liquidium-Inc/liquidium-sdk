@@ -10,7 +10,6 @@ import {
   type FlexiblePool,
 } from "../../core/canisters/lending/flexible-actor";
 import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
-import type { ApiClient } from "../../core/transports/api-client";
 import type { CanisterContext } from "../../core/transports/canister-context";
 import {
   mapDecodedPoolToPool,
@@ -23,10 +22,7 @@ const ZERO_POOL_RATE: PoolRateTuple = [0n, 0n, 0n];
 
 /** Pool metadata, prices, and current rate helpers. */
 export class MarketModule {
-  constructor(
-    private readonly canisterContext: CanisterContext,
-    private readonly apiClient: ApiClient | undefined
-  ) {}
+  constructor(private readonly canisterContext: CanisterContext) {}
 
   /**
    * Lists SDK-supported pools with their current rates.
@@ -36,8 +32,6 @@ export class MarketModule {
    * @returns Supported lending pools enriched with their current rate data.
    */
   async listPools(): Promise<Pool[]> {
-    void this.apiClient;
-
     try {
       const flexibleActor = createFlexibleLendingActor(this.canisterContext);
       const rawPools = await flexibleActor.list_pools();
