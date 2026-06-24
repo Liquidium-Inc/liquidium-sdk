@@ -1,0 +1,245 @@
+import { Actor } from "@icp-sdk/core/agent";
+import { Principal } from "@icp-sdk/core/principal";
+import { afterEach, describe, expect, test, vi } from "vitest";
+import { LiquidiumClient, LiquidiumErrorCode } from "../../../index";
+import {
+  BTC_POOL_ID,
+  createBtcPoolRecord,
+  createUsdtPoolRecord,
+  USDT_POOL_ID,
+  VALID_BTC_OUTFLOW_ADDRESS,
+} from "./test-fixtures";
+
+afterEach(() => {
+  vi.restoreAllMocks();
+  vi.useRealTimers();
+});
+
+describe("LendingModule withdraw", () => {
+  test("creates and submits a withdraw action with a custom outflow account", async () => {
+    // given
+    vi.setSystemTime(new Date("2026-04-01T00:00:00.000Z"));
+    const getNonce = vi.fn().mockResolvedValue(23n);
+    const withdraw = vi.fn().mockResolvedValue({
+      Ok: {
+        id: "outflow-2",
+        txid: ["txid-2"],
+        outflow_type: { Withdraw: null },
+        outflow_ref: ["ref-2"],
+        amount: 10_000n,
+        receiver: { External: VALID_BTC_OUTFLOW_ADDRESS },
+      },
+    });
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord()]),
+      get_nonce: getNonce,
+      withdraw,
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const withdrawAction = await client.lending.prepareWithdraw({
+      profileId: "aaaaa-aa",
+      poolId: BTC_POOL_ID,
+      amount: 10_000n,
+      receiverAddress: VALID_BTC_OUTFLOW_ADDRESS,
+      signerWalletAddress: "0xsigner",
+    });
+    const outflow = await withdrawAction.submit({
+      signature: "0xsigned",
+      chain: "ETH",
+    });
+
+    // then
+    expect(getNonce).toHaveBeenCalledWith("0xsigner");
+    expect(withdrawAction.kind).toBe("create-withdraw");
+    expect(withdrawAction.executionKind).toBe("sign-message");
+    expect(withdrawAction.actionType).toBe("create-withdraw");
+    expect(withdrawAction.transferMode).toBe("native");
+    expect(withdrawAction.account).toBe("0xsigner");
+    expect(withdrawAction.data).toMatchObject({
+      profileId: "aaaaa-aa",
+      poolId: BTC_POOL_ID,
+      amount: 10_000n,
+      receiverAddress: VALID_BTC_OUTFLOW_ADDRESS,
+      signerWalletAddress: "0xsigner",
+    });
+    expect(withdrawAction.message).toBe(`Liquidium: Withdraw Assets
+
+Action: Withdraw from pool
+Pool ID: hkmli-faaaa-aaaar-qb4ba-cai
+Amount: 10000
+Address:${VALID_BTC_OUTFLOW_ADDRESS}
+Expires: 1775001900
+Nonce: 23`);
+    expect(withdraw).toHaveBeenCalledTimes(1);
+    expect(withdraw.mock.calls[0]?.[0]).toEqual(Principal.fromText("aaaaa-aa"));
+    expect(withdraw.mock.calls[0]?.[1]).toMatchObject({
+      data: {
+        expiry_timestamp: 1775001900n,
+        account: { External: VALID_BTC_OUTFLOW_ADDRESS },
+        pool_id: Principal.fromText(BTC_POOL_ID),
+        amount: 10_000n,
+      },
+      signature_info: {
+        Wallet: {
+          signature: "0xsigned",
+          chain: { ETH: null },
+          account: "0xsigner",
+        },
+      },
+    });
+    expect(outflow).toEqual({
+      id: "outflow-2",
+      outflowType: "withdrawal",
+      outflowRef: "ref-2",
+      txid: "txid-2",
+      amount: 10_000n,
+      receiver: {
+        type: "External",
+        account: VALID_BTC_OUTFLOW_ADDRESS,
+      },
+      status: {
+        operation: "withdrawal",
+        state: "confirming",
+        confirmations: null,
+        requiredConfirmations: null,
+      },
+    });
+  });
+
+  test("creates and executes a withdraw request directly", async () => {
+    // given
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord()]),
+      get_nonce: vi.fn().mockResolvedValue(37n),
+      withdraw: vi.fn().mockResolvedValue({
+        Ok: {
+          id: "outflow-4",
+          txid: [],
+          outflow_type: { Withdraw: null },
+          outflow_ref: [],
+          amount: 8_000n,
+          receiver: { External: VALID_BTC_OUTFLOW_ADDRESS },
+        },
+      }),
+    } as never);
+    const signMessage = vi.fn().mockResolvedValue("0xsigned");
+    const client = new LiquidiumClient({});
+
+    // when
+    const outflow = await client.lending.withdraw({
+      profileId: "aaaaa-aa",
+      poolId: BTC_POOL_ID,
+      amount: 8_000n,
+      receiverAddress: VALID_BTC_OUTFLOW_ADDRESS,
+      signerWalletAddress: "0xsigner",
+      signerChain: "ETH",
+      signerWalletAdapter: { signMessage },
+    });
+
+    // then
+    expect(outflow.outflowType).toBe("withdrawal");
+    expect(signMessage).toHaveBeenCalledWith({
+      actionType: "create-withdraw",
+      transferMode: "native",
+      chain: "ETH",
+      message: expect.stringContaining("Liquidium: Withdraw Assets"),
+      account: "0xsigner",
+    });
+  });
+
+  test("maps protocol errors for withdraw submission", async () => {
+    // given
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord()]),
+      get_nonce: vi.fn().mockResolvedValue(29n),
+      withdraw: vi.fn().mockResolvedValue({
+        Err: { InsufficientFunds: null },
+      }),
+    } as never);
+    const BTC_SIGNATURE_BASE64 = "AQID/v8=";
+    const client = new LiquidiumClient({});
+
+    // when
+
+    // then
+    await expect(
+      client.lending
+        .prepareWithdraw({
+          profileId: "aaaaa-aa",
+          poolId: BTC_POOL_ID,
+          amount: 10_000n,
+          receiverAddress: VALID_BTC_OUTFLOW_ADDRESS,
+          signerWalletAddress: "bc1qsigner",
+        })
+        .then((withdrawAction) =>
+          withdrawAction.submit({
+            signature: BTC_SIGNATURE_BASE64,
+            chain: "BTC",
+          })
+        )
+    ).rejects.toMatchObject({
+      code: LiquidiumErrorCode.INSUFFICIENT_FUNDS,
+    });
+  });
+
+  test("validates withdraw inputs", async () => {
+    // given
+    const client = new LiquidiumClient({});
+
+    // when
+
+    // then
+    await expect(
+      client.lending.prepareWithdraw({
+        profileId: "p1",
+        poolId: "aaaaa-aa",
+        amount: 10_000n,
+        receiverAddress: "   ",
+        signerWalletAddress: "0xsigner",
+      })
+    ).rejects.toMatchObject({
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message: "Withdraw requires a custom outflow account",
+    });
+    await expect(
+      client.lending.prepareWithdraw({
+        profileId: "p1",
+        poolId: "aaaaa-aa",
+        amount: 10_000n,
+        receiverAddress: VALID_BTC_OUTFLOW_ADDRESS,
+        signerWalletAddress: "  ",
+      })
+    ).rejects.toMatchObject({
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message: "Withdraw requires a signer account",
+    });
+  });
+
+  test("rejects a withdraw with an invalid EVM receiver address", async () => {
+    // given
+    const getNonce = vi.fn().mockResolvedValue(17n);
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi.fn().mockResolvedValue([createUsdtPoolRecord()]),
+      get_nonce: getNonce,
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const result = client.lending.prepareWithdraw({
+      profileId: "aaaaa-aa",
+      poolId: USDT_POOL_ID,
+      amount: 10_000n,
+      receiverAddress: "not-an-evm-address",
+      signerWalletAddress: "0xsigner",
+    });
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.INVALID_ADDRESS,
+      message: "Address must be a valid EVM address",
+    });
+    expect(getNonce).not.toHaveBeenCalled();
+  });
+});
