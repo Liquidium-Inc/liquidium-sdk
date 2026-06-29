@@ -1,6 +1,7 @@
 import type {
   ActivityFilter,
   GetActivityStatusResponse,
+  OutflowDetails,
   Pool,
   SupplyFlow,
   WalletAdapter,
@@ -19,6 +20,23 @@ type SubmitContractInteractionSupplyParams = {
   account: string;
   amount: bigint;
   walletAdapter: WalletAdapter;
+};
+
+type SubmitContractInteractionRepaymentParams = {
+  profileId: string;
+  poolId: string;
+  account: string;
+  amount: bigint;
+  walletAdapter: WalletAdapter;
+};
+
+type BorrowWithWalletParams = {
+  profileId: string;
+  poolId: string;
+  amount: bigint;
+  receiverAddress: string;
+  signerWalletAddress: string;
+  signerWalletAdapter: WalletAdapter;
 };
 
 type ListProfileActivitiesParams = {
@@ -73,6 +91,43 @@ export async function submitContractInteractionSupply({
     account,
     amount,
     walletAdapter,
+  });
+}
+
+export async function submitContractInteractionRepayment({
+  profileId,
+  poolId,
+  account,
+  amount,
+  walletAdapter,
+}: SubmitContractInteractionRepaymentParams): Promise<SupplyFlow> {
+  return await createClient().lending.supply({
+    profileId,
+    poolId,
+    action: SupplyAction.repayment,
+    mechanism: SupplyPlanType.contractInteraction,
+    account,
+    amount,
+    walletAdapter,
+  });
+}
+
+export async function borrowWithWallet({
+  profileId,
+  poolId,
+  amount,
+  receiverAddress,
+  signerWalletAddress,
+  signerWalletAdapter,
+}: BorrowWithWalletParams): Promise<OutflowDetails> {
+  return await createClient().lending.borrow({
+    profileId,
+    poolId,
+    amount,
+    receiverAddress,
+    signerWalletAddress,
+    signerChain: Chain.ETH,
+    signerWalletAdapter,
   });
 }
 

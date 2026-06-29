@@ -19,6 +19,7 @@ section {
 
 h1,
 h2,
+h3,
 p {
   margin-top: 0;
 }
@@ -73,6 +74,41 @@ button {
 button {
   margin-top: 12px;
   cursor: pointer;
+}
+
+.action-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  max-width: 640px;
+  margin-top: 12px;
+  padding: 6px;
+  border: 1px solid #111;
+  background: #f4f4f0;
+}
+
+.action-tab {
+  max-width: none;
+  margin-top: 0;
+  color: #111;
+  font-weight: 700;
+  border: 1px solid transparent;
+  background: transparent;
+}
+
+.action-tab:hover,
+.action-tab:focus-visible {
+  border-color: #111;
+  outline: none;
+}
+
+.action-tab-active {
+  color: #fff;
+  background: #111;
+}
+
+.tab-panel {
+  margin-top: 16px;
 }
 
 pre {
