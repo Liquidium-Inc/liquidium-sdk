@@ -41,6 +41,7 @@ import {
   WalletActionKind,
   WalletExecutionKind,
 } from "../../core/wallet-actions";
+import { getWithdrawAmountMinimumValidationError } from "../../core/withdraw-minimums";
 import { executeWith } from "../../execute";
 import { roundInflowFeeEstimate } from "./_internal/inflow-fee-rounding";
 import { SupplyFlowExecutor } from "./_internal/supply-flow";
@@ -84,11 +85,6 @@ interface OutflowRequestData {
   expiryTimestamp: bigint;
 }
 
-interface NormalizeOutflowReceiverAddressParams {
-  poolId: string;
-  receiverAddress: string;
-}
-
 /** Borrow, withdraw, supply, inflow reporting, and fee-estimation helpers. */
 export class LendingModule {
   constructor(
@@ -124,9 +120,28 @@ export class LendingModule {
         "Withdraw requires a signer account"
       );
     }
-    const receiverAddress = await this.normalizeOutflowReceiverAddress({
-      poolId: request.poolId,
-      receiverAddress: destinationAccount,
+    if (request.amount <= 0n) {
+      throw new LiquidiumError(
+        LiquidiumErrorCode.VALIDATION_ERROR,
+        "Withdraw amount must be greater than 0"
+      );
+    }
+    const selectedPool = await this.getPoolById(request.poolId);
+    const selectedAsset = selectedPool.asset;
+    const minimumWithdrawAmountError = getWithdrawAmountMinimumValidationError({
+      amount: request.amount,
+      asset: selectedAsset,
+    });
+    if (minimumWithdrawAmountError) {
+      throw new LiquidiumError(
+        LiquidiumErrorCode.VALIDATION_ERROR,
+        minimumWithdrawAmountError.message
+      );
+    }
+    const receiverAddress = normalizeExternalAddress({
+      address: destinationAccount,
+      asset: selectedAsset,
+      chain: selectedPool.chain,
     });
 
     const lendingActor = createLendingActor(this.canisterContext);
@@ -602,18 +617,6 @@ export class LendingModule {
     }
 
     return decodedPool;
-  }
-
-  private async normalizeOutflowReceiverAddress(
-    params: NormalizeOutflowReceiverAddressParams
-  ): Promise<string> {
-    const selectedPool = await this.getPoolById(params.poolId);
-
-    return normalizeExternalAddress({
-      address: params.receiverAddress,
-      asset: selectedPool.asset,
-      chain: selectedPool.chain,
-    });
   }
 }
 

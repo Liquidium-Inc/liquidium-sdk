@@ -8,7 +8,7 @@
 
 > **getMinimumBorrowAmount**(`asset`): `bigint`
 
-Defined in: [packages/client/src/core/borrow-minimums.ts:26](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/borrow-minimums.ts#L26)
+Defined in: [packages/client/src/core/borrow-minimums.ts:31](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/borrow-minimums.ts#L31)
 
 Returns the minimum borrow amount for an asset in base units.
 

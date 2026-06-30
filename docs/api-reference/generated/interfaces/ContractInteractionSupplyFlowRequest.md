@@ -6,7 +6,7 @@
 
 # Interface: ContractInteractionSupplyFlowRequest
 
-Defined in: [packages/client/src/modules/lending/types.ts:282](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L282)
+Defined in: [packages/client/src/modules/lending/types.ts:283](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L283)
 
 Input for contract-interaction `lending.supply`, which always executes now.
 
@@ -20,7 +20,7 @@ Input for contract-interaction `lending.supply`, which always executes now.
 
 > **account**: `string`
 
-Defined in: [packages/client/src/modules/lending/types.ts:289](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L289)
+Defined in: [packages/client/src/modules/lending/types.ts:290](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L290)
 
 Sender EVM wallet address.
 
@@ -30,7 +30,7 @@ Sender EVM wallet address.
 
 > **action**: [`SupplyAction`](../type-aliases/SupplyAction.md)
 
-Defined in: [packages/client/src/modules/lending/types.ts:246](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L246)
+Defined in: [packages/client/src/modules/lending/types.ts:247](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L247)
 
 #### Inherited from
 
@@ -42,7 +42,7 @@ Defined in: [packages/client/src/modules/lending/types.ts:246](https://github.co
 
 > **amount**: `bigint`
 
-Defined in: [packages/client/src/modules/lending/types.ts:291](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L291)
+Defined in: [packages/client/src/modules/lending/types.ts:292](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L292)
 
 Deposit or repayment amount in token base units.
 
@@ -52,7 +52,7 @@ Deposit or repayment amount in token base units.
 
 > **mechanism**: `"contractInteraction"`
 
-Defined in: [packages/client/src/modules/lending/types.ts:285](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L285)
+Defined in: [packages/client/src/modules/lending/types.ts:286](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L286)
 
 Contract-interaction mechanism discriminator.
 
@@ -62,7 +62,7 @@ Contract-interaction mechanism discriminator.
 
 > **poolId**: `string`
 
-Defined in: [packages/client/src/modules/lending/types.ts:245](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L245)
+Defined in: [packages/client/src/modules/lending/types.ts:246](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L246)
 
 #### Inherited from
 
@@ -74,7 +74,7 @@ Defined in: [packages/client/src/modules/lending/types.ts:245](https://github.co
 
 > **profileId**: `string`
 
-Defined in: [packages/client/src/modules/lending/types.ts:244](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L244)
+Defined in: [packages/client/src/modules/lending/types.ts:245](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L245)
 
 #### Inherited from
 
@@ -86,6 +86,6 @@ Defined in: [packages/client/src/modules/lending/types.ts:244](https://github.co
 
 > **walletAdapter**: `Pick`\<[`WalletAdapter`](WalletAdapter.md), `"sendEthTransaction"`\>
 
-Defined in: [packages/client/src/modules/lending/types.ts:287](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L287)
+Defined in: [packages/client/src/modules/lending/types.ts:288](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L288)
 
 ETH wallet adapter used to approve and deposit ERC-20 assets.
