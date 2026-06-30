@@ -1,5 +1,11 @@
 # @liquidium/client
 
+## 0.4.1
+
+### Patch Changes
+
+- 7cf071f: Validate minimum withdrawal amounts for BTC, USDC, and USDT before signing withdrawal requests.
+
 ## 0.4.0
 
 ### Minor Changes
