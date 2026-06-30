@@ -241,6 +241,18 @@ The SDK enforces product minimums before borrow creation:
 
 Use `getMinimumBorrowAmount(asset)` to display the same minimum that `client.quote.calculateLtv(...)`, `client.quote.getQuote(...)`, `client.instantLoans.create(...)`, and `client.lending.prepareBorrow(...)` enforce.
 
+### Withdraw minimums
+
+The SDK enforces product minimums before withdraw creation:
+
+| Asset | Minimum withdraw amount |
+| --- | --- |
+| BTC | `5_000n` sats |
+| USDC | `1_000_000n` base units |
+| USDT | `1_000_000n` base units |
+
+Use `getMinimumWithdrawAmount(asset)` to display the same minimum that `client.lending.prepareWithdraw(...)` enforces.
+
 ### Profile full withdraw amounts
 
 For profile-based withdraw flows, call `client.positions.getFullWithdrawAmount(profileId, poolId)` before building the withdraw request. The helper returns `{ amount, decimals }`: pass `amount` to `client.lending.withdraw(...)` or `client.lending.prepareWithdraw(...)`, and use `decimals` for display formatting. Do not add `earnedInterest`; the returned amount already uses the current supplied balance.

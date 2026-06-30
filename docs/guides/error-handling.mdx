@@ -40,7 +40,7 @@ try {
 
 Use the exported `LiquidiumErrorCode` values when your UI needs different copy for timeout, transport, validation, or protocol failures.
 
-Borrow amounts below the SDK minimum throw or return validation errors before state-changing borrow calls. Use `getMinimumBorrowAmount(asset)` to show the minimum next to the amount input.
+Borrow and withdraw amounts below SDK minimums throw or return validation errors before state-changing calls. Use `getMinimumBorrowAmount(asset)` and `getMinimumWithdrawAmount(asset)` to show the minimum next to amount inputs.
 
 ## External Address Validation
 

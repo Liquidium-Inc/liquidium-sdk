@@ -159,15 +159,16 @@ export interface BorrowAction
   actionType: typeof WalletActionKind.createBorrow;
 }
 
-/**
- * Fields to build a withdraw request. `amount` is in the pool asset's base units.
- */
+/** Fields to build a withdraw request. `amount` is in the pool asset's base units. */
 export interface CreateWithdrawRequest {
   /** Liquidium profile principal text. */
   profileId: string;
   /** Pool principal text to withdraw from. */
   poolId: string;
-  /** Amount to withdraw in the pool asset's base units. */
+  /**
+   * Amount to withdraw in the pool asset's base units. BTC withdrawals require
+   * at least 5,000 sats. USDC and USDT withdrawals require at least 1 token.
+   */
   amount: bigint;
   /** External-chain address that receives the withdrawn asset. Must match the pool chain. */
   receiverAddress: string;

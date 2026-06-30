@@ -6,7 +6,7 @@
 
 # Interface: SupplyFlow
 
-Defined in: [packages/client/src/modules/lending/types.ts:315](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L315)
+Defined in: [packages/client/src/modules/lending/types.ts:316](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L316)
 
 Supply receipt returned by `lending.supply(...)`.
 
@@ -29,7 +29,7 @@ responsibility to track confirmation state with your own polling.
 
 > **status**: [`LiquidiumStatus`](LiquidiumStatus.md)
 
-Defined in: [packages/client/src/modules/lending/types.ts:323](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L323)
+Defined in: [packages/client/src/modules/lending/types.ts:324](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L324)
 
 Shared lifecycle status for the supply flow.
 
@@ -39,7 +39,7 @@ Shared lifecycle status for the supply flow.
 
 > **target**: [`SupplyTarget`](../type-aliases/SupplyTarget.md)
 
-Defined in: [packages/client/src/modules/lending/types.ts:319](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L319)
+Defined in: [packages/client/src/modules/lending/types.ts:320](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L320)
 
 Destination where funds should be sent or were sent.
 
@@ -49,7 +49,7 @@ Destination where funds should be sent or were sent.
 
 > `optional` **txid?**: `string`
 
-Defined in: [packages/client/src/modules/lending/types.ts:321](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L321)
+Defined in: [packages/client/src/modules/lending/types.ts:322](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L322)
 
 Transaction id when the SDK broadcast the transaction.
 
@@ -59,7 +59,7 @@ Transaction id when the SDK broadcast the transaction.
 
 > **type**: [`SupplyPlanType`](../type-aliases/SupplyPlanType.md)
 
-Defined in: [packages/client/src/modules/lending/types.ts:317](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L317)
+Defined in: [packages/client/src/modules/lending/types.ts:318](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L318)
 
 Execution plan used by the supply flow.
 
@@ -69,7 +69,7 @@ Execution plan used by the supply flow.
 
 > **submit**(`request`): `Promise`\<[`SubmitInflowResponse`](SubmitInflowResponse.md)\>
 
-Defined in: [packages/client/src/modules/lending/types.ts:325](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L325)
+Defined in: [packages/client/src/modules/lending/types.ts:326](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L326)
 
 Registers a broadcast transaction id when the flow requires an indexing hint.
 

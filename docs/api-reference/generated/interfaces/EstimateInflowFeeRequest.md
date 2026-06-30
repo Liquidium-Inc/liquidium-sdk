@@ -6,7 +6,7 @@
 
 # Interface: EstimateInflowFeeRequest
 
-Defined in: [packages/client/src/modules/lending/types.ts:355](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L355)
+Defined in: [packages/client/src/modules/lending/types.ts:356](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L356)
 
 Request for estimating the fee needed for an inflow target.
 
@@ -16,7 +16,7 @@ Request for estimating the fee needed for an inflow target.
 
 > **asset**: [`Asset`](../type-aliases/Asset.md)
 
-Defined in: [packages/client/src/modules/lending/types.ts:357](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L357)
+Defined in: [packages/client/src/modules/lending/types.ts:358](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L358)
 
 Asset to estimate for.
 
@@ -26,6 +26,6 @@ Asset to estimate for.
 
 > **chain**: [`Chain`](../type-aliases/Chain.md)
 
-Defined in: [packages/client/src/modules/lending/types.ts:359](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L359)
+Defined in: [packages/client/src/modules/lending/types.ts:360](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L360)
 
 Chain to estimate for.

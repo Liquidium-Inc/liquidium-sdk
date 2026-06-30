@@ -6,6 +6,7 @@ import {
   BTC_POOL_ID,
   createBtcPoolRecord,
   createUsdtPoolRecord,
+  LOWERCASE_EVM_OUTFLOW_ADDRESS,
   USDT_POOL_ID,
   VALID_BTC_OUTFLOW_ADDRESS,
 } from "./test-fixtures";
@@ -215,6 +216,116 @@ Nonce: 23`);
       code: LiquidiumErrorCode.VALIDATION_ERROR,
       message: "Withdraw requires a signer account",
     });
+    await expect(
+      client.lending.prepareWithdraw({
+        profileId: "p1",
+        poolId: "aaaaa-aa",
+        amount: 0n,
+        receiverAddress: VALID_BTC_OUTFLOW_ADDRESS,
+        signerWalletAddress: "0xsigner",
+      })
+    ).rejects.toMatchObject({
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message: "Withdraw amount must be greater than 0",
+    });
+  });
+
+  test("rejects a BTC withdraw below the asset minimum before signing", async () => {
+    // given
+    const getNonce = vi.fn().mockResolvedValue(17n);
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord()]),
+      get_nonce: getNonce,
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const result = client.lending.prepareWithdraw({
+      profileId: "aaaaa-aa",
+      poolId: BTC_POOL_ID,
+      amount: 4_999n,
+      receiverAddress: VALID_BTC_OUTFLOW_ADDRESS,
+      signerWalletAddress: "0xsigner",
+    });
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message: "Withdraw amount must be at least 5000 base units for BTC",
+    });
+    expect(getNonce).not.toHaveBeenCalled();
+  });
+
+  test("allows a BTC withdraw equal to the asset minimum", async () => {
+    // given
+    const getNonce = vi.fn().mockResolvedValue(17n);
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord()]),
+      get_nonce: getNonce,
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const withdrawAction = await client.lending.prepareWithdraw({
+      profileId: "aaaaa-aa",
+      poolId: BTC_POOL_ID,
+      amount: 5_000n,
+      receiverAddress: VALID_BTC_OUTFLOW_ADDRESS,
+      signerWalletAddress: "0xsigner",
+    });
+
+    // then
+    expect(getNonce).toHaveBeenCalledWith("0xsigner");
+    expect(withdrawAction.message).toContain("Amount: 5000");
+  });
+
+  test("rejects an ETH stablecoin withdraw below the asset minimum before signing", async () => {
+    // given
+    const getNonce = vi.fn().mockResolvedValue(17n);
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi.fn().mockResolvedValue([createUsdtPoolRecord()]),
+      get_nonce: getNonce,
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const result = client.lending.prepareWithdraw({
+      profileId: "aaaaa-aa",
+      poolId: USDT_POOL_ID,
+      amount: 999_999n,
+      receiverAddress: LOWERCASE_EVM_OUTFLOW_ADDRESS,
+      signerWalletAddress: "0xsigner",
+    });
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message: "Withdraw amount must be at least 1000000 base units for USDT",
+    });
+    expect(getNonce).not.toHaveBeenCalled();
+  });
+
+  test("allows an ETH stablecoin withdraw equal to the asset minimum", async () => {
+    // given
+    const getNonce = vi.fn().mockResolvedValue(17n);
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi.fn().mockResolvedValue([createUsdtPoolRecord()]),
+      get_nonce: getNonce,
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const withdrawAction = await client.lending.prepareWithdraw({
+      profileId: "aaaaa-aa",
+      poolId: USDT_POOL_ID,
+      amount: 1_000_000n,
+      receiverAddress: LOWERCASE_EVM_OUTFLOW_ADDRESS,
+      signerWalletAddress: "0xsigner",
+    });
+
+    // then
+    expect(withdrawAction.data.amount).toBe(1_000_000n);
+    expect(getNonce).toHaveBeenCalledWith("0xsigner");
   });
 
   test("rejects a withdraw with an invalid EVM receiver address", async () => {
@@ -230,7 +341,7 @@ Nonce: 23`);
     const result = client.lending.prepareWithdraw({
       profileId: "aaaaa-aa",
       poolId: USDT_POOL_ID,
-      amount: 10_000n,
+      amount: 1_000_000n,
       receiverAddress: "not-an-evm-address",
       signerWalletAddress: "0xsigner",
     });
