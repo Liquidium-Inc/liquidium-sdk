@@ -27,13 +27,14 @@ import {
   listProfileActivities,
   submitContractInteractionRepayment,
   submitContractInteractionSupply,
+  withdrawWithWallet,
 } from "./sdk-example";
 
 const CONTRACT_INTERACTION_ASSETS = new Set(["USDC", "USDT"]);
 const DEFAULT_CONTRACT_INTERACTION_ASSET = "USDC";
 const DEFAULT_BORROW_ASSET = "USDC";
 
-type ContractInteractionTab = "supply" | "repay" | "borrow";
+type ContractInteractionTab = "supply" | "repay" | "borrow" | "withdraw";
 
 export function App() {
   const isStatusPage = window.location.pathname.endsWith("/status.html");
@@ -52,6 +53,7 @@ function ContractInteractionPage() {
   const [selectedSupplyPoolId, setSelectedSupplyPoolId] = useState("");
   const [selectedRepaymentPoolId, setSelectedRepaymentPoolId] = useState("");
   const [selectedBorrowPoolId, setSelectedBorrowPoolId] = useState("");
+  const [selectedWithdrawPoolId, setSelectedWithdrawPoolId] = useState("");
   const [supplyAmount, setSupplyAmount] = useState("10");
   const [supplyResult, setSupplyResult] = useState(
     "No contract interaction submitted yet."
@@ -65,10 +67,16 @@ function ContractInteractionPage() {
   const [borrowResult, setBorrowResult] = useState(
     "Connect a wallet, then submit a borrow."
   );
+  const [withdrawAmount, setWithdrawAmount] = useState("1");
+  const [withdrawDestination, setWithdrawDestination] = useState("");
+  const [withdrawResult, setWithdrawResult] = useState(
+    "Connect a wallet, then submit a withdraw."
+  );
   const [status, setStatus] = useState("Ready.");
   const walletAddress = primaryWallet?.address ?? "";
   const contractInteractionPools = getContractInteractionPools(pools);
   const borrowPools = getBorrowPools(pools);
+  const withdrawPools = getBorrowPools(pools);
 
   useEffect(() => {
     void run(async () => {
@@ -90,6 +98,7 @@ function ContractInteractionPage() {
       setSelectedSupplyPoolId(defaultContractInteractionPool?.id ?? "");
       setSelectedRepaymentPoolId(defaultContractInteractionPool?.id ?? "");
       setSelectedBorrowPoolId(defaultBorrowPool?.id ?? "");
+      setSelectedWithdrawPoolId(defaultBorrowPool?.id ?? "");
       setStatus(
         `Loaded ${availableContractInteractionPools.length} contract interaction pools.`
       );
@@ -112,6 +121,22 @@ function ContractInteractionPage() {
     setBorrowDestination(walletAddress);
   }, [walletAddress, selectedBorrowPoolId, pools]);
 
+  useEffect(() => {
+    if (!walletAddress) {
+      return;
+    }
+
+    const selectedWithdrawPool = pools.find(
+      (pool) => pool.id === selectedWithdrawPoolId
+    );
+
+    if (!selectedWithdrawPool || selectedWithdrawPool.chain !== Chain.ETH) {
+      return;
+    }
+
+    setWithdrawDestination(walletAddress);
+  }, [walletAddress, selectedWithdrawPoolId, pools]);
+
   async function loadPools(): Promise<void> {
     setStatus("Loading pools...");
     const loadedPools = await listMarketPools();
@@ -131,6 +156,7 @@ function ContractInteractionPage() {
     setSelectedSupplyPoolId(defaultContractInteractionPool?.id ?? "");
     setSelectedRepaymentPoolId(defaultContractInteractionPool?.id ?? "");
     setSelectedBorrowPoolId(defaultBorrowPool?.id ?? "");
+    setSelectedWithdrawPoolId(defaultBorrowPool?.id ?? "");
     setStatus(
       `Loaded ${availableContractInteractionPools.length} contract interaction pools.`
     );
@@ -275,11 +301,49 @@ function ContractInteractionPage() {
     setStatus(`Submitted borrow ${outflow.id}.`);
   }
 
+  async function withdraw(): Promise<void> {
+    const selectedWithdrawPool = getSelectedPool(
+      withdrawPools,
+      selectedWithdrawPoolId
+    );
+    const amount = parseAmountToBaseUnits(
+      withdrawAmount,
+      selectedWithdrawPool.decimals
+    );
+    const receiverAddress = withdrawDestination.trim();
+    const signerWalletAddress = getConnectedWalletAddress(primaryWallet);
+    const trimmedProfileId = profileId.trim();
+
+    if (!trimmedProfileId) {
+      throw new Error("Enter a profile id.");
+    }
+
+    if (!receiverAddress) {
+      throw new Error("Enter a withdraw destination address.");
+    }
+
+    setStatus("Submitting withdraw...");
+    setWithdrawResult("Submitting withdraw...");
+
+    const outflow = await withdrawWithWallet({
+      profileId: trimmedProfileId,
+      poolId: selectedWithdrawPool.id,
+      amount,
+      receiverAddress,
+      signerWalletAddress,
+      signerWalletAdapter: createDynamicWalletAdapter(primaryWallet),
+    });
+
+    saveRecentActivityId(outflow.id);
+    setWithdrawResult(formatOutflowDetails(outflow));
+    setStatus(`Submitted withdraw ${outflow.id}.`);
+  }
+
   return (
     <main>
       <nav className="page-switcher" aria-label="Example pages">
         <a className="page-switcher-link page-switcher-link-active" href="/">
-          Supply / repay / borrow
+          Supply / repay / borrow / withdraw
         </a>
         <a className="page-switcher-link" href="/status.html">
           Activity tracker
@@ -289,7 +353,7 @@ function ContractInteractionPage() {
       <h1>Liquidium Contract Interaction Flow</h1>
       <p>
         Supply and repay USDC or USDT through the ETH contract interaction path,
-        then borrow from a Liquidium profile.
+        then borrow or withdraw from a Liquidium profile.
       </p>
 
       <section>
@@ -370,6 +434,15 @@ function ContractInteractionPage() {
             onClick={() => setActiveTab("borrow")}
           >
             Borrow
+          </button>
+          <button
+            type="button"
+            role="tab"
+            className={getTabButtonClassName(activeTab === "withdraw")}
+            aria-selected={activeTab === "withdraw"}
+            onClick={() => setActiveTab("withdraw")}
+          >
+            Withdraw
           </button>
         </div>
 
@@ -485,6 +558,49 @@ function ContractInteractionPage() {
             <div className="result-box">{borrowResult}</div>
           </div>
         ) : null}
+
+        {activeTab === "withdraw" ? (
+          <div className="tab-panel">
+            <h3>Withdraw</h3>
+
+            <label htmlFor="withdraw-pool-select">Withdraw pool</label>
+            <select
+              id="withdraw-pool-select"
+              value={selectedWithdrawPoolId}
+              onChange={(event) =>
+                setSelectedWithdrawPoolId(event.target.value)
+              }
+            >
+              {withdrawPools.map((pool) => (
+                <option key={pool.id} value={pool.id}>
+                  {pool.asset} on {pool.chain}
+                </option>
+              ))}
+            </select>
+
+            <label htmlFor="withdraw-amount-input">Withdraw amount</label>
+            <input
+              id="withdraw-amount-input"
+              inputMode="decimal"
+              value={withdrawAmount}
+              onChange={(event) => setWithdrawAmount(event.target.value)}
+            />
+
+            <label htmlFor="withdraw-destination-input">
+              Withdraw destination address
+            </label>
+            <input
+              id="withdraw-destination-input"
+              value={withdrawDestination}
+              onChange={(event) => setWithdrawDestination(event.target.value)}
+            />
+
+            <button type="button" onClick={() => void run(withdraw, setStatus)}>
+              Withdraw With Dynamic Wallet
+            </button>
+            <div className="result-box">{withdrawResult}</div>
+          </div>
+        ) : null}
       </section>
 
       <section>
@@ -580,7 +696,7 @@ function ActivityTrackerPage() {
     <main>
       <nav className="page-switcher" aria-label="Example pages">
         <a className="page-switcher-link" href="/">
-          Supply / repay / borrow
+          Supply / repay / borrow / withdraw
         </a>
         <a
           className="page-switcher-link page-switcher-link-active"
@@ -592,8 +708,8 @@ function ActivityTrackerPage() {
 
       <h1>Liquidium Activity Tracker</h1>
       <p>
-        Track contract-interaction supply, repayment, and borrow activity by
-        profile id or tx/activity id.
+        Track contract-interaction supply, repayment, borrow, and withdraw
+        activity by profile id or tx/activity id.
       </p>
 
       <section>

@@ -39,6 +39,15 @@ type BorrowWithWalletParams = {
   signerWalletAdapter: WalletAdapter;
 };
 
+type WithdrawWithWalletParams = {
+  profileId: string;
+  poolId: string;
+  amount: bigint;
+  receiverAddress: string;
+  signerWalletAddress: string;
+  signerWalletAdapter: WalletAdapter;
+};
+
 type ListProfileActivitiesParams = {
   profileId: string;
   filter: ActivityFilter;
@@ -121,6 +130,25 @@ export async function borrowWithWallet({
   signerWalletAdapter,
 }: BorrowWithWalletParams): Promise<OutflowDetails> {
   return await createClient().lending.borrow({
+    profileId,
+    poolId,
+    amount,
+    receiverAddress,
+    signerWalletAddress,
+    signerChain: Chain.ETH,
+    signerWalletAdapter,
+  });
+}
+
+export async function withdrawWithWallet({
+  profileId,
+  poolId,
+  amount,
+  receiverAddress,
+  signerWalletAddress,
+  signerWalletAdapter,
+}: WithdrawWithWalletParams): Promise<OutflowDetails> {
+  return await createClient().lending.withdraw({
     profileId,
     poolId,
     amount,
