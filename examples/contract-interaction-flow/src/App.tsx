@@ -12,6 +12,7 @@ import {
   formatActivityStatus,
   formatAmount,
   formatError,
+  formatOutflowDetails,
   formatPool,
   formatSupplyFlow,
   getRecentActivityIds,
@@ -19,66 +20,120 @@ import {
   saveRecentActivityId,
 } from "./format";
 import {
+  borrowWithWallet,
   getActivityStatus,
   getOrCreateWalletProfile,
   listMarketPools,
   listProfileActivities,
+  submitContractInteractionRepayment,
   submitContractInteractionSupply,
 } from "./sdk-example";
 
-const CONTRACT_SUPPLY_ASSETS = new Set(["USDC", "USDT"]);
-const DEFAULT_SUPPLY_ASSET = "USDC";
+const CONTRACT_INTERACTION_ASSETS = new Set(["USDC", "USDT"]);
+const DEFAULT_CONTRACT_INTERACTION_ASSET = "USDC";
+const DEFAULT_BORROW_ASSET = "USDC";
+
+type ContractInteractionTab = "supply" | "repay" | "borrow";
 
 export function App() {
   const isStatusPage = window.location.pathname.endsWith("/status.html");
 
-  return isStatusPage ? <ActivityTrackerPage /> : <SupplyPage />;
+  return isStatusPage ? <ActivityTrackerPage /> : <ContractInteractionPage />;
 }
 
-function SupplyPage() {
+function ContractInteractionPage() {
   const { primaryWallet } = useDynamicContext();
   const [pools, setPools] = useState<Pool[]>([]);
+  const [activeTab, setActiveTab] = useState<ContractInteractionTab>("supply");
   const [profileId, setProfileId] = useState("");
   const [profileResult, setProfileResult] = useState(
     "Connect a wallet, then create or load a profile."
   );
-  const [selectedPoolId, setSelectedPoolId] = useState("");
+  const [selectedSupplyPoolId, setSelectedSupplyPoolId] = useState("");
+  const [selectedRepaymentPoolId, setSelectedRepaymentPoolId] = useState("");
+  const [selectedBorrowPoolId, setSelectedBorrowPoolId] = useState("");
   const [supplyAmount, setSupplyAmount] = useState("10");
   const [supplyResult, setSupplyResult] = useState(
     "No contract interaction submitted yet."
   );
+  const [repaymentAmount, setRepaymentAmount] = useState("10");
+  const [repaymentResult, setRepaymentResult] = useState(
+    "No contract interaction repayment submitted yet."
+  );
+  const [borrowAmount, setBorrowAmount] = useState("9");
+  const [borrowDestination, setBorrowDestination] = useState("");
+  const [borrowResult, setBorrowResult] = useState(
+    "Connect a wallet, then submit a borrow."
+  );
   const [status, setStatus] = useState("Ready.");
   const walletAddress = primaryWallet?.address ?? "";
-  const supplyPools = getContractSupplyPools(pools);
+  const contractInteractionPools = getContractInteractionPools(pools);
+  const borrowPools = getBorrowPools(pools);
 
   useEffect(() => {
     void run(async () => {
       setStatus("Loading pools...");
       const loadedPools = await listMarketPools();
-      const availableSupplyPools = getContractSupplyPools(loadedPools);
-      const defaultPool =
-        availableSupplyPools.find(
-          (pool) => pool.asset === DEFAULT_SUPPLY_ASSET
-        ) ?? availableSupplyPools[0];
+      const availableContractInteractionPools =
+        getContractInteractionPools(loadedPools);
+      const availableBorrowPools = getBorrowPools(loadedPools);
+      const defaultContractInteractionPool =
+        availableContractInteractionPools.find(
+          (pool) => pool.asset === DEFAULT_CONTRACT_INTERACTION_ASSET
+        ) ?? availableContractInteractionPools[0];
+      const defaultBorrowPool =
+        availableBorrowPools.find(
+          (pool) => pool.asset === DEFAULT_BORROW_ASSET
+        ) ?? availableBorrowPools[0];
 
       setPools(loadedPools);
-      setSelectedPoolId(defaultPool?.id ?? "");
-      setStatus(`Loaded ${availableSupplyPools.length} contract supply pools.`);
+      setSelectedSupplyPoolId(defaultContractInteractionPool?.id ?? "");
+      setSelectedRepaymentPoolId(defaultContractInteractionPool?.id ?? "");
+      setSelectedBorrowPoolId(defaultBorrowPool?.id ?? "");
+      setStatus(
+        `Loaded ${availableContractInteractionPools.length} contract interaction pools.`
+      );
     }, setStatus);
   }, []);
+
+  useEffect(() => {
+    if (!walletAddress) {
+      return;
+    }
+
+    const selectedBorrowPool = pools.find(
+      (pool) => pool.id === selectedBorrowPoolId
+    );
+
+    if (!selectedBorrowPool || selectedBorrowPool.chain !== Chain.ETH) {
+      return;
+    }
+
+    setBorrowDestination(walletAddress);
+  }, [walletAddress, selectedBorrowPoolId, pools]);
 
   async function loadPools(): Promise<void> {
     setStatus("Loading pools...");
     const loadedPools = await listMarketPools();
-    const availableSupplyPools = getContractSupplyPools(loadedPools);
-    const defaultPool =
-      availableSupplyPools.find(
-        (pool) => pool.asset === DEFAULT_SUPPLY_ASSET
-      ) ?? availableSupplyPools[0];
+    const availableContractInteractionPools =
+      getContractInteractionPools(loadedPools);
+    const availableBorrowPools = getBorrowPools(loadedPools);
+    const defaultContractInteractionPool =
+      availableContractInteractionPools.find(
+        (pool) => pool.asset === DEFAULT_CONTRACT_INTERACTION_ASSET
+      ) ?? availableContractInteractionPools[0];
+    const defaultBorrowPool =
+      availableBorrowPools.find(
+        (pool) => pool.asset === DEFAULT_BORROW_ASSET
+      ) ?? availableBorrowPools[0];
 
     setPools(loadedPools);
-    setSelectedPoolId(defaultPool?.id ?? "");
-    setStatus(`Loaded ${availableSupplyPools.length} contract supply pools.`);
+    setSelectedSupplyPoolId(defaultContractInteractionPool?.id ?? "");
+    setSelectedRepaymentPoolId(defaultContractInteractionPool?.id ?? "");
+    setSelectedBorrowPoolId(defaultBorrowPool?.id ?? "");
+    setStatus(
+      `Loaded ${availableContractInteractionPools.length} contract interaction pools.`
+    );
   }
 
   async function createOrLoadProfile(): Promise<void> {
@@ -97,7 +152,10 @@ function SupplyPage() {
 
   async function submitContractSupply(): Promise<void> {
     const account = getConnectedWalletAddress(primaryWallet);
-    const selectedPool = getSelectedPool(supplyPools, selectedPoolId);
+    const selectedPool = getSelectedPool(
+      contractInteractionPools,
+      selectedSupplyPoolId
+    );
     const amount = parseAmountToBaseUnits(supplyAmount, selectedPool.decimals);
     const trimmedProfileId = profileId.trim();
 
@@ -134,11 +192,94 @@ function SupplyPage() {
     );
   }
 
+  async function submitContractRepayment(): Promise<void> {
+    const account = getConnectedWalletAddress(primaryWallet);
+    const selectedPool = getSelectedPool(
+      contractInteractionPools,
+      selectedRepaymentPoolId
+    );
+    const amount = parseAmountToBaseUnits(
+      repaymentAmount,
+      selectedPool.decimals
+    );
+    const trimmedProfileId = profileId.trim();
+
+    if (!trimmedProfileId) {
+      throw new Error("Enter a profile id.");
+    }
+
+    setStatus("Submitting contract interaction repayment...");
+    setRepaymentResult("Submitting contract interaction repayment...");
+
+    const repaymentFlow = await submitContractInteractionRepayment({
+      profileId: trimmedProfileId,
+      poolId: selectedPool.id,
+      account,
+      amount,
+      walletAdapter: createDynamicWalletAdapter(primaryWallet),
+    });
+
+    if (repaymentFlow.txid) {
+      saveRecentActivityId(repaymentFlow.txid);
+    }
+
+    setRepaymentResult(
+      [
+        `Repaid amount: ${formatAmount(amount, selectedPool.decimals)} ${selectedPool.asset}`,
+        "",
+        formatSupplyFlow(repaymentFlow),
+        "",
+        "Use the txid on the Activity tracker page to follow status.",
+      ].join("\n")
+    );
+    setStatus(
+      `Submitted contract repayment ${repaymentFlow.txid ?? "without txid"}.`
+    );
+  }
+
+  async function borrow(): Promise<void> {
+    const selectedBorrowPool = getSelectedPool(
+      borrowPools,
+      selectedBorrowPoolId
+    );
+    const amount = parseAmountToBaseUnits(
+      borrowAmount,
+      selectedBorrowPool.decimals
+    );
+    const receiverAddress = borrowDestination.trim();
+    const signerWalletAddress = getConnectedWalletAddress(primaryWallet);
+    const trimmedProfileId = profileId.trim();
+
+    if (!trimmedProfileId) {
+      throw new Error("Enter a profile id.");
+    }
+
+    if (!receiverAddress) {
+      throw new Error("Enter a borrow destination address.");
+    }
+
+    setStatus("Submitting borrow...");
+    setBorrowResult("Submitting borrow...");
+
+    const outflow = await borrowWithWallet({
+      profileId: trimmedProfileId,
+      poolId: selectedBorrowPool.id,
+      amount,
+      receiverAddress,
+      signerWalletAddress,
+      signerWalletAdapter: createDynamicWalletAdapter(primaryWallet),
+    });
+
+    saveRecentActivityId(outflow.id);
+    setBorrowResult(formatOutflowDetails(outflow));
+    setStatus(`Submitted borrow ${outflow.id}.`);
+  }
+
   return (
     <main>
       <nav className="page-switcher" aria-label="Example pages">
         <a className="page-switcher-link page-switcher-link-active" href="/">
-          Supply
+          Supply / repay / borrow
         </a>
         <a className="page-switcher-link" href="/status.html">
           Activity tracker
@@ -146,7 +287,10 @@ function SupplyPage() {
       </nav>
 
       <h1>Liquidium Contract Interaction Flow</h1>
-      <p>Supply USDC or USDT through the ETH contract interaction path.</p>
+      <p>
+        Supply and repay USDC or USDT through the ETH contract interaction path,
+        then borrow from a Liquidium profile.
+      </p>
 
       <section>
         <h2>Wallet</h2>
@@ -167,9 +311,9 @@ function SupplyPage() {
           Refresh Pools
         </button>
         <div className="list-box">
-          {supplyPools.length === 0
-            ? "No USDC/USDT ETH pools loaded."
-            : supplyPools.map(formatPool).join("\n\n")}
+          {pools.length === 0
+            ? "No pools loaded."
+            : pools.map(formatPool).join("\n\n")}
         </div>
       </section>
 
@@ -194,36 +338,153 @@ function SupplyPage() {
       </section>
 
       <section>
-        <h2>Supply By Contract Interaction</h2>
-
-        <label htmlFor="supply-pool-select">Supply pool</label>
-        <select
-          id="supply-pool-select"
-          value={selectedPoolId}
-          onChange={(event) => setSelectedPoolId(event.target.value)}
+        <h2>Actions</h2>
+        <div
+          className="action-tabs"
+          role="tablist"
+          aria-label="Lending actions"
         >
-          {supplyPools.map((pool) => (
-            <option key={pool.id} value={pool.id}>
-              {pool.asset} on {pool.chain}
-            </option>
-          ))}
-        </select>
+          <button
+            type="button"
+            role="tab"
+            className={getTabButtonClassName(activeTab === "supply")}
+            aria-selected={activeTab === "supply"}
+            onClick={() => setActiveTab("supply")}
+          >
+            Supply
+          </button>
+          <button
+            type="button"
+            role="tab"
+            className={getTabButtonClassName(activeTab === "repay")}
+            aria-selected={activeTab === "repay"}
+            onClick={() => setActiveTab("repay")}
+          >
+            Repay
+          </button>
+          <button
+            type="button"
+            role="tab"
+            className={getTabButtonClassName(activeTab === "borrow")}
+            aria-selected={activeTab === "borrow"}
+            onClick={() => setActiveTab("borrow")}
+          >
+            Borrow
+          </button>
+        </div>
 
-        <label htmlFor="supply-amount-input">Supply amount</label>
-        <input
-          id="supply-amount-input"
-          inputMode="decimal"
-          value={supplyAmount}
-          onChange={(event) => setSupplyAmount(event.target.value)}
-        />
+        {activeTab === "supply" ? (
+          <div className="tab-panel">
+            <h3>Supply By Contract Interaction</h3>
 
-        <button
-          type="button"
-          onClick={() => void run(submitContractSupply, setStatus)}
-        >
-          Submit Contract Supply
-        </button>
-        <div className="result-box">{supplyResult}</div>
+            <label htmlFor="supply-pool-select">Supply pool</label>
+            <select
+              id="supply-pool-select"
+              value={selectedSupplyPoolId}
+              onChange={(event) => setSelectedSupplyPoolId(event.target.value)}
+            >
+              {contractInteractionPools.map((pool) => (
+                <option key={pool.id} value={pool.id}>
+                  {pool.asset} on {pool.chain}
+                </option>
+              ))}
+            </select>
+
+            <label htmlFor="supply-amount-input">Supply amount</label>
+            <input
+              id="supply-amount-input"
+              inputMode="decimal"
+              value={supplyAmount}
+              onChange={(event) => setSupplyAmount(event.target.value)}
+            />
+
+            <button
+              type="button"
+              onClick={() => void run(submitContractSupply, setStatus)}
+            >
+              Submit Contract Supply
+            </button>
+            <div className="result-box">{supplyResult}</div>
+          </div>
+        ) : null}
+
+        {activeTab === "repay" ? (
+          <div className="tab-panel">
+            <h3>Repay By Contract Interaction</h3>
+
+            <label htmlFor="repayment-pool-select">Repayment pool</label>
+            <select
+              id="repayment-pool-select"
+              value={selectedRepaymentPoolId}
+              onChange={(event) =>
+                setSelectedRepaymentPoolId(event.target.value)
+              }
+            >
+              {contractInteractionPools.map((pool) => (
+                <option key={pool.id} value={pool.id}>
+                  {pool.asset} on {pool.chain}
+                </option>
+              ))}
+            </select>
+
+            <label htmlFor="repayment-amount-input">Repayment amount</label>
+            <input
+              id="repayment-amount-input"
+              inputMode="decimal"
+              value={repaymentAmount}
+              onChange={(event) => setRepaymentAmount(event.target.value)}
+            />
+
+            <button
+              type="button"
+              onClick={() => void run(submitContractRepayment, setStatus)}
+            >
+              Submit Contract Repayment
+            </button>
+            <div className="result-box">{repaymentResult}</div>
+          </div>
+        ) : null}
+
+        {activeTab === "borrow" ? (
+          <div className="tab-panel">
+            <h3>Borrow</h3>
+
+            <label htmlFor="borrow-pool-select">Borrow pool</label>
+            <select
+              id="borrow-pool-select"
+              value={selectedBorrowPoolId}
+              onChange={(event) => setSelectedBorrowPoolId(event.target.value)}
+            >
+              {borrowPools.map((pool) => (
+                <option key={pool.id} value={pool.id}>
+                  {pool.asset} on {pool.chain}
+                </option>
+              ))}
+            </select>
+
+            <label htmlFor="borrow-amount-input">Borrow amount</label>
+            <input
+              id="borrow-amount-input"
+              inputMode="decimal"
+              value={borrowAmount}
+              onChange={(event) => setBorrowAmount(event.target.value)}
+            />
+
+            <label htmlFor="borrow-destination-input">
+              Borrow destination address
+            </label>
+            <input
+              id="borrow-destination-input"
+              value={borrowDestination}
+              onChange={(event) => setBorrowDestination(event.target.value)}
+            />
+
+            <button type="button" onClick={() => void run(borrow, setStatus)}>
+              Borrow With Dynamic Wallet
+            </button>
+            <div className="result-box">{borrowResult}</div>
+          </div>
+        ) : null}
       </section>
 
       <section>
@@ -319,7 +580,7 @@ function ActivityTrackerPage() {
     <main>
       <nav className="page-switcher" aria-label="Example pages">
         <a className="page-switcher-link" href="/">
-          Supply
+          Supply / repay / borrow
         </a>
         <a
           className="page-switcher-link page-switcher-link-active"
@@ -331,8 +592,8 @@ function ActivityTrackerPage() {
 
       <h1>Liquidium Activity Tracker</h1>
       <p>
-        Track contract-interaction supply activity by profile id or tx/activity
-        id.
+        Track contract-interaction supply, repayment, and borrow activity by
+        profile id or tx/activity id.
       </p>
 
       <section>
@@ -416,23 +677,31 @@ function ActivityTrackerPage() {
   );
 }
 
-function getContractSupplyPools(pools: Pool[]): Pool[] {
+function getContractInteractionPools(pools: Pool[]): Pool[] {
   return pools.filter(
     (pool) =>
       pool.chain === Chain.ETH &&
-      CONTRACT_SUPPLY_ASSETS.has(pool.asset) &&
+      CONTRACT_INTERACTION_ASSETS.has(pool.asset) &&
       !pool.frozen
   );
+}
+
+function getBorrowPools(pools: Pool[]): Pool[] {
+  return pools.filter((pool) => !pool.frozen);
 }
 
 function getSelectedPool(pools: Pool[], poolId: string): Pool {
   const pool = pools.find((candidatePool) => candidatePool.id === poolId);
 
   if (!pool) {
-    throw new Error("Select an available USDC or USDT pool first.");
+    throw new Error("Select an available pool first.");
   }
 
   return pool;
+}
+
+function getTabButtonClassName(isActive: boolean): string {
+  return isActive ? "action-tab action-tab-active" : "action-tab";
 }
 
 async function getOrCreateConnectedWalletProfile(

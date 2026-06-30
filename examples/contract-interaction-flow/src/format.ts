@@ -2,6 +2,7 @@ import type {
   Activity,
   GetActivityStatusResponse,
   LiquidiumStatus,
+  OutflowDetails,
   Pool,
   SupplyFlow,
   SupplyTarget,
@@ -92,14 +93,28 @@ export function formatPool(pool: Pool): string {
 }
 
 export function formatSupplyFlow(flow: SupplyFlow): string {
+  const actionLabel =
+    flow.target.action === "repayment" ? "repayment" : "supply";
+
   return [
-    "Contract interaction supply submitted.",
+    `Contract interaction ${actionLabel} submitted.`,
     `Mechanism: ${flow.type}`,
     `Txid: ${flow.txid ?? "not set"}`,
     "Status:",
     formatStatus(flow.status, "Flow"),
     "",
     formatSupplyTarget(flow.target),
+  ].join("\n");
+}
+
+export function formatOutflowDetails(outflow: OutflowDetails): string {
+  return [
+    `Outflow id: ${outflow.id}`,
+    `Type: ${outflow.outflowType}`,
+    `Amount: ${outflow.amount.toString()} base units`,
+    `Receiver: ${outflow.receiver.type} ${outflow.receiver.account}`,
+    `Outflow ref: ${outflow.outflowRef ?? "not set"}`,
+    `Txid: ${outflow.txid ?? "not set"}`,
   ].join("\n");
 }
 
@@ -113,11 +128,24 @@ export function formatSupplyTarget(target: SupplyTarget): string {
     ].join("\n");
   }
 
+  if (
+    "owner" in target &&
+    typeof target.owner === "string" &&
+    "subaccount" in target &&
+    target.subaccount instanceof Uint8Array
+  ) {
+    return [
+      `Target type: ${target.type}`,
+      `Account: ${target.account}`,
+      `Owner: ${target.owner}`,
+      `Subaccount: ${formatBytes(target.subaccount)}`,
+      `Action: ${target.action}`,
+    ].join("\n");
+  }
+
   return [
     `Target type: ${target.type}`,
     `Account: ${target.account}`,
-    `Owner: ${target.owner}`,
-    `Subaccount: ${formatBytes(target.subaccount)}`,
     `Action: ${target.action}`,
   ].join("\n");
 }
