@@ -8,7 +8,7 @@
 
 > `const` **MIN\_WITHDRAW\_AMOUNTS\_BY\_ASSET**: `object`
 
-Defined in: packages/client/src/core/withdraw-minimums.ts:2
+Defined in: [packages/client/src/core/withdraw-minimums.ts:7](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/withdraw-minimums.ts#L7)
 
 Minimum withdraw amounts in each asset's base units.
 
@@ -16,12 +16,12 @@ Minimum withdraw amounts in each asset's base units.
 
 ### BTC
 
-> `readonly` **BTC**: `5000n` = `5_000n`
+> `readonly` **BTC**: `5000n` = `MINIMUM_BTC_WITHDRAW_AMOUNT_SATS`
 
 ### USDC
 
-> `readonly` **USDC**: `1000000n` = `1_000_000n`
+> `readonly` **USDC**: `1000000n` = `MINIMUM_STABLECOIN_WITHDRAW_AMOUNT_BASE_UNITS`
 
 ### USDT
 
-> `readonly` **USDT**: `1000000n` = `1_000_000n`
+> `readonly` **USDT**: `1000000n` = `MINIMUM_STABLECOIN_WITHDRAW_AMOUNT_BASE_UNITS`

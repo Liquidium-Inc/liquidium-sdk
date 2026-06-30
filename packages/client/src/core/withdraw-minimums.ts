@@ -1,8 +1,13 @@
+import { Asset } from "./types";
+
+const MINIMUM_BTC_WITHDRAW_AMOUNT_SATS = 5_000n;
+const MINIMUM_STABLECOIN_WITHDRAW_AMOUNT_BASE_UNITS = 1_000_000n;
+
 /** Minimum withdraw amounts in each asset's base units. */
 export const MIN_WITHDRAW_AMOUNTS_BY_ASSET = {
-  BTC: 5_000n, // 5,000 sats = 0.00005 BTC
-  USDC: 1_000_000n, // 1 USDC
-  USDT: 1_000_000n, // 1 USDT
+  [Asset.BTC]: MINIMUM_BTC_WITHDRAW_AMOUNT_SATS,
+  [Asset.USDC]: MINIMUM_STABLECOIN_WITHDRAW_AMOUNT_BASE_UNITS,
+  [Asset.USDT]: MINIMUM_STABLECOIN_WITHDRAW_AMOUNT_BASE_UNITS,
 } as const;
 
 export type MinimumWithdrawAsset = keyof typeof MIN_WITHDRAW_AMOUNTS_BY_ASSET;

@@ -1,8 +1,13 @@
+import { Asset } from "./types";
+
+const MINIMUM_BTC_BORROW_AMOUNT_SATS = 5_100n;
+const MINIMUM_STABLECOIN_BORROW_AMOUNT_BASE_UNITS = 1_000_000n;
+
 /** Minimum borrow amounts in each asset's base units. */
 export const MIN_BORROW_AMOUNTS_BY_ASSET = {
-  BTC: 5_100n, // 5,100 sats = 0.000051 BTC
-  USDC: 1_000_000n, // 1 USDC
-  USDT: 1_000_000n, // 1 USDT
+  [Asset.BTC]: MINIMUM_BTC_BORROW_AMOUNT_SATS,
+  [Asset.USDC]: MINIMUM_STABLECOIN_BORROW_AMOUNT_BASE_UNITS,
+  [Asset.USDT]: MINIMUM_STABLECOIN_BORROW_AMOUNT_BASE_UNITS,
 } as const;
 
 export type MinimumBorrowAsset = keyof typeof MIN_BORROW_AMOUNTS_BY_ASSET;
