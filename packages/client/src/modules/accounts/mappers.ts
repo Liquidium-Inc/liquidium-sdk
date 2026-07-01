@@ -12,7 +12,14 @@ interface AccountEthChainVariant {
   ETH: null;
 }
 
-type AccountChainVariant = AccountBtcChainVariant | AccountEthChainVariant;
+interface AccountIcpChainVariant {
+  ICP: null;
+}
+
+type AccountChainVariant =
+  | AccountBtcChainVariant
+  | AccountEthChainVariant
+  | AccountIcpChainVariant;
 
 export function mapCreateAccountRequestToRegisterProfileRequest(
   request: CreateAccountRequest
@@ -52,5 +59,7 @@ function mapAccountChainToLendingChainVariant(
       return { BTC: null };
     case Chain.ETH:
       return { ETH: null };
+    case Chain.ICP:
+      return { ICP: null };
   }
 }

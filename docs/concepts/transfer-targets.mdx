@@ -8,6 +8,19 @@ order: 220
 
 The SDK returns transfer targets for deposits and repayments. Your UI should render the target based on its discriminator.
 
+## Pool Assets And ck Ledgers
+
+SDK asset symbols describe Liquidium pool assets. For assets that originate outside the IC, the pool canister already uses the ck ledger version:
+
+| SDK asset | Origin chain | IC ledger used by the pool |
+| --- | --- | --- |
+| `BTC` | Bitcoin | ckBTC ledger |
+| `USDT` | Ethereum | ckUSDT ledger |
+| `USDC` | Ethereum | ckUSDC ledger |
+| `ICP` | Internet Computer | ICP ledger |
+
+This means `Asset.USDC` is the public symbol, while the IC transfer target is a ckUSDC ICRC account. Native BTC or ERC-20 transfers are ingress paths into the same pool asset, not separate pool assets.
+
 ## Native Address Target
 
 Use `target.address` when the target is an external-chain address:
@@ -20,12 +33,27 @@ if (target.type === "nativeAddress") {
 
 ## ICRC Account Target
 
-Use `target.account` when the target is an ICRC account:
+Use `target.account.address` when the target is an ICRC account:
 
 ```ts
 if (target.type === "icrcAccount") {
-  showAccount(target.account);
+  showAccount(target.account.address);
 }
 ```
+
+The grouped account also includes `owner` and optional `subaccount` bytes for wallets that build the ledger transfer directly.
+
+## ICP Ledger Target
+
+ICP targets include both address formats for the same ledger account:
+
+```ts
+if (target.type === "icpLedgerAccount") {
+  showAccount(target.account.icrc.address);
+  showLegacyAccountIdentifier(target.account.accountIdentifier);
+}
+```
+
+Use `target.account.icrc` for ICRC wallet transfers. Show `accountIdentifier` only when the user or wallet needs the legacy ICP ledger format.
 
 Each target also includes `poolId`, `asset`, `chain`, and `action`. Use those fields to validate the UI label before the user sends funds.

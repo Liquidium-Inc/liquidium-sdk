@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { Asset, Chain } from "../../../core/types";
+import { TransferMode } from "../../../core/wallet-actions";
 import { roundInflowFeeEstimate } from "./inflow-fee-rounding";
 
 describe("roundInflowFeeEstimate", () => {
@@ -74,6 +75,34 @@ describe("roundInflowFeeEstimate", () => {
 
     // then
     expect(result).toBe(BTC_FEE_ESTIMATE_SATS);
+  });
+
+  test("should not round ckBTC ledger fees", () => {
+    // given
+    const CKBTC_LEDGER_FEE_SATS = 10n;
+
+    // when
+    const result = roundInflowFeeEstimate(
+      { asset: Asset.BTC, chain: Chain.BTC, transferMode: TransferMode.ck },
+      CKBTC_LEDGER_FEE_SATS
+    );
+
+    // then
+    expect(result).toBe(CKBTC_LEDGER_FEE_SATS);
+  });
+
+  test("should not round ckUSDC ledger fees", () => {
+    // given
+    const CKUSDC_LEDGER_FEE = 10_000n;
+
+    // when
+    const result = roundInflowFeeEstimate(
+      { asset: Asset.USDC, chain: Chain.ETH, transferMode: TransferMode.ck },
+      CKUSDC_LEDGER_FEE
+    );
+
+    // then
+    expect(result).toBe(CKUSDC_LEDGER_FEE);
   });
 
   test("should return zero for zero or negative inflow fee estimates", () => {

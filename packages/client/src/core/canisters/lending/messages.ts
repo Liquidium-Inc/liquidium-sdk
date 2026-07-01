@@ -1,5 +1,5 @@
-interface MessageAccount {
-  type: "Native" | "External";
+export interface MessageAccount {
+  type: "AccountIdentifier" | "External" | "Icrc" | "Native";
   data: string;
 }
 
@@ -42,6 +42,10 @@ function accountTypeToString(accountType: MessageAccount): string {
   switch (accountType.type) {
     case "External":
       return `Address:${accountType.data}`;
+    case "Icrc":
+      return `Icrc:${accountType.data}`;
+    case "AccountIdentifier":
+      return `AccountId:${accountType.data}`;
     case "Native":
       return `Principal:${accountType.data}`;
   }

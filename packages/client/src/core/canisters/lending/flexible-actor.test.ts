@@ -121,7 +121,7 @@ describe("decodeFlexiblePool", () => {
     expect(decoded?.chain).toBe("BTC");
   });
 
-  test("should return null for an unsupported ICP pool", () => {
+  test("should decode an ICP pool", () => {
     // given
     const pool = createFlexiblePool({
       asset: { ICP: null },
@@ -132,7 +132,9 @@ describe("decodeFlexiblePool", () => {
     const decoded = decodeFlexiblePool(pool);
 
     // then
-    expect(decoded).toBeNull();
+    expect(decoded).not.toBeNull();
+    expect(decoded?.asset).toBe("ICP");
+    expect(decoded?.chain).toBe("ICP");
   });
 
   test("should return null for an unsupported SOL pool", () => {
@@ -230,7 +232,7 @@ describe("decodeFlexiblePosition", () => {
     expect(decoded?.asset).toBe("USDT");
   });
 
-  test("should return null for an unsupported ICP position", () => {
+  test("should decode an ICP position", () => {
     // given
     const position = createFlexiblePosition({ asset: { ICP: null } });
 
@@ -238,7 +240,8 @@ describe("decodeFlexiblePosition", () => {
     const decoded = decodeFlexiblePosition(position);
 
     // then
-    expect(decoded).toBeNull();
+    expect(decoded).not.toBeNull();
+    expect(decoded?.asset).toBe("ICP");
   });
 
   test("should return null for an unknown asset tag", () => {
@@ -267,7 +270,7 @@ describe("decodeFlexiblePositionView", () => {
     expect(decoded?.deposited_native_now).toBe(50_000n);
   });
 
-  test("should return null for an unsupported ICP position view", () => {
+  test("should decode an ICP position view", () => {
     // given
     const view = createFlexiblePositionView({ asset: { ICP: null } });
 
@@ -275,7 +278,8 @@ describe("decodeFlexiblePositionView", () => {
     const decoded = decodeFlexiblePositionView(view);
 
     // then
-    expect(decoded).toBeNull();
+    expect(decoded).not.toBeNull();
+    expect(decoded?.asset).toBe("ICP");
   });
 
   test("should return null for an unknown asset tag", () => {
@@ -309,7 +313,7 @@ describe("decodeFlexibleUserStats", () => {
     expect(decoded.positions[0]?.asset).toBe("BTC");
   });
 
-  test("should filter out unsupported ICP positions and unknown assets", () => {
+  test("should keep ICP positions and filter out unknown assets", () => {
     // given
     const stats = createFlexibleUserStats({
       positions: [
@@ -324,9 +328,10 @@ describe("decodeFlexibleUserStats", () => {
     const decoded = decodeFlexibleUserStats(stats);
 
     // then
-    expect(decoded.positions).toHaveLength(2);
+    expect(decoded.positions).toHaveLength(3);
     expect(decoded.positions.map((position) => position.asset)).toEqual([
       "BTC",
+      "ICP",
       "USDC",
     ]);
   });

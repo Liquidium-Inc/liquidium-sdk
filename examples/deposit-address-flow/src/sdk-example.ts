@@ -2,9 +2,11 @@ import type {
   ActivityFilter,
   AssetPrices,
   GetActivityStatusResponse,
+  OutflowDestination,
   OutflowDetails,
   Pool,
   SupplyFlow,
+  TransferMode,
   WalletAdapter,
 } from "@liquidium/client";
 import { Chain, SupplyAction } from "@liquidium/client";
@@ -23,6 +25,7 @@ type GetOrCreateWalletProfileParams = {
 type CreateDepositAddressSupplyParams = {
   profileId: string;
   poolId: string;
+  transferMode: TransferMode;
 };
 
 type RegisterSupplyTxidParams = {
@@ -39,7 +42,7 @@ type BorrowWithWalletParams = {
   profileId: string;
   poolId: string;
   amount: bigint;
-  receiverAddress: string;
+  receiver: OutflowDestination;
   signerWalletAddress: string;
   signerWalletAdapter: WalletAdapter;
 };
@@ -83,11 +86,13 @@ export async function getOrCreateWalletProfile({
 export async function createDepositAddressSupply({
   profileId,
   poolId,
+  transferMode,
 }: CreateDepositAddressSupplyParams): Promise<SupplyFlow> {
   return await client.lending.supply({
     profileId,
     poolId,
     action: SupplyAction.deposit,
+    transferMode,
   });
 }
 
@@ -112,7 +117,7 @@ export async function borrowWithWallet({
   profileId,
   poolId,
   amount,
-  receiverAddress,
+  receiver,
   signerWalletAddress,
   signerWalletAdapter,
 }: BorrowWithWalletParams): Promise<OutflowDetails> {
@@ -120,7 +125,7 @@ export async function borrowWithWallet({
     profileId,
     poolId,
     amount,
-    receiverAddress,
+    receiver,
     signerWalletAddress,
     signerChain: Chain.ETH,
     signerWalletAdapter,

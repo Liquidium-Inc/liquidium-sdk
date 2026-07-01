@@ -444,13 +444,16 @@ Keep the initial loan LTV under the SDK's instant-loan starting-LTV guard and se
 `ltvMaxBps` within the collateral pool's accepted max-LTV range.
 
 If the target is a native address, show `target.address`. If it is an ICRC
-account, show `target.account`.
+account, show `target.account.address`. If it is an ICP ledger target, show
+`target.account.icrc.address` and optionally the legacy account identifier.
 
 ```ts
 const depositAddress =
   depositTarget.type === "nativeAddress"
     ? depositTarget.address
-    : depositTarget.account;
+    : depositTarget.type === "icrcAccount"
+      ? depositTarget.account.address
+      : depositTarget.account.icrc.address;
 ```
 
 Transfer targets also include `poolId`, `asset`, `chain`, and `action`. Use
@@ -466,7 +469,9 @@ const repayAddress =
     ? null
     : loan.repayment.target.type === "nativeAddress"
       ? loan.repayment.target.address
-      : loan.repayment.target.account;
+      : loan.repayment.target.type === "icrcAccount"
+        ? loan.repayment.target.account.address
+        : loan.repayment.target.account.icrc.address;
 ```
 
 Use search only as recovery when the user lost the loan reference:
@@ -571,7 +576,9 @@ const outflow = await client.lending.borrow({
   profileId,
   poolId: quote.borrowPoolId,
   amount: quote.borrowAmount,
-  receiverAddress,
+  receiver: {
+    address: destinationAddress,
+  },
   signerWalletAddress: walletAddress,
   signerChain: "ETH",
   signerWalletAdapter: {

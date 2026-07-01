@@ -53,4 +53,4 @@ Lending outflow and instant-loan destination fields accept external addresses fo
 
 The SDK validates BTC mainnet addresses with Bitcoin mainnet rules and leaves the address unchanged. It validates EVM addresses with `viem` and stores the checksummed `getAddress(...)` form.
 
-Invalid lending `receiverAddress`, instant-loan `borrowDestination`, instant-loan `refundDestination`, and contract-interaction `account` values throw `LiquidiumError` with `LiquidiumErrorCode.INVALID_ADDRESS`. Catch that code at the form boundary and ask the user to enter an address for the selected asset and chain before retrying the flow.
+Invalid lending `receiver.address`, instant-loan `borrowDestination`, instant-loan `refundDestination`, and contract-interaction `account` values throw `LiquidiumError` with `LiquidiumErrorCode.INVALID_ADDRESS`. Catch that code at the form boundary and ask the user to enter an address for the selected asset and chain before retrying the flow.

@@ -82,6 +82,51 @@ describe("MarketModule", () => {
     ]);
   });
 
+  test("maps ICP pools with 8 native decimals", async () => {
+    // given
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi.fn().mockResolvedValue([
+        {
+          optimal_utilization_rate: 80n,
+          principal: { toString: () => "pool-icp", toText: () => "pool-icp" },
+          total_generated_interest_snapshot: 0n,
+          supply_cap: [],
+          same_asset_borrowing: [],
+          asset: { ICP: null },
+          rate_slope_before: 1n,
+          borrow_cap: [],
+          total_debt_at_last_sync: 25_000n,
+          chain: { ICP: null },
+          rate_slope_after: 2n,
+          reserve_factor: 100n,
+          last_updated: [],
+          lending_index: 300n,
+          protocol_liquidation_fee: 50n,
+          borrow_index: 400n,
+          base_rate: 5n,
+          frozen: false,
+          liquidation_bonus: 200n,
+          liquidation_threshold: 7_500n,
+          max_ltv: 0n,
+          total_supply_at_last_sync: 50_000n,
+        },
+      ]),
+      get_pool_rate: vi.fn().mockResolvedValue([]),
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const pools = await client.market.listPools();
+
+    // then
+    expect(pools[0]).toMatchObject({
+      id: "pool-icp",
+      asset: "ICP",
+      chain: "ICP",
+      decimals: 8n,
+    });
+  });
+
   test("defaults pool rates to zero when get_pool_rate returns none", async () => {
     // given
     vi.spyOn(Actor, "createActor").mockReturnValue({

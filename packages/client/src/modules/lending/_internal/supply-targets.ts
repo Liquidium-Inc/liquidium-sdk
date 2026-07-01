@@ -1,5 +1,8 @@
-import { encodeIcrcAccount } from "@icp-sdk/canisters/ledger/icrc";
 import { Principal } from "@icp-sdk/core/principal";
+import {
+  createIcrcAccount,
+  encodeIcpAccountIdentifier,
+} from "../../../core/accounts";
 import { createCkBtcMinterActor } from "../../../core/canisters/ckbtc/minter";
 import {
   createDepositAccountsActor,
@@ -15,10 +18,13 @@ import {
   USDC_CONTRACT_ADDRESS,
   USDT_CONTRACT_ADDRESS,
 } from "../../../core/evm";
+import { isPoolLedgerAsset } from "../../../core/pool-ledger-assets";
 import type { CanisterContext } from "../../../core/transports/canister-context";
 import { Asset, Chain, type SupplyAction } from "../../../core/types";
 import { encodeInflowSubaccount } from "../../../core/utils/inflow-subaccount";
+import { TransferMode } from "../../../core/wallet-actions";
 import {
+  type IcpLedgerSupplyTarget,
   type IcrcAccountSupplyTarget,
   type NativeAddressSupplyTarget,
   SupplyPlanType,
@@ -32,6 +38,7 @@ export interface InternalSupplyTargetRequest {
   poolId: string;
   action: SupplyAction;
   mechanism?: SupplyMechanism;
+  transferMode?: TransferMode;
 }
 
 interface SupplyTargetRequest {
@@ -45,6 +52,7 @@ interface ResolveSupplyMechanismParams {
   asset: string;
   chain: string;
   requestedMechanism?: SupplyMechanism;
+  transferMode?: TransferMode;
 }
 
 export async function resolveSupplyTarget(
@@ -58,10 +66,29 @@ export async function resolveSupplyTarget(
     asset,
     chain,
     requestedMechanism: request.mechanism,
+    transferMode: request.transferMode,
   });
 
   switch (mechanism) {
     case SupplyPlanType.transfer:
+      if (asset === Asset.ICP && chain === Chain.ICP) {
+        return getIcpLedgerSupplyTarget(request.profileId, {
+          poolId: request.poolId,
+          asset,
+          chain,
+          action: request.action,
+        });
+      }
+
+      if (request.transferMode === TransferMode.ck) {
+        return getIcrcAccountSupplyTarget(request.profileId, {
+          poolId: request.poolId,
+          asset,
+          chain,
+          action: request.action,
+        });
+      }
+
       return await getNativeAddressSupplyTarget(
         canisterContext,
         request.profileId,
@@ -85,6 +112,17 @@ export async function resolveSupplyTarget(
 export function resolveSupplyMechanism(
   params: ResolveSupplyMechanismParams
 ): SupplyMechanism {
+  if (params.transferMode === TransferMode.ck) {
+    if (params.requestedMechanism === SupplyPlanType.contractInteraction) {
+      throw new LiquidiumError(
+        LiquidiumErrorCode.VALIDATION_ERROR,
+        "ck transfer mode is not supported for contract-interaction supply"
+      );
+    }
+
+    return SupplyPlanType.transfer;
+  }
+
   if (params.asset === Asset.BTC && params.chain === Chain.BTC) {
     if (params.requestedMechanism === SupplyPlanType.contractInteraction) {
       throw new LiquidiumError(
@@ -99,6 +137,17 @@ export function resolveSupplyMechanism(
   if (isEthStablecoin(params.asset, params.chain)) {
     if (params.requestedMechanism) {
       return params.requestedMechanism;
+    }
+
+    return SupplyPlanType.transfer;
+  }
+
+  if (params.asset === Asset.ICP && params.chain === Chain.ICP) {
+    if (params.requestedMechanism === SupplyPlanType.contractInteraction) {
+      throw new LiquidiumError(
+        LiquidiumErrorCode.VALIDATION_ERROR,
+        "Contract-interaction supply is not supported for ICP on ICP"
+      );
     }
 
     return SupplyPlanType.transfer;
@@ -235,7 +284,7 @@ async function getNativeAddressSupplyTarget(
     };
   }
 
-  const configuredBtcPoolId = canisterContext.canisterIds.btcPool;
+  const configuredBtcPoolId = canisterContext.canisterIds.pools.btc;
   if (request.poolId !== configuredBtcPoolId) {
     throw new LiquidiumError(
       LiquidiumErrorCode.VALIDATION_ERROR,
@@ -268,7 +317,7 @@ function getIcrcAccountSupplyTarget(
   profileId: string,
   request: SupplyTargetRequest
 ): IcrcAccountSupplyTarget {
-  assertSupportsIcrcAccountInflowTarget(request.asset);
+  assertSupportsIcrcAccountInflowTarget(request.asset, request.chain);
 
   const poolPrincipal = Principal.fromText(request.poolId);
   const subaccount = encodeInflowSubaccount({
@@ -282,12 +331,47 @@ function getIcrcAccountSupplyTarget(
     asset: request.asset,
     chain: request.chain,
     action: request.action,
-    owner: poolPrincipal.toText(),
-    subaccount,
-    account: encodeIcrcAccount({
+    account: createIcrcAccount({
       owner: poolPrincipal,
       subaccount,
     }),
+  };
+}
+
+function getIcpLedgerSupplyTarget(
+  profileId: string,
+  request: SupplyTargetRequest
+): IcpLedgerSupplyTarget {
+  if (request.asset !== Asset.ICP || request.chain !== Chain.ICP) {
+    throw new LiquidiumError(
+      LiquidiumErrorCode.VALIDATION_ERROR,
+      `ICP ledger inflow targets are not supported for ${request.asset} on ${request.chain}`
+    );
+  }
+
+  const poolPrincipal = Principal.fromText(request.poolId);
+  const subaccount = encodeInflowSubaccount({
+    action: request.action,
+    principal: Principal.fromText(profileId),
+  });
+  const icrcAccount = createIcrcAccount({
+    owner: poolPrincipal,
+    subaccount,
+  });
+
+  return {
+    type: "icpLedgerAccount",
+    poolId: request.poolId,
+    asset: Asset.ICP,
+    chain: Chain.ICP,
+    action: request.action,
+    account: {
+      icrc: icrcAccount,
+      accountIdentifier: encodeIcpAccountIdentifier({
+        owner: poolPrincipal,
+        subaccount,
+      }),
+    },
   };
 }
 
@@ -309,13 +393,16 @@ function assertSupportsNativeAddressInflowTarget(
   );
 }
 
-function assertSupportsIcrcAccountInflowTarget(asset: string): void {
-  if (asset === Asset.BTC || asset === Asset.USDT || asset === Asset.USDC) {
+function assertSupportsIcrcAccountInflowTarget(
+  asset: string,
+  chain: string
+): void {
+  if (asset !== Asset.ICP && isPoolLedgerAsset({ asset, chain })) {
     return;
   }
 
   throw new LiquidiumError(
     LiquidiumErrorCode.VALIDATION_ERROR,
-    `ICRC account inflow targets are not supported for ${asset}`
+    `ICRC account inflow targets are not supported for ${asset} on ${chain}`
   );
 }

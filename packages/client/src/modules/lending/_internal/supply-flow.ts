@@ -8,6 +8,7 @@ import {
   ERC20_ABI,
   MAX_UINT256,
 } from "../../../core/evm";
+import { getPoolLedgerAssetRoute } from "../../../core/pool-ledger-assets";
 import { createLiquidiumStatus } from "../../../core/status";
 import type { CanisterContext } from "../../../core/transports/canister-context";
 import {
@@ -19,6 +20,7 @@ import {
 import { retryWithBackoff } from "../../../core/utils/retry";
 import {
   type EthTransactionRequest,
+  type IcrcTransferDetails,
   TransferMode,
   type WalletAdapter,
 } from "../../../core/wallet-actions";
@@ -39,6 +41,7 @@ import type {
   SupplyFlowRequest,
   SupplyPlanType,
   SupplyTarget,
+  TransferSupplyFlowRequest,
 } from "../types";
 import {
   EvmSupplyApprovalStrategy as ApprovalStrategy,
@@ -88,7 +91,7 @@ interface GetEvmSupplyContextForPoolParams {
 }
 
 interface SendAndSubmitNativeSupplyInflowParams {
-  request: SupplyFlowRequest;
+  request: TransferSupplyFlowRequest;
   instruction: SupplyInstruction;
   defaultSubmitInflowRequest?: SubmitInflowDefaults;
 }
@@ -115,6 +118,15 @@ interface SendNativeSupplyTransactionParams {
   asset: string;
   toAddress: string;
   amount: bigint;
+  senderAccount: string;
+  action: SupplyAction;
+}
+
+interface SendIcrcSupplyTransactionParams {
+  walletAdapter: Pick<WalletAdapter, "sendIcrcTransfer">;
+  asset: string;
+  chain: string;
+  transfer: IcrcTransferDetails;
   senderAccount: string;
   action: SupplyAction;
 }
@@ -174,6 +186,7 @@ export class SupplyFlowExecutor {
       asset: instruction.asset,
       chain: instruction.chain,
       requestedMechanism: request.mechanism,
+      transferMode: request.transferMode,
     });
     const defaultSubmitInflowRequest = getDefaultSubmitInflowRequest({
       action: request.action,
@@ -188,7 +201,7 @@ export class SupplyFlowExecutor {
       case PlanType.transfer:
         if (request.walletAdapter) {
           txid = await this.sendAndSubmitNativeSupplyInflow({
-            request,
+            request: request as TransferSupplyFlowRequest,
             instruction,
             defaultSubmitInflowRequest,
           });
@@ -303,13 +316,6 @@ export class SupplyFlowExecutor {
   ): Promise<string> {
     const { request, instruction, defaultSubmitInflowRequest } = params;
 
-    if (instruction.target.type !== "nativeAddress") {
-      throw new LiquidiumError(
-        LiquidiumErrorCode.VALIDATION_ERROR,
-        "Wallet-executed supply requires a native-address target"
-      );
-    }
-
     if (!request.walletAdapter) {
       throw new LiquidiumError(
         LiquidiumErrorCode.VALIDATION_ERROR,
@@ -332,15 +338,32 @@ export class SupplyFlowExecutor {
       );
     }
 
-    const txid = await this.sendNativeSupplyTransaction({
-      walletAdapter: request.walletAdapter,
-      chain: instruction.chain,
-      toAddress: instruction.target.address,
-      amount: request.amount,
-      senderAccount: account,
-      asset: instruction.asset,
-      action: request.action,
-    });
+    const txid =
+      instruction.target.type === "nativeAddress"
+        ? await this.sendNativeSupplyTransaction({
+            walletAdapter: request.walletAdapter,
+            chain: instruction.chain,
+            toAddress: instruction.target.address,
+            amount: request.amount,
+            senderAccount: account,
+            asset: instruction.asset,
+            action: request.action,
+          })
+        : await this.sendIcrcSupplyTransaction({
+            walletAdapter: request.walletAdapter,
+            asset: instruction.asset,
+            chain: instruction.chain,
+            transfer: {
+              ledgerCanisterId: getPoolLedgerAssetRoute({
+                asset: instruction.asset,
+                chain: instruction.chain,
+              }).ledgerCanisterId,
+              to: getIcrcSupplyTargetAccount(instruction.target),
+              amount: request.amount,
+            },
+            senderAccount: account,
+            action: request.action,
+          });
 
     if (shouldSubmitInflow({ instruction, mechanism: PlanType.transfer })) {
       try {
@@ -497,7 +520,7 @@ export class SupplyFlowExecutor {
         amount: supplyAmount,
         poolId: request.poolId,
         profileId: request.profileId,
-        destinationAccount: instruction.target.account,
+        destinationAccount: instruction.target.account.address,
         action: request.action,
       }),
       `supply-${request.action}-deposit-erc20`
@@ -573,6 +596,34 @@ export class SupplyFlowExecutor {
           `Native-address wallet execution is not supported for ${params.chain}`
         );
     }
+  }
+
+  private async sendIcrcSupplyTransaction(
+    params: SendIcrcSupplyTransactionParams
+  ): Promise<string> {
+    if (!params.walletAdapter.sendIcrcTransfer) {
+      throw new LiquidiumError(
+        LiquidiumErrorCode.VALIDATION_ERROR,
+        "ICRC wallet adapter does not support ledger transfers"
+      );
+    }
+
+    const route = getPoolLedgerAssetRoute({
+      asset: params.asset,
+      chain: params.chain,
+    });
+
+    return await params.walletAdapter.sendIcrcTransfer({
+      chain: route.chain,
+      asset: route.asset,
+      transfer: {
+        ...params.transfer,
+        ledgerCanisterId: route.ledgerCanisterId,
+      },
+      account: params.senderAccount,
+      actionType: `supply-${params.action}`,
+      transferMode: route.transferMode,
+    });
   }
 
   private async submitInflowWithRetry(
@@ -752,6 +803,22 @@ function getDefaultSubmitInflowRequest(
   };
 }
 
+function getIcrcSupplyTargetAccount(
+  target: SupplyTarget
+): IcrcTransferDetails["to"] {
+  switch (target.type) {
+    case "icrcAccount":
+      return target.account;
+    case "icpLedgerAccount":
+      return target.account.icrc;
+    case "nativeAddress":
+      throw new LiquidiumError(
+        LiquidiumErrorCode.VALIDATION_ERROR,
+        "ICRC wallet execution requires an ICRC-compatible supply target"
+      );
+  }
+}
+
 function mapSupplyActionToStatusOperation(
   action: SupplyAction
 ): InflowOperation {
@@ -761,6 +828,10 @@ function mapSupplyActionToStatusOperation(
 function shouldSubmitInflow(params: ShouldSubmitInflowParams): boolean {
   if (params.mechanism !== PlanType.transfer) {
     return true;
+  }
+
+  if (params.instruction.target.type !== "nativeAddress") {
+    return false;
   }
 
   return !isEthStablecoin(params.instruction.asset, params.instruction.chain);

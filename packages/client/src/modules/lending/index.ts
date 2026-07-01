@@ -17,15 +17,21 @@ export type {
   ExternalOutflowReceiver,
   GetDepositAddressRequest,
   GetEvmSupplyContextRequest,
+  IcpLedgerAccount,
+  IcpLedgerSupplyTarget,
+  IcrcAccount,
   IcrcAccountSupplyTarget,
   IcrcOutflowReceiver,
+  IcrcTransferDetails,
   InflowFeeEstimate,
   InflowOperation,
   ManualTransferSupplyFlowRequest,
   NativeAddressSupplyTarget,
   NativeOutflowReceiver,
+  OutflowDestination,
   OutflowDetails,
   OutflowReceiver,
+  SendIcrcTransferRequest,
   SubmitInflowRequest,
   SubmitInflowResponse,
   SubmitSupplyFlowInflowRequest,
@@ -39,4 +45,8 @@ export type {
   WithdrawOutflowDetails,
   WithdrawSubmitSignatureInfo,
 } from "./types";
-export { EvmSupplyApprovalStrategy, SupplyPlanType } from "./types";
+export {
+  EvmSupplyApprovalStrategy,
+  OutflowAccountType,
+  SupplyPlanType,
+} from "./types";

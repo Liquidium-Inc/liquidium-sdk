@@ -5,10 +5,13 @@ import { LiquidiumClient, LiquidiumErrorCode } from "../../../index";
 import {
   BTC_POOL_ID,
   createBtcPoolRecord,
+  createIcpPoolRecord,
   createUsdtPoolRecord,
+  ICP_POOL_ID,
   LOWERCASE_EVM_OUTFLOW_ADDRESS,
   USDT_POOL_ID,
   VALID_BTC_OUTFLOW_ADDRESS,
+  VALID_ICP_ACCOUNT_IDENTIFIER,
 } from "./test-fixtures";
 
 afterEach(() => {
@@ -43,7 +46,7 @@ describe("LendingModule withdraw", () => {
       profileId: "aaaaa-aa",
       poolId: BTC_POOL_ID,
       amount: 10_000n,
-      receiverAddress: VALID_BTC_OUTFLOW_ADDRESS,
+      receiver: { address: VALID_BTC_OUTFLOW_ADDRESS },
       signerWalletAddress: "0xsigner",
     });
     const outflow = await withdrawAction.submit({
@@ -62,7 +65,7 @@ describe("LendingModule withdraw", () => {
       profileId: "aaaaa-aa",
       poolId: BTC_POOL_ID,
       amount: 10_000n,
-      receiverAddress: VALID_BTC_OUTFLOW_ADDRESS,
+      receiver: { address: VALID_BTC_OUTFLOW_ADDRESS },
       signerWalletAddress: "0xsigner",
     });
     expect(withdrawAction.message).toBe(`Liquidium: Withdraw Assets
@@ -109,6 +112,50 @@ Nonce: 23`);
     });
   });
 
+  test("creates an ICP withdraw action to an account identifier destination", async () => {
+    // given
+    vi.setSystemTime(new Date("2026-04-01T00:00:00.000Z"));
+    const withdraw = vi.fn().mockResolvedValue({
+      Ok: {
+        id: "outflow-icp-account-id",
+        txid: [],
+        outflow_type: { Withdraw: null },
+        outflow_ref: [],
+        amount: 10_000n,
+        receiver: { AccountIdentifier: VALID_ICP_ACCOUNT_IDENTIFIER },
+      },
+    });
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi.fn().mockResolvedValue([createIcpPoolRecord()]),
+      get_nonce: vi.fn().mockResolvedValue(23n),
+      withdraw,
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const withdrawAction = await client.lending.prepareWithdraw({
+      profileId: "aaaaa-aa",
+      poolId: ICP_POOL_ID,
+      amount: 10_000n,
+      receiver: {
+        address: VALID_ICP_ACCOUNT_IDENTIFIER,
+      },
+      signerWalletAddress: "0xsigner",
+    });
+    await withdrawAction.submit({ signature: "0xsigned", chain: "ETH" });
+
+    // then
+    expect(withdrawAction.transferMode).toBe("native");
+    expect(withdrawAction.message).toContain(
+      `AccountId:${VALID_ICP_ACCOUNT_IDENTIFIER}`
+    );
+    expect(withdraw.mock.calls[0]?.[1]).toMatchObject({
+      data: {
+        account: { AccountIdentifier: VALID_ICP_ACCOUNT_IDENTIFIER },
+      },
+    });
+  });
+
   test("creates and executes a withdraw request directly", async () => {
     // given
     vi.spyOn(Actor, "createActor").mockReturnValue({
@@ -133,7 +180,7 @@ Nonce: 23`);
       profileId: "aaaaa-aa",
       poolId: BTC_POOL_ID,
       amount: 8_000n,
-      receiverAddress: VALID_BTC_OUTFLOW_ADDRESS,
+      receiver: { address: VALID_BTC_OUTFLOW_ADDRESS },
       signerWalletAddress: "0xsigner",
       signerChain: "ETH",
       signerWalletAdapter: { signMessage },
@@ -171,7 +218,7 @@ Nonce: 23`);
           profileId: "aaaaa-aa",
           poolId: BTC_POOL_ID,
           amount: 10_000n,
-          receiverAddress: VALID_BTC_OUTFLOW_ADDRESS,
+          receiver: { address: VALID_BTC_OUTFLOW_ADDRESS },
           signerWalletAddress: "bc1qsigner",
         })
         .then((withdrawAction) =>
@@ -197,7 +244,7 @@ Nonce: 23`);
         profileId: "p1",
         poolId: "aaaaa-aa",
         amount: 10_000n,
-        receiverAddress: "   ",
+        receiver: { address: "   " },
         signerWalletAddress: "0xsigner",
       })
     ).rejects.toMatchObject({
@@ -209,7 +256,7 @@ Nonce: 23`);
         profileId: "p1",
         poolId: "aaaaa-aa",
         amount: 10_000n,
-        receiverAddress: VALID_BTC_OUTFLOW_ADDRESS,
+        receiver: { address: VALID_BTC_OUTFLOW_ADDRESS },
         signerWalletAddress: "  ",
       })
     ).rejects.toMatchObject({
@@ -221,7 +268,7 @@ Nonce: 23`);
         profileId: "p1",
         poolId: "aaaaa-aa",
         amount: 0n,
-        receiverAddress: VALID_BTC_OUTFLOW_ADDRESS,
+        receiver: { address: VALID_BTC_OUTFLOW_ADDRESS },
         signerWalletAddress: "0xsigner",
       })
     ).rejects.toMatchObject({
@@ -244,7 +291,7 @@ Nonce: 23`);
       profileId: "aaaaa-aa",
       poolId: BTC_POOL_ID,
       amount: 4_999n,
-      receiverAddress: VALID_BTC_OUTFLOW_ADDRESS,
+      receiver: { address: VALID_BTC_OUTFLOW_ADDRESS },
       signerWalletAddress: "0xsigner",
     });
 
@@ -270,7 +317,7 @@ Nonce: 23`);
       profileId: "aaaaa-aa",
       poolId: BTC_POOL_ID,
       amount: 5_000n,
-      receiverAddress: VALID_BTC_OUTFLOW_ADDRESS,
+      receiver: { address: VALID_BTC_OUTFLOW_ADDRESS },
       signerWalletAddress: "0xsigner",
     });
 
@@ -293,7 +340,7 @@ Nonce: 23`);
       profileId: "aaaaa-aa",
       poolId: USDT_POOL_ID,
       amount: 999_999n,
-      receiverAddress: LOWERCASE_EVM_OUTFLOW_ADDRESS,
+      receiver: { address: LOWERCASE_EVM_OUTFLOW_ADDRESS },
       signerWalletAddress: "0xsigner",
     });
 
@@ -319,7 +366,7 @@ Nonce: 23`);
       profileId: "aaaaa-aa",
       poolId: USDT_POOL_ID,
       amount: 1_000_000n,
-      receiverAddress: LOWERCASE_EVM_OUTFLOW_ADDRESS,
+      receiver: { address: LOWERCASE_EVM_OUTFLOW_ADDRESS },
       signerWalletAddress: "0xsigner",
     });
 
@@ -342,7 +389,7 @@ Nonce: 23`);
       profileId: "aaaaa-aa",
       poolId: USDT_POOL_ID,
       amount: 1_000_000n,
-      receiverAddress: "not-an-evm-address",
+      receiver: { address: "not-an-evm-address" },
       signerWalletAddress: "0xsigner",
     });
 

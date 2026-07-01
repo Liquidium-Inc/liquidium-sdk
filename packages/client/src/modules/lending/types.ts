@@ -1,3 +1,4 @@
+import type { IcrcAccount } from "../../core/accounts";
 import type { LiquidiumOperation, LiquidiumStatus } from "../../core/status";
 import type {
   Asset,
@@ -8,12 +9,36 @@ import type {
   SupplyAction,
 } from "../../core/types";
 import type {
+  IcrcTransferDetails,
+  SendIcrcTransferRequest,
   SignatureInfo,
   SignMessageWalletAction,
+  TransferMode,
   WalletActionKind,
   WalletAdapter,
   WalletExecutionKind,
 } from "../../core/wallet-actions";
+
+export type { IcrcAccount, IcrcTransferDetails, SendIcrcTransferRequest };
+
+/** Account type hint for borrow and withdraw outflow destinations. */
+export const OutflowAccountType = {
+  AccountIdentifier: "AccountIdentifier",
+  External: "External",
+  Icrc: "Icrc",
+  Native: "Native",
+} as const;
+/** Account type hint for borrow and withdraw outflow destinations. */
+export type OutflowAccountType =
+  (typeof OutflowAccountType)[keyof typeof OutflowAccountType];
+
+/** Borrow or withdraw destination, with optional protocol account type hint. */
+export interface OutflowDestination {
+  /** Destination address, principal, ICRC account, or ICP account identifier. */
+  address: string;
+  /** Optional account type hint. When omitted, the SDK auto-detects the type. */
+  type?: OutflowAccountType;
+}
 
 /** Wallet execution dependencies for borrow and withdraw convenience methods. */
 export interface WalletExecutionParams {
@@ -136,8 +161,8 @@ export interface CreateBorrowRequest {
   poolId: string;
   /** Amount to borrow in the borrow asset's base units. */
   amount: bigint;
-  /** External-chain address that receives the borrowed asset. Must match the borrow pool chain. */
-  receiverAddress: string;
+  /** Destination that receives the borrowed asset. */
+  receiver: OutflowDestination;
   /** Wallet address that signs the borrow authorization. */
   signerWalletAddress: string;
 }
@@ -170,8 +195,8 @@ export interface CreateWithdrawRequest {
    * at least 5,000 sats. USDC and USDT withdrawals require at least 1 token.
    */
   amount: bigint;
-  /** External-chain address that receives the withdrawn asset. Must match the pool chain. */
-  receiverAddress: string;
+  /** Destination that receives the withdrawn asset. */
+  receiver: OutflowDestination;
   /** Wallet address that signs the withdraw authorization. */
   signerWalletAddress: string;
 }
@@ -230,21 +255,45 @@ export interface IcrcAccountSupplyTarget {
   chain: MarketChain;
   /** Deposit or repayment action for the inflow. */
   action: SupplyAction;
-  /** ICRC account owner principal text. */
-  owner: string;
-  /** ICRC subaccount bytes. */
-  subaccount: Uint8Array;
-  /** Text-encoded ICRC account. */
-  account: string;
+  /** ICRC account receiving the transfer. */
+  account: IcrcAccount;
+}
+
+/** ICP ledger target with both ICRC and legacy account identifier formats. */
+export interface IcpLedgerAccount {
+  /** ICRC ledger account. */
+  icrc: IcrcAccount;
+  /** Legacy ICP ledger account identifier text. */
+  accountIdentifier: string;
+}
+
+/** ICP ledger account target for manual or wallet-executed transfers. */
+export interface IcpLedgerSupplyTarget {
+  /** Target discriminator. */
+  type: "icpLedgerAccount";
+  /** Pool principal text receiving the inflow. */
+  poolId: string;
+  /** ICP asset discriminator. */
+  asset: typeof Asset.ICP;
+  /** ICP chain discriminator. */
+  chain: typeof Chain.ICP;
+  /** Deposit or repayment action for the inflow. */
+  action: SupplyAction;
+  /** ICP ledger account formats for the same target. */
+  account: IcpLedgerAccount;
 }
 
 /** Supply destination returned by `lending.supply(...)`. */
-export type SupplyTarget = NativeAddressSupplyTarget | IcrcAccountSupplyTarget;
+export type SupplyTarget =
+  | NativeAddressSupplyTarget
+  | IcrcAccountSupplyTarget
+  | IcpLedgerSupplyTarget;
 
 interface BaseSupplyFlowRequest {
   profileId: string;
   poolId: string;
   action: SupplyAction;
+  transferMode?: TransferMode;
 }
 
 /** Manual transfer-based `lending.supply` request. */
@@ -266,7 +315,7 @@ export interface WalletTransferSupplyFlowRequest extends BaseSupplyFlowRequest {
   /** Wallet adapter used to broadcast the transfer. */
   walletAdapter: Pick<
     WalletAdapter,
-    "sendBtcTransaction" | "sendEthTransaction"
+    "sendBtcTransaction" | "sendEthTransaction" | "sendIcrcTransfer"
   >;
   /** Sender wallet account. */
   account: string;
@@ -358,6 +407,10 @@ export interface EstimateInflowFeeRequest {
   asset: Asset;
   /** Chain to estimate for. */
   chain: Chain;
+  /** Asset transfer path to estimate. Defaults preserve existing native flows. */
+  transferMode?: TransferMode;
+  /** Supply mechanism to estimate when callers need to disambiguate. */
+  mechanism?: SupplyPlanType;
 }
 
 /** Request for an ETH stablecoin deposit address. */

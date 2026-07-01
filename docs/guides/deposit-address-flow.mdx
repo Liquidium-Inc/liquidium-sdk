@@ -27,11 +27,99 @@ const supplyFlow = await client.lending.supply({
   action: "deposit",
 });
 
-if (supplyFlow.target.type === "nativeAddress") {
-  console.log("Send funds to", supplyFlow.target.address);
-} else {
-  console.log("Send funds to", supplyFlow.target.account);
+switch (supplyFlow.target.type) {
+  case "nativeAddress":
+    console.log("Send funds to", supplyFlow.target.address);
+    break;
+  case "icrcAccount":
+    console.log("Send ck funds to", supplyFlow.target.account.address);
+    break;
+  case "icpLedgerAccount":
+    console.log("Send ICP to", supplyFlow.target.account.icrc.address);
+    console.log("Legacy ICP account id", supplyFlow.target.account.accountIdentifier);
+    break;
 }
 ```
 
 When the flow needs a transaction ID, call `supplyFlow.submit(...)` after the user broadcasts the transfer.
+
+## ck Transfers
+
+Liquidium pool canisters already use ck ledgers for external-chain assets. The SDK keeps public symbols such as `USDC` and `USDT`, but direct IC transfers go to ckUSDC and ckUSDT ledger accounts.
+
+Default transfer targets preserve the native ingress paths: BTC returns a BTC address and USDC/USDT on ETH return an EVM deposit address. Request ck transfer mode to get the pool-owned ICRC account directly:
+
+```ts
+const ckSupplyFlow = await client.lending.supply({
+  profileId,
+  poolId,
+  action: "deposit",
+  transferMode: "ck",
+});
+
+if (ckSupplyFlow.target.type !== "icrcAccount") {
+  throw new Error("Expected ck transfer target");
+}
+
+console.log(ckSupplyFlow.target.account.address);
+```
+
+For wallet-executed ck transfers, implement `sendIcrcTransfer` on your wallet adapter:
+
+```ts
+const ckWalletFlow = await client.lending.supply({
+  profileId,
+  poolId,
+  action: "repayment",
+  transferMode: "ck",
+  amount: 1_000_000n,
+  account: "wallet-account-id",
+  walletAdapter: {
+    async sendIcrcTransfer(request) {
+      return await sendLedgerTransfer(request.transfer);
+    },
+  },
+});
+
+console.log(ckWalletFlow.txid);
+```
+
+The returned `txid` is an IC ledger transaction reference, usually a block index string.
+
+## ICP Transfers
+
+ICP pools return an ICP ledger target without setting `transferMode`:
+
+```ts
+const icpSupplyFlow = await client.lending.supply({
+  profileId,
+  poolId,
+  action: "deposit",
+});
+
+if (icpSupplyFlow.target.type === "icpLedgerAccount") {
+  console.log(icpSupplyFlow.target.account.icrc.address);
+  console.log(icpSupplyFlow.target.account.accountIdentifier);
+}
+```
+
+Wallet-executed ICP supply uses the same `sendIcrcTransfer` adapter method with `transferMode: "native"` in the adapter request.
+
+## Borrow Or Withdraw To IC Accounts
+
+Use `receiver` for borrow and withdraw destinations. The SDK auto-detects account identifiers, ICRC accounts, principals, and external addresses, or you can provide a type hint:
+
+```ts
+await client.lending.borrow({
+  profileId,
+  poolId,
+  amount: 100_000n,
+  receiver: {
+    address: "aaaaa-aa",
+    type: "Native",
+  },
+  signerWalletAddress,
+  signerChain: "ETH",
+  signerWalletAdapter,
+});
+```

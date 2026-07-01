@@ -18,11 +18,15 @@ export type {
   LiquidiumStatus,
 } from "./core/status";
 export type {
+  CanisterIdOverrides,
   CanisterIds,
+  CkCanisterIds,
+  CkLedgerFamilyCanisterIds,
   EvmReadClient,
   LiquidiumClientConfig,
   MarketAsset,
   MarketChain,
+  PoolCanisterIds,
   Wallet,
 } from "./core/types";
 export {
@@ -34,8 +38,10 @@ export {
 } from "./core/types";
 export type {
   EthTransactionRequest,
+  IcrcTransferDetails,
   SendBtcTransactionRequest,
   SendEthTransactionRequest,
+  SendIcrcTransferRequest,
   SignMessageRequest,
   SignMessageWalletAction,
   WalletAction,
@@ -103,7 +109,6 @@ export type {
   AccountIdentifierAccount,
   CreateInstantLoanRequest,
   ExternalAccount,
-  IcrcAccount,
   InstantLoan,
   InstantLoanAccount,
   InstantLoanAsset,
@@ -158,6 +163,9 @@ export type {
   ExternalOutflowReceiver,
   GetDepositAddressRequest,
   GetEvmSupplyContextRequest,
+  IcpLedgerAccount,
+  IcpLedgerSupplyTarget,
+  IcrcAccount,
   IcrcAccountSupplyTarget,
   IcrcOutflowReceiver,
   InflowFeeEstimate,
@@ -165,6 +173,7 @@ export type {
   ManualTransferSupplyFlowRequest,
   NativeAddressSupplyTarget,
   NativeOutflowReceiver,
+  OutflowDestination,
   OutflowDetails,
   OutflowReceiver,
   SubmitInflowRequest,
@@ -184,6 +193,7 @@ export {
   createTransferErc20Transaction,
   EvmSupplyApprovalStrategy,
   LendingModule,
+  OutflowAccountType,
   SupplyPlanType,
 } from "./modules/lending";
 export type {

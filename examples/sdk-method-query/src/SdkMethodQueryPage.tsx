@@ -8,9 +8,11 @@ import type {
   ExternalAccount,
   InflowOperation,
   LiquidiumClient,
+  OutflowDestination,
   Pool,
   QuoteRequest,
   SupplyPlanType,
+  TransferMode,
   WalletAdapter,
 } from "@liquidium/client";
 import { useMemo, useState } from "react";
@@ -420,17 +422,14 @@ const SDK_METHODS: MethodDefinition[] = [
     id: "lending.prepareWithdraw",
     label: "lending.prepareWithdraw",
     defaultArgs:
-      '{\n  "profileId": "aaaaa-aa",\n  "poolId": "bbbbb-bb",\n  "amount": "10000",\n  "receiverAddress": "bc1...",\n  "signerWalletAddress": "bc1..."\n}',
+      '{\n  "profileId": "aaaaa-aa",\n  "poolId": "bbbbb-bb",\n  "amount": "10000",\n  "receiver": {\n    "address": "bc1..."\n  },\n  "signerWalletAddress": "bc1..."\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
       return await client.lending.prepareWithdraw({
         profileId: expectNonEmptyString(args.profileId, "profileId"),
         poolId: expectNonEmptyString(args.poolId, "poolId"),
         amount: expectBigInt(args.amount, "amount"),
-        receiverAddress: expectNonEmptyString(
-          args.receiverAddress,
-          "receiverAddress"
-        ),
+        receiver: expectReceiver(args.receiver, "receiver"),
         signerWalletAddress: expectNonEmptyString(
           args.signerWalletAddress,
           "signerWalletAddress"
@@ -442,17 +441,14 @@ const SDK_METHODS: MethodDefinition[] = [
     id: "lending.withdraw",
     label: "lending.withdraw",
     defaultArgs:
-      '{\n  "profileId": "aaaaa-aa",\n  "poolId": "bbbbb-bb",\n  "amount": "10000",\n  "receiverAddress": "bc1...",\n  "signerWalletAddress": "bc1...",\n  "signerChain": "BTC",\n  "mockSignature": "replace-with-real-signature"\n}',
+      '{\n  "profileId": "aaaaa-aa",\n  "poolId": "bbbbb-bb",\n  "amount": "10000",\n  "receiver": {\n    "address": "bc1..."\n  },\n  "signerWalletAddress": "bc1...",\n  "signerChain": "BTC",\n  "mockSignature": "replace-with-real-signature"\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
       return await client.lending.withdraw({
         profileId: expectNonEmptyString(args.profileId, "profileId"),
         poolId: expectNonEmptyString(args.poolId, "poolId"),
         amount: expectBigInt(args.amount, "amount"),
-        receiverAddress: expectNonEmptyString(
-          args.receiverAddress,
-          "receiverAddress"
-        ),
+        receiver: expectReceiver(args.receiver, "receiver"),
         signerWalletAddress: expectNonEmptyString(
           args.signerWalletAddress,
           "signerWalletAddress"
@@ -468,17 +464,14 @@ const SDK_METHODS: MethodDefinition[] = [
     id: "lending.prepareBorrow",
     label: "lending.prepareBorrow",
     defaultArgs:
-      '{\n  "profileId": "aaaaa-aa",\n  "poolId": "bbbbb-bb",\n  "amount": "10000",\n  "receiverAddress": "bc1...",\n  "signerWalletAddress": "bc1..."\n}',
+      '{\n  "profileId": "aaaaa-aa",\n  "poolId": "bbbbb-bb",\n  "amount": "10000",\n  "receiver": {\n    "address": "bc1..."\n  },\n  "signerWalletAddress": "bc1..."\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
       return await client.lending.prepareBorrow({
         profileId: expectNonEmptyString(args.profileId, "profileId"),
         poolId: expectNonEmptyString(args.poolId, "poolId"),
         amount: expectBigInt(args.amount, "amount"),
-        receiverAddress: expectNonEmptyString(
-          args.receiverAddress,
-          "receiverAddress"
-        ),
+        receiver: expectReceiver(args.receiver, "receiver"),
         signerWalletAddress: expectNonEmptyString(
           args.signerWalletAddress,
           "signerWalletAddress"
@@ -490,17 +483,14 @@ const SDK_METHODS: MethodDefinition[] = [
     id: "lending.borrow",
     label: "lending.borrow",
     defaultArgs:
-      '{\n  "profileId": "aaaaa-aa",\n  "poolId": "bbbbb-bb",\n  "amount": "10000",\n  "receiverAddress": "bc1...",\n  "signerWalletAddress": "bc1...",\n  "signerChain": "BTC",\n  "mockSignature": "replace-with-real-signature"\n}',
+      '{\n  "profileId": "aaaaa-aa",\n  "poolId": "bbbbb-bb",\n  "amount": "10000",\n  "receiver": {\n    "address": "bc1..."\n  },\n  "signerWalletAddress": "bc1...",\n  "signerChain": "BTC",\n  "mockSignature": "replace-with-real-signature"\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
       return await client.lending.borrow({
         profileId: expectNonEmptyString(args.profileId, "profileId"),
         poolId: expectNonEmptyString(args.poolId, "poolId"),
         amount: expectBigInt(args.amount, "amount"),
-        receiverAddress: expectNonEmptyString(
-          args.receiverAddress,
-          "receiverAddress"
-        ),
+        receiver: expectReceiver(args.receiver, "receiver"),
         signerWalletAddress: expectNonEmptyString(
           args.signerWalletAddress,
           "signerWalletAddress"
@@ -535,6 +525,10 @@ const SDK_METHODS: MethodDefinition[] = [
         args.mechanism,
         "mechanism"
       );
+      const transferMode = expectOptionalTransferMode(
+        args.transferMode,
+        "transferMode"
+      );
 
       if (mechanism === "contractInteraction") {
         return await client.lending.supply({
@@ -557,6 +551,7 @@ const SDK_METHODS: MethodDefinition[] = [
           poolId: expectNonEmptyString(args.poolId, "poolId"),
           action: expectSupplyAction(args.action, "action"),
           mechanism: "transfer",
+          transferMode,
           account: expectNonEmptyString(args.account, "account"),
           amount: expectBigInt(args.amount, "amount"),
           walletAdapter,
@@ -568,6 +563,7 @@ const SDK_METHODS: MethodDefinition[] = [
         poolId: expectNonEmptyString(args.poolId, "poolId"),
         action: expectSupplyAction(args.action, "action"),
         mechanism: "transfer",
+        transferMode,
       });
     },
   },
@@ -580,6 +576,11 @@ const SDK_METHODS: MethodDefinition[] = [
       return await client.lending.estimateInflowFee({
         asset: expectAsset(args.asset, "asset"),
         chain: expectChain(args.chain, "chain"),
+        transferMode: expectOptionalTransferMode(
+          args.transferMode,
+          "transferMode"
+        ),
+        mechanism: expectOptionalSupplyMechanism(args.mechanism, "mechanism"),
       });
     },
   },
@@ -719,8 +720,15 @@ export function SdkMethodQueryPage({
         nextArgs.newWalletAddress = walletAddress;
       }
 
-      if ("receiverAddress" in nextArgs) {
-        nextArgs.receiverAddress = walletAddress;
+      if (
+        "receiver" in nextArgs &&
+        nextArgs.receiver !== null &&
+        typeof nextArgs.receiver === "object"
+      ) {
+        nextArgs.receiver = {
+          ...nextArgs.receiver,
+          address: walletAddress,
+        };
       }
 
       if ("borrowDestination" in nextArgs) {
@@ -888,6 +896,7 @@ function createMockWalletAdapter(
     signMessage: async () => signature,
     sendBtcTransaction: async () => txHash,
     sendEthTransaction: async () => txHash,
+    sendIcrcTransfer: async () => txHash,
   };
 }
 
@@ -1032,24 +1041,70 @@ function expectOptionalLimit(
   return value;
 }
 
-function expectChain(value: unknown, fieldName: string): "BTC" | "ETH" {
+function expectChain(value: unknown, fieldName: string): Chain {
   const chain = expectNonEmptyString(value, fieldName).toUpperCase();
 
-  if (chain === "BTC" || chain === "ETH") {
+  if (chain === "BTC" || chain === "ETH" || chain === "ICP") {
     return chain;
   }
 
-  throw new Error(`${fieldName} must be BTC or ETH.`);
+  throw new Error(`${fieldName} must be BTC, ETH, or ICP.`);
 }
 
 function expectAsset(value: unknown, fieldName: string): Asset {
   const asset = expectNonEmptyString(value, fieldName).toUpperCase();
 
-  if (asset === "BTC" || asset === "USDC" || asset === "USDT") {
+  if (
+    asset === "BTC" ||
+    asset === "ICP" ||
+    asset === "USDC" ||
+    asset === "USDT"
+  ) {
     return asset;
   }
 
-  throw new Error(`${fieldName} must be BTC, USDC, or USDT.`);
+  throw new Error(`${fieldName} must be BTC, ICP, USDC, or USDT.`);
+}
+
+function expectReceiver(value: unknown, fieldName: string): OutflowDestination {
+  const receiver = expectObject(value, fieldName);
+  const address = expectNonEmptyString(
+    receiver.address,
+    `${fieldName}.address`
+  );
+  const type =
+    receiver.type === undefined
+      ? undefined
+      : expectOutflowAccountType(receiver.type, `${fieldName}.type`);
+
+  if (!type) {
+    return { address };
+  }
+
+  return {
+    address,
+    type,
+  };
+}
+
+function expectOutflowAccountType(
+  value: unknown,
+  fieldName: string
+): OutflowDestination["type"] {
+  const accountType = expectNonEmptyString(value, fieldName);
+
+  if (
+    accountType === "AccountIdentifier" ||
+    accountType === "External" ||
+    accountType === "Icrc" ||
+    accountType === "Native"
+  ) {
+    return accountType;
+  }
+
+  throw new Error(
+    `${fieldName} must be AccountIdentifier, External, Icrc, or Native.`
+  );
 }
 
 function expectInstantLoanAsset(
@@ -1132,6 +1187,22 @@ function expectOptionalSupplyMechanism(
   }
 
   throw new Error(`${fieldName} must be transfer or contractInteraction.`);
+}
+
+function expectOptionalTransferMode(
+  value: unknown,
+  fieldName: string
+): TransferMode | undefined {
+  const transferMode = expectOptionalString(value, fieldName);
+  if (!transferMode) {
+    return undefined;
+  }
+
+  if (transferMode === "native" || transferMode === "ck") {
+    return transferMode;
+  }
+
+  throw new Error(`${fieldName} must be native or ck.`);
 }
 
 function expectInflowOperation(

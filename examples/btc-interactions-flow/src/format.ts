@@ -122,11 +122,22 @@ export function formatSupplyTarget(target: SupplyTarget): string {
     ].join("\n");
   }
 
+  if (target.type === "icrcAccount") {
+    return [
+      `Target type: ${target.type}`,
+      `Account: ${target.account.address}`,
+      `Owner: ${target.account.owner}`,
+      `Subaccount: ${formatBytes(target.account.subaccount)}`,
+      `Action: ${target.action}`,
+    ].join("\n");
+  }
+
   return [
     `Target type: ${target.type}`,
-    `Account: ${target.account}`,
-    `Owner: ${target.owner}`,
-    `Subaccount: ${formatBytes(target.subaccount)}`,
+    `Account: ${target.account.icrc.address}`,
+    `Legacy account identifier: ${target.account.accountIdentifier}`,
+    `Owner: ${target.account.icrc.owner}`,
+    `Subaccount: ${formatBytes(target.account.icrc.subaccount)}`,
     `Action: ${target.action}`,
   ].join("\n");
 }
@@ -284,7 +295,11 @@ function stringifyForDisplay(value: unknown): string {
   );
 }
 
-function formatBytes(bytes: Uint8Array): string {
+function formatBytes(bytes: Uint8Array | undefined): string {
+  if (!bytes) {
+    return "not set";
+  }
+
   return Array.from(bytes)
     .map((byte) => byte.toString(16).padStart(2, "0"))
     .join("");

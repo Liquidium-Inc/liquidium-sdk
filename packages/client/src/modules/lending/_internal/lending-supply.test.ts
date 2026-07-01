@@ -1,3 +1,4 @@
+import { encodeIcrcAccount } from "@icp-sdk/canisters/ledger/icrc";
 import { Actor } from "@icp-sdk/core/agent";
 import { Principal } from "@icp-sdk/core/principal";
 import { decodeFunctionData } from "viem";
@@ -7,8 +8,12 @@ import { encodeInflowSubaccount } from "../../../core/utils/inflow-subaccount";
 import { LiquidiumClient, LiquidiumErrorCode } from "../../../index";
 import {
   BTC_POOL_ID,
+  createBtcPoolRecord,
+  createIcpPoolRecord,
+  createUsdcPoolRecord,
   encodeBytes32Hex,
   encodePrincipalToBytes32,
+  ICP_POOL_ID,
   LONG_RETRY_TEST_TIMEOUT_MS,
   mockUsdtPoolList,
   USDC_POOL_ID,
@@ -253,6 +258,129 @@ describe("LendingModule supply", () => {
     ]);
   });
 
+  test("returns a ckBTC ICRC account target when ck transfer mode is requested", async () => {
+    // given
+    const profileId = "aaaaa-aa";
+    const expectedSubaccount = encodeInflowSubaccount({
+      action: "deposit",
+      principal: Principal.fromText(profileId),
+    });
+    vi.spyOn(Actor, "createActor").mockReturnValueOnce({
+      list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord()]),
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const supplyFlow = await client.lending.supply({
+      profileId,
+      poolId: BTC_POOL_ID,
+      action: "deposit",
+      transferMode: "ck",
+    });
+
+    // then
+    expect(supplyFlow.target).toEqual({
+      type: "icrcAccount",
+      poolId: BTC_POOL_ID,
+      asset: "BTC",
+      chain: "BTC",
+      action: "deposit",
+      account: {
+        type: "Icrc",
+        owner: BTC_POOL_ID,
+        subaccount: expectedSubaccount,
+        address: encodeIcrcAccount({
+          owner: Principal.fromText(BTC_POOL_ID),
+          subaccount: expectedSubaccount,
+        }),
+      },
+    });
+  });
+
+  test("returns a ckUSDC ICRC account target when ck transfer mode is requested", async () => {
+    // given
+    const profileId = "aaaaa-aa";
+    const expectedSubaccount = encodeInflowSubaccount({
+      action: "repayment",
+      principal: Principal.fromText(profileId),
+    });
+    vi.spyOn(Actor, "createActor").mockReturnValueOnce({
+      list_pools: vi.fn().mockResolvedValue([createUsdcPoolRecord()]),
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const supplyFlow = await client.lending.supply({
+      profileId,
+      poolId: USDC_POOL_ID,
+      action: "repayment",
+      transferMode: "ck",
+    });
+
+    // then
+    expect(supplyFlow.target).toEqual({
+      type: "icrcAccount",
+      poolId: USDC_POOL_ID,
+      asset: "USDC",
+      chain: "ETH",
+      action: "repayment",
+      account: {
+        type: "Icrc",
+        owner: USDC_POOL_ID,
+        subaccount: expectedSubaccount,
+        address: encodeIcrcAccount({
+          owner: Principal.fromText(USDC_POOL_ID),
+          subaccount: expectedSubaccount,
+        }),
+      },
+    });
+  });
+
+  test("returns an ICP ledger target with ICRC and account identifier formats", async () => {
+    // given
+    const profileId = "aaaaa-aa";
+    const expectedSubaccount = encodeInflowSubaccount({
+      action: "deposit",
+      principal: Principal.fromText(profileId),
+    });
+    vi.spyOn(Actor, "createActor").mockReturnValueOnce({
+      list_pools: vi.fn().mockResolvedValue([createIcpPoolRecord()]),
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const supplyFlow = await client.lending.supply({
+      profileId,
+      poolId: ICP_POOL_ID,
+      action: "deposit",
+    });
+
+    // then
+    expect(supplyFlow.target).toMatchObject({
+      type: "icpLedgerAccount",
+      poolId: ICP_POOL_ID,
+      asset: "ICP",
+      chain: "ICP",
+      action: "deposit",
+      account: {
+        icrc: {
+          type: "Icrc",
+          owner: ICP_POOL_ID,
+          subaccount: expectedSubaccount,
+          address: encodeIcrcAccount({
+            owner: Principal.fromText(ICP_POOL_ID),
+            subaccount: expectedSubaccount,
+          }),
+        },
+      },
+    });
+    expect(
+      supplyFlow.target.type === "icpLedgerAccount"
+        ? supplyFlow.target.account.accountIdentifier
+        : ""
+    ).toMatch(/^[0-9a-f]{64}$/);
+  });
+
   test("should not submit eth stablecoin transfer txids through the inflow endpoint", async () => {
     // given
     const profileId = "aaaaa-aa";
@@ -316,7 +444,7 @@ describe("LendingModule supply", () => {
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
-  test("rejects supply when the selected pool asset is unsupported", async () => {
+  test("rejects supply when the selected asset and chain pair is unsupported", async () => {
     // given
     vi.spyOn(Actor, "createActor").mockReturnValue({
       list_pools: vi.fn().mockResolvedValue([
@@ -361,8 +489,8 @@ describe("LendingModule supply", () => {
         action: "deposit",
       })
     ).rejects.toMatchObject({
-      code: LiquidiumErrorCode.POOL_NOT_FOUND,
-      message: `Pool not found: ${USDT_POOL_ID}`,
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message: "No supply mechanism is configured for ICP on ETH",
     });
   });
 
@@ -967,6 +1095,89 @@ describe("LendingModule supply", () => {
         }),
       })
     );
+  });
+
+  test("executes ckUSDC supply with an ICRC wallet transfer", async () => {
+    // given
+    const txid = "42";
+    vi.spyOn(Actor, "createActor").mockReturnValueOnce({
+      list_pools: vi.fn().mockResolvedValue([createUsdcPoolRecord()]),
+    } as never);
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    const sendIcrcTransfer = vi.fn().mockResolvedValue(txid);
+    const client = new LiquidiumClient({});
+
+    // when
+    const flow = await client.lending.supply({
+      profileId: "aaaaa-aa",
+      poolId: USDC_POOL_ID,
+      action: "repayment",
+      transferMode: "ck",
+      amount: 1_000_000n,
+      account: "icrc-sender",
+      walletAdapter: {
+        sendIcrcTransfer,
+      },
+    });
+
+    // then
+    expect(flow.txid).toBe(txid);
+    expect(sendIcrcTransfer).toHaveBeenCalledWith({
+      chain: "ETH",
+      asset: "USDC",
+      account: "icrc-sender",
+      actionType: "supply-repayment",
+      transferMode: "ck",
+      transfer: {
+        ledgerCanisterId: "xevnm-gaaaa-aaaar-qafnq-cai",
+        to:
+          flow.target.type === "icrcAccount" ? flow.target.account : undefined,
+        amount: 1_000_000n,
+      },
+    });
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  test("executes ICP supply with an ICRC wallet transfer in native transfer mode", async () => {
+    // given
+    const txid = "123";
+    vi.spyOn(Actor, "createActor").mockReturnValueOnce({
+      list_pools: vi.fn().mockResolvedValue([createIcpPoolRecord()]),
+    } as never);
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    const sendIcrcTransfer = vi.fn().mockResolvedValue(txid);
+    const client = new LiquidiumClient({});
+
+    // when
+    const flow = await client.lending.supply({
+      profileId: "aaaaa-aa",
+      poolId: ICP_POOL_ID,
+      action: "deposit",
+      amount: 100_000_000n,
+      account: "icp-sender",
+      walletAdapter: {
+        sendIcrcTransfer,
+      },
+    });
+
+    // then
+    expect(flow.txid).toBe(txid);
+    expect(sendIcrcTransfer).toHaveBeenCalledWith({
+      chain: "ICP",
+      asset: "ICP",
+      account: "icp-sender",
+      actionType: "supply-deposit",
+      transferMode: "native",
+      transfer: {
+        ledgerCanisterId: "ryjl3-tyaaa-aaaaa-aaaba-cai",
+        to:
+          flow.target.type === "icpLedgerAccount"
+            ? flow.target.account.icrc
+            : undefined,
+        amount: 100_000_000n,
+      },
+    });
+    expect(fetchSpy).not.toHaveBeenCalled();
   });
 
   test("retries BTC inflow submission when the API temporarily fails", async () => {

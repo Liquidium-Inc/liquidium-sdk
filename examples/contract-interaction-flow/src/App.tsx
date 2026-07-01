@@ -272,7 +272,7 @@ function ContractInteractionPage() {
       borrowAmount,
       selectedBorrowPool.decimals
     );
-    const receiverAddress = borrowDestination.trim();
+    const destinationAddress = borrowDestination.trim();
     const signerWalletAddress = getConnectedWalletAddress(primaryWallet);
     const trimmedProfileId = profileId.trim();
 
@@ -280,7 +280,7 @@ function ContractInteractionPage() {
       throw new Error("Enter a profile id.");
     }
 
-    if (!receiverAddress) {
+    if (!destinationAddress) {
       throw new Error("Enter a borrow destination address.");
     }
 
@@ -291,7 +291,7 @@ function ContractInteractionPage() {
       profileId: trimmedProfileId,
       poolId: selectedBorrowPool.id,
       amount,
-      receiverAddress,
+      receiver: { address: destinationAddress },
       signerWalletAddress,
       signerWalletAdapter: createDynamicWalletAdapter(primaryWallet),
     });
@@ -310,7 +310,7 @@ function ContractInteractionPage() {
       withdrawAmount,
       selectedWithdrawPool.decimals
     );
-    const receiverAddress = withdrawDestination.trim();
+    const destinationAddress = withdrawDestination.trim();
     const signerWalletAddress = getConnectedWalletAddress(primaryWallet);
     const trimmedProfileId = profileId.trim();
 
@@ -318,7 +318,7 @@ function ContractInteractionPage() {
       throw new Error("Enter a profile id.");
     }
 
-    if (!receiverAddress) {
+    if (!destinationAddress) {
       throw new Error("Enter a withdraw destination address.");
     }
 
@@ -329,7 +329,7 @@ function ContractInteractionPage() {
       profileId: trimmedProfileId,
       poolId: selectedWithdrawPool.id,
       amount,
-      receiverAddress,
+      receiver: { address: destinationAddress },
       signerWalletAddress,
       signerWalletAdapter: createDynamicWalletAdapter(primaryWallet),
     });

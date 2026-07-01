@@ -118,6 +118,48 @@ describe("LendingModule inflow", () => {
     expect(getDepositFee).toHaveBeenCalledWith();
     expect(icrc1Fee).toHaveBeenCalledWith();
   });
+
+  test("estimates ckUSDC inflow fee from the ledger without deposit-fee rounding", async () => {
+    // given
+    const CKUSDC_LEDGER_FEE = 10_000n;
+    const icrc1Fee = vi.fn().mockResolvedValue(CKUSDC_LEDGER_FEE);
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      icrc1_fee: icrc1Fee,
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const estimate = await client.lending.estimateInflowFee({
+      asset: "USDC",
+      chain: "ETH",
+      transferMode: "ck",
+    });
+
+    // then
+    expect(estimate.totalFee).toBe(CKUSDC_LEDGER_FEE);
+    expect(icrc1Fee).toHaveBeenCalledWith();
+  });
+
+  test("estimates ICP inflow fee from the ICP ledger", async () => {
+    // given
+    const ICP_LEDGER_FEE_E8S = 10_000n;
+    const icrc1Fee = vi.fn().mockResolvedValue(ICP_LEDGER_FEE_E8S);
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      icrc1_fee: icrc1Fee,
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const estimate = await client.lending.estimateInflowFee({
+      asset: "ICP",
+      chain: "ICP",
+    });
+
+    // then
+    expect(estimate.totalFee).toBe(ICP_LEDGER_FEE_E8S);
+    expect(icrc1Fee).toHaveBeenCalledWith();
+  });
+
   test("uses default prod API base URL for inflow submission without apiBaseUrl", async () => {
     // given
     const TXID = "abc";

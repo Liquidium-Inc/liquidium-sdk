@@ -5,6 +5,7 @@ import type {
   AssetPrices,
   Pool,
   SupplyFlow,
+  TransferMode,
 } from "@liquidium/client";
 import { Chain } from "@liquidium/client";
 import { useEffect, useState } from "react";
@@ -36,6 +37,7 @@ import {
 
 const DEFAULT_SUPPLY_ASSET = "USDC";
 const DEFAULT_BORROW_ASSET = "USDC";
+const DEFAULT_SUPPLY_TRANSFER_MODE: TransferMode = "native";
 
 export function App() {
   const isStatusPage = window.location.pathname.endsWith("/status.html");
@@ -49,6 +51,9 @@ function SupplyBorrowPage() {
   const [assetPrices, setAssetPrices] = useState<AssetPrices>({});
   const [profileId, setProfileId] = useState("");
   const [selectedSupplyPoolId, setSelectedSupplyPoolId] = useState("");
+  const [supplyTransferMode, setSupplyTransferMode] = useState<TransferMode>(
+    DEFAULT_SUPPLY_TRANSFER_MODE
+  );
   const [selectedBorrowPoolId, setSelectedBorrowPoolId] = useState("");
   const [supplyAmount, setSupplyAmount] = useState("10");
   const [supplyTxid, setSupplyTxid] = useState("");
@@ -56,10 +61,10 @@ function SupplyBorrowPage() {
     null
   );
   const [supplyResult, setSupplyResult] = useState(
-    "No deposit address loaded yet."
+    "No supply target loaded yet."
   );
   const [submitSupplyResult, setSubmitSupplyResult] = useState(
-    "Generate a deposit address first, then track the txid."
+    "Generate a supply target first, then track the txid."
   );
   const [borrowAmount, setBorrowAmount] = useState("9");
   const [borrowDestination, setBorrowDestination] = useState("");
@@ -148,39 +153,44 @@ function SupplyBorrowPage() {
       throw new Error("Enter a profile id.");
     }
 
-    setStatus("Generating deposit address...");
-    setSupplyResult("Generating deposit address...");
+    setStatus("Generating supply target...");
+    setSupplyResult("Generating supply target...");
 
     const supplyFlow = await createDepositAddressSupply({
       profileId: trimmedProfileId,
       poolId: selectedSupplyPool.id,
+      transferMode: supplyTransferMode,
     });
 
     setCurrentSupplyFlow(supplyFlow);
     setSupplyResult(
       [
         `Send amount: ${formatAmount(parsedSupplyAmount, selectedSupplyPool.decimals)} ${selectedSupplyPool.asset}`,
+        `Transfer mode: ${formatTransferMode(supplyTransferMode)}`,
         "",
         formatSupplyTarget(supplyFlow.target),
         "",
         "After broadcasting the transfer, paste the txid below to track it.",
       ].join("\n")
     );
-    setStatus("Deposit address generated.");
+    setStatus("Supply target generated.");
   }
 
   async function submitSupplyTxid(): Promise<void> {
     const txid = supplyTxid.trim();
 
     if (!currentSupplyFlow) {
-      throw new Error("Generate a deposit address first.");
+      throw new Error("Generate a supply target first.");
     }
 
     if (!txid) {
       throw new Error("Enter a txid.");
     }
 
-    if (currentSupplyFlow.target.chain === Chain.ETH) {
+    if (
+      currentSupplyFlow.target.type === "nativeAddress" &&
+      currentSupplyFlow.target.chain === Chain.ETH
+    ) {
       await trackEthSupplyTxid(txid);
       return;
     }
@@ -239,10 +249,10 @@ function SupplyBorrowPage() {
       borrowAmount,
       selectedBorrowPool.decimals
     );
-    const receiverAddress = borrowDestination.trim();
+    const destinationAddress = borrowDestination.trim();
     const signerWalletAddress = getConnectedWalletAddress(primaryWallet);
 
-    if (!receiverAddress) {
+    if (!destinationAddress) {
       throw new Error("Enter a borrow destination address.");
     }
 
@@ -257,7 +267,7 @@ function SupplyBorrowPage() {
       profileId: result.profileId,
       poolId: selectedBorrowPool.id,
       amount: parsedBorrowAmount,
-      receiverAddress,
+      receiver: { address: destinationAddress },
       signerWalletAddress,
       signerWalletAdapter: createDynamicWalletAdapter(primaryWallet),
     });
@@ -279,7 +289,7 @@ function SupplyBorrowPage() {
 
       <h1>Liquidium Deposit Address Flow</h1>
       <p>
-        Create or load a profile, generate a deposit address for supply, then
+        Create or load a profile, generate a native or ck supply target, then
         borrow with a Dynamic-connected wallet.
       </p>
 
@@ -338,7 +348,7 @@ function SupplyBorrowPage() {
       </section>
 
       <section>
-        <h2>Supply By Deposit Address</h2>
+        <h2>Supply Target</h2>
         <label htmlFor="supply-pool-select">Supply pool</label>
         <select
           id="supply-pool-select"
@@ -351,6 +361,22 @@ function SupplyBorrowPage() {
             </option>
           ))}
         </select>
+
+        <label htmlFor="supply-transfer-mode-select">Transfer mode</label>
+        <select
+          id="supply-transfer-mode-select"
+          value={supplyTransferMode}
+          onChange={(event) =>
+            setSupplyTransferMode(event.target.value as TransferMode)
+          }
+        >
+          <option value="native">Native ingress address</option>
+          <option value="ck">Direct ck / ICRC ledger account</option>
+        </select>
+        <p>
+          Choose native for BTC/EVM deposit addresses. Choose ck to get the
+          pool-owned ICRC account for ckBTC, ckUSDC, or ckUSDT transfers.
+        </p>
 
         <label htmlFor="supply-amount-input">
           Supply amount to send manually
@@ -366,7 +392,7 @@ function SupplyBorrowPage() {
           type="button"
           onClick={() => void run(createSupplyTarget, setStatus)}
         >
-          Get Deposit Address
+          Get Supply Target
         </button>
         <div className="result-box">{supplyResult}</div>
 
@@ -617,6 +643,12 @@ function ActivityTrackerPage() {
       </section>
     </main>
   );
+}
+
+function formatTransferMode(transferMode: TransferMode): string {
+  return transferMode === "ck"
+    ? "Direct ck / ICRC ledger account"
+    : "Native ingress address";
 }
 
 async function getOrCreateConnectedWalletProfile(

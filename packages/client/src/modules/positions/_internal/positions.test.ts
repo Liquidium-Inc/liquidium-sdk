@@ -98,6 +98,34 @@ describe("PositionsModule", () => {
     );
   });
 
+  test("returns a mapped ICP position with 8 native decimals", async () => {
+    // given
+    const getPosition = vi.fn().mockResolvedValue([
+      makePositionView({
+        asset: { ICP: null },
+        deposited_native_now: 200_000_000n,
+        debt_native_now: 50_000_000n,
+      }),
+    ]);
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      get_position: getPosition,
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const position = await client.positions.getPosition(PROFILE_ID, POOL_ID);
+
+    // then
+    expect(position).toMatchObject({
+      poolId: POOL_ID,
+      asset: "ICP",
+      deposited: 200_000_000n,
+      depositedDecimals: 8n,
+      borrowed: 50_000_000n,
+      borrowedDecimals: 8n,
+    });
+  });
+
   test("returns null when the canister reports no position", async () => {
     // given
     vi.spyOn(Actor, "createActor").mockReturnValue({

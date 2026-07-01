@@ -10,7 +10,7 @@ export type CkBtcMinterActor = _SERVICE;
 export function createCkBtcMinterActor(
   canisterContext: CanisterContext
 ): CkBtcMinterActor {
-  const canisterId = CK_CANISTER_IDS.btcMinter;
+  const canisterId = CK_CANISTER_IDS.ckBTC.minter;
 
   if (!canisterId) {
     throw new LiquidiumError(

@@ -7,10 +7,13 @@ import {
   BTC_POOL_ID,
   CHECKSUM_EVM_OUTFLOW_ADDRESS,
   createBtcPoolRecord,
+  createIcpPoolRecord,
   createUsdtPoolRecord,
+  ICP_POOL_ID,
   LOWERCASE_EVM_OUTFLOW_ADDRESS,
   USDT_POOL_ID,
   VALID_BTC_OUTFLOW_ADDRESS,
+  VALID_IC_PRINCIPAL,
 } from "./test-fixtures";
 
 afterEach(() => {
@@ -47,7 +50,7 @@ describe("LendingModule borrow", () => {
       profileId,
       poolId,
       amount: 50_000n,
-      receiverAddress: VALID_BTC_OUTFLOW_ADDRESS,
+      receiver: { address: VALID_BTC_OUTFLOW_ADDRESS },
       signerWalletAddress: "0xsigner",
     });
     const outflow = await borrowAction.submit({
@@ -66,7 +69,7 @@ describe("LendingModule borrow", () => {
       profileId,
       poolId,
       amount: 50_000n,
-      receiverAddress: VALID_BTC_OUTFLOW_ADDRESS,
+      receiver: { address: VALID_BTC_OUTFLOW_ADDRESS },
       signerWalletAddress: "0xsigner",
     });
     expect(borrowAction.message).toBe(`Liquidium: Borrow Assets
@@ -115,6 +118,137 @@ Nonce: 17`);
     });
   });
 
+  test("creates a BTC borrow action to an IC principal destination", async () => {
+    // given
+    vi.setSystemTime(new Date("2026-04-01T00:00:00.000Z"));
+    const borrowAssets = vi.fn().mockResolvedValue({
+      Ok: {
+        id: "outflow-principal",
+        txid: [],
+        outflow_type: { Borrow: null },
+        outflow_ref: [],
+        amount: 50_000n,
+        receiver: { Native: Principal.fromText(VALID_IC_PRINCIPAL) },
+      },
+    });
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord()]),
+      get_nonce: vi.fn().mockResolvedValue(17n),
+      borrow_assets: borrowAssets,
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const borrowAction = await client.lending.prepareBorrow({
+      profileId: "aaaaa-aa",
+      poolId: BTC_POOL_ID,
+      amount: 50_000n,
+      receiver: {
+        address: VALID_IC_PRINCIPAL,
+        type: "Native",
+      },
+      signerWalletAddress: "0xsigner",
+    });
+    await borrowAction.submit({ signature: "0xsigned", chain: "ETH" });
+
+    // then
+    expect(borrowAction.transferMode).toBe("ck");
+    expect(borrowAction.message).toContain(`Principal:${VALID_IC_PRINCIPAL}`);
+    expect(borrowAssets.mock.calls[0]?.[1]).toMatchObject({
+      data: {
+        account: { Native: Principal.fromText(VALID_IC_PRINCIPAL) },
+      },
+    });
+  });
+
+  test("creates an ICP borrow action to an ICRC destination", async () => {
+    // given
+    vi.setSystemTime(new Date("2026-04-01T00:00:00.000Z"));
+    const ICRC_SUBACCOUNT = new Uint8Array(32).fill(5);
+    const ICRC_ACCOUNT = encodeIcrcAccount({
+      owner: Principal.fromText(VALID_IC_PRINCIPAL),
+      subaccount: ICRC_SUBACCOUNT,
+    });
+    const borrowAssets = vi.fn().mockResolvedValue({
+      Ok: {
+        id: "outflow-icp-icrc",
+        txid: [],
+        outflow_type: { Borrow: null },
+        outflow_ref: [],
+        amount: 100_000_000n,
+        receiver: {
+          Icrc: {
+            owner: Principal.fromText(VALID_IC_PRINCIPAL),
+            subaccount: [ICRC_SUBACCOUNT],
+          },
+        },
+      },
+    });
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi.fn().mockResolvedValue([createIcpPoolRecord()]),
+      get_nonce: vi.fn().mockResolvedValue(17n),
+      borrow_assets: borrowAssets,
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const borrowAction = await client.lending.prepareBorrow({
+      profileId: "aaaaa-aa",
+      poolId: ICP_POOL_ID,
+      amount: 100_000_000n,
+      receiver: {
+        address: ICRC_ACCOUNT,
+      },
+      signerWalletAddress: "0xsigner",
+    });
+    await borrowAction.submit({ signature: "0xsigned", chain: "ETH" });
+
+    // then
+    expect(borrowAction.transferMode).toBe("native");
+    expect(borrowAction.message).toContain(`Icrc:${ICRC_ACCOUNT}`);
+    expect(borrowAssets.mock.calls[0]?.[1]).toMatchObject({
+      data: {
+        account: {
+          Icrc: {
+            owner: Principal.fromText(VALID_IC_PRINCIPAL),
+            subaccount: [ICRC_SUBACCOUNT],
+          },
+        },
+      },
+    });
+  });
+
+  test("rejects an ICRC destination for an ETH pool before fetching a nonce", async () => {
+    // given
+    const getNonce = vi.fn().mockResolvedValue(17n);
+    const ICRC_ACCOUNT = encodeIcrcAccount({
+      owner: Principal.fromText(VALID_IC_PRINCIPAL),
+    });
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi.fn().mockResolvedValue([createUsdtPoolRecord()]),
+      get_nonce: getNonce,
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const result = client.lending.prepareBorrow({
+      profileId: "aaaaa-aa",
+      poolId: USDT_POOL_ID,
+      amount: 1_000_000n,
+      receiver: {
+        address: ICRC_ACCOUNT,
+      },
+      signerWalletAddress: "0xsigner",
+    });
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message: "Target pool does not support this address type",
+    });
+    expect(getNonce).not.toHaveBeenCalled();
+  });
+
   test("maps an ICRC receiver returned by a lending outflow", async () => {
     // given
     vi.setSystemTime(new Date("2026-04-01T00:00:00.000Z"));
@@ -149,7 +283,7 @@ Nonce: 17`);
       profileId,
       poolId,
       amount: 50_000n,
-      receiverAddress: VALID_BTC_OUTFLOW_ADDRESS,
+      receiver: { address: VALID_BTC_OUTFLOW_ADDRESS },
       signerWalletAddress: "0xsigner",
     });
     const outflow = await borrowAction.submit({
@@ -198,7 +332,7 @@ Nonce: 17`);
       profileId,
       poolId,
       amount: 50_000n,
-      receiverAddress: VALID_BTC_OUTFLOW_ADDRESS,
+      receiver: { address: VALID_BTC_OUTFLOW_ADDRESS },
       signerWalletAddress: "0xsigner",
     });
     const outflow = await borrowAction.submit({
@@ -237,7 +371,7 @@ Nonce: 17`);
       profileId: "aaaaa-aa",
       poolId: BTC_POOL_ID,
       amount: 12_000n,
-      receiverAddress: VALID_BTC_OUTFLOW_ADDRESS,
+      receiver: { address: VALID_BTC_OUTFLOW_ADDRESS },
       signerWalletAddress: "0xsigner",
       signerChain: "ETH",
       signerWalletAdapter: { signMessage },
@@ -284,7 +418,7 @@ Nonce: 17`);
       profileId: "aaaaa-aa",
       poolId: BTC_POOL_ID,
       amount: 12_000n,
-      receiverAddress: VALID_BTC_OUTFLOW_ADDRESS,
+      receiver: { address: VALID_BTC_OUTFLOW_ADDRESS },
       signerWalletAddress: LOWERCASE_SIGNER_ADDRESS,
       signerChain: "ETH",
       signerWalletAdapter: { signMessage },
@@ -333,7 +467,7 @@ Nonce: 17`);
       profileId: "aaaaa-aa",
       poolId: BTC_POOL_ID,
       amount: 12_000n,
-      receiverAddress: VALID_BTC_OUTFLOW_ADDRESS,
+      receiver: { address: VALID_BTC_OUTFLOW_ADDRESS },
       signerWalletAddress: "0xsigner",
       signerChain: "ETH",
       signerWalletAdapter: { signMessage },
@@ -372,7 +506,7 @@ Nonce: 17`);
           profileId: "aaaaa-aa",
           poolId: BTC_POOL_ID,
           amount: 50_000n,
-          receiverAddress: VALID_BTC_OUTFLOW_ADDRESS,
+          receiver: { address: VALID_BTC_OUTFLOW_ADDRESS },
           signerWalletAddress: "bc1qsigner",
         })
         .then((borrowAction) =>
@@ -398,7 +532,7 @@ Nonce: 17`);
         profileId: "p1",
         poolId: "aaaaa-aa",
         amount: 50_000n,
-        receiverAddress: "   ",
+        receiver: { address: "   " },
         signerWalletAddress: "0xsigner",
       })
     ).rejects.toMatchObject({
@@ -410,7 +544,7 @@ Nonce: 17`);
         profileId: "p1",
         poolId: "aaaaa-aa",
         amount: 50_000n,
-        receiverAddress: VALID_BTC_OUTFLOW_ADDRESS,
+        receiver: { address: VALID_BTC_OUTFLOW_ADDRESS },
         signerWalletAddress: "  ",
       })
     ).rejects.toMatchObject({
@@ -433,7 +567,7 @@ Nonce: 17`);
       profileId: "aaaaa-aa",
       poolId: BTC_POOL_ID,
       amount: 5_099n,
-      receiverAddress: VALID_BTC_OUTFLOW_ADDRESS,
+      receiver: { address: VALID_BTC_OUTFLOW_ADDRESS },
       signerWalletAddress: "0xsigner",
     });
 
@@ -459,7 +593,7 @@ Nonce: 17`);
       profileId: "aaaaa-aa",
       poolId: USDT_POOL_ID,
       amount: 999_999n,
-      receiverAddress: LOWERCASE_EVM_OUTFLOW_ADDRESS,
+      receiver: { address: LOWERCASE_EVM_OUTFLOW_ADDRESS },
       signerWalletAddress: "0xsigner",
     });
 
@@ -485,7 +619,7 @@ Nonce: 17`);
       profileId: "aaaaa-aa",
       poolId: BTC_POOL_ID,
       amount: 50_000n,
-      receiverAddress: "not-a-btc-address",
+      receiver: { address: "not-a-btc-address" },
       signerWalletAddress: "0xsigner",
     });
 
@@ -522,13 +656,13 @@ Nonce: 17`);
       profileId: "aaaaa-aa",
       poolId: USDT_POOL_ID,
       amount: 1_000_000n,
-      receiverAddress: LOWERCASE_EVM_OUTFLOW_ADDRESS,
+      receiver: { address: LOWERCASE_EVM_OUTFLOW_ADDRESS },
       signerWalletAddress: "0xsigner",
     });
     await borrowAction.submit({ signature: "0xsigned", chain: "ETH" });
 
     // then
-    expect(borrowAction.data.receiverAddress).toBe(
+    expect(borrowAction.data.receiver.address).toBe(
       CHECKSUM_EVM_OUTFLOW_ADDRESS
     );
     expect(borrowAction.message).toContain(

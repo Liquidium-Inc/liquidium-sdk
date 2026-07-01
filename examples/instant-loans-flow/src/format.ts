@@ -155,11 +155,21 @@ export function formatSupplyTarget(target: SupplyTarget): string {
     ].join("\n");
   }
 
+  if (target.type === "icrcAccount") {
+    return [
+      `Send ${target.asset} on ${target.chain} to this ICRC account:`,
+      target.account.address,
+      `Owner: ${target.account.owner}`,
+      `Subaccount: ${formatBytes(target.account.subaccount)}`,
+    ].join("\n");
+  }
+
   return [
-    `Send ${target.asset} on ${target.chain} to this ICRC account:`,
-    target.account,
-    `Owner: ${target.owner}`,
-    `Subaccount: ${formatBytes(target.subaccount)}`,
+    "Send ICP to this ledger account:",
+    target.account.icrc.address,
+    `Legacy account identifier: ${target.account.accountIdentifier}`,
+    `Owner: ${target.account.icrc.owner}`,
+    `Subaccount: ${formatBytes(target.account.icrc.subaccount)}`,
   ].join("\n");
 }
 
@@ -483,7 +493,11 @@ function formatInstantLoanAccount(
   return `Native principal: ${account.principal}`;
 }
 
-function formatBytes(bytes: Uint8Array): string {
+function formatBytes(bytes: Uint8Array | undefined): string {
+  if (!bytes) {
+    return "not set";
+  }
+
   return Array.from(bytes)
     .map((byte) => byte.toString(16).padStart(2, "0"))
     .join("");

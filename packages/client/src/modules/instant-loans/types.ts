@@ -1,6 +1,9 @@
+import type { IcrcAccount } from "../../core/accounts";
 import type { LiquidiumStatus } from "../../core/status";
 import type { Chain, MarketAsset, MarketChain } from "../../core/types";
 import type { SupplyTarget } from "../lending";
+
+export type { IcrcAccount } from "../../core/accounts";
 
 /** Asset symbols supported by the instant-loans canister. */
 export type InstantLoanAsset = "BTC" | "SOL" | "USDC" | "USDT";
@@ -43,18 +46,6 @@ export interface AccountIdentifierAccount {
   /** Account kind discriminator. */
   type: "AccountIdentifier";
   /** ICP ledger account identifier text, displayed as the destination address. */
-  address: string;
-}
-
-/** ICRC account returned by existing or future canister state. */
-export interface IcrcAccount {
-  /** Account kind discriminator. */
-  type: "Icrc";
-  /** ICRC account owner principal text. */
-  owner: string;
-  /** Optional ICRC subaccount bytes. */
-  subaccount?: Uint8Array;
-  /** Text-encoded ICRC account for display. */
   address: string;
 }
 

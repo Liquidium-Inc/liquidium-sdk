@@ -142,7 +142,11 @@ function formatSupplyTarget(target: SupplyTarget): string {
     return target.address;
   }
 
-  return target.account;
+  if (target.type === "icrcAccount") {
+    return target.account.address;
+  }
+
+  return target.account.icrc.address;
 }
 ```
 
@@ -160,7 +164,7 @@ Instant-loan integrations use this sequence:
 
 `client.instantLoans.create(...)` and `client.instantLoans.get(...)` return the generated Liquidium profile, current position state, an initial deposit quote with its transfer target, and a repayment quote with its transfer target. Repayment amount fields are zero when the loan has no debt. Users do not manage the generated profile.
 
-`client.market.listPools()` returns only pools whose asset and chain variants are supported by this SDK version. Canister pools for unsupported variants such as `ICP` or `SOL` are omitted from the returned list.
+`client.market.listPools()` returns only pools whose asset and chain variants are supported by this SDK version. BTC, USDC, USDT, and ICP lending pools are returned. Future unsupported variants such as `SOL` are omitted from the returned list.
 
 ## Core API
 

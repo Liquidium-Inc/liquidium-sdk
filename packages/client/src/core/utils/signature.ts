@@ -15,6 +15,7 @@ export function normalizeWalletSignature(
     case Chain.BTC:
       return normalizeBtcSignature(signature);
     case Chain.ETH:
+    case Chain.ICP:
       return normalizeHexSignature(signature);
   }
 }

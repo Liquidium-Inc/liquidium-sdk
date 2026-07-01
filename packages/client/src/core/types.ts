@@ -26,7 +26,7 @@ export interface LiquidiumClientConfig {
   /** Extra headers sent with every SDK API request. */
   headers?: Record<string, string>;
   /** Override individual canister principals for custom deployments. */
-  canisterIds?: Partial<CanisterIds>;
+  canisterIds?: CanisterIdOverrides;
   /** Custom `fetch` implementation for SDK API requests. */
   fetch?: typeof fetch;
   /** Per-request timeout for SDK API calls in milliseconds. */
@@ -39,18 +39,60 @@ export interface LiquidiumClientConfig {
   evmPublicClient?: EvmReadClient;
 }
 
+/** Pool canister principal text values grouped by pool asset. */
+export interface PoolCanisterIds {
+  /** BTC pool canister principal. */
+  btc: string;
+  /** USDT pool canister principal. */
+  usdt: string;
+  /** USDC pool canister principal. */
+  usdc: string;
+  /** ICP pool canister principal. */
+  icp: string;
+}
+
 /** Principal text values for canisters used by the client. */
 export interface CanisterIds {
   /** Liquidium lending canister principal. */
   lending: string;
-  /** BTC pool canister principal. */
-  btcPool: string;
-  /** ERC-20 pool canister principal. */
-  ercPool: string;
+  /** Pool canister principals grouped by pool asset. */
+  pools: PoolCanisterIds;
   /** ckETH minter deposit helper canister principal. */
   ethDeposit: string;
   /** Accountless instant-loans canister principal. */
   instantLoans: string;
+}
+
+/** Custom canister principal overrides accepted by client configuration. */
+export type CanisterIdOverrides = Omit<Partial<CanisterIds>, "pools"> & {
+  /** Partial grouped pool canister principal overrides. */
+  pools?: Partial<PoolCanisterIds>;
+};
+
+/** Ledger, index, minter, and archive canisters for one ledger family. */
+export interface CkLedgerFamilyCanisterIds {
+  /** ICRC or ICP ledger canister principal. */
+  ledger: string;
+  /** Ledger index canister principal, when available. */
+  index?: string;
+  /** Chain-key minter canister principal, when available. */
+  minter?: string;
+  /** Ledger archive canister principal, when available. */
+  archive?: string;
+}
+
+/** Mainnet ck-asset and ICP ledger-family canister principals. */
+export interface CkCanisterIds {
+  /** ckBTC canister principals. */
+  ckBTC: CkLedgerFamilyCanisterIds;
+  /** ckETH canister principals. */
+  ckETH: CkLedgerFamilyCanisterIds;
+  /** ckUSDT canister principals. */
+  ckUSDT: CkLedgerFamilyCanisterIds;
+  /** ckUSDC canister principals. */
+  ckUSDC: CkLedgerFamilyCanisterIds;
+  /** ICP ledger canister principals. */
+  icp: CkLedgerFamilyCanisterIds;
 }
 
 /** Supported deployment environments with bundled canister ids. */
@@ -63,6 +105,7 @@ export type Environment = (typeof Environment)[keyof typeof Environment];
 /** Canonical asset symbols supported by state-mutating protocol flows. */
 export const Asset = {
   BTC: "BTC",
+  ICP: "ICP",
   SOL: "SOL",
   USDC: "USDC",
   USDT: "USDT",
@@ -74,6 +117,7 @@ export type Asset = (typeof Asset)[keyof typeof Asset];
 export const Chain = {
   BTC: "BTC",
   ETH: "ETH",
+  ICP: "ICP",
 } as const;
 /** Canonical chain identifier used by wallet and protocol actions. */
 export type Chain = (typeof Chain)[keyof typeof Chain];
