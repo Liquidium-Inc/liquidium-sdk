@@ -8,7 +8,7 @@
 
 > `const` **Chain**: `object`
 
-Defined in: [packages/client/src/core/types.ts:74](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L74)
+Defined in: [packages/client/src/core/types.ts:117](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L117)
 
 Canonical chain identifiers used by wallet and protocol actions.
 
@@ -21,3 +21,7 @@ Canonical chain identifiers used by wallet and protocol actions.
 ### ETH
 
 > `readonly` **ETH**: `"ETH"` = `"ETH"`
+
+### ICP
+
+> `readonly` **ICP**: `"ICP"` = `"ICP"`

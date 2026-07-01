@@ -8,6 +8,6 @@
 
 > **MarketChain** = `string`
 
-Defined in: [packages/client/src/core/types.ts:84](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L84)
+Defined in: [packages/client/src/core/types.ts:128](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L128)
 
 Chain name as returned by market-data APIs, including future chains.

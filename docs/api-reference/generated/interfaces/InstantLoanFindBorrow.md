@@ -6,7 +6,7 @@
 
 # Interface: InstantLoanFindBorrow
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:188](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L188)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:179](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L179)
 
 Borrow leg returned by instant-loan search.
 
@@ -16,7 +16,7 @@ Borrow leg returned by instant-loan search.
 
 > **asset**: [`InstantLoanAsset`](../type-aliases/InstantLoanAsset.md)
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:192](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L192)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:183](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L183)
 
 Asset the user borrows.
 
@@ -26,6 +26,6 @@ Asset the user borrows.
 
 > **poolId**: `string`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:190](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L190)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:181](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L181)
 
 Principal text of the borrow pool.

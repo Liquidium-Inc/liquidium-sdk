@@ -8,6 +8,6 @@
 
 > **InstantLoanLeg** = `"Lend"` \| `"Borrow"`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:252](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L252)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:243](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L243)
 
 Instant-loan leg used when stuck funds are withdrawn.

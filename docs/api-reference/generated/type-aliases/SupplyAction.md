@@ -8,6 +8,6 @@
 
 > **SupplyAction** = *typeof* [`SupplyAction`](../variables/SupplyAction.md)\[keyof *typeof* [`SupplyAction`](../variables/SupplyAction.md)\]
 
-Defined in: [packages/client/src/core/types.ts:87](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L87)
+Defined in: [packages/client/src/core/types.ts:131](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L131)
 
 Inflow operation performed by a supply target.

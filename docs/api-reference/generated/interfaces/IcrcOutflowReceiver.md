@@ -6,7 +6,7 @@
 
 # Interface: IcrcOutflowReceiver
 
-Defined in: [packages/client/src/modules/lending/types.ts:76](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L76)
+Defined in: [packages/client/src/modules/lending/types.ts:101](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L101)
 
 ICRC account destination for a completed outflow.
 
@@ -16,7 +16,7 @@ ICRC account destination for a completed outflow.
 
 > **account**: `string`
 
-Defined in: [packages/client/src/modules/lending/types.ts:84](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L84)
+Defined in: [packages/client/src/modules/lending/types.ts:109](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L109)
 
 Text-encoded ICRC account for display.
 
@@ -26,7 +26,7 @@ Text-encoded ICRC account for display.
 
 > **owner**: `string`
 
-Defined in: [packages/client/src/modules/lending/types.ts:80](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L80)
+Defined in: [packages/client/src/modules/lending/types.ts:105](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L105)
 
 ICRC account owner principal text.
 
@@ -36,7 +36,7 @@ ICRC account owner principal text.
 
 > `optional` **subaccount?**: `Uint8Array`\<`ArrayBufferLike`\>
 
-Defined in: [packages/client/src/modules/lending/types.ts:82](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L82)
+Defined in: [packages/client/src/modules/lending/types.ts:107](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L107)
 
 Optional ICRC subaccount bytes.
 
@@ -46,6 +46,6 @@ Optional ICRC subaccount bytes.
 
 > **type**: `"Icrc"`
 
-Defined in: [packages/client/src/modules/lending/types.ts:78](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L78)
+Defined in: [packages/client/src/modules/lending/types.ts:103](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L103)
 
 Destination account type reported by the protocol.

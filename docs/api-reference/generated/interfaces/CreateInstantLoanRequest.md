@@ -6,7 +6,7 @@
 
 # Interface: CreateInstantLoanRequest
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:79](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L79)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:70](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L70)
 
 Parameters for creating an accountless instant loan.
 
@@ -24,7 +24,7 @@ pool decimals.
 
 > **borrowAmount**: `bigint`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:124](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L124)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:115](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L115)
 
 Amount to borrow, in the borrow asset's base units.
 
@@ -37,7 +37,7 @@ For USDC/USDT, convert the UI amount using the selected borrow pool's
 
 > **borrowAsset**: [`InstantLoanAsset`](../type-aliases/InstantLoanAsset.md)
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:107](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L107)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:98](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L98)
 
 Asset the user wants to borrow from the borrow pool.
 
@@ -50,7 +50,7 @@ USDC borrow pool.
 
 > **borrowDestination**: `string` \| [`ExternalAccount`](ExternalAccount.md)
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:149](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L149)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:140](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L140)
 
 External destination that receives the borrowed asset after the loan starts.
 
@@ -64,7 +64,7 @@ EVM address for ETH USDC/USDT outflows.
 
 > **borrowPoolId**: `string`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:93](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L93)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:84](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L84)
 
 Principal text of the pool that funds the borrow.
 
@@ -77,7 +77,7 @@ This should be the `id` of the borrow `Pool` selected from
 
 > **collateralAmount**: `bigint`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:117](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L117)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:108](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L108)
 
 Intended credited collateral amount, in base units.
 
@@ -93,7 +93,7 @@ amount to send to `loan.initialDeposit.target`.
 
 > **collateralAsset**: [`InstantLoanAsset`](../type-aliases/InstantLoanAsset.md)
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:100](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L100)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:91](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L91)
 
 Asset the user will deposit as collateral.
 
@@ -106,7 +106,7 @@ a BTC collateral pool.
 
 > **collateralPoolId**: `string`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:86](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L86)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:77](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L77)
 
 Principal text of the pool that receives the user's collateral deposit.
 
@@ -119,7 +119,7 @@ This should be the `id` of the collateral `Pool` selected from
 
 > **depositWindowSeconds**: `bigint`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:141](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L141)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:132](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L132)
 
 Seconds allowed for the user to send collateral after loan creation.
 
@@ -133,7 +133,7 @@ instant-loan flow can time out. Internally this is sent to the canister as
 
 > **ltvMaxBps**: `bigint`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:133](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L133)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:124](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L124)
 
 Maximum allowed loan-to-value ratio in basis points.
 
@@ -148,7 +148,7 @@ this limit.
 
 > **refundDestination**: `string` \| [`ExternalAccount`](ExternalAccount.md)
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:157](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L157)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:148](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L148)
 
 External destination that receives collateral refunds or withdrawals.
 

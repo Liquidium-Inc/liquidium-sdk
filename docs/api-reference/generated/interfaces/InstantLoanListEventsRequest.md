@@ -6,7 +6,7 @@
 
 # Interface: InstantLoanListEventsRequest
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:212](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L212)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:203](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L203)
 
 Page request for direct instant-loan canister event queries.
 
@@ -16,7 +16,7 @@ Page request for direct instant-loan canister event queries.
 
 > **limit**: `bigint`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:216](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L216)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:207](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L207)
 
 Maximum number of events to return.
 
@@ -26,6 +26,6 @@ Maximum number of events to return.
 
 > **start**: `bigint`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:214](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L214)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:205](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L205)
 
 Event id to start from.

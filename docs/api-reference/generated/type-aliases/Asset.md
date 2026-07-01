@@ -8,6 +8,6 @@
 
 > **Asset** = *typeof* [`Asset`](../variables/Asset.md)\[keyof *typeof* [`Asset`](../variables/Asset.md)\]
 
-Defined in: [packages/client/src/core/types.ts:64](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L64)
+Defined in: [packages/client/src/core/types.ts:106](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L106)
 
 Canonical asset symbol supported by state-mutating protocol flows.
