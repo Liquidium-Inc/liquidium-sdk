@@ -1,7 +1,9 @@
-import { Chain, type Pool } from "../../packages/client/src";
+import {
+  Chain,
+  getMinimumBorrowAmount as getConfiguredMinimumBorrowAmount,
+  type Pool,
+} from "../../packages/client/src";
 
-const MINIMUM_USDT_BORROW_AMOUNT = 1_000_000n;
-const MINIMUM_USDC_BORROW_AMOUNT = 1_000_000n;
 const ETH_STABLECOIN_BORROW_ASSETS = ["USDT", "USDC"] as const;
 
 export type EthStablecoinBorrowAsset =
@@ -49,22 +51,18 @@ export function listAvailableBorrowPools(pools: Pool[]): Pool[] {
 }
 
 export function getMinimumBorrowAmount(pool: Pool): bigint {
-  if (pool.asset === "USDT") {
-    return MINIMUM_USDT_BORROW_AMOUNT;
+  if (!isEthStablecoinBorrowAsset(pool.asset)) {
+    throw new Error(`Unsupported e2e borrow asset: ${pool.asset}`);
   }
 
-  if (pool.asset === "USDC") {
-    return MINIMUM_USDC_BORROW_AMOUNT;
-  }
-
-  throw new Error(`Unsupported e2e borrow asset: ${pool.asset}`);
+  return getConfiguredMinimumBorrowAmount(pool.asset);
 }
 
 function findBorrowPoolByAsset(
   pools: Pool[],
   asset: EthStablecoinBorrowAsset
 ): Pool | undefined {
-  const minimumAvailableLiquidity = getMinimumBorrowAmountForAsset(asset);
+  const minimumAvailableLiquidity = getConfiguredMinimumBorrowAmount(asset);
 
   return pools.find(
     (pool) =>
@@ -75,14 +73,12 @@ function findBorrowPoolByAsset(
   );
 }
 
-function getMinimumBorrowAmountForAsset(
-  asset: EthStablecoinBorrowAsset
-): bigint {
-  if (asset === "USDT") {
-    return MINIMUM_USDT_BORROW_AMOUNT;
-  }
-
-  return MINIMUM_USDC_BORROW_AMOUNT;
+function isEthStablecoinBorrowAsset(
+  asset: string
+): asset is EthStablecoinBorrowAsset {
+  return ETH_STABLECOIN_BORROW_ASSETS.some(
+    (borrowAsset) => borrowAsset === asset
+  );
 }
 
 function selectPool(params: {
