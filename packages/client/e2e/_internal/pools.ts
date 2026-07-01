@@ -2,6 +2,10 @@ import { Chain, type Pool } from "../../src";
 
 const MINIMUM_USDT_BORROW_AMOUNT = 1_000_000n;
 const MINIMUM_USDC_BORROW_AMOUNT = 1_000_000n;
+const ETH_STABLECOIN_BORROW_ASSETS = ["USDT", "USDC"] as const;
+
+export type EthStablecoinBorrowAsset =
+  (typeof ETH_STABLECOIN_BORROW_ASSETS)[number];
 
 export function selectBtcCollateralPool(pools: Pool[]): Pool {
   return selectPool({
@@ -12,23 +16,36 @@ export function selectBtcCollateralPool(pools: Pool[]): Pool {
 }
 
 export function selectBorrowPool(pools: Pool[]): Pool {
-  const usdtPool = pools.find(
-    (pool) =>
-      pool.asset === "USDT" &&
-      pool.chain === Chain.ETH &&
-      !pool.frozen &&
-      pool.availableLiquidity >= MINIMUM_USDT_BORROW_AMOUNT
-  );
-  if (usdtPool) {
-    return usdtPool;
+  for (const asset of ETH_STABLECOIN_BORROW_ASSETS) {
+    const pool = findBorrowPoolByAsset(pools, asset);
+    if (pool) {
+      return pool;
+    }
   }
 
-  return selectPool({
-    pools,
-    asset: "USDC",
-    chain: Chain.ETH,
-    minimumAvailableLiquidity: MINIMUM_USDC_BORROW_AMOUNT,
-  });
+  throw new Error(
+    "No live ETH stablecoin borrow pool is available for e2e tests"
+  );
+}
+
+export function selectBorrowPoolByAsset(
+  pools: Pool[],
+  asset: EthStablecoinBorrowAsset
+): Pool {
+  const pool = findBorrowPoolByAsset(pools, asset);
+  if (!pool) {
+    throw new Error(
+      `No live ${Chain.ETH} ${asset} pool is available for e2e tests`
+    );
+  }
+
+  return pool;
+}
+
+export function listAvailableBorrowPools(pools: Pool[]): Pool[] {
+  return ETH_STABLECOIN_BORROW_ASSETS.map((asset) =>
+    findBorrowPoolByAsset(pools, asset)
+  ).filter((pool): pool is Pool => Boolean(pool));
 }
 
 export function getMinimumBorrowAmount(pool: Pool): bigint {
@@ -41,6 +58,31 @@ export function getMinimumBorrowAmount(pool: Pool): bigint {
   }
 
   throw new Error(`Unsupported e2e borrow asset: ${pool.asset}`);
+}
+
+function findBorrowPoolByAsset(
+  pools: Pool[],
+  asset: EthStablecoinBorrowAsset
+): Pool | undefined {
+  const minimumAvailableLiquidity = getMinimumBorrowAmountForAsset(asset);
+
+  return pools.find(
+    (pool) =>
+      pool.asset === asset &&
+      pool.chain === Chain.ETH &&
+      !pool.frozen &&
+      pool.availableLiquidity >= minimumAvailableLiquidity
+  );
+}
+
+function getMinimumBorrowAmountForAsset(
+  asset: EthStablecoinBorrowAsset
+): bigint {
+  if (asset === "USDT") {
+    return MINIMUM_USDT_BORROW_AMOUNT;
+  }
+
+  return MINIMUM_USDC_BORROW_AMOUNT;
 }
 
 function selectPool(params: {
