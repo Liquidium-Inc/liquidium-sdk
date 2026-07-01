@@ -1,6 +1,10 @@
 import { Actor } from "@icp-sdk/core/agent";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { LiquidiumClient, publicIdFromInt } from "../../../index";
+import {
+  LiquidiumClient,
+  LiquidiumErrorCode,
+  publicIdFromInt,
+} from "../../../index";
 import {
   BTC_POOL_ID,
   createBtcPoolRecord,
@@ -141,5 +145,42 @@ describe("InstantLoansModule find", () => {
       expect.objectContaining({ method: "GET" })
     );
     expect(fetchSpy).toHaveBeenCalledTimes(1);
+  });
+
+  test("should return a typed error when the API returns a malformed success payload", async () => {
+    // given
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          success: true,
+          candidates: [
+            {
+              loan_id: "not-a-number",
+              short_ref: publicIdFromInt(LOAN_ID),
+              profile: PROFILE_ID,
+              created_at: "2026-05-27T08:16:26.194Z",
+              lend_asset: "BTC",
+              borrow_asset: "USDT",
+              collateral_amount: "10000000",
+              lend_pool_ic_id: BTC_POOL_ID,
+              borrow_pool_ic_id: USDT_POOL_ID,
+            },
+          ],
+        }),
+        { status: 200, headers: { "content-type": "application/json" } }
+      )
+    );
+    const client = new LiquidiumClient({
+      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
+    });
+
+    // when
+    const result = client.instantLoans.find(LOAN_ID.toString());
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message: "Invalid instant loan loan ID",
+    });
   });
 });
