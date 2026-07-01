@@ -58,10 +58,6 @@
     "viem": "^2.50.4"
   },
   "devDependencies": {
-    "@types/node": "^26.0.1",
-    "bitcoinjs-lib": "^7.0.1",
-    "ecpair": "^3.0.1",
-    "tiny-secp256k1": "^2.2.4",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3"
   },

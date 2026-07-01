@@ -1,4 +1,4 @@
-import { Chain, type Pool } from "../../src";
+import { Chain, type Pool } from "../../packages/client/src";
 
 const MINIMUM_USDT_BORROW_AMOUNT = 1_000_000n;
 const MINIMUM_USDC_BORROW_AMOUNT = 1_000_000n;

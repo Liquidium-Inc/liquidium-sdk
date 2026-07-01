@@ -4,7 +4,7 @@ import * as bitcoin from "bitcoinjs-lib";
 import ECPairFactory from "ecpair";
 import * as ecc from "tiny-secp256k1";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
-import type { WalletAdapter } from "../../src";
+import type { WalletAdapter } from "../../packages/client/src";
 
 const BTC_MESSAGE_PREFIX = Buffer.from(
   "\u0018Bitcoin Signed Message:\n",

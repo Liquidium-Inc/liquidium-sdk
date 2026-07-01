@@ -2,7 +2,11 @@ import { Actor } from "@icp-sdk/core/agent";
 import { Principal } from "@icp-sdk/core/principal";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { DEFAULT_API_BASE_URL } from "../../../core/config";
-import { LiquidiumClient, publicIdFromInt } from "../../../index";
+import {
+  LiquidiumClient,
+  LiquidiumErrorCode,
+  publicIdFromInt,
+} from "../../../index";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -224,6 +228,61 @@ describe("ActivitiesModule", () => {
         signal: expect.any(AbortSignal),
       }
     );
+  });
+
+  test("returns not found when the activity status API misses a receipt", async () => {
+    // given
+    const ACTIVITY_ID = "missing-activity";
+    const responsePayload = {
+      found: false as const,
+      id: ACTIVITY_ID,
+    };
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify(responsePayload), {
+        status: 200,
+        headers: {
+          "content-type": "application/json",
+        },
+      })
+    );
+    const client = new LiquidiumClient({
+      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
+    });
+
+    // when
+    const result = await client.activities.getStatus({
+      profileId: "profile-1",
+      id: ACTIVITY_ID,
+    });
+
+    // then
+    expect(result).toEqual({ found: false, id: ACTIVITY_ID });
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "https://app.liquidium.fi/api/sdk/v2/activities/missing-activity/status?profileId=profile-1",
+      expect.objectContaining({ method: "GET" })
+    );
+  });
+
+  test("rejects malformed instant loan references before resolving activities", async () => {
+    // given
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    const actorCreateSpy = vi.spyOn(Actor, "createActor");
+    const client = new LiquidiumClient({
+      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
+    });
+
+    // when
+    const result = client.activities.list({
+      shortRef: "invalid-ref",
+    });
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message: "Invalid instant loan reference",
+    });
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(actorCreateSpy).not.toHaveBeenCalled();
   });
 
   test("gets activity status by instant loan short ref", async () => {

@@ -1,5 +1,10 @@
 import { expect, test } from "vitest";
-import { Asset, Chain, LiquidiumClient, SupplyAction } from "../src";
+import {
+  Asset,
+  Chain,
+  LiquidiumClient,
+  SupplyAction,
+} from "../packages/client/src";
 import { describeLive } from "./_internal/live";
 import { selectBorrowPool, selectBtcCollateralPool } from "./_internal/pools";
 import { createEthereumTestWallet } from "./_internal/test-wallets";

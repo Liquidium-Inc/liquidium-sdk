@@ -1,5 +1,9 @@
 import { expect, test } from "vitest";
-import { Chain, LiquidiumClient, LiquidiumErrorCode } from "../src";
+import {
+  Chain,
+  LiquidiumClient,
+  LiquidiumErrorCode,
+} from "../packages/client/src";
 import { describeLive } from "./_internal/live";
 import {
   createBitcoinjsTestWallet,

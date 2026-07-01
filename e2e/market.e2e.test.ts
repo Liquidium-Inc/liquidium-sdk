@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { LiquidiumClient, type Pool } from "../src";
+import { LiquidiumClient, type Pool } from "../packages/client/src";
 import { describeLive } from "./_internal/live";
 
 describeLive("live market e2e", () => {

@@ -6,7 +6,7 @@ import {
   LiquidiumErrorCode,
   type Pool,
   publicIdFromInt,
-} from "../src";
+} from "../packages/client/src";
 import { describeLive } from "./_internal/live";
 import {
   getMinimumBorrowAmount,

@@ -14,7 +14,7 @@ export default defineConfig({
         extends: true,
         test: {
           name: "client-e2e",
-          include: ["packages/client/e2e/**/*.{test,spec}.{ts,tsx}"],
+          include: ["e2e/**/*.{test,spec}.{ts,tsx}"],
           fileParallelism: false,
           maxWorkers: 1,
           testTimeout: 120_000,
