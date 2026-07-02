@@ -400,4 +400,30 @@ Nonce: 23`);
     });
     expect(getNonce).not.toHaveBeenCalled();
   });
+
+  test("rejects a withdraw with an invalid BTC receiver address", async () => {
+    // given
+    const getNonce = vi.fn().mockResolvedValue(17n);
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord()]),
+      get_nonce: getNonce,
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const result = client.lending.prepareWithdraw({
+      profileId: "aaaaa-aa",
+      poolId: BTC_POOL_ID,
+      amount: 5_000n,
+      receiver: { address: "not-a-btc-address" },
+      signerWalletAddress: "0xsigner",
+    });
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.INVALID_ADDRESS,
+      message: "Address must be a valid mainnet BTC address",
+    });
+    expect(getNonce).not.toHaveBeenCalled();
+  });
 });

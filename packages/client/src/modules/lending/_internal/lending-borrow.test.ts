@@ -260,6 +260,122 @@ Nonce: 17`);
     expect(getNonce).not.toHaveBeenCalled();
   });
 
+  test("rejects an invalid hinted IC principal borrow receiver before fetching a nonce", async () => {
+    // given
+    const getNonce = vi.fn().mockResolvedValue(17n);
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord()]),
+      get_nonce: getNonce,
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const result = client.lending.prepareBorrow({
+      profileId: "aaaaa-aa",
+      poolId: BTC_POOL_ID,
+      amount: 50_000n,
+      receiver: {
+        address: "not a principal",
+        type: "IcPrincipal",
+      },
+      signerWalletAddress: "0xsigner",
+    });
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.INVALID_ADDRESS,
+      message: "Invalid IcPrincipal outflow destination",
+    });
+    expect(getNonce).not.toHaveBeenCalled();
+  });
+
+  test("rejects an invalid hinted ICRC borrow receiver before fetching a nonce", async () => {
+    // given
+    const getNonce = vi.fn().mockResolvedValue(17n);
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi.fn().mockResolvedValue([createIcpPoolRecord()]),
+      get_nonce: getNonce,
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const result = client.lending.prepareBorrow({
+      profileId: "aaaaa-aa",
+      poolId: ICP_POOL_ID,
+      amount: 100_000_000n,
+      receiver: {
+        address: VALID_BTC_OUTFLOW_ADDRESS,
+        type: "IcrcAccount",
+      },
+      signerWalletAddress: "0xsigner",
+    });
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.INVALID_ADDRESS,
+      message: "Invalid IcrcAccount outflow destination",
+    });
+    expect(getNonce).not.toHaveBeenCalled();
+  });
+
+  test("rejects an invalid hinted ICP account identifier borrow receiver before fetching a nonce", async () => {
+    // given
+    const getNonce = vi.fn().mockResolvedValue(17n);
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi.fn().mockResolvedValue([createIcpPoolRecord()]),
+      get_nonce: getNonce,
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const result = client.lending.prepareBorrow({
+      profileId: "aaaaa-aa",
+      poolId: ICP_POOL_ID,
+      amount: 100_000_000n,
+      receiver: {
+        address: "not-an-account-identifier",
+        type: "IcpAccountIdentifier",
+      },
+      signerWalletAddress: "0xsigner",
+    });
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.INVALID_ADDRESS,
+      message: "Invalid IcpAccountIdentifier outflow destination",
+    });
+    expect(getNonce).not.toHaveBeenCalled();
+  });
+
+  test("rejects a chain-address borrow receiver for an ICP pool before fetching a nonce", async () => {
+    // given
+    const getNonce = vi.fn().mockResolvedValue(17n);
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi.fn().mockResolvedValue([createIcpPoolRecord()]),
+      get_nonce: getNonce,
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const result = client.lending.prepareBorrow({
+      profileId: "aaaaa-aa",
+      poolId: ICP_POOL_ID,
+      amount: 100_000_000n,
+      receiver: {
+        address: VALID_BTC_OUTFLOW_ADDRESS,
+        type: "ChainAddress",
+      },
+      signerWalletAddress: "0xsigner",
+    });
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message: "Target pool does not support this address type",
+    });
+    expect(getNonce).not.toHaveBeenCalled();
+  });
+
   test("maps an ICRC receiver returned by a lending outflow", async () => {
     // given
     vi.setSystemTime(new Date("2026-04-01T00:00:00.000Z"));
@@ -638,6 +754,32 @@ Nonce: 17`);
     await expect(result).rejects.toMatchObject({
       code: LiquidiumErrorCode.INVALID_ADDRESS,
       message: "Address must be a valid mainnet BTC address",
+    });
+    expect(getNonce).not.toHaveBeenCalled();
+  });
+
+  test("rejects a borrow with an invalid EVM receiver address", async () => {
+    // given
+    const getNonce = vi.fn().mockResolvedValue(17n);
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi.fn().mockResolvedValue([createUsdtPoolRecord()]),
+      get_nonce: getNonce,
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const result = client.lending.prepareBorrow({
+      profileId: "aaaaa-aa",
+      poolId: USDT_POOL_ID,
+      amount: 1_000_000n,
+      receiver: { address: "not-an-evm-address" },
+      signerWalletAddress: "0xsigner",
+    });
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.INVALID_ADDRESS,
+      message: "Address must be a valid EVM address",
     });
     expect(getNonce).not.toHaveBeenCalled();
   });
