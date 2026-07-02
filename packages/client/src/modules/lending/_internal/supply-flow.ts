@@ -339,7 +339,7 @@ export class SupplyFlowExecutor {
     }
 
     const txid =
-      instruction.target.type === "chainAddress"
+      instruction.target.type === "ChainAddress"
         ? await this.sendChainAddressSupplyTransaction({
             walletAdapter: request.walletAdapter,
             chain: instruction.chain,
@@ -406,7 +406,7 @@ export class SupplyFlowExecutor {
     const { request, instruction, defaultSubmitInflowRequest } = params;
 
     if (
-      instruction.target.type !== "icrcAccount" ||
+      instruction.target.type !== "IcrcAccount" ||
       instruction.chain !== Chain.ETH
     ) {
       throw new LiquidiumError(
@@ -807,11 +807,11 @@ function getIcrcSupplyTargetAccount(
   target: SupplyTarget
 ): IcrcTransferDetails["to"] {
   switch (target.type) {
-    case "icrcAccount":
+    case "IcrcAccount":
       return target.account;
-    case "icpLedgerAccount":
+    case "IcpLedgerAccount":
       return target.account.icpIcrcAccount;
-    case "chainAddress":
+    case "ChainAddress":
       throw new LiquidiumError(
         LiquidiumErrorCode.VALIDATION_ERROR,
         "ICRC wallet execution requires an ICRC-compatible supply target"
@@ -830,7 +830,7 @@ function shouldSubmitInflow(params: ShouldSubmitInflowParams): boolean {
     return true;
   }
 
-  if (params.instruction.target.type !== "chainAddress") {
+  if (params.instruction.target.type !== "ChainAddress") {
     return false;
   }
 

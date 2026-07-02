@@ -207,7 +207,7 @@ function SupplyBorrowPage() {
     }
 
     if (
-      currentSupplyFlow.target.type === "chainAddress" &&
+      currentSupplyFlow.target.type === "ChainAddress" &&
       currentSupplyFlow.target.chain === Chain.ETH
     ) {
       await trackEthSupplyTxid(txid);

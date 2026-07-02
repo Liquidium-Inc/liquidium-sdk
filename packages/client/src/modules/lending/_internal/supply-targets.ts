@@ -275,7 +275,7 @@ async function getChainAddressSupplyTarget(
     }
 
     return {
-      type: "chainAddress",
+      type: "ChainAddress",
       poolId: request.poolId,
       asset: request.asset,
       chain: request.chain,
@@ -304,7 +304,7 @@ async function getChainAddressSupplyTarget(
   );
 
   return {
-    type: "chainAddress",
+    type: "ChainAddress",
     poolId: request.poolId,
     asset: request.asset,
     chain: request.chain,
@@ -326,7 +326,7 @@ function getIcrcAccountSupplyTarget(
   });
 
   return {
-    type: "icrcAccount",
+    type: "IcrcAccount",
     poolId: request.poolId,
     asset: request.asset,
     chain: request.chain,
@@ -360,7 +360,7 @@ function getIcpLedgerAccountSupplyTarget(
   });
 
   return {
-    type: "icpLedgerAccount",
+    type: "IcpLedgerAccount",
     poolId: request.poolId,
     asset: Asset.ICP,
     chain: Chain.ICP,

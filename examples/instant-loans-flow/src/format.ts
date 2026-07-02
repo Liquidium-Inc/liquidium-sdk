@@ -147,7 +147,7 @@ export function formatPool(pool: Pool): string {
 }
 
 export function formatSupplyTarget(target: SupplyTarget): string {
-  if (target.type === "chainAddress") {
+  if (target.type === "ChainAddress") {
     return [
       `Send ${target.asset} on ${target.chain} to this address:`,
       target.address,
@@ -155,7 +155,7 @@ export function formatSupplyTarget(target: SupplyTarget): string {
     ].join("\n");
   }
 
-  if (target.type === "icrcAccount") {
+  if (target.type === "IcrcAccount") {
     return [
       `Send ${target.asset} on ${target.chain} to this ICRC account:`,
       target.account.address,

@@ -64,7 +64,7 @@ Pool principal text receiving the inflow.
 
 ### type
 
-> **type**: `"icrcAccount"`
+> **type**: `"IcrcAccount"`
 
 Defined in: [packages/client/src/modules/lending/types.ts:279](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L279)
 

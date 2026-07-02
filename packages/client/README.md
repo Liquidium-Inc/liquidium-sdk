@@ -138,11 +138,11 @@ function requirePool(pools: Pool[], asset: string): Pool {
 }
 
 function formatSupplyTarget(target: SupplyTarget): string {
-  if (target.type === "chainAddress") {
+  if (target.type === "ChainAddress") {
     return target.address;
   }
 
-  if (target.type === "icrcAccount") {
+  if (target.type === "IcrcAccount") {
     return target.account.address;
   }
 

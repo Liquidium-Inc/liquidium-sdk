@@ -116,7 +116,7 @@ export function formatBtcSupplyFlow(
 }
 
 export function formatSupplyTarget(target: SupplyTarget): string {
-  if (target.type === "chainAddress") {
+  if (target.type === "ChainAddress") {
     return [
       `Target type: ${target.type}`,
       `Address: ${target.address}`,
@@ -125,7 +125,7 @@ export function formatSupplyTarget(target: SupplyTarget): string {
     ].join("\n");
   }
 
-  if (target.type === "icrcAccount") {
+  if (target.type === "IcrcAccount") {
     return [
       `Target type: ${target.type}`,
       `Account: ${target.account.address}`,

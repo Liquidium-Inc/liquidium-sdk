@@ -451,7 +451,7 @@ account, show `target.account.address`. If it is an ICP ledger target, show
 const depositAddress =
   depositTarget.type === "nativeAddress"
     ? depositTarget.address
-    : depositTarget.type === "icrcAccount"
+    : depositTarget.type === "IcrcAccount"
       ? depositTarget.account.address
       : depositTarget.account.icrc.address;
 ```
@@ -469,7 +469,7 @@ const repayAddress =
     ? null
     : loan.repayment.target.type === "nativeAddress"
       ? loan.repayment.target.address
-      : loan.repayment.target.type === "icrcAccount"
+      : loan.repayment.target.type === "IcrcAccount"
         ? loan.repayment.target.account.address
         : loan.repayment.target.account.icrc.address;
 ```

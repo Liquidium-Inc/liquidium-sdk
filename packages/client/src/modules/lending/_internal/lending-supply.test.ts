@@ -80,7 +80,7 @@ describe("LendingModule supply", () => {
     expect(supplyFlow).toMatchObject({
       type: "transfer",
       target: {
-        type: "chainAddress",
+        type: "ChainAddress",
         poolId: BTC_POOL_ID,
         asset: "BTC",
         chain: "BTC",
@@ -155,7 +155,7 @@ describe("LendingModule supply", () => {
     expect(supplyFlow).toMatchObject({
       type: "transfer",
       target: {
-        type: "chainAddress",
+        type: "ChainAddress",
         poolId: USDT_POOL_ID,
         asset: "USDT",
         chain: "ETH",
@@ -234,7 +234,7 @@ describe("LendingModule supply", () => {
     expect(supplyFlow).toMatchObject({
       type: "transfer",
       target: {
-        type: "chainAddress",
+        type: "ChainAddress",
         poolId: USDC_POOL_ID,
         asset: "USDC",
         chain: "ETH",
@@ -280,7 +280,7 @@ describe("LendingModule supply", () => {
 
     // then
     expect(supplyFlow.target).toEqual({
-      type: "icrcAccount",
+      type: "IcrcAccount",
       poolId: BTC_POOL_ID,
       asset: "BTC",
       chain: "BTC",
@@ -319,7 +319,7 @@ describe("LendingModule supply", () => {
 
     // then
     expect(supplyFlow.target).toEqual({
-      type: "icrcAccount",
+      type: "IcrcAccount",
       poolId: USDC_POOL_ID,
       asset: "USDC",
       chain: "ETH",
@@ -357,7 +357,7 @@ describe("LendingModule supply", () => {
 
     // then
     expect(supplyFlow.target).toMatchObject({
-      type: "icpLedgerAccount",
+      type: "IcpLedgerAccount",
       poolId: ICP_POOL_ID,
       asset: "ICP",
       chain: "ICP",
@@ -375,7 +375,7 @@ describe("LendingModule supply", () => {
       },
     });
     expect(
-      supplyFlow.target.type === "icpLedgerAccount"
+      supplyFlow.target.type === "IcpLedgerAccount"
         ? supplyFlow.target.account.icpAccountIdentifier
         : ""
     ).toMatch(/^[0-9a-f]{64}$/);
@@ -742,7 +742,7 @@ describe("LendingModule supply", () => {
     // then
     expect(flow.type).toBe("transfer");
     expect(flow.target).toMatchObject({
-      type: "chainAddress",
+      type: "ChainAddress",
       asset: "USDT",
       chain: "ETH",
       address: "0x1111111111111111111111111111111111111111",
@@ -812,7 +812,7 @@ describe("LendingModule supply", () => {
     // then
     expect(flow.type).toBe("contractInteraction");
     expect(flow.target).toMatchObject({
-      type: "icrcAccount",
+      type: "IcrcAccount",
       asset: "USDT",
       chain: "ETH",
     });
@@ -994,7 +994,7 @@ describe("LendingModule supply", () => {
     // then
     expect(flow.type).toBe("transfer");
     expect(flow.target).toMatchObject({
-      type: "chainAddress",
+      type: "ChainAddress",
       address: "bc1qexampledepositaddress",
     });
     expect(fetchSpy).toHaveBeenCalledWith(
@@ -1131,7 +1131,7 @@ describe("LendingModule supply", () => {
       transfer: {
         ledgerCanisterId: "xevnm-gaaaa-aaaar-qafnq-cai",
         to:
-          flow.target.type === "icrcAccount" ? flow.target.account : undefined,
+          flow.target.type === "IcrcAccount" ? flow.target.account : undefined,
         amount: 1_000_000n,
       },
     });
@@ -1171,7 +1171,7 @@ describe("LendingModule supply", () => {
       transfer: {
         ledgerCanisterId: "ryjl3-tyaaa-aaaaa-aaaba-cai",
         to:
-          flow.target.type === "icpLedgerAccount"
+          flow.target.type === "IcpLedgerAccount"
             ? flow.target.account.icpIcrcAccount
             : undefined,
         amount: 100_000_000n,

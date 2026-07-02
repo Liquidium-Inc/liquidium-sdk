@@ -260,7 +260,7 @@ export type SupplyPlanType =
 /** Chain address target for manual or wallet-executed transfers. */
 export interface ChainAddressSupplyTarget {
   /** Target discriminator. */
-  type: "chainAddress";
+  type: "ChainAddress";
   /** Pool principal text receiving the inflow. */
   poolId: string;
   /** Asset expected by the target. */
@@ -276,7 +276,7 @@ export interface ChainAddressSupplyTarget {
 /** ICRC account target for ck-asset or contract-interaction inflows. */
 export interface IcrcAccountSupplyTarget {
   /** Target discriminator. */
-  type: "icrcAccount";
+  type: "IcrcAccount";
   /** Pool principal text receiving the inflow. */
   poolId: string;
   /** Asset expected by the target. */
@@ -300,7 +300,7 @@ export interface IcpLedgerAccount {
 /** ICP ledger account target for manual or wallet-executed transfers. */
 export interface IcpLedgerAccountSupplyTarget {
   /** Target discriminator. */
-  type: "icpLedgerAccount";
+  type: "IcpLedgerAccount";
   /** Pool principal text receiving the inflow. */
   poolId: string;
   /** ICP asset discriminator. */

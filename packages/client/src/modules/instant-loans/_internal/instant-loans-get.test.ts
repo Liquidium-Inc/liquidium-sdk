@@ -173,7 +173,7 @@ describe("InstantLoansModule get", () => {
       asset: "USDT",
       chain: "ETH",
       target: expect.objectContaining({
-        type: "chainAddress",
+        type: "ChainAddress",
         asset: "USDT",
         chain: "ETH",
         address: "0x1111111111111111111111111111111111111111",

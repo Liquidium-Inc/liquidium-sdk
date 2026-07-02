@@ -64,7 +64,7 @@ Pool principal text receiving the inflow.
 
 ### type
 
-> **type**: `"chainAddress"`
+> **type**: `"ChainAddress"`
 
 Defined in: [packages/client/src/modules/lending/types.ts:263](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L263)
 
