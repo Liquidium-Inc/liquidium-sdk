@@ -6,7 +6,7 @@
 
 # Interface: OutflowDetails
 
-Defined in: [packages/client/src/modules/lending/types.ts:148](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L148)
+Defined in: [packages/client/src/modules/lending/types.ts:93](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L93)
 
 Receipt for a borrow or withdrawal outflow submitted to the lending canister.
 
@@ -19,7 +19,7 @@ the protocol assigns a chain transaction id. `outflowRef` is an optional protoco
 
 > **amount**: `bigint`
 
-Defined in: [packages/client/src/modules/lending/types.ts:158](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L158)
+Defined in: [packages/client/src/modules/lending/types.ts:103](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L103)
 
 Outflow amount in the pool asset's base units.
 
@@ -29,7 +29,7 @@ Outflow amount in the pool asset's base units.
 
 > **id**: `string`
 
-Defined in: [packages/client/src/modules/lending/types.ts:150](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L150)
+Defined in: [packages/client/src/modules/lending/types.ts:95](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L95)
 
 Protocol outflow id.
 
@@ -39,7 +39,7 @@ Protocol outflow id.
 
 > `optional` **outflowRef?**: `string`
 
-Defined in: [packages/client/src/modules/lending/types.ts:154](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L154)
+Defined in: [packages/client/src/modules/lending/types.ts:99](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L99)
 
 Optional protocol outflow reference.
 
@@ -49,7 +49,7 @@ Optional protocol outflow reference.
 
 > **outflowType**: [`OutflowType`](../type-aliases/OutflowType.md)
 
-Defined in: [packages/client/src/modules/lending/types.ts:152](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L152)
+Defined in: [packages/client/src/modules/lending/types.ts:97](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L97)
 
 Borrow, withdrawal, or fee-claim discriminator.
 
@@ -59,7 +59,7 @@ Borrow, withdrawal, or fee-claim discriminator.
 
 > **receiver**: [`OutflowReceiver`](../type-aliases/OutflowReceiver.md)
 
-Defined in: [packages/client/src/modules/lending/types.ts:160](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L160)
+Defined in: [packages/client/src/modules/lending/types.ts:105](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L105)
 
 Outflow destination account.
 
@@ -69,6 +69,6 @@ Outflow destination account.
 
 > `optional` **txid?**: `string`
 
-Defined in: [packages/client/src/modules/lending/types.ts:156](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L156)
+Defined in: [packages/client/src/modules/lending/types.ts:101](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L101)
 
 Chain transaction id when already assigned by the protocol.

@@ -8,7 +8,7 @@
 
 > `const` **WalletActionKind**: `object`
 
-Defined in: [packages/client/src/core/wallet-actions.ts:21](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L21)
+Defined in: [packages/client/src/core/wallet-actions.ts:19](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L19)
 
 Protocol action represented by a prepared wallet action.
 

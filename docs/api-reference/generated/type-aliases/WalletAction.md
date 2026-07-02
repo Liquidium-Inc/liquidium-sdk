@@ -8,7 +8,7 @@
 
 > **WalletAction**\<`TResult`\> = [`SignMessageWalletAction`](../interfaces/SignMessageWalletAction.md)\<`unknown`, `TResult`\>
 
-Defined in: [packages/client/src/core/wallet-actions.ts:166](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L166)
+Defined in: [packages/client/src/core/wallet-actions.ts:131](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L131)
 
 Any prepared action returned by SDK methods and executable by [executeWith](../functions/executeWith.md).
 

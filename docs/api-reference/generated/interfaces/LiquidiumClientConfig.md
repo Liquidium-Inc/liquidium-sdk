@@ -29,7 +29,7 @@ by this SDK package version.
 
 ### canisterIds?
 
-> `optional` **canisterIds?**: [`CanisterIdOverrides`](../type-aliases/CanisterIdOverrides.md)
+> `optional` **canisterIds?**: `Partial`\<[`CanisterIds`](CanisterIds.md)\>
 
 Defined in: [packages/client/src/core/types.ts:29](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L29)
 

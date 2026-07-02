@@ -6,7 +6,7 @@
 
 # Interface: EvmContractTransaction
 
-Defined in: [packages/client/src/modules/lending/types.ts:52](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L52)
+Defined in: [packages/client/src/modules/lending/types.ts:27](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L27)
 
 EVM transaction payload returned by lending transaction builders.
 
@@ -16,7 +16,7 @@ EVM transaction payload returned by lending transaction builders.
 
 > **data**: `string`
 
-Defined in: [packages/client/src/modules/lending/types.ts:56](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L56)
+Defined in: [packages/client/src/modules/lending/types.ts:31](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L31)
 
 Hex-encoded calldata.
 
@@ -26,6 +26,6 @@ Hex-encoded calldata.
 
 > **to**: `string`
 
-Defined in: [packages/client/src/modules/lending/types.ts:54](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L54)
+Defined in: [packages/client/src/modules/lending/types.ts:29](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L29)
 
 Contract address to call.

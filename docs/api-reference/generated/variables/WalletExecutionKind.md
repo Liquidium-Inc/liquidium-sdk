@@ -8,7 +8,7 @@
 
 > `const` **WalletExecutionKind**: `object`
 
-Defined in: [packages/client/src/core/wallet-actions.ts:13](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L13)
+Defined in: [packages/client/src/core/wallet-actions.ts:11](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L11)
 
 Wallet capability required to execute a prepared SDK action.
 
