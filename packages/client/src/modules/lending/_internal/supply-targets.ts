@@ -366,8 +366,8 @@ function getIcpLedgerAccountSupplyTarget(
     chain: Chain.ICP,
     action: request.action,
     account: {
-      icrc: icrcAccount,
-      accountIdentifier: encodeIcpAccountIdentifier({
+      icpIcrcAccount: icrcAccount,
+      icpAccountIdentifier: encodeIcpAccountIdentifier({
         owner: poolPrincipal,
         subaccount,
       }),

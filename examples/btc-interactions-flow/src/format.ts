@@ -137,10 +137,10 @@ export function formatSupplyTarget(target: SupplyTarget): string {
 
   return [
     `Target type: ${target.type}`,
-    `Account: ${target.account.icrc.address}`,
-    `Legacy account identifier: ${target.account.accountIdentifier}`,
-    `Owner: ${target.account.icrc.owner}`,
-    `Subaccount: ${formatBytes(target.account.icrc.subaccount)}`,
+    `Account: ${target.account.icpIcrcAccount.address}`,
+    `ICP account identifier: ${target.account.icpAccountIdentifier}`,
+    `Owner: ${target.account.icpIcrcAccount.owner}`,
+    `Subaccount: ${formatBytes(target.account.icpIcrcAccount.subaccount)}`,
     `Action: ${target.action}`,
   ].join("\n");
 }

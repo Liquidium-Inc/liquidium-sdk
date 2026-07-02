@@ -810,7 +810,7 @@ function getIcrcSupplyTargetAccount(
     case "icrcAccount":
       return target.account;
     case "icpLedgerAccount":
-      return target.account.icrc;
+      return target.account.icpIcrcAccount;
     case "chainAddress":
       throw new LiquidiumError(
         LiquidiumErrorCode.VALIDATION_ERROR,

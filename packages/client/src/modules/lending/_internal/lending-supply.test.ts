@@ -363,7 +363,7 @@ describe("LendingModule supply", () => {
       chain: "ICP",
       action: "deposit",
       account: {
-        icrc: {
+        icpIcrcAccount: {
           type: "Icrc",
           owner: ICP_POOL_ID,
           subaccount: expectedSubaccount,
@@ -376,7 +376,7 @@ describe("LendingModule supply", () => {
     });
     expect(
       supplyFlow.target.type === "icpLedgerAccount"
-        ? supplyFlow.target.account.accountIdentifier
+        ? supplyFlow.target.account.icpAccountIdentifier
         : ""
     ).toMatch(/^[0-9a-f]{64}$/);
   });
@@ -1172,7 +1172,7 @@ describe("LendingModule supply", () => {
         ledgerCanisterId: "ryjl3-tyaaa-aaaaa-aaaba-cai",
         to:
           flow.target.type === "icpLedgerAccount"
-            ? flow.target.account.icrc
+            ? flow.target.account.icpIcrcAccount
             : undefined,
         amount: 100_000_000n,
       },

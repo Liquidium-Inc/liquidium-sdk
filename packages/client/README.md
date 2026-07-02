@@ -146,7 +146,7 @@ function formatSupplyTarget(target: SupplyTarget): string {
     return target.account.address;
   }
 
-  return target.account.icrc.address;
+  return target.account.icpIcrcAccount.address;
 }
 ```
 

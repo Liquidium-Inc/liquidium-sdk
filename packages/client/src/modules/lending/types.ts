@@ -289,12 +289,12 @@ export interface IcrcAccountSupplyTarget {
   account: IcrcAccount;
 }
 
-/** ICP ledger target with both ICRC and legacy account identifier formats. */
+/** ICP ledger target with both ICRC account and account identifier formats. */
 export interface IcpLedgerAccount {
   /** ICRC ledger account. */
-  icrc: IcrcAccount;
-  /** Legacy ICP ledger account identifier text. */
-  accountIdentifier: string;
+  icpIcrcAccount: IcrcAccount;
+  /** ICP ledger account identifier text. */
+  icpAccountIdentifier: string;
 }
 
 /** ICP ledger account target for manual or wallet-executed transfers. */
