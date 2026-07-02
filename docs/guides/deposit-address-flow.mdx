@@ -28,15 +28,15 @@ const supplyFlow = await client.lending.supply({
 });
 
 switch (supplyFlow.target.type) {
-  case "nativeAddress":
+  case "ChainAddress":
     console.log("Send funds to", supplyFlow.target.address);
     break;
-  case "icrcAccount":
+  case "IcrcAccount":
     console.log("Send ck funds to", supplyFlow.target.account.address);
     break;
-  case "icpLedgerAccount":
-    console.log("Send ICP to", supplyFlow.target.account.icrc.address);
-    console.log("Legacy ICP account id", supplyFlow.target.account.accountIdentifier);
+  case "IcpLedgerAccount":
+    console.log("Send ICP to", supplyFlow.target.account.icpIcrcAccount.address);
+    console.log("Legacy ICP account id", supplyFlow.target.account.icpAccountIdentifier);
     break;
 }
 ```
@@ -57,7 +57,7 @@ const ckSupplyFlow = await client.lending.supply({
   transferMode: "ck",
 });
 
-if (ckSupplyFlow.target.type !== "icrcAccount") {
+if (ckSupplyFlow.target.type !== "IcrcAccount") {
   throw new Error("Expected ck transfer target");
 }
 
@@ -97,9 +97,9 @@ const icpSupplyFlow = await client.lending.supply({
   action: "deposit",
 });
 
-if (icpSupplyFlow.target.type === "icpLedgerAccount") {
-  console.log(icpSupplyFlow.target.account.icrc.address);
-  console.log(icpSupplyFlow.target.account.accountIdentifier);
+if (icpSupplyFlow.target.type === "IcpLedgerAccount") {
+  console.log(icpSupplyFlow.target.account.icpIcrcAccount.address);
+  console.log(icpSupplyFlow.target.account.icpAccountIdentifier);
 }
 ```
 
@@ -116,7 +116,7 @@ await client.lending.borrow({
   amount: 100_000n,
   receiver: {
     address: "aaaaa-aa",
-    type: "Native",
+    type: "IcPrincipal",
   },
   signerWalletAddress,
   signerChain: "ETH",

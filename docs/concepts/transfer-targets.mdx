@@ -26,7 +26,7 @@ This means `Asset.USDC` is the public symbol, while the IC transfer target is a 
 Use `target.address` when the target is an external-chain address:
 
 ```ts
-if (target.type === "nativeAddress") {
+if (target.type === "ChainAddress") {
   showAddress(target.address);
 }
 ```
@@ -36,7 +36,7 @@ if (target.type === "nativeAddress") {
 Use `target.account.address` when the target is an ICRC account:
 
 ```ts
-if (target.type === "icrcAccount") {
+if (target.type === "IcrcAccount") {
   showAccount(target.account.address);
 }
 ```
@@ -48,12 +48,12 @@ The grouped account also includes `owner` and optional `subaccount` bytes for wa
 ICP targets include both address formats for the same ledger account:
 
 ```ts
-if (target.type === "icpLedgerAccount") {
-  showAccount(target.account.icrc.address);
-  showLegacyAccountIdentifier(target.account.accountIdentifier);
+if (target.type === "IcpLedgerAccount") {
+  showAccount(target.account.icpIcrcAccount.address);
+  showLegacyAccountIdentifier(target.account.icpAccountIdentifier);
 }
 ```
 
-Use `target.account.icrc` for ICRC wallet transfers. Show `accountIdentifier` only when the user or wallet needs the legacy ICP ledger format.
+Use `target.account.icpIcrcAccount` for ICRC wallet transfers. Show `icpAccountIdentifier` only when the user or wallet needs the legacy ICP ledger format.
 
 Each target also includes `poolId`, `asset`, `chain`, and `action`. Use those fields to validate the UI label before the user sends funds.

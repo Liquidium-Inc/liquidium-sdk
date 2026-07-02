@@ -251,8 +251,8 @@ function parseOutflowDestinationAutomatically(
 ): Omit<ParsedOutflowDestination, "transferMode"> {
   const parsers = [
     parseAccountIdentifierDestination,
-    parseIcrcDestination,
     parseIcPrincipalDestination,
+    parseIcrcDestination,
   ];
 
   for (const parser of parsers) {
