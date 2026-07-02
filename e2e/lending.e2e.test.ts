@@ -32,7 +32,7 @@ describeLive("live lending e2e", () => {
     // then
     expect(btcSupplyFlow.txid).toBeUndefined();
     expect(btcSupplyFlow.target).toMatchObject({
-      type: "nativeAddress",
+      type: "ChainAddress",
       poolId: btcPool.id,
       asset: Asset.BTC,
       chain: Chain.BTC,
