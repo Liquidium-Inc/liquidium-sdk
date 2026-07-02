@@ -6,7 +6,7 @@
 
 # Interface: IcpLedgerAccount
 
-Defined in: [packages/client/src/modules/lending/types.ts:263](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L263)
+Defined in: [packages/client/src/modules/lending/types.ts:293](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L293)
 
 ICP ledger target with both ICRC and legacy account identifier formats.
 
@@ -16,7 +16,7 @@ ICP ledger target with both ICRC and legacy account identifier formats.
 
 > **accountIdentifier**: `string`
 
-Defined in: [packages/client/src/modules/lending/types.ts:267](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L267)
+Defined in: [packages/client/src/modules/lending/types.ts:297](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L297)
 
 Legacy ICP ledger account identifier text.
 
@@ -26,6 +26,6 @@ Legacy ICP ledger account identifier text.
 
 > **icrc**: [`IcrcAccount`](IcrcAccount.md)
 
-Defined in: [packages/client/src/modules/lending/types.ts:265](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L265)
+Defined in: [packages/client/src/modules/lending/types.ts:295](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L295)
 
 ICRC ledger account.

@@ -6,7 +6,7 @@
 
 # Interface: WithdrawSubmitSignatureInfo
 
-Defined in: [packages/client/src/modules/lending/types.ts:151](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L151)
+Defined in: [packages/client/src/modules/lending/types.ts:181](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L181)
 
 Signature payload for submitting a prepared withdraw action.
 

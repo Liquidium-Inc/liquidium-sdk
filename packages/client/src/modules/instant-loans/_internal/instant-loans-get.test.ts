@@ -4,7 +4,6 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 import { DEFAULT_API_BASE_URL } from "../../../core/config";
 import { LiquidiumClient, publicIdFromInt } from "../../../index";
 import {
-  ACCOUNT_IDENTIFIER,
   BTC_POOL_ID,
   createBtcBorrowInstantLoan,
   createBtcPoolRecord,
@@ -31,7 +30,7 @@ describe("InstantLoansModule get", () => {
     const EXPIRY_TIMESTAMP_SECONDS = 1_775_235_600n;
     const getLoan = vi.fn().mockResolvedValue({
       Ok: createInstantLoan({
-        borrow_destination: { AccountIdentifier: ACCOUNT_IDENTIFIER },
+        borrow_destination: { Native: Principal.fromText(PROFILE_ID) },
         refund_destination: {
           Icrc: {
             owner: Principal.fromText(PROFILE_ID),
@@ -135,8 +134,8 @@ describe("InstantLoansModule get", () => {
       amount: 2_000_000n,
       decimals: 6n,
       destination: {
-        type: "AccountIdentifier",
-        address: ACCOUNT_IDENTIFIER,
+        type: "IcPrincipal",
+        principal: PROFILE_ID,
       },
     });
     expect(loan.refundDestination).toEqual({
@@ -174,7 +173,7 @@ describe("InstantLoansModule get", () => {
       asset: "USDT",
       chain: "ETH",
       target: expect.objectContaining({
-        type: "nativeAddress",
+        type: "chainAddress",
         asset: "USDT",
         chain: "ETH",
         address: "0x1111111111111111111111111111111111111111",

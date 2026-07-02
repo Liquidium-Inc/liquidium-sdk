@@ -87,7 +87,7 @@ export function formatPool(pool: Pool): string {
 }
 
 export function formatSupplyTarget(target: SupplyTarget): string {
-  if (target.type === "nativeAddress") {
+  if (target.type === "chainAddress") {
     return [
       `Send ${target.asset} on ${target.chain} to this address:`,
       target.address,
@@ -118,10 +118,23 @@ export function formatOutflowDetails(outflow: OutflowDetails): string {
     `Outflow id: ${outflow.id}`,
     `Type: ${outflow.outflowType}`,
     `Amount: ${outflow.amount.toString()} base units`,
-    `Receiver: ${outflow.receiver.type} ${outflow.receiver.account}`,
+    `Receiver: ${formatOutflowReceiver(outflow.receiver)}`,
     `Outflow ref: ${outflow.outflowRef ?? "not set"}`,
     `Txid: ${outflow.txid ?? "not set"}`,
   ].join("\n");
+}
+
+function formatOutflowReceiver(receiver: OutflowDetails["receiver"]): string {
+  switch (receiver.type) {
+    case "ChainAddress":
+      return `${receiver.type} ${receiver.address}`;
+    case "IcPrincipal":
+      return `${receiver.type} ${receiver.principal}`;
+    case "IcpAccountIdentifier":
+      return `${receiver.type} ${receiver.accountIdentifier}`;
+    case "IcrcAccount":
+      return `${receiver.type} ${receiver.address}`;
+  }
 }
 
 export function formatActivityStatus(

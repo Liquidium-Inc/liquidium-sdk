@@ -6,7 +6,7 @@
 
 # Interface: InstantLoanCreatedEventType
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:246](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L246)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:276](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L276)
 
 Loan-created instant-loan event payload.
 
@@ -16,7 +16,7 @@ Loan-created instant-loan event payload.
 
 > **borrowAmount**: `bigint`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:251](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L251)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:281](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L281)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [packages/client/src/modules/instant-loans/types.ts:251](https://git
 
 > **borrowAsset**: [`InstantLoanAsset`](../type-aliases/InstantLoanAsset.md)
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:258](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L258)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:288](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L288)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [packages/client/src/modules/instant-loans/types.ts:258](https://git
 
 > **borrowDestination**: [`InstantLoanAccount`](../type-aliases/InstantLoanAccount.md)
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:249](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L249)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:279](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L279)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [packages/client/src/modules/instant-loans/types.ts:249](https://git
 
 > **borrowPoolId**: `string`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:257](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L257)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:287](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L287)
 
 ***
 
@@ -48,7 +48,7 @@ Defined in: [packages/client/src/modules/instant-loans/types.ts:257](https://git
 
 > **collateralAsset**: [`InstantLoanAsset`](../type-aliases/InstantLoanAsset.md)
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:250](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L250)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:280](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L280)
 
 ***
 
@@ -56,7 +56,7 @@ Defined in: [packages/client/src/modules/instant-loans/types.ts:250](https://git
 
 > **collateralPoolId**: `string`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:252](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L252)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:282](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L282)
 
 ***
 
@@ -64,7 +64,7 @@ Defined in: [packages/client/src/modules/instant-loans/types.ts:252](https://git
 
 > **depositWindowSeconds**: `bigint`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:255](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L255)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:285](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L285)
 
 ***
 
@@ -72,7 +72,7 @@ Defined in: [packages/client/src/modules/instant-loans/types.ts:255](https://git
 
 > **loanId**: `bigint`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:248](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L248)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:278](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L278)
 
 ***
 
@@ -80,7 +80,7 @@ Defined in: [packages/client/src/modules/instant-loans/types.ts:248](https://git
 
 > **ltvMaxBps**: `bigint`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:254](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L254)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:284](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L284)
 
 ***
 
@@ -88,7 +88,7 @@ Defined in: [packages/client/src/modules/instant-loans/types.ts:254](https://git
 
 > **profileId**: `string`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:256](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L256)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:286](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L286)
 
 ***
 
@@ -96,7 +96,7 @@ Defined in: [packages/client/src/modules/instant-loans/types.ts:256](https://git
 
 > **refundDestination**: [`InstantLoanAccount`](../type-aliases/InstantLoanAccount.md)
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:253](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L253)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:283](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L283)
 
 ***
 
@@ -104,4 +104,4 @@ Defined in: [packages/client/src/modules/instant-loans/types.ts:253](https://git
 
 > **type**: `"LoanCreated"`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:247](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L247)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:277](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L277)

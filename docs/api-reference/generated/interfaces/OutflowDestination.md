@@ -8,7 +8,7 @@
 
 Defined in: [packages/client/src/modules/lending/types.ts:36](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L36)
 
-Borrow or withdraw destination, with optional protocol account type hint.
+Borrow or withdraw destination, with optional account type hint.
 
 ## Properties
 

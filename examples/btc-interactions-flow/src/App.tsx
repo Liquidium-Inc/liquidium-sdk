@@ -3,6 +3,7 @@ import type {
   ActivityFilter,
   Pool,
   SupplyAction as SupplyActionType,
+  TransferMode,
 } from "@liquidium/client";
 import { Chain, SupplyAction } from "@liquidium/client";
 import { useEffect, useState } from "react";
@@ -23,6 +24,7 @@ import {
   saveRecentActivityId,
 } from "./format";
 import {
+  createBtcSupplyTarget,
   getActivityStatus,
   getOrCreateWalletProfile,
   listMarketPools,
@@ -31,6 +33,7 @@ import {
 } from "./sdk-example";
 
 const DEFAULT_SUPPLY_AMOUNT_BTC = "0.0001";
+const DEFAULT_TRANSFER_MODE: TransferMode = "native";
 
 export function App() {
   const isStatusPage = window.location.pathname.endsWith("/status.html");
@@ -48,6 +51,9 @@ function BtcInteractionsPage() {
   const [selectedPoolId, setSelectedPoolId] = useState("");
   const [supplyAction, setSupplyAction] = useState<SupplyActionType>(
     SupplyAction.deposit
+  );
+  const [transferMode, setTransferMode] = useState<TransferMode>(
+    DEFAULT_TRANSFER_MODE
   );
   const [supplyAmount, setSupplyAmount] = useState(DEFAULT_SUPPLY_AMOUNT_BTC);
   const [supplyResult, setSupplyResult] = useState(
@@ -94,7 +100,6 @@ function BtcInteractionsPage() {
   }
 
   async function submitBtcInteraction(): Promise<void> {
-    const account = getConnectedBitcoinAddress(primaryWallet);
     const selectedPool = getSelectedBtcPool(btcPools, selectedPoolId);
     const amount = parseAmountToBaseUnits(supplyAmount, selectedPool.decimals);
     const trimmedProfileId = profileId.trim();
@@ -103,17 +108,33 @@ function BtcInteractionsPage() {
       throw new Error("Enter a profile id.");
     }
 
-    setStatus(`Submitting BTC ${supplyAction}...`);
-    setSupplyResult(`Submitting BTC ${supplyAction}...`);
+    const isCkTransferMode = transferMode === "ck";
+    setStatus(
+      isCkTransferMode
+        ? `Generating ckBTC ${supplyAction} target...`
+        : `Submitting BTC ${supplyAction}...`
+    );
+    setSupplyResult(
+      isCkTransferMode
+        ? `Generating ckBTC ${supplyAction} target...`
+        : `Submitting BTC ${supplyAction}...`
+    );
 
-    const supplyFlow = await submitBtcSupply({
-      profileId: trimmedProfileId,
-      poolId: selectedPool.id,
-      action: supplyAction,
-      account,
-      amount,
-      walletAdapter: createDynamicBitcoinWalletAdapter(primaryWallet),
-    });
+    const supplyFlow = isCkTransferMode
+      ? await createBtcSupplyTarget({
+          profileId: trimmedProfileId,
+          poolId: selectedPool.id,
+          action: supplyAction,
+          transferMode,
+        })
+      : await submitBtcSupply({
+          profileId: trimmedProfileId,
+          poolId: selectedPool.id,
+          action: supplyAction,
+          account: getConnectedBitcoinAddress(primaryWallet),
+          amount,
+          walletAdapter: createDynamicBitcoinWalletAdapter(primaryWallet),
+        });
 
     if (supplyFlow.txid) {
       saveRecentActivityId(supplyFlow.txid);
@@ -123,14 +144,19 @@ function BtcInteractionsPage() {
       [
         `Sent amount: ${formatAmount(amount, selectedPool.decimals)} ${selectedPool.asset}`,
         `Action: ${supplyAction}`,
+        `Transfer mode: ${formatTransferMode(transferMode)}`,
         "",
         formatBtcSupplyFlow(supplyFlow, supplyAction),
         "",
-        "Use the txid on the Activity tracker page to follow status.",
+        supplyFlow.txid
+          ? "Use the txid on the Activity tracker page to follow status."
+          : "Send ckBTC manually to the ICRC account above.",
       ].join("\n")
     );
     setStatus(
-      `Submitted BTC ${supplyAction} ${supplyFlow.txid ?? "without txid"}.`
+      supplyFlow.txid
+        ? `Submitted BTC ${supplyAction} ${supplyFlow.txid}.`
+        : `Generated ckBTC ${supplyAction} target.`
     );
   }
 
@@ -214,6 +240,22 @@ function BtcInteractionsPage() {
           ))}
         </select>
 
+        <label htmlFor="transfer-mode-select">Transfer mode</label>
+        <select
+          id="transfer-mode-select"
+          value={transferMode}
+          onChange={(event) =>
+            setTransferMode(event.target.value as TransferMode)
+          }
+        >
+          <option value="native">Native BTC wallet transaction</option>
+          <option value="ck">Direct ckBTC / ICRC ledger account</option>
+        </select>
+        <p>
+          Native mode broadcasts with the connected Bitcoin wallet. ck mode
+          returns the pool-owned ICRC account for a manual ckBTC transfer.
+        </p>
+
         <label htmlFor="supply-action-select">Action</label>
         <select
           id="supply-action-select"
@@ -240,7 +282,9 @@ function BtcInteractionsPage() {
             void run(submitBtcInteraction, setStatus, setSupplyResult)
           }
         >
-          Submit BTC Transaction With Dynamic Wallet
+          {transferMode === "ck"
+            ? "Get ckBTC Transfer Target"
+            : "Submit BTC Transaction With Dynamic Wallet"}
         </button>
         <div className="result-box">{supplyResult}</div>
       </section>
@@ -251,6 +295,12 @@ function BtcInteractionsPage() {
       </section>
     </main>
   );
+}
+
+function formatTransferMode(transferMode: TransferMode): string {
+  return transferMode === "ck"
+    ? "Direct ckBTC / ICRC ledger account"
+    : "Native BTC wallet transaction";
 }
 
 function ActivityTrackerPage() {

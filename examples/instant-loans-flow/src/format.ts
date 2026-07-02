@@ -147,7 +147,7 @@ export function formatPool(pool: Pool): string {
 }
 
 export function formatSupplyTarget(target: SupplyTarget): string {
-  if (target.type === "nativeAddress") {
+  if (target.type === "chainAddress") {
     return [
       `Send ${target.asset} on ${target.chain} to this address:`,
       target.address,
@@ -490,7 +490,7 @@ function formatInstantLoanAccount(
     return `ICRC account: ${account.address}`;
   }
 
-  return `Native principal: ${account.principal}`;
+  return `IC principal: ${account.principal}`;
 }
 
 function formatBytes(bytes: Uint8Array | undefined): string {

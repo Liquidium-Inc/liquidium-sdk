@@ -97,23 +97,26 @@ export function formatBtcSupplyFlow(
   flow: SupplyFlow,
   action: SupplyAction
 ): string {
-  const title =
-    action === SupplyActionValue.repayment
-      ? "BTC repayment submitted."
-      : "BTC supply submitted.";
+  const actionLabel =
+    action === SupplyActionValue.repayment ? "repayment" : "supply";
+  const title = flow.txid
+    ? `BTC ${actionLabel} submitted.`
+    : `BTC ${actionLabel} target generated.`;
 
   return [
     title,
     `Mechanism: ${flow.type}`,
     `Txid: ${flow.txid ?? "not set"}`,
-    "Status: track the txid on the Activity tracker page.",
+    flow.txid
+      ? "Status: track the txid on the Activity tracker page."
+      : "Status: send funds manually, then track the transfer externally.",
     "",
     formatSupplyTarget(flow.target),
   ].join("\n");
 }
 
 export function formatSupplyTarget(target: SupplyTarget): string {
-  if (target.type === "nativeAddress") {
+  if (target.type === "chainAddress") {
     return [
       `Target type: ${target.type}`,
       `Address: ${target.address}`,

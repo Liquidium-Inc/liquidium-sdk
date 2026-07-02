@@ -6,7 +6,7 @@
 
 # Interface: InstantLoanDepositTimerStartedEventType
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:311](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L311)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:341](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L341)
 
 Deposit timer started event payload.
 
@@ -16,7 +16,7 @@ Deposit timer started event payload.
 
 > **loanId**: `bigint`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:313](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L313)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:343](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L343)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [packages/client/src/modules/instant-loans/types.ts:313](https://git
 
 > **timestamp**: `bigint`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:315](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L315)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:345](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L345)
 
 Unix timestamp in seconds when the deposit timer started.
 
@@ -34,4 +34,4 @@ Unix timestamp in seconds when the deposit timer started.
 
 > **type**: `"DepositTimerStarted"`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:312](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L312)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:342](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L342)

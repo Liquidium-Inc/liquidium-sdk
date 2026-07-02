@@ -6,7 +6,7 @@
 
 # Interface: InstantLoanStuckFundsWithdrawalRequestedEventType
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:285](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L285)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:315](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L315)
 
 Stuck funds withdrawal request event payload.
 
@@ -16,7 +16,7 @@ Stuck funds withdrawal request event payload.
 
 > **account**: [`InstantLoanAccount`](../type-aliases/InstantLoanAccount.md)
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:289](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L289)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:319](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L319)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [packages/client/src/modules/instant-loans/types.ts:289](https://git
 
 > **amount**: `bigint`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:291](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L291)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:321](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L321)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [packages/client/src/modules/instant-loans/types.ts:291](https://git
 
 > **leg**: [`InstantLoanLeg`](../type-aliases/InstantLoanLeg.md)
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:287](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L287)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:317](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L317)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [packages/client/src/modules/instant-loans/types.ts:287](https://git
 
 > **loanId**: `bigint`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:288](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L288)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:318](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L318)
 
 ***
 
@@ -48,7 +48,7 @@ Defined in: [packages/client/src/modules/instant-loans/types.ts:288](https://git
 
 > **poolId**: `string`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:290](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L290)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:320](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L320)
 
 ***
 
@@ -56,4 +56,4 @@ Defined in: [packages/client/src/modules/instant-loans/types.ts:290](https://git
 
 > **type**: `"StuckFundsWithdrawalRequested"`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:286](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L286)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:316](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L316)

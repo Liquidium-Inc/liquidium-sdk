@@ -14,18 +14,18 @@ Account type hint for borrow and withdraw outflow destinations.
 
 ## Type Declaration
 
-### AccountIdentifier
+### ChainAddress
 
-> `readonly` **AccountIdentifier**: `"AccountIdentifier"` = `"AccountIdentifier"`
+> `readonly` **ChainAddress**: `"ChainAddress"` = `"ChainAddress"`
 
-### External
+### IcpAccountIdentifier
 
-> `readonly` **External**: `"External"` = `"External"`
+> `readonly` **IcpAccountIdentifier**: `"IcpAccountIdentifier"` = `"IcpAccountIdentifier"`
 
-### Icrc
+### IcPrincipal
 
-> `readonly` **Icrc**: `"Icrc"` = `"Icrc"`
+> `readonly` **IcPrincipal**: `"IcPrincipal"` = `"IcPrincipal"`
 
-### Native
+### IcrcAccount
 
-> `readonly` **Native**: `"Native"` = `"Native"`
+> `readonly` **IcrcAccount**: `"IcrcAccount"` = `"IcrcAccount"`

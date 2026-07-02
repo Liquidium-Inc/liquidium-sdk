@@ -80,7 +80,7 @@ describe("LendingModule supply", () => {
     expect(supplyFlow).toMatchObject({
       type: "transfer",
       target: {
-        type: "nativeAddress",
+        type: "chainAddress",
         poolId: BTC_POOL_ID,
         asset: "BTC",
         chain: "BTC",
@@ -155,7 +155,7 @@ describe("LendingModule supply", () => {
     expect(supplyFlow).toMatchObject({
       type: "transfer",
       target: {
-        type: "nativeAddress",
+        type: "chainAddress",
         poolId: USDT_POOL_ID,
         asset: "USDT",
         chain: "ETH",
@@ -234,7 +234,7 @@ describe("LendingModule supply", () => {
     expect(supplyFlow).toMatchObject({
       type: "transfer",
       target: {
-        type: "nativeAddress",
+        type: "chainAddress",
         poolId: USDC_POOL_ID,
         asset: "USDC",
         chain: "ETH",
@@ -542,7 +542,7 @@ describe("LendingModule supply", () => {
     ).rejects.toMatchObject({
       code: LiquidiumErrorCode.VALIDATION_ERROR,
       message:
-        "Native BTC inflow targets require the configured BTC pool hkmli-faaaa-aaaar-qb4ba-cai, received ryjl3-tyaaa-aaaaa-aaaba-cai",
+        "Chain-address BTC inflow targets require the configured BTC pool hkmli-faaaa-aaaar-qb4ba-cai, received ryjl3-tyaaa-aaaaa-aaaba-cai",
     });
   });
 
@@ -742,7 +742,7 @@ describe("LendingModule supply", () => {
     // then
     expect(flow.type).toBe("transfer");
     expect(flow.target).toMatchObject({
-      type: "nativeAddress",
+      type: "chainAddress",
       asset: "USDT",
       chain: "ETH",
       address: "0x1111111111111111111111111111111111111111",
@@ -994,7 +994,7 @@ describe("LendingModule supply", () => {
     // then
     expect(flow.type).toBe("transfer");
     expect(flow.target).toMatchObject({
-      type: "nativeAddress",
+      type: "chainAddress",
       address: "bc1qexampledepositaddress",
     });
     expect(fetchSpy).toHaveBeenCalledWith(

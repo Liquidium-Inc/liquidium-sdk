@@ -106,8 +106,8 @@ Nonce: 17`);
       txid: "txid-1",
       amount: 50_000n,
       receiver: {
-        type: "External",
-        account: VALID_BTC_OUTFLOW_ADDRESS,
+        type: "ChainAddress",
+        address: VALID_BTC_OUTFLOW_ADDRESS,
       },
       status: {
         operation: "borrow",
@@ -145,19 +145,30 @@ Nonce: 17`);
       amount: 50_000n,
       receiver: {
         address: VALID_IC_PRINCIPAL,
-        type: "Native",
+        type: "IcPrincipal",
       },
       signerWalletAddress: "0xsigner",
     });
-    await borrowAction.submit({ signature: "0xsigned", chain: "ETH" });
+    const outflow = await borrowAction.submit({
+      signature: "0xsigned",
+      chain: "ETH",
+    });
 
     // then
     expect(borrowAction.transferMode).toBe("ck");
+    expect(borrowAction.data.receiver).toEqual({
+      address: VALID_IC_PRINCIPAL,
+      type: "IcPrincipal",
+    });
     expect(borrowAction.message).toContain(`Principal:${VALID_IC_PRINCIPAL}`);
     expect(borrowAssets.mock.calls[0]?.[1]).toMatchObject({
       data: {
         account: { Native: Principal.fromText(VALID_IC_PRINCIPAL) },
       },
+    });
+    expect(outflow.receiver).toEqual({
+      type: "IcPrincipal",
+      principal: VALID_IC_PRINCIPAL,
     });
   });
 
@@ -293,10 +304,10 @@ Nonce: 17`);
 
     // then
     expect(outflow.receiver).toEqual({
-      type: "Icrc",
+      type: "IcrcAccount",
       owner: profileId,
       subaccount: ICRC_SUBACCOUNT,
-      account: encodeIcrcAccount({
+      address: encodeIcrcAccount({
         owner: Principal.fromText(profileId),
         subaccount: ICRC_SUBACCOUNT,
       }),
@@ -342,8 +353,8 @@ Nonce: 17`);
 
     // then
     expect(outflow.receiver).toEqual({
-      type: "AccountIdentifier",
-      account: ACCOUNT_IDENTIFIER,
+      type: "IcpAccountIdentifier",
+      accountIdentifier: ACCOUNT_IDENTIFIER,
     });
   });
 

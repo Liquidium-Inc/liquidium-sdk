@@ -90,7 +90,7 @@ interface GetEvmSupplyContextForPoolParams {
   chain: string;
 }
 
-interface SendAndSubmitNativeSupplyInflowParams {
+interface SendAndSubmitTransferSupplyInflowParams {
   request: TransferSupplyFlowRequest;
   instruction: SupplyInstruction;
   defaultSubmitInflowRequest?: SubmitInflowDefaults;
@@ -109,7 +109,7 @@ interface ExecuteContractSupplyParams {
   defaultSubmitInflowRequest?: SubmitInflowDefaults;
 }
 
-interface SendNativeSupplyTransactionParams {
+interface SendChainAddressSupplyTransactionParams {
   walletAdapter: Pick<
     WalletAdapter,
     "sendBtcTransaction" | "sendEthTransaction"
@@ -200,7 +200,7 @@ export class SupplyFlowExecutor {
     switch (mechanism) {
       case PlanType.transfer:
         if (request.walletAdapter) {
-          txid = await this.sendAndSubmitNativeSupplyInflow({
+          txid = await this.sendAndSubmitTransferSupplyInflow({
             request: request as TransferSupplyFlowRequest,
             instruction,
             defaultSubmitInflowRequest,
@@ -311,8 +311,8 @@ export class SupplyFlowExecutor {
     };
   }
 
-  private async sendAndSubmitNativeSupplyInflow(
-    params: SendAndSubmitNativeSupplyInflowParams
+  private async sendAndSubmitTransferSupplyInflow(
+    params: SendAndSubmitTransferSupplyInflowParams
   ): Promise<string> {
     const { request, instruction, defaultSubmitInflowRequest } = params;
 
@@ -339,8 +339,8 @@ export class SupplyFlowExecutor {
     }
 
     const txid =
-      instruction.target.type === "nativeAddress"
-        ? await this.sendNativeSupplyTransaction({
+      instruction.target.type === "chainAddress"
+        ? await this.sendChainAddressSupplyTransaction({
             walletAdapter: request.walletAdapter,
             chain: instruction.chain,
             toAddress: instruction.target.address,
@@ -536,8 +536,8 @@ export class SupplyFlowExecutor {
     return depositTxid;
   }
 
-  private async sendNativeSupplyTransaction(
-    params: SendNativeSupplyTransactionParams
+  private async sendChainAddressSupplyTransaction(
+    params: SendChainAddressSupplyTransactionParams
   ): Promise<string> {
     switch (params.chain) {
       case Chain.BTC: {
@@ -593,7 +593,7 @@ export class SupplyFlowExecutor {
       default:
         throw new LiquidiumError(
           LiquidiumErrorCode.VALIDATION_ERROR,
-          `Native-address wallet execution is not supported for ${params.chain}`
+          `Chain-address wallet execution is not supported for ${params.chain}`
         );
     }
   }
@@ -811,7 +811,7 @@ function getIcrcSupplyTargetAccount(
       return target.account;
     case "icpLedgerAccount":
       return target.account.icrc;
-    case "nativeAddress":
+    case "chainAddress":
       throw new LiquidiumError(
         LiquidiumErrorCode.VALIDATION_ERROR,
         "ICRC wallet execution requires an ICRC-compatible supply target"
@@ -830,7 +830,7 @@ function shouldSubmitInflow(params: ShouldSubmitInflowParams): boolean {
     return true;
   }
 
-  if (params.instruction.target.type !== "nativeAddress") {
+  if (params.instruction.target.type !== "chainAddress") {
     return false;
   }
 

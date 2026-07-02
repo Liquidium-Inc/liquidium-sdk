@@ -24,9 +24,9 @@ import { Asset, Chain, type SupplyAction } from "../../../core/types";
 import { encodeInflowSubaccount } from "../../../core/utils/inflow-subaccount";
 import { TransferMode } from "../../../core/wallet-actions";
 import {
-  type IcpLedgerSupplyTarget,
+  type ChainAddressSupplyTarget,
+  type IcpLedgerAccountSupplyTarget,
   type IcrcAccountSupplyTarget,
-  type NativeAddressSupplyTarget,
   SupplyPlanType,
   type SupplyTarget,
 } from "../types";
@@ -72,7 +72,7 @@ export async function resolveSupplyTarget(
   switch (mechanism) {
     case SupplyPlanType.transfer:
       if (asset === Asset.ICP && chain === Chain.ICP) {
-        return getIcpLedgerSupplyTarget(request.profileId, {
+        return getIcpLedgerAccountSupplyTarget(request.profileId, {
           poolId: request.poolId,
           asset,
           chain,
@@ -89,7 +89,7 @@ export async function resolveSupplyTarget(
         });
       }
 
-      return await getNativeAddressSupplyTarget(
+      return await getChainAddressSupplyTarget(
         canisterContext,
         request.profileId,
         {
@@ -247,12 +247,12 @@ async function getPoolById(
   return decodedPool;
 }
 
-async function getNativeAddressSupplyTarget(
+async function getChainAddressSupplyTarget(
   canisterContext: CanisterContext,
   profileId: string,
   request: SupplyTargetRequest
-): Promise<NativeAddressSupplyTarget> {
-  assertSupportsNativeAddressInflowTarget(request.asset, request.chain);
+): Promise<ChainAddressSupplyTarget> {
+  assertSupportsChainAddressInflowTarget(request.asset, request.chain);
 
   if (isEthStablecoin(request.asset, request.chain)) {
     const tokenAddress = getEthStablecoinContractAddress(request.asset);
@@ -275,7 +275,7 @@ async function getNativeAddressSupplyTarget(
     }
 
     return {
-      type: "nativeAddress",
+      type: "chainAddress",
       poolId: request.poolId,
       asset: request.asset,
       chain: request.chain,
@@ -288,7 +288,7 @@ async function getNativeAddressSupplyTarget(
   if (request.poolId !== configuredBtcPoolId) {
     throw new LiquidiumError(
       LiquidiumErrorCode.VALIDATION_ERROR,
-      `Native BTC inflow targets require the configured BTC pool ${configuredBtcPoolId}, received ${request.poolId}`
+      `Chain-address BTC inflow targets require the configured BTC pool ${configuredBtcPoolId}, received ${request.poolId}`
     );
   }
 
@@ -304,7 +304,7 @@ async function getNativeAddressSupplyTarget(
   );
 
   return {
-    type: "nativeAddress",
+    type: "chainAddress",
     poolId: request.poolId,
     asset: request.asset,
     chain: request.chain,
@@ -338,10 +338,10 @@ function getIcrcAccountSupplyTarget(
   };
 }
 
-function getIcpLedgerSupplyTarget(
+function getIcpLedgerAccountSupplyTarget(
   profileId: string,
   request: SupplyTargetRequest
-): IcpLedgerSupplyTarget {
+): IcpLedgerAccountSupplyTarget {
   if (request.asset !== Asset.ICP || request.chain !== Chain.ICP) {
     throw new LiquidiumError(
       LiquidiumErrorCode.VALIDATION_ERROR,
@@ -375,7 +375,7 @@ function getIcpLedgerSupplyTarget(
   };
 }
 
-function assertSupportsNativeAddressInflowTarget(
+function assertSupportsChainAddressInflowTarget(
   asset: string,
   chain: string
 ): void {
@@ -389,7 +389,7 @@ function assertSupportsNativeAddressInflowTarget(
 
   throw new LiquidiumError(
     LiquidiumErrorCode.VALIDATION_ERROR,
-    `Native address inflow targets are not supported for ${asset} on ${chain}`
+    `Chain address inflow targets are not supported for ${asset} on ${chain}`
   );
 }
 

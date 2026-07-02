@@ -2,13 +2,13 @@
 
 ***
 
-[@liquidium/client](../README.md) / NativeAccount
+[@liquidium/client](../README.md) / IcPrincipalAccount
 
-# Interface: NativeAccount
+# Interface: IcPrincipalAccount
 
 Defined in: [packages/client/src/modules/instant-loans/types.ts:37](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L37)
 
-IC principal account returned when a canister-native destination is used.
+IC principal account returned when an IC principal destination is used.
 
 ## Properties
 
@@ -18,13 +18,13 @@ IC principal account returned when a canister-native destination is used.
 
 Defined in: [packages/client/src/modules/instant-loans/types.ts:41](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L41)
 
-Principal text for the canister-native account.
+IC principal text.
 
 ***
 
 ### type
 
-> **type**: `"Native"`
+> **type**: `"IcPrincipal"`
 
 Defined in: [packages/client/src/modules/instant-loans/types.ts:39](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L39)
 

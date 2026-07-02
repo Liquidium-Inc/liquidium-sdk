@@ -3,6 +3,7 @@ import { DynamicWidget, useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import type {
   ActivityFilter,
   AssetPrices,
+  OutflowAccountType,
   Pool,
   SupplyFlow,
   TransferMode,
@@ -38,6 +39,16 @@ import {
 const DEFAULT_SUPPLY_ASSET = "USDC";
 const DEFAULT_BORROW_ASSET = "USDC";
 const DEFAULT_SUPPLY_TRANSFER_MODE: TransferMode = "native";
+const DEFAULT_OUTFLOW_ACCOUNT_TYPE: OutflowAccountType = "ChainAddress";
+const EXTERNAL_CHAIN_OUTFLOW_ACCOUNT_TYPES: OutflowAccountType[] = [
+  "ChainAddress",
+  "IcPrincipal",
+];
+const ICP_OUTFLOW_ACCOUNT_TYPES: OutflowAccountType[] = [
+  "IcrcAccount",
+  "IcpAccountIdentifier",
+  "IcPrincipal",
+];
 
 export function App() {
   const isStatusPage = window.location.pathname.endsWith("/status.html");
@@ -68,6 +79,8 @@ function SupplyBorrowPage() {
   );
   const [borrowAmount, setBorrowAmount] = useState("9");
   const [borrowDestination, setBorrowDestination] = useState("");
+  const [borrowDestinationType, setBorrowDestinationType] =
+    useState<OutflowAccountType>(DEFAULT_OUTFLOW_ACCOUNT_TYPE);
   const [borrowResult, setBorrowResult] = useState(
     "Connect a wallet, then submit a borrow."
   );
@@ -101,6 +114,7 @@ function SupplyBorrowPage() {
       setSelectedBorrowPoolId(
         defaultBorrowPool?.id ?? loadedPools[0]?.id ?? ""
       );
+      setBorrowDestinationType(getDefaultOutflowAccountType(defaultBorrowPool));
       setStatus(`Loaded ${loadedPools.length} pools.`);
     }, setStatus);
   }, []);
@@ -114,12 +128,16 @@ function SupplyBorrowPage() {
       (pool) => pool.id === selectedBorrowPoolId
     );
 
-    if (!selectedBorrowPool || selectedBorrowPool.chain !== Chain.ETH) {
+    if (
+      !selectedBorrowPool ||
+      selectedBorrowPool.chain !== Chain.ETH ||
+      borrowDestinationType !== "ChainAddress"
+    ) {
       return;
     }
 
     setBorrowDestination(walletAddress);
-  }, [walletAddress, selectedBorrowPoolId, pools]);
+  }, [walletAddress, selectedBorrowPoolId, borrowDestinationType, pools]);
 
   async function loadPools(): Promise<void> {
     setStatus("Loading pools...");
@@ -138,6 +156,7 @@ function SupplyBorrowPage() {
     setAssetPrices(loadedAssetPrices);
     setSelectedSupplyPoolId(defaultSupplyPool?.id ?? loadedPools[0]?.id ?? "");
     setSelectedBorrowPoolId(defaultBorrowPool?.id ?? loadedPools[0]?.id ?? "");
+    setBorrowDestinationType(getDefaultOutflowAccountType(defaultBorrowPool));
     setStatus(`Loaded ${loadedPools.length} pools.`);
   }
 
@@ -188,7 +207,7 @@ function SupplyBorrowPage() {
     }
 
     if (
-      currentSupplyFlow.target.type === "nativeAddress" &&
+      currentSupplyFlow.target.type === "chainAddress" &&
       currentSupplyFlow.target.chain === Chain.ETH
     ) {
       await trackEthSupplyTxid(txid);
@@ -267,7 +286,7 @@ function SupplyBorrowPage() {
       profileId: result.profileId,
       poolId: selectedBorrowPool.id,
       amount: parsedBorrowAmount,
-      receiver: { address: destinationAddress },
+      receiver: { address: destinationAddress, type: borrowDestinationType },
       signerWalletAddress,
       signerWalletAdapter: createDynamicWalletAdapter(primaryWallet),
     });
@@ -419,7 +438,15 @@ function SupplyBorrowPage() {
         <select
           id="borrow-pool-select"
           value={selectedBorrowPoolId}
-          onChange={(event) => setSelectedBorrowPoolId(event.target.value)}
+          onChange={(event) =>
+            setSelectedBorrowPool({
+              poolId: event.target.value,
+              pools,
+              setSelectedPoolId: setSelectedBorrowPoolId,
+              setDestinationType: setBorrowDestinationType,
+              setDestination: setBorrowDestination,
+            })
+          }
         >
           {pools.map((pool) => (
             <option key={pool.id} value={pool.id}>
@@ -439,6 +466,25 @@ function SupplyBorrowPage() {
         <label htmlFor="borrow-destination-input">
           Borrow destination address
         </label>
+        <select
+          id="borrow-destination-type-select"
+          value={borrowDestinationType}
+          onChange={(event) =>
+            setBorrowDestinationType(event.target.value as OutflowAccountType)
+          }
+        >
+          {getOutflowAccountTypeOptions(
+            pools.find((pool) => pool.id === selectedBorrowPoolId)
+          ).map((accountType) => (
+            <option key={accountType} value={accountType}>
+              {formatOutflowAccountType(accountType)}
+            </option>
+          ))}
+        </select>
+        <p>
+          For ICP pools, choose ICRC account, ICP account identifier, or IC
+          principal. External addresses are for BTC and EVM-chain outflows.
+        </p>
         <input
           id="borrow-destination-input"
           value={borrowDestination}
@@ -649,6 +695,47 @@ function formatTransferMode(transferMode: TransferMode): string {
   return transferMode === "ck"
     ? "Direct ck / ICRC ledger account"
     : "Native ingress address";
+}
+
+function getDefaultOutflowAccountType(
+  pool: Pool | undefined
+): OutflowAccountType {
+  return pool?.chain === Chain.ICP ? "IcrcAccount" : "ChainAddress";
+}
+
+function getOutflowAccountTypeOptions(
+  pool: Pool | undefined
+): OutflowAccountType[] {
+  return pool?.chain === Chain.ICP
+    ? ICP_OUTFLOW_ACCOUNT_TYPES
+    : EXTERNAL_CHAIN_OUTFLOW_ACCOUNT_TYPES;
+}
+
+function formatOutflowAccountType(accountType: OutflowAccountType): string {
+  switch (accountType) {
+    case "ChainAddress":
+      return "Chain-native address";
+    case "IcPrincipal":
+      return "IC principal";
+    case "IcrcAccount":
+      return "ICRC account";
+    case "IcpAccountIdentifier":
+      return "ICP account identifier";
+  }
+}
+
+function setSelectedBorrowPool(params: {
+  poolId: string;
+  pools: Pool[];
+  setSelectedPoolId(poolId: string): void;
+  setDestinationType(accountType: OutflowAccountType): void;
+  setDestination(destination: string): void;
+}): void {
+  const selectedPool = params.pools.find((pool) => pool.id === params.poolId);
+
+  params.setSelectedPoolId(params.poolId);
+  params.setDestinationType(getDefaultOutflowAccountType(selectedPool));
+  params.setDestination("");
 }
 
 async function getOrCreateConnectedWalletProfile(

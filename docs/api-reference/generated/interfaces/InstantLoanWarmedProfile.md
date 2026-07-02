@@ -6,7 +6,7 @@
 
 # Interface: InstantLoanWarmedProfile
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:225](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L225)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:255](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L255)
 
 Warmed profile available for a future instant loan.
 
@@ -16,7 +16,7 @@ Warmed profile available for a future instant loan.
 
 > **authorization**: [`InstantLoanAuthorization`](InstantLoanAuthorization.md)
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:227](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L227)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:257](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L257)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [packages/client/src/modules/instant-loans/types.ts:227](https://git
 
 > **createdAt**: `bigint`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:229](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L229)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:259](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L259)
 
 Unix creation timestamp in seconds.
 
@@ -34,7 +34,7 @@ Unix creation timestamp in seconds.
 
 > **id**: `bigint`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:226](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L226)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:256](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L256)
 
 ***
 
@@ -42,4 +42,4 @@ Defined in: [packages/client/src/modules/instant-loans/types.ts:226](https://git
 
 > **profileId**: `string`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:230](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L230)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:260](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L260)

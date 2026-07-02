@@ -6,7 +6,7 @@
 
 # Interface: WithdrawAction
 
-Defined in: [packages/client/src/modules/lending/types.ts:211](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L211)
+Defined in: [packages/client/src/modules/lending/types.ts:241](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L241)
 
 Prepared action for creating a withdraw outflow.
 
@@ -34,7 +34,7 @@ Default account to pass to the wallet adapter.
 
 > **actionType**: `"create-withdraw"`
 
-Defined in: [packages/client/src/modules/lending/types.ts:218](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L218)
+Defined in: [packages/client/src/modules/lending/types.ts:248](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L248)
 
 Adapter-facing action type.
 
@@ -62,7 +62,7 @@ Original request data needed to submit the signed action.
 
 > **executionKind**: `"sign-message"`
 
-Defined in: [packages/client/src/modules/lending/types.ts:216](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L216)
+Defined in: [packages/client/src/modules/lending/types.ts:246](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L246)
 
 Required wallet capability.
 
@@ -76,7 +76,7 @@ Required wallet capability.
 
 > **kind**: `"create-withdraw"`
 
-Defined in: [packages/client/src/modules/lending/types.ts:214](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L214)
+Defined in: [packages/client/src/modules/lending/types.ts:244](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L244)
 
 Protocol action kind.
 

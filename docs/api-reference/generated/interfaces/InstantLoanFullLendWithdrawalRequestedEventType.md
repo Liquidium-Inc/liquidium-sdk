@@ -6,7 +6,7 @@
 
 # Interface: InstantLoanFullLendWithdrawalRequestedEventType
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:262](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L262)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:292](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L292)
 
 Full collateral withdrawal request event payload.
 
@@ -16,7 +16,7 @@ Full collateral withdrawal request event payload.
 
 > **account**: [`InstantLoanAccount`](../type-aliases/InstantLoanAccount.md)
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:265](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L265)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:295](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L295)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [packages/client/src/modules/instant-loans/types.ts:265](https://git
 
 > **loanId**: `bigint`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:264](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L264)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:294](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L294)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [packages/client/src/modules/instant-loans/types.ts:264](https://git
 
 > **poolId**: `string`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:266](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L266)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:296](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L296)
 
 ***
 
@@ -40,4 +40,4 @@ Defined in: [packages/client/src/modules/instant-loans/types.ts:266](https://git
 
 > **type**: `"FullLendWithdrawalRequested"`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:263](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L263)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:293](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L293)

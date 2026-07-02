@@ -6,8 +6,8 @@
 
 # Type Alias: SupplyTarget
 
-> **SupplyTarget** = [`NativeAddressSupplyTarget`](../interfaces/NativeAddressSupplyTarget.md) \| [`IcrcAccountSupplyTarget`](../interfaces/IcrcAccountSupplyTarget.md) \| [`IcpLedgerSupplyTarget`](../interfaces/IcpLedgerSupplyTarget.md)
+> **SupplyTarget** = [`ChainAddressSupplyTarget`](../interfaces/ChainAddressSupplyTarget.md) \| [`IcrcAccountSupplyTarget`](../interfaces/IcrcAccountSupplyTarget.md) \| [`IcpLedgerAccountSupplyTarget`](../interfaces/IcpLedgerAccountSupplyTarget.md)
 
-Defined in: [packages/client/src/modules/lending/types.ts:287](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L287)
+Defined in: [packages/client/src/modules/lending/types.ts:317](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L317)
 
 Supply destination returned by `lending.supply(...)`.

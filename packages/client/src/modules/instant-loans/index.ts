@@ -4,6 +4,7 @@ export type {
   AccountIdentifierAccount,
   CreateInstantLoanRequest,
   ExternalAccount,
+  IcPrincipalAccount,
   IcrcAccount,
   InstantLoan,
   InstantLoanAccount,
@@ -35,5 +36,4 @@ export type {
   InstantLoanStuckFundsWithdrawalRequestedEventType,
   InstantLoanTerms,
   InstantLoanWarmedProfile,
-  NativeAccount,
 } from "./types";

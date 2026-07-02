@@ -31,6 +31,12 @@ type SubmitContractInteractionRepaymentParams = {
   walletAdapter: WalletAdapter;
 };
 
+type CreateCkTransferTargetParams = {
+  profileId: string;
+  poolId: string;
+  action: SupplyAction;
+};
+
 type BorrowWithWalletParams = {
   profileId: string;
   poolId: string;
@@ -119,6 +125,19 @@ export async function submitContractInteractionRepayment({
     account,
     amount,
     walletAdapter,
+  });
+}
+
+export async function createCkTransferTarget({
+  profileId,
+  poolId,
+  action,
+}: CreateCkTransferTargetParams): Promise<SupplyFlow> {
+  return await createClient().lending.supply({
+    profileId,
+    poolId,
+    action,
+    transferMode: "ck",
   });
 }
 

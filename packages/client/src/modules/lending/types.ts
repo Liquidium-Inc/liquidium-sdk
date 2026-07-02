@@ -23,16 +23,16 @@ export type { IcrcAccount, IcrcTransferDetails, SendIcrcTransferRequest };
 
 /** Account type hint for borrow and withdraw outflow destinations. */
 export const OutflowAccountType = {
-  AccountIdentifier: "AccountIdentifier",
-  External: "External",
-  Icrc: "Icrc",
-  Native: "Native",
+  ChainAddress: "ChainAddress",
+  IcPrincipal: "IcPrincipal",
+  IcpAccountIdentifier: "IcpAccountIdentifier",
+  IcrcAccount: "IcrcAccount",
 } as const;
 /** Account type hint for borrow and withdraw outflow destinations. */
 export type OutflowAccountType =
   (typeof OutflowAccountType)[keyof typeof OutflowAccountType];
 
-/** Borrow or withdraw destination, with optional protocol account type hint. */
+/** Borrow or withdraw destination, with optional account type hint. */
 export interface OutflowDestination {
   /** Destination address, principal, ICRC account, or ICP account identifier. */
   address: string;
@@ -66,47 +66,77 @@ export interface CreateTransferErc20TransactionParams {
   amount: bigint;
 }
 
-/** Destination account for a completed outflow. */
+/**
+ * Destination account for a completed outflow.
+ *
+ * @example
+ * ```ts
+ * const icPrincipalReceiver: OutflowReceiver = {
+ *   type: "IcPrincipal",
+ *   principal: "aaaaa-aa",
+ * };
+ *
+ * const chainAddressReceiver: OutflowReceiver = {
+ *   type: "ChainAddress",
+ *   address: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",
+ * };
+ *
+ * const icpAccountIdentifierReceiver: OutflowReceiver = {
+ *   type: "IcpAccountIdentifier",
+ *   accountIdentifier: "e2134f3f176b1429df3f92807b8f0f26a520debc313b2d6ad86a4a2e7f3d8f8d",
+ * };
+ *
+ * const icrcAccountReceiver: OutflowReceiver = {
+ *   type: "IcrcAccount",
+ *   owner: "aaaaa-aa",
+ *   address: "aaaaa-aa",
+ * };
+ * ```
+ */
 export type OutflowReceiver =
-  | NativeOutflowReceiver
-  | ExternalOutflowReceiver
-  | AccountIdentifierOutflowReceiver
-  | IcrcOutflowReceiver;
+  /** Chain-native destination address, such as a BTC or EVM address. */
+  | ChainAddressOutflowReceiver
+  /** IC principal destination. */
+  | IcPrincipalOutflowReceiver
+  /** Legacy ICP ledger account identifier destination. */
+  | IcpAccountIdentifierOutflowReceiver
+  /** ICRC account destination. */
+  | IcrcAccountOutflowReceiver;
 
-/** IC principal destination for a completed outflow. */
-export interface NativeOutflowReceiver {
-  /** Destination account type reported by the protocol. */
-  type: "Native";
-  /** Destination principal. */
-  account: string;
+/** Chain-native destination for a completed outflow, such as a BTC or EVM address. */
+export interface ChainAddressOutflowReceiver {
+  /** Destination account type. */
+  type: "ChainAddress";
+  /** Chain-native destination address. */
+  address: string;
 }
 
-/** External-chain destination for a completed outflow. */
-export interface ExternalOutflowReceiver {
-  /** Destination account type reported by the protocol. */
-  type: "External";
-  /** External-chain destination address. */
-  account: string;
+/** IC principal destination for a completed outflow. */
+export interface IcPrincipalOutflowReceiver {
+  /** Destination account type. */
+  type: "IcPrincipal";
+  /** Destination principal. */
+  principal: string;
 }
 
 /** Legacy ICP ledger account identifier destination for a completed outflow. */
-export interface AccountIdentifierOutflowReceiver {
-  /** Destination account type reported by the protocol. */
-  type: "AccountIdentifier";
+export interface IcpAccountIdentifierOutflowReceiver {
+  /** Destination account type. */
+  type: "IcpAccountIdentifier";
   /** ICP ledger account identifier text, displayed as the destination address. */
-  account: string;
+  accountIdentifier: string;
 }
 
 /** ICRC account destination for a completed outflow. */
-export interface IcrcOutflowReceiver {
-  /** Destination account type reported by the protocol. */
-  type: "Icrc";
+export interface IcrcAccountOutflowReceiver {
+  /** Destination account type. */
+  type: "IcrcAccount";
   /** ICRC account owner principal text. */
   owner: string;
   /** Optional ICRC subaccount bytes. */
   subaccount?: Uint8Array;
   /** Text-encoded ICRC account for display. */
-  account: string;
+  address: string;
 }
 
 /**
@@ -227,10 +257,10 @@ export const SupplyPlanType = {
 export type SupplyPlanType =
   (typeof SupplyPlanType)[keyof typeof SupplyPlanType];
 
-/** External-chain address target for manual or wallet-executed transfers. */
-export interface NativeAddressSupplyTarget {
+/** Chain address target for manual or wallet-executed transfers. */
+export interface ChainAddressSupplyTarget {
   /** Target discriminator. */
-  type: "nativeAddress";
+  type: "chainAddress";
   /** Pool principal text receiving the inflow. */
   poolId: string;
   /** Asset expected by the target. */
@@ -268,7 +298,7 @@ export interface IcpLedgerAccount {
 }
 
 /** ICP ledger account target for manual or wallet-executed transfers. */
-export interface IcpLedgerSupplyTarget {
+export interface IcpLedgerAccountSupplyTarget {
   /** Target discriminator. */
   type: "icpLedgerAccount";
   /** Pool principal text receiving the inflow. */
@@ -285,9 +315,9 @@ export interface IcpLedgerSupplyTarget {
 
 /** Supply destination returned by `lending.supply(...)`. */
 export type SupplyTarget =
-  | NativeAddressSupplyTarget
+  | ChainAddressSupplyTarget
   | IcrcAccountSupplyTarget
-  | IcpLedgerSupplyTarget;
+  | IcpLedgerAccountSupplyTarget;
 
 interface BaseSupplyFlowRequest {
   profileId: string;

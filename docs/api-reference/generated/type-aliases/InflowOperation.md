@@ -8,6 +8,6 @@
 
 > **InflowOperation** = `Extract`\<[`LiquidiumOperation`](LiquidiumOperation.md), `"deposit"` \| `"repayment"`\>
 
-Defined in: [packages/client/src/modules/lending/types.ts:379](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L379)
+Defined in: [packages/client/src/modules/lending/types.ts:409](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L409)
 
 Canonical inflow operation accepted by direct inflow submission.

@@ -6,7 +6,7 @@
 
 # Interface: GetEvmSupplyContextRequest
 
-Defined in: [packages/client/src/modules/lending/types.ts:435](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L435)
+Defined in: [packages/client/src/modules/lending/types.ts:465](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L465)
 
 Request for ERC-20 approval and deposit planning.
 
@@ -16,7 +16,7 @@ Request for ERC-20 approval and deposit planning.
 
 > **action**: [`SupplyAction`](../type-aliases/SupplyAction.md)
 
-Defined in: [packages/client/src/modules/lending/types.ts:445](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L445)
+Defined in: [packages/client/src/modules/lending/types.ts:475](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L475)
 
 Deposit or repayment action for the inflow.
 
@@ -26,7 +26,7 @@ Deposit or repayment action for the inflow.
 
 > **amount**: `bigint`
 
-Defined in: [packages/client/src/modules/lending/types.ts:443](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L443)
+Defined in: [packages/client/src/modules/lending/types.ts:473](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L473)
 
 Supply amount in token base units.
 
@@ -36,7 +36,7 @@ Supply amount in token base units.
 
 > **poolId**: `string`
 
-Defined in: [packages/client/src/modules/lending/types.ts:439](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L439)
+Defined in: [packages/client/src/modules/lending/types.ts:469](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L469)
 
 Pool principal text receiving the inflow.
 
@@ -46,7 +46,7 @@ Pool principal text receiving the inflow.
 
 > **profileId**: `string`
 
-Defined in: [packages/client/src/modules/lending/types.ts:437](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L437)
+Defined in: [packages/client/src/modules/lending/types.ts:467](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L467)
 
 Liquidium profile principal text.
 
@@ -56,6 +56,6 @@ Liquidium profile principal text.
 
 > **walletAddress**: `string`
 
-Defined in: [packages/client/src/modules/lending/types.ts:441](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L441)
+Defined in: [packages/client/src/modules/lending/types.ts:471](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L471)
 
 EVM wallet address that will send funds.

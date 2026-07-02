@@ -6,7 +6,7 @@
 
 # Interface: BorrowAction
 
-Defined in: [packages/client/src/modules/lending/types.ts:177](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L177)
+Defined in: [packages/client/src/modules/lending/types.ts:207](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L207)
 
 Prepared action for creating a borrow outflow.
 
@@ -34,7 +34,7 @@ Default account to pass to the wallet adapter.
 
 > **actionType**: `"create-borrow"`
 
-Defined in: [packages/client/src/modules/lending/types.ts:184](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L184)
+Defined in: [packages/client/src/modules/lending/types.ts:214](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L214)
 
 Adapter-facing action type.
 
@@ -62,7 +62,7 @@ Original request data needed to submit the signed action.
 
 > **executionKind**: `"sign-message"`
 
-Defined in: [packages/client/src/modules/lending/types.ts:182](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L182)
+Defined in: [packages/client/src/modules/lending/types.ts:212](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L212)
 
 Required wallet capability.
 
@@ -76,7 +76,7 @@ Required wallet capability.
 
 > **kind**: `"create-borrow"`
 
-Defined in: [packages/client/src/modules/lending/types.ts:180](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L180)
+Defined in: [packages/client/src/modules/lending/types.ts:210](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L210)
 
 Protocol action kind.
 

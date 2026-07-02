@@ -8,7 +8,7 @@
 
 > **BorrowOutflowDetails** = [`OutflowDetails`](../interfaces/OutflowDetails.md) & `object`
 
-Defined in: [packages/client/src/modules/lending/types.ts:134](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L134)
+Defined in: [packages/client/src/modules/lending/types.ts:164](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L164)
 
 Borrow receipt.
 

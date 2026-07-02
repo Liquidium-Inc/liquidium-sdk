@@ -8,7 +8,7 @@
 
 > `const` **SupplyPlanType**: `object`
 
-Defined in: [packages/client/src/modules/lending/types.ts:222](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L222)
+Defined in: [packages/client/src/modules/lending/types.ts:252](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L252)
 
 Supply execution plan selected by the SDK.
 

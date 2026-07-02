@@ -6,7 +6,7 @@
 
 # Interface: SubmitInflowRequest
 
-Defined in: [packages/client/src/modules/lending/types.ts:393](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L393)
+Defined in: [packages/client/src/modules/lending/types.ts:423](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L423)
 
 Body for direct `lending.submitInflow`.
 
@@ -20,7 +20,7 @@ Body for direct `lending.submitInflow`.
 
 > `optional` **chain?**: [`Chain`](../type-aliases/Chain.md)
 
-Defined in: [packages/client/src/modules/lending/types.ts:389](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L389)
+Defined in: [packages/client/src/modules/lending/types.ts:419](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L419)
 
 Chain where the transaction was broadcast, when not implied by the flow.
 
@@ -34,7 +34,7 @@ Chain where the transaction was broadcast, when not implied by the flow.
 
 > **operation**: [`InflowOperation`](../type-aliases/InflowOperation.md)
 
-Defined in: [packages/client/src/modules/lending/types.ts:395](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L395)
+Defined in: [packages/client/src/modules/lending/types.ts:425](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L425)
 
 Deposit or repayment operation represented by the transaction.
 
@@ -44,7 +44,7 @@ Deposit or repayment operation represented by the transaction.
 
 > **txid**: `string`
 
-Defined in: [packages/client/src/modules/lending/types.ts:387](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L387)
+Defined in: [packages/client/src/modules/lending/types.ts:417](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L417)
 
 Broadcast transaction id or hash.
 

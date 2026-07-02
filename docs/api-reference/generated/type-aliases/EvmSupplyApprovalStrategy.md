@@ -8,6 +8,6 @@
 
 > **EvmSupplyApprovalStrategy** = *typeof* [`EvmSupplyApprovalStrategy`](../variables/EvmSupplyApprovalStrategy.md)\[keyof *typeof* [`EvmSupplyApprovalStrategy`](../variables/EvmSupplyApprovalStrategy.md)\]
 
-Defined in: [packages/client/src/modules/lending/types.ts:449](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L449)
+Defined in: [packages/client/src/modules/lending/types.ts:479](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L479)
 
 Approval strategy required before an ERC-20 deposit contract call.

@@ -1094,16 +1094,16 @@ function expectOutflowAccountType(
   const accountType = expectNonEmptyString(value, fieldName);
 
   if (
-    accountType === "AccountIdentifier" ||
-    accountType === "External" ||
-    accountType === "Icrc" ||
-    accountType === "Native"
+    accountType === "ChainAddress" ||
+    accountType === "IcPrincipal" ||
+    accountType === "IcpAccountIdentifier" ||
+    accountType === "IcrcAccount"
   ) {
     return accountType;
   }
 
   throw new Error(
-    `${fieldName} must be AccountIdentifier, External, Icrc, or Native.`
+    `${fieldName} must be ChainAddress, IcPrincipal, IcpAccountIdentifier, or IcrcAccount.`
   );
 }
 

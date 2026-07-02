@@ -63,7 +63,7 @@ export type CanisterOutflowReceiver =
 
 export interface ParsedOutflowDestination {
   address: string;
-  accountType: MessageAccountType;
+  accountType: OutflowAccountType;
   canisterAccount: CanisterOutflowReceiver;
   messageAccount: {
     type: MessageAccountType;
@@ -107,24 +107,24 @@ export function mapCanisterAccountType(
 ): OutflowDetails["receiver"] {
   if ("Native" in receiver) {
     return {
-      type: "Native",
-      account: receiver.Native.toText(),
+      type: "IcPrincipal",
+      principal: receiver.Native.toText(),
     };
   }
   if ("AccountIdentifier" in receiver) {
     return {
-      type: "AccountIdentifier",
-      account: receiver.AccountIdentifier,
+      type: "IcpAccountIdentifier",
+      accountIdentifier: receiver.AccountIdentifier,
     };
   }
   if ("Icrc" in receiver) {
     const subaccount = normalizeOptionalSubaccount(receiver.Icrc.subaccount[0]);
 
     return {
-      type: "Icrc",
+      type: "IcrcAccount",
       owner: receiver.Icrc.owner.toText(),
       subaccount,
-      account: encodeIcrcAccount({
+      address: encodeIcrcAccount({
         owner: receiver.Icrc.owner,
         subaccount,
       }),
@@ -132,8 +132,8 @@ export function mapCanisterAccountType(
   }
 
   return {
-    type: "External",
-    account: receiver.External,
+    type: "ChainAddress",
+    address: receiver.External,
   };
 }
 
@@ -149,7 +149,7 @@ export function parseOutflowDestination(
     chain: params.chain,
   });
 
-  if (parsedAccount.accountType !== "External") {
+  if (parsedAccount.accountType !== "ChainAddress") {
     return {
       ...parsedAccount,
       transferMode:
@@ -165,7 +165,7 @@ export function parseOutflowDestination(
 
   return {
     address: externalAddress,
-    accountType: "External",
+    accountType: "ChainAddress",
     canisterAccount: { External: externalAddress },
     messageAccount: { type: "External", data: externalAddress },
     transferMode: TransferMode.native,
@@ -220,13 +220,13 @@ function parseOutflowDestinationWithHint(
 ): Omit<ParsedOutflowDestination, "transferMode"> {
   try {
     switch (destination.type) {
-      case "External":
+      case "ChainAddress":
         return parseExternalDestination(destination.address);
-      case "Native":
-        return parseNativeDestination(destination.address);
-      case "Icrc":
+      case "IcPrincipal":
+        return parseIcPrincipalDestination(destination.address);
+      case "IcrcAccount":
         return parseIcrcDestination(destination.address);
-      case "AccountIdentifier":
+      case "IcpAccountIdentifier":
         return parseAccountIdentifierDestination(destination.address);
       default:
         throw new LiquidiumError(
@@ -252,7 +252,7 @@ function parseOutflowDestinationAutomatically(
   const parsers = [
     parseAccountIdentifierDestination,
     parseIcrcDestination,
-    parseNativeDestination,
+    parseIcPrincipalDestination,
   ];
 
   for (const parser of parsers) {
@@ -269,13 +269,13 @@ function parseExternalDestination(
 ): Omit<ParsedOutflowDestination, "transferMode"> {
   return {
     address,
-    accountType: "External",
+    accountType: "ChainAddress",
     canisterAccount: { External: address },
     messageAccount: { type: "External", data: address },
   };
 }
 
-function parseNativeDestination(
+function parseIcPrincipalDestination(
   address: string
 ): Omit<ParsedOutflowDestination, "transferMode"> {
   const principal = Principal.fromText(address);
@@ -283,7 +283,7 @@ function parseNativeDestination(
 
   return {
     address: principalText,
-    accountType: "Native",
+    accountType: "IcPrincipal",
     canisterAccount: { Native: principal },
     messageAccount: { type: "Native", data: principalText },
   };
@@ -296,7 +296,7 @@ function parseIcrcDestination(
 
   return {
     address: decoded.account.address,
-    accountType: "Icrc",
+    accountType: "IcrcAccount",
     canisterAccount: {
       Icrc: {
         owner: decoded.owner,
@@ -314,7 +314,7 @@ function parseAccountIdentifierDestination(
 
   return {
     address: accountIdentifier,
-    accountType: "AccountIdentifier",
+    accountType: "IcpAccountIdentifier",
     canisterAccount: { AccountIdentifier: accountIdentifier },
     messageAccount: { type: "AccountIdentifier", data: accountIdentifier },
   };
@@ -325,16 +325,19 @@ function assertDestinationTypeSupportedByChain(params: {
   chain: string;
 }): void {
   if (params.chain === Chain.BTC || params.chain === Chain.ETH) {
-    if (params.accountType === "External" || params.accountType === "Native") {
+    if (
+      params.accountType === "ChainAddress" ||
+      params.accountType === "IcPrincipal"
+    ) {
       return;
     }
   }
 
   if (params.chain === Chain.ICP) {
     if (
-      params.accountType === "AccountIdentifier" ||
-      params.accountType === "Icrc" ||
-      params.accountType === "Native"
+      params.accountType === "IcpAccountIdentifier" ||
+      params.accountType === "IcrcAccount" ||
+      params.accountType === "IcPrincipal"
     ) {
       return;
     }

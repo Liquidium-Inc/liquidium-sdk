@@ -33,11 +33,11 @@ export interface ExternalAccount {
   address: string;
 }
 
-/** IC principal account returned when a canister-native destination is used. */
-export interface NativeAccount {
+/** IC principal account returned when an IC principal destination is used. */
+export interface IcPrincipalAccount {
   /** Account kind discriminator. */
-  type: "Native";
-  /** Principal text for the canister-native account. */
+  type: "IcPrincipal";
+  /** IC principal text. */
   principal: string;
 }
 
@@ -49,11 +49,41 @@ export interface AccountIdentifierAccount {
   address: string;
 }
 
-/** Borrow destination or refund account associated with an instant loan. */
+/**
+ * Borrow destination or refund account associated with an instant loan.
+ *
+ * @example
+ * ```ts
+ * const icPrincipalAccount: InstantLoanAccount = {
+ *   type: "IcPrincipal",
+ *   principal: "aaaaa-aa",
+ * };
+ *
+ * const externalAccount: InstantLoanAccount = {
+ *   type: "External",
+ *   address: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",
+ * };
+ *
+ * const accountIdentifierAccount: InstantLoanAccount = {
+ *   type: "AccountIdentifier",
+ *   address: "e2134f3f176b1429df3f92807b8f0f26a520debc313b2d6ad86a4a2e7f3d8f8d",
+ * };
+ *
+ * const icrcAccount: InstantLoanAccount = {
+ *   type: "Icrc",
+ *   owner: "aaaaa-aa",
+ *   address: "aaaaa-aa",
+ * };
+ * ```
+ */
 export type InstantLoanAccount =
+  /** External-chain account. */
   | ExternalAccount
-  | NativeAccount
+  /** IC principal account. */
+  | IcPrincipalAccount
+  /** Legacy ICP ledger account identifier. */
   | AccountIdentifierAccount
+  /** ICRC account. */
   | IcrcAccount;
 
 /**

@@ -100,8 +100,8 @@ Nonce: 23`);
       txid: "txid-2",
       amount: 10_000n,
       receiver: {
-        type: "External",
-        account: VALID_BTC_OUTFLOW_ADDRESS,
+        type: "ChainAddress",
+        address: VALID_BTC_OUTFLOW_ADDRESS,
       },
       status: {
         operation: "withdrawal",

@@ -6,7 +6,7 @@
 
 # Interface: InstantLoanRepayCompleteEventType
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:304](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L304)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:334](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L334)
 
 Repay-complete event payload.
 
@@ -16,7 +16,7 @@ Repay-complete event payload.
 
 > **loanId**: `bigint`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:306](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L306)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:336](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L336)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [packages/client/src/modules/instant-loans/types.ts:306](https://git
 
 > **profileId**: `string`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:307](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L307)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:337](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L337)
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [packages/client/src/modules/instant-loans/types.ts:307](https://git
 
 > **type**: `"RepayComplete"`
 
-Defined in: [packages/client/src/modules/instant-loans/types.ts:305](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L305)
+Defined in: [packages/client/src/modules/instant-loans/types.ts:335](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/types.ts#L335)

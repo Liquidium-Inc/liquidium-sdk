@@ -968,7 +968,7 @@ function accountFromCanister(
   account: DecodedInstantLoanCanisterRecord["borrow_destination"]
 ): InstantLoanAccount {
   if ("Native" in account) {
-    return { type: "Native", principal: account.Native.toText() };
+    return { type: "IcPrincipal", principal: account.Native.toText() };
   }
   if ("AccountIdentifier" in account) {
     return {
