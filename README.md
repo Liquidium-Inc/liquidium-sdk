@@ -138,7 +138,7 @@ function requirePool(pools: Pool[], asset: string): Pool {
 }
 
 function formatSupplyTarget(target: SupplyTarget): string {
-  if (target.type === "nativeAddress") {
+  if (target.type === "chainAddress") {
     return target.address;
   }
 
