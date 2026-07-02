@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { LiquidiumClient, LiquidiumError, LiquidiumErrorCode } from "../index";
 
 describe("LiquidiumClient", () => {
@@ -30,6 +30,32 @@ describe("LiquidiumClient", () => {
 
     // then
     expect(client).toBeDefined();
+  });
+
+  test("uses the configured API base URL for SDK API modules", async () => {
+    // given
+    const API_BASE_URL = "https://api.example.com/sdk";
+    const QUERY = "loan-ref";
+    const customFetch = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(JSON.stringify({ success: true, candidates: [] }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      })
+    );
+    const client = new LiquidiumClient({
+      apiBaseUrl: API_BASE_URL,
+      fetch: customFetch,
+    });
+
+    // when
+    const results = await client.instantLoans.find(QUERY);
+
+    // then
+    expect(results).toEqual([]);
+    expect(customFetch).toHaveBeenCalledWith(
+      `${API_BASE_URL}/v1/instant-loans/find?query=${QUERY}`,
+      expect.objectContaining({ method: "GET" })
+    );
   });
 });
 
