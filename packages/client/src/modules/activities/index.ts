@@ -20,4 +20,4 @@ export type {
   OutflowActivityOperation,
   OutflowActivityStatus,
 } from "./types";
-export { ActivityFilter } from "./types";
+export { ActivityAssetKind, ActivityFilter } from "./types";

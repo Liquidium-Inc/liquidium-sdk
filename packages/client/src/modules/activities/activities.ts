@@ -13,6 +13,7 @@ import { parseBigInt } from "../../core/utils/bigint";
 import { intFromPublicId } from "../instant-loans/ref-code";
 import type {
   Activity,
+  ActivityAssetKind,
   ActivityTopUp,
   GetActivityStatusRequest,
   GetActivityStatusResponse,
@@ -39,6 +40,7 @@ interface ActivityWire {
   poolId: string;
   asset: string | null;
   chain: Chain | null;
+  assetKind: ActivityAssetKind;
   amount: string;
   timestampMs: number;
   txids?: string[];
@@ -194,6 +196,7 @@ function mapActivity(wire: ActivityWire): Activity {
     poolId: wire.poolId,
     asset: wire.asset,
     chain: wire.chain,
+    assetKind: wire.assetKind,
     amount,
     timestampMs: wire.timestampMs,
   };

@@ -3,6 +3,7 @@ import { Principal } from "@icp-sdk/core/principal";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { DEFAULT_API_BASE_URL } from "../../../core/config";
 import {
+  ActivityAssetKind,
   LiquidiumClient,
   LiquidiumErrorCode,
   publicIdFromInt,
@@ -54,6 +55,7 @@ describe("ActivitiesModule", () => {
           poolId: "pool-1",
           asset: "BTC",
           chain: "BTC" as const,
+          assetKind: ActivityAssetKind.ckAsset,
           amount: ACTIVITY_AMOUNT,
           timestampMs: ACTIVITY_TIMESTAMP_MS,
           txids: ["tx-1"],
@@ -90,6 +92,7 @@ describe("ActivitiesModule", () => {
         poolId: "pool-1",
         asset: "BTC",
         chain: "BTC",
+        assetKind: ActivityAssetKind.ckAsset,
         amount: ACTIVITY_AMOUNT_BASE_UNITS,
         timestampMs: ACTIVITY_TIMESTAMP_MS,
         txids: ["tx-1"],
@@ -177,6 +180,7 @@ describe("ActivitiesModule", () => {
         poolId: "pool-1",
         asset: "BTC",
         chain: "BTC" as const,
+        assetKind: ActivityAssetKind.ckAsset,
         amount: ACTIVITY_AMOUNT,
         timestampMs: ACTIVITY_TIMESTAMP_MS,
         txids: ["tx-1"],
@@ -214,6 +218,7 @@ describe("ActivitiesModule", () => {
         poolId: "pool-1",
         asset: "BTC",
         chain: "BTC",
+        assetKind: ActivityAssetKind.ckAsset,
         amount: ACTIVITY_AMOUNT_BASE_UNITS,
         timestampMs: ACTIVITY_TIMESTAMP_MS,
         txids: ["tx-1"],
@@ -313,6 +318,7 @@ describe("ActivitiesModule", () => {
         poolId: "pool-1",
         asset: "BTC",
         chain: "BTC" as const,
+        assetKind: ActivityAssetKind.ckAsset,
         amount: ACTIVITY_AMOUNT,
         timestampMs: ACTIVITY_TIMESTAMP_MS,
         txids: ["tx-1"],
@@ -355,6 +361,7 @@ describe("ActivitiesModule", () => {
         poolId: "pool-1",
         asset: "BTC",
         chain: "BTC",
+        assetKind: ActivityAssetKind.ckAsset,
         amount: ACTIVITY_AMOUNT_BASE_UNITS,
         timestampMs: ACTIVITY_TIMESTAMP_MS,
         txids: ["tx-1"],
@@ -395,6 +402,7 @@ describe("ActivitiesModule", () => {
         poolId: "7dcux-qqaaa-aaaae-qfc3a-cai",
         asset: "USDT",
         chain: "ETH" as const,
+        assetKind: ActivityAssetKind.ckAsset,
         amount: ACTIVITY_AMOUNT,
         timestampMs: ACTIVITY_TIMESTAMP_MS,
         txids: [
@@ -440,6 +448,7 @@ describe("ActivitiesModule", () => {
         poolId: "7dcux-qqaaa-aaaae-qfc3a-cai",
         asset: "USDT",
         chain: "ETH",
+        assetKind: ActivityAssetKind.ckAsset,
         amount: ACTIVITY_AMOUNT_BASE_UNITS,
         timestampMs: ACTIVITY_TIMESTAMP_MS,
         txids: [

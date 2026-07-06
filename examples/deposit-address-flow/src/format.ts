@@ -199,6 +199,7 @@ function formatActivity(activity: Activity): string {
     `Pool: ${activity.poolId}`,
     `Asset: ${activity.asset ?? "not set"}`,
     `Chain: ${activity.chain ?? "not set"}`,
+    `Asset kind: ${activity.assetKind}`,
     `Amount: ${activity.amount.toString()} base units`,
     `Timestamp ms: ${activity.timestampMs.toString()}`,
     `Txids: ${activity.txids?.join(", ") ?? "not set"}`,

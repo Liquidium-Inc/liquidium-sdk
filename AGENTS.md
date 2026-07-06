@@ -4,7 +4,6 @@
 
 When changing public SDK behavior, exported types, method names, request fields, response fields, errors, examples, or runtime configuration:
 
-- Update the relevant files in `docs/` in the same change.
 - Update examples in `examples/` when the documented flow depends on runnable code.
 - Keep docs direct and specific. Avoid filler, vague claims, and marketing copy.
 - Put user-facing tutorials in `docs/getting-started/`.
@@ -13,7 +12,7 @@ When changing public SDK behavior, exported types, method names, request fields,
 - Put lookup material in `docs/api-reference/`.
 - Put runnable-app notes in `docs/examples/`.
 
-If exported APIs changed, run `pnpm docs:api` to regenerate `docs/api-reference/generated/`.
+Do not update `docs/`, generated API reference files, or run `pnpm docs:api` unless the user explicitly asks for docs in the current task. When public API changes need documentation follow-up, mention that in the final response so docs can be handled in a separate PR.
 
 ## TypeScript API Shape
 

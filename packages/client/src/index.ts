@@ -90,7 +90,11 @@ export type {
   OutflowActivityOperation,
   OutflowActivityStatus,
 } from "./modules/activities";
-export { ActivitiesModule, ActivityFilter } from "./modules/activities";
+export {
+  ActivitiesModule,
+  ActivityAssetKind,
+  ActivityFilter,
+} from "./modules/activities";
 export type {
   PaginatedResponse,
   UserHistoryEntry,

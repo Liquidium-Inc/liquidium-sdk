@@ -11,6 +11,15 @@ export const ActivityFilter = {
 export type ActivityFilter =
   (typeof ActivityFilter)[keyof typeof ActivityFilter];
 
+/** Activity asset representation used by the protocol. */
+export const ActivityAssetKind = {
+  nativeAsset: "native_asset",
+  ckAsset: "ck_asset",
+} as const;
+/** Activity asset representation used by the protocol. */
+export type ActivityAssetKind =
+  (typeof ActivityAssetKind)[keyof typeof ActivityAssetKind];
+
 /** Fee top-up state for an inflow activity. */
 export interface ActivityTopUp {
   /** Whether another transfer is needed before processing can continue. */
@@ -46,6 +55,8 @@ interface BaseActivity {
   poolId: string;
   asset: string | null;
   chain: Chain | null;
+  /** Protocol asset representation for the activity. */
+  assetKind: ActivityAssetKind;
   amount: bigint;
   timestampMs: number;
   /** Chain transaction ids associated with the activity when available. */
