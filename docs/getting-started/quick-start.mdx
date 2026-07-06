@@ -89,15 +89,11 @@ function requirePool(pools: Pool[], asset: string): Pool {
 }
 
 function formatSupplyTarget(target: SupplyTarget): string {
-  if (target.type === "ChainAddress") {
+  if (target.type === "nativeAddress") {
     return target.address;
   }
 
-  if (target.type === "IcrcAccount") {
-    return target.account.address;
-  }
-
-  return target.account.icpIcrcAccount.address;
+  return target.account;
 }
 ```
 

@@ -42,21 +42,4 @@ const client = new LiquidiumClient({
 | `evmRpcHeaders` | Add headers to EVM RPC requests. |
 | `evmPublicClient` | Use an existing viem-compatible read client. |
 
-Pool overrides are grouped by asset:
-
-```ts
-const client = new LiquidiumClient({
-  canisterIds: {
-    pools: {
-      btc: "...",
-      usdt: "...",
-      usdc: "...",
-      icp: "...",
-    },
-  },
-});
-```
-
-Partial `pools` overrides are merged with the bundled mainnet IDs. Use `pools.btc`, `pools.usdt`, `pools.usdc`, and `pools.icp`; flat pool aliases are not accepted.
-
 Set `VITE_INFURA_API_KEY` or `VITE_EVM_RPC_URL` when you run an example that needs Ethereum reads.
