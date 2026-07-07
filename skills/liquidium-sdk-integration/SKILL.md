@@ -445,7 +445,8 @@ Keep the initial loan LTV under the SDK's instant-loan starting-LTV guard and se
 
 If the target is a native address, show `target.address`. If it is an ICRC
 account, show `target.account.address`. If it is an ICP ledger target, show
-`target.account.icrc.address` and optionally the legacy account identifier.
+`target.account.icpIcrcAccount.address` and optionally
+`target.account.icpAccountIdentifier`.
 
 ```ts
 const depositAddress =
@@ -453,7 +454,7 @@ const depositAddress =
     ? depositTarget.address
     : depositTarget.type === "IcrcAccount"
       ? depositTarget.account.address
-      : depositTarget.account.icrc.address;
+      : depositTarget.account.icpIcrcAccount.address;
 ```
 
 Transfer targets also include `poolId`, `asset`, `chain`, and `action`. Use
@@ -471,7 +472,7 @@ const repayAddress =
       ? loan.repayment.target.address
       : loan.repayment.target.type === "IcrcAccount"
         ? loan.repayment.target.account.address
-        : loan.repayment.target.account.icrc.address;
+        : loan.repayment.target.account.icpIcrcAccount.address;
 ```
 
 Use search only as recovery when the user lost the loan reference:
