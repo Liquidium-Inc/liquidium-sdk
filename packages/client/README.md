@@ -54,7 +54,12 @@ npm install @liquidium/client
 Create an instant loan, display the deposit target, and restore the loan by reference:
 
 ```ts
-import { LiquidiumClient, type Pool, type SupplyTarget } from "@liquidium/client";
+import {
+  LiquidiumClient,
+  TransferMode,
+  type Pool,
+  type SupplyTarget,
+} from "@liquidium/client";
 
 const client = new LiquidiumClient();
 
@@ -93,13 +98,15 @@ const loan = await client.instantLoans.create({
   borrowAmount,
   ltvMaxBps: ltv.maxAllowedLtvBps,
   depositWindowSeconds: 3_600n,
+  borrowTransferMode: TransferMode.nativeAsset,
   borrowDestination: {
-    type: "External",
+    type: "ChainAddress",
     address: "0x2222222222222222222222222222222222222222",
   },
+  refundTransferMode: TransferMode.nativeAsset,
   refundDestination: {
-    type: "External",
-    address: "bc1qrefunddestination",
+    type: "ChainAddress",
+    address: "1BoatSLRHtKNngkdXEeobR76b53LETtpyT",
   },
 });
 
@@ -182,10 +189,23 @@ Creates an accountless instant loan and returns generated transfer targets.
 | `borrowAmount` | Borrow amount in base units. The SDK rejects values below the asset minimum. |
 | `ltvMaxBps` | Maximum LTV in basis points, where `6_000n` is 60% |
 | `depositWindowSeconds` | How long the user has to send collateral |
-| `borrowDestination` | External address that receives borrowed funds |
-| `refundDestination` | External address that receives collateral refunds |
+| `borrowTransferMode` | Delivery path for borrowed funds: `TransferMode.nativeAsset` or `TransferMode.ckLedger` |
+| `borrowDestination` | Account that receives borrowed funds |
+| `refundTransferMode` | Delivery path for collateral refunds: `TransferMode.nativeAsset` or `TransferMode.ckLedger` |
+| `refundDestination` | Account that receives collateral refunds |
 
-`borrowDestination` and `refundDestination` can be address strings or account objects such as `{ type: "External", address: "bc1q..." }`.
+`borrowDestination` and `refundDestination` can be address strings or typed account objects such as `{ type: "ChainAddress", address: "bc1q..." }`, `{ type: "IcPrincipal", address: "aaaaa-aa" }`, or `{ type: "IcrcAccount", address: "aaaaa-aa" }`. Prefer typed objects when the destination family matters.
+
+Destination validation is transfer-mode-specific and runs before loan creation:
+
+| Asset path | Transfer mode | Valid destination family |
+| --- | --- | --- |
+| BTC L1 | `TransferMode.nativeAsset` | BTC mainnet chain address |
+| ETH L1 USDC/USDT | `TransferMode.nativeAsset` | EVM chain address |
+| ICP native | `TransferMode.nativeAsset` | IC principal, ICRC account, or ICP account identifier |
+| ckBTC, ckUSDC, ckUSDT | `TransferMode.ckLedger` | IC principal or ICRC account |
+
+The SDK rejects mismatched L1-vs-IC destination families, such as an ETH address for a ck-ledger delivery or a BTC/EVM address for an ICP destination.
 
 ### `client.instantLoans.get({ ref })`
 
@@ -287,6 +307,7 @@ The SDK returns amount fields as `bigint` values in the asset's smallest unit.
 | Asset type | Example |
 | --- | --- |
 | BTC | Satoshis |
+| ICP | e8s |
 | USDC / USDT | Token base units using the pool decimals |
 
 Use `Pool.decimals` from `client.market.listPools()` when converting user-entered decimals to base units. Hydrated instant loans also include `loan.collateral.decimals`, `loan.borrow.decimals`, and `loan.initialDeposit.decimals` for display.

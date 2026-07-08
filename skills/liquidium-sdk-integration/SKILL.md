@@ -378,14 +378,15 @@ const walletAdapter: WalletAdapter = {
 ### Instant loan default flow
 
 Use `client.instantLoans.create(...)` when the user should not create or manage
-a Liquidium profile. The user supplies external destination addresses, receives
-a short loan ID, then sends collateral to the generated deposit address.
+a Liquidium profile. The user supplies transfer-mode-specific borrow and refund
+destinations, receives a short loan ID, then sends collateral to the generated
+deposit address.
 
 Default app sequence:
 
 1. Fetch pools and prices for pool selection and optional quote display.
 2. Optionally call `client.quote.calculateLtv(...)` to show current LTV and the collateral pool's max allowed LTV.
-3. Call `client.instantLoans.create(...)` with direct base-unit amounts and external destination addresses.
+3. Call `client.instantLoans.create(...)` with direct base-unit amounts, transfer modes, and matching destination account families.
 4. Persist or display `loan.ref` as the primary recovery key.
 5. Show `loan.initialDeposit.amount` plus `loan.initialDeposit.target` for collateral deposit and, when `loan.repayment.amount > 0n`, `loan.repayment.target` plus `loan.repayment.amount` for repayment.
 
@@ -420,11 +421,16 @@ const loan = await client.instantLoans.create({
   borrowAmount: 2_000_000n,
   ltvMaxBps: ltv.maxAllowedLtvBps,
   depositWindowSeconds: 3_600n,
+  borrowTransferMode: "nativeAsset",
   borrowDestination: {
-    type: "External",
+    type: "ChainAddress",
     address: "0x2222222222222222222222222222222222222222",
   },
-  refundDestination: { type: "External", address: "bc1qrefunddestination" },
+  refundTransferMode: "nativeAsset",
+  refundDestination: {
+    type: "ChainAddress",
+    address: "1BoatSLRHtKNngkdXEeobR76b53LETtpyT",
+  },
 });
 
 const ref = loan.ref;
@@ -433,8 +439,26 @@ const depositTarget = loan.initialDeposit.target;
 const repayTarget = loan.repayment.amount > 0n ? loan.repayment.target : null;
 ```
 
-Create destinations are external-only. Pass an external address string or an
-external account object: `{ type: "External", address: "..." }`.
+Create destinations are validated against the requested transfer mode before the
+SDK creates a loan. Use `nativeAsset` for L1 BTC, L1 ETH stablecoins, and ICP
+native destinations. Use `ckLedger` for ckBTC, ckUSDC, and ckUSDT destinations.
+
+Destination families:
+
+| Asset path | Transfer mode | Valid destination family |
+| --- | --- | --- |
+| BTC L1 | `nativeAsset` | BTC mainnet chain address |
+| ETH L1 USDC/USDT | `nativeAsset` | EVM chain address |
+| ICP native | `nativeAsset` | IC principal, ICRC account, or ICP account identifier |
+| ckBTC, ckUSDC, ckUSDT | `ckLedger` | IC principal or ICRC account |
+
+Use typed destination objects when preventing fund-loss mistakes matters:
+`{ type: "ChainAddress", address: "..." }`,
+`{ type: "IcPrincipal", address: "..." }`,
+`{ type: "IcrcAccount", address: "..." }`, or
+`{ type: "IcpAccountIdentifier", address: "..." }`. The SDK rejects mismatched
+families such as an ETH L1 address for a ck-ledger destination or a BTC/EVM
+address for an ICP native destination before any create request is sent.
 
 `collateralAmount` and `borrowAmount` are in each asset's base units.
 `collateralAmount` is the intended credited collateral target before
@@ -450,7 +474,7 @@ account, show `target.account.address`. If it is an ICP ledger target, show
 
 ```ts
 const depositAddress =
-  depositTarget.type === "nativeAddress"
+  depositTarget.type === "ChainAddress"
     ? depositTarget.address
     : depositTarget.type === "IcrcAccount"
       ? depositTarget.account.address
@@ -468,7 +492,7 @@ const repayAmount = loan.repayment.amount;
 const repayAddress =
   repayAmount === 0n
     ? null
-    : loan.repayment.target.type === "nativeAddress"
+    : loan.repayment.target.type === "ChainAddress"
       ? loan.repayment.target.address
       : loan.repayment.target.type === "IcrcAccount"
         ? loan.repayment.target.account.address
@@ -607,7 +631,7 @@ const supplyFlow = await client.lending.supply({
 
 if (
   supplyFlow.type === "transfer" &&
-  supplyFlow.target.type === "nativeAddress"
+  supplyFlow.target.type === "ChainAddress"
 ) {
   const depositAddress = supplyFlow.target.address;
 }
