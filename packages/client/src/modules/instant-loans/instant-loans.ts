@@ -1137,7 +1137,16 @@ function resolveInstantLoanStringDestination(params: {
   const address = normalizeInstantLoanDestinationAddress(params.destination);
 
   if (params.transferMode === "ckLedger") {
-    return parsePrincipalInstantLoanDestination(address);
+    for (const parser of [
+      parsePrincipalInstantLoanDestination,
+      parseIcrcInstantLoanDestination,
+    ]) {
+      try {
+        return parser(address);
+      } catch {}
+    }
+
+    throwInvalidCkInstantLoanDestination(params.role);
   }
 
   if (params.asset !== CoreAsset.ICP) {
@@ -1193,14 +1202,14 @@ function assertInstantLoanDestinationTypeMatchesTransferMode(params: {
   transferMode: TransferMode;
 }): void {
   if (params.transferMode === "ckLedger") {
-    if (params.destinationType === "IcPrincipal") {
+    if (
+      params.destinationType === "IcPrincipal" ||
+      params.destinationType === "IcrcAccount"
+    ) {
       return;
     }
 
-    throw new LiquidiumError(
-      LiquidiumErrorCode.VALIDATION_ERROR,
-      `ckLedger instant loan ${params.role} destination must be an IC principal`
-    );
+    throwInvalidCkInstantLoanDestination(params.role);
   }
 
   if (params.asset === CoreAsset.ICP) {
@@ -1233,6 +1242,15 @@ function assertInstantLoanDestinationTypeMatchesTransferMode(params: {
   throw new LiquidiumError(
     LiquidiumErrorCode.VALIDATION_ERROR,
     `${params.asset} instant loan ${params.role} destination only supports ChainAddress or IcPrincipal destinations`
+  );
+}
+
+function throwInvalidCkInstantLoanDestination(
+  role: InstantLoanOutflowRole
+): never {
+  throw new LiquidiumError(
+    LiquidiumErrorCode.VALIDATION_ERROR,
+    `ckLedger instant loan ${role} destination must be an IC principal or ICRC account`
   );
 }
 

@@ -282,7 +282,8 @@ function assertDestinationTypeSupportedByChain(params: {
   if (params.chain === Chain.BTC || params.chain === Chain.ETH) {
     if (
       params.accountType === "ChainAddress" ||
-      params.accountType === "IcPrincipal"
+      params.accountType === "IcPrincipal" ||
+      params.accountType === "IcrcAccount"
     ) {
       return;
     }

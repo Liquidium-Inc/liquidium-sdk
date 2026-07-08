@@ -2,15 +2,22 @@ import { Actor } from "@icp-sdk/core/agent";
 import { Principal } from "@icp-sdk/core/principal";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { DEFAULT_API_BASE_URL } from "../../../core/config";
-import { LiquidiumClient, LiquidiumErrorCode } from "../../../index";
 import {
+  type CreateInstantLoanRequest,
+  LiquidiumClient,
+  LiquidiumErrorCode,
+} from "../../../index";
+import {
+  ACCOUNT_IDENTIFIER,
   BTC_POOL_ID,
   CHECKSUM_EVM_BORROW_ADDRESS,
   createBtcPoolRecord,
   createIcpPoolRecord,
   createInstantLoan,
   createUsdtPoolRecord,
+  encodeIcrcAccount,
   ICP_POOL_ID,
+  ICRC_SUBACCOUNT,
   LOAN_ID,
   LOWERCASE_EVM_BORROW_ADDRESS,
   PROFILE_ID,
@@ -18,6 +25,23 @@ import {
   USDT_POOL_ID,
   VALID_BTC_REFUND_ADDRESS,
 } from "./test-fixtures";
+
+const VALID_ICRC_DESTINATION = encodeIcrcAccount({
+  owner: Principal.fromText(PROFILE_ID),
+  subaccount: ICRC_SUBACCOUNT,
+});
+const DEFAULT_COLLATERAL_AMOUNT_BASE_UNITS = 10_000_000n;
+const DEFAULT_BORROW_AMOUNT_BASE_UNITS = 5_726_000_000n;
+const DEFAULT_ICP_AMOUNT_E8S = 1_000_000n;
+const DEFAULT_LTV_MAX_BPS = 6_000n;
+const DEFAULT_DEPOSIT_WINDOW_SECONDS = 3_600n;
+
+interface InstantLoanDestinationValidationCase {
+  name: string;
+  requestOverrides: Partial<CreateInstantLoanRequest>;
+  expectedCode: LiquidiumErrorCode;
+  expectedMessage: string;
+}
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -387,8 +411,9 @@ describe("InstantLoansModule create", () => {
 
     // then
     await expect(result).rejects.toMatchObject({
-      code: LiquidiumErrorCode.INVALID_ADDRESS,
-      message: "Invalid instant loan IC principal destination",
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message:
+        "ckLedger instant loan borrow destination must be an IC principal or ICRC account",
     });
     expect(fetchSpy).not.toHaveBeenCalled();
     expect(actorCreateSpy).not.toHaveBeenCalled();
@@ -423,7 +448,7 @@ describe("InstantLoansModule create", () => {
     await expect(result).rejects.toMatchObject({
       code: LiquidiumErrorCode.VALIDATION_ERROR,
       message:
-        "ckLedger instant loan borrow destination must be an IC principal",
+        "ckLedger instant loan borrow destination must be an IC principal or ICRC account",
     });
     expect(fetchSpy).not.toHaveBeenCalled();
     expect(actorCreateSpy).not.toHaveBeenCalled();
@@ -493,6 +518,217 @@ describe("InstantLoansModule create", () => {
     await expect(result).rejects.toMatchObject({
       code: LiquidiumErrorCode.VALIDATION_ERROR,
       message: "ckLedger instant loan borrow delivery is not supported for SOL",
+    });
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(actorCreateSpy).not.toHaveBeenCalled();
+  });
+
+  test.each<InstantLoanDestinationValidationCase>([
+    {
+      name: "ck stablecoin borrow rejects an ETH L1 address",
+      requestOverrides: {
+        borrowTransferMode: "ckLedger",
+        borrowDestination: {
+          type: "ChainAddress",
+          address: CHECKSUM_EVM_BORROW_ADDRESS,
+        },
+      },
+      expectedCode: LiquidiumErrorCode.VALIDATION_ERROR,
+      expectedMessage:
+        "ckLedger instant loan borrow destination must be an IC principal or ICRC account",
+    },
+    {
+      name: "ck stablecoin borrow rejects a BTC L1 address",
+      requestOverrides: {
+        borrowTransferMode: "ckLedger",
+        borrowDestination: {
+          type: "ChainAddress",
+          address: VALID_BTC_REFUND_ADDRESS,
+        },
+      },
+      expectedCode: LiquidiumErrorCode.VALIDATION_ERROR,
+      expectedMessage:
+        "ckLedger instant loan borrow destination must be an IC principal or ICRC account",
+    },
+    {
+      name: "ck stablecoin borrow rejects an ICP account identifier",
+      requestOverrides: {
+        borrowTransferMode: "ckLedger",
+        borrowDestination: {
+          type: "IcpAccountIdentifier",
+          address: ACCOUNT_IDENTIFIER,
+        },
+      },
+      expectedCode: LiquidiumErrorCode.VALIDATION_ERROR,
+      expectedMessage:
+        "ckLedger instant loan borrow destination must be an IC principal or ICRC account",
+    },
+    {
+      name: "ckBTC refund rejects a BTC L1 address",
+      requestOverrides: {
+        refundTransferMode: "ckLedger",
+        refundDestination: {
+          type: "ChainAddress",
+          address: VALID_BTC_REFUND_ADDRESS,
+        },
+      },
+      expectedCode: LiquidiumErrorCode.VALIDATION_ERROR,
+      expectedMessage:
+        "ckLedger instant loan refund destination must be an IC principal or ICRC account",
+    },
+    {
+      name: "ckBTC refund rejects an ETH L1 address",
+      requestOverrides: {
+        refundTransferMode: "ckLedger",
+        refundDestination: {
+          type: "ChainAddress",
+          address: CHECKSUM_EVM_BORROW_ADDRESS,
+        },
+      },
+      expectedCode: LiquidiumErrorCode.VALIDATION_ERROR,
+      expectedMessage:
+        "ckLedger instant loan refund destination must be an IC principal or ICRC account",
+    },
+    {
+      name: "ckBTC refund rejects an ICP account identifier",
+      requestOverrides: {
+        refundTransferMode: "ckLedger",
+        refundDestination: {
+          type: "IcpAccountIdentifier",
+          address: ACCOUNT_IDENTIFIER,
+        },
+      },
+      expectedCode: LiquidiumErrorCode.VALIDATION_ERROR,
+      expectedMessage:
+        "ckLedger instant loan refund destination must be an IC principal or ICRC account",
+    },
+    {
+      name: "native stablecoin borrow rejects an IC principal",
+      requestOverrides: {
+        borrowDestination: {
+          type: "IcPrincipal",
+          address: PROFILE_ID,
+        },
+      },
+      expectedCode: LiquidiumErrorCode.VALIDATION_ERROR,
+      expectedMessage:
+        "nativeAsset instant loan borrow destination must be an external chain address for USDT",
+    },
+    {
+      name: "native stablecoin borrow rejects an ICRC account",
+      requestOverrides: {
+        borrowDestination: {
+          type: "IcrcAccount",
+          address: VALID_ICRC_DESTINATION,
+        },
+      },
+      expectedCode: LiquidiumErrorCode.VALIDATION_ERROR,
+      expectedMessage:
+        "USDT instant loan borrow destination only supports ChainAddress or IcPrincipal destinations",
+    },
+    {
+      name: "native BTC refund rejects an IC principal",
+      requestOverrides: {
+        refundDestination: {
+          type: "IcPrincipal",
+          address: PROFILE_ID,
+        },
+      },
+      expectedCode: LiquidiumErrorCode.VALIDATION_ERROR,
+      expectedMessage:
+        "nativeAsset instant loan refund destination must be an external chain address for BTC",
+    },
+    {
+      name: "native BTC refund rejects an ICRC account",
+      requestOverrides: {
+        refundDestination: {
+          type: "IcrcAccount",
+          address: VALID_ICRC_DESTINATION,
+        },
+      },
+      expectedCode: LiquidiumErrorCode.VALIDATION_ERROR,
+      expectedMessage:
+        "BTC instant loan refund destination only supports ChainAddress or IcPrincipal destinations",
+    },
+    {
+      name: "native ICP borrow rejects an ETH L1 address",
+      requestOverrides: {
+        borrowPoolId: ICP_POOL_ID,
+        borrowAsset: "ICP",
+        borrowAmount: DEFAULT_ICP_AMOUNT_E8S,
+        borrowDestination: {
+          type: "ChainAddress",
+          address: CHECKSUM_EVM_BORROW_ADDRESS,
+        },
+      },
+      expectedCode: LiquidiumErrorCode.INVALID_ADDRESS,
+      expectedMessage:
+        "ICP instant loan destination must be an IC principal, ICP account identifier, or ICRC account",
+    },
+    {
+      name: "native ICP borrow rejects a BTC L1 address",
+      requestOverrides: {
+        borrowPoolId: ICP_POOL_ID,
+        borrowAsset: "ICP",
+        borrowAmount: DEFAULT_ICP_AMOUNT_E8S,
+        borrowDestination: {
+          type: "ChainAddress",
+          address: VALID_BTC_REFUND_ADDRESS,
+        },
+      },
+      expectedCode: LiquidiumErrorCode.INVALID_ADDRESS,
+      expectedMessage:
+        "ICP instant loan destination must be an IC principal, ICP account identifier, or ICRC account",
+    },
+    {
+      name: "native ICP refund rejects an ETH L1 address",
+      requestOverrides: {
+        collateralPoolId: ICP_POOL_ID,
+        collateralAsset: "ICP",
+        collateralAmount: DEFAULT_ICP_AMOUNT_E8S,
+        refundDestination: {
+          type: "ChainAddress",
+          address: CHECKSUM_EVM_BORROW_ADDRESS,
+        },
+      },
+      expectedCode: LiquidiumErrorCode.INVALID_ADDRESS,
+      expectedMessage:
+        "ICP instant loan destination must be an IC principal, ICP account identifier, or ICRC account",
+    },
+    {
+      name: "native ICP refund rejects a BTC L1 address",
+      requestOverrides: {
+        collateralPoolId: ICP_POOL_ID,
+        collateralAsset: "ICP",
+        collateralAmount: DEFAULT_ICP_AMOUNT_E8S,
+        refundDestination: {
+          type: "ChainAddress",
+          address: VALID_BTC_REFUND_ADDRESS,
+        },
+      },
+      expectedCode: LiquidiumErrorCode.INVALID_ADDRESS,
+      expectedMessage:
+        "ICP instant loan destination must be an IC principal, ICP account identifier, or ICRC account",
+    },
+  ])("rejects unsafe instant loan destination combo: $name", async ({
+    requestOverrides,
+    expectedCode,
+    expectedMessage,
+  }) => {
+    // given
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    const actorCreateSpy = vi.spyOn(Actor, "createActor");
+    const client = new LiquidiumClient({});
+
+    // when
+    const result = client.instantLoans.create(
+      createInstantLoanRequest(requestOverrides)
+    );
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: expectedCode,
+      message: expectedMessage,
     });
     expect(fetchSpy).not.toHaveBeenCalled();
     expect(actorCreateSpy).not.toHaveBeenCalled();
@@ -802,3 +1038,23 @@ describe("InstantLoansModule create", () => {
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 });
+
+function createInstantLoanRequest(
+  overrides: Partial<CreateInstantLoanRequest> = {}
+): CreateInstantLoanRequest {
+  return {
+    collateralPoolId: BTC_POOL_ID,
+    borrowPoolId: USDT_POOL_ID,
+    collateralAsset: "BTC",
+    borrowAsset: "USDT",
+    collateralAmount: DEFAULT_COLLATERAL_AMOUNT_BASE_UNITS,
+    borrowAmount: DEFAULT_BORROW_AMOUNT_BASE_UNITS,
+    ltvMaxBps: DEFAULT_LTV_MAX_BPS,
+    depositWindowSeconds: DEFAULT_DEPOSIT_WINDOW_SECONDS,
+    borrowTransferMode: "nativeAsset",
+    borrowDestination: CHECKSUM_EVM_BORROW_ADDRESS,
+    refundTransferMode: "nativeAsset",
+    refundDestination: VALID_BTC_REFUND_ADDRESS,
+    ...overrides,
+  };
+}

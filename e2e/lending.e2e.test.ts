@@ -3,6 +3,7 @@ import {
   Asset,
   Chain,
   LiquidiumClient,
+  LiquidiumErrorCode,
   type SendIcrcTransferRequest,
   SupplyAction,
   TransferMode,
@@ -22,6 +23,8 @@ const FAKE_CK_STABLECOIN_TXID = "fake-ck-stablecoin-txid";
 const ICP_TRANSFER_AMOUNT_E8S = 100_000_000n;
 const CK_BTC_TRANSFER_AMOUNT_SATS = 100_000n;
 const CK_STABLECOIN_TRANSFER_AMOUNT_BASE_UNITS = 1_000_000n;
+const VALID_ETH_L1_ADDRESS = "0x52908400098527886E0F7030069857D2E4169EE7";
+const VALID_BTC_L1_ADDRESS = "1BoatSLRHtKNngkdXEeobR76b53LETtpyT";
 
 describeLive("live lending e2e", () => {
   test("should resolve a manual BTC supply target without broadcasting transactions", async () => {
@@ -298,6 +301,56 @@ describeLive("live lending e2e", () => {
     expect(capturedTransferRequest?.transfer.to).toEqual(
       ckStablecoinSupplyFlow.target.account
     );
+  });
+
+  test("should reject an ETH L1 borrow receiver for an ICP pool", async () => {
+    // given
+    const client = new LiquidiumClient();
+    const pools = await client.market.listPools();
+    const icpPool = selectIcpPool(pools);
+
+    // when
+    const result = client.lending.prepareBorrow({
+      profileId: "aaaaa-aa",
+      poolId: icpPool.id,
+      amount: ICP_TRANSFER_AMOUNT_E8S,
+      receiver: {
+        type: "ChainAddress",
+        address: VALID_ETH_L1_ADDRESS,
+      },
+      signerWalletAddress: VALID_ETH_L1_ADDRESS,
+    });
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message: "Target pool does not support this address type",
+    });
+  });
+
+  test("should reject a BTC L1 withdraw receiver for an ICP pool", async () => {
+    // given
+    const client = new LiquidiumClient();
+    const pools = await client.market.listPools();
+    const icpPool = selectIcpPool(pools);
+
+    // when
+    const result = client.lending.prepareWithdraw({
+      profileId: "aaaaa-aa",
+      poolId: icpPool.id,
+      amount: ICP_TRANSFER_AMOUNT_E8S,
+      receiver: {
+        type: "ChainAddress",
+        address: VALID_BTC_L1_ADDRESS,
+      },
+      signerWalletAddress: VALID_ETH_L1_ADDRESS,
+    });
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message: "Target pool does not support this address type",
+    });
   });
 
   test("should expose the live borrowing-disabled flag", async () => {

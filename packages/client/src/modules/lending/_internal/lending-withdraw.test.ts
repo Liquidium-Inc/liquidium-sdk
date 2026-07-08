@@ -1,3 +1,4 @@
+import { encodeIcrcAccount } from "@icp-sdk/canisters/ledger/icrc";
 import { Actor } from "@icp-sdk/core/agent";
 import { Principal } from "@icp-sdk/core/principal";
 import { afterEach, describe, expect, test, vi } from "vitest";
@@ -11,6 +12,7 @@ import {
   LOWERCASE_EVM_OUTFLOW_ADDRESS,
   USDT_POOL_ID,
   VALID_BTC_OUTFLOW_ADDRESS,
+  VALID_IC_PRINCIPAL,
   VALID_ICP_ACCOUNT_IDENTIFIER,
 } from "./test-fixtures";
 
@@ -159,6 +161,120 @@ Nonce: 23`);
     expect(withdraw.mock.calls[0]?.[1]).toMatchObject({
       data: {
         account: { AccountIdentifier: VALID_ICP_ACCOUNT_IDENTIFIER },
+      },
+    });
+  });
+
+  test("creates a BTC withdraw action to an ICRC destination", async () => {
+    // given
+    const ICRC_SUBACCOUNT = new Uint8Array(32).fill(6);
+    const ICRC_ACCOUNT = encodeIcrcAccount({
+      owner: Principal.fromText(VALID_IC_PRINCIPAL),
+      subaccount: ICRC_SUBACCOUNT,
+    });
+    const withdraw = vi.fn().mockResolvedValue({
+      Ok: {
+        id: "outflow-btc-icrc",
+        txid: [],
+        outflow_type: { Withdraw: null },
+        outflow_ref: [],
+        amount: 5_000n,
+        receiver: {
+          Icrc: {
+            owner: Principal.fromText(VALID_IC_PRINCIPAL),
+            subaccount: [ICRC_SUBACCOUNT],
+          },
+        },
+      },
+    });
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord()]),
+      get_nonce: vi.fn().mockResolvedValue(23n),
+      withdraw,
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const withdrawAction = await client.lending.prepareWithdraw({
+      profileId: "aaaaa-aa",
+      poolId: BTC_POOL_ID,
+      amount: 5_000n,
+      receiver: {
+        address: ICRC_ACCOUNT,
+        type: "IcrcAccount",
+      },
+      signerWalletAddress: "0xsigner",
+    });
+    await withdrawAction.submit({ signature: "0xsigned", chain: "ETH" });
+
+    // then
+    expect(withdrawAction.transferMode).toBe("ckLedger");
+    expect(withdrawAction.message).toContain(`Icrc:${ICRC_ACCOUNT}`);
+    expect(withdraw.mock.calls[0]?.[1]).toMatchObject({
+      data: {
+        account: {
+          Icrc: {
+            owner: Principal.fromText(VALID_IC_PRINCIPAL),
+            subaccount: [ICRC_SUBACCOUNT],
+          },
+        },
+      },
+    });
+  });
+
+  test("creates an ETH stablecoin withdraw action to an ICRC destination", async () => {
+    // given
+    const ICRC_SUBACCOUNT = new Uint8Array(32).fill(7);
+    const ICRC_ACCOUNT = encodeIcrcAccount({
+      owner: Principal.fromText(VALID_IC_PRINCIPAL),
+      subaccount: ICRC_SUBACCOUNT,
+    });
+    const withdraw = vi.fn().mockResolvedValue({
+      Ok: {
+        id: "outflow-usdt-icrc",
+        txid: [],
+        outflow_type: { Withdraw: null },
+        outflow_ref: [],
+        amount: 1_000_000n,
+        receiver: {
+          Icrc: {
+            owner: Principal.fromText(VALID_IC_PRINCIPAL),
+            subaccount: [ICRC_SUBACCOUNT],
+          },
+        },
+      },
+    });
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi.fn().mockResolvedValue([createUsdtPoolRecord()]),
+      get_nonce: vi.fn().mockResolvedValue(23n),
+      withdraw,
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const withdrawAction = await client.lending.prepareWithdraw({
+      profileId: "aaaaa-aa",
+      poolId: USDT_POOL_ID,
+      amount: 1_000_000n,
+      receiver: {
+        address: ICRC_ACCOUNT,
+        type: "IcrcAccount",
+      },
+      signerWalletAddress: "0xsigner",
+    });
+    await withdrawAction.submit({ signature: "0xsigned", chain: "ETH" });
+
+    // then
+    expect(withdrawAction.transferMode).toBe("ckLedger");
+    expect(withdrawAction.message).toContain(`Icrc:${ICRC_ACCOUNT}`);
+    expect(withdraw.mock.calls[0]?.[1]).toMatchObject({
+      data: {
+        account: {
+          Icrc: {
+            owner: Principal.fromText(VALID_IC_PRINCIPAL),
+            subaccount: [ICRC_SUBACCOUNT],
+          },
+        },
       },
     });
   });
@@ -380,6 +496,64 @@ Nonce: 23`);
     // then
     expect(withdrawAction.data.amount).toBe(1_000_000n);
     expect(getNonce).toHaveBeenCalledWith("0xsigner");
+  });
+
+  test("rejects a BTC L1 withdraw receiver for an ICP pool before fetching a nonce", async () => {
+    // given
+    const getNonce = vi.fn().mockResolvedValue(17n);
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi.fn().mockResolvedValue([createIcpPoolRecord()]),
+      get_nonce: getNonce,
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const result = client.lending.prepareWithdraw({
+      profileId: "aaaaa-aa",
+      poolId: ICP_POOL_ID,
+      amount: 10_000n,
+      receiver: {
+        address: VALID_BTC_OUTFLOW_ADDRESS,
+        type: "ChainAddress",
+      },
+      signerWalletAddress: "0xsigner",
+    });
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message: "Target pool does not support this address type",
+    });
+    expect(getNonce).not.toHaveBeenCalled();
+  });
+
+  test("rejects an ETH L1 withdraw receiver for an ICP pool before fetching a nonce", async () => {
+    // given
+    const getNonce = vi.fn().mockResolvedValue(17n);
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi.fn().mockResolvedValue([createIcpPoolRecord()]),
+      get_nonce: getNonce,
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const result = client.lending.prepareWithdraw({
+      profileId: "aaaaa-aa",
+      poolId: ICP_POOL_ID,
+      amount: 10_000n,
+      receiver: {
+        address: LOWERCASE_EVM_OUTFLOW_ADDRESS,
+        type: "ChainAddress",
+      },
+      signerWalletAddress: "0xsigner",
+    });
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message: "Target pool does not support this address type",
+    });
+    expect(getNonce).not.toHaveBeenCalled();
   });
 
   test("rejects a withdraw with an invalid EVM receiver address", async () => {
