@@ -17,6 +17,7 @@ import type {
 } from "@liquidium/client";
 import { useMemo, useState } from "react";
 import type { SharedExampleState } from "./example-state";
+import { METHOD_ARG_REFERENCES } from "./generated-method-arg-references";
 import { createLiquidiumClient } from "./lib/client";
 
 const MIN_LIST_LIMIT = 1;
@@ -623,6 +624,8 @@ export function SdkMethodQueryPage({
       SDK_METHODS[0]
     );
   }, [selectedMethodId]);
+  const selectedMethodArgReference =
+    METHOD_ARG_REFERENCES[selectedMethod.id] ?? "No reference available.";
 
   const walletAddress = primaryWallet?.address ?? "";
   const walletChain = getWalletChainLabel(primaryWallet);
@@ -829,17 +832,27 @@ export function SdkMethodQueryPage({
           </label>
         </div>
 
-        <label className="query-input-label">
-          JSON args
-          <textarea
-            className="query-json-input"
-            value={argsInput}
-            onChange={(event) => {
-              setArgsInput(event.target.value);
-            }}
-            spellCheck={false}
-          />
-        </label>
+        <div className="query-workspace">
+          <label className="query-input-label">
+            JSON args
+            <textarea
+              className="query-json-input"
+              value={argsInput}
+              onChange={(event) => {
+                setArgsInput(event.target.value);
+              }}
+              spellCheck={false}
+            />
+          </label>
+
+          <aside className="method-reference" aria-label="Method argument type">
+            <div className="method-reference-heading">
+              <h3>Args type</h3>
+              <span>{selectedMethod.label}</span>
+            </div>
+            <pre>{selectedMethodArgReference}</pre>
+          </aside>
+        </div>
 
         <div className="actions">
           <button

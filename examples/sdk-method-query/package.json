@@ -4,9 +4,13 @@
   "version": "0.0.1",
   "type": "module",
   "scripts": {
+    "predev": "pnpm run generate:method-references",
     "dev": "vite",
+    "generate:method-references": "node scripts/generate-method-arg-references.mjs",
+    "prebuild": "pnpm run generate:method-references",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
+    "pretypecheck": "pnpm run generate:method-references",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

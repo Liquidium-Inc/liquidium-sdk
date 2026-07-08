@@ -23,13 +23,6 @@ type SubmitBtcSupplyParams = {
   walletAdapter: WalletAdapter;
 };
 
-type CreateBtcSupplyTargetParams = {
-  profileId: string;
-  poolId: string;
-  action: SupplyAction;
-  chain: Chain;
-};
-
 type ListProfileActivitiesParams = {
   profileId: string;
   filter: ActivityFilter;
@@ -81,20 +74,6 @@ export async function submitBtcSupply({
     account,
     amount,
     walletAdapter,
-  });
-}
-
-export async function createBtcSupplyTarget({
-  profileId,
-  poolId,
-  action,
-  chain,
-}: CreateBtcSupplyTargetParams): Promise<SupplyFlow> {
-  return await client.lending.supply({
-    profileId,
-    poolId,
-    action,
-    chain,
   });
 }
 

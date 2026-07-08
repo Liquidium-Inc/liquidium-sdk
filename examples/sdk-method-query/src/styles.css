@@ -246,6 +246,13 @@ pre {
 .query-input-label {
   display: grid;
   gap: 0.375rem;
+}
+
+.query-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.8fr);
+  gap: 1rem;
+  align-items: start;
   margin-top: 1rem;
 }
 
@@ -257,6 +264,37 @@ pre {
     "Liberation Mono", "Courier New", monospace;
   border: 1px solid #ccc;
   resize: vertical;
+}
+
+.method-reference {
+  display: grid;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.method-reference-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.method-reference-heading h3 {
+  margin: 0;
+}
+
+.method-reference-heading span {
+  min-width: 0;
+  overflow: hidden;
+  color: #555;
+  font-size: 0.875rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.method-reference pre {
+  min-height: 14rem;
+  font-size: 0.875rem;
 }
 
 @media (max-width: 640px) {
@@ -275,5 +313,9 @@ pre {
 
   .actions > * {
     width: 100%;
+  }
+
+  .query-workspace {
+    grid-template-columns: 1fr;
   }
 }

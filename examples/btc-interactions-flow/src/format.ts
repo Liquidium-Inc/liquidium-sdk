@@ -5,7 +5,6 @@ import type {
   Pool,
   SupplyAction,
   SupplyFlow,
-  SupplyTarget,
 } from "@liquidium/client";
 import { SupplyAction as SupplyActionValue } from "@liquidium/client";
 
@@ -107,15 +106,13 @@ export function formatBtcSupplyFlow(
     title,
     `Mechanism: ${flow.type}`,
     `Txid: ${flow.txid ?? "not set"}`,
-    flow.txid
-      ? "Status: track the txid on the Activity tracker page."
-      : "Status: send funds manually, then track the transfer externally.",
+    "Status: track the txid on the Activity tracker page.",
     "",
-    formatSupplyTarget(flow.target),
+    formatBtcSupplyTarget(flow.target),
   ].join("\n");
 }
 
-export function formatSupplyTarget(target: SupplyTarget): string {
+function formatBtcSupplyTarget(target: SupplyFlow["target"]): string {
   if (target.type === "ChainAddress") {
     return [
       `Target type: ${target.type}`,
@@ -125,23 +122,9 @@ export function formatSupplyTarget(target: SupplyTarget): string {
     ].join("\n");
   }
 
-  if (target.type === "IcrcAccount") {
-    return [
-      `Target type: ${target.type}`,
-      `Account: ${target.account.address}`,
-      `Owner: ${target.account.owner}`,
-      `Subaccount: ${formatBytes(target.account.subaccount)}`,
-      `Action: ${target.action}`,
-    ].join("\n");
-  }
-
   return [
+    "Unexpected non-BTC target.",
     `Target type: ${target.type}`,
-    `Account: ${target.account.icpIcrcAccount.address}`,
-    `ICP account identifier: ${target.account.icpAccountIdentifier}`,
-    `Owner: ${target.account.icpIcrcAccount.owner}`,
-    `Subaccount: ${formatBytes(target.account.icpIcrcAccount.subaccount)}`,
-    `Action: ${target.action}`,
   ].join("\n");
 }
 
@@ -297,14 +280,4 @@ function stringifyForDisplay(value: unknown): string {
     },
     2
   );
-}
-
-function formatBytes(bytes: Uint8Array | undefined): string {
-  if (!bytes) {
-    return "not set";
-  }
-
-  return Array.from(bytes)
-    .map((byte) => byte.toString(16).padStart(2, "0"))
-    .join("");
 }

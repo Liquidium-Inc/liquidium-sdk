@@ -23,7 +23,6 @@ import {
   saveRecentActivityId,
 } from "./format";
 import {
-  createBtcSupplyTarget,
   getActivityStatus,
   getOrCreateWalletProfile,
   listMarketPools,
@@ -32,7 +31,6 @@ import {
 } from "./sdk-example";
 
 const DEFAULT_SUPPLY_AMOUNT_BTC = "0.0001";
-const DEFAULT_TRANSFER_CHAIN = Chain.BTC;
 
 export function App() {
   const isStatusPage = window.location.pathname.endsWith("/status.html");
@@ -50,9 +48,6 @@ function BtcInteractionsPage() {
   const [selectedPoolId, setSelectedPoolId] = useState("");
   const [supplyAction, setSupplyAction] = useState<SupplyActionType>(
     SupplyAction.deposit
-  );
-  const [transferChain, setTransferChain] = useState<Chain>(
-    DEFAULT_TRANSFER_CHAIN
   );
   const [supplyAmount, setSupplyAmount] = useState(DEFAULT_SUPPLY_AMOUNT_BTC);
   const [supplyResult, setSupplyResult] = useState(
@@ -107,56 +102,36 @@ function BtcInteractionsPage() {
       throw new Error("Enter a profile id.");
     }
 
-    const isCkTransfer = transferChain === Chain.ICP;
-    setStatus(
-      isCkTransfer
-        ? `Generating ckBTC ${supplyAction} target...`
-        : `Submitting BTC ${supplyAction}...`
-    );
-    setSupplyResult(
-      isCkTransfer
-        ? `Generating ckBTC ${supplyAction} target...`
-        : `Submitting BTC ${supplyAction}...`
-    );
+    setStatus(`Submitting BTC ${supplyAction}...`);
+    setSupplyResult(`Submitting BTC ${supplyAction}...`);
 
-    const supplyFlow = isCkTransfer
-      ? await createBtcSupplyTarget({
-          profileId: trimmedProfileId,
-          poolId: selectedPool.id,
-          action: supplyAction,
-          chain: transferChain,
-        })
-      : await submitBtcSupply({
-          profileId: trimmedProfileId,
-          poolId: selectedPool.id,
-          action: supplyAction,
-          account: getConnectedBitcoinAddress(primaryWallet),
-          amount,
-          walletAdapter: createDynamicBitcoinWalletAdapter(primaryWallet),
-        });
+    const supplyFlow = await submitBtcSupply({
+      profileId: trimmedProfileId,
+      poolId: selectedPool.id,
+      action: supplyAction,
+      account: getConnectedBitcoinAddress(primaryWallet),
+      amount,
+      walletAdapter: createDynamicBitcoinWalletAdapter(primaryWallet),
+    });
 
-    if (supplyFlow.txid) {
-      saveRecentActivityId(supplyFlow.txid);
+    if (!supplyFlow.txid) {
+      throw new Error("BTC wallet transaction did not return a txid.");
     }
+
+    saveRecentActivityId(supplyFlow.txid);
 
     setSupplyResult(
       [
         `Sent amount: ${formatAmount(amount, selectedPool.decimals)} ${selectedPool.asset}`,
         `Action: ${supplyAction}`,
-        `Transfer chain: ${formatTransferChain(transferChain)}`,
+        "Transfer chain: Native BTC wallet transaction",
         "",
         formatBtcSupplyFlow(supplyFlow, supplyAction),
         "",
-        supplyFlow.txid
-          ? "Use the txid on the Activity tracker page to follow status."
-          : "Send ckBTC manually to the ICRC account above.",
+        "Use the txid on the Activity tracker page to follow status.",
       ].join("\n")
     );
-    setStatus(
-      supplyFlow.txid
-        ? `Submitted BTC ${supplyAction} ${supplyFlow.txid}.`
-        : `Generated ckBTC ${supplyAction} target.`
-    );
+    setStatus(`Submitted BTC ${supplyAction} ${supplyFlow.txid}.`);
   }
 
   return (
@@ -239,20 +214,6 @@ function BtcInteractionsPage() {
           ))}
         </select>
 
-        <label htmlFor="transfer-chain-select">Transfer chain</label>
-        <select
-          id="transfer-chain-select"
-          value={transferChain}
-          onChange={(event) => setTransferChain(event.target.value as Chain)}
-        >
-          <option value={Chain.BTC}>Native BTC wallet transaction</option>
-          <option value={Chain.ICP}>Direct ckBTC / ICRC ledger account</option>
-        </select>
-        <p>
-          Native mode broadcasts with the connected Bitcoin wallet. ck mode
-          returns the pool-owned ICRC account for a manual ckBTC transfer.
-        </p>
-
         <label htmlFor="supply-action-select">Action</label>
         <select
           id="supply-action-select"
@@ -279,9 +240,7 @@ function BtcInteractionsPage() {
             void run(submitBtcInteraction, setStatus, setSupplyResult)
           }
         >
-          {transferChain === Chain.ICP
-            ? "Get ckBTC Transfer Target"
-            : "Submit BTC Transaction With Dynamic Wallet"}
+          Submit BTC Transaction With Dynamic Wallet
         </button>
         <div className="result-box">{supplyResult}</div>
       </section>
@@ -292,12 +251,6 @@ function BtcInteractionsPage() {
       </section>
     </main>
   );
-}
-
-function formatTransferChain(transferChain: Chain): string {
-  return transferChain === Chain.ICP
-    ? "Direct ckBTC / ICRC ledger account"
-    : "Native BTC wallet transaction";
 }
 
 function ActivityTrackerPage() {
