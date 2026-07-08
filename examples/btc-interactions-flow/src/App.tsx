@@ -33,7 +33,7 @@ import {
 } from "./sdk-example";
 
 const DEFAULT_SUPPLY_AMOUNT_BTC = "0.0001";
-const DEFAULT_TRANSFER_MODE: TransferMode = "native";
+const DEFAULT_TRANSFER_MODE: TransferMode = "nativeAsset";
 
 export function App() {
   const isStatusPage = window.location.pathname.endsWith("/status.html");
@@ -108,7 +108,7 @@ function BtcInteractionsPage() {
       throw new Error("Enter a profile id.");
     }
 
-    const isCkTransferMode = transferMode === "ck";
+    const isCkTransferMode = transferMode === "ckLedger";
     setStatus(
       isCkTransferMode
         ? `Generating ckBTC ${supplyAction} target...`
@@ -248,8 +248,8 @@ function BtcInteractionsPage() {
             setTransferMode(event.target.value as TransferMode)
           }
         >
-          <option value="native">Native BTC wallet transaction</option>
-          <option value="ck">Direct ckBTC / ICRC ledger account</option>
+          <option value="nativeAsset">Native BTC wallet transaction</option>
+          <option value="ckLedger">Direct ckBTC / ICRC ledger account</option>
         </select>
         <p>
           Native mode broadcasts with the connected Bitcoin wallet. ck mode
@@ -282,7 +282,7 @@ function BtcInteractionsPage() {
             void run(submitBtcInteraction, setStatus, setSupplyResult)
           }
         >
-          {transferMode === "ck"
+          {transferMode === "ckLedger"
             ? "Get ckBTC Transfer Target"
             : "Submit BTC Transaction With Dynamic Wallet"}
         </button>
@@ -298,7 +298,7 @@ function BtcInteractionsPage() {
 }
 
 function formatTransferMode(transferMode: TransferMode): string {
-  return transferMode === "ck"
+  return transferMode === "ckLedger"
     ? "Direct ckBTC / ICRC ledger account"
     : "Native BTC wallet transaction";
 }

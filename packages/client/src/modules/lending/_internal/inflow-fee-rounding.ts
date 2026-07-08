@@ -22,7 +22,7 @@ export function roundInflowFeeEstimate(
   }
 
   if (
-    request.transferMode !== TransferMode.ck &&
+    request.transferMode !== TransferMode.ckLedger &&
     isEthStablecoin(request.asset, request.chain)
   ) {
     return roundUpToNearest(
@@ -32,7 +32,7 @@ export function roundInflowFeeEstimate(
   }
 
   if (
-    request.transferMode !== TransferMode.ck &&
+    request.transferMode !== TransferMode.ckLedger &&
     request.asset === Asset.BTC &&
     request.chain === Chain.BTC
   ) {

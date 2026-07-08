@@ -83,7 +83,11 @@ describe("roundInflowFeeEstimate", () => {
 
     // when
     const result = roundInflowFeeEstimate(
-      { asset: Asset.BTC, chain: Chain.BTC, transferMode: TransferMode.ck },
+      {
+        asset: Asset.BTC,
+        chain: Chain.BTC,
+        transferMode: TransferMode.ckLedger,
+      },
       CKBTC_LEDGER_FEE_SATS
     );
 
@@ -97,7 +101,11 @@ describe("roundInflowFeeEstimate", () => {
 
     // when
     const result = roundInflowFeeEstimate(
-      { asset: Asset.USDC, chain: Chain.ETH, transferMode: TransferMode.ck },
+      {
+        asset: Asset.USDC,
+        chain: Chain.ETH,
+        transferMode: TransferMode.ckLedger,
+      },
       CKUSDC_LEDGER_FEE
     );
 

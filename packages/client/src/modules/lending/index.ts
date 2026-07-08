@@ -27,6 +27,8 @@ export type {
   IcrcTransferDetails,
   InflowFeeEstimate,
   InflowOperation,
+  LiquidiumAccount,
+  LiquidiumAccountInput,
   ManualTransferSupplyFlowRequest,
   OutflowDestination,
   OutflowDetails,

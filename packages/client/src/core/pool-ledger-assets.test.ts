@@ -25,25 +25,25 @@ describe("pool ledger asset routes", () => {
         asset: "BTC",
         chain: "BTC",
         ledgerCanisterId: "mxzaz-hqaaa-aaaar-qaada-cai",
-        transferMode: "ck",
+        transferMode: "ckLedger",
       },
       {
         asset: "USDT",
         chain: "ETH",
         ledgerCanisterId: "cngnf-vqaaa-aaaar-qag4q-cai",
-        transferMode: "ck",
+        transferMode: "ckLedger",
       },
       {
         asset: "USDC",
         chain: "ETH",
         ledgerCanisterId: "xevnm-gaaaa-aaaar-qafnq-cai",
-        transferMode: "ck",
+        transferMode: "ckLedger",
       },
       {
         asset: "ICP",
         chain: "ICP",
         ledgerCanisterId: "ryjl3-tyaaa-aaaaa-aaaba-cai",
-        transferMode: "native",
+        transferMode: "nativeAsset",
       },
     ] as const;
 

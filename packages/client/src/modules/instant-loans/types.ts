@@ -1,53 +1,34 @@
-import type { IcrcAccount } from "../../core/accounts";
+import type {
+  LiquidiumAccount,
+  LiquidiumAccountInput,
+} from "../../core/accounts";
 import type { LiquidiumStatus } from "../../core/status";
-import type { Chain, MarketAsset, MarketChain } from "../../core/types";
+import type { Asset, MarketAsset, MarketChain } from "../../core/types";
+import type { TransferMode } from "../../core/wallet-actions";
 import type { SupplyTarget } from "../lending";
 
-export type { IcrcAccount } from "../../core/accounts";
-
 /** Asset symbols supported by the instant-loans canister. */
-export type InstantLoanAsset = "BTC" | "SOL" | "USDC" | "USDT";
+export type InstantLoanAsset = Asset;
 
-/** External chain account used for borrow delivery or collateral refunds. */
-export interface ExternalAccount {
-  /**
-   * Account kind discriminator.
-   *
-   * Use `External` for addresses outside the IC, such as BTC, Solana, or EVM
-   * addresses. Instant-loan creation currently accepts external destinations.
-   */
-  type: "External";
-  /**
-   * Optional chain metadata for display and caller-side validation.
-   *
-   * The instant-loan API only sends `address` to the canister. Include `chain`
-   * when your UI needs to remember which network the address belongs to.
-   */
-  chain?: Chain | MarketChain;
-  /**
-   * Destination address on the external chain.
-   *
-   * For `borrowDestination`, this receives the borrowed asset. For
-   * `refundDestination`, this receives collateral refunds or withdrawals.
-   */
-  address: string;
+/** Inflow target transfer-mode selection for instant-loan quotes. */
+export interface InstantLoanTransferModeOptions {
+  /** Transfer path used for the initial collateral deposit target. */
+  initialDepositTransferMode?: TransferMode;
+  /** Transfer path used for the repayment target. */
+  repaymentTransferMode?: TransferMode;
 }
 
-/** IC principal account returned when an IC principal destination is used. */
-export interface IcPrincipalAccount {
-  /** Account kind discriminator. */
-  type: "IcPrincipal";
-  /** IC principal text. */
-  principal: string;
+/** Delivery-mode selection for instant-loan creation. */
+export interface InstantLoanDeliveryTransferModeOptions {
+  /** Delivery path used for the borrowed asset. */
+  borrowTransferMode: TransferMode;
+  /** Delivery path used for collateral refunds and withdrawals. */
+  refundTransferMode: TransferMode;
 }
 
-/** Legacy ICP ledger account identifier returned by existing canister state. */
-export interface AccountIdentifierAccount {
-  /** Account kind discriminator. */
-  type: "AccountIdentifier";
-  /** ICP ledger account identifier text, displayed as the destination address. */
-  address: string;
-}
+/** Delivery-mode selection for instant-loan creation. */
+export type InstantLoanOutflowTransferModeOptions =
+  InstantLoanDeliveryTransferModeOptions;
 
 /**
  * Borrow destination or refund account associated with an instant loan.
@@ -59,32 +40,27 @@ export interface AccountIdentifierAccount {
  *   principal: "aaaaa-aa",
  * };
  *
- * const externalAccount: InstantLoanAccount = {
- *   type: "External",
+ * const chainAddressAccount: InstantLoanAccount = {
+ *   type: "ChainAddress",
  *   address: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",
  * };
  *
  * const accountIdentifierAccount: InstantLoanAccount = {
- *   type: "AccountIdentifier",
- *   address: "e2134f3f176b1429df3f92807b8f0f26a520debc313b2d6ad86a4a2e7f3d8f8d",
+ *   type: "IcpAccountIdentifier",
+ *   accountIdentifier: "e2134f3f176b1429df3f92807b8f0f26a520debc313b2d6ad86a4a2e7f3d8f8d",
  * };
  *
  * const icrcAccount: InstantLoanAccount = {
- *   type: "Icrc",
+ *   type: "IcrcAccount",
  *   owner: "aaaaa-aa",
  *   address: "aaaaa-aa",
  * };
  * ```
  */
-export type InstantLoanAccount =
-  /** External-chain account. */
-  | ExternalAccount
-  /** IC principal account. */
-  | IcPrincipalAccount
-  /** Legacy ICP ledger account identifier. */
-  | AccountIdentifierAccount
-  /** ICRC account. */
-  | IcrcAccount;
+export type InstantLoanAccount = LiquidiumAccount;
+
+/** Destination accepted when creating an instant loan. */
+export type InstantLoanDestination = LiquidiumAccountInput;
 
 /**
  * Parameters for creating an accountless instant loan.
@@ -97,7 +73,9 @@ export type InstantLoanAccount =
  * satoshis and ERC-20 assets use token base units according to the selected
  * pool decimals.
  */
-export interface CreateInstantLoanRequest {
+export interface CreateInstantLoanRequest
+  extends InstantLoanTransferModeOptions,
+    InstantLoanDeliveryTransferModeOptions {
   /**
    * Principal text of the pool that receives the user's collateral deposit.
    *
@@ -161,21 +139,21 @@ export interface CreateInstantLoanRequest {
    */
   depositWindowSeconds: bigint;
   /**
-   * External destination that receives the borrowed asset after the loan starts.
+   * Destination that receives the borrowed asset after the loan starts.
    *
-   * Pass either an address string or `{ type: "External", address }`. This is
-   * usually the user's wallet address on the borrow asset's chain, such as an
-   * EVM address for ETH USDC/USDT outflows.
+   * Pass either a string shorthand or a typed destination. For BTC/ETH chain
+   * outflows this is usually the user's chain address. For ICP or ck outflows,
+   * use `IcPrincipal`, `IcpAccountIdentifier`, or `IcrcAccount` destinations.
    */
-  borrowDestination: string | ExternalAccount;
+  borrowDestination: InstantLoanDestination;
   /**
-   * External destination that receives collateral refunds or withdrawals.
+   * Destination that receives collateral refunds or withdrawals.
    *
-   * Pass either an address string or `{ type: "External", address }`. This
-   * should be an address on the collateral asset's chain, such as a BTC address
-   * when `collateralAsset` is `"BTC"`.
+   * Pass either a string shorthand or a typed destination. For BTC/ETH chain
+   * outflows this is usually the user's chain address. For ICP or ck outflows,
+   * use `IcPrincipal`, `IcpAccountIdentifier`, or `IcrcAccount` destinations.
    */
-  refundDestination: string | ExternalAccount;
+  refundDestination: InstantLoanDestination;
 }
 
 /** Lookup request for loading an instant loan by numeric canister id. */
@@ -192,8 +170,8 @@ export interface InstantLoanGetByRefRequest {
 
 /** Lookup request for loading canonical instant-loan state. */
 export type InstantLoanGetRequest =
-  | InstantLoanGetByIdRequest
-  | InstantLoanGetByRefRequest;
+  | (InstantLoanGetByIdRequest & InstantLoanTransferModeOptions)
+  | (InstantLoanGetByRefRequest & InstantLoanTransferModeOptions);
 
 /** Collateral leg returned by instant-loan search. */
 export interface InstantLoanFindCollateral {

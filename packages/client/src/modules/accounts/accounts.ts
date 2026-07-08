@@ -147,7 +147,7 @@ export class AccountsModule {
         kind: WalletActionKind.createAccount,
         executionKind: WalletExecutionKind.signMessage,
         actionType: WalletActionKind.createAccount,
-        transferMode: TransferMode.native,
+        transferMode: TransferMode.nativeAsset,
         account: normalizedAccount,
         message: createInitializeAccountMessage(expiryTimestamp, nonce),
         data: {

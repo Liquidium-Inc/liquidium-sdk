@@ -1,4 +1,9 @@
-import type { AssetPrices, Pool } from "@liquidium/client";
+import type {
+  AssetPrices,
+  InstantLoan,
+  Pool,
+  TransferMode,
+} from "@liquidium/client";
 import { useEffect, useState } from "react";
 import { formatConfig } from "./client";
 import {
@@ -7,6 +12,7 @@ import {
   formatInstantLoan,
   formatPercentFromBps,
   formatPool,
+  formatSupplyTarget,
   formatUnixTimestampSeconds,
   getRecentLoanRefs,
   parseAmountToBaseUnits,
@@ -17,12 +23,36 @@ import {
 import {
   calculateLoanLtv,
   createInstantLoan,
+  getInstantLoan,
+  type InstantLoanDestinationType,
   loadMarketData,
 } from "./sdk-example";
 
 const PRICE_DISPLAY_DECIMALS = 8;
 const DEFAULT_COLLATERAL_ASSET = "BTC";
 const DEFAULT_BORROW_ASSET = "USDC";
+const DEFAULT_TRANSFER_MODE: TransferMode = "nativeAsset";
+const DEFAULT_DESTINATION_TYPE: InstantLoanDestinationType = "ChainAddress";
+const CK_TARGET_ASSETS = new Set(["BTC", "USDC", "USDT"]);
+const CHAIN_ADDRESS_DESTINATION_TYPES: InstantLoanDestinationType[] = [
+  "ChainAddress",
+];
+const CK_DESTINATION_TYPES: InstantLoanDestinationType[] = ["IcPrincipal"];
+const ICP_DESTINATION_TYPES: InstantLoanDestinationType[] = [
+  "IcrcAccount",
+  "IcpAccountIdentifier",
+  "IcPrincipal",
+];
+
+type LoanTargetOptions = {
+  initialDeposit: LoanTargetOption[];
+  repayment: LoanTargetOption[];
+};
+
+type LoanTargetOption = {
+  label: string;
+  loan: InstantLoan;
+};
 
 export function App() {
   const [pools, setPools] = useState<Pool[]>([]);
@@ -31,9 +61,19 @@ export function App() {
   const [selectedBorrowPoolId, setSelectedBorrowPoolId] = useState("");
   const [collateralAmount, setCollateralAmount] = useState("0.0002");
   const [borrowAmount, setBorrowAmount] = useState("9");
+  const [borrowTransferMode, setBorrowTransferMode] = useState<TransferMode>(
+    DEFAULT_TRANSFER_MODE
+  );
+  const [refundTransferMode, setRefundTransferMode] = useState<TransferMode>(
+    DEFAULT_TRANSFER_MODE
+  );
+  const [borrowDestinationType, setBorrowDestinationType] =
+    useState<InstantLoanDestinationType>(DEFAULT_DESTINATION_TYPE);
   const [maxLtv, setMaxLtv] = useState("30");
   const [depositWindowSeconds, setDepositWindowSeconds] = useState("3600");
   const [borrowDestination, setBorrowDestination] = useState("");
+  const [refundDestinationType, setRefundDestinationType] =
+    useState<InstantLoanDestinationType>(DEFAULT_DESTINATION_TYPE);
   const [refundDestination, setRefundDestination] = useState("");
   const [loanResult, setLoanResult] = useState("No loan created yet.");
   const [recentLoanRefs, setRecentLoanRefs] = useState<string[]>(() =>
@@ -63,6 +103,14 @@ export function App() {
       setSelectedBorrowPoolId(
         defaultBorrowPool?.id ?? loadedPools[0]?.id ?? ""
       );
+      resetDestinationControls({
+        collateralPool: defaultCollateralPool,
+        borrowPool: defaultBorrowPool,
+        setBorrowTransferMode,
+        setRefundTransferMode,
+        setBorrowDestinationType,
+        setRefundDestinationType,
+      });
 
       if (defaultCollateralPool) {
         setMaxLtv(formatBpsInput(defaultCollateralPool.maxLtv));
@@ -91,6 +139,14 @@ export function App() {
       defaultCollateralPool?.id ?? loadedPools[0]?.id ?? ""
     );
     setSelectedBorrowPoolId(defaultBorrowPool?.id ?? loadedPools[0]?.id ?? "");
+    resetDestinationControls({
+      collateralPool: defaultCollateralPool,
+      borrowPool: defaultBorrowPool,
+      setBorrowTransferMode,
+      setRefundTransferMode,
+      setBorrowDestinationType,
+      setRefundDestinationType,
+    });
 
     if (defaultCollateralPool) {
       setMaxLtv(formatBpsInput(defaultCollateralPool.maxLtv));
@@ -138,8 +194,17 @@ export function App() {
       borrowAmount: parsedBorrowAmount,
       ltvMaxBps,
       depositWindowSeconds: parsedDepositWindowSeconds,
+      borrowTransferMode,
       borrowDestinationAddress: trimmedBorrowDestination,
+      borrowDestinationType,
+      refundTransferMode,
       refundDestinationAddress: trimmedRefundDestination,
+      refundDestinationType,
+    });
+    const loanTargetOptions = await getLoanTargetOptions({
+      loan,
+      collateralPool,
+      borrowPool,
     });
 
     saveRecentLoanRef(loan.ref);
@@ -172,7 +237,21 @@ export function App() {
         )} ${borrowPool.asset}`,
         `Max LTV: ${formatPercentFromBps(ltvMaxBps)}`,
         "",
-        formatInstantLoan(loan, { pools }),
+        "Initial deposit targets:",
+        loanTargetOptions.initialDeposit
+          .map((targetOption) =>
+            formatInitialDepositTargetOption(targetOption, collateralPool)
+          )
+          .join("\n\n"),
+        "",
+        "Repayment targets:",
+        loanTargetOptions.repayment
+          .map((targetOption) =>
+            formatRepaymentTargetOption(targetOption, borrowPool)
+          )
+          .join("\n\n"),
+        "",
+        formatInstantLoan(loan, { pools, includeTargets: false }),
       ].join("\n")
     );
     setStatus(`Created instant loan ${loan.ref}.`);
@@ -182,9 +261,30 @@ export function App() {
     setSelectedCollateralPoolId(poolId);
     const pool = pools.find((candidatePool) => candidatePool.id === poolId);
 
+    setSelectedDestinationTransferMode({
+      pool,
+      transferMode: DEFAULT_TRANSFER_MODE,
+      setTransferMode: setRefundTransferMode,
+      setDestinationType: setRefundDestinationType,
+      setDestination: setRefundDestination,
+    });
+
     if (pool) {
       setMaxLtv(formatBpsInput(pool.maxLtv));
     }
+  }
+
+  function handleBorrowPoolChange(poolId: string): void {
+    setSelectedBorrowPoolId(poolId);
+    const pool = pools.find((candidatePool) => candidatePool.id === poolId);
+
+    setSelectedDestinationTransferMode({
+      pool,
+      transferMode: DEFAULT_TRANSFER_MODE,
+      setTransferMode: setBorrowTransferMode,
+      setDestinationType: setBorrowDestinationType,
+      setDestination: setBorrowDestination,
+    });
   }
 
   return (
@@ -241,7 +341,7 @@ export function App() {
         <select
           id="borrow-pool-select"
           value={selectedBorrowPoolId}
-          onChange={(event) => setSelectedBorrowPoolId(event.target.value)}
+          onChange={(event) => handleBorrowPoolChange(event.target.value)}
         >
           {pools.map((pool) => (
             <option key={pool.id} value={pool.id}>
@@ -286,6 +386,66 @@ export function App() {
           onChange={(event) => setDepositWindowSeconds(event.target.value)}
         />
 
+        <label htmlFor="borrow-transfer-mode-select">
+          Borrow delivery mode
+        </label>
+        <select
+          id="borrow-transfer-mode-select"
+          value={borrowTransferMode}
+          onChange={(event) =>
+            setSelectedDestinationTransferMode({
+              pool: pools.find((pool) => pool.id === selectedBorrowPoolId),
+              transferMode: event.target.value as TransferMode,
+              setTransferMode: setBorrowTransferMode,
+              setDestinationType: setBorrowDestinationType,
+              setDestination: setBorrowDestination,
+            })
+          }
+        >
+          {getTransferModeOptions(
+            pools.find((pool) => pool.id === selectedBorrowPoolId)
+          ).map((transferMode) => (
+            <option key={transferMode} value={transferMode}>
+              {formatOutflowTransferMode(
+                pools.find((pool) => pool.id === selectedBorrowPoolId),
+                transferMode
+              )}
+            </option>
+          ))}
+        </select>
+        {shouldShowDestinationTypeSelect(
+          pools.find((pool) => pool.id === selectedBorrowPoolId),
+          borrowTransferMode
+        ) ? (
+          <>
+            <label htmlFor="borrow-destination-type-select">
+              Borrow destination type
+            </label>
+            <select
+              id="borrow-destination-type-select"
+              value={borrowDestinationType}
+              onChange={(event) =>
+                setBorrowDestinationType(
+                  event.target.value as InstantLoanDestinationType
+                )
+              }
+            >
+              {getDestinationTypeOptions(
+                pools.find((pool) => pool.id === selectedBorrowPoolId),
+                borrowTransferMode
+              ).map((destinationType) => (
+                <option key={destinationType} value={destinationType}>
+                  {formatDestinationType(destinationType)}
+                </option>
+              ))}
+            </select>
+          </>
+        ) : null}
+        <p>
+          Choose ck mode to send borrowed ck assets to an IC principal. Native
+          mode uses the chain address, except ICP where you can choose the ICP
+          destination format.
+        </p>
         <label htmlFor="borrow-destination-input">
           Borrow destination address
         </label>
@@ -295,8 +455,67 @@ export function App() {
           onChange={(event) => setBorrowDestination(event.target.value)}
         />
 
+        <label htmlFor="refund-transfer-mode-select">
+          Refund/withdrawal delivery mode
+        </label>
+        <select
+          id="refund-transfer-mode-select"
+          value={refundTransferMode}
+          onChange={(event) =>
+            setSelectedDestinationTransferMode({
+              pool: pools.find((pool) => pool.id === selectedCollateralPoolId),
+              transferMode: event.target.value as TransferMode,
+              setTransferMode: setRefundTransferMode,
+              setDestinationType: setRefundDestinationType,
+              setDestination: setRefundDestination,
+            })
+          }
+        >
+          {getTransferModeOptions(
+            pools.find((pool) => pool.id === selectedCollateralPoolId)
+          ).map((transferMode) => (
+            <option key={transferMode} value={transferMode}>
+              {formatOutflowTransferMode(
+                pools.find((pool) => pool.id === selectedCollateralPoolId),
+                transferMode
+              )}
+            </option>
+          ))}
+        </select>
+        {shouldShowDestinationTypeSelect(
+          pools.find((pool) => pool.id === selectedCollateralPoolId),
+          refundTransferMode
+        ) ? (
+          <>
+            <label htmlFor="refund-destination-type-select">
+              Refund/withdrawal destination type
+            </label>
+            <select
+              id="refund-destination-type-select"
+              value={refundDestinationType}
+              onChange={(event) =>
+                setRefundDestinationType(
+                  event.target.value as InstantLoanDestinationType
+                )
+              }
+            >
+              {getDestinationTypeOptions(
+                pools.find((pool) => pool.id === selectedCollateralPoolId),
+                refundTransferMode
+              ).map((destinationType) => (
+                <option key={destinationType} value={destinationType}>
+                  {formatDestinationType(destinationType)}
+                </option>
+              ))}
+            </select>
+          </>
+        ) : null}
+        <p>
+          Refunds and full collateral withdrawals use this delivery mode. ICP
+          pools also let you choose the native destination format.
+        </p>
         <label htmlFor="refund-destination-input">
-          Refund destination address
+          Refund/withdrawal destination address
         </label>
         <input
           id="refund-destination-input"
@@ -395,6 +614,254 @@ export function App() {
         ? `LTV preview unavailable: ${error.message}`
         : "LTV preview unavailable.";
     }
+  }
+}
+
+function resetDestinationControls(params: {
+  collateralPool: Pool | undefined;
+  borrowPool: Pool | undefined;
+  setBorrowTransferMode(transferMode: TransferMode): void;
+  setRefundTransferMode(transferMode: TransferMode): void;
+  setBorrowDestinationType(destinationType: InstantLoanDestinationType): void;
+  setRefundDestinationType(destinationType: InstantLoanDestinationType): void;
+}): void {
+  const collateralTransferMode = getDefaultTransferMode(params.collateralPool);
+  const borrowTransferMode = getDefaultTransferMode(params.borrowPool);
+
+  params.setBorrowTransferMode(borrowTransferMode);
+  params.setRefundTransferMode(collateralTransferMode);
+  params.setBorrowDestinationType(
+    getDefaultDestinationType(params.borrowPool, borrowTransferMode)
+  );
+  params.setRefundDestinationType(
+    getDefaultDestinationType(params.collateralPool, collateralTransferMode)
+  );
+}
+
+function setSelectedDestinationTransferMode(params: {
+  pool: Pool | undefined;
+  transferMode: TransferMode;
+  setTransferMode(transferMode: TransferMode): void;
+  setDestinationType(destinationType: InstantLoanDestinationType): void;
+  setDestination(destination: string): void;
+}): void {
+  const transferMode = getSupportedTransferMode(
+    params.pool,
+    params.transferMode
+  );
+
+  params.setTransferMode(transferMode);
+  params.setDestinationType(
+    getDefaultDestinationType(params.pool, transferMode)
+  );
+  params.setDestination("");
+}
+
+function getDefaultTransferMode(_pool: Pool | undefined): TransferMode {
+  return DEFAULT_TRANSFER_MODE;
+}
+
+function getSupportedTransferMode(
+  pool: Pool | undefined,
+  transferMode: TransferMode
+): TransferMode {
+  return getTransferModeOptions(pool).includes(transferMode)
+    ? transferMode
+    : getDefaultTransferMode(pool);
+}
+
+function getTransferModeOptions(pool: Pool | undefined): TransferMode[] {
+  if (pool?.chain === "ICP" || !CK_TARGET_ASSETS.has(pool?.asset ?? "")) {
+    return ["nativeAsset"];
+  }
+
+  return ["nativeAsset", "ckLedger"];
+}
+
+async function getLoanTargetOptions(params: {
+  loan: InstantLoan;
+  collateralPool: Pool;
+  borrowPool: Pool;
+}): Promise<LoanTargetOptions> {
+  const initialDeposit = await getInitialDepositTargetOptions(params);
+  const repayment = await getRepaymentTargetOptions(params);
+
+  return { initialDeposit, repayment };
+}
+
+async function getInitialDepositTargetOptions(params: {
+  loan: InstantLoan;
+  collateralPool: Pool;
+}): Promise<LoanTargetOption[]> {
+  const targetOptions = [
+    {
+      label: formatInflowTransferMode(params.collateralPool, "nativeAsset"),
+      loan: params.loan,
+    },
+  ];
+
+  if (!getTransferModeOptions(params.collateralPool).includes("ckLedger")) {
+    return targetOptions;
+  }
+
+  const ckTargetLoan = await getInstantLoan({
+    loanId: params.loan.loanId,
+    initialDepositTransferMode: "ckLedger",
+  });
+
+  return [
+    ...targetOptions,
+    {
+      label: formatInflowTransferMode(params.collateralPool, "ckLedger"),
+      loan: ckTargetLoan,
+    },
+  ];
+}
+
+async function getRepaymentTargetOptions(params: {
+  loan: InstantLoan;
+  borrowPool: Pool;
+}): Promise<LoanTargetOption[]> {
+  const targetOptions = [
+    {
+      label: formatInflowTransferMode(params.borrowPool, "nativeAsset"),
+      loan: params.loan,
+    },
+  ];
+
+  if (!getTransferModeOptions(params.borrowPool).includes("ckLedger")) {
+    return targetOptions;
+  }
+
+  const ckTargetLoan = await getInstantLoan({
+    loanId: params.loan.loanId,
+    repaymentTransferMode: "ckLedger",
+  });
+
+  return [
+    ...targetOptions,
+    {
+      label: formatInflowTransferMode(params.borrowPool, "ckLedger"),
+      loan: ckTargetLoan,
+    },
+  ];
+}
+
+function formatInitialDepositTargetOption(
+  targetOption: LoanTargetOption,
+  collateralPool: Pool
+): string {
+  const initialDeposit = targetOption.loan.initialDeposit;
+
+  return [
+    targetOption.label,
+    `Amount to send: ${formatAmount(
+      initialDeposit.amount,
+      collateralPool.decimals
+    )} ${initialDeposit.asset}`,
+    `Credited collateral: ${formatAmount(
+      initialDeposit.collateralAmount,
+      collateralPool.decimals
+    )} ${initialDeposit.asset}`,
+    `Estimated inflow fee: ${formatAmount(
+      initialDeposit.inflowFeeAmount,
+      collateralPool.decimals
+    )} ${initialDeposit.asset}`,
+    formatSupplyTarget(initialDeposit.target),
+  ].join("\n");
+}
+
+function formatRepaymentTargetOption(
+  targetOption: LoanTargetOption,
+  borrowPool: Pool
+): string {
+  const repayment = targetOption.loan.repayment;
+
+  return [
+    targetOption.label,
+    `Amount to repay: ${formatAmount(repayment.amount, borrowPool.decimals)} ${repayment.asset}`,
+    `Current debt: ${formatAmount(repayment.debtAmount, borrowPool.decimals)} ${repayment.asset}`,
+    `Interest buffer: ${formatAmount(
+      repayment.interestBufferAmount,
+      borrowPool.decimals
+    )} ${repayment.asset}`,
+    `Estimated inflow fee: ${formatAmount(
+      repayment.inflowFeeAmount,
+      borrowPool.decimals
+    )} ${repayment.asset}${repayment.inflowFeeEstimateAvailable ? "" : " (estimate unavailable)"}`,
+    formatSupplyTarget(repayment.target),
+  ].join("\n");
+}
+
+function getDefaultDestinationType(
+  pool: Pool | undefined,
+  transferMode: TransferMode
+): InstantLoanDestinationType {
+  if (pool?.chain === "ICP") {
+    return "IcrcAccount";
+  }
+
+  return transferMode === "ckLedger" ? "IcPrincipal" : "ChainAddress";
+}
+
+function getDestinationTypeOptions(
+  pool: Pool | undefined,
+  transferMode: TransferMode
+): InstantLoanDestinationType[] {
+  if (pool?.chain === "ICP") {
+    return ICP_DESTINATION_TYPES;
+  }
+
+  return transferMode === "ckLedger"
+    ? CK_DESTINATION_TYPES
+    : CHAIN_ADDRESS_DESTINATION_TYPES;
+}
+
+function shouldShowDestinationTypeSelect(
+  pool: Pool | undefined,
+  transferMode: TransferMode
+): boolean {
+  return getDestinationTypeOptions(pool, transferMode).length > 1;
+}
+
+function formatInflowTransferMode(
+  pool: Pool | undefined,
+  transferMode: TransferMode
+): string {
+  if (pool?.chain === "ICP") {
+    return "Native ICP ledger account";
+  }
+
+  return transferMode === "ckLedger"
+    ? `Direct ck${pool?.asset ?? "asset"} / ICRC ledger account`
+    : `Native ${pool?.chain ?? "chain"} ingress address`;
+}
+
+function formatOutflowTransferMode(
+  pool: Pool | undefined,
+  transferMode: TransferMode
+): string {
+  if (pool?.chain === "ICP") {
+    return "Native ICP ledger destination";
+  }
+
+  return transferMode === "ckLedger"
+    ? `ck${pool?.asset ?? "asset"} to IC principal`
+    : `Native ${pool?.chain ?? "chain"} address`;
+}
+
+function formatDestinationType(
+  destinationType: InstantLoanDestinationType
+): string {
+  switch (destinationType) {
+    case "ChainAddress":
+      return "Chain-native address";
+    case "IcPrincipal":
+      return "IC principal";
+    case "IcpAccountIdentifier":
+      return "ICP account identifier";
+    case "IcrcAccount":
+      return "ICRC account";
   }
 }
 

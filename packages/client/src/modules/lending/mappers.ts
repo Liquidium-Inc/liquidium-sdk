@@ -1,7 +1,8 @@
-import { encodeIcrcAccount } from "@icp-sdk/canisters/ledger/icrc";
 import { Principal } from "@icp-sdk/core/principal";
 import {
+  type CanisterLiquidiumAccount,
   decodeIcrcAccountAddress,
+  mapCanisterAccountToLiquidiumAccount,
   normalizeIcpAccountIdentifier,
 } from "../../core/accounts";
 import { normalizeExternalAddress } from "../../core/address-validation";
@@ -36,30 +37,7 @@ export type LendingChainVariant =
   | LendingEthChainVariant
   | LendingIcpChainVariant;
 
-export interface CanisterNativeOutflowReceiver {
-  Native: Principal;
-}
-
-export interface CanisterExternalOutflowReceiver {
-  External: string;
-}
-
-export interface CanisterAccountIdentifierOutflowReceiver {
-  AccountIdentifier: string;
-}
-
-export interface CanisterIcrcOutflowReceiver {
-  Icrc: {
-    owner: Principal;
-    subaccount: [] | [Uint8Array | number[]];
-  };
-}
-
-export type CanisterOutflowReceiver =
-  | CanisterNativeOutflowReceiver
-  | CanisterExternalOutflowReceiver
-  | CanisterAccountIdentifierOutflowReceiver
-  | CanisterIcrcOutflowReceiver;
+export type CanisterOutflowReceiver = CanisterLiquidiumAccount;
 
 export interface ParsedOutflowDestination {
   address: string;
@@ -76,6 +54,11 @@ export interface ParseOutflowDestinationParams {
   destination: OutflowDestination;
   asset: string;
   chain: string;
+}
+
+interface NormalizedOutflowDestinationInput {
+  address: string;
+  type: OutflowAccountType | null;
 }
 
 export interface CanisterOutflowRecord {
@@ -105,44 +88,16 @@ export function mapCanisterOutflowDetails(
 export function mapCanisterAccountType(
   receiver: CanisterOutflowReceiver
 ): OutflowDetails["receiver"] {
-  if ("Native" in receiver) {
-    return {
-      type: "IcPrincipal",
-      principal: receiver.Native.toText(),
-    };
-  }
-  if ("AccountIdentifier" in receiver) {
-    return {
-      type: "IcpAccountIdentifier",
-      accountIdentifier: receiver.AccountIdentifier,
-    };
-  }
-  if ("Icrc" in receiver) {
-    const subaccount = normalizeOptionalSubaccount(receiver.Icrc.subaccount[0]);
-
-    return {
-      type: "IcrcAccount",
-      owner: receiver.Icrc.owner.toText(),
-      subaccount,
-      address: encodeIcrcAccount({
-        owner: receiver.Icrc.owner,
-        subaccount,
-      }),
-    };
-  }
-
-  return {
-    type: "ChainAddress",
-    address: receiver.External,
-  };
+  return mapCanisterAccountToLiquidiumAccount(receiver);
 }
 
 export function parseOutflowDestination(
   params: ParseOutflowDestinationParams
 ): ParsedOutflowDestination {
-  const parsedAccount = params.destination.type
-    ? parseOutflowDestinationWithHint(params.destination)
-    : parseOutflowDestinationAutomatically(params.destination.address);
+  const destination = normalizeOutflowDestinationInput(params.destination);
+  const parsedAccount = destination.type
+    ? parseOutflowDestinationWithHint(destination)
+    : parseOutflowDestinationAutomatically(destination.address);
 
   assertDestinationTypeSupportedByChain({
     accountType: parsedAccount.accountType,
@@ -153,7 +108,9 @@ export function parseOutflowDestination(
     return {
       ...parsedAccount,
       transferMode:
-        params.chain === Chain.ICP ? TransferMode.native : TransferMode.ck,
+        params.chain === Chain.ICP
+          ? TransferMode.nativeAsset
+          : TransferMode.ckLedger,
     };
   }
 
@@ -168,20 +125,8 @@ export function parseOutflowDestination(
     accountType: "ChainAddress",
     canisterAccount: { External: externalAddress },
     messageAccount: { type: "External", data: externalAddress },
-    transferMode: TransferMode.native,
+    transferMode: TransferMode.nativeAsset,
   };
-}
-
-function normalizeOptionalSubaccount(
-  subaccount: Uint8Array | number[] | undefined
-): Uint8Array | undefined {
-  if (!subaccount) {
-    return undefined;
-  }
-
-  return subaccount instanceof Uint8Array
-    ? subaccount
-    : Uint8Array.from(subaccount);
 }
 
 export function normalizeOutflowType(
@@ -215,8 +160,18 @@ export function mapWalletChainToLendingChain(
   }
 }
 
-function parseOutflowDestinationWithHint(
+function normalizeOutflowDestinationInput(
   destination: OutflowDestination
+): NormalizedOutflowDestinationInput {
+  if (typeof destination === "string") {
+    return { address: destination, type: null };
+  }
+
+  return destination;
+}
+
+function parseOutflowDestinationWithHint(
+  destination: NormalizedOutflowDestinationInput
 ): Omit<ParsedOutflowDestination, "transferMode"> {
   try {
     switch (destination.type) {

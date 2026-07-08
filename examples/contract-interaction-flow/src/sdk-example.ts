@@ -137,7 +137,7 @@ export async function createCkTransferTarget({
     profileId,
     poolId,
     action,
-    transferMode: "ck",
+    transferMode: "ckLedger",
   });
 }
 

@@ -3,8 +3,11 @@ import type {
   GetActivityStatusResponse,
   InstantLoan,
   InstantLoanAsset,
+  InstantLoanDestination,
   InstantLoanFindResult,
+  InstantLoanTransferModeOptions,
   Pool,
+  TransferMode,
 } from "@liquidium/client";
 import { client } from "./client";
 
@@ -31,19 +34,31 @@ type CreateInstantLoanParams = {
   borrowAmount: bigint;
   ltvMaxBps: bigint;
   depositWindowSeconds: bigint;
+  borrowTransferMode: TransferMode;
   borrowDestinationAddress: string;
+  borrowDestinationType: InstantLoanDestinationType;
+  refundTransferMode: TransferMode;
   refundDestinationAddress: string;
+  refundDestinationType: InstantLoanDestinationType;
 };
 
-type GetInstantLoanParams =
-  | {
-      ref: string;
-      loanId?: never;
-    }
-  | {
-      ref?: never;
-      loanId: bigint;
-    };
+export type InstantLoanDestinationType =
+  | "ChainAddress"
+  | "IcPrincipal"
+  | "IcpAccountIdentifier"
+  | "IcrcAccount";
+
+type GetInstantLoanParams = InstantLoanTransferModeOptions &
+  (
+    | {
+        ref: string;
+        loanId?: never;
+      }
+    | {
+        ref?: never;
+        loanId: bigint;
+      }
+  );
 
 type GetLoanActivityStatusParams = {
   shortRef: string;
@@ -88,26 +103,35 @@ export async function createInstantLoan({
   borrowAmount,
   ltvMaxBps,
   depositWindowSeconds,
+  borrowTransferMode,
   borrowDestinationAddress,
+  borrowDestinationType,
+  refundTransferMode,
   refundDestinationAddress,
+  refundDestinationType,
 }: CreateInstantLoanParams): Promise<InstantLoan> {
+  const typedCollateralAsset = toInstantLoanAsset(collateralAsset);
+  const typedBorrowAsset = toInstantLoanAsset(borrowAsset);
+
   return await client.instantLoans.create({
     collateralPoolId,
     borrowPoolId,
-    collateralAsset: toInstantLoanAsset(collateralAsset),
-    borrowAsset: toInstantLoanAsset(borrowAsset),
+    collateralAsset: typedCollateralAsset,
+    borrowAsset: typedBorrowAsset,
     collateralAmount,
     borrowAmount,
     ltvMaxBps,
     depositWindowSeconds,
-    borrowDestination: {
-      type: "External",
-      address: borrowDestinationAddress,
-    },
-    refundDestination: {
-      type: "External",
-      address: refundDestinationAddress,
-    },
+    borrowTransferMode,
+    borrowDestination: toInstantLoanDestination(
+      borrowDestinationAddress,
+      borrowDestinationType
+    ),
+    refundTransferMode,
+    refundDestination: toInstantLoanDestination(
+      refundDestinationAddress,
+      refundDestinationType
+    ),
   });
 }
 
@@ -135,4 +159,32 @@ export async function findInstantLoans(
 
 function toInstantLoanAsset(asset: string): InstantLoanAsset {
   return asset as InstantLoanAsset;
+}
+
+function toInstantLoanDestination(
+  address: string,
+  destinationType: InstantLoanDestinationType
+): InstantLoanDestination {
+  switch (destinationType) {
+    case "ChainAddress":
+      return {
+        type: "ChainAddress",
+        address,
+      };
+    case "IcPrincipal":
+      return {
+        type: "IcPrincipal",
+        address,
+      };
+    case "IcpAccountIdentifier":
+      return {
+        type: "IcpAccountIdentifier",
+        address,
+      };
+    case "IcrcAccount":
+      return {
+        type: "IcrcAccount",
+        address,
+      };
+  }
 }

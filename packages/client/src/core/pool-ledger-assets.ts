@@ -13,7 +13,7 @@ export interface PoolLedgerAssetRoute {
   ledgerCanisterId: string;
   asset: PoolLedgerTransferAsset;
   chain: PoolLedgerTransferChain;
-  transferMode: typeof TransferMode.ck | typeof TransferMode.native;
+  transferMode: typeof TransferMode.ckLedger | typeof TransferMode.nativeAsset;
 }
 
 // Public asset symbols identify pool assets. On the IC side, BTC/USDT/USDC
@@ -28,7 +28,7 @@ export function getPoolLedgerAssetRoute(params: {
       ledgerCanisterId: CK_CANISTER_IDS.ckBTC.ledger,
       asset: Asset.BTC,
       chain: Chain.BTC,
-      transferMode: TransferMode.ck,
+      transferMode: TransferMode.ckLedger,
     };
   }
 
@@ -37,7 +37,7 @@ export function getPoolLedgerAssetRoute(params: {
       ledgerCanisterId: CK_CANISTER_IDS.ckUSDT.ledger,
       asset: Asset.USDT,
       chain: Chain.ETH,
-      transferMode: TransferMode.ck,
+      transferMode: TransferMode.ckLedger,
     };
   }
 
@@ -46,7 +46,7 @@ export function getPoolLedgerAssetRoute(params: {
       ledgerCanisterId: CK_CANISTER_IDS.ckUSDC.ledger,
       asset: Asset.USDC,
       chain: Chain.ETH,
-      transferMode: TransferMode.ck,
+      transferMode: TransferMode.ckLedger,
     };
   }
 
@@ -55,7 +55,7 @@ export function getPoolLedgerAssetRoute(params: {
       ledgerCanisterId: CK_CANISTER_IDS.icp.ledger,
       asset: Asset.ICP,
       chain: Chain.ICP,
-      transferMode: TransferMode.native,
+      transferMode: TransferMode.nativeAsset,
     };
   }
 

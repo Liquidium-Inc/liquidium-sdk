@@ -42,7 +42,7 @@ describe("AccountsModule", () => {
     expect(createAction.kind).toBe("create-account");
     expect(createAction.executionKind).toBe("sign-message");
     expect(createAction.actionType).toBe("create-account");
-    expect(createAction.transferMode).toBe("native");
+    expect(createAction.transferMode).toBe("nativeAsset");
     expect(createAction.account).toBe("0xabc");
     expect(createAction.message).toContain("Liquidium: Initialize Account");
     expect(profileId).toBe("ccccc-cc");
@@ -79,7 +79,7 @@ describe("AccountsModule", () => {
     expect(profileId).toBe("ccccc-cc");
     expect(signMessage).toHaveBeenCalledWith({
       actionType: "create-account",
-      transferMode: "native",
+      transferMode: "nativeAsset",
       chain: "ETH",
       message: expect.stringContaining("Liquidium: Initialize Account"),
       account: "0xabc",

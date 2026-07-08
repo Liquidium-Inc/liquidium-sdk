@@ -1,4 +1,14 @@
 export { LiquidiumClient } from "./client";
+export type {
+  ChainAddressAccount,
+  IcPrincipalAccount,
+  IcpAccountIdentifierAccount,
+  IcrcAccount,
+  LiquidiumAccount,
+  LiquidiumAccountInput,
+  LiquidiumAccountReference,
+} from "./core/accounts";
+export { LiquidiumAccountType } from "./core/accounts";
 export {
   getMinimumBorrowAmount,
   MIN_BORROW_AMOUNTS_BY_ASSET,
@@ -110,10 +120,7 @@ export type {
 } from "./modules/history";
 export { HistoryModule } from "./modules/history";
 export type {
-  AccountIdentifierAccount,
   CreateInstantLoanRequest,
-  ExternalAccount,
-  IcPrincipalAccount,
   InstantLoan,
   InstantLoanAccount,
   InstantLoanAsset,
@@ -123,8 +130,10 @@ export type {
   InstantLoanCollateral,
   InstantLoanConfig,
   InstantLoanCreatedEventType,
+  InstantLoanDeliveryTransferModeOptions,
   InstantLoanDepositTimerExceededEventType,
   InstantLoanDepositTimerStartedEventType,
+  InstantLoanDestination,
   InstantLoanEvent,
   InstantLoanEventType,
   InstantLoanFindBorrow,
@@ -137,12 +146,14 @@ export type {
   InstantLoanInitialDeposit,
   InstantLoanLeg,
   InstantLoanListEventsRequest,
+  InstantLoanOutflowTransferModeOptions,
   InstantLoanPositionSummary,
   InstantLoanProfileWarmedEventType,
   InstantLoanRepayCompleteEventType,
   InstantLoanRepayment,
   InstantLoanStuckFundsWithdrawalRequestedEventType,
   InstantLoanTerms,
+  InstantLoanTransferModeOptions,
   InstantLoanWarmedProfile,
 } from "./modules/instant-loans";
 export {
@@ -171,7 +182,6 @@ export type {
   IcpAccountIdentifierOutflowReceiver,
   IcpLedgerAccount,
   IcpLedgerAccountSupplyTarget,
-  IcrcAccount,
   IcrcAccountOutflowReceiver,
   IcrcAccountSupplyTarget,
   InflowFeeEstimate,

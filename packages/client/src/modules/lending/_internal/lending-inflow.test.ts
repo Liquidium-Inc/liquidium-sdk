@@ -132,7 +132,7 @@ describe("LendingModule inflow", () => {
     const estimate = await client.lending.estimateInflowFee({
       asset: "USDC",
       chain: "ETH",
-      transferMode: "ck",
+      transferMode: "ckLedger",
     });
 
     // then

@@ -18,6 +18,7 @@ const ERROR_FIELD_EXCLUDE_LIST = new Set(["name", "message", "stack", "cause"]);
 
 type InstantLoanFormatOptions = {
   pools?: Pool[];
+  includeTargets?: boolean;
 };
 
 type StatusSubject = "Activity" | "Loan";
@@ -187,23 +188,53 @@ export function formatInstantLoan(
     loan.borrow.poolId,
     loan.borrow.decimals
   );
-  const repaymentLines = [
-    `Amount to repay: ${formatAmount(loan.repayment.amount, borrowDecimals)} ${
-      loan.repayment.asset
-    } on ${loan.repayment.chain}`,
-    `Current debt: ${formatAmount(loan.repayment.debtAmount, borrowDecimals)} ${
-      loan.repayment.asset
-    }`,
-    `Interest buffer: ${formatAmount(
-      loan.repayment.interestBufferAmount,
-      borrowDecimals
-    )} ${loan.repayment.asset} (${loan.repayment.interestBufferSeconds.toString()} seconds)`,
-    `Inflow fee: ${formatAmount(loan.repayment.inflowFeeAmount, borrowDecimals)} ${
-      loan.repayment.asset
-    }${loan.repayment.inflowFeeEstimateAvailable ? "" : " (estimate unavailable)"}`,
-    "Repay target:",
-    formatSupplyTarget(loan.repayment.target),
-  ];
+  const includeTargets = options.includeTargets ?? true;
+  const targetLines = includeTargets
+    ? [
+        "",
+        "Deposit target:",
+        formatSupplyTarget(loan.initialDeposit.target),
+        "",
+        "Initial deposit quote:",
+        `Amount to send: ${formatAmount(
+          loan.initialDeposit.amount,
+          collateralDecimals
+        )} ${loan.initialDeposit.asset} on ${loan.initialDeposit.chain}`,
+        `Credited collateral: ${formatAmount(
+          loan.initialDeposit.collateralAmount,
+          collateralDecimals
+        )} ${loan.initialDeposit.asset}`,
+        `Estimated inflow fee: ${formatAmount(
+          loan.initialDeposit.inflowFeeAmount,
+          collateralDecimals
+        )} ${loan.initialDeposit.asset}`,
+        `Deposit detected: ${formatUnixTimestampSeconds(
+          loan.initialDeposit.detectedTimestamp
+        )}`,
+        `Deposit expires: ${formatUnixTimestampSeconds(
+          loan.initialDeposit.expiryTimestamp
+        )}`,
+      ]
+    : [];
+  const repaymentLines = includeTargets
+    ? [
+        `Amount to repay: ${formatAmount(loan.repayment.amount, borrowDecimals)} ${
+          loan.repayment.asset
+        } on ${loan.repayment.chain}`,
+        `Current debt: ${formatAmount(loan.repayment.debtAmount, borrowDecimals)} ${
+          loan.repayment.asset
+        }`,
+        `Interest buffer: ${formatAmount(
+          loan.repayment.interestBufferAmount,
+          borrowDecimals
+        )} ${loan.repayment.asset} (${loan.repayment.interestBufferSeconds.toString()} seconds)`,
+        `Inflow fee: ${formatAmount(loan.repayment.inflowFeeAmount, borrowDecimals)} ${
+          loan.repayment.asset
+        }${loan.repayment.inflowFeeEstimateAvailable ? "" : " (estimate unavailable)"}`,
+        "Repay target:",
+        formatSupplyTarget(loan.repayment.target),
+      ]
+    : [];
 
   return [
     `Reference: ${loan.ref}`,
@@ -228,29 +259,7 @@ export function formatInstantLoan(
     `Pool: ${loan.borrow.poolId}`,
     "",
     `Refund destination: ${formatInstantLoanAccount(loan.refundDestination)}`,
-    "",
-    "Deposit target:",
-    formatSupplyTarget(loan.initialDeposit.target),
-    "",
-    "Initial deposit quote:",
-    `Amount to send: ${formatAmount(
-      loan.initialDeposit.amount,
-      collateralDecimals
-    )} ${loan.initialDeposit.asset} on ${loan.initialDeposit.chain}`,
-    `Credited collateral: ${formatAmount(
-      loan.initialDeposit.collateralAmount,
-      collateralDecimals
-    )} ${loan.initialDeposit.asset}`,
-    `Estimated inflow fee: ${formatAmount(
-      loan.initialDeposit.inflowFeeAmount,
-      collateralDecimals
-    )} ${loan.initialDeposit.asset}`,
-    `Deposit detected: ${formatUnixTimestampSeconds(
-      loan.initialDeposit.detectedTimestamp
-    )}`,
-    `Deposit expires: ${formatUnixTimestampSeconds(
-      loan.initialDeposit.expiryTimestamp
-    )}`,
+    ...targetLines,
     "",
     "Current position:",
     `Collateral: ${formatAmount(
@@ -272,9 +281,7 @@ export function formatInstantLoan(
       loan.position.totalDebtAmount,
       borrowDecimals
     )} ${loan.borrow.asset}`,
-    "",
-    "Repayment quote:",
-    ...repaymentLines,
+    ...(includeTargets ? ["", "Repayment quote:", ...repaymentLines] : []),
   ].join("\n");
 }
 
@@ -481,13 +488,13 @@ function getErrorDetails(error: Error): string | undefined {
 function formatInstantLoanAccount(
   account: InstantLoan["borrow"]["destination"]
 ): string {
-  if (account.type === "External") {
-    return `${account.chain ?? "external"}: ${account.address}`;
+  if (account.type === "ChainAddress") {
+    return `chain address: ${account.address}`;
   }
-  if (account.type === "AccountIdentifier") {
-    return `ICP account identifier: ${account.address}`;
+  if (account.type === "IcpAccountIdentifier") {
+    return `ICP account identifier: ${account.accountIdentifier}`;
   }
-  if (account.type === "Icrc") {
+  if (account.type === "IcrcAccount") {
     return `ICRC account: ${account.address}`;
   }
 

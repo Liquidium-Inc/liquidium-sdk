@@ -46,7 +46,10 @@ describe("LendingModule withdraw", () => {
       profileId: "aaaaa-aa",
       poolId: BTC_POOL_ID,
       amount: 10_000n,
-      receiver: { address: VALID_BTC_OUTFLOW_ADDRESS },
+      receiver: {
+        address: VALID_BTC_OUTFLOW_ADDRESS,
+        type: "ChainAddress",
+      },
       signerWalletAddress: "0xsigner",
     });
     const outflow = await withdrawAction.submit({
@@ -59,13 +62,16 @@ describe("LendingModule withdraw", () => {
     expect(withdrawAction.kind).toBe("create-withdraw");
     expect(withdrawAction.executionKind).toBe("sign-message");
     expect(withdrawAction.actionType).toBe("create-withdraw");
-    expect(withdrawAction.transferMode).toBe("native");
+    expect(withdrawAction.transferMode).toBe("nativeAsset");
     expect(withdrawAction.account).toBe("0xsigner");
     expect(withdrawAction.data).toMatchObject({
       profileId: "aaaaa-aa",
       poolId: BTC_POOL_ID,
       amount: 10_000n,
-      receiver: { address: VALID_BTC_OUTFLOW_ADDRESS },
+      receiver: {
+        address: VALID_BTC_OUTFLOW_ADDRESS,
+        type: "ChainAddress",
+      },
       signerWalletAddress: "0xsigner",
     });
     expect(withdrawAction.message).toBe(`Liquidium: Withdraw Assets
@@ -139,13 +145,14 @@ Nonce: 23`);
       amount: 10_000n,
       receiver: {
         address: VALID_ICP_ACCOUNT_IDENTIFIER,
+        type: "IcpAccountIdentifier",
       },
       signerWalletAddress: "0xsigner",
     });
     await withdrawAction.submit({ signature: "0xsigned", chain: "ETH" });
 
     // then
-    expect(withdrawAction.transferMode).toBe("native");
+    expect(withdrawAction.transferMode).toBe("nativeAsset");
     expect(withdrawAction.message).toContain(
       `AccountId:${VALID_ICP_ACCOUNT_IDENTIFIER}`
     );
@@ -180,7 +187,7 @@ Nonce: 23`);
       profileId: "aaaaa-aa",
       poolId: BTC_POOL_ID,
       amount: 8_000n,
-      receiver: { address: VALID_BTC_OUTFLOW_ADDRESS },
+      receiver: VALID_BTC_OUTFLOW_ADDRESS,
       signerWalletAddress: "0xsigner",
       signerChain: "ETH",
       signerWalletAdapter: { signMessage },
@@ -190,7 +197,7 @@ Nonce: 23`);
     expect(outflow.outflowType).toBe("withdrawal");
     expect(signMessage).toHaveBeenCalledWith({
       actionType: "create-withdraw",
-      transferMode: "native",
+      transferMode: "nativeAsset",
       chain: "ETH",
       message: expect.stringContaining("Liquidium: Withdraw Assets"),
       account: "0xsigner",
@@ -218,7 +225,7 @@ Nonce: 23`);
           profileId: "aaaaa-aa",
           poolId: BTC_POOL_ID,
           amount: 10_000n,
-          receiver: { address: VALID_BTC_OUTFLOW_ADDRESS },
+          receiver: VALID_BTC_OUTFLOW_ADDRESS,
           signerWalletAddress: "bc1qsigner",
         })
         .then((withdrawAction) =>
@@ -244,7 +251,7 @@ Nonce: 23`);
         profileId: "p1",
         poolId: "aaaaa-aa",
         amount: 10_000n,
-        receiver: { address: "   " },
+        receiver: "   ",
         signerWalletAddress: "0xsigner",
       })
     ).rejects.toMatchObject({
@@ -256,7 +263,7 @@ Nonce: 23`);
         profileId: "p1",
         poolId: "aaaaa-aa",
         amount: 10_000n,
-        receiver: { address: VALID_BTC_OUTFLOW_ADDRESS },
+        receiver: VALID_BTC_OUTFLOW_ADDRESS,
         signerWalletAddress: "  ",
       })
     ).rejects.toMatchObject({
@@ -268,7 +275,7 @@ Nonce: 23`);
         profileId: "p1",
         poolId: "aaaaa-aa",
         amount: 0n,
-        receiver: { address: VALID_BTC_OUTFLOW_ADDRESS },
+        receiver: VALID_BTC_OUTFLOW_ADDRESS,
         signerWalletAddress: "0xsigner",
       })
     ).rejects.toMatchObject({
@@ -291,7 +298,7 @@ Nonce: 23`);
       profileId: "aaaaa-aa",
       poolId: BTC_POOL_ID,
       amount: 4_999n,
-      receiver: { address: VALID_BTC_OUTFLOW_ADDRESS },
+      receiver: VALID_BTC_OUTFLOW_ADDRESS,
       signerWalletAddress: "0xsigner",
     });
 
@@ -317,7 +324,7 @@ Nonce: 23`);
       profileId: "aaaaa-aa",
       poolId: BTC_POOL_ID,
       amount: 5_000n,
-      receiver: { address: VALID_BTC_OUTFLOW_ADDRESS },
+      receiver: VALID_BTC_OUTFLOW_ADDRESS,
       signerWalletAddress: "0xsigner",
     });
 
@@ -340,7 +347,7 @@ Nonce: 23`);
       profileId: "aaaaa-aa",
       poolId: USDT_POOL_ID,
       amount: 999_999n,
-      receiver: { address: LOWERCASE_EVM_OUTFLOW_ADDRESS },
+      receiver: LOWERCASE_EVM_OUTFLOW_ADDRESS,
       signerWalletAddress: "0xsigner",
     });
 
@@ -366,7 +373,7 @@ Nonce: 23`);
       profileId: "aaaaa-aa",
       poolId: USDT_POOL_ID,
       amount: 1_000_000n,
-      receiver: { address: LOWERCASE_EVM_OUTFLOW_ADDRESS },
+      receiver: LOWERCASE_EVM_OUTFLOW_ADDRESS,
       signerWalletAddress: "0xsigner",
     });
 
@@ -389,7 +396,7 @@ Nonce: 23`);
       profileId: "aaaaa-aa",
       poolId: USDT_POOL_ID,
       amount: 1_000_000n,
-      receiver: { address: "not-an-evm-address" },
+      receiver: "not-an-evm-address",
       signerWalletAddress: "0xsigner",
     });
 
@@ -415,7 +422,7 @@ Nonce: 23`);
       profileId: "aaaaa-aa",
       poolId: BTC_POOL_ID,
       amount: 5_000n,
-      receiver: { address: "not-a-btc-address" },
+      receiver: "not-a-btc-address",
       signerWalletAddress: "0xsigner",
     });
 

@@ -139,7 +139,7 @@ describe("InstantLoansModule get", () => {
       },
     });
     expect(loan.refundDestination).toEqual({
-      type: "Icrc",
+      type: "IcrcAccount",
       owner: PROFILE_ID,
       subaccount: ICRC_SUBACCOUNT,
       address: encodeIcrcAccount({

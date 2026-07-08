@@ -1,4 +1,13 @@
-import type { IcrcAccount } from "../../core/accounts";
+import {
+  type ChainAddressAccount,
+  type IcPrincipalAccount,
+  type IcpAccountIdentifierAccount,
+  type IcrcAccount,
+  type LiquidiumAccount,
+  type LiquidiumAccountInput,
+  type LiquidiumAccountType,
+  LiquidiumAccountType as SharedLiquidiumAccountType,
+} from "../../core/accounts";
 import type { LiquidiumOperation, LiquidiumStatus } from "../../core/status";
 import type {
   Asset,
@@ -19,26 +28,21 @@ import type {
   WalletExecutionKind,
 } from "../../core/wallet-actions";
 
-export type { IcrcAccount, IcrcTransferDetails, SendIcrcTransferRequest };
+export type {
+  IcrcAccount,
+  IcrcTransferDetails,
+  LiquidiumAccount,
+  LiquidiumAccountInput,
+  SendIcrcTransferRequest,
+};
 
 /** Account type hint for borrow and withdraw outflow destinations. */
-export const OutflowAccountType = {
-  ChainAddress: "ChainAddress",
-  IcPrincipal: "IcPrincipal",
-  IcpAccountIdentifier: "IcpAccountIdentifier",
-  IcrcAccount: "IcrcAccount",
-} as const;
+export const OutflowAccountType = SharedLiquidiumAccountType;
 /** Account type hint for borrow and withdraw outflow destinations. */
-export type OutflowAccountType =
-  (typeof OutflowAccountType)[keyof typeof OutflowAccountType];
+export type OutflowAccountType = LiquidiumAccountType;
 
-/** Borrow or withdraw destination, with optional account type hint. */
-export interface OutflowDestination {
-  /** Destination address, principal, ICRC account, or ICP account identifier. */
-  address: string;
-  /** Optional account type hint. When omitted, the SDK auto-detects the type. */
-  type?: OutflowAccountType;
-}
+/** Borrow or withdraw destination input. */
+export type OutflowDestination = LiquidiumAccountInput;
 
 /** Wallet execution dependencies for borrow and withdraw convenience methods. */
 export interface WalletExecutionParams {
@@ -93,51 +97,19 @@ export interface CreateTransferErc20TransactionParams {
  * };
  * ```
  */
-export type OutflowReceiver =
-  /** Chain-native destination address, such as a BTC or EVM address. */
-  | ChainAddressOutflowReceiver
-  /** IC principal destination. */
-  | IcPrincipalOutflowReceiver
-  /** Legacy ICP ledger account identifier destination. */
-  | IcpAccountIdentifierOutflowReceiver
-  /** ICRC account destination. */
-  | IcrcAccountOutflowReceiver;
+export type OutflowReceiver = LiquidiumAccount;
 
 /** Chain-native destination for a completed outflow, such as a BTC or EVM address. */
-export interface ChainAddressOutflowReceiver {
-  /** Destination account type. */
-  type: "ChainAddress";
-  /** Chain-native destination address. */
-  address: string;
-}
+export type ChainAddressOutflowReceiver = ChainAddressAccount;
 
 /** IC principal destination for a completed outflow. */
-export interface IcPrincipalOutflowReceiver {
-  /** Destination account type. */
-  type: "IcPrincipal";
-  /** Destination principal. */
-  principal: string;
-}
+export type IcPrincipalOutflowReceiver = IcPrincipalAccount;
 
 /** Legacy ICP ledger account identifier destination for a completed outflow. */
-export interface IcpAccountIdentifierOutflowReceiver {
-  /** Destination account type. */
-  type: "IcpAccountIdentifier";
-  /** ICP ledger account identifier text, displayed as the destination address. */
-  accountIdentifier: string;
-}
+export type IcpAccountIdentifierOutflowReceiver = IcpAccountIdentifierAccount;
 
 /** ICRC account destination for a completed outflow. */
-export interface IcrcAccountOutflowReceiver {
-  /** Destination account type. */
-  type: "IcrcAccount";
-  /** ICRC account owner principal text. */
-  owner: string;
-  /** Optional ICRC subaccount bytes. */
-  subaccount?: Uint8Array;
-  /** Text-encoded ICRC account for display. */
-  address: string;
-}
+export type IcrcAccountOutflowReceiver = IcrcAccount;
 
 /**
  * Receipt for a borrow or withdrawal outflow submitted to the lending canister.
@@ -328,20 +300,14 @@ interface BaseSupplyFlowRequest {
 
 /** Manual transfer-based `lending.supply` request. */
 export interface ManualTransferSupplyFlowRequest extends BaseSupplyFlowRequest {
-  /** Optional explicit transfer mechanism. */
-  mechanism?: typeof SupplyPlanType.transfer;
-  /** Disallowed for manual transfer flows. */
-  walletAdapter?: never;
-  /** Disallowed for manual transfer flows. */
-  account?: never;
-  /** Disallowed for manual transfer flows. */
-  amount?: never;
+  /** Transfer supply uses the default mechanism and does not accept this field. */
+  mechanism?: never;
 }
 
 /** Wallet-executed transfer-based `lending.supply` request. */
 export interface WalletTransferSupplyFlowRequest extends BaseSupplyFlowRequest {
-  /** Optional explicit transfer mechanism. */
-  mechanism?: typeof SupplyPlanType.transfer;
+  /** Transfer supply uses the default mechanism and does not accept this field. */
+  mechanism?: never;
   /** Wallet adapter used to broadcast the transfer. */
   walletAdapter: Pick<
     WalletAdapter,
@@ -439,8 +405,6 @@ export interface EstimateInflowFeeRequest {
   chain: Chain;
   /** Asset transfer path to estimate. Defaults preserve existing native flows. */
   transferMode?: TransferMode;
-  /** Supply mechanism to estimate when callers need to disambiguate. */
-  mechanism?: SupplyPlanType;
 }
 
 /** Request for an ETH stablecoin deposit address. */

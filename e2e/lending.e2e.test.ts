@@ -85,12 +85,12 @@ describeLive("live lending e2e", () => {
     const ckBtcFeeEstimate = await client.lending.estimateInflowFee({
       asset: Asset.BTC,
       chain: Chain.BTC,
-      transferMode: TransferMode.ck,
+      transferMode: TransferMode.ckLedger,
     });
     const ckStablecoinFeeEstimate = await client.lending.estimateInflowFee({
       asset: stablecoinPool.asset as typeof Asset.USDC | typeof Asset.USDT,
       chain: Chain.ETH,
-      transferMode: TransferMode.ck,
+      transferMode: TransferMode.ckLedger,
     });
     const icpFeeEstimate = await client.lending.estimateInflowFee({
       asset: Asset.ICP,
@@ -178,7 +178,7 @@ describeLive("live lending e2e", () => {
       asset: Asset.ICP,
       account: "icp-sender",
       actionType: "supply-deposit",
-      transferMode: TransferMode.native,
+      transferMode: TransferMode.nativeAsset,
       transfer: {
         ledgerCanisterId: CK_CANISTER_IDS.icp.ledger,
         amount: ICP_TRANSFER_AMOUNT_E8S,
@@ -212,7 +212,7 @@ describeLive("live lending e2e", () => {
       profileId,
       poolId: btcPool.id,
       action: SupplyAction.deposit,
-      transferMode: TransferMode.ck,
+      transferMode: TransferMode.ckLedger,
       amount: CK_BTC_TRANSFER_AMOUNT_SATS,
       account: "ck-btc-sender",
       walletAdapter: {
@@ -230,7 +230,7 @@ describeLive("live lending e2e", () => {
       asset: Asset.BTC,
       account: "ck-btc-sender",
       actionType: "supply-deposit",
-      transferMode: TransferMode.ck,
+      transferMode: TransferMode.ckLedger,
       transfer: {
         ledgerCanisterId: CK_CANISTER_IDS.ckBTC.ledger,
         amount: CK_BTC_TRANSFER_AMOUNT_SATS,
@@ -264,7 +264,7 @@ describeLive("live lending e2e", () => {
       profileId,
       poolId: stablecoinPool.id,
       action: SupplyAction.repayment,
-      transferMode: TransferMode.ck,
+      transferMode: TransferMode.ckLedger,
       amount: CK_STABLECOIN_TRANSFER_AMOUNT_BASE_UNITS,
       account: "ck-stablecoin-sender",
       walletAdapter: {
@@ -282,7 +282,7 @@ describeLive("live lending e2e", () => {
       asset: stablecoinPool.asset,
       account: "ck-stablecoin-sender",
       actionType: "supply-repayment",
-      transferMode: TransferMode.ck,
+      transferMode: TransferMode.ckLedger,
       transfer: {
         ledgerCanisterId: getExpectedStablecoinLedgerCanisterId(
           stablecoinPool.asset

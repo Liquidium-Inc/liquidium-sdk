@@ -117,7 +117,9 @@ async function createLiveInstantLoan(params: {
     borrowAmount,
     ltvMaxBps: quote.targetLtvBps + INSTANT_LOAN_LTV_BUFFER_BPS,
     depositWindowSeconds: DEFAULT_DEPOSIT_WINDOW_SECONDS,
+    borrowTransferMode: "nativeAsset",
     borrowDestination: evmAddress,
+    refundTransferMode: "nativeAsset",
     refundDestination: bitcoinAddress,
   });
 }

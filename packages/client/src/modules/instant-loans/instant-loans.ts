@@ -1,4 +1,9 @@
-import { encodeIcrcAccount } from "@icp-sdk/canisters/ledger/icrc";
+import { Principal } from "@icp-sdk/core/principal";
+import {
+  decodeIcrcAccountAddress,
+  mapCanisterAccountToLiquidiumAccount,
+  normalizeIcpAccountIdentifier,
+} from "../../core/accounts";
 import type {
   InstantLoanAuthorisation,
   InstantLoanLeg as InstantLoanCanisterLeg,
@@ -37,6 +42,7 @@ import {
 } from "../../core/utils/api-response-parsers";
 import { getAssetNativeDecimals } from "../../core/utils/asset-decimals";
 import { getVariantKey } from "../../core/utils/variant";
+import type { TransferMode } from "../../core/wallet-actions";
 import type { ActivitiesModule, Activity } from "../activities";
 import { ActivityFilter } from "../activities";
 import { resolveSupplyTarget } from "../lending/_internal/supply-targets";
@@ -53,12 +59,12 @@ import {
 import { intFromPublicId, publicIdFromInt } from "./ref-code";
 import type {
   CreateInstantLoanRequest,
-  ExternalAccount,
   InstantLoan,
   InstantLoanAccount,
   InstantLoanAsset,
   InstantLoanAuthorization,
   InstantLoanConfig,
+  InstantLoanDestination,
   InstantLoanEvent,
   InstantLoanEventType,
   InstantLoanFindBorrow,
@@ -68,6 +74,7 @@ import type {
   InstantLoanInitialDeposit,
   InstantLoanLeg,
   InstantLoanListEventsRequest,
+  InstantLoanTransferModeOptions,
   InstantLoanWarmedProfile,
 } from "./types";
 
@@ -79,12 +86,21 @@ const ETH_STABLECOIN_INFLOW_FEE_FALLBACK = 1_500_000n;
 const INSTANT_LOAN_MIN_SLIPPAGE_BUFFER_BPS = 200n;
 const INSTANT_LOAN_FIND_QUERY_MAX_LENGTH = 256;
 const INSTANT_LOAN_WIRE_CONTEXT = "instant loan";
+const DEFAULT_INSTANT_LOAN_TRANSFER_MODE: TransferMode = "nativeAsset";
 const INSTANT_LOAN_ASSETS = [
   CoreAsset.BTC,
+  CoreAsset.ICP,
   CoreAsset.SOL,
   CoreAsset.USDC,
   CoreAsset.USDT,
 ] as const satisfies readonly InstantLoanAsset[];
+const CK_OUTFLOW_ASSETS = new Set<InstantLoanAsset>([
+  CoreAsset.BTC,
+  CoreAsset.USDC,
+  CoreAsset.USDT,
+]);
+
+const ICP_ACCOUNT_IDENTIFIER_HEX_LENGTH = 64;
 
 interface InstantLoanLtvPolicy {
   ltvBps: bigint;
@@ -122,9 +138,31 @@ interface InstantLoanCreateRequestWire {
   borrowAmount: string;
   ltvMaxBps: string;
   depositWindowSeconds: string;
-  borrowDestination: InstantLoanCreateAccountWire;
-  refundDestination: InstantLoanCreateAccountWire;
+  borrowDestination: InstantLoanApiAccountType;
+  refundDestination: InstantLoanApiAccountType;
 }
+
+interface InstantLoanApiExternalAccountType {
+  External: string;
+}
+
+interface InstantLoanApiNativeAccountType {
+  Native: string;
+}
+
+interface InstantLoanApiAccountIdentifierAccountType {
+  AccountIdentifier: string;
+}
+
+interface InstantLoanApiIcrcAccountType {
+  Icrc: string;
+}
+
+type InstantLoanApiAccountType =
+  | InstantLoanApiExternalAccountType
+  | InstantLoanApiNativeAccountType
+  | InstantLoanApiAccountIdentifierAccountType
+  | InstantLoanApiIcrcAccountType;
 
 interface InstantLoanCollateralHintWire {
   collateralAmountHint: string;
@@ -154,10 +192,6 @@ interface V1InstantLoanCreateResponseWire {
   loan: InstantLoanWire;
 }
 
-interface InstantLoanCreateAccountWire {
-  External: string;
-}
-
 interface InstantLoanWireCollateral {
   amountHint: string;
 }
@@ -183,6 +217,8 @@ interface InstantLoanHydrationInput {
   started: boolean;
   depositDetectedTimestamp: bigint | null;
   expiryTimestamp: bigint | null;
+  initialDepositTransferMode: TransferMode;
+  repaymentTransferMode: TransferMode;
 }
 
 interface InstantLoanInitialDepositQuoteInput {
@@ -190,6 +226,7 @@ interface InstantLoanInitialDepositQuoteInput {
   decimals: bigint;
   asset: string;
   target: SupplyTarget;
+  transferMode: TransferMode;
   detectedTimestamp: bigint | null;
   expiryTimestamp: bigint | null;
 }
@@ -213,9 +250,29 @@ interface DeriveDepositExpiryTimestampInput {
   depositWindowSeconds: bigint;
 }
 
+interface NormalizedInstantLoanTransferModeOptions {
+  initialDepositTransferMode: TransferMode;
+  repaymentTransferMode: TransferMode;
+}
+
 interface LtvCalculationErrorDetails {
   code: QuoteValidationErrorCode;
   message: string;
+}
+
+type ExternalDestinationNormalizer = (
+  address: string,
+  asset: InstantLoanAsset
+) => string;
+
+type InstantLoanOutflowRole = "borrow" | "refund";
+
+interface ResolveInstantLoanDestinationParams {
+  destination: InstantLoanDestination;
+  asset: InstantLoanAsset;
+  role: InstantLoanOutflowRole;
+  transferMode: TransferMode;
+  normalizeExternalDestination: ExternalDestinationNormalizer;
 }
 
 /** Accountless instant-loan creation, lookup, recovery, and canister query helpers. */
@@ -247,18 +304,20 @@ export class InstantLoansModule {
    */
   async create(request: CreateInstantLoanRequest): Promise<InstantLoan> {
     validateCreateRequest(request);
-    const borrowDestination = {
-      External: validateInstantLoanBorrowDestination(
-        addressFromAccountInput(request.borrowDestination),
-        request.borrowAsset
-      ),
-    };
-    const refundDestination = {
-      External: validateInstantLoanRefundDestination(
-        addressFromAccountInput(request.refundDestination),
-        request.collateralAsset
-      ),
-    };
+    const borrowDestination = resolveInstantLoanDestination({
+      destination: request.borrowDestination,
+      asset: request.borrowAsset,
+      role: "borrow",
+      transferMode: request.borrowTransferMode,
+      normalizeExternalDestination: validateInstantLoanBorrowDestination,
+    });
+    const refundDestination = resolveInstantLoanDestination({
+      destination: request.refundDestination,
+      asset: request.collateralAsset,
+      role: "refund",
+      transferMode: request.refundTransferMode,
+      normalizeExternalDestination: validateInstantLoanRefundDestination,
+    });
     const apiClient = this.requireApi("Instant loan creation");
 
     await this.validateInstantLoanLtvPolicy(request);
@@ -292,7 +351,10 @@ export class InstantLoansModule {
     );
     const record = await this.getLoanRecord(loanId);
 
-    return await this.mapLoanRecord(record, collateralAmount);
+    return await this.mapLoanRecord(record, collateralAmount, {
+      initialDepositTransferMode: request.initialDepositTransferMode,
+      repaymentTransferMode: request.repaymentTransferMode,
+    });
   }
 
   /**
@@ -311,7 +373,10 @@ export class InstantLoansModule {
     const record = await this.getLoanRecord(loanId);
     const collateralAmount = await this.getCollateralAmountHint(loanId);
 
-    return await this.mapLoanRecord(record, collateralAmount);
+    return await this.mapLoanRecord(record, collateralAmount, {
+      initialDepositTransferMode: request.initialDepositTransferMode,
+      repaymentTransferMode: request.repaymentTransferMode,
+    });
   }
 
   /**
@@ -499,8 +564,12 @@ export class InstantLoansModule {
 
   private async mapLoanRecord(
     record: DecodedInstantLoanCanisterRecord,
-    collateralAmount: bigint
+    collateralAmount: bigint,
+    transferModeOptions: InstantLoanTransferModeOptions = {}
   ): Promise<InstantLoan> {
+    const normalizedTransferModeOptions =
+      normalizeInstantLoanTransferModeOptions(transferModeOptions);
+
     return await this.hydrateLoan({
       loanId: record.id,
       profileId: record.lending_profile.toText(),
@@ -522,6 +591,10 @@ export class InstantLoansModule {
           depositDetectedTimestamp: record.deposit_detected_ts[0] ?? null,
           depositWindowSeconds: record.ltv_timer_s,
         }),
+      initialDepositTransferMode:
+        normalizedTransferModeOptions.initialDepositTransferMode,
+      repaymentTransferMode:
+        normalizedTransferModeOptions.repaymentTransferMode,
     });
   }
 
@@ -560,12 +633,14 @@ export class InstantLoansModule {
         poolId: collateralPoolId,
         action: SupplyAction.deposit,
         mechanism: SupplyPlanType.transfer,
+        transferMode: input.initialDepositTransferMode,
       }),
       resolveSupplyTarget(this.canisterContext, {
         profileId,
         poolId: borrowPoolId,
         action: SupplyAction.repayment,
         mechanism: SupplyPlanType.transfer,
+        transferMode: input.repaymentTransferMode,
       }),
       this.positions.getPosition(profileId, collateralPoolId),
       this.positions.getPosition(profileId, borrowPoolId),
@@ -581,7 +656,11 @@ export class InstantLoansModule {
 
     const repaymentInflowFee =
       totalDebtAmount > 0n
-        ? await this.estimateRepaymentInflowFee(borrowAsset, repayTarget.chain)
+        ? await this.estimateRepaymentInflowFee(
+            borrowAsset,
+            repayTarget.chain,
+            input.repaymentTransferMode
+          )
         : { totalFee: 0n, estimateAvailable: false };
 
     const repaymentAmount =
@@ -615,6 +694,7 @@ export class InstantLoansModule {
       decimals: collateralDecimals,
       asset: collateralAsset,
       target: depositTarget,
+      transferMode: input.initialDepositTransferMode,
       detectedTimestamp: input.depositDetectedTimestamp,
       expiryTimestamp: input.expiryTimestamp,
     });
@@ -677,6 +757,7 @@ export class InstantLoansModule {
     const inflowFee = await this.lending.estimateInflowFee({
       asset: input.asset as Asset,
       chain: input.target.chain as Chain,
+      transferMode: input.transferMode,
     });
 
     return {
@@ -694,12 +775,14 @@ export class InstantLoansModule {
 
   private async estimateRepaymentInflowFee(
     asset: string,
-    chain: string
+    chain: string,
+    transferMode: TransferMode
   ): Promise<RepaymentInflowFeeEstimate> {
     try {
       const fee = await this.lending.estimateInflowFee({
         asset: asset as Asset,
         chain: chain as Chain,
+        transferMode,
       });
       return { totalFee: fee.totalFee, estimateAvailable: true };
     } catch {
@@ -913,7 +996,27 @@ function deriveDepositExpiryTimestamp(
   return input.depositDetectedTimestamp + input.depositWindowSeconds;
 }
 
+function normalizeInstantLoanTransferModeOptions(
+  options: InstantLoanTransferModeOptions
+): NormalizedInstantLoanTransferModeOptions {
+  return {
+    initialDepositTransferMode:
+      options.initialDepositTransferMode ?? DEFAULT_INSTANT_LOAN_TRANSFER_MODE,
+    repaymentTransferMode:
+      options.repaymentTransferMode ?? DEFAULT_INSTANT_LOAN_TRANSFER_MODE,
+  };
+}
+
 function validateCreateRequest(request: CreateInstantLoanRequest): void {
+  validateInstantLoanOutflowTransferMode(
+    request.borrowTransferMode,
+    "borrowTransferMode"
+  );
+  validateInstantLoanOutflowTransferMode(
+    request.refundTransferMode,
+    "refundTransferMode"
+  );
+
   if (request.collateralAmount <= 0n) {
     throw new LiquidiumError(
       LiquidiumErrorCode.VALIDATION_ERROR,
@@ -940,6 +1043,20 @@ function validateCreateRequest(request: CreateInstantLoanRequest): void {
   }
 }
 
+function validateInstantLoanOutflowTransferMode(
+  transferMode: TransferMode,
+  fieldName: string
+): void {
+  if (transferMode === "nativeAsset" || transferMode === "ckLedger") {
+    return;
+  }
+
+  throw new LiquidiumError(
+    LiquidiumErrorCode.VALIDATION_ERROR,
+    `${fieldName} must be nativeAsset or ckLedger`
+  );
+}
+
 function throwLtvCalculationError(
   error: LtvCalculationErrorDetails | undefined
 ): never {
@@ -951,58 +1068,262 @@ function throwLtvCalculationError(
   );
 }
 
-function addressFromAccountInput(account: string | ExternalAccount): string {
-  const address =
-    typeof account === "string" ? account.trim() : account.address.trim();
-  if (!address) {
+function resolveInstantLoanDestination(
+  params: ResolveInstantLoanDestinationParams
+): InstantLoanApiAccountType {
+  assertInstantLoanOutflowTransferModeSupported(params);
+
+  if (typeof params.destination === "string") {
+    return resolveInstantLoanStringDestination({
+      destination: params.destination,
+      asset: params.asset,
+      role: params.role,
+      transferMode: params.transferMode,
+      normalizeExternalDestination: params.normalizeExternalDestination,
+    });
+  }
+
+  if (!params.destination.type) {
+    return resolveInstantLoanStringDestination({
+      destination: params.destination.address,
+      asset: params.asset,
+      role: params.role,
+      transferMode: params.transferMode,
+      normalizeExternalDestination: params.normalizeExternalDestination,
+    });
+  }
+
+  assertInstantLoanDestinationTypeMatchesTransferMode({
+    destinationType: params.destination.type,
+    asset: params.asset,
+    role: params.role,
+    transferMode: params.transferMode,
+  });
+
+  switch (params.destination.type) {
+    case "ChainAddress":
+      assertExternalInstantLoanDestinationSupported(params.asset);
+
+      return {
+        External: params.normalizeExternalDestination(
+          normalizeInstantLoanDestinationAddress(params.destination.address),
+          params.asset
+        ),
+      };
+    case "IcPrincipal":
+      return {
+        Native: normalizeInstantLoanPrincipal(
+          normalizeInstantLoanDestinationAddress(params.destination.address)
+        ),
+      };
+    case "IcpAccountIdentifier":
+      return parseAccountIdentifierInstantLoanDestination(
+        normalizeInstantLoanDestinationAddress(params.destination.address)
+      );
+    case "IcrcAccount":
+      return parseIcrcInstantLoanDestination(
+        normalizeInstantLoanDestinationAddress(params.destination.address)
+      );
+  }
+}
+
+function resolveInstantLoanStringDestination(params: {
+  destination: string;
+  asset: InstantLoanAsset;
+  role: InstantLoanOutflowRole;
+  transferMode: TransferMode;
+  normalizeExternalDestination: ExternalDestinationNormalizer;
+}): InstantLoanApiAccountType {
+  const address = normalizeInstantLoanDestinationAddress(params.destination);
+
+  if (params.transferMode === "ckLedger") {
+    return parsePrincipalInstantLoanDestination(address);
+  }
+
+  if (params.asset !== CoreAsset.ICP) {
+    return {
+      External: params.normalizeExternalDestination(address, params.asset),
+    };
+  }
+
+  for (const parser of [
+    parseAccountIdentifierInstantLoanDestination,
+    parsePrincipalInstantLoanDestination,
+    parseIcrcInstantLoanDestination,
+  ]) {
+    try {
+      return parser(address);
+    } catch {}
+  }
+
+  throwInvalidIcpInstantLoanDestination();
+}
+
+function assertInstantLoanOutflowTransferModeSupported(
+  params: Pick<
+    ResolveInstantLoanDestinationParams,
+    "asset" | "role" | "transferMode"
+  >
+): void {
+  if (params.transferMode !== "ckLedger") {
+    return;
+  }
+
+  if (CK_OUTFLOW_ASSETS.has(params.asset)) {
+    return;
+  }
+
+  throwUnsupportedCkInstantLoanDelivery(params);
+}
+
+function throwUnsupportedCkInstantLoanDelivery(params: {
+  asset: InstantLoanAsset;
+  role: InstantLoanOutflowRole;
+}): never {
+  throw new LiquidiumError(
+    LiquidiumErrorCode.VALIDATION_ERROR,
+    `ckLedger instant loan ${params.role} delivery is not supported for ${params.asset}`
+  );
+}
+
+function assertInstantLoanDestinationTypeMatchesTransferMode(params: {
+  destinationType: Exclude<InstantLoanDestination, string>["type"];
+  asset: InstantLoanAsset;
+  role: InstantLoanOutflowRole;
+  transferMode: TransferMode;
+}): void {
+  if (params.transferMode === "ckLedger") {
+    if (params.destinationType === "IcPrincipal") {
+      return;
+    }
+
+    throw new LiquidiumError(
+      LiquidiumErrorCode.VALIDATION_ERROR,
+      `ckLedger instant loan ${params.role} destination must be an IC principal`
+    );
+  }
+
+  if (params.asset === CoreAsset.ICP) {
+    if (params.destinationType !== "ChainAddress") {
+      return;
+    }
+
+    throwInvalidIcpInstantLoanDestination();
+  }
+
+  if (params.destinationType === "ChainAddress") {
+    return;
+  }
+
+  if (params.destinationType === "IcPrincipal") {
+    if (params.transferMode === "nativeAsset") {
+      throw new LiquidiumError(
+        LiquidiumErrorCode.VALIDATION_ERROR,
+        `nativeAsset instant loan ${params.role} destination must be an external chain address for ${params.asset}`
+      );
+    }
+
+    if (!CK_OUTFLOW_ASSETS.has(params.asset)) {
+      throwUnsupportedCkInstantLoanDelivery(params);
+    }
+
+    return;
+  }
+
+  throw new LiquidiumError(
+    LiquidiumErrorCode.VALIDATION_ERROR,
+    `${params.asset} instant loan ${params.role} destination only supports ChainAddress or IcPrincipal destinations`
+  );
+}
+
+function assertExternalInstantLoanDestinationSupported(
+  asset: InstantLoanAsset
+): void {
+  if (asset !== CoreAsset.ICP) {
+    return;
+  }
+
+  throwInvalidIcpInstantLoanDestination();
+}
+
+function throwInvalidIcpInstantLoanDestination(): never {
+  throw new LiquidiumError(
+    LiquidiumErrorCode.INVALID_ADDRESS,
+    "ICP instant loan destination must be an IC principal, ICP account identifier, or ICRC account"
+  );
+}
+
+function parsePrincipalInstantLoanDestination(
+  address: string
+): InstantLoanApiAccountType {
+  return { Native: normalizeInstantLoanPrincipal(address) };
+}
+
+function parseAccountIdentifierInstantLoanDestination(
+  address: string
+): InstantLoanApiAccountType {
+  if (address.length !== ICP_ACCOUNT_IDENTIFIER_HEX_LENGTH) {
+    throw new LiquidiumError(
+      LiquidiumErrorCode.INVALID_ADDRESS,
+      "Invalid ICP account identifier"
+    );
+  }
+
+  try {
+    return { AccountIdentifier: normalizeIcpAccountIdentifier(address) };
+  } catch {
+    throw new LiquidiumError(
+      LiquidiumErrorCode.INVALID_ADDRESS,
+      "Invalid ICP account identifier"
+    );
+  }
+}
+
+function parseIcrcInstantLoanDestination(
+  address: string
+): InstantLoanApiAccountType {
+  let decoded: ReturnType<typeof decodeIcrcAccountAddress>;
+
+  try {
+    decoded = decodeIcrcAccountAddress(address);
+  } catch {
+    throw new LiquidiumError(
+      LiquidiumErrorCode.INVALID_ADDRESS,
+      "Invalid instant loan ICRC destination"
+    );
+  }
+
+  return { Icrc: decoded.account.address };
+}
+
+function normalizeInstantLoanPrincipal(address: string): string {
+  try {
+    return Principal.fromText(address).toText();
+  } catch {
+    throw new LiquidiumError(
+      LiquidiumErrorCode.INVALID_ADDRESS,
+      "Invalid instant loan IC principal destination"
+    );
+  }
+}
+
+function normalizeInstantLoanDestinationAddress(address: string): string {
+  const trimmedAddress = address.trim();
+
+  if (!trimmedAddress) {
     throw new LiquidiumError(
       LiquidiumErrorCode.VALIDATION_ERROR,
       "Instant loan account address must be non-empty"
     );
   }
 
-  return address;
+  return trimmedAddress;
 }
 
 function accountFromCanister(
   account: DecodedInstantLoanCanisterRecord["borrow_destination"]
 ): InstantLoanAccount {
-  if ("Native" in account) {
-    return { type: "IcPrincipal", principal: account.Native.toText() };
-  }
-  if ("AccountIdentifier" in account) {
-    return {
-      type: "AccountIdentifier",
-      address: account.AccountIdentifier,
-    };
-  }
-  if ("Icrc" in account) {
-    const subaccount = normalizeOptionalSubaccount(account.Icrc.subaccount[0]);
-
-    return {
-      type: "Icrc",
-      owner: account.Icrc.owner.toText(),
-      subaccount,
-      address: encodeIcrcAccount({
-        owner: account.Icrc.owner,
-        subaccount,
-      }),
-    };
-  }
-
-  return { type: "External", address: account.External };
-}
-
-function normalizeOptionalSubaccount(
-  subaccount: Uint8Array | number[] | undefined
-): Uint8Array | undefined {
-  if (!subaccount) {
-    return undefined;
-  }
-
-  return subaccount instanceof Uint8Array
-    ? subaccount
-    : Uint8Array.from(subaccount);
+  return mapCanisterAccountToLiquidiumAccount(account);
 }
 
 function mapInstantLoanEvent(

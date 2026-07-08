@@ -5,9 +5,10 @@ import type {
   Asset,
   AssetPrices,
   Chain,
-  ExternalAccount,
   InflowOperation,
+  InstantLoanAsset,
   LiquidiumClient,
+  OutflowAccountType,
   OutflowDestination,
   Pool,
   QuoteRequest,
@@ -262,7 +263,7 @@ const SDK_METHODS: MethodDefinition[] = [
     id: "instantLoans.create",
     label: "instantLoans.create",
     defaultArgs:
-      '{\n  "collateralPoolId": "hkmli-faaaa-aaaar-qb4ba-cai",\n  "borrowPoolId": "hnnn4-iyaaa-aaaar-qb4bq-cai",\n  "collateralAsset": "BTC",\n  "borrowAsset": "USDT",\n  "collateralAmount": "37000",\n  "borrowAmount": "9000000",\n  "ltvMaxBps": "6800",\n  "depositWindowSeconds": "3600",\n  "borrowDestination": {\n    "type": "External",\n    "address": "0xYourBorrowAddress"\n  },\n  "refundDestination": {\n    "type": "External",\n    "address": "bc1qYourRefundAddress"\n  }\n}',
+      '{\n  "collateralPoolId": "hkmli-faaaa-aaaar-qb4ba-cai",\n  "borrowPoolId": "hnnn4-iyaaa-aaaar-qb4bq-cai",\n  "collateralAsset": "BTC",\n  "borrowAsset": "USDT",\n  "collateralAmount": "37000",\n  "borrowAmount": "9000000",\n  "ltvMaxBps": "6800",\n  "depositWindowSeconds": "3600",\n  "borrowTransferMode": "nativeAsset",\n  "borrowDestination": {\n    "type": "ChainAddress",\n    "address": "0xYourBorrowAddress"\n  },\n  "refundTransferMode": "nativeAsset",\n  "refundDestination": {\n    "type": "ChainAddress",\n    "address": "bc1qYourRefundAddress"\n  }\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
       return await client.instantLoans.create({
@@ -286,9 +287,17 @@ const SDK_METHODS: MethodDefinition[] = [
           args.depositWindowSeconds,
           "depositWindowSeconds"
         ),
+        borrowTransferMode: expectTransferMode(
+          args.borrowTransferMode,
+          "borrowTransferMode"
+        ),
         borrowDestination: expectInstantLoanAccount(
           args.borrowDestination,
           "borrowDestination"
+        ),
+        refundTransferMode: expectTransferMode(
+          args.refundTransferMode,
+          "refundTransferMode"
         ),
         refundDestination: expectInstantLoanAccount(
           args.refundDestination,
@@ -550,7 +559,6 @@ const SDK_METHODS: MethodDefinition[] = [
           profileId: expectNonEmptyString(args.profileId, "profileId"),
           poolId: expectNonEmptyString(args.poolId, "poolId"),
           action: expectSupplyAction(args.action, "action"),
-          mechanism: "transfer",
           transferMode,
           account: expectNonEmptyString(args.account, "account"),
           amount: expectBigInt(args.amount, "amount"),
@@ -562,7 +570,6 @@ const SDK_METHODS: MethodDefinition[] = [
         profileId: expectNonEmptyString(args.profileId, "profileId"),
         poolId: expectNonEmptyString(args.poolId, "poolId"),
         action: expectSupplyAction(args.action, "action"),
-        mechanism: "transfer",
         transferMode,
       });
     },
@@ -580,7 +587,6 @@ const SDK_METHODS: MethodDefinition[] = [
           args.transferMode,
           "transferMode"
         ),
-        mechanism: expectOptionalSupplyMechanism(args.mechanism, "mechanism"),
       });
     },
   },
@@ -733,7 +739,7 @@ export function SdkMethodQueryPage({
 
       if ("borrowDestination" in nextArgs) {
         nextArgs.borrowDestination = {
-          type: "External",
+          type: "ChainAddress",
           address: walletAddress,
         };
       }
@@ -1078,7 +1084,7 @@ function expectReceiver(value: unknown, fieldName: string): OutflowDestination {
       : expectOutflowAccountType(receiver.type, `${fieldName}.type`);
 
   if (!type) {
-    return { address };
+    return address;
   }
 
   return {
@@ -1090,7 +1096,7 @@ function expectReceiver(value: unknown, fieldName: string): OutflowDestination {
 function expectOutflowAccountType(
   value: unknown,
   fieldName: string
-): OutflowDestination["type"] {
+): OutflowAccountType {
   const accountType = expectNonEmptyString(value, fieldName);
 
   if (
@@ -1110,11 +1116,12 @@ function expectOutflowAccountType(
 function expectInstantLoanAsset(
   value: unknown,
   fieldName: string
-): "BTC" | "SOL" | "USDC" | "USDT" {
+): InstantLoanAsset {
   const asset = expectNonEmptyString(value, fieldName).toUpperCase();
 
   if (
     asset === "BTC" ||
+    asset === "ICP" ||
     asset === "SOL" ||
     asset === "USDC" ||
     asset === "USDT"
@@ -1122,31 +1129,21 @@ function expectInstantLoanAsset(
     return asset;
   }
 
-  throw new Error(`${fieldName} must be BTC, SOL, USDC, or USDT.`);
+  throw new Error(`${fieldName} must be BTC, ICP, SOL, USDC, or USDT.`);
 }
 
 function expectInstantLoanAccount(
   value: unknown,
   fieldName: string
-): ExternalAccount {
+): OutflowDestination {
   if (typeof value === "string") {
     return {
-      type: "External",
+      type: "ChainAddress",
       address: expectNonEmptyString(value, fieldName),
     };
   }
 
-  const account = expectObject(value, fieldName);
-  const type = expectNonEmptyString(account.type, `${fieldName}.type`);
-
-  if (type === "External") {
-    return {
-      type,
-      address: expectNonEmptyString(account.address, `${fieldName}.address`),
-    };
-  }
-
-  throw new Error(`${fieldName}.type must be External.`);
+  return expectReceiver(value, fieldName);
 }
 
 function expectOptionalChain(
@@ -1198,11 +1195,21 @@ function expectOptionalTransferMode(
     return undefined;
   }
 
-  if (transferMode === "native" || transferMode === "ck") {
+  if (transferMode === "nativeAsset" || transferMode === "ckLedger") {
     return transferMode;
   }
 
-  throw new Error(`${fieldName} must be native or ck.`);
+  throw new Error(`${fieldName} must be nativeAsset or ckLedger.`);
+}
+
+function expectTransferMode(value: unknown, fieldName: string): TransferMode {
+  const transferMode = expectNonEmptyString(value, fieldName);
+
+  if (transferMode === "nativeAsset" || transferMode === "ckLedger") {
+    return transferMode;
+  }
+
+  throw new Error(`${fieldName} must be nativeAsset or ckLedger.`);
 }
 
 function expectInflowOperation(

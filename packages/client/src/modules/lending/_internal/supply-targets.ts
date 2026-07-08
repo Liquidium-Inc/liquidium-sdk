@@ -31,14 +31,12 @@ import {
   type SupplyTarget,
 } from "../types";
 
-export type SupplyMechanism = SupplyPlanType;
-
-export interface InternalSupplyTargetRequest {
+export interface ResolveSupplyTargetRequest {
   profileId: string;
   poolId: string;
   action: SupplyAction;
-  mechanism?: SupplyMechanism;
-  transferMode?: TransferMode;
+  mechanism: SupplyPlanType | null;
+  transferMode: TransferMode;
 }
 
 interface SupplyTargetRequest {
@@ -51,13 +49,13 @@ interface SupplyTargetRequest {
 interface ResolveSupplyMechanismParams {
   asset: string;
   chain: string;
-  requestedMechanism?: SupplyMechanism;
-  transferMode?: TransferMode;
+  mechanism: SupplyPlanType | null;
+  transferMode: TransferMode;
 }
 
 export async function resolveSupplyTarget(
   canisterContext: CanisterContext,
-  request: InternalSupplyTargetRequest
+  request: ResolveSupplyTargetRequest
 ): Promise<SupplyTarget> {
   const selectedPool = await getPoolById(canisterContext, request.poolId);
   const asset = selectedPool.asset;
@@ -65,7 +63,7 @@ export async function resolveSupplyTarget(
   const mechanism = resolveSupplyMechanism({
     asset,
     chain,
-    requestedMechanism: request.mechanism,
+    mechanism: request.mechanism,
     transferMode: request.transferMode,
   });
 
@@ -80,7 +78,7 @@ export async function resolveSupplyTarget(
         });
       }
 
-      if (request.transferMode === TransferMode.ck) {
+      if (request.transferMode === TransferMode.ckLedger) {
         return getIcrcAccountSupplyTarget(request.profileId, {
           poolId: request.poolId,
           asset,
@@ -111,9 +109,9 @@ export async function resolveSupplyTarget(
 
 export function resolveSupplyMechanism(
   params: ResolveSupplyMechanismParams
-): SupplyMechanism {
-  if (params.transferMode === TransferMode.ck) {
-    if (params.requestedMechanism === SupplyPlanType.contractInteraction) {
+): SupplyPlanType {
+  if (params.transferMode === TransferMode.ckLedger) {
+    if (params.mechanism === SupplyPlanType.contractInteraction) {
       throw new LiquidiumError(
         LiquidiumErrorCode.VALIDATION_ERROR,
         "ck transfer mode is not supported for contract-interaction supply"
@@ -124,7 +122,7 @@ export function resolveSupplyMechanism(
   }
 
   if (params.asset === Asset.BTC && params.chain === Chain.BTC) {
-    if (params.requestedMechanism === SupplyPlanType.contractInteraction) {
+    if (params.mechanism === SupplyPlanType.contractInteraction) {
       throw new LiquidiumError(
         LiquidiumErrorCode.VALIDATION_ERROR,
         "Contract-interaction supply is not supported for BTC on BTC"
@@ -135,15 +133,15 @@ export function resolveSupplyMechanism(
   }
 
   if (isEthStablecoin(params.asset, params.chain)) {
-    if (params.requestedMechanism) {
-      return params.requestedMechanism;
+    if (params.mechanism) {
+      return params.mechanism;
     }
 
     return SupplyPlanType.transfer;
   }
 
   if (params.asset === Asset.ICP && params.chain === Chain.ICP) {
-    if (params.requestedMechanism === SupplyPlanType.contractInteraction) {
+    if (params.mechanism === SupplyPlanType.contractInteraction) {
       throw new LiquidiumError(
         LiquidiumErrorCode.VALIDATION_ERROR,
         "Contract-interaction supply is not supported for ICP on ICP"

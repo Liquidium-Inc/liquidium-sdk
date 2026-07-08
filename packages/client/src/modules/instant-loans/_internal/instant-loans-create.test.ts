@@ -1,4 +1,5 @@
 import { Actor } from "@icp-sdk/core/agent";
+import { Principal } from "@icp-sdk/core/principal";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { DEFAULT_API_BASE_URL } from "../../../core/config";
 import { LiquidiumClient, LiquidiumErrorCode } from "../../../index";
@@ -6,10 +7,13 @@ import {
   BTC_POOL_ID,
   CHECKSUM_EVM_BORROW_ADDRESS,
   createBtcPoolRecord,
+  createIcpPoolRecord,
   createInstantLoan,
   createUsdtPoolRecord,
+  ICP_POOL_ID,
   LOAN_ID,
   LOWERCASE_EVM_BORROW_ADDRESS,
+  PROFILE_ID,
   prices,
   USDT_POOL_ID,
   VALID_BTC_REFUND_ADDRESS,
@@ -121,10 +125,12 @@ describe("InstantLoansModule create", () => {
       borrowAmount: 5_726_000_000n,
       ltvMaxBps: 6_000n,
       depositWindowSeconds: 3_600n,
+      borrowTransferMode: "nativeAsset",
       borrowDestination: {
-        type: "External",
+        type: "ChainAddress",
         address: LOWERCASE_EVM_BORROW_ADDRESS,
       },
+      refundTransferMode: "nativeAsset",
       refundDestination: VALID_BTC_REFUND_ADDRESS,
     });
 
@@ -189,6 +195,309 @@ describe("InstantLoansModule create", () => {
     });
   });
 
+  test("creates a loan with an ICP borrow destination and ck initial deposit target", async () => {
+    // given
+    const CKBTC_LEDGER_FEE_SATS = 10n;
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation(async (input, init) => {
+        const url = input.toString();
+        if (init?.method === "POST") {
+          return new Response(
+            JSON.stringify({
+              success: true,
+              loan: {
+                loanId: LOAN_ID.toString(),
+                collateral: {
+                  amountHint: "10000000",
+                },
+              },
+            }),
+            { status: 200, headers: { "content-type": "application/json" } }
+          );
+        }
+        if (url.includes("/activities?")) {
+          return new Response(JSON.stringify({ activities: [] }), {
+            status: 200,
+            headers: { "content-type": "application/json" },
+          });
+        }
+
+        return new Response(JSON.stringify({ error: "not found" }), {
+          status: 404,
+          headers: { "content-type": "application/json" },
+        });
+      });
+
+    vi.spyOn(Actor, "createActor")
+      .mockReturnValueOnce({
+        list_pools: vi
+          .fn()
+          .mockResolvedValue([createBtcPoolRecord(), createIcpPoolRecord()]),
+        get_pool_rate: vi
+          .fn()
+          .mockResolvedValue([[10_000_000_000_000_000_000_000_000n, 0n, 0n]]),
+      } as never)
+      .mockReturnValueOnce({
+        get_prices: vi.fn().mockResolvedValue(prices()),
+      } as never)
+      .mockReturnValueOnce({
+        get_loan: vi.fn().mockResolvedValue({
+          Ok: createInstantLoan({
+            borrow_destination: { Native: Principal.fromText(PROFILE_ID) },
+            borrow_amount: 1_000_000n,
+            borrow_pool_id: Principal.fromText(ICP_POOL_ID),
+            borrow_asset: { ICP: null },
+          }),
+        }),
+      } as never)
+      .mockReturnValueOnce({
+        list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord()]),
+      } as never)
+      .mockReturnValueOnce({
+        list_pools: vi.fn().mockResolvedValue([createIcpPoolRecord()]),
+      } as never)
+      .mockReturnValueOnce({
+        get_position: vi.fn().mockResolvedValue([]),
+      } as never)
+      .mockReturnValueOnce({
+        get_position: vi.fn().mockResolvedValue([]),
+      } as never)
+      .mockReturnValueOnce({
+        get_pool_rate: vi
+          .fn()
+          .mockResolvedValue([[10_000_000_000_000_000_000_000_000n, 0n, 0n]]),
+      } as never)
+      .mockReturnValueOnce({
+        icrc1_fee: vi.fn().mockResolvedValue(CKBTC_LEDGER_FEE_SATS),
+      } as never);
+    const client = new LiquidiumClient({
+      canisterIds: { instantLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
+    });
+
+    // when
+    const loan = await client.instantLoans.create({
+      collateralPoolId: BTC_POOL_ID,
+      borrowPoolId: ICP_POOL_ID,
+      collateralAsset: "BTC",
+      borrowAsset: "ICP",
+      collateralAmount: 10_000_000n,
+      borrowAmount: 1_000_000n,
+      ltvMaxBps: 6_000n,
+      depositWindowSeconds: 3_600n,
+      initialDepositTransferMode: "ckLedger",
+      borrowTransferMode: "nativeAsset",
+      borrowDestination: PROFILE_ID,
+      refundTransferMode: "nativeAsset",
+      refundDestination: VALID_BTC_REFUND_ADDRESS,
+    });
+
+    // then
+    const EXPECTED_INITIAL_DEPOSIT_AMOUNT_SATS = 10_000_000n + 10n;
+
+    expect(fetchSpy).toHaveBeenCalledWith(
+      `${DEFAULT_API_BASE_URL}/v1/instant-loans`,
+      expect.objectContaining({
+        body: JSON.stringify({
+          collateralPoolId: BTC_POOL_ID,
+          borrowPoolId: ICP_POOL_ID,
+          collateralAsset: "BTC",
+          borrowAsset: "ICP",
+          collateralAmount: "10000000",
+          borrowAmount: "1000000",
+          ltvMaxBps: "6000",
+          depositWindowSeconds: "3600",
+          borrowDestination: { Native: PROFILE_ID },
+          refundDestination: { External: VALID_BTC_REFUND_ADDRESS },
+        }),
+        method: "POST",
+      })
+    );
+    expect(loan.borrow).toMatchObject({
+      asset: "ICP",
+      destination: {
+        type: "IcPrincipal",
+        principal: PROFILE_ID,
+      },
+    });
+    expect(loan.initialDeposit).toMatchObject({
+      amount: EXPECTED_INITIAL_DEPOSIT_AMOUNT_SATS,
+      inflowFeeAmount: CKBTC_LEDGER_FEE_SATS,
+      target: expect.objectContaining({
+        type: "IcrcAccount",
+        asset: "BTC",
+        chain: "BTC",
+      }),
+    });
+  });
+
+  test("rejects an invalid ICP borrow destination before creating the loan", async () => {
+    // given
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    const actorCreateSpy = vi.spyOn(Actor, "createActor");
+    const client = new LiquidiumClient({});
+
+    // when
+    const result = client.instantLoans.create({
+      collateralPoolId: BTC_POOL_ID,
+      borrowPoolId: ICP_POOL_ID,
+      collateralAsset: "BTC",
+      borrowAsset: "ICP",
+      collateralAmount: 10_000_000n,
+      borrowAmount: 1_000_000n,
+      ltvMaxBps: 6_000n,
+      depositWindowSeconds: 3_600n,
+      borrowTransferMode: "nativeAsset",
+      borrowDestination: "not-an-icp-destination",
+      refundTransferMode: "nativeAsset",
+      refundDestination: VALID_BTC_REFUND_ADDRESS,
+    });
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.INVALID_ADDRESS,
+      message:
+        "ICP instant loan destination must be an IC principal, ICP account identifier, or ICRC account",
+    });
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(actorCreateSpy).not.toHaveBeenCalled();
+  });
+
+  test("rejects an invalid ck borrow principal before creating the loan", async () => {
+    // given
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    const actorCreateSpy = vi.spyOn(Actor, "createActor");
+    const client = new LiquidiumClient({});
+
+    // when
+    const result = client.instantLoans.create({
+      collateralPoolId: BTC_POOL_ID,
+      borrowPoolId: USDT_POOL_ID,
+      collateralAsset: "BTC",
+      borrowAsset: "USDT",
+      collateralAmount: 10_000_000n,
+      borrowAmount: 5_726_000_000n,
+      ltvMaxBps: 6_000n,
+      depositWindowSeconds: 3_600n,
+      borrowTransferMode: "ckLedger",
+      borrowDestination: "not-an-ic-principal",
+      refundTransferMode: "nativeAsset",
+      refundDestination: VALID_BTC_REFUND_ADDRESS,
+    });
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.INVALID_ADDRESS,
+      message: "Invalid instant loan IC principal destination",
+    });
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(actorCreateSpy).not.toHaveBeenCalled();
+  });
+
+  test("rejects a ck borrow destination that uses an external account before creating the loan", async () => {
+    // given
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    const actorCreateSpy = vi.spyOn(Actor, "createActor");
+    const client = new LiquidiumClient({});
+
+    // when
+    const result = client.instantLoans.create({
+      collateralPoolId: BTC_POOL_ID,
+      borrowPoolId: USDT_POOL_ID,
+      collateralAsset: "BTC",
+      borrowAsset: "USDT",
+      collateralAmount: 10_000_000n,
+      borrowAmount: 5_726_000_000n,
+      ltvMaxBps: 6_000n,
+      depositWindowSeconds: 3_600n,
+      borrowTransferMode: "ckLedger",
+      borrowDestination: {
+        type: "ChainAddress",
+        address: CHECKSUM_EVM_BORROW_ADDRESS,
+      },
+      refundTransferMode: "nativeAsset",
+      refundDestination: VALID_BTC_REFUND_ADDRESS,
+    });
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message:
+        "ckLedger instant loan borrow destination must be an IC principal",
+    });
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(actorCreateSpy).not.toHaveBeenCalled();
+  });
+
+  test("rejects a native borrow destination that uses an IC principal before creating the loan", async () => {
+    // given
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    const actorCreateSpy = vi.spyOn(Actor, "createActor");
+    const client = new LiquidiumClient({});
+
+    // when
+    const result = client.instantLoans.create({
+      collateralPoolId: BTC_POOL_ID,
+      borrowPoolId: USDT_POOL_ID,
+      collateralAsset: "BTC",
+      borrowAsset: "USDT",
+      collateralAmount: 10_000_000n,
+      borrowAmount: 5_726_000_000n,
+      ltvMaxBps: 6_000n,
+      depositWindowSeconds: 3_600n,
+      borrowTransferMode: "nativeAsset",
+      borrowDestination: {
+        type: "IcPrincipal",
+        address: PROFILE_ID,
+      },
+      refundTransferMode: "nativeAsset",
+      refundDestination: VALID_BTC_REFUND_ADDRESS,
+    });
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message:
+        "nativeAsset instant loan borrow destination must be an external chain address for USDT",
+    });
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(actorCreateSpy).not.toHaveBeenCalled();
+  });
+
+  test("rejects an unsupported typed ck borrow destination before creating the loan", async () => {
+    // given
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    const actorCreateSpy = vi.spyOn(Actor, "createActor");
+    const client = new LiquidiumClient({});
+
+    // when
+    const result = client.instantLoans.create({
+      collateralPoolId: BTC_POOL_ID,
+      borrowPoolId: USDT_POOL_ID,
+      collateralAsset: "BTC",
+      borrowAsset: "SOL",
+      collateralAmount: 10_000_000n,
+      borrowAmount: 5_726_000_000n,
+      ltvMaxBps: 6_000n,
+      depositWindowSeconds: 3_600n,
+      borrowTransferMode: "ckLedger",
+      borrowDestination: {
+        type: "IcPrincipal",
+        address: PROFILE_ID,
+      },
+      refundTransferMode: "nativeAsset",
+      refundDestination: VALID_BTC_REFUND_ADDRESS,
+    });
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message: "ckLedger instant loan borrow delivery is not supported for SOL",
+    });
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(actorCreateSpy).not.toHaveBeenCalled();
+  });
+
   test("rejects an instant loan with a borrow amount below the asset minimum", async () => {
     // given
     const fetchSpy = vi.spyOn(globalThis, "fetch");
@@ -216,7 +525,9 @@ describe("InstantLoansModule create", () => {
       borrowAmount: 999_999n,
       ltvMaxBps: 6_000n,
       depositWindowSeconds: 3_600n,
+      borrowTransferMode: "nativeAsset",
       borrowDestination: CHECKSUM_EVM_BORROW_ADDRESS,
+      refundTransferMode: "nativeAsset",
       refundDestination: VALID_BTC_REFUND_ADDRESS,
     });
 
@@ -244,7 +555,9 @@ describe("InstantLoansModule create", () => {
       borrowAmount: 5_726_000_000n,
       ltvMaxBps: 6_000n,
       depositWindowSeconds: 3_600n,
+      borrowTransferMode: "nativeAsset",
       borrowDestination: CHECKSUM_EVM_BORROW_ADDRESS,
+      refundTransferMode: "nativeAsset",
       refundDestination: "bc1qrefunddestination",
     });
 
@@ -273,7 +586,9 @@ describe("InstantLoansModule create", () => {
       borrowAmount: 5_726_000_000n,
       ltvMaxBps: 6_000n,
       depositWindowSeconds: 3_600n,
+      borrowTransferMode: "nativeAsset",
       borrowDestination: "not-an-evm-address",
+      refundTransferMode: "nativeAsset",
       refundDestination: VALID_BTC_REFUND_ADDRESS,
     });
 
@@ -302,7 +617,9 @@ describe("InstantLoansModule create", () => {
       borrowAmount: 10_000_000n,
       ltvMaxBps: 6_000n,
       depositWindowSeconds: 3_600n,
+      borrowTransferMode: "nativeAsset",
       borrowDestination: "tb1qnotmainnet",
+      refundTransferMode: "nativeAsset",
       refundDestination: CHECKSUM_EVM_BORROW_ADDRESS,
     });
 
@@ -331,7 +648,9 @@ describe("InstantLoansModule create", () => {
       borrowAmount: 10_000_000n,
       ltvMaxBps: 6_000n,
       depositWindowSeconds: 3_600n,
+      borrowTransferMode: "nativeAsset",
       borrowDestination: VALID_BTC_REFUND_ADDRESS,
+      refundTransferMode: "nativeAsset",
       refundDestination: "not-an-evm-address",
     });
 
@@ -377,7 +696,9 @@ describe("InstantLoansModule create", () => {
       borrowAmount: 6_500_000_000n,
       ltvMaxBps: 6_500n,
       depositWindowSeconds: 3_600n,
+      borrowTransferMode: "nativeAsset",
       borrowDestination: "0x2222222222222222222222222222222222222222",
+      refundTransferMode: "nativeAsset",
       refundDestination: VALID_BTC_REFUND_ADDRESS,
     });
 
@@ -423,7 +744,9 @@ describe("InstantLoansModule create", () => {
       borrowAmount: 5_726_000_000n,
       ltvMaxBps: 5_925n,
       depositWindowSeconds: 3_600n,
+      borrowTransferMode: "nativeAsset",
       borrowDestination: "0x2222222222222222222222222222222222222222",
+      refundTransferMode: "nativeAsset",
       refundDestination: VALID_BTC_REFUND_ADDRESS,
     });
 
@@ -466,7 +789,9 @@ describe("InstantLoansModule create", () => {
       borrowAmount: 2_000_000n,
       ltvMaxBps: 7_001n,
       depositWindowSeconds: 3_600n,
+      borrowTransferMode: "nativeAsset",
       borrowDestination: "0x2222222222222222222222222222222222222222",
+      refundTransferMode: "nativeAsset",
       refundDestination: VALID_BTC_REFUND_ADDRESS,
     });
 

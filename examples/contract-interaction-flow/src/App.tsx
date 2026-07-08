@@ -3,6 +3,7 @@ import type {
   ActivityFilter,
   OutflowAccountType,
   Pool,
+  TransferMode,
 } from "@liquidium/client";
 import { Chain } from "@liquidium/client";
 import { useEffect, useState } from "react";
@@ -44,11 +45,12 @@ type StablecoinInflowMode = "contractInteraction" | "ck";
 
 const DEFAULT_STABLECOIN_INFLOW_MODE: StablecoinInflowMode =
   "contractInteraction";
+const DEFAULT_OUTFLOW_TRANSFER_MODE: TransferMode = "nativeAsset";
 const DEFAULT_OUTFLOW_ACCOUNT_TYPE: OutflowAccountType = "ChainAddress";
 const EXTERNAL_CHAIN_OUTFLOW_ACCOUNT_TYPES: OutflowAccountType[] = [
   "ChainAddress",
-  "IcPrincipal",
 ];
+const CK_OUTFLOW_ACCOUNT_TYPES: OutflowAccountType[] = ["IcPrincipal"];
 const ICP_OUTFLOW_ACCOUNT_TYPES: OutflowAccountType[] = [
   "IcrcAccount",
   "IcpAccountIdentifier",
@@ -86,6 +88,9 @@ function ContractInteractionPage() {
     "No contract interaction repayment submitted yet."
   );
   const [borrowAmount, setBorrowAmount] = useState("9");
+  const [borrowTransferMode, setBorrowTransferMode] = useState<TransferMode>(
+    DEFAULT_OUTFLOW_TRANSFER_MODE
+  );
   const [borrowDestination, setBorrowDestination] = useState("");
   const [borrowDestinationType, setBorrowDestinationType] =
     useState<OutflowAccountType>(DEFAULT_OUTFLOW_ACCOUNT_TYPE);
@@ -93,6 +98,8 @@ function ContractInteractionPage() {
     "Connect a wallet, then submit a borrow."
   );
   const [withdrawAmount, setWithdrawAmount] = useState("1");
+  const [withdrawTransferMode, setWithdrawTransferMode] =
+    useState<TransferMode>(DEFAULT_OUTFLOW_TRANSFER_MODE);
   const [withdrawDestination, setWithdrawDestination] = useState("");
   const [withdrawDestinationType, setWithdrawDestinationType] =
     useState<OutflowAccountType>(DEFAULT_OUTFLOW_ACCOUNT_TYPE);
@@ -126,9 +133,19 @@ function ContractInteractionPage() {
       setSelectedRepaymentPoolId(defaultContractInteractionPool?.id ?? "");
       setSelectedBorrowPoolId(defaultBorrowPool?.id ?? "");
       setSelectedWithdrawPoolId(defaultBorrowPool?.id ?? "");
-      setBorrowDestinationType(getDefaultOutflowAccountType(defaultBorrowPool));
+      setBorrowTransferMode(DEFAULT_OUTFLOW_TRANSFER_MODE);
+      setWithdrawTransferMode(DEFAULT_OUTFLOW_TRANSFER_MODE);
+      setBorrowDestinationType(
+        getDefaultOutflowAccountType(
+          defaultBorrowPool,
+          DEFAULT_OUTFLOW_TRANSFER_MODE
+        )
+      );
       setWithdrawDestinationType(
-        getDefaultOutflowAccountType(defaultBorrowPool)
+        getDefaultOutflowAccountType(
+          defaultBorrowPool,
+          DEFAULT_OUTFLOW_TRANSFER_MODE
+        )
       );
       setStatus(
         `Loaded ${availableContractInteractionPools.length} contract interaction pools.`
@@ -196,8 +213,20 @@ function ContractInteractionPage() {
     setSelectedRepaymentPoolId(defaultContractInteractionPool?.id ?? "");
     setSelectedBorrowPoolId(defaultBorrowPool?.id ?? "");
     setSelectedWithdrawPoolId(defaultBorrowPool?.id ?? "");
-    setBorrowDestinationType(getDefaultOutflowAccountType(defaultBorrowPool));
-    setWithdrawDestinationType(getDefaultOutflowAccountType(defaultBorrowPool));
+    setBorrowTransferMode(DEFAULT_OUTFLOW_TRANSFER_MODE);
+    setWithdrawTransferMode(DEFAULT_OUTFLOW_TRANSFER_MODE);
+    setBorrowDestinationType(
+      getDefaultOutflowAccountType(
+        defaultBorrowPool,
+        DEFAULT_OUTFLOW_TRANSFER_MODE
+      )
+    );
+    setWithdrawDestinationType(
+      getDefaultOutflowAccountType(
+        defaultBorrowPool,
+        DEFAULT_OUTFLOW_TRANSFER_MODE
+      )
+    );
     setStatus(
       `Loaded ${availableContractInteractionPools.length} contract interaction pools.`
     );
@@ -376,7 +405,13 @@ function ContractInteractionPage() {
     });
 
     saveRecentActivityId(outflow.id);
-    setBorrowResult(formatOutflowDetails(outflow));
+    setBorrowResult(
+      [
+        `Transfer mode: ${formatOutflowTransferMode(selectedBorrowPool, borrowTransferMode)}`,
+        "",
+        formatOutflowDetails(outflow),
+      ].join("\n")
+    );
     setStatus(`Submitted borrow ${outflow.id}.`);
   }
 
@@ -414,7 +449,13 @@ function ContractInteractionPage() {
     });
 
     saveRecentActivityId(outflow.id);
-    setWithdrawResult(formatOutflowDetails(outflow));
+    setWithdrawResult(
+      [
+        `Transfer mode: ${formatOutflowTransferMode(selectedWithdrawPool, withdrawTransferMode)}`,
+        "",
+        formatOutflowDetails(outflow),
+      ].join("\n")
+    );
     setStatus(`Submitted withdraw ${outflow.id}.`);
   }
 
@@ -653,7 +694,9 @@ function ContractInteractionPage() {
                 setSelectedOutflowPool({
                   poolId: event.target.value,
                   pools,
+                  transferMode: DEFAULT_OUTFLOW_TRANSFER_MODE,
                   setSelectedPoolId: setSelectedBorrowPoolId,
+                  setTransferMode: setBorrowTransferMode,
                   setDestinationType: setBorrowDestinationType,
                   setDestination: setBorrowDestination,
                 })
@@ -665,6 +708,36 @@ function ContractInteractionPage() {
                 </option>
               ))}
             </select>
+
+            <label htmlFor="borrow-transfer-mode-select">Transfer mode</label>
+            <select
+              id="borrow-transfer-mode-select"
+              value={borrowTransferMode}
+              onChange={(event) =>
+                setSelectedOutflowTransferMode({
+                  transferMode: event.target.value as TransferMode,
+                  pool: pools.find((pool) => pool.id === selectedBorrowPoolId),
+                  setTransferMode: setBorrowTransferMode,
+                  setDestinationType: setBorrowDestinationType,
+                  setDestination: setBorrowDestination,
+                })
+              }
+            >
+              {getOutflowTransferModeOptions(
+                pools.find((pool) => pool.id === selectedBorrowPoolId)
+              ).map((transferMode) => (
+                <option key={transferMode} value={transferMode}>
+                  {formatOutflowTransferMode(
+                    pools.find((pool) => pool.id === selectedBorrowPoolId),
+                    transferMode
+                  )}
+                </option>
+              ))}
+            </select>
+            <p>
+              Native mode sends borrowed assets to the chain address or ICP
+              ledger account. ck mode sends ck assets to an IC principal.
+            </p>
 
             <label htmlFor="borrow-amount-input">Borrow amount</label>
             <input
@@ -687,7 +760,8 @@ function ContractInteractionPage() {
               }
             >
               {getOutflowAccountTypeOptions(
-                pools.find((pool) => pool.id === selectedBorrowPoolId)
+                pools.find((pool) => pool.id === selectedBorrowPoolId),
+                borrowTransferMode
               ).map((accountType) => (
                 <option key={accountType} value={accountType}>
                   {formatOutflowAccountType(accountType)}
@@ -723,7 +797,9 @@ function ContractInteractionPage() {
                 setSelectedOutflowPool({
                   poolId: event.target.value,
                   pools,
+                  transferMode: DEFAULT_OUTFLOW_TRANSFER_MODE,
                   setSelectedPoolId: setSelectedWithdrawPoolId,
+                  setTransferMode: setWithdrawTransferMode,
                   setDestinationType: setWithdrawDestinationType,
                   setDestination: setWithdrawDestination,
                 })
@@ -735,6 +811,38 @@ function ContractInteractionPage() {
                 </option>
               ))}
             </select>
+
+            <label htmlFor="withdraw-transfer-mode-select">Transfer mode</label>
+            <select
+              id="withdraw-transfer-mode-select"
+              value={withdrawTransferMode}
+              onChange={(event) =>
+                setSelectedOutflowTransferMode({
+                  transferMode: event.target.value as TransferMode,
+                  pool: pools.find(
+                    (pool) => pool.id === selectedWithdrawPoolId
+                  ),
+                  setTransferMode: setWithdrawTransferMode,
+                  setDestinationType: setWithdrawDestinationType,
+                  setDestination: setWithdrawDestination,
+                })
+              }
+            >
+              {getOutflowTransferModeOptions(
+                pools.find((pool) => pool.id === selectedWithdrawPoolId)
+              ).map((transferMode) => (
+                <option key={transferMode} value={transferMode}>
+                  {formatOutflowTransferMode(
+                    pools.find((pool) => pool.id === selectedWithdrawPoolId),
+                    transferMode
+                  )}
+                </option>
+              ))}
+            </select>
+            <p>
+              Native mode sends withdrawn assets to the chain address or ICP
+              ledger account. ck mode sends ck assets to an IC principal.
+            </p>
 
             <label htmlFor="withdraw-amount-input">Withdraw amount</label>
             <input
@@ -757,7 +865,8 @@ function ContractInteractionPage() {
               }
             >
               {getOutflowAccountTypeOptions(
-                pools.find((pool) => pool.id === selectedWithdrawPoolId)
+                pools.find((pool) => pool.id === selectedWithdrawPoolId),
+                withdrawTransferMode
               ).map((accountType) => (
                 <option key={accountType} value={accountType}>
                   {formatOutflowAccountType(accountType)}
@@ -797,16 +906,26 @@ function formatStablecoinInflowMode(mode: StablecoinInflowMode): string {
 }
 
 function getDefaultOutflowAccountType(
-  pool: Pool | undefined
+  pool: Pool | undefined,
+  transferMode: TransferMode
 ): OutflowAccountType {
+  if (transferMode === "ckLedger" && pool?.chain !== Chain.ICP) {
+    return "IcPrincipal";
+  }
+
   return pool?.chain === Chain.ICP ? "IcrcAccount" : "ChainAddress";
 }
 
 function getOutflowAccountTypeOptions(
-  pool: Pool | undefined
+  pool: Pool | undefined,
+  transferMode: TransferMode
 ): OutflowAccountType[] {
-  return pool?.chain === Chain.ICP
-    ? ICP_OUTFLOW_ACCOUNT_TYPES
+  if (pool?.chain === Chain.ICP) {
+    return ICP_OUTFLOW_ACCOUNT_TYPES;
+  }
+
+  return transferMode === "ckLedger"
+    ? CK_OUTFLOW_ACCOUNT_TYPES
     : EXTERNAL_CHAIN_OUTFLOW_ACCOUNT_TYPES;
 }
 
@@ -826,15 +945,53 @@ function formatOutflowAccountType(accountType: OutflowAccountType): string {
 function setSelectedOutflowPool(params: {
   poolId: string;
   pools: Pool[];
+  transferMode: TransferMode;
   setSelectedPoolId(poolId: string): void;
+  setTransferMode(transferMode: TransferMode): void;
   setDestinationType(accountType: OutflowAccountType): void;
   setDestination(destination: string): void;
 }): void {
   const selectedPool = params.pools.find((pool) => pool.id === params.poolId);
 
   params.setSelectedPoolId(params.poolId);
-  params.setDestinationType(getDefaultOutflowAccountType(selectedPool));
+  params.setTransferMode(params.transferMode);
+  params.setDestinationType(
+    getDefaultOutflowAccountType(selectedPool, params.transferMode)
+  );
   params.setDestination("");
+}
+
+function setSelectedOutflowTransferMode(params: {
+  transferMode: TransferMode;
+  pool: Pool | undefined;
+  setTransferMode(transferMode: TransferMode): void;
+  setDestinationType(accountType: OutflowAccountType): void;
+  setDestination(destination: string): void;
+}): void {
+  params.setTransferMode(params.transferMode);
+  params.setDestinationType(
+    getDefaultOutflowAccountType(params.pool, params.transferMode)
+  );
+  params.setDestination("");
+}
+
+function getOutflowTransferModeOptions(pool: Pool | undefined): TransferMode[] {
+  return pool?.chain === Chain.ICP
+    ? ["nativeAsset"]
+    : ["nativeAsset", "ckLedger"];
+}
+
+function formatOutflowTransferMode(
+  pool: Pool | undefined,
+  transferMode: TransferMode
+): string {
+  if (transferMode === "ckLedger" && pool?.chain !== Chain.ICP) {
+    return `ck${pool?.asset ?? "asset"} to IC principal`;
+  }
+
+  return pool?.chain === Chain.ICP
+    ? "Native ICP ledger account"
+    : "Native chain address";
 }
 
 function ActivityTrackerPage() {

@@ -30,6 +30,7 @@ import {
   createTransferErc20Transaction,
 } from "../evm-transactions";
 import type {
+  ContractInteractionSupplyFlowRequest,
   EvmSupplyApprovalStrategy,
   EvmSupplyContext,
   GetEvmSupplyContextRequest,
@@ -41,7 +42,7 @@ import type {
   SupplyFlowRequest,
   SupplyPlanType,
   SupplyTarget,
-  TransferSupplyFlowRequest,
+  WalletTransferSupplyFlowRequest,
 } from "../types";
 import {
   EvmSupplyApprovalStrategy as ApprovalStrategy,
@@ -59,6 +60,7 @@ const SUBMIT_INFLOW_INITIAL_RETRY_DELAY_MS = 1_500;
 const SUBMIT_INFLOW_RETRY_BACKOFF_MULTIPLIER = 2;
 const ETH_APPROVAL_POLL_INTERVAL_MS = 2_000;
 const ETH_APPROVAL_MAX_POLLS = 30;
+const DEFAULT_SUPPLY_TRANSFER_MODE = TransferMode.nativeAsset;
 
 type SubmitInflowDefaults = Omit<SubmitInflowRequest, "txid">;
 type AllowanceExpectation = "zero" | "sufficient";
@@ -91,22 +93,22 @@ interface GetEvmSupplyContextForPoolParams {
 }
 
 interface SendAndSubmitTransferSupplyInflowParams {
-  request: TransferSupplyFlowRequest;
+  request: WalletTransferSupplyFlowRequest;
   instruction: SupplyInstruction;
-  defaultSubmitInflowRequest?: SubmitInflowDefaults;
+  defaultSubmitInflowRequest: SubmitInflowDefaults | null;
 }
 
 interface SubmitSupplyFlowInflowParams {
   instruction: SupplyInstruction;
   mechanism: SupplyPlanType;
-  defaultSubmitInflowRequest?: SubmitInflowDefaults;
+  defaultSubmitInflowRequest: SubmitInflowDefaults | null;
   submitRequest: SubmitSupplyFlowInflowRequest;
 }
 
 interface ExecuteContractSupplyParams {
-  request: SupplyFlowRequest;
+  request: ContractInteractionSupplyFlowRequest;
   instruction: SupplyInstruction;
-  defaultSubmitInflowRequest?: SubmitInflowDefaults;
+  defaultSubmitInflowRequest: SubmitInflowDefaults | null;
 }
 
 interface SendChainAddressSupplyTransactionParams {
@@ -171,10 +173,15 @@ export class SupplyFlowExecutor {
   constructor(private readonly params: SupplyFlowExecutorParams) {}
 
   async create(request: SupplyFlowRequest): Promise<SupplyFlow> {
-    const target = await resolveSupplyTarget(
-      this.params.canisterContext,
-      request
-    );
+    const requestedMechanism = request.mechanism ?? null;
+    const transferMode = request.transferMode ?? DEFAULT_SUPPLY_TRANSFER_MODE;
+    const target = await resolveSupplyTarget(this.params.canisterContext, {
+      profileId: request.profileId,
+      poolId: request.poolId,
+      action: request.action,
+      mechanism: requestedMechanism,
+      transferMode,
+    });
     const instruction: SupplyInstruction = {
       poolId: request.poolId,
       asset: target.asset,
@@ -185,8 +192,8 @@ export class SupplyFlowExecutor {
     const mechanism = resolveSupplyMechanism({
       asset: instruction.asset,
       chain: instruction.chain,
-      requestedMechanism: request.mechanism,
-      transferMode: request.transferMode,
+      mechanism: requestedMechanism,
+      transferMode,
     });
     const defaultSubmitInflowRequest = getDefaultSubmitInflowRequest({
       action: request.action,
@@ -199,15 +206,22 @@ export class SupplyFlowExecutor {
     let txid: string | undefined;
     switch (mechanism) {
       case PlanType.transfer:
-        if (request.walletAdapter) {
+        if (isWalletTransferSupplyRequest(request)) {
           txid = await this.sendAndSubmitTransferSupplyInflow({
-            request: request as TransferSupplyFlowRequest,
+            request,
             instruction,
             defaultSubmitInflowRequest,
           });
         }
         break;
       case PlanType.contractInteraction:
+        if (!isContractInteractionSupplyRequest(request)) {
+          throw new LiquidiumError(
+            LiquidiumErrorCode.VALIDATION_ERROR,
+            "Contract-interaction supply requires contract-interaction request fields"
+          );
+        }
+
         txid = await this.executeContractSupply({
           request,
           instruction,
@@ -554,7 +568,7 @@ export class SupplyFlowExecutor {
           amountSats: params.amount,
           account: params.senderAccount,
           actionType: `supply-${params.action}`,
-          transferMode: TransferMode.native,
+          transferMode: TransferMode.nativeAsset,
         });
       }
       case Chain.ETH: {
@@ -570,7 +584,7 @@ export class SupplyFlowExecutor {
             chain: Chain.ETH,
             account: params.senderAccount,
             actionType: `supply-${params.action}`,
-            transferMode: TransferMode.native,
+            transferMode: TransferMode.nativeAsset,
             transaction: createTransferErc20Transaction({
               tokenAddress: getEthStablecoinContractAddress(params.asset),
               recipientAddress: params.toAddress,
@@ -583,7 +597,7 @@ export class SupplyFlowExecutor {
           chain: Chain.ETH,
           account: params.senderAccount,
           actionType: `supply-${params.action}`,
-          transferMode: TransferMode.native,
+          transferMode: TransferMode.nativeAsset,
           transaction: {
             to: params.toAddress,
             value: params.amount.toString(),
@@ -628,7 +642,7 @@ export class SupplyFlowExecutor {
 
   private async submitInflowWithRetry(
     txid: string,
-    extraRequest?: SubmitInflowDefaults
+    extraRequest: SubmitInflowDefaults | null
   ): Promise<void> {
     if (!extraRequest) {
       throw new LiquidiumError(
@@ -665,7 +679,7 @@ export class SupplyFlowExecutor {
       chain: Chain.ETH,
       account: walletAddress,
       actionType,
-      transferMode: TransferMode.native,
+      transferMode: TransferMode.nativeAsset,
       transaction: request,
     });
   }
@@ -792,9 +806,9 @@ function getUnknownErrorMessage(error: unknown): string | null {
 
 function getDefaultSubmitInflowRequest(
   params: DefaultSubmitInflowRequestParams
-): SubmitInflowDefaults | undefined {
+): SubmitInflowDefaults | null {
   if (params.chain !== Chain.BTC && params.chain !== Chain.ETH) {
-    return undefined;
+    return null;
   }
 
   return {
@@ -817,6 +831,18 @@ function getIcrcSupplyTargetAccount(
         "ICRC wallet execution requires an ICRC-compatible supply target"
       );
   }
+}
+
+function isWalletTransferSupplyRequest(
+  request: SupplyFlowRequest
+): request is WalletTransferSupplyFlowRequest {
+  return "walletAdapter" in request;
+}
+
+function isContractInteractionSupplyRequest(
+  request: SupplyFlowRequest
+): request is ContractInteractionSupplyFlowRequest {
+  return request.mechanism === PlanType.contractInteraction;
 }
 
 function mapSupplyActionToStatusOperation(

@@ -3,8 +3,8 @@ import type { Asset, Chain } from "./types";
 
 /** Asset transfer path used for wallet-executed actions. */
 export const TransferMode = {
-  ck: "ck",
-  native: "native",
+  ckLedger: "ckLedger",
+  nativeAsset: "nativeAsset",
 } as const;
 /** Asset transfer path used for wallet-executed actions. */
 export type TransferMode = (typeof TransferMode)[keyof typeof TransferMode];
@@ -110,16 +110,16 @@ export interface SendIcrcTransferRequest {
   /** SDK action type that produced this request. */
   actionType: string;
   /** Transfer path associated with the action. */
-  transferMode: Extract<TransferMode, "ck" | "native">;
+  transferMode: Extract<TransferMode, "ckLedger" | "nativeAsset">;
 }
 
 /**
  * Optional wallet capabilities. Implement only what your flow uses:
  *
  * - `signMessage` - account creation, borrow, withdraw
- * - `sendBtcTransaction` / `sendEthTransaction` - automated native transfer-path supply
- * - `sendIcrcTransfer` - automated ck-asset and ICP ledger transfer supply
- * - `sendEthTransaction` - contract-interaction supply and ETH native sends
+ * - `sendBtcTransaction` / `sendEthTransaction` - automated native-asset transfer supply
+ * - `sendIcrcTransfer` - automated ck-ledger and ICP ledger transfer supply
+ * - `sendEthTransaction` - contract-interaction supply and ETH native-asset sends
  */
 export interface WalletAdapter {
   /** Signs an SDK plaintext message and returns the wallet signature. BTC adapters may return base64 BIP-322 or hex-encoded signature bytes. */

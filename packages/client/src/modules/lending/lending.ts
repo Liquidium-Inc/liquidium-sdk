@@ -508,7 +508,7 @@ export class LendingModule {
   async estimateInflowFee(
     request: EstimateInflowFeeRequest
   ): Promise<InflowFeeEstimate> {
-    if (request.transferMode === TransferMode.ck) {
+    if (request.transferMode === TransferMode.ckLedger) {
       const ledgerFee = await this.estimateIcrcLedgerFee(request);
       return {
         totalFee: roundInflowFeeEstimate(request, ledgerFee),
@@ -661,7 +661,10 @@ export class LendingModule {
 function resolveOutflowDestinationInput(
   params: ResolveOutflowDestinationInputParams
 ): OutflowDestination {
-  const address = params.receiver.address.trim();
+  const receiver = params.receiver;
+  const address =
+    typeof receiver === "string" ? receiver.trim() : receiver.address.trim();
+
   if (!address) {
     throw new LiquidiumError(
       LiquidiumErrorCode.VALIDATION_ERROR,
@@ -669,9 +672,13 @@ function resolveOutflowDestinationInput(
     );
   }
 
+  if (typeof receiver === "string") {
+    return address;
+  }
+
   return {
     address,
-    type: params.receiver.type,
+    type: receiver.type,
   };
 }
 
