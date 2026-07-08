@@ -122,10 +122,9 @@ function formatBtcSupplyTarget(target: SupplyFlow["target"]): string {
     ].join("\n");
   }
 
-  return [
-    "Unexpected non-BTC target.",
-    `Target type: ${target.type}`,
-  ].join("\n");
+  return ["Unexpected non-BTC target.", `Target type: ${target.type}`].join(
+    "\n"
+  );
 }
 
 export function formatActivityStatus(
