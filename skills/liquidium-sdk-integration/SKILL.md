@@ -378,7 +378,7 @@ const walletAdapter: WalletAdapter = {
 ### Instant loan default flow
 
 Use `client.instantLoans.create(...)` when the user should not create or manage
-a Liquidium profile. The user supplies transfer-mode-specific borrow and refund
+a Liquidium profile. The user supplies chain-specific borrow and refund
 destinations, receives a short loan ID, then sends collateral to the generated
 deposit address.
 
@@ -386,7 +386,7 @@ Default app sequence:
 
 1. Fetch pools and prices for pool selection and optional quote display.
 2. Optionally call `client.quote.calculateLtv(...)` to show current LTV and the collateral pool's max allowed LTV.
-3. Call `client.instantLoans.create(...)` with direct base-unit amounts, transfer modes, and matching destination account families.
+3. Call `client.instantLoans.create(...)` with direct base-unit amounts, transfer chains, and matching destination account families.
 4. Persist or display `loan.ref` as the primary recovery key.
 5. Show `loan.initialDeposit.amount` plus `loan.initialDeposit.target` for collateral deposit and, when `loan.repayment.amount > 0n`, `loan.repayment.target` plus `loan.repayment.amount` for repayment.
 
@@ -421,12 +421,12 @@ const loan = await client.instantLoans.create({
   borrowAmount: 2_000_000n,
   ltvMaxBps: ltv.maxAllowedLtvBps,
   depositWindowSeconds: 3_600n,
-  borrowTransferMode: "nativeAsset",
+  borrowChain: "ETH",
   borrowDestination: {
     type: "ChainAddress",
     address: "0x2222222222222222222222222222222222222222",
   },
-  refundTransferMode: "nativeAsset",
+  refundChain: "BTC",
   refundDestination: {
     type: "ChainAddress",
     address: "1BoatSLRHtKNngkdXEeobR76b53LETtpyT",
@@ -439,18 +439,18 @@ const depositTarget = loan.initialDeposit.target;
 const repayTarget = loan.repayment.amount > 0n ? loan.repayment.target : null;
 ```
 
-Create destinations are validated against the requested transfer mode before the
-SDK creates a loan. Use `nativeAsset` for L1 BTC, L1 ETH stablecoins, and ICP
-native destinations. Use `ckLedger` for ckBTC, ckUSDC, and ckUSDT destinations.
+Create destinations are validated against the requested chain before the SDK
+creates a loan. Use `"BTC"` for L1 BTC, `"ETH"` for L1 ETH stablecoins, and
+`"ICP"` for ICP-native or ck-ledger destinations.
 
 Destination families:
 
-| Asset path | Transfer mode | Valid destination family |
+| Asset path | Chain | Valid destination family |
 | --- | --- | --- |
-| BTC L1 | `nativeAsset` | BTC mainnet chain address |
-| ETH L1 USDC/USDT | `nativeAsset` | EVM chain address |
-| ICP native | `nativeAsset` | IC principal, ICRC account, or ICP account identifier |
-| ckBTC, ckUSDC, ckUSDT | `ckLedger` | IC principal or ICRC account |
+| BTC L1 | `"BTC"` | BTC mainnet chain address |
+| ETH L1 USDC/USDT | `"ETH"` | EVM chain address |
+| ICP native | `"ICP"` | IC principal, ICRC account, or ICP account identifier |
+| ckBTC, ckUSDC, ckUSDT | `"ICP"` | IC principal or ICRC account |
 
 Use typed destination objects when preventing fund-loss mistakes matters:
 `{ type: "ChainAddress", address: "..." }`,

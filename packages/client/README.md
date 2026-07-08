@@ -56,7 +56,6 @@ Create an instant loan, display the deposit target, and restore the loan by refe
 ```ts
 import {
   LiquidiumClient,
-  TransferMode,
   type Pool,
   type SupplyTarget,
 } from "@liquidium/client";
@@ -98,12 +97,12 @@ const loan = await client.instantLoans.create({
   borrowAmount,
   ltvMaxBps: ltv.maxAllowedLtvBps,
   depositWindowSeconds: 3_600n,
-  borrowTransferMode: TransferMode.nativeAsset,
+  borrowChain: "ETH",
   borrowDestination: {
     type: "ChainAddress",
     address: "0x2222222222222222222222222222222222222222",
   },
-  refundTransferMode: TransferMode.nativeAsset,
+  refundChain: "BTC",
   refundDestination: {
     type: "ChainAddress",
     address: "1BoatSLRHtKNngkdXEeobR76b53LETtpyT",
@@ -189,21 +188,23 @@ Creates an accountless instant loan and returns generated transfer targets.
 | `borrowAmount` | Borrow amount in base units. The SDK rejects values below the asset minimum. |
 | `ltvMaxBps` | Maximum LTV in basis points, where `6_000n` is 60% |
 | `depositWindowSeconds` | How long the user has to send collateral |
-| `borrowTransferMode` | Delivery path for borrowed funds: `TransferMode.nativeAsset` or `TransferMode.ckLedger` |
+| `initialDepositChain` | Optional transfer chain for the collateral deposit target. Use `"ICP"` for ck-ledger deposits. |
+| `repaymentChain` | Optional transfer chain for the repayment target. Use `"ICP"` for ck-ledger repayments. |
+| `borrowChain` | Delivery chain for borrowed funds: `"BTC"`, `"ETH"`, or `"ICP"`. Use `"ICP"` for ck-ledger delivery. |
 | `borrowDestination` | Account that receives borrowed funds |
-| `refundTransferMode` | Delivery path for collateral refunds: `TransferMode.nativeAsset` or `TransferMode.ckLedger` |
+| `refundChain` | Delivery chain for collateral refunds: `"BTC"`, `"ETH"`, or `"ICP"`. Use `"ICP"` for ck-ledger delivery. |
 | `refundDestination` | Account that receives collateral refunds |
 
 `borrowDestination` and `refundDestination` can be address strings or typed account objects such as `{ type: "ChainAddress", address: "bc1q..." }`, `{ type: "IcPrincipal", address: "aaaaa-aa" }`, or `{ type: "IcrcAccount", address: "aaaaa-aa" }`. Prefer typed objects when the destination family matters.
 
-Destination validation is transfer-mode-specific and runs before loan creation:
+Destination validation is chain-specific and runs before loan creation:
 
-| Asset path | Transfer mode | Valid destination family |
+| Asset path | Chain | Valid destination family |
 | --- | --- | --- |
-| BTC L1 | `TransferMode.nativeAsset` | BTC mainnet chain address |
-| ETH L1 USDC/USDT | `TransferMode.nativeAsset` | EVM chain address |
-| ICP native | `TransferMode.nativeAsset` | IC principal, ICRC account, or ICP account identifier |
-| ckBTC, ckUSDC, ckUSDT | `TransferMode.ckLedger` | IC principal or ICRC account |
+| BTC L1 | `"BTC"` | BTC mainnet chain address |
+| ETH L1 USDC/USDT | `"ETH"` | EVM chain address |
+| ICP native | `"ICP"` | IC principal, ICRC account, or ICP account identifier |
+| ckBTC, ckUSDC, ckUSDT | `"ICP"` | IC principal or ICRC account |
 
 The SDK rejects mismatched L1-vs-IC destination families, such as an ETH address for a ck-ledger delivery or a BTC/EVM address for an ICP destination.
 
