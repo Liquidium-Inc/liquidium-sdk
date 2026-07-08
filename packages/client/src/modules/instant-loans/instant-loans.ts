@@ -1113,6 +1113,8 @@ function resolveInstantLoanStringDestination(params: {
   }
 
   if (params.chain !== CoreChain.ICP) {
+    assertExternalInstantLoanDestinationSupported(params.asset);
+
     return {
       External: params.normalizeExternalDestination(address, params.asset),
     };

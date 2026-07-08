@@ -681,6 +681,32 @@ describe("InstantLoansModule create", () => {
         "ICP instant loan destination must be an IC principal, ICP account identifier, or ICRC account",
     },
     {
+      name: "native ICP borrow rejects an ETH string shorthand address",
+      requestOverrides: {
+        borrowPoolId: ICP_POOL_ID,
+        borrowAsset: "ICP",
+        borrowAmount: DEFAULT_ICP_AMOUNT_E8S,
+        borrowDestination: CHECKSUM_EVM_BORROW_ADDRESS,
+      },
+      expectedCode: LiquidiumErrorCode.INVALID_ADDRESS,
+      expectedMessage:
+        "ICP instant loan destination must be an IC principal, ICP account identifier, or ICRC account",
+    },
+    {
+      name: "native ICP borrow rejects a string shorthand address without a chain",
+      requestOverrides: {
+        borrowPoolId: ICP_POOL_ID,
+        borrowAsset: "ICP",
+        borrowAmount: DEFAULT_ICP_AMOUNT_E8S,
+        borrowChain:
+          undefined as unknown as CreateInstantLoanRequest["borrowChain"],
+        borrowDestination: CHECKSUM_EVM_BORROW_ADDRESS,
+      },
+      expectedCode: LiquidiumErrorCode.INVALID_ADDRESS,
+      expectedMessage:
+        "ICP instant loan destination must be an IC principal, ICP account identifier, or ICRC account",
+    },
+    {
       name: "native ICP refund rejects an ETH L1 address",
       requestOverrides: {
         collateralPoolId: ICP_POOL_ID,
@@ -705,6 +731,18 @@ describe("InstantLoansModule create", () => {
           type: "ChainAddress",
           address: VALID_BTC_REFUND_ADDRESS,
         },
+      },
+      expectedCode: LiquidiumErrorCode.INVALID_ADDRESS,
+      expectedMessage:
+        "ICP instant loan destination must be an IC principal, ICP account identifier, or ICRC account",
+    },
+    {
+      name: "native ICP refund rejects a BTC string shorthand address",
+      requestOverrides: {
+        collateralPoolId: ICP_POOL_ID,
+        collateralAsset: "ICP",
+        collateralAmount: DEFAULT_ICP_AMOUNT_E8S,
+        refundDestination: VALID_BTC_REFUND_ADDRESS,
       },
       expectedCode: LiquidiumErrorCode.INVALID_ADDRESS,
       expectedMessage:
