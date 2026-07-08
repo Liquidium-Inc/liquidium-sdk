@@ -75,6 +75,7 @@ describe("LendingModule withdraw", () => {
       },
       signerWalletAddress: "0xsigner",
     });
+    expect(withdrawAction.data).not.toHaveProperty("receiverAccount");
     expect(withdrawAction.message).toBe(`Liquidium: Withdraw Assets
 
 Action: Withdraw from pool

@@ -82,14 +82,17 @@ import type {
   WithdrawSubmitSignatureInfo,
 } from "./types";
 
-interface OutflowRequestData {
+interface OutflowActionData {
   profileId: string;
   poolId: string;
   amount: bigint;
   receiver: OutflowDestination;
-  receiverAccount: CanisterOutflowReceiver;
   signerWalletAddress: string;
   expiryTimestamp: bigint;
+}
+
+interface OutflowSubmissionData extends OutflowActionData {
+  receiverAccount: CanisterOutflowReceiver;
 }
 
 interface ResolveOutflowDestinationInputParams {
@@ -158,7 +161,7 @@ export class LendingModule {
     try {
       const expiryTimestamp = computeExpiryTimestampFromNow();
       const nonce = await lendingActor.get_nonce(signerAccount);
-      const withdrawRequestData = {
+      const withdrawActionData: OutflowActionData = {
         profileId: request.profileId,
         poolId: request.poolId,
         amount: request.amount,
@@ -166,9 +169,12 @@ export class LendingModule {
           address: receiver.address,
           type: receiver.accountType,
         },
-        receiverAccount: receiver.canisterAccount,
         signerWalletAddress: signerAccount,
         expiryTimestamp,
+      };
+      const withdrawSubmissionData: OutflowSubmissionData = {
+        ...withdrawActionData,
+        receiverAccount: receiver.canisterAccount,
       };
 
       return {
@@ -185,9 +191,12 @@ export class LendingModule {
           },
           nonce
         ),
-        data: withdrawRequestData,
+        data: withdrawActionData,
         submit: async (signatureInfo: WithdrawSubmitSignatureInfo) => {
-          return await this.submitWithdraw(withdrawRequestData, signatureInfo);
+          return await this.submitWithdraw(
+            withdrawSubmissionData,
+            signatureInfo
+          );
         },
       };
     } catch (error) {
@@ -200,7 +209,7 @@ export class LendingModule {
   }
 
   private async submitWithdraw(
-    request: OutflowRequestData,
+    request: OutflowSubmissionData,
     signatureInfo: WithdrawSubmitSignatureInfo
   ): Promise<WithdrawOutflowDetails> {
     try {
@@ -315,7 +324,7 @@ export class LendingModule {
     try {
       const expiryTimestamp = computeExpiryTimestampFromNow();
       const nonce = await lendingActor.get_nonce(signerAccount);
-      const borrowRequestData = {
+      const borrowActionData: OutflowActionData = {
         profileId: request.profileId,
         poolId: request.poolId,
         amount: request.amount,
@@ -323,9 +332,12 @@ export class LendingModule {
           address: receiver.address,
           type: receiver.accountType,
         },
-        receiverAccount: receiver.canisterAccount,
         signerWalletAddress: signerAccount,
         expiryTimestamp,
+      };
+      const borrowSubmissionData: OutflowSubmissionData = {
+        ...borrowActionData,
+        receiverAccount: receiver.canisterAccount,
       };
 
       return {
@@ -342,9 +354,9 @@ export class LendingModule {
           },
           nonce
         ),
-        data: borrowRequestData,
+        data: borrowActionData,
         submit: async (signatureInfo: BorrowSubmitSignatureInfo) => {
-          return await this.submitBorrow(borrowRequestData, signatureInfo);
+          return await this.submitBorrow(borrowSubmissionData, signatureInfo);
         },
       };
     } catch (error) {
@@ -357,7 +369,7 @@ export class LendingModule {
   }
 
   private async submitBorrow(
-    request: OutflowRequestData,
+    request: OutflowSubmissionData,
     signatureInfo: BorrowSubmitSignatureInfo
   ): Promise<BorrowOutflowDetails> {
     try {

@@ -77,6 +77,7 @@ describe("LendingModule borrow", () => {
       },
       signerWalletAddress: "0xsigner",
     });
+    expect(borrowAction.data).not.toHaveProperty("receiverAccount");
     expect(borrowAction.message).toBe(`Liquidium: Borrow Assets
 
 Action: Borrow from pool
