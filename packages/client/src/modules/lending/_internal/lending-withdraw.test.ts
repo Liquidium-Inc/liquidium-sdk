@@ -64,7 +64,6 @@ describe("LendingModule withdraw", () => {
     expect(withdrawAction.kind).toBe("create-withdraw");
     expect(withdrawAction.executionKind).toBe("sign-message");
     expect(withdrawAction.actionType).toBe("create-withdraw");
-    expect(withdrawAction.transferMode).toBe("nativeAsset");
     expect(withdrawAction.account).toBe("0xsigner");
     expect(withdrawAction.data).toMatchObject({
       profileId: "aaaaa-aa",
@@ -154,7 +153,6 @@ Nonce: 23`);
     await withdrawAction.submit({ signature: "0xsigned", chain: "ETH" });
 
     // then
-    expect(withdrawAction.transferMode).toBe("nativeAsset");
     expect(withdrawAction.message).toContain(
       `AccountId:${VALID_ICP_ACCOUNT_IDENTIFIER}`
     );
@@ -208,7 +206,6 @@ Nonce: 23`);
     await withdrawAction.submit({ signature: "0xsigned", chain: "ETH" });
 
     // then
-    expect(withdrawAction.transferMode).toBe("ckLedger");
     expect(withdrawAction.message).toContain(`Icrc:${ICRC_ACCOUNT}`);
     expect(withdraw.mock.calls[0]?.[1]).toMatchObject({
       data: {
@@ -265,7 +262,6 @@ Nonce: 23`);
     await withdrawAction.submit({ signature: "0xsigned", chain: "ETH" });
 
     // then
-    expect(withdrawAction.transferMode).toBe("ckLedger");
     expect(withdrawAction.message).toContain(`Icrc:${ICRC_ACCOUNT}`);
     expect(withdraw.mock.calls[0]?.[1]).toMatchObject({
       data: {
@@ -313,7 +309,6 @@ Nonce: 23`);
     expect(outflow.outflowType).toBe("withdrawal");
     expect(signMessage).toHaveBeenCalledWith({
       actionType: "create-withdraw",
-      transferMode: "nativeAsset",
       chain: "ETH",
       message: expect.stringContaining("Liquidium: Withdraw Assets"),
       account: "0xsigner",

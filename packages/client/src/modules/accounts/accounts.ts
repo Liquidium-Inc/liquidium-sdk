@@ -14,7 +14,6 @@ import { Chain, type Wallet } from "../../core/types";
 import { computeExpiryTimestampFromNow } from "../../core/utils/time";
 import { getVariantKey } from "../../core/utils/variant";
 import {
-  TransferMode,
   WalletActionKind,
   WalletExecutionKind,
 } from "../../core/wallet-actions";
@@ -147,7 +146,6 @@ export class AccountsModule {
         kind: WalletActionKind.createAccount,
         executionKind: WalletExecutionKind.signMessage,
         actionType: WalletActionKind.createAccount,
-        transferMode: TransferMode.nativeAsset,
         account: normalizedAccount,
         message: createInitializeAccountMessage(expiryTimestamp, nonce),
         data: {

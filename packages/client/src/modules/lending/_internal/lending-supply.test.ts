@@ -274,7 +274,7 @@ describe("LendingModule supply", () => {
       profileId,
       poolId: BTC_POOL_ID,
       action: "deposit",
-      transferMode: "ckLedger",
+      chain: "ICP",
     });
 
     // then
@@ -282,7 +282,7 @@ describe("LendingModule supply", () => {
       type: "IcrcAccount",
       poolId: BTC_POOL_ID,
       asset: "BTC",
-      chain: "BTC",
+      chain: "ICP",
       action: "deposit",
       account: {
         type: "IcrcAccount",
@@ -313,7 +313,7 @@ describe("LendingModule supply", () => {
       profileId,
       poolId: USDC_POOL_ID,
       action: "repayment",
-      transferMode: "ckLedger",
+      chain: "ICP",
     });
 
     // then
@@ -321,7 +321,7 @@ describe("LendingModule supply", () => {
       type: "IcrcAccount",
       poolId: USDC_POOL_ID,
       asset: "USDC",
-      chain: "ETH",
+      chain: "ICP",
       action: "repayment",
       account: {
         type: "IcrcAccount",
@@ -1080,7 +1080,6 @@ describe("LendingModule supply", () => {
       amountSats: 100_000n,
       account: "bc1qsender",
       actionType: "supply-deposit",
-      transferMode: "nativeAsset",
     });
     expect(fetchSpy).toHaveBeenCalledWith(
       "https://app.liquidium.fi/api/sdk/v2/inflow",
@@ -1110,7 +1109,7 @@ describe("LendingModule supply", () => {
       profileId: "aaaaa-aa",
       poolId: USDC_POOL_ID,
       action: "repayment",
-      transferMode: "ckLedger",
+      chain: "ICP",
       amount: 1_000_000n,
       account: "icrc-sender",
       walletAdapter: {
@@ -1121,11 +1120,10 @@ describe("LendingModule supply", () => {
     // then
     expect(flow.txid).toBe(txid);
     expect(sendIcrcTransfer).toHaveBeenCalledWith({
-      chain: "ETH",
       asset: "USDC",
       account: "icrc-sender",
       actionType: "supply-repayment",
-      transferMode: "ckLedger",
+      chain: "ICP",
       transfer: {
         ledgerCanisterId: "xevnm-gaaaa-aaaar-qafnq-cai",
         to:
@@ -1165,7 +1163,6 @@ describe("LendingModule supply", () => {
       asset: "ICP",
       account: "icp-sender",
       actionType: "supply-deposit",
-      transferMode: "nativeAsset",
       transfer: {
         ledgerCanisterId: "ryjl3-tyaaa-aaaaa-aaaba-cai",
         to:
@@ -1439,7 +1436,6 @@ describe("LendingModule supply", () => {
       amountSats: 100_000n,
       account: "bc1qsender",
       actionType: "supply-repayment",
-      transferMode: "nativeAsset",
     });
     expect(fetchSpy).toHaveBeenCalledWith(
       "https://app.liquidium.fi/api/sdk/v2/inflow",

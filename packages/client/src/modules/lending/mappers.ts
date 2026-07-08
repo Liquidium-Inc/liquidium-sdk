@@ -9,7 +9,6 @@ import { normalizeExternalAddress } from "../../core/address-validation";
 import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
 import { Chain, OutflowType } from "../../core/types";
 import { getVariantKey } from "../../core/utils/variant";
-import { TransferMode } from "../../core/wallet-actions";
 import type {
   OutflowAccountType,
   OutflowDestination,
@@ -47,7 +46,6 @@ export interface ParsedOutflowDestination {
     type: MessageAccountType;
     data: string;
   };
-  transferMode: TransferMode;
 }
 
 export interface ParseOutflowDestinationParams {
@@ -105,13 +103,7 @@ export function parseOutflowDestination(
   });
 
   if (parsedAccount.accountType !== "ChainAddress") {
-    return {
-      ...parsedAccount,
-      transferMode:
-        params.chain === Chain.ICP
-          ? TransferMode.nativeAsset
-          : TransferMode.ckLedger,
-    };
+    return parsedAccount;
   }
 
   const externalAddress = normalizeExternalAddress({
@@ -125,7 +117,6 @@ export function parseOutflowDestination(
     accountType: "ChainAddress",
     canisterAccount: { External: externalAddress },
     messageAccount: { type: "External", data: externalAddress },
-    transferMode: TransferMode.nativeAsset,
   };
 }
 
@@ -172,7 +163,7 @@ function normalizeOutflowDestinationInput(
 
 function parseOutflowDestinationWithHint(
   destination: NormalizedOutflowDestinationInput
-): Omit<ParsedOutflowDestination, "transferMode"> {
+): ParsedOutflowDestination {
   try {
     switch (destination.type) {
       case "ChainAddress":
@@ -203,7 +194,7 @@ function parseOutflowDestinationWithHint(
 
 function parseOutflowDestinationAutomatically(
   address: string
-): Omit<ParsedOutflowDestination, "transferMode"> {
+): ParsedOutflowDestination {
   const parsers = [
     parseAccountIdentifierDestination,
     parseIcPrincipalDestination,
@@ -219,9 +210,7 @@ function parseOutflowDestinationAutomatically(
   return parseExternalDestination(address);
 }
 
-function parseExternalDestination(
-  address: string
-): Omit<ParsedOutflowDestination, "transferMode"> {
+function parseExternalDestination(address: string): ParsedOutflowDestination {
   return {
     address,
     accountType: "ChainAddress",
@@ -232,7 +221,7 @@ function parseExternalDestination(
 
 function parseIcPrincipalDestination(
   address: string
-): Omit<ParsedOutflowDestination, "transferMode"> {
+): ParsedOutflowDestination {
   const principal = Principal.fromText(address);
   const principalText = principal.toText();
 
@@ -244,9 +233,7 @@ function parseIcPrincipalDestination(
   };
 }
 
-function parseIcrcDestination(
-  address: string
-): Omit<ParsedOutflowDestination, "transferMode"> {
+function parseIcrcDestination(address: string): ParsedOutflowDestination {
   const decoded = decodeIcrcAccountAddress(address);
 
   return {
@@ -264,7 +251,7 @@ function parseIcrcDestination(
 
 function parseAccountIdentifierDestination(
   address: string
-): Omit<ParsedOutflowDestination, "transferMode"> {
+): ParsedOutflowDestination {
   const accountIdentifier = normalizeIcpAccountIdentifier(address);
 
   return {

@@ -1,14 +1,6 @@
 import type { IcrcAccount } from "./accounts";
 import type { Asset, Chain } from "./types";
 
-/** Asset transfer path used for wallet-executed actions. */
-export const TransferMode = {
-  ckLedger: "ckLedger",
-  nativeAsset: "nativeAsset",
-} as const;
-/** Asset transfer path used for wallet-executed actions. */
-export type TransferMode = (typeof TransferMode)[keyof typeof TransferMode];
-
 /** Wallet capability required to execute a prepared SDK action. */
 export const WalletExecutionKind = {
   signMessage: "sign-message",
@@ -49,8 +41,6 @@ export interface SignMessageRequest {
   account?: string;
   /** SDK action type that produced this request. */
   actionType: string;
-  /** Transfer path associated with the action. */
-  transferMode: TransferMode;
 }
 
 /** ETH transaction-sending request passed to wallet adapters. */
@@ -63,8 +53,6 @@ export interface SendEthTransactionRequest {
   account?: string;
   /** SDK action type that produced this request. */
   actionType: string;
-  /** Transfer path associated with the action. */
-  transferMode: TransferMode;
 }
 
 /** BTC transaction-sending request passed to wallet adapters. */
@@ -79,8 +67,6 @@ export interface SendBtcTransactionRequest {
   account?: string;
   /** SDK action type that produced this request. */
   actionType: string;
-  /** Transfer path associated with the action. */
-  transferMode: TransferMode;
 }
 
 /** ICRC ledger transfer payload passed to wallet adapters. */
@@ -109,8 +95,6 @@ export interface SendIcrcTransferRequest {
   account?: string;
   /** SDK action type that produced this request. */
   actionType: string;
-  /** Transfer path associated with the action. */
-  transferMode: Extract<TransferMode, "ckLedger" | "nativeAsset">;
 }
 
 /**
@@ -150,8 +134,6 @@ export interface SignMessageWalletAction<TData, TResult> {
   executionKind: typeof WalletExecutionKind.signMessage;
   /** Adapter-facing action type. */
   actionType: string;
-  /** Transfer path associated with the action. */
-  transferMode: TransferMode;
   /** Default account to pass to the wallet adapter. */
   account: string;
   /** Plaintext message that must be signed. */

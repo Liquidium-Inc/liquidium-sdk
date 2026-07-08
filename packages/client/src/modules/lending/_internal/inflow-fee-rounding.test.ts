@@ -1,6 +1,5 @@
 import { describe, expect, test } from "vitest";
 import { Asset, Chain } from "../../../core/types";
-import { TransferMode } from "../../../core/wallet-actions";
 import { roundInflowFeeEstimate } from "./inflow-fee-rounding";
 
 describe("roundInflowFeeEstimate", () => {
@@ -85,8 +84,7 @@ describe("roundInflowFeeEstimate", () => {
     const result = roundInflowFeeEstimate(
       {
         asset: Asset.BTC,
-        chain: Chain.BTC,
-        transferMode: TransferMode.ckLedger,
+        chain: Chain.ICP,
       },
       CKBTC_LEDGER_FEE_SATS
     );
@@ -103,8 +101,7 @@ describe("roundInflowFeeEstimate", () => {
     const result = roundInflowFeeEstimate(
       {
         asset: Asset.USDC,
-        chain: Chain.ETH,
-        transferMode: TransferMode.ckLedger,
+        chain: Chain.ICP,
       },
       CKUSDC_LEDGER_FEE
     );

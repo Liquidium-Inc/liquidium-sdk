@@ -9,8 +9,11 @@ describe("pool ledger asset routes", () => {
     // given
     const SUPPORTED_ASSET_CHAIN_PAIRS = [
       { asset: "BTC", chain: "BTC" },
+      { asset: "BTC", chain: "ICP" },
       { asset: "USDT", chain: "ETH" },
+      { asset: "USDT", chain: "ICP" },
       { asset: "USDC", chain: "ETH" },
+      { asset: "USDC", chain: "ICP" },
       { asset: "ICP", chain: "ICP" },
     ] as const;
 
@@ -25,25 +28,36 @@ describe("pool ledger asset routes", () => {
         asset: "BTC",
         chain: "BTC",
         ledgerCanisterId: "mxzaz-hqaaa-aaaar-qaada-cai",
-        transferMode: "ckLedger",
+      },
+      {
+        asset: "BTC",
+        chain: "ICP",
+        ledgerCanisterId: "mxzaz-hqaaa-aaaar-qaada-cai",
       },
       {
         asset: "USDT",
         chain: "ETH",
         ledgerCanisterId: "cngnf-vqaaa-aaaar-qag4q-cai",
-        transferMode: "ckLedger",
+      },
+      {
+        asset: "USDT",
+        chain: "ICP",
+        ledgerCanisterId: "cngnf-vqaaa-aaaar-qag4q-cai",
       },
       {
         asset: "USDC",
         chain: "ETH",
         ledgerCanisterId: "xevnm-gaaaa-aaaar-qafnq-cai",
-        transferMode: "ckLedger",
+      },
+      {
+        asset: "USDC",
+        chain: "ICP",
+        ledgerCanisterId: "xevnm-gaaaa-aaaar-qafnq-cai",
       },
       {
         asset: "ICP",
         chain: "ICP",
         ledgerCanisterId: "ryjl3-tyaaa-aaaaa-aaaba-cai",
-        transferMode: "nativeAsset",
       },
     ] as const;
 

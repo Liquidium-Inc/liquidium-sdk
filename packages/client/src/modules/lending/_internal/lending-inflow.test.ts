@@ -131,12 +131,31 @@ describe("LendingModule inflow", () => {
     // when
     const estimate = await client.lending.estimateInflowFee({
       asset: "USDC",
-      chain: "ETH",
-      transferMode: "ckLedger",
+      chain: "ICP",
     });
 
     // then
     expect(estimate.totalFee).toBe(CKUSDC_LEDGER_FEE);
+    expect(icrc1Fee).toHaveBeenCalledWith();
+  });
+
+  test("estimates ckBTC inflow fee from the ledger without deposit-fee rounding", async () => {
+    // given
+    const CKBTC_LEDGER_FEE = 10n;
+    const icrc1Fee = vi.fn().mockResolvedValue(CKBTC_LEDGER_FEE);
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      icrc1_fee: icrc1Fee,
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const estimate = await client.lending.estimateInflowFee({
+      asset: "BTC",
+      chain: "ICP",
+    });
+
+    // then
+    expect(estimate.totalFee).toBe(CKBTC_LEDGER_FEE);
     expect(icrc1Fee).toHaveBeenCalledWith();
   });
 

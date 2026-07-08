@@ -96,7 +96,7 @@ describeLive("live instant loans e2e", () => {
     {
       name: "ck stablecoin borrow to an ETH L1 address",
       requestOverrides: {
-        borrowTransferMode: "ckLedger",
+        borrowChain: "ICP",
         borrowDestination: {
           type: "ChainAddress",
           address: VALID_ETH_L1_ADDRESS,
@@ -107,7 +107,7 @@ describeLive("live instant loans e2e", () => {
     {
       name: "ckBTC refund to a BTC L1 address",
       requestOverrides: {
-        refundTransferMode: "ckLedger",
+        refundChain: "ICP",
         refundDestination: {
           type: "ChainAddress",
           address: VALID_BTC_L1_ADDRESS,
@@ -121,6 +121,7 @@ describeLive("live instant loans e2e", () => {
         borrowPoolId: ICP_POOL_ID_PLACEHOLDER,
         borrowAsset: "ICP",
         borrowAmount: DEFAULT_ICP_AMOUNT_E8S,
+        borrowChain: "ICP",
         borrowDestination: {
           type: "ChainAddress",
           address: VALID_ETH_L1_ADDRESS,
@@ -181,9 +182,9 @@ async function createLiveInstantLoan(params: {
     borrowAmount,
     ltvMaxBps: quote.targetLtvBps + INSTANT_LOAN_LTV_BUFFER_BPS,
     depositWindowSeconds: DEFAULT_DEPOSIT_WINDOW_SECONDS,
-    borrowTransferMode: "nativeAsset",
+    borrowChain: "ETH",
     borrowDestination: evmAddress,
-    refundTransferMode: "nativeAsset",
+    refundChain: "BTC",
     refundDestination: bitcoinAddress,
   });
 }
@@ -200,9 +201,9 @@ function createInstantLoanValidationRequest(
     borrowAmount: DEFAULT_BORROW_AMOUNT_BASE_UNITS,
     ltvMaxBps: DEFAULT_LTV_MAX_BPS,
     depositWindowSeconds: DEFAULT_DEPOSIT_WINDOW_SECONDS,
-    borrowTransferMode: "nativeAsset",
+    borrowChain: "ETH",
     borrowDestination: VALID_ETH_L1_ADDRESS,
-    refundTransferMode: "nativeAsset",
+    refundChain: "BTC",
     refundDestination: VALID_BTC_L1_ADDRESS,
     ...overrides,
   };

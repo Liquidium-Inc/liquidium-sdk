@@ -3,32 +3,30 @@ import type {
   LiquidiumAccountInput,
 } from "../../core/accounts";
 import type { LiquidiumStatus } from "../../core/status";
-import type { Asset, MarketAsset, MarketChain } from "../../core/types";
-import type { TransferMode } from "../../core/wallet-actions";
+import type { Asset, Chain, MarketAsset, MarketChain } from "../../core/types";
 import type { SupplyTarget } from "../lending";
 
 /** Asset symbols supported by the instant-loans canister. */
 export type InstantLoanAsset = Asset;
 
-/** Inflow target transfer-mode selection for instant-loan quotes. */
-export interface InstantLoanTransferModeOptions {
-  /** Transfer path used for the initial collateral deposit target. */
-  initialDepositTransferMode?: TransferMode;
-  /** Transfer path used for the repayment target. */
-  repaymentTransferMode?: TransferMode;
+/** Inflow transfer-chain selection for instant-loan quotes. */
+export interface InstantLoanInflowChainOptions {
+  /** Transfer chain used for the initial collateral deposit target. Use ICP for ck-ledger transfers. */
+  initialDepositChain?: Chain;
+  /** Transfer chain used for the repayment target. Use ICP for ck-ledger transfers. */
+  repaymentChain?: Chain;
 }
 
-/** Delivery-mode selection for instant-loan creation. */
-export interface InstantLoanDeliveryTransferModeOptions {
-  /** Delivery path used for the borrowed asset. */
-  borrowTransferMode: TransferMode;
-  /** Delivery path used for collateral refunds and withdrawals. */
-  refundTransferMode: TransferMode;
+/** Delivery-chain selection for instant-loan creation. */
+export interface InstantLoanDeliveryChainOptions {
+  /** Delivery chain used for the borrowed asset. Use ICP for ck-ledger delivery. */
+  borrowChain: Chain;
+  /** Delivery chain used for collateral refunds and withdrawals. Use ICP for ck-ledger delivery. */
+  refundChain: Chain;
 }
 
-/** Delivery-mode selection for instant-loan creation. */
-export type InstantLoanOutflowTransferModeOptions =
-  InstantLoanDeliveryTransferModeOptions;
+/** Delivery-chain selection for instant-loan creation. */
+export type InstantLoanOutflowChainOptions = InstantLoanDeliveryChainOptions;
 
 /**
  * Borrow destination or refund account associated with an instant loan.
@@ -74,8 +72,8 @@ export type InstantLoanDestination = LiquidiumAccountInput;
  * pool decimals.
  */
 export interface CreateInstantLoanRequest
-  extends InstantLoanTransferModeOptions,
-    InstantLoanDeliveryTransferModeOptions {
+  extends InstantLoanInflowChainOptions,
+    InstantLoanDeliveryChainOptions {
   /**
    * Principal text of the pool that receives the user's collateral deposit.
    *
@@ -170,8 +168,8 @@ export interface InstantLoanGetByRefRequest {
 
 /** Lookup request for loading canonical instant-loan state. */
 export type InstantLoanGetRequest =
-  | (InstantLoanGetByIdRequest & InstantLoanTransferModeOptions)
-  | (InstantLoanGetByRefRequest & InstantLoanTransferModeOptions);
+  | (InstantLoanGetByIdRequest & InstantLoanInflowChainOptions)
+  | (InstantLoanGetByRefRequest & InstantLoanInflowChainOptions);
 
 /** Collateral leg returned by instant-loan search. */
 export interface InstantLoanFindCollateral {

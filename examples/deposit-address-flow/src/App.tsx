@@ -6,7 +6,6 @@ import type {
   OutflowAccountType,
   Pool,
   SupplyFlow,
-  TransferMode,
 } from "@liquidium/client";
 import { Chain } from "@liquidium/client";
 import { useEffect, useState } from "react";
@@ -38,8 +37,9 @@ import {
 
 const DEFAULT_SUPPLY_ASSET = "USDC";
 const DEFAULT_BORROW_ASSET = "USDC";
-const DEFAULT_SUPPLY_TRANSFER_MODE: TransferMode = "nativeAsset";
-const DEFAULT_OUTFLOW_TRANSFER_MODE: TransferMode = "nativeAsset";
+type ChainSelection = "poolChain" | "icpLedger";
+const DEFAULT_SUPPLY_CHAIN_SELECTION: ChainSelection = "poolChain";
+const DEFAULT_OUTFLOW_CHAIN_SELECTION: ChainSelection = "poolChain";
 const DEFAULT_OUTFLOW_ACCOUNT_TYPE: OutflowAccountType = "ChainAddress";
 const EXTERNAL_CHAIN_OUTFLOW_ACCOUNT_TYPES: OutflowAccountType[] = [
   "ChainAddress",
@@ -63,9 +63,8 @@ function SupplyBorrowPage() {
   const [assetPrices, setAssetPrices] = useState<AssetPrices>({});
   const [profileId, setProfileId] = useState("");
   const [selectedSupplyPoolId, setSelectedSupplyPoolId] = useState("");
-  const [supplyTransferMode, setSupplyTransferMode] = useState<TransferMode>(
-    DEFAULT_SUPPLY_TRANSFER_MODE
-  );
+  const [supplyChainSelection, setSupplyChainSelection] =
+    useState<ChainSelection>(DEFAULT_SUPPLY_CHAIN_SELECTION);
   const [selectedBorrowPoolId, setSelectedBorrowPoolId] = useState("");
   const [supplyAmount, setSupplyAmount] = useState("10");
   const [supplyTxid, setSupplyTxid] = useState("");
@@ -79,9 +78,8 @@ function SupplyBorrowPage() {
     "Generate a supply target first, then track the txid."
   );
   const [borrowAmount, setBorrowAmount] = useState("9");
-  const [borrowTransferMode, setBorrowTransferMode] = useState<TransferMode>(
-    DEFAULT_OUTFLOW_TRANSFER_MODE
-  );
+  const [borrowChainSelection, setBorrowChainSelection] =
+    useState<ChainSelection>(DEFAULT_OUTFLOW_CHAIN_SELECTION);
   const [borrowDestination, setBorrowDestination] = useState("");
   const [borrowDestinationType, setBorrowDestinationType] =
     useState<OutflowAccountType>(DEFAULT_OUTFLOW_ACCOUNT_TYPE);
@@ -118,11 +116,11 @@ function SupplyBorrowPage() {
       setSelectedBorrowPoolId(
         defaultBorrowPool?.id ?? loadedPools[0]?.id ?? ""
       );
-      setBorrowTransferMode(DEFAULT_OUTFLOW_TRANSFER_MODE);
+      setBorrowChainSelection(DEFAULT_OUTFLOW_CHAIN_SELECTION);
       setBorrowDestinationType(
         getDefaultOutflowAccountType(
           defaultBorrowPool,
-          DEFAULT_OUTFLOW_TRANSFER_MODE
+          DEFAULT_OUTFLOW_CHAIN_SELECTION
         )
       );
       setStatus(`Loaded ${loadedPools.length} pools.`);
@@ -166,11 +164,11 @@ function SupplyBorrowPage() {
     setAssetPrices(loadedAssetPrices);
     setSelectedSupplyPoolId(defaultSupplyPool?.id ?? loadedPools[0]?.id ?? "");
     setSelectedBorrowPoolId(defaultBorrowPool?.id ?? loadedPools[0]?.id ?? "");
-    setBorrowTransferMode(DEFAULT_OUTFLOW_TRANSFER_MODE);
+    setBorrowChainSelection(DEFAULT_OUTFLOW_CHAIN_SELECTION);
     setBorrowDestinationType(
       getDefaultOutflowAccountType(
         defaultBorrowPool,
-        DEFAULT_OUTFLOW_TRANSFER_MODE
+        DEFAULT_OUTFLOW_CHAIN_SELECTION
       )
     );
     setStatus(`Loaded ${loadedPools.length} pools.`);
@@ -194,14 +192,14 @@ function SupplyBorrowPage() {
     const supplyFlow = await createDepositAddressSupply({
       profileId: trimmedProfileId,
       poolId: selectedSupplyPool.id,
-      transferMode: supplyTransferMode,
+      chainSelection: supplyChainSelection,
     });
 
     setCurrentSupplyFlow(supplyFlow);
     setSupplyResult(
       [
         `Send amount: ${formatAmount(parsedSupplyAmount, selectedSupplyPool.decimals)} ${selectedSupplyPool.asset}`,
-        `Transfer mode: ${formatTransferMode(supplyTransferMode)}`,
+        `Transfer chain: ${formatChainSelection(supplyChainSelection)}`,
         "",
         formatSupplyTarget(supplyFlow.target),
         "",
@@ -309,7 +307,7 @@ function SupplyBorrowPage() {
     saveRecentActivityId(outflow.id);
     setBorrowResult(
       [
-        `Transfer mode: ${formatOutflowTransferMode(selectedBorrowPool, borrowTransferMode)}`,
+        `Transfer chain: ${formatOutflowChainSelection(selectedBorrowPool, borrowChainSelection)}`,
         "",
         formatOutflowDetails(outflow),
       ].join("\n")
@@ -403,16 +401,16 @@ function SupplyBorrowPage() {
           ))}
         </select>
 
-        <label htmlFor="supply-transfer-mode-select">Transfer mode</label>
+        <label htmlFor="supply-chain-select">Supply chain</label>
         <select
-          id="supply-transfer-mode-select"
-          value={supplyTransferMode}
+          id="supply-chain-select"
+          value={supplyChainSelection}
           onChange={(event) =>
-            setSupplyTransferMode(event.target.value as TransferMode)
+            setSupplyChainSelection(event.target.value as ChainSelection)
           }
         >
-          <option value="nativeAsset">Native ingress address</option>
-          <option value="ckLedger">Direct ck / ICRC ledger account</option>
+          <option value="poolChain">Pool native chain</option>
+          <option value="icpLedger">ICP ck ledger</option>
         </select>
         <p>
           Choose native for BTC/EVM deposit addresses. Choose ck to get the
@@ -464,9 +462,9 @@ function SupplyBorrowPage() {
             setSelectedBorrowPool({
               poolId: event.target.value,
               pools,
-              transferMode: DEFAULT_OUTFLOW_TRANSFER_MODE,
+              chainSelection: DEFAULT_OUTFLOW_CHAIN_SELECTION,
               setSelectedPoolId: setSelectedBorrowPoolId,
-              setTransferMode: setBorrowTransferMode,
+              setChainSelection: setBorrowChainSelection,
               setDestinationType: setBorrowDestinationType,
               setDestination: setBorrowDestination,
             })
@@ -479,27 +477,27 @@ function SupplyBorrowPage() {
           ))}
         </select>
 
-        <label htmlFor="borrow-transfer-mode-select">Transfer mode</label>
+        <label htmlFor="borrow-chain-select">Borrow chain</label>
         <select
-          id="borrow-transfer-mode-select"
-          value={borrowTransferMode}
+          id="borrow-chain-select"
+          value={borrowChainSelection}
           onChange={(event) =>
-            setSelectedOutflowTransferMode({
-              transferMode: event.target.value as TransferMode,
+            setSelectedOutflowChainSelection({
+              chainSelection: event.target.value as ChainSelection,
               pool: pools.find((pool) => pool.id === selectedBorrowPoolId),
-              setTransferMode: setBorrowTransferMode,
+              setChainSelection: setBorrowChainSelection,
               setDestinationType: setBorrowDestinationType,
               setDestination: setBorrowDestination,
             })
           }
         >
-          {getOutflowTransferModeOptions(
+          {getOutflowChainSelectionOptions(
             pools.find((pool) => pool.id === selectedBorrowPoolId)
-          ).map((transferMode) => (
-            <option key={transferMode} value={transferMode}>
-              {formatOutflowTransferMode(
+          ).map((chainSelection) => (
+            <option key={chainSelection} value={chainSelection}>
+              {formatOutflowChainSelection(
                 pools.find((pool) => pool.id === selectedBorrowPoolId),
-                transferMode
+                chainSelection
               )}
             </option>
           ))}
@@ -529,7 +527,7 @@ function SupplyBorrowPage() {
         >
           {getOutflowAccountTypeOptions(
             pools.find((pool) => pool.id === selectedBorrowPoolId),
-            borrowTransferMode
+            borrowChainSelection
           ).map((accountType) => (
             <option key={accountType} value={accountType}>
               {formatOutflowAccountType(accountType)}
@@ -746,17 +744,17 @@ function ActivityTrackerPage() {
   );
 }
 
-function formatTransferMode(transferMode: TransferMode): string {
-  return transferMode === "ckLedger"
+function formatChainSelection(chainSelection: ChainSelection): string {
+  return chainSelection === "icpLedger"
     ? "Direct ck / ICRC ledger account"
     : "Native ingress address";
 }
 
 function getDefaultOutflowAccountType(
   pool: Pool | undefined,
-  transferMode: TransferMode
+  chainSelection: ChainSelection
 ): OutflowAccountType {
-  if (transferMode === "ckLedger" && pool?.chain !== Chain.ICP) {
+  if (chainSelection === "icpLedger" && pool?.chain !== Chain.ICP) {
     return "IcPrincipal";
   }
 
@@ -765,13 +763,13 @@ function getDefaultOutflowAccountType(
 
 function getOutflowAccountTypeOptions(
   pool: Pool | undefined,
-  transferMode: TransferMode
+  chainSelection: ChainSelection
 ): OutflowAccountType[] {
   if (pool?.chain === Chain.ICP) {
     return ICP_OUTFLOW_ACCOUNT_TYPES;
   }
 
-  return transferMode === "ckLedger"
+  return chainSelection === "icpLedger"
     ? CK_OUTFLOW_ACCOUNT_TYPES
     : EXTERNAL_CHAIN_OUTFLOW_ACCOUNT_TYPES;
 }
@@ -792,47 +790,47 @@ function formatOutflowAccountType(accountType: OutflowAccountType): string {
 function setSelectedBorrowPool(params: {
   poolId: string;
   pools: Pool[];
-  transferMode: TransferMode;
+  chainSelection: ChainSelection;
   setSelectedPoolId(poolId: string): void;
-  setTransferMode(transferMode: TransferMode): void;
+  setChainSelection(chainSelection: ChainSelection): void;
   setDestinationType(accountType: OutflowAccountType): void;
   setDestination(destination: string): void;
 }): void {
   const selectedPool = params.pools.find((pool) => pool.id === params.poolId);
 
   params.setSelectedPoolId(params.poolId);
-  params.setTransferMode(params.transferMode);
+  params.setChainSelection(params.chainSelection);
   params.setDestinationType(
-    getDefaultOutflowAccountType(selectedPool, params.transferMode)
+    getDefaultOutflowAccountType(selectedPool, params.chainSelection)
   );
   params.setDestination("");
 }
 
-function setSelectedOutflowTransferMode(params: {
-  transferMode: TransferMode;
+function setSelectedOutflowChainSelection(params: {
+  chainSelection: ChainSelection;
   pool: Pool | undefined;
-  setTransferMode(transferMode: TransferMode): void;
+  setChainSelection(chainSelection: ChainSelection): void;
   setDestinationType(accountType: OutflowAccountType): void;
   setDestination(destination: string): void;
 }): void {
-  params.setTransferMode(params.transferMode);
+  params.setChainSelection(params.chainSelection);
   params.setDestinationType(
-    getDefaultOutflowAccountType(params.pool, params.transferMode)
+    getDefaultOutflowAccountType(params.pool, params.chainSelection)
   );
   params.setDestination("");
 }
 
-function getOutflowTransferModeOptions(pool: Pool | undefined): TransferMode[] {
-  return pool?.chain === Chain.ICP
-    ? ["nativeAsset"]
-    : ["nativeAsset", "ckLedger"];
+function getOutflowChainSelectionOptions(
+  pool: Pool | undefined
+): ChainSelection[] {
+  return pool?.chain === Chain.ICP ? ["poolChain"] : ["poolChain", "icpLedger"];
 }
 
-function formatOutflowTransferMode(
+function formatOutflowChainSelection(
   pool: Pool | undefined,
-  transferMode: TransferMode
+  chainSelection: ChainSelection
 ): string {
-  if (transferMode === "ckLedger" && pool?.chain !== Chain.ICP) {
+  if (chainSelection === "icpLedger" && pool?.chain !== Chain.ICP) {
     return `ck${pool?.asset ?? "asset"} to IC principal`;
   }
 

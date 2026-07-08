@@ -149,12 +149,12 @@ describe("InstantLoansModule create", () => {
       borrowAmount: 5_726_000_000n,
       ltvMaxBps: 6_000n,
       depositWindowSeconds: 3_600n,
-      borrowTransferMode: "nativeAsset",
+      borrowChain: "ETH",
       borrowDestination: {
         type: "ChainAddress",
         address: LOWERCASE_EVM_BORROW_ADDRESS,
       },
-      refundTransferMode: "nativeAsset",
+      refundChain: "BTC",
       refundDestination: VALID_BTC_REFUND_ADDRESS,
     });
 
@@ -309,10 +309,10 @@ describe("InstantLoansModule create", () => {
       borrowAmount: 1_000_000n,
       ltvMaxBps: 6_000n,
       depositWindowSeconds: 3_600n,
-      initialDepositTransferMode: "ckLedger",
-      borrowTransferMode: "nativeAsset",
+      initialDepositChain: "ICP",
+      borrowChain: "ICP",
       borrowDestination: PROFILE_ID,
-      refundTransferMode: "nativeAsset",
+      refundChain: "BTC",
       refundDestination: VALID_BTC_REFUND_ADDRESS,
     });
 
@@ -350,7 +350,7 @@ describe("InstantLoansModule create", () => {
       target: expect.objectContaining({
         type: "IcrcAccount",
         asset: "BTC",
-        chain: "BTC",
+        chain: "ICP",
       }),
     });
   });
@@ -371,9 +371,9 @@ describe("InstantLoansModule create", () => {
       borrowAmount: 1_000_000n,
       ltvMaxBps: 6_000n,
       depositWindowSeconds: 3_600n,
-      borrowTransferMode: "nativeAsset",
+      borrowChain: "ICP",
       borrowDestination: "not-an-icp-destination",
-      refundTransferMode: "nativeAsset",
+      refundChain: "BTC",
       refundDestination: VALID_BTC_REFUND_ADDRESS,
     });
 
@@ -403,9 +403,9 @@ describe("InstantLoansModule create", () => {
       borrowAmount: 5_726_000_000n,
       ltvMaxBps: 6_000n,
       depositWindowSeconds: 3_600n,
-      borrowTransferMode: "ckLedger",
+      borrowChain: "ICP",
       borrowDestination: "not-an-ic-principal",
-      refundTransferMode: "nativeAsset",
+      refundChain: "BTC",
       refundDestination: VALID_BTC_REFUND_ADDRESS,
     });
 
@@ -413,7 +413,7 @@ describe("InstantLoansModule create", () => {
     await expect(result).rejects.toMatchObject({
       code: LiquidiumErrorCode.VALIDATION_ERROR,
       message:
-        "ckLedger instant loan borrow destination must be an IC principal or ICRC account",
+        "ICP instant loan borrow destination must be an IC principal or ICRC account",
     });
     expect(fetchSpy).not.toHaveBeenCalled();
     expect(actorCreateSpy).not.toHaveBeenCalled();
@@ -435,12 +435,12 @@ describe("InstantLoansModule create", () => {
       borrowAmount: 5_726_000_000n,
       ltvMaxBps: 6_000n,
       depositWindowSeconds: 3_600n,
-      borrowTransferMode: "ckLedger",
+      borrowChain: "ICP",
       borrowDestination: {
         type: "ChainAddress",
         address: CHECKSUM_EVM_BORROW_ADDRESS,
       },
-      refundTransferMode: "nativeAsset",
+      refundChain: "BTC",
       refundDestination: VALID_BTC_REFUND_ADDRESS,
     });
 
@@ -448,7 +448,7 @@ describe("InstantLoansModule create", () => {
     await expect(result).rejects.toMatchObject({
       code: LiquidiumErrorCode.VALIDATION_ERROR,
       message:
-        "ckLedger instant loan borrow destination must be an IC principal or ICRC account",
+        "ICP instant loan borrow destination must be an IC principal or ICRC account",
     });
     expect(fetchSpy).not.toHaveBeenCalled();
     expect(actorCreateSpy).not.toHaveBeenCalled();
@@ -470,12 +470,12 @@ describe("InstantLoansModule create", () => {
       borrowAmount: 5_726_000_000n,
       ltvMaxBps: 6_000n,
       depositWindowSeconds: 3_600n,
-      borrowTransferMode: "nativeAsset",
+      borrowChain: "ETH",
       borrowDestination: {
         type: "IcPrincipal",
         address: PROFILE_ID,
       },
-      refundTransferMode: "nativeAsset",
+      refundChain: "BTC",
       refundDestination: VALID_BTC_REFUND_ADDRESS,
     });
 
@@ -483,7 +483,7 @@ describe("InstantLoansModule create", () => {
     await expect(result).rejects.toMatchObject({
       code: LiquidiumErrorCode.VALIDATION_ERROR,
       message:
-        "nativeAsset instant loan borrow destination must be an external chain address for USDT",
+        "ETH instant loan borrow destination must be an external chain address for USDT",
     });
     expect(fetchSpy).not.toHaveBeenCalled();
     expect(actorCreateSpy).not.toHaveBeenCalled();
@@ -505,19 +505,19 @@ describe("InstantLoansModule create", () => {
       borrowAmount: 5_726_000_000n,
       ltvMaxBps: 6_000n,
       depositWindowSeconds: 3_600n,
-      borrowTransferMode: "ckLedger",
+      borrowChain: "ICP",
       borrowDestination: {
         type: "IcPrincipal",
         address: PROFILE_ID,
       },
-      refundTransferMode: "nativeAsset",
+      refundChain: "BTC",
       refundDestination: VALID_BTC_REFUND_ADDRESS,
     });
 
     // then
     await expect(result).rejects.toMatchObject({
       code: LiquidiumErrorCode.VALIDATION_ERROR,
-      message: "ckLedger instant loan borrow delivery is not supported for SOL",
+      message: "ICP instant loan borrow delivery is not supported for SOL",
     });
     expect(fetchSpy).not.toHaveBeenCalled();
     expect(actorCreateSpy).not.toHaveBeenCalled();
@@ -527,7 +527,7 @@ describe("InstantLoansModule create", () => {
     {
       name: "ck stablecoin borrow rejects an ETH L1 address",
       requestOverrides: {
-        borrowTransferMode: "ckLedger",
+        borrowChain: "ICP",
         borrowDestination: {
           type: "ChainAddress",
           address: CHECKSUM_EVM_BORROW_ADDRESS,
@@ -535,12 +535,12 @@ describe("InstantLoansModule create", () => {
       },
       expectedCode: LiquidiumErrorCode.VALIDATION_ERROR,
       expectedMessage:
-        "ckLedger instant loan borrow destination must be an IC principal or ICRC account",
+        "ICP instant loan borrow destination must be an IC principal or ICRC account",
     },
     {
       name: "ck stablecoin borrow rejects a BTC L1 address",
       requestOverrides: {
-        borrowTransferMode: "ckLedger",
+        borrowChain: "ICP",
         borrowDestination: {
           type: "ChainAddress",
           address: VALID_BTC_REFUND_ADDRESS,
@@ -548,12 +548,12 @@ describe("InstantLoansModule create", () => {
       },
       expectedCode: LiquidiumErrorCode.VALIDATION_ERROR,
       expectedMessage:
-        "ckLedger instant loan borrow destination must be an IC principal or ICRC account",
+        "ICP instant loan borrow destination must be an IC principal or ICRC account",
     },
     {
       name: "ck stablecoin borrow rejects an ICP account identifier",
       requestOverrides: {
-        borrowTransferMode: "ckLedger",
+        borrowChain: "ICP",
         borrowDestination: {
           type: "IcpAccountIdentifier",
           address: ACCOUNT_IDENTIFIER,
@@ -561,12 +561,12 @@ describe("InstantLoansModule create", () => {
       },
       expectedCode: LiquidiumErrorCode.VALIDATION_ERROR,
       expectedMessage:
-        "ckLedger instant loan borrow destination must be an IC principal or ICRC account",
+        "ICP instant loan borrow destination must be an IC principal or ICRC account",
     },
     {
       name: "ckBTC refund rejects a BTC L1 address",
       requestOverrides: {
-        refundTransferMode: "ckLedger",
+        refundChain: "ICP",
         refundDestination: {
           type: "ChainAddress",
           address: VALID_BTC_REFUND_ADDRESS,
@@ -574,12 +574,12 @@ describe("InstantLoansModule create", () => {
       },
       expectedCode: LiquidiumErrorCode.VALIDATION_ERROR,
       expectedMessage:
-        "ckLedger instant loan refund destination must be an IC principal or ICRC account",
+        "ICP instant loan refund destination must be an IC principal or ICRC account",
     },
     {
       name: "ckBTC refund rejects an ETH L1 address",
       requestOverrides: {
-        refundTransferMode: "ckLedger",
+        refundChain: "ICP",
         refundDestination: {
           type: "ChainAddress",
           address: CHECKSUM_EVM_BORROW_ADDRESS,
@@ -587,12 +587,12 @@ describe("InstantLoansModule create", () => {
       },
       expectedCode: LiquidiumErrorCode.VALIDATION_ERROR,
       expectedMessage:
-        "ckLedger instant loan refund destination must be an IC principal or ICRC account",
+        "ICP instant loan refund destination must be an IC principal or ICRC account",
     },
     {
       name: "ckBTC refund rejects an ICP account identifier",
       requestOverrides: {
-        refundTransferMode: "ckLedger",
+        refundChain: "ICP",
         refundDestination: {
           type: "IcpAccountIdentifier",
           address: ACCOUNT_IDENTIFIER,
@@ -600,7 +600,7 @@ describe("InstantLoansModule create", () => {
       },
       expectedCode: LiquidiumErrorCode.VALIDATION_ERROR,
       expectedMessage:
-        "ckLedger instant loan refund destination must be an IC principal or ICRC account",
+        "ICP instant loan refund destination must be an IC principal or ICRC account",
     },
     {
       name: "native stablecoin borrow rejects an IC principal",
@@ -612,7 +612,7 @@ describe("InstantLoansModule create", () => {
       },
       expectedCode: LiquidiumErrorCode.VALIDATION_ERROR,
       expectedMessage:
-        "nativeAsset instant loan borrow destination must be an external chain address for USDT",
+        "ETH instant loan borrow destination must be an external chain address for USDT",
     },
     {
       name: "native stablecoin borrow rejects an ICRC account",
@@ -636,7 +636,7 @@ describe("InstantLoansModule create", () => {
       },
       expectedCode: LiquidiumErrorCode.VALIDATION_ERROR,
       expectedMessage:
-        "nativeAsset instant loan refund destination must be an external chain address for BTC",
+        "BTC instant loan refund destination must be an external chain address for BTC",
     },
     {
       name: "native BTC refund rejects an ICRC account",
@@ -761,9 +761,9 @@ describe("InstantLoansModule create", () => {
       borrowAmount: 999_999n,
       ltvMaxBps: 6_000n,
       depositWindowSeconds: 3_600n,
-      borrowTransferMode: "nativeAsset",
+      borrowChain: "ETH",
       borrowDestination: CHECKSUM_EVM_BORROW_ADDRESS,
-      refundTransferMode: "nativeAsset",
+      refundChain: "BTC",
       refundDestination: VALID_BTC_REFUND_ADDRESS,
     });
 
@@ -791,9 +791,9 @@ describe("InstantLoansModule create", () => {
       borrowAmount: 5_726_000_000n,
       ltvMaxBps: 6_000n,
       depositWindowSeconds: 3_600n,
-      borrowTransferMode: "nativeAsset",
+      borrowChain: "ETH",
       borrowDestination: CHECKSUM_EVM_BORROW_ADDRESS,
-      refundTransferMode: "nativeAsset",
+      refundChain: "BTC",
       refundDestination: "bc1qrefunddestination",
     });
 
@@ -822,9 +822,9 @@ describe("InstantLoansModule create", () => {
       borrowAmount: 5_726_000_000n,
       ltvMaxBps: 6_000n,
       depositWindowSeconds: 3_600n,
-      borrowTransferMode: "nativeAsset",
+      borrowChain: "ETH",
       borrowDestination: "not-an-evm-address",
-      refundTransferMode: "nativeAsset",
+      refundChain: "BTC",
       refundDestination: VALID_BTC_REFUND_ADDRESS,
     });
 
@@ -853,9 +853,9 @@ describe("InstantLoansModule create", () => {
       borrowAmount: 10_000_000n,
       ltvMaxBps: 6_000n,
       depositWindowSeconds: 3_600n,
-      borrowTransferMode: "nativeAsset",
+      borrowChain: "ETH",
       borrowDestination: "tb1qnotmainnet",
-      refundTransferMode: "nativeAsset",
+      refundChain: "BTC",
       refundDestination: CHECKSUM_EVM_BORROW_ADDRESS,
     });
 
@@ -884,9 +884,9 @@ describe("InstantLoansModule create", () => {
       borrowAmount: 10_000_000n,
       ltvMaxBps: 6_000n,
       depositWindowSeconds: 3_600n,
-      borrowTransferMode: "nativeAsset",
+      borrowChain: "ETH",
       borrowDestination: VALID_BTC_REFUND_ADDRESS,
-      refundTransferMode: "nativeAsset",
+      refundChain: "BTC",
       refundDestination: "not-an-evm-address",
     });
 
@@ -932,9 +932,9 @@ describe("InstantLoansModule create", () => {
       borrowAmount: 6_500_000_000n,
       ltvMaxBps: 6_500n,
       depositWindowSeconds: 3_600n,
-      borrowTransferMode: "nativeAsset",
+      borrowChain: "ETH",
       borrowDestination: "0x2222222222222222222222222222222222222222",
-      refundTransferMode: "nativeAsset",
+      refundChain: "BTC",
       refundDestination: VALID_BTC_REFUND_ADDRESS,
     });
 
@@ -980,9 +980,9 @@ describe("InstantLoansModule create", () => {
       borrowAmount: 5_726_000_000n,
       ltvMaxBps: 5_925n,
       depositWindowSeconds: 3_600n,
-      borrowTransferMode: "nativeAsset",
+      borrowChain: "ETH",
       borrowDestination: "0x2222222222222222222222222222222222222222",
-      refundTransferMode: "nativeAsset",
+      refundChain: "BTC",
       refundDestination: VALID_BTC_REFUND_ADDRESS,
     });
 
@@ -1025,9 +1025,9 @@ describe("InstantLoansModule create", () => {
       borrowAmount: 2_000_000n,
       ltvMaxBps: 7_001n,
       depositWindowSeconds: 3_600n,
-      borrowTransferMode: "nativeAsset",
+      borrowChain: "ETH",
       borrowDestination: "0x2222222222222222222222222222222222222222",
-      refundTransferMode: "nativeAsset",
+      refundChain: "BTC",
       refundDestination: VALID_BTC_REFUND_ADDRESS,
     });
 
@@ -1051,9 +1051,9 @@ function createInstantLoanRequest(
     borrowAmount: DEFAULT_BORROW_AMOUNT_BASE_UNITS,
     ltvMaxBps: DEFAULT_LTV_MAX_BPS,
     depositWindowSeconds: DEFAULT_DEPOSIT_WINDOW_SECONDS,
-    borrowTransferMode: "nativeAsset",
+    borrowChain: "ETH",
     borrowDestination: CHECKSUM_EVM_BORROW_ADDRESS,
-    refundTransferMode: "nativeAsset",
+    refundChain: "BTC",
     refundDestination: VALID_BTC_REFUND_ADDRESS,
     ...overrides,
   };

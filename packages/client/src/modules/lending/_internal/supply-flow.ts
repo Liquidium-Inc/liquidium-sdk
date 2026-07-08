@@ -18,11 +18,10 @@ import {
   SupplyAction,
 } from "../../../core/types";
 import { retryWithBackoff } from "../../../core/utils/retry";
-import {
-  type EthTransactionRequest,
-  type IcrcTransferDetails,
-  TransferMode,
-  type WalletAdapter,
+import type {
+  EthTransactionRequest,
+  IcrcTransferDetails,
+  WalletAdapter,
 } from "../../../core/wallet-actions";
 import {
   createApproveTransaction,
@@ -51,7 +50,6 @@ import {
 import {
   getEthStablecoinContractAddress,
   isEthStablecoin,
-  resolveSupplyMechanism,
   resolveSupplyTarget,
 } from "./supply-targets";
 
@@ -60,8 +58,6 @@ const SUBMIT_INFLOW_INITIAL_RETRY_DELAY_MS = 1_500;
 const SUBMIT_INFLOW_RETRY_BACKOFF_MULTIPLIER = 2;
 const ETH_APPROVAL_POLL_INTERVAL_MS = 2_000;
 const ETH_APPROVAL_MAX_POLLS = 30;
-const DEFAULT_SUPPLY_TRANSFER_MODE = TransferMode.nativeAsset;
-
 type SubmitInflowDefaults = Omit<SubmitInflowRequest, "txid">;
 type AllowanceExpectation = "zero" | "sufficient";
 
@@ -174,13 +170,12 @@ export class SupplyFlowExecutor {
 
   async create(request: SupplyFlowRequest): Promise<SupplyFlow> {
     const requestedMechanism = request.mechanism ?? null;
-    const transferMode = request.transferMode ?? DEFAULT_SUPPLY_TRANSFER_MODE;
     const target = await resolveSupplyTarget(this.params.canisterContext, {
       profileId: request.profileId,
       poolId: request.poolId,
       action: request.action,
       mechanism: requestedMechanism,
-      transferMode,
+      chain: request.chain,
     });
     const instruction: SupplyInstruction = {
       poolId: request.poolId,
@@ -189,12 +184,10 @@ export class SupplyFlowExecutor {
       action: request.action,
       target,
     };
-    const mechanism = resolveSupplyMechanism({
-      asset: instruction.asset,
-      chain: instruction.chain,
-      mechanism: requestedMechanism,
-      transferMode,
-    });
+    const mechanism =
+      requestedMechanism === PlanType.contractInteraction
+        ? PlanType.contractInteraction
+        : PlanType.transfer;
     const defaultSubmitInflowRequest = getDefaultSubmitInflowRequest({
       action: request.action,
       chain:
@@ -568,7 +561,6 @@ export class SupplyFlowExecutor {
           amountSats: params.amount,
           account: params.senderAccount,
           actionType: `supply-${params.action}`,
-          transferMode: TransferMode.nativeAsset,
         });
       }
       case Chain.ETH: {
@@ -584,7 +576,6 @@ export class SupplyFlowExecutor {
             chain: Chain.ETH,
             account: params.senderAccount,
             actionType: `supply-${params.action}`,
-            transferMode: TransferMode.nativeAsset,
             transaction: createTransferErc20Transaction({
               tokenAddress: getEthStablecoinContractAddress(params.asset),
               recipientAddress: params.toAddress,
@@ -597,7 +588,6 @@ export class SupplyFlowExecutor {
           chain: Chain.ETH,
           account: params.senderAccount,
           actionType: `supply-${params.action}`,
-          transferMode: TransferMode.nativeAsset,
           transaction: {
             to: params.toAddress,
             value: params.amount.toString(),
@@ -636,7 +626,6 @@ export class SupplyFlowExecutor {
       },
       account: params.senderAccount,
       actionType: `supply-${params.action}`,
-      transferMode: route.transferMode,
     });
   }
 
@@ -679,7 +668,6 @@ export class SupplyFlowExecutor {
       chain: Chain.ETH,
       account: walletAddress,
       actionType,
-      transferMode: TransferMode.nativeAsset,
       transaction: request,
     });
   }

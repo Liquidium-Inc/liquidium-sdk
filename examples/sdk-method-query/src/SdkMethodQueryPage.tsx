@@ -13,7 +13,6 @@ import type {
   Pool,
   QuoteRequest,
   SupplyPlanType,
-  TransferMode,
   WalletAdapter,
 } from "@liquidium/client";
 import { useMemo, useState } from "react";
@@ -263,7 +262,7 @@ const SDK_METHODS: MethodDefinition[] = [
     id: "instantLoans.create",
     label: "instantLoans.create",
     defaultArgs:
-      '{\n  "collateralPoolId": "hkmli-faaaa-aaaar-qb4ba-cai",\n  "borrowPoolId": "hnnn4-iyaaa-aaaar-qb4bq-cai",\n  "collateralAsset": "BTC",\n  "borrowAsset": "USDT",\n  "collateralAmount": "37000",\n  "borrowAmount": "9000000",\n  "ltvMaxBps": "6800",\n  "depositWindowSeconds": "3600",\n  "borrowTransferMode": "nativeAsset",\n  "borrowDestination": {\n    "type": "ChainAddress",\n    "address": "0xYourBorrowAddress"\n  },\n  "refundTransferMode": "nativeAsset",\n  "refundDestination": {\n    "type": "ChainAddress",\n    "address": "bc1qYourRefundAddress"\n  }\n}',
+      '{\n  "collateralPoolId": "hkmli-faaaa-aaaar-qb4ba-cai",\n  "borrowPoolId": "hnnn4-iyaaa-aaaar-qb4bq-cai",\n  "collateralAsset": "BTC",\n  "borrowAsset": "USDT",\n  "collateralAmount": "37000",\n  "borrowAmount": "9000000",\n  "ltvMaxBps": "6800",\n  "depositWindowSeconds": "3600",\n  "borrowChain": "ETH",\n  "borrowDestination": {\n    "type": "ChainAddress",\n    "address": "0xYourBorrowAddress"\n  },\n  "refundChain": "BTC",\n  "refundDestination": {\n    "type": "ChainAddress",\n    "address": "bc1qYourRefundAddress"\n  }\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
       return await client.instantLoans.create({
@@ -287,18 +286,12 @@ const SDK_METHODS: MethodDefinition[] = [
           args.depositWindowSeconds,
           "depositWindowSeconds"
         ),
-        borrowTransferMode: expectTransferMode(
-          args.borrowTransferMode,
-          "borrowTransferMode"
-        ),
+        borrowChain: expectChain(args.borrowChain, "borrowChain"),
         borrowDestination: expectInstantLoanAccount(
           args.borrowDestination,
           "borrowDestination"
         ),
-        refundTransferMode: expectTransferMode(
-          args.refundTransferMode,
-          "refundTransferMode"
-        ),
+        refundChain: expectChain(args.refundChain, "refundChain"),
         refundDestination: expectInstantLoanAccount(
           args.refundDestination,
           "refundDestination"
@@ -534,10 +527,7 @@ const SDK_METHODS: MethodDefinition[] = [
         args.mechanism,
         "mechanism"
       );
-      const transferMode = expectOptionalTransferMode(
-        args.transferMode,
-        "transferMode"
-      );
+      const chain = expectOptionalChain(args.chain, "chain");
 
       if (mechanism === "contractInteraction") {
         return await client.lending.supply({
@@ -559,7 +549,7 @@ const SDK_METHODS: MethodDefinition[] = [
           profileId: expectNonEmptyString(args.profileId, "profileId"),
           poolId: expectNonEmptyString(args.poolId, "poolId"),
           action: expectSupplyAction(args.action, "action"),
-          transferMode,
+          chain,
           account: expectNonEmptyString(args.account, "account"),
           amount: expectBigInt(args.amount, "amount"),
           walletAdapter,
@@ -570,7 +560,7 @@ const SDK_METHODS: MethodDefinition[] = [
         profileId: expectNonEmptyString(args.profileId, "profileId"),
         poolId: expectNonEmptyString(args.poolId, "poolId"),
         action: expectSupplyAction(args.action, "action"),
-        transferMode,
+        chain,
       });
     },
   },
@@ -583,10 +573,6 @@ const SDK_METHODS: MethodDefinition[] = [
       return await client.lending.estimateInflowFee({
         asset: expectAsset(args.asset, "asset"),
         chain: expectChain(args.chain, "chain"),
-        transferMode: expectOptionalTransferMode(
-          args.transferMode,
-          "transferMode"
-        ),
       });
     },
   },
@@ -1184,32 +1170,6 @@ function expectOptionalSupplyMechanism(
   }
 
   throw new Error(`${fieldName} must be transfer or contractInteraction.`);
-}
-
-function expectOptionalTransferMode(
-  value: unknown,
-  fieldName: string
-): TransferMode | undefined {
-  const transferMode = expectOptionalString(value, fieldName);
-  if (!transferMode) {
-    return undefined;
-  }
-
-  if (transferMode === "nativeAsset" || transferMode === "ckLedger") {
-    return transferMode;
-  }
-
-  throw new Error(`${fieldName} must be nativeAsset or ckLedger.`);
-}
-
-function expectTransferMode(value: unknown, fieldName: string): TransferMode {
-  const transferMode = expectNonEmptyString(value, fieldName);
-
-  if (transferMode === "nativeAsset" || transferMode === "ckLedger") {
-    return transferMode;
-  }
-
-  throw new Error(`${fieldName} must be nativeAsset or ckLedger.`);
 }
 
 function expectInflowOperation(

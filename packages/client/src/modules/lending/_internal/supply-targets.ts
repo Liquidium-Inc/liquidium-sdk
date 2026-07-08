@@ -22,7 +22,6 @@ import { isPoolLedgerAsset } from "../../../core/pool-ledger-assets";
 import type { CanisterContext } from "../../../core/transports/canister-context";
 import { Asset, Chain, type SupplyAction } from "../../../core/types";
 import { encodeInflowSubaccount } from "../../../core/utils/inflow-subaccount";
-import { TransferMode } from "../../../core/wallet-actions";
 import {
   type ChainAddressSupplyTarget,
   type IcpLedgerAccountSupplyTarget,
@@ -36,7 +35,7 @@ export interface ResolveSupplyTargetRequest {
   poolId: string;
   action: SupplyAction;
   mechanism: SupplyPlanType | null;
-  transferMode: TransferMode;
+  chain?: Chain;
 }
 
 interface SupplyTargetRequest {
@@ -48,9 +47,9 @@ interface SupplyTargetRequest {
 
 interface ResolveSupplyMechanismParams {
   asset: string;
-  chain: string;
+  poolChain: string;
+  transferChain: string;
   mechanism: SupplyPlanType | null;
-  transferMode: TransferMode;
 }
 
 export async function resolveSupplyTarget(
@@ -59,30 +58,31 @@ export async function resolveSupplyTarget(
 ): Promise<SupplyTarget> {
   const selectedPool = await getPoolById(canisterContext, request.poolId);
   const asset = selectedPool.asset;
-  const chain = selectedPool.chain;
+  const poolChain = selectedPool.chain;
+  const transferChain = request.chain ?? poolChain;
   const mechanism = resolveSupplyMechanism({
     asset,
-    chain,
+    poolChain,
+    transferChain,
     mechanism: request.mechanism,
-    transferMode: request.transferMode,
   });
 
   switch (mechanism) {
     case SupplyPlanType.transfer:
-      if (asset === Asset.ICP && chain === Chain.ICP) {
+      if (asset === Asset.ICP && transferChain === Chain.ICP) {
         return getIcpLedgerAccountSupplyTarget(request.profileId, {
           poolId: request.poolId,
           asset,
-          chain,
+          chain: transferChain,
           action: request.action,
         });
       }
 
-      if (request.transferMode === TransferMode.ckLedger) {
+      if (transferChain === Chain.ICP) {
         return getIcrcAccountSupplyTarget(request.profileId, {
           poolId: request.poolId,
           asset,
-          chain,
+          chain: transferChain,
           action: request.action,
         });
       }
@@ -93,7 +93,7 @@ export async function resolveSupplyTarget(
         {
           poolId: request.poolId,
           asset,
-          chain,
+          chain: poolChain,
           action: request.action,
         }
       );
@@ -101,7 +101,7 @@ export async function resolveSupplyTarget(
       return getIcrcAccountSupplyTarget(request.profileId, {
         poolId: request.poolId,
         asset,
-        chain,
+        chain: transferChain,
         action: request.action,
       });
   }
@@ -110,18 +110,18 @@ export async function resolveSupplyTarget(
 export function resolveSupplyMechanism(
   params: ResolveSupplyMechanismParams
 ): SupplyPlanType {
-  if (params.transferMode === TransferMode.ckLedger) {
+  if (params.transferChain === Chain.ICP && params.asset !== Asset.ICP) {
     if (params.mechanism === SupplyPlanType.contractInteraction) {
       throw new LiquidiumError(
         LiquidiumErrorCode.VALIDATION_ERROR,
-        "ck transfer mode is not supported for contract-interaction supply"
+        "ICP-chain supply is not supported for contract-interaction supply"
       );
     }
 
     return SupplyPlanType.transfer;
   }
 
-  if (params.asset === Asset.BTC && params.chain === Chain.BTC) {
+  if (params.asset === Asset.BTC && params.poolChain === Chain.BTC) {
     if (params.mechanism === SupplyPlanType.contractInteraction) {
       throw new LiquidiumError(
         LiquidiumErrorCode.VALIDATION_ERROR,
@@ -132,7 +132,7 @@ export function resolveSupplyMechanism(
     return SupplyPlanType.transfer;
   }
 
-  if (isEthStablecoin(params.asset, params.chain)) {
+  if (isEthStablecoin(params.asset, params.poolChain)) {
     if (params.mechanism) {
       return params.mechanism;
     }
@@ -140,7 +140,7 @@ export function resolveSupplyMechanism(
     return SupplyPlanType.transfer;
   }
 
-  if (params.asset === Asset.ICP && params.chain === Chain.ICP) {
+  if (params.asset === Asset.ICP && params.poolChain === Chain.ICP) {
     if (params.mechanism === SupplyPlanType.contractInteraction) {
       throw new LiquidiumError(
         LiquidiumErrorCode.VALIDATION_ERROR,
@@ -153,7 +153,7 @@ export function resolveSupplyMechanism(
 
   throw new LiquidiumError(
     LiquidiumErrorCode.VALIDATION_ERROR,
-    `No supply mechanism is configured for ${params.asset} on ${params.chain}`
+    `No supply mechanism is configured for ${params.asset} on ${params.transferChain}`
   );
 }
 

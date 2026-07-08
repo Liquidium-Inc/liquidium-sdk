@@ -58,7 +58,6 @@ export type {
   WalletAdapter,
 } from "./core/wallet-actions";
 export {
-  TransferMode,
   WalletActionKind,
   WalletExecutionKind,
 } from "./core/wallet-actions";
@@ -130,7 +129,7 @@ export type {
   InstantLoanCollateral,
   InstantLoanConfig,
   InstantLoanCreatedEventType,
-  InstantLoanDeliveryTransferModeOptions,
+  InstantLoanDeliveryChainOptions,
   InstantLoanDepositTimerExceededEventType,
   InstantLoanDepositTimerStartedEventType,
   InstantLoanDestination,
@@ -143,17 +142,17 @@ export type {
   InstantLoanGetByIdRequest,
   InstantLoanGetByRefRequest,
   InstantLoanGetRequest,
+  InstantLoanInflowChainOptions,
   InstantLoanInitialDeposit,
   InstantLoanLeg,
   InstantLoanListEventsRequest,
-  InstantLoanOutflowTransferModeOptions,
+  InstantLoanOutflowChainOptions,
   InstantLoanPositionSummary,
   InstantLoanProfileWarmedEventType,
   InstantLoanRepayCompleteEventType,
   InstantLoanRepayment,
   InstantLoanStuckFundsWithdrawalRequestedEventType,
   InstantLoanTerms,
-  InstantLoanTransferModeOptions,
   InstantLoanWarmedProfile,
 } from "./modules/instant-loans";
 export {

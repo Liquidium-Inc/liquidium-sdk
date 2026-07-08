@@ -6,7 +6,6 @@ import type {
   OutflowDetails,
   Pool,
   SupplyFlow,
-  TransferMode,
   WalletAdapter,
 } from "@liquidium/client";
 import { Chain, SupplyAction } from "@liquidium/client";
@@ -17,6 +16,8 @@ type MarketData = {
   assetPrices: AssetPrices;
 };
 
+type ChainSelection = "poolChain" | "icpLedger";
+
 type GetOrCreateWalletProfileParams = {
   account: string;
   walletAdapter: WalletAdapter;
@@ -25,7 +26,7 @@ type GetOrCreateWalletProfileParams = {
 type CreateDepositAddressSupplyParams = {
   profileId: string;
   poolId: string;
-  transferMode: TransferMode;
+  chainSelection: ChainSelection;
 };
 
 type RegisterSupplyTxidParams = {
@@ -86,13 +87,13 @@ export async function getOrCreateWalletProfile({
 export async function createDepositAddressSupply({
   profileId,
   poolId,
-  transferMode,
+  chainSelection,
 }: CreateDepositAddressSupplyParams): Promise<SupplyFlow> {
   return await client.lending.supply({
     profileId,
     poolId,
     action: SupplyAction.deposit,
-    transferMode,
+    chain: chainSelection === "icpLedger" ? Chain.ICP : undefined,
   });
 }
 

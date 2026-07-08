@@ -3,7 +3,6 @@ import type {
   ActivityFilter,
   Pool,
   SupplyAction as SupplyActionType,
-  TransferMode,
 } from "@liquidium/client";
 import { Chain, SupplyAction } from "@liquidium/client";
 import { useEffect, useState } from "react";
@@ -33,7 +32,7 @@ import {
 } from "./sdk-example";
 
 const DEFAULT_SUPPLY_AMOUNT_BTC = "0.0001";
-const DEFAULT_TRANSFER_MODE: TransferMode = "nativeAsset";
+const DEFAULT_TRANSFER_CHAIN = Chain.BTC;
 
 export function App() {
   const isStatusPage = window.location.pathname.endsWith("/status.html");
@@ -52,8 +51,8 @@ function BtcInteractionsPage() {
   const [supplyAction, setSupplyAction] = useState<SupplyActionType>(
     SupplyAction.deposit
   );
-  const [transferMode, setTransferMode] = useState<TransferMode>(
-    DEFAULT_TRANSFER_MODE
+  const [transferChain, setTransferChain] = useState<Chain>(
+    DEFAULT_TRANSFER_CHAIN
   );
   const [supplyAmount, setSupplyAmount] = useState(DEFAULT_SUPPLY_AMOUNT_BTC);
   const [supplyResult, setSupplyResult] = useState(
@@ -108,24 +107,24 @@ function BtcInteractionsPage() {
       throw new Error("Enter a profile id.");
     }
 
-    const isCkTransferMode = transferMode === "ckLedger";
+    const isCkTransfer = transferChain === Chain.ICP;
     setStatus(
-      isCkTransferMode
+      isCkTransfer
         ? `Generating ckBTC ${supplyAction} target...`
         : `Submitting BTC ${supplyAction}...`
     );
     setSupplyResult(
-      isCkTransferMode
+      isCkTransfer
         ? `Generating ckBTC ${supplyAction} target...`
         : `Submitting BTC ${supplyAction}...`
     );
 
-    const supplyFlow = isCkTransferMode
+    const supplyFlow = isCkTransfer
       ? await createBtcSupplyTarget({
           profileId: trimmedProfileId,
           poolId: selectedPool.id,
           action: supplyAction,
-          transferMode,
+          chain: transferChain,
         })
       : await submitBtcSupply({
           profileId: trimmedProfileId,
@@ -144,7 +143,7 @@ function BtcInteractionsPage() {
       [
         `Sent amount: ${formatAmount(amount, selectedPool.decimals)} ${selectedPool.asset}`,
         `Action: ${supplyAction}`,
-        `Transfer mode: ${formatTransferMode(transferMode)}`,
+        `Transfer chain: ${formatTransferChain(transferChain)}`,
         "",
         formatBtcSupplyFlow(supplyFlow, supplyAction),
         "",
@@ -240,16 +239,14 @@ function BtcInteractionsPage() {
           ))}
         </select>
 
-        <label htmlFor="transfer-mode-select">Transfer mode</label>
+        <label htmlFor="transfer-chain-select">Transfer chain</label>
         <select
-          id="transfer-mode-select"
-          value={transferMode}
-          onChange={(event) =>
-            setTransferMode(event.target.value as TransferMode)
-          }
+          id="transfer-chain-select"
+          value={transferChain}
+          onChange={(event) => setTransferChain(event.target.value as Chain)}
         >
-          <option value="nativeAsset">Native BTC wallet transaction</option>
-          <option value="ckLedger">Direct ckBTC / ICRC ledger account</option>
+          <option value={Chain.BTC}>Native BTC wallet transaction</option>
+          <option value={Chain.ICP}>Direct ckBTC / ICRC ledger account</option>
         </select>
         <p>
           Native mode broadcasts with the connected Bitcoin wallet. ck mode
@@ -282,7 +279,7 @@ function BtcInteractionsPage() {
             void run(submitBtcInteraction, setStatus, setSupplyResult)
           }
         >
-          {transferMode === "ckLedger"
+          {transferChain === Chain.ICP
             ? "Get ckBTC Transfer Target"
             : "Submit BTC Transaction With Dynamic Wallet"}
         </button>
@@ -297,8 +294,8 @@ function BtcInteractionsPage() {
   );
 }
 
-function formatTransferMode(transferMode: TransferMode): string {
-  return transferMode === "ckLedger"
+function formatTransferChain(transferChain: Chain): string {
+  return transferChain === Chain.ICP
     ? "Direct ckBTC / ICRC ledger account"
     : "Native BTC wallet transaction";
 }

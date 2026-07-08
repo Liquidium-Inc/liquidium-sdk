@@ -58,7 +58,6 @@ export function executeWith(options: ExecuteWithOptions) {
           message: action.message,
           account: options.account ?? action.account,
           actionType: action.actionType,
-          transferMode: action.transferMode,
         });
 
         return action.submit({

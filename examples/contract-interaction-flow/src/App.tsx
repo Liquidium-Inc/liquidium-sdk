@@ -3,7 +3,6 @@ import type {
   ActivityFilter,
   OutflowAccountType,
   Pool,
-  TransferMode,
 } from "@liquidium/client";
 import { Chain } from "@liquidium/client";
 import { useEffect, useState } from "react";
@@ -42,10 +41,11 @@ const DEFAULT_BORROW_ASSET = "USDC";
 
 type ContractInteractionTab = "supply" | "repay" | "borrow" | "withdraw";
 type StablecoinInflowMode = "contractInteraction" | "ck";
+type ChainSelection = "poolChain" | "icpLedger";
 
 const DEFAULT_STABLECOIN_INFLOW_MODE: StablecoinInflowMode =
   "contractInteraction";
-const DEFAULT_OUTFLOW_TRANSFER_MODE: TransferMode = "nativeAsset";
+const DEFAULT_OUTFLOW_CHAIN_SELECTION: ChainSelection = "poolChain";
 const DEFAULT_OUTFLOW_ACCOUNT_TYPE: OutflowAccountType = "ChainAddress";
 const EXTERNAL_CHAIN_OUTFLOW_ACCOUNT_TYPES: OutflowAccountType[] = [
   "ChainAddress",
@@ -88,9 +88,8 @@ function ContractInteractionPage() {
     "No contract interaction repayment submitted yet."
   );
   const [borrowAmount, setBorrowAmount] = useState("9");
-  const [borrowTransferMode, setBorrowTransferMode] = useState<TransferMode>(
-    DEFAULT_OUTFLOW_TRANSFER_MODE
-  );
+  const [borrowChainSelection, setBorrowChainSelection] =
+    useState<ChainSelection>(DEFAULT_OUTFLOW_CHAIN_SELECTION);
   const [borrowDestination, setBorrowDestination] = useState("");
   const [borrowDestinationType, setBorrowDestinationType] =
     useState<OutflowAccountType>(DEFAULT_OUTFLOW_ACCOUNT_TYPE);
@@ -98,8 +97,8 @@ function ContractInteractionPage() {
     "Connect a wallet, then submit a borrow."
   );
   const [withdrawAmount, setWithdrawAmount] = useState("1");
-  const [withdrawTransferMode, setWithdrawTransferMode] =
-    useState<TransferMode>(DEFAULT_OUTFLOW_TRANSFER_MODE);
+  const [withdrawChainSelection, setWithdrawChainSelection] =
+    useState<ChainSelection>(DEFAULT_OUTFLOW_CHAIN_SELECTION);
   const [withdrawDestination, setWithdrawDestination] = useState("");
   const [withdrawDestinationType, setWithdrawDestinationType] =
     useState<OutflowAccountType>(DEFAULT_OUTFLOW_ACCOUNT_TYPE);
@@ -133,18 +132,18 @@ function ContractInteractionPage() {
       setSelectedRepaymentPoolId(defaultContractInteractionPool?.id ?? "");
       setSelectedBorrowPoolId(defaultBorrowPool?.id ?? "");
       setSelectedWithdrawPoolId(defaultBorrowPool?.id ?? "");
-      setBorrowTransferMode(DEFAULT_OUTFLOW_TRANSFER_MODE);
-      setWithdrawTransferMode(DEFAULT_OUTFLOW_TRANSFER_MODE);
+      setBorrowChainSelection(DEFAULT_OUTFLOW_CHAIN_SELECTION);
+      setWithdrawChainSelection(DEFAULT_OUTFLOW_CHAIN_SELECTION);
       setBorrowDestinationType(
         getDefaultOutflowAccountType(
           defaultBorrowPool,
-          DEFAULT_OUTFLOW_TRANSFER_MODE
+          DEFAULT_OUTFLOW_CHAIN_SELECTION
         )
       );
       setWithdrawDestinationType(
         getDefaultOutflowAccountType(
           defaultBorrowPool,
-          DEFAULT_OUTFLOW_TRANSFER_MODE
+          DEFAULT_OUTFLOW_CHAIN_SELECTION
         )
       );
       setStatus(
@@ -213,18 +212,18 @@ function ContractInteractionPage() {
     setSelectedRepaymentPoolId(defaultContractInteractionPool?.id ?? "");
     setSelectedBorrowPoolId(defaultBorrowPool?.id ?? "");
     setSelectedWithdrawPoolId(defaultBorrowPool?.id ?? "");
-    setBorrowTransferMode(DEFAULT_OUTFLOW_TRANSFER_MODE);
-    setWithdrawTransferMode(DEFAULT_OUTFLOW_TRANSFER_MODE);
+    setBorrowChainSelection(DEFAULT_OUTFLOW_CHAIN_SELECTION);
+    setWithdrawChainSelection(DEFAULT_OUTFLOW_CHAIN_SELECTION);
     setBorrowDestinationType(
       getDefaultOutflowAccountType(
         defaultBorrowPool,
-        DEFAULT_OUTFLOW_TRANSFER_MODE
+        DEFAULT_OUTFLOW_CHAIN_SELECTION
       )
     );
     setWithdrawDestinationType(
       getDefaultOutflowAccountType(
         defaultBorrowPool,
-        DEFAULT_OUTFLOW_TRANSFER_MODE
+        DEFAULT_OUTFLOW_CHAIN_SELECTION
       )
     );
     setStatus(
@@ -407,7 +406,7 @@ function ContractInteractionPage() {
     saveRecentActivityId(outflow.id);
     setBorrowResult(
       [
-        `Transfer mode: ${formatOutflowTransferMode(selectedBorrowPool, borrowTransferMode)}`,
+        `Transfer chain: ${formatOutflowChainSelection(selectedBorrowPool, borrowChainSelection)}`,
         "",
         formatOutflowDetails(outflow),
       ].join("\n")
@@ -451,7 +450,7 @@ function ContractInteractionPage() {
     saveRecentActivityId(outflow.id);
     setWithdrawResult(
       [
-        `Transfer mode: ${formatOutflowTransferMode(selectedWithdrawPool, withdrawTransferMode)}`,
+        `Transfer chain: ${formatOutflowChainSelection(selectedWithdrawPool, withdrawChainSelection)}`,
         "",
         formatOutflowDetails(outflow),
       ].join("\n")
@@ -694,9 +693,9 @@ function ContractInteractionPage() {
                 setSelectedOutflowPool({
                   poolId: event.target.value,
                   pools,
-                  transferMode: DEFAULT_OUTFLOW_TRANSFER_MODE,
+                  chainSelection: DEFAULT_OUTFLOW_CHAIN_SELECTION,
                   setSelectedPoolId: setSelectedBorrowPoolId,
-                  setTransferMode: setBorrowTransferMode,
+                  setChainSelection: setBorrowChainSelection,
                   setDestinationType: setBorrowDestinationType,
                   setDestination: setBorrowDestination,
                 })
@@ -709,27 +708,27 @@ function ContractInteractionPage() {
               ))}
             </select>
 
-            <label htmlFor="borrow-transfer-mode-select">Transfer mode</label>
+            <label htmlFor="borrow-chain-select">Borrow chain</label>
             <select
-              id="borrow-transfer-mode-select"
-              value={borrowTransferMode}
+              id="borrow-chain-select"
+              value={borrowChainSelection}
               onChange={(event) =>
-                setSelectedOutflowTransferMode({
-                  transferMode: event.target.value as TransferMode,
+                setSelectedOutflowChainSelection({
+                  chainSelection: event.target.value as ChainSelection,
                   pool: pools.find((pool) => pool.id === selectedBorrowPoolId),
-                  setTransferMode: setBorrowTransferMode,
+                  setChainSelection: setBorrowChainSelection,
                   setDestinationType: setBorrowDestinationType,
                   setDestination: setBorrowDestination,
                 })
               }
             >
-              {getOutflowTransferModeOptions(
+              {getOutflowChainSelectionOptions(
                 pools.find((pool) => pool.id === selectedBorrowPoolId)
-              ).map((transferMode) => (
-                <option key={transferMode} value={transferMode}>
-                  {formatOutflowTransferMode(
+              ).map((chainSelection) => (
+                <option key={chainSelection} value={chainSelection}>
+                  {formatOutflowChainSelection(
                     pools.find((pool) => pool.id === selectedBorrowPoolId),
-                    transferMode
+                    chainSelection
                   )}
                 </option>
               ))}
@@ -761,7 +760,7 @@ function ContractInteractionPage() {
             >
               {getOutflowAccountTypeOptions(
                 pools.find((pool) => pool.id === selectedBorrowPoolId),
-                borrowTransferMode
+                borrowChainSelection
               ).map((accountType) => (
                 <option key={accountType} value={accountType}>
                   {formatOutflowAccountType(accountType)}
@@ -797,9 +796,9 @@ function ContractInteractionPage() {
                 setSelectedOutflowPool({
                   poolId: event.target.value,
                   pools,
-                  transferMode: DEFAULT_OUTFLOW_TRANSFER_MODE,
+                  chainSelection: DEFAULT_OUTFLOW_CHAIN_SELECTION,
                   setSelectedPoolId: setSelectedWithdrawPoolId,
-                  setTransferMode: setWithdrawTransferMode,
+                  setChainSelection: setWithdrawChainSelection,
                   setDestinationType: setWithdrawDestinationType,
                   setDestination: setWithdrawDestination,
                 })
@@ -812,29 +811,29 @@ function ContractInteractionPage() {
               ))}
             </select>
 
-            <label htmlFor="withdraw-transfer-mode-select">Transfer mode</label>
+            <label htmlFor="withdraw-chain-select">Withdraw chain</label>
             <select
-              id="withdraw-transfer-mode-select"
-              value={withdrawTransferMode}
+              id="withdraw-chain-select"
+              value={withdrawChainSelection}
               onChange={(event) =>
-                setSelectedOutflowTransferMode({
-                  transferMode: event.target.value as TransferMode,
+                setSelectedOutflowChainSelection({
+                  chainSelection: event.target.value as ChainSelection,
                   pool: pools.find(
                     (pool) => pool.id === selectedWithdrawPoolId
                   ),
-                  setTransferMode: setWithdrawTransferMode,
+                  setChainSelection: setWithdrawChainSelection,
                   setDestinationType: setWithdrawDestinationType,
                   setDestination: setWithdrawDestination,
                 })
               }
             >
-              {getOutflowTransferModeOptions(
+              {getOutflowChainSelectionOptions(
                 pools.find((pool) => pool.id === selectedWithdrawPoolId)
-              ).map((transferMode) => (
-                <option key={transferMode} value={transferMode}>
-                  {formatOutflowTransferMode(
+              ).map((chainSelection) => (
+                <option key={chainSelection} value={chainSelection}>
+                  {formatOutflowChainSelection(
                     pools.find((pool) => pool.id === selectedWithdrawPoolId),
-                    transferMode
+                    chainSelection
                   )}
                 </option>
               ))}
@@ -866,7 +865,7 @@ function ContractInteractionPage() {
             >
               {getOutflowAccountTypeOptions(
                 pools.find((pool) => pool.id === selectedWithdrawPoolId),
-                withdrawTransferMode
+                withdrawChainSelection
               ).map((accountType) => (
                 <option key={accountType} value={accountType}>
                   {formatOutflowAccountType(accountType)}
@@ -907,9 +906,9 @@ function formatStablecoinInflowMode(mode: StablecoinInflowMode): string {
 
 function getDefaultOutflowAccountType(
   pool: Pool | undefined,
-  transferMode: TransferMode
+  chainSelection: ChainSelection
 ): OutflowAccountType {
-  if (transferMode === "ckLedger" && pool?.chain !== Chain.ICP) {
+  if (chainSelection === "icpLedger" && pool?.chain !== Chain.ICP) {
     return "IcPrincipal";
   }
 
@@ -918,13 +917,13 @@ function getDefaultOutflowAccountType(
 
 function getOutflowAccountTypeOptions(
   pool: Pool | undefined,
-  transferMode: TransferMode
+  chainSelection: ChainSelection
 ): OutflowAccountType[] {
   if (pool?.chain === Chain.ICP) {
     return ICP_OUTFLOW_ACCOUNT_TYPES;
   }
 
-  return transferMode === "ckLedger"
+  return chainSelection === "icpLedger"
     ? CK_OUTFLOW_ACCOUNT_TYPES
     : EXTERNAL_CHAIN_OUTFLOW_ACCOUNT_TYPES;
 }
@@ -945,47 +944,47 @@ function formatOutflowAccountType(accountType: OutflowAccountType): string {
 function setSelectedOutflowPool(params: {
   poolId: string;
   pools: Pool[];
-  transferMode: TransferMode;
+  chainSelection: ChainSelection;
   setSelectedPoolId(poolId: string): void;
-  setTransferMode(transferMode: TransferMode): void;
+  setChainSelection(chainSelection: ChainSelection): void;
   setDestinationType(accountType: OutflowAccountType): void;
   setDestination(destination: string): void;
 }): void {
   const selectedPool = params.pools.find((pool) => pool.id === params.poolId);
 
   params.setSelectedPoolId(params.poolId);
-  params.setTransferMode(params.transferMode);
+  params.setChainSelection(params.chainSelection);
   params.setDestinationType(
-    getDefaultOutflowAccountType(selectedPool, params.transferMode)
+    getDefaultOutflowAccountType(selectedPool, params.chainSelection)
   );
   params.setDestination("");
 }
 
-function setSelectedOutflowTransferMode(params: {
-  transferMode: TransferMode;
+function setSelectedOutflowChainSelection(params: {
+  chainSelection: ChainSelection;
   pool: Pool | undefined;
-  setTransferMode(transferMode: TransferMode): void;
+  setChainSelection(chainSelection: ChainSelection): void;
   setDestinationType(accountType: OutflowAccountType): void;
   setDestination(destination: string): void;
 }): void {
-  params.setTransferMode(params.transferMode);
+  params.setChainSelection(params.chainSelection);
   params.setDestinationType(
-    getDefaultOutflowAccountType(params.pool, params.transferMode)
+    getDefaultOutflowAccountType(params.pool, params.chainSelection)
   );
   params.setDestination("");
 }
 
-function getOutflowTransferModeOptions(pool: Pool | undefined): TransferMode[] {
-  return pool?.chain === Chain.ICP
-    ? ["nativeAsset"]
-    : ["nativeAsset", "ckLedger"];
+function getOutflowChainSelectionOptions(
+  pool: Pool | undefined
+): ChainSelection[] {
+  return pool?.chain === Chain.ICP ? ["poolChain"] : ["poolChain", "icpLedger"];
 }
 
-function formatOutflowTransferMode(
+function formatOutflowChainSelection(
   pool: Pool | undefined,
-  transferMode: TransferMode
+  chainSelection: ChainSelection
 ): string {
-  if (transferMode === "ckLedger" && pool?.chain !== Chain.ICP) {
+  if (chainSelection === "icpLedger" && pool?.chain !== Chain.ICP) {
     return `ck${pool?.asset ?? "asset"} to IC principal`;
   }
 

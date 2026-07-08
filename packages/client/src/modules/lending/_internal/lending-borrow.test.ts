@@ -66,7 +66,6 @@ describe("LendingModule borrow", () => {
     expect(borrowAction.kind).toBe("create-borrow");
     expect(borrowAction.executionKind).toBe("sign-message");
     expect(borrowAction.actionType).toBe("create-borrow");
-    expect(borrowAction.transferMode).toBe("nativeAsset");
     expect(borrowAction.account).toBe("0xsigner");
     expect(borrowAction.data).toMatchObject({
       profileId,
@@ -161,7 +160,6 @@ Nonce: 17`);
     });
 
     // then
-    expect(borrowAction.transferMode).toBe("ckLedger");
     expect(borrowAction.data.receiver).toEqual({
       address: VALID_IC_PRINCIPAL,
       type: "IcPrincipal",
@@ -212,7 +210,6 @@ Nonce: 17`);
     await borrowAction.submit({ signature: "0xsigned", chain: "ETH" });
 
     // then
-    expect(borrowAction.transferMode).toBe("ckLedger");
     expect(borrowAction.data.receiver).toEqual({
       address: VALID_IC_PRINCIPAL,
       type: "IcPrincipal",
@@ -269,7 +266,6 @@ Nonce: 17`);
     await borrowAction.submit({ signature: "0xsigned", chain: "ETH" });
 
     // then
-    expect(borrowAction.transferMode).toBe("nativeAsset");
     expect(borrowAction.message).toContain(`Icrc:${ICRC_ACCOUNT}`);
     expect(borrowAssets.mock.calls[0]?.[1]).toMatchObject({
       data: {
@@ -326,7 +322,6 @@ Nonce: 17`);
     await borrowAction.submit({ signature: "0xsigned", chain: "ETH" });
 
     // then
-    expect(borrowAction.transferMode).toBe("ckLedger");
     expect(borrowAction.message).toContain(`Icrc:${ICRC_ACCOUNT}`);
     expect(borrowAssets.mock.calls[0]?.[1]).toMatchObject({
       data: {
@@ -383,7 +378,6 @@ Nonce: 17`);
     await borrowAction.submit({ signature: "0xsigned", chain: "ETH" });
 
     // then
-    expect(borrowAction.transferMode).toBe("ckLedger");
     expect(borrowAction.message).toContain(`Icrc:${ICRC_ACCOUNT}`);
     expect(borrowAssets.mock.calls[0]?.[1]).toMatchObject({
       data: {
@@ -674,7 +668,6 @@ Nonce: 17`);
     expect(outflow.outflowType).toBe("borrow");
     expect(signMessage).toHaveBeenCalledWith({
       actionType: "create-borrow",
-      transferMode: "nativeAsset",
       chain: "ETH",
       message: expect.stringContaining("Liquidium: Borrow Assets"),
       account: "0xsigner",

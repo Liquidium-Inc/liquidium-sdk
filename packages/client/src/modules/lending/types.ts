@@ -22,7 +22,6 @@ import type {
   SendIcrcTransferRequest,
   SignatureInfo,
   SignMessageWalletAction,
-  TransferMode,
   WalletActionKind,
   WalletAdapter,
   WalletExecutionKind,
@@ -295,7 +294,8 @@ interface BaseSupplyFlowRequest {
   profileId: string;
   poolId: string;
   action: SupplyAction;
-  transferMode?: TransferMode;
+  /** Transfer chain to use. Pass ICP for ck-ledger transfers. Defaults to the pool chain. */
+  chain?: Chain;
 }
 
 /** Manual transfer-based `lending.supply` request. */
@@ -401,10 +401,8 @@ export interface SubmitInflowResponse {
 export interface EstimateInflowFeeRequest {
   /** Asset to estimate for. */
   asset: Asset;
-  /** Chain to estimate for. */
+  /** Transfer chain to estimate for. Use ICP for ck-ledger asset transfers. */
   chain: Chain;
-  /** Asset transfer path to estimate. Defaults preserve existing native flows. */
-  transferMode?: TransferMode;
 }
 
 /** Request for an ETH stablecoin deposit address. */

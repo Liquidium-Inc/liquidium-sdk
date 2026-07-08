@@ -1,9 +1,5 @@
-import type {
-  AssetPrices,
-  InstantLoan,
-  Pool,
-  TransferMode,
-} from "@liquidium/client";
+import type { AssetPrices, InstantLoan, Pool } from "@liquidium/client";
+import { Chain } from "@liquidium/client";
 import { useEffect, useState } from "react";
 import { formatConfig } from "./client";
 import {
@@ -31,7 +27,7 @@ import {
 const PRICE_DISPLAY_DECIMALS = 8;
 const DEFAULT_COLLATERAL_ASSET = "BTC";
 const DEFAULT_BORROW_ASSET = "USDC";
-const DEFAULT_TRANSFER_MODE: TransferMode = "nativeAsset";
+const DEFAULT_TRANSFER_CHAIN: Chain = Chain.ETH;
 const DEFAULT_DESTINATION_TYPE: InstantLoanDestinationType = "ChainAddress";
 const CK_TARGET_ASSETS = new Set(["BTC", "USDC", "USDT"]);
 const CHAIN_ADDRESS_DESTINATION_TYPES: InstantLoanDestinationType[] = [
@@ -61,12 +57,8 @@ export function App() {
   const [selectedBorrowPoolId, setSelectedBorrowPoolId] = useState("");
   const [collateralAmount, setCollateralAmount] = useState("0.0002");
   const [borrowAmount, setBorrowAmount] = useState("9");
-  const [borrowTransferMode, setBorrowTransferMode] = useState<TransferMode>(
-    DEFAULT_TRANSFER_MODE
-  );
-  const [refundTransferMode, setRefundTransferMode] = useState<TransferMode>(
-    DEFAULT_TRANSFER_MODE
-  );
+  const [borrowChain, setBorrowChain] = useState<Chain>(DEFAULT_TRANSFER_CHAIN);
+  const [refundChain, setRefundChain] = useState<Chain>(DEFAULT_TRANSFER_CHAIN);
   const [borrowDestinationType, setBorrowDestinationType] =
     useState<InstantLoanDestinationType>(DEFAULT_DESTINATION_TYPE);
   const [maxLtv, setMaxLtv] = useState("30");
@@ -106,8 +98,8 @@ export function App() {
       resetDestinationControls({
         collateralPool: defaultCollateralPool,
         borrowPool: defaultBorrowPool,
-        setBorrowTransferMode,
-        setRefundTransferMode,
+        setBorrowChain,
+        setRefundChain,
         setBorrowDestinationType,
         setRefundDestinationType,
       });
@@ -142,8 +134,8 @@ export function App() {
     resetDestinationControls({
       collateralPool: defaultCollateralPool,
       borrowPool: defaultBorrowPool,
-      setBorrowTransferMode,
-      setRefundTransferMode,
+      setBorrowChain,
+      setRefundChain,
       setBorrowDestinationType,
       setRefundDestinationType,
     });
@@ -194,10 +186,10 @@ export function App() {
       borrowAmount: parsedBorrowAmount,
       ltvMaxBps,
       depositWindowSeconds: parsedDepositWindowSeconds,
-      borrowTransferMode,
+      borrowChain,
       borrowDestinationAddress: trimmedBorrowDestination,
       borrowDestinationType,
-      refundTransferMode,
+      refundChain,
       refundDestinationAddress: trimmedRefundDestination,
       refundDestinationType,
     });
@@ -261,10 +253,10 @@ export function App() {
     setSelectedCollateralPoolId(poolId);
     const pool = pools.find((candidatePool) => candidatePool.id === poolId);
 
-    setSelectedDestinationTransferMode({
+    setSelectedDestinationChain({
       pool,
-      transferMode: DEFAULT_TRANSFER_MODE,
-      setTransferMode: setRefundTransferMode,
+      transferChain: DEFAULT_TRANSFER_CHAIN,
+      setChain: setRefundChain,
       setDestinationType: setRefundDestinationType,
       setDestination: setRefundDestination,
     });
@@ -278,10 +270,10 @@ export function App() {
     setSelectedBorrowPoolId(poolId);
     const pool = pools.find((candidatePool) => candidatePool.id === poolId);
 
-    setSelectedDestinationTransferMode({
+    setSelectedDestinationChain({
       pool,
-      transferMode: DEFAULT_TRANSFER_MODE,
-      setTransferMode: setBorrowTransferMode,
+      transferChain: DEFAULT_TRANSFER_CHAIN,
+      setChain: setBorrowChain,
       setDestinationType: setBorrowDestinationType,
       setDestination: setBorrowDestination,
     });
@@ -391,31 +383,31 @@ export function App() {
         </label>
         <select
           id="borrow-transfer-mode-select"
-          value={borrowTransferMode}
+          value={borrowChain}
           onChange={(event) =>
-            setSelectedDestinationTransferMode({
+            setSelectedDestinationChain({
               pool: pools.find((pool) => pool.id === selectedBorrowPoolId),
-              transferMode: event.target.value as TransferMode,
-              setTransferMode: setBorrowTransferMode,
+              transferChain: event.target.value as Chain,
+              setChain: setBorrowChain,
               setDestinationType: setBorrowDestinationType,
               setDestination: setBorrowDestination,
             })
           }
         >
-          {getTransferModeOptions(
+          {getChainOptions(
             pools.find((pool) => pool.id === selectedBorrowPoolId)
-          ).map((transferMode) => (
-            <option key={transferMode} value={transferMode}>
-              {formatOutflowTransferMode(
+          ).map((transferChain) => (
+            <option key={transferChain} value={transferChain}>
+              {formatOutflowChain(
                 pools.find((pool) => pool.id === selectedBorrowPoolId),
-                transferMode
+                transferChain
               )}
             </option>
           ))}
         </select>
         {shouldShowDestinationTypeSelect(
           pools.find((pool) => pool.id === selectedBorrowPoolId),
-          borrowTransferMode
+          borrowChain
         ) ? (
           <>
             <label htmlFor="borrow-destination-type-select">
@@ -432,7 +424,7 @@ export function App() {
             >
               {getDestinationTypeOptions(
                 pools.find((pool) => pool.id === selectedBorrowPoolId),
-                borrowTransferMode
+                borrowChain
               ).map((destinationType) => (
                 <option key={destinationType} value={destinationType}>
                   {formatDestinationType(destinationType)}
@@ -460,31 +452,31 @@ export function App() {
         </label>
         <select
           id="refund-transfer-mode-select"
-          value={refundTransferMode}
+          value={refundChain}
           onChange={(event) =>
-            setSelectedDestinationTransferMode({
+            setSelectedDestinationChain({
               pool: pools.find((pool) => pool.id === selectedCollateralPoolId),
-              transferMode: event.target.value as TransferMode,
-              setTransferMode: setRefundTransferMode,
+              transferChain: event.target.value as Chain,
+              setChain: setRefundChain,
               setDestinationType: setRefundDestinationType,
               setDestination: setRefundDestination,
             })
           }
         >
-          {getTransferModeOptions(
+          {getChainOptions(
             pools.find((pool) => pool.id === selectedCollateralPoolId)
-          ).map((transferMode) => (
-            <option key={transferMode} value={transferMode}>
-              {formatOutflowTransferMode(
+          ).map((transferChain) => (
+            <option key={transferChain} value={transferChain}>
+              {formatOutflowChain(
                 pools.find((pool) => pool.id === selectedCollateralPoolId),
-                transferMode
+                transferChain
               )}
             </option>
           ))}
         </select>
         {shouldShowDestinationTypeSelect(
           pools.find((pool) => pool.id === selectedCollateralPoolId),
-          refundTransferMode
+          refundChain
         ) ? (
           <>
             <label htmlFor="refund-destination-type-select">
@@ -501,7 +493,7 @@ export function App() {
             >
               {getDestinationTypeOptions(
                 pools.find((pool) => pool.id === selectedCollateralPoolId),
-                refundTransferMode
+                refundChain
               ).map((destinationType) => (
                 <option key={destinationType} value={destinationType}>
                   {formatDestinationType(destinationType)}
@@ -620,62 +612,59 @@ export function App() {
 function resetDestinationControls(params: {
   collateralPool: Pool | undefined;
   borrowPool: Pool | undefined;
-  setBorrowTransferMode(transferMode: TransferMode): void;
-  setRefundTransferMode(transferMode: TransferMode): void;
+  setBorrowChain(transferChain: Chain): void;
+  setRefundChain(transferChain: Chain): void;
   setBorrowDestinationType(destinationType: InstantLoanDestinationType): void;
   setRefundDestinationType(destinationType: InstantLoanDestinationType): void;
 }): void {
-  const collateralTransferMode = getDefaultTransferMode(params.collateralPool);
-  const borrowTransferMode = getDefaultTransferMode(params.borrowPool);
+  const collateralChain = getDefaultChain(params.collateralPool);
+  const borrowChain = getDefaultChain(params.borrowPool);
 
-  params.setBorrowTransferMode(borrowTransferMode);
-  params.setRefundTransferMode(collateralTransferMode);
+  params.setBorrowChain(borrowChain);
+  params.setRefundChain(collateralChain);
   params.setBorrowDestinationType(
-    getDefaultDestinationType(params.borrowPool, borrowTransferMode)
+    getDefaultDestinationType(params.borrowPool, borrowChain)
   );
   params.setRefundDestinationType(
-    getDefaultDestinationType(params.collateralPool, collateralTransferMode)
+    getDefaultDestinationType(params.collateralPool, collateralChain)
   );
 }
 
-function setSelectedDestinationTransferMode(params: {
+function setSelectedDestinationChain(params: {
   pool: Pool | undefined;
-  transferMode: TransferMode;
-  setTransferMode(transferMode: TransferMode): void;
+  transferChain: Chain;
+  setChain(transferChain: Chain): void;
   setDestinationType(destinationType: InstantLoanDestinationType): void;
   setDestination(destination: string): void;
 }): void {
-  const transferMode = getSupportedTransferMode(
-    params.pool,
-    params.transferMode
-  );
+  const transferChain = getSupportedChain(params.pool, params.transferChain);
 
-  params.setTransferMode(transferMode);
+  params.setChain(transferChain);
   params.setDestinationType(
-    getDefaultDestinationType(params.pool, transferMode)
+    getDefaultDestinationType(params.pool, transferChain)
   );
   params.setDestination("");
 }
 
-function getDefaultTransferMode(_pool: Pool | undefined): TransferMode {
-  return DEFAULT_TRANSFER_MODE;
+function getDefaultChain(pool: Pool | undefined): Chain {
+  return (pool?.chain as Chain | undefined) ?? DEFAULT_TRANSFER_CHAIN;
 }
 
-function getSupportedTransferMode(
+function getSupportedChain(
   pool: Pool | undefined,
-  transferMode: TransferMode
-): TransferMode {
-  return getTransferModeOptions(pool).includes(transferMode)
-    ? transferMode
-    : getDefaultTransferMode(pool);
+  transferChain: Chain
+): Chain {
+  return getChainOptions(pool).includes(transferChain)
+    ? transferChain
+    : getDefaultChain(pool);
 }
 
-function getTransferModeOptions(pool: Pool | undefined): TransferMode[] {
+function getChainOptions(pool: Pool | undefined): Chain[] {
   if (pool?.chain === "ICP" || !CK_TARGET_ASSETS.has(pool?.asset ?? "")) {
-    return ["nativeAsset"];
+    return [getDefaultChain(pool)];
   }
 
-  return ["nativeAsset", "ckLedger"];
+  return [getDefaultChain(pool), Chain.ICP];
 }
 
 async function getLoanTargetOptions(params: {
@@ -695,24 +684,27 @@ async function getInitialDepositTargetOptions(params: {
 }): Promise<LoanTargetOption[]> {
   const targetOptions = [
     {
-      label: formatInflowTransferMode(params.collateralPool, "nativeAsset"),
+      label: formatInflowChain(
+        params.collateralPool,
+        getDefaultChain(params.collateralPool)
+      ),
       loan: params.loan,
     },
   ];
 
-  if (!getTransferModeOptions(params.collateralPool).includes("ckLedger")) {
+  if (!getChainOptions(params.collateralPool).includes(Chain.ICP)) {
     return targetOptions;
   }
 
   const ckTargetLoan = await getInstantLoan({
     loanId: params.loan.loanId,
-    initialDepositTransferMode: "ckLedger",
+    initialDepositChain: Chain.ICP,
   });
 
   return [
     ...targetOptions,
     {
-      label: formatInflowTransferMode(params.collateralPool, "ckLedger"),
+      label: formatInflowChain(params.collateralPool, Chain.ICP),
       loan: ckTargetLoan,
     },
   ];
@@ -724,24 +716,27 @@ async function getRepaymentTargetOptions(params: {
 }): Promise<LoanTargetOption[]> {
   const targetOptions = [
     {
-      label: formatInflowTransferMode(params.borrowPool, "nativeAsset"),
+      label: formatInflowChain(
+        params.borrowPool,
+        getDefaultChain(params.borrowPool)
+      ),
       loan: params.loan,
     },
   ];
 
-  if (!getTransferModeOptions(params.borrowPool).includes("ckLedger")) {
+  if (!getChainOptions(params.borrowPool).includes(Chain.ICP)) {
     return targetOptions;
   }
 
   const ckTargetLoan = await getInstantLoan({
     loanId: params.loan.loanId,
-    repaymentTransferMode: "ckLedger",
+    repaymentChain: Chain.ICP,
   });
 
   return [
     ...targetOptions,
     {
-      label: formatInflowTransferMode(params.borrowPool, "ckLedger"),
+      label: formatInflowChain(params.borrowPool, Chain.ICP),
       loan: ckTargetLoan,
     },
   ];
@@ -795,57 +790,57 @@ function formatRepaymentTargetOption(
 
 function getDefaultDestinationType(
   pool: Pool | undefined,
-  transferMode: TransferMode
+  transferChain: Chain
 ): InstantLoanDestinationType {
   if (pool?.chain === "ICP") {
     return "IcrcAccount";
   }
 
-  return transferMode === "ckLedger" ? "IcPrincipal" : "ChainAddress";
+  return transferChain === Chain.ICP ? "IcPrincipal" : "ChainAddress";
 }
 
 function getDestinationTypeOptions(
   pool: Pool | undefined,
-  transferMode: TransferMode
+  transferChain: Chain
 ): InstantLoanDestinationType[] {
   if (pool?.chain === "ICP") {
     return ICP_DESTINATION_TYPES;
   }
 
-  return transferMode === "ckLedger"
+  return transferChain === Chain.ICP
     ? CK_DESTINATION_TYPES
     : CHAIN_ADDRESS_DESTINATION_TYPES;
 }
 
 function shouldShowDestinationTypeSelect(
   pool: Pool | undefined,
-  transferMode: TransferMode
+  transferChain: Chain
 ): boolean {
-  return getDestinationTypeOptions(pool, transferMode).length > 1;
+  return getDestinationTypeOptions(pool, transferChain).length > 1;
 }
 
-function formatInflowTransferMode(
+function formatInflowChain(
   pool: Pool | undefined,
-  transferMode: TransferMode
+  transferChain: Chain
 ): string {
   if (pool?.chain === "ICP") {
     return "Native ICP ledger account";
   }
 
-  return transferMode === "ckLedger"
+  return transferChain === Chain.ICP
     ? `Direct ck${pool?.asset ?? "asset"} / ICRC ledger account`
     : `Native ${pool?.chain ?? "chain"} ingress address`;
 }
 
-function formatOutflowTransferMode(
+function formatOutflowChain(
   pool: Pool | undefined,
-  transferMode: TransferMode
+  transferChain: Chain
 ): string {
   if (pool?.chain === "ICP") {
     return "Native ICP ledger destination";
   }
 
-  return transferMode === "ckLedger"
+  return transferChain === Chain.ICP
     ? `ck${pool?.asset ?? "asset"} to IC principal`
     : `Native ${pool?.chain ?? "chain"} address`;
 }

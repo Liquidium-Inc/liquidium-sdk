@@ -4,7 +4,6 @@ import type {
   Pool,
   SupplyAction,
   SupplyFlow,
-  TransferMode,
   WalletAdapter,
 } from "@liquidium/client";
 import { Chain } from "@liquidium/client";
@@ -28,7 +27,7 @@ type CreateBtcSupplyTargetParams = {
   profileId: string;
   poolId: string;
   action: SupplyAction;
-  transferMode: TransferMode;
+  chain: Chain;
 };
 
 type ListProfileActivitiesParams = {
@@ -89,13 +88,13 @@ export async function createBtcSupplyTarget({
   profileId,
   poolId,
   action,
-  transferMode,
+  chain,
 }: CreateBtcSupplyTargetParams): Promise<SupplyFlow> {
   return await client.lending.supply({
     profileId,
     poolId,
     action,
-    transferMode,
+    chain,
   });
 }
 

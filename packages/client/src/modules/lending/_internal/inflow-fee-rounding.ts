@@ -1,6 +1,5 @@
 import { Asset, Chain } from "../../../core/types";
 import { ceilDivBigint } from "../../../core/utils/bigint";
-import { TransferMode } from "../../../core/wallet-actions";
 import type { EstimateInflowFeeRequest } from "../types";
 import { isEthStablecoin } from "./supply-targets";
 
@@ -21,21 +20,14 @@ export function roundInflowFeeEstimate(
     return 0n;
   }
 
-  if (
-    request.transferMode !== TransferMode.ckLedger &&
-    isEthStablecoin(request.asset, request.chain)
-  ) {
+  if (isEthStablecoin(request.asset, request.chain)) {
     return roundUpToNearest(
       totalFee,
       ETH_STABLECOIN_INFLOW_FEE_ROUND_UP_TO_NEAREST_10_CENTS
     );
   }
 
-  if (
-    request.transferMode !== TransferMode.ckLedger &&
-    request.asset === Asset.BTC &&
-    request.chain === Chain.BTC
-  ) {
+  if (request.asset === Asset.BTC && request.chain === Chain.BTC) {
     return roundUpToNearest(totalFee, BTC_INFLOW_FEE_ROUND_UP_TO_NEAREST_SATS);
   }
 

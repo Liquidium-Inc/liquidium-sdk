@@ -6,7 +6,6 @@ import {
   LiquidiumErrorCode,
   type SendIcrcTransferRequest,
   SupplyAction,
-  TransferMode,
 } from "../packages/client/src";
 import { CK_CANISTER_IDS } from "../packages/client/src/core/config";
 import { describeLive } from "./_internal/live";
@@ -55,55 +54,6 @@ describeLive("live lending e2e", () => {
       chain: Chain.BTC,
       action: SupplyAction.deposit,
     });
-  });
-
-  test("should estimate BTC and ETH stablecoin inflow fees", async () => {
-    // given
-    const client = new LiquidiumClient();
-    const pools = await client.market.listPools();
-    const stablecoinPool = selectBorrowPool(pools);
-
-    // when
-    const btcFeeEstimate = await client.lending.estimateInflowFee({
-      asset: Asset.BTC,
-      chain: Chain.BTC,
-    });
-    const stablecoinFeeEstimate = await client.lending.estimateInflowFee({
-      asset: stablecoinPool.asset as typeof Asset.USDC | typeof Asset.USDT,
-      chain: Chain.ETH,
-    });
-
-    // then
-    expect(btcFeeEstimate.totalFee).toBeGreaterThan(0n);
-    expect(stablecoinFeeEstimate.totalFee).toBeGreaterThan(0n);
-  });
-
-  test("should estimate live ck and ICP ledger inflow fees", async () => {
-    // given
-    const client = new LiquidiumClient();
-    const pools = await client.market.listPools();
-    const stablecoinPool = selectBorrowPool(pools);
-
-    // when
-    const ckBtcFeeEstimate = await client.lending.estimateInflowFee({
-      asset: Asset.BTC,
-      chain: Chain.BTC,
-      transferMode: TransferMode.ckLedger,
-    });
-    const ckStablecoinFeeEstimate = await client.lending.estimateInflowFee({
-      asset: stablecoinPool.asset as typeof Asset.USDC | typeof Asset.USDT,
-      chain: Chain.ETH,
-      transferMode: TransferMode.ckLedger,
-    });
-    const icpFeeEstimate = await client.lending.estimateInflowFee({
-      asset: Asset.ICP,
-      chain: Chain.ICP,
-    });
-
-    // then
-    expect(ckBtcFeeEstimate.totalFee).toBeGreaterThan(0n);
-    expect(ckStablecoinFeeEstimate.totalFee).toBeGreaterThan(0n);
-    expect(icpFeeEstimate.totalFee).toBeGreaterThan(0n);
   });
 
   test("should resolve a manual ICP supply target in both ledger account formats", async () => {
@@ -181,7 +131,6 @@ describeLive("live lending e2e", () => {
       asset: Asset.ICP,
       account: "icp-sender",
       actionType: "supply-deposit",
-      transferMode: TransferMode.nativeAsset,
       transfer: {
         ledgerCanisterId: CK_CANISTER_IDS.icp.ledger,
         amount: ICP_TRANSFER_AMOUNT_E8S,
@@ -215,7 +164,7 @@ describeLive("live lending e2e", () => {
       profileId,
       poolId: btcPool.id,
       action: SupplyAction.deposit,
-      transferMode: TransferMode.ckLedger,
+      chain: Chain.ICP,
       amount: CK_BTC_TRANSFER_AMOUNT_SATS,
       account: "ck-btc-sender",
       walletAdapter: {
@@ -229,11 +178,10 @@ describeLive("live lending e2e", () => {
     // then
     expect(ckBtcSupplyFlow.txid).toBe(FAKE_CK_BTC_TXID);
     expect(capturedTransferRequest).toMatchObject({
-      chain: Chain.BTC,
+      chain: Chain.ICP,
       asset: Asset.BTC,
       account: "ck-btc-sender",
       actionType: "supply-deposit",
-      transferMode: TransferMode.ckLedger,
       transfer: {
         ledgerCanisterId: CK_CANISTER_IDS.ckBTC.ledger,
         amount: CK_BTC_TRANSFER_AMOUNT_SATS,
@@ -267,7 +215,7 @@ describeLive("live lending e2e", () => {
       profileId,
       poolId: stablecoinPool.id,
       action: SupplyAction.repayment,
-      transferMode: TransferMode.ckLedger,
+      chain: Chain.ICP,
       amount: CK_STABLECOIN_TRANSFER_AMOUNT_BASE_UNITS,
       account: "ck-stablecoin-sender",
       walletAdapter: {
@@ -281,11 +229,10 @@ describeLive("live lending e2e", () => {
     // then
     expect(ckStablecoinSupplyFlow.txid).toBe(FAKE_CK_STABLECOIN_TXID);
     expect(capturedTransferRequest).toMatchObject({
-      chain: Chain.ETH,
+      chain: Chain.ICP,
       asset: stablecoinPool.asset,
       account: "ck-stablecoin-sender",
       actionType: "supply-repayment",
-      transferMode: TransferMode.ckLedger,
       transfer: {
         ledgerCanisterId: getExpectedStablecoinLedgerCanisterId(
           stablecoinPool.asset

@@ -1,7 +1,6 @@
 import { CK_CANISTER_IDS } from "./config";
 import { LiquidiumError, LiquidiumErrorCode } from "./errors";
 import { Asset, Chain } from "./types";
-import { TransferMode } from "./wallet-actions";
 
 export type PoolLedgerTransferAsset = Extract<
   Asset,
@@ -13,7 +12,6 @@ export interface PoolLedgerAssetRoute {
   ledgerCanisterId: string;
   asset: PoolLedgerTransferAsset;
   chain: PoolLedgerTransferChain;
-  transferMode: typeof TransferMode.ckLedger | typeof TransferMode.nativeAsset;
 }
 
 // Public asset symbols identify pool assets. On the IC side, BTC/USDT/USDC
@@ -23,30 +21,36 @@ export function getPoolLedgerAssetRoute(params: {
   asset: string;
   chain: string;
 }): PoolLedgerAssetRoute {
-  if (params.asset === Asset.BTC && params.chain === Chain.BTC) {
+  if (
+    params.asset === Asset.BTC &&
+    (params.chain === Chain.BTC || params.chain === Chain.ICP)
+  ) {
     return {
       ledgerCanisterId: CK_CANISTER_IDS.ckBTC.ledger,
       asset: Asset.BTC,
-      chain: Chain.BTC,
-      transferMode: TransferMode.ckLedger,
+      chain: params.chain,
     };
   }
 
-  if (params.asset === Asset.USDT && params.chain === Chain.ETH) {
+  if (
+    params.asset === Asset.USDT &&
+    (params.chain === Chain.ETH || params.chain === Chain.ICP)
+  ) {
     return {
       ledgerCanisterId: CK_CANISTER_IDS.ckUSDT.ledger,
       asset: Asset.USDT,
-      chain: Chain.ETH,
-      transferMode: TransferMode.ckLedger,
+      chain: params.chain,
     };
   }
 
-  if (params.asset === Asset.USDC && params.chain === Chain.ETH) {
+  if (
+    params.asset === Asset.USDC &&
+    (params.chain === Chain.ETH || params.chain === Chain.ICP)
+  ) {
     return {
       ledgerCanisterId: CK_CANISTER_IDS.ckUSDC.ledger,
       asset: Asset.USDC,
-      chain: Chain.ETH,
-      transferMode: TransferMode.ckLedger,
+      chain: params.chain,
     };
   }
 
@@ -55,7 +59,6 @@ export function getPoolLedgerAssetRoute(params: {
       ledgerCanisterId: CK_CANISTER_IDS.icp.ledger,
       asset: Asset.ICP,
       chain: Chain.ICP,
-      transferMode: TransferMode.nativeAsset,
     };
   }
 

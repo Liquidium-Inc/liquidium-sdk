@@ -1,13 +1,13 @@
 import type {
   AssetPrices,
+  Chain,
   GetActivityStatusResponse,
   InstantLoan,
   InstantLoanAsset,
   InstantLoanDestination,
   InstantLoanFindResult,
-  InstantLoanTransferModeOptions,
+  InstantLoanInflowChainOptions,
   Pool,
-  TransferMode,
 } from "@liquidium/client";
 import { client } from "./client";
 
@@ -34,10 +34,10 @@ type CreateInstantLoanParams = {
   borrowAmount: bigint;
   ltvMaxBps: bigint;
   depositWindowSeconds: bigint;
-  borrowTransferMode: TransferMode;
+  borrowChain: Chain;
   borrowDestinationAddress: string;
   borrowDestinationType: InstantLoanDestinationType;
-  refundTransferMode: TransferMode;
+  refundChain: Chain;
   refundDestinationAddress: string;
   refundDestinationType: InstantLoanDestinationType;
 };
@@ -48,7 +48,7 @@ export type InstantLoanDestinationType =
   | "IcpAccountIdentifier"
   | "IcrcAccount";
 
-type GetInstantLoanParams = InstantLoanTransferModeOptions &
+type GetInstantLoanParams = InstantLoanInflowChainOptions &
   (
     | {
         ref: string;
@@ -103,10 +103,10 @@ export async function createInstantLoan({
   borrowAmount,
   ltvMaxBps,
   depositWindowSeconds,
-  borrowTransferMode,
+  borrowChain,
   borrowDestinationAddress,
   borrowDestinationType,
-  refundTransferMode,
+  refundChain,
   refundDestinationAddress,
   refundDestinationType,
 }: CreateInstantLoanParams): Promise<InstantLoan> {
@@ -122,12 +122,12 @@ export async function createInstantLoan({
     borrowAmount,
     ltvMaxBps,
     depositWindowSeconds,
-    borrowTransferMode,
+    borrowChain,
     borrowDestination: toInstantLoanDestination(
       borrowDestinationAddress,
       borrowDestinationType
     ),
-    refundTransferMode,
+    refundChain,
     refundDestination: toInstantLoanDestination(
       refundDestinationAddress,
       refundDestinationType

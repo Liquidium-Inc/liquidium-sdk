@@ -20,7 +20,10 @@ import {
 } from "../../core/canisters/lending/messages";
 import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
 import { normalizeEvmAddress } from "../../core/evm";
-import { getPoolLedgerAssetRoute } from "../../core/pool-ledger-assets";
+import {
+  getPoolLedgerAssetRoute,
+  type PoolLedgerAssetRoute,
+} from "../../core/pool-ledger-assets";
 import { SdkApiPath } from "../../core/sdk-api-paths";
 import {
   createLiquidiumStatus,
@@ -38,7 +41,6 @@ import { encodeInflowSubaccount } from "../../core/utils/inflow-subaccount";
 import { normalizeWalletSignature } from "../../core/utils/signature";
 import { computeExpiryTimestampFromNow } from "../../core/utils/time";
 import {
-  TransferMode,
   WalletActionKind,
   WalletExecutionKind,
 } from "../../core/wallet-actions";
@@ -173,7 +175,6 @@ export class LendingModule {
         kind: WalletActionKind.createWithdraw,
         executionKind: WalletExecutionKind.signMessage,
         actionType: WalletActionKind.createWithdraw,
-        transferMode: receiver.transferMode,
         account: signerAccount,
         message: createWithdrawAssetMessage(
           {
@@ -331,7 +332,6 @@ export class LendingModule {
         kind: WalletActionKind.createBorrow,
         executionKind: WalletExecutionKind.signMessage,
         actionType: WalletActionKind.createBorrow,
-        transferMode: receiver.transferMode,
         account: signerAccount,
         message: createBorrowAssetMessage(
           {
@@ -501,6 +501,7 @@ export class LendingModule {
    *
    * ETH stablecoin deposit-address estimates are served by the deposit-address
    * canister. BTC estimates include the ckBTC minter deposit fee and ledger fee.
+   * ICP-chain estimates return the corresponding ICRC ledger fee.
    *
    * @param request - Asset and chain pair to estimate for.
    * @returns Total fee estimate rounded up in the asset's base units.
@@ -508,14 +509,7 @@ export class LendingModule {
   async estimateInflowFee(
     request: EstimateInflowFeeRequest
   ): Promise<InflowFeeEstimate> {
-    if (request.transferMode === TransferMode.ckLedger) {
-      const ledgerFee = await this.estimateIcrcLedgerFee(request);
-      return {
-        totalFee: roundInflowFeeEstimate(request, ledgerFee),
-      };
-    }
-
-    if (request.asset === Asset.ICP && request.chain === Chain.ICP) {
+    if (request.chain === Chain.ICP) {
       const ledgerFee = await this.estimateIcrcLedgerFee(request);
       return {
         totalFee: roundInflowFeeEstimate(request, ledgerFee),
@@ -561,7 +555,7 @@ export class LendingModule {
   private async estimateIcrcLedgerFee(
     request: EstimateInflowFeeRequest
   ): Promise<bigint> {
-    const route = getPoolLedgerAssetRoute(request);
+    const route = getInflowFeeLedgerAssetRoute(request);
 
     return await createIcrcLedgerActor({
       canisterContext: this.canisterContext,
@@ -655,6 +649,35 @@ export class LendingModule {
     }
 
     return decodedPool;
+  }
+}
+
+function getInflowFeeLedgerAssetRoute(
+  request: EstimateInflowFeeRequest
+): PoolLedgerAssetRoute {
+  if (request.chain !== Chain.ICP) {
+    throw new LiquidiumError(
+      LiquidiumErrorCode.VALIDATION_ERROR,
+      `IC ledger inflow fees are not supported for ${request.asset} on ${request.chain}`
+    );
+  }
+
+  switch (request.asset) {
+    case Asset.BTC:
+      return getPoolLedgerAssetRoute({ asset: Asset.BTC, chain: Chain.BTC });
+    case Asset.USDC:
+    case Asset.USDT:
+      return getPoolLedgerAssetRoute({
+        asset: request.asset,
+        chain: Chain.ETH,
+      });
+    case Asset.ICP:
+      return getPoolLedgerAssetRoute({ asset: Asset.ICP, chain: Chain.ICP });
+    case Asset.SOL:
+      throw new LiquidiumError(
+        LiquidiumErrorCode.VALIDATION_ERROR,
+        `IC ledger inflow fees are not supported for ${request.asset} on ${request.chain}`
+      );
   }
 }
 
