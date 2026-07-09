@@ -276,6 +276,7 @@ function SupplyBorrowPage() {
       profileId: result.profileId,
       poolId: selectedBorrowPool.id,
       amount: parsedBorrowAmount,
+      chain: borrowChainSelection,
       receiver: destinationAddress,
       signerWalletAddress,
       signerWalletAdapter: createDynamicWalletAdapter(primaryWallet),

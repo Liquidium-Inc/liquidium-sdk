@@ -264,6 +264,7 @@ describeLive("live lending e2e", () => {
       profileId: "aaaaa-aa",
       poolId: icpPool.id,
       amount: ICP_TRANSFER_AMOUNT_E8S,
+      chain: Chain.ETH,
       receiver: {
         type: "ChainAddress",
         address: VALID_ETH_L1_ADDRESS,
@@ -289,6 +290,7 @@ describeLive("live lending e2e", () => {
       profileId: "aaaaa-aa",
       poolId: icpPool.id,
       amount: ICP_TRANSFER_AMOUNT_E8S,
+      chain: Chain.BTC,
       receiver: {
         type: "ChainAddress",
         address: VALID_BTC_L1_ADDRESS,

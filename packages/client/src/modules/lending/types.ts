@@ -162,6 +162,8 @@ export interface CreateBorrowRequest {
   poolId: string;
   /** Amount to borrow in the borrow asset's base units. */
   amount: bigint;
+  /** Chain where borrowed funds should arrive. */
+  chain: Chain;
   /** Destination that receives the borrowed asset. */
   receiver: OutflowDestination;
   /** Wallet address that signs the borrow authorization. */
@@ -196,6 +198,8 @@ export interface CreateWithdrawRequest {
    * at least 5,000 sats. USDC and USDT withdrawals require at least 1 token.
    */
   amount: bigint;
+  /** Chain where withdrawn funds should arrive. */
+  chain: Chain;
   /** Destination that receives the withdrawn asset. */
   receiver: OutflowDestination;
   /** Wallet address that signs the withdraw authorization. */

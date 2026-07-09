@@ -51,7 +51,8 @@ export interface ParsedOutflowDestination {
 export interface ParseOutflowDestinationParams {
   destination: OutflowDestination;
   asset: string;
-  chain: string;
+  poolChain: string;
+  destinationChain: string;
 }
 
 interface NormalizedOutflowDestinationInput {
@@ -99,7 +100,8 @@ export function parseOutflowDestination(
 
   assertDestinationTypeSupportedByChain({
     accountType: parsedAccount.accountType,
-    chain: params.chain,
+    poolChain: params.poolChain,
+    destinationChain: params.destinationChain,
   });
 
   if (parsedAccount.accountType !== "ChainAddress") {
@@ -109,7 +111,7 @@ export function parseOutflowDestination(
   const externalAddress = normalizeExternalAddress({
     address: parsedAccount.address,
     asset: params.asset,
-    chain: params.chain,
+    chain: params.destinationChain,
   });
 
   return {
@@ -264,15 +266,26 @@ function parseAccountIdentifierDestination(
 
 function assertDestinationTypeSupportedByChain(params: {
   accountType: OutflowAccountType;
-  chain: string;
+  poolChain: string;
+  destinationChain: string;
 }): void {
-  if (params.chain === Chain.BTC || params.chain === Chain.ETH) {
-    if (params.accountType === "ChainAddress") {
+  if (params.poolChain === Chain.BTC || params.poolChain === Chain.ETH) {
+    if (
+      params.destinationChain === params.poolChain &&
+      params.accountType === "ChainAddress"
+    ) {
+      return;
+    }
+
+    if (
+      params.destinationChain === Chain.ICP &&
+      params.accountType === "IcPrincipal"
+    ) {
       return;
     }
   }
 
-  if (params.chain === Chain.ICP) {
+  if (params.poolChain === Chain.ICP && params.destinationChain === Chain.ICP) {
     if (
       params.accountType === "IcpAccountIdentifier" ||
       params.accountType === "IcrcAccount" ||

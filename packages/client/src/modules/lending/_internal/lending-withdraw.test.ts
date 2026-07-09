@@ -2,7 +2,7 @@ import { encodeIcrcAccount } from "@icp-sdk/canisters/ledger/icrc";
 import { Actor } from "@icp-sdk/core/agent";
 import { Principal } from "@icp-sdk/core/principal";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { LiquidiumClient, LiquidiumErrorCode } from "../../../index";
+import { Chain, LiquidiumClient, LiquidiumErrorCode } from "../../../index";
 import {
   BTC_POOL_ID,
   createBtcPoolRecord,
@@ -48,6 +48,7 @@ describe("LendingModule withdraw", () => {
       profileId: "aaaaa-aa",
       poolId: BTC_POOL_ID,
       amount: 10_000n,
+      chain: Chain.BTC,
       receiver: {
         address: VALID_BTC_OUTFLOW_ADDRESS,
         type: "ChainAddress",
@@ -145,6 +146,7 @@ Nonce: 23`);
       profileId: "aaaaa-aa",
       poolId: ICP_POOL_ID,
       amount: 10_000n,
+      chain: Chain.ICP,
       receiver: {
         address: VALID_ICP_ACCOUNT_IDENTIFIER,
         type: "IcpAccountIdentifier",
@@ -183,6 +185,7 @@ Nonce: 23`);
       profileId: "aaaaa-aa",
       poolId: BTC_POOL_ID,
       amount: 5_000n,
+      chain: Chain.BTC,
       receiver: {
         address: ICRC_ACCOUNT,
         type: "IcrcAccount",
@@ -217,6 +220,7 @@ Nonce: 23`);
       profileId: "aaaaa-aa",
       poolId: USDT_POOL_ID,
       amount: 1_000_000n,
+      chain: Chain.ETH,
       receiver: {
         address: ICRC_ACCOUNT,
         type: "IcrcAccount",
@@ -256,6 +260,7 @@ Nonce: 23`);
       profileId: "aaaaa-aa",
       poolId: BTC_POOL_ID,
       amount: 8_000n,
+      chain: Chain.BTC,
       receiver: VALID_BTC_OUTFLOW_ADDRESS,
       signerWalletAddress: "0xsigner",
       signerChain: "ETH",
@@ -293,6 +298,7 @@ Nonce: 23`);
           profileId: "aaaaa-aa",
           poolId: BTC_POOL_ID,
           amount: 10_000n,
+          chain: Chain.BTC,
           receiver: VALID_BTC_OUTFLOW_ADDRESS,
           signerWalletAddress: "bc1qsigner",
         })
@@ -319,6 +325,7 @@ Nonce: 23`);
         profileId: "p1",
         poolId: "aaaaa-aa",
         amount: 10_000n,
+        chain: Chain.BTC,
         receiver: "   ",
         signerWalletAddress: "0xsigner",
       })
@@ -331,6 +338,7 @@ Nonce: 23`);
         profileId: "p1",
         poolId: "aaaaa-aa",
         amount: 10_000n,
+        chain: Chain.BTC,
         receiver: VALID_BTC_OUTFLOW_ADDRESS,
         signerWalletAddress: "  ",
       })
@@ -343,6 +351,7 @@ Nonce: 23`);
         profileId: "p1",
         poolId: "aaaaa-aa",
         amount: 0n,
+        chain: Chain.BTC,
         receiver: VALID_BTC_OUTFLOW_ADDRESS,
         signerWalletAddress: "0xsigner",
       })
@@ -366,6 +375,7 @@ Nonce: 23`);
       profileId: "aaaaa-aa",
       poolId: BTC_POOL_ID,
       amount: 4_999n,
+      chain: Chain.BTC,
       receiver: VALID_BTC_OUTFLOW_ADDRESS,
       signerWalletAddress: "0xsigner",
     });
@@ -392,6 +402,7 @@ Nonce: 23`);
       profileId: "aaaaa-aa",
       poolId: BTC_POOL_ID,
       amount: 5_000n,
+      chain: Chain.BTC,
       receiver: VALID_BTC_OUTFLOW_ADDRESS,
       signerWalletAddress: "0xsigner",
     });
@@ -415,6 +426,7 @@ Nonce: 23`);
       profileId: "aaaaa-aa",
       poolId: USDT_POOL_ID,
       amount: 999_999n,
+      chain: Chain.ETH,
       receiver: LOWERCASE_EVM_OUTFLOW_ADDRESS,
       signerWalletAddress: "0xsigner",
     });
@@ -441,6 +453,7 @@ Nonce: 23`);
       profileId: "aaaaa-aa",
       poolId: USDT_POOL_ID,
       amount: 1_000_000n,
+      chain: Chain.ETH,
       receiver: LOWERCASE_EVM_OUTFLOW_ADDRESS,
       signerWalletAddress: "0xsigner",
     });
@@ -464,6 +477,7 @@ Nonce: 23`);
       profileId: "aaaaa-aa",
       poolId: ICP_POOL_ID,
       amount: 10_000n,
+      chain: Chain.BTC,
       receiver: {
         address: VALID_BTC_OUTFLOW_ADDRESS,
         type: "ChainAddress",
@@ -493,6 +507,7 @@ Nonce: 23`);
       profileId: "aaaaa-aa",
       poolId: ICP_POOL_ID,
       amount: 10_000n,
+      chain: Chain.ETH,
       receiver: {
         address: LOWERCASE_EVM_OUTFLOW_ADDRESS,
         type: "ChainAddress",
@@ -522,6 +537,7 @@ Nonce: 23`);
       profileId: "aaaaa-aa",
       poolId: USDT_POOL_ID,
       amount: 1_000_000n,
+      chain: Chain.ETH,
       receiver: "not-an-evm-address",
       signerWalletAddress: "0xsigner",
     });
@@ -548,6 +564,7 @@ Nonce: 23`);
       profileId: "aaaaa-aa",
       poolId: BTC_POOL_ID,
       amount: 5_000n,
+      chain: Chain.BTC,
       receiver: "not-a-btc-address",
       signerWalletAddress: "0xsigner",
     });

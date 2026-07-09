@@ -86,6 +86,7 @@ interface OutflowActionData {
   profileId: string;
   poolId: string;
   amount: bigint;
+  chain: Chain;
   receiver: OutflowDestination;
   signerWalletAddress: string;
   expiryTimestamp: bigint;
@@ -153,7 +154,8 @@ export class LendingModule {
     const receiver = parseOutflowDestination({
       destination,
       asset: selectedAsset,
-      chain: selectedPool.chain,
+      poolChain: selectedPool.chain,
+      destinationChain: request.chain,
     });
 
     const lendingActor = createLendingActor(this.canisterContext);
@@ -165,6 +167,7 @@ export class LendingModule {
         profileId: request.profileId,
         poolId: request.poolId,
         amount: request.amount,
+        chain: request.chain,
         receiver: {
           address: receiver.address,
           type: receiver.accountType,
@@ -316,7 +319,8 @@ export class LendingModule {
     const receiver = parseOutflowDestination({
       destination,
       asset: selectedAsset,
-      chain: selectedPool.chain,
+      poolChain: selectedPool.chain,
+      destinationChain: request.chain,
     });
 
     const lendingActor = createLendingActor(this.canisterContext);
@@ -328,6 +332,7 @@ export class LendingModule {
         profileId: request.profileId,
         poolId: request.poolId,
         amount: request.amount,
+        chain: request.chain,
         receiver: {
           address: receiver.address,
           type: receiver.accountType,

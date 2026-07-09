@@ -2,15 +2,17 @@ import { encodeIcrcAccount } from "@icp-sdk/canisters/ledger/icrc";
 import { Actor } from "@icp-sdk/core/agent";
 import { Principal } from "@icp-sdk/core/principal";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { LiquidiumClient, LiquidiumErrorCode } from "../../../index";
+import { Chain, LiquidiumClient, LiquidiumErrorCode } from "../../../index";
 import {
   BTC_POOL_ID,
   CHECKSUM_EVM_OUTFLOW_ADDRESS,
   createBtcPoolRecord,
   createIcpPoolRecord,
+  createUsdcPoolRecord,
   createUsdtPoolRecord,
   ICP_POOL_ID,
   LOWERCASE_EVM_OUTFLOW_ADDRESS,
+  USDC_POOL_ID,
   USDT_POOL_ID,
   VALID_BTC_OUTFLOW_ADDRESS,
   VALID_IC_PRINCIPAL,
@@ -50,6 +52,7 @@ describe("LendingModule borrow", () => {
       profileId,
       poolId,
       amount: 50_000n,
+      chain: Chain.BTC,
       receiver: {
         address: VALID_BTC_OUTFLOW_ADDRESS,
         type: "ChainAddress",
@@ -138,6 +141,7 @@ Nonce: 17`);
       profileId: "aaaaa-aa",
       poolId: BTC_POOL_ID,
       amount: 50_000n,
+      chain: Chain.BTC,
       receiver: {
         address: VALID_IC_PRINCIPAL,
         type: "IcPrincipal",
@@ -167,6 +171,7 @@ Nonce: 17`);
       profileId: "aaaaa-aa",
       poolId: BTC_POOL_ID,
       amount: 50_000n,
+      chain: Chain.BTC,
       receiver: VALID_IC_PRINCIPAL,
       signerWalletAddress: "0xsigner",
     });
@@ -214,6 +219,7 @@ Nonce: 17`);
       profileId: "aaaaa-aa",
       poolId: ICP_POOL_ID,
       amount: 100_000_000n,
+      chain: Chain.ICP,
       receiver: {
         address: ICRC_ACCOUNT,
         type: "IcrcAccount",
@@ -255,6 +261,7 @@ Nonce: 17`);
       profileId: "aaaaa-aa",
       poolId: USDT_POOL_ID,
       amount: 1_000_000n,
+      chain: Chain.ETH,
       receiver: {
         address: ICRC_ACCOUNT,
         type: "IcrcAccount",
@@ -268,6 +275,56 @@ Nonce: 17`);
       message: "Target pool does not support this address type",
     });
     expect(getNonce).not.toHaveBeenCalled();
+  });
+
+  test("creates an ETH USDC borrow action for ICP delivery to an IC principal", async () => {
+    // given
+    vi.setSystemTime(new Date("2026-04-01T00:00:00.000Z"));
+    const borrowAssets = vi.fn().mockResolvedValue({
+      Ok: {
+        id: "outflow-ck-usdc",
+        txid: [],
+        outflow_type: { Borrow: null },
+        outflow_ref: [],
+        amount: 2_000_000n,
+        receiver: { Native: Principal.fromText(VALID_IC_PRINCIPAL) },
+      },
+    });
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi.fn().mockResolvedValue([createUsdcPoolRecord()]),
+      get_nonce: vi.fn().mockResolvedValue(17n),
+      borrow_assets: borrowAssets,
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const borrowAction = await client.lending.prepareBorrow({
+      profileId: "aaaaa-aa",
+      poolId: USDC_POOL_ID,
+      amount: 2_000_000n,
+      chain: Chain.ICP,
+      receiver: {
+        address: VALID_IC_PRINCIPAL,
+        type: "IcPrincipal",
+      },
+      signerWalletAddress: "0xsigner",
+    });
+    await borrowAction.submit({ signature: "0xsigned", chain: "ETH" });
+
+    // then
+    expect(borrowAction.message).toContain(`Principal:${VALID_IC_PRINCIPAL}`);
+    expect(borrowAction.data).toMatchObject({
+      chain: Chain.ICP,
+      receiver: {
+        address: VALID_IC_PRINCIPAL,
+        type: "IcPrincipal",
+      },
+    });
+    expect(borrowAssets.mock.calls[0]?.[1]).toMatchObject({
+      data: {
+        account: { Native: Principal.fromText(VALID_IC_PRINCIPAL) },
+      },
+    });
   });
 
   test("rejects a BTC borrow receiver that uses an ICRC account before fetching a nonce", async () => {
@@ -289,6 +346,7 @@ Nonce: 17`);
       profileId: "aaaaa-aa",
       poolId: BTC_POOL_ID,
       amount: 50_000n,
+      chain: Chain.BTC,
       receiver: {
         address: ICRC_ACCOUNT,
         type: "IcrcAccount",
@@ -318,6 +376,7 @@ Nonce: 17`);
       profileId: "aaaaa-aa",
       poolId: BTC_POOL_ID,
       amount: 50_000n,
+      chain: Chain.BTC,
       receiver: {
         address: "not a principal",
         type: "IcPrincipal",
@@ -347,6 +406,7 @@ Nonce: 17`);
       profileId: "aaaaa-aa",
       poolId: ICP_POOL_ID,
       amount: 100_000_000n,
+      chain: Chain.ICP,
       receiver: {
         address: VALID_BTC_OUTFLOW_ADDRESS,
         type: "IcrcAccount",
@@ -376,6 +436,7 @@ Nonce: 17`);
       profileId: "aaaaa-aa",
       poolId: ICP_POOL_ID,
       amount: 100_000_000n,
+      chain: Chain.ICP,
       receiver: {
         address: "not-an-account-identifier",
         type: "IcpAccountIdentifier",
@@ -405,6 +466,7 @@ Nonce: 17`);
       profileId: "aaaaa-aa",
       poolId: ICP_POOL_ID,
       amount: 100_000_000n,
+      chain: Chain.ICP,
       receiver: {
         address: VALID_BTC_OUTFLOW_ADDRESS,
         type: "ChainAddress",
@@ -434,6 +496,7 @@ Nonce: 17`);
       profileId: "aaaaa-aa",
       poolId: ICP_POOL_ID,
       amount: 100_000_000n,
+      chain: Chain.ETH,
       receiver: {
         address: CHECKSUM_EVM_OUTFLOW_ADDRESS,
         type: "ChainAddress",
@@ -483,6 +546,7 @@ Nonce: 17`);
       profileId,
       poolId,
       amount: 50_000n,
+      chain: Chain.BTC,
       receiver: VALID_BTC_OUTFLOW_ADDRESS,
       signerWalletAddress: "0xsigner",
     });
@@ -532,6 +596,7 @@ Nonce: 17`);
       profileId,
       poolId,
       amount: 50_000n,
+      chain: Chain.BTC,
       receiver: VALID_BTC_OUTFLOW_ADDRESS,
       signerWalletAddress: "0xsigner",
     });
@@ -571,6 +636,7 @@ Nonce: 17`);
       profileId: "aaaaa-aa",
       poolId: BTC_POOL_ID,
       amount: 12_000n,
+      chain: Chain.BTC,
       receiver: VALID_BTC_OUTFLOW_ADDRESS,
       signerWalletAddress: "0xsigner",
       signerChain: "ETH",
@@ -617,6 +683,7 @@ Nonce: 17`);
       profileId: "aaaaa-aa",
       poolId: BTC_POOL_ID,
       amount: 12_000n,
+      chain: Chain.BTC,
       receiver: VALID_BTC_OUTFLOW_ADDRESS,
       signerWalletAddress: LOWERCASE_SIGNER_ADDRESS,
       signerChain: "ETH",
@@ -666,6 +733,7 @@ Nonce: 17`);
       profileId: "aaaaa-aa",
       poolId: BTC_POOL_ID,
       amount: 12_000n,
+      chain: Chain.BTC,
       receiver: VALID_BTC_OUTFLOW_ADDRESS,
       signerWalletAddress: "0xsigner",
       signerChain: "ETH",
@@ -705,6 +773,7 @@ Nonce: 17`);
           profileId: "aaaaa-aa",
           poolId: BTC_POOL_ID,
           amount: 50_000n,
+          chain: Chain.BTC,
           receiver: VALID_BTC_OUTFLOW_ADDRESS,
           signerWalletAddress: "bc1qsigner",
         })
@@ -731,6 +800,7 @@ Nonce: 17`);
         profileId: "p1",
         poolId: "aaaaa-aa",
         amount: 50_000n,
+        chain: Chain.BTC,
         receiver: "   ",
         signerWalletAddress: "0xsigner",
       })
@@ -743,6 +813,7 @@ Nonce: 17`);
         profileId: "p1",
         poolId: "aaaaa-aa",
         amount: 50_000n,
+        chain: Chain.BTC,
         receiver: VALID_BTC_OUTFLOW_ADDRESS,
         signerWalletAddress: "  ",
       })
@@ -766,6 +837,7 @@ Nonce: 17`);
       profileId: "aaaaa-aa",
       poolId: BTC_POOL_ID,
       amount: 5_099n,
+      chain: Chain.BTC,
       receiver: VALID_BTC_OUTFLOW_ADDRESS,
       signerWalletAddress: "0xsigner",
     });
@@ -792,6 +864,7 @@ Nonce: 17`);
       profileId: "aaaaa-aa",
       poolId: USDT_POOL_ID,
       amount: 999_999n,
+      chain: Chain.ETH,
       receiver: LOWERCASE_EVM_OUTFLOW_ADDRESS,
       signerWalletAddress: "0xsigner",
     });
@@ -818,6 +891,7 @@ Nonce: 17`);
       profileId: "aaaaa-aa",
       poolId: BTC_POOL_ID,
       amount: 50_000n,
+      chain: Chain.BTC,
       receiver: "not-a-btc-address",
       signerWalletAddress: "0xsigner",
     });
@@ -844,6 +918,7 @@ Nonce: 17`);
       profileId: "aaaaa-aa",
       poolId: USDT_POOL_ID,
       amount: 1_000_000n,
+      chain: Chain.ETH,
       receiver: "not-an-evm-address",
       signerWalletAddress: "0xsigner",
     });
@@ -881,6 +956,7 @@ Nonce: 17`);
       profileId: "aaaaa-aa",
       poolId: USDT_POOL_ID,
       amount: 1_000_000n,
+      chain: Chain.ETH,
       receiver: LOWERCASE_EVM_OUTFLOW_ADDRESS,
       signerWalletAddress: "0xsigner",
     });

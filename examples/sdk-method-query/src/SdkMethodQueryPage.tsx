@@ -426,13 +426,14 @@ const SDK_METHODS: MethodDefinition[] = [
     id: "lending.prepareWithdraw",
     label: "lending.prepareWithdraw",
     defaultArgs:
-      '{\n  "profileId": "aaaaa-aa",\n  "poolId": "bbbbb-bb",\n  "amount": "10000",\n  "receiver": {\n    "address": "bc1..."\n  },\n  "signerWalletAddress": "bc1..."\n}',
+      '{\n  "profileId": "aaaaa-aa",\n  "poolId": "bbbbb-bb",\n  "amount": "10000",\n  "chain": "BTC",\n  "receiver": {\n    "address": "bc1..."\n  },\n  "signerWalletAddress": "bc1..."\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
       return await client.lending.prepareWithdraw({
         profileId: expectNonEmptyString(args.profileId, "profileId"),
         poolId: expectNonEmptyString(args.poolId, "poolId"),
         amount: expectBigInt(args.amount, "amount"),
+        chain: expectChain(args.chain, "chain"),
         receiver: expectReceiver(args.receiver, "receiver"),
         signerWalletAddress: expectNonEmptyString(
           args.signerWalletAddress,
@@ -445,13 +446,14 @@ const SDK_METHODS: MethodDefinition[] = [
     id: "lending.withdraw",
     label: "lending.withdraw",
     defaultArgs:
-      '{\n  "profileId": "aaaaa-aa",\n  "poolId": "bbbbb-bb",\n  "amount": "10000",\n  "receiver": {\n    "address": "bc1..."\n  },\n  "signerWalletAddress": "bc1...",\n  "signerChain": "BTC",\n  "mockSignature": "replace-with-real-signature"\n}',
+      '{\n  "profileId": "aaaaa-aa",\n  "poolId": "bbbbb-bb",\n  "amount": "10000",\n  "chain": "BTC",\n  "receiver": {\n    "address": "bc1..."\n  },\n  "signerWalletAddress": "bc1...",\n  "signerChain": "BTC",\n  "mockSignature": "replace-with-real-signature"\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
       return await client.lending.withdraw({
         profileId: expectNonEmptyString(args.profileId, "profileId"),
         poolId: expectNonEmptyString(args.poolId, "poolId"),
         amount: expectBigInt(args.amount, "amount"),
+        chain: expectChain(args.chain, "chain"),
         receiver: expectReceiver(args.receiver, "receiver"),
         signerWalletAddress: expectNonEmptyString(
           args.signerWalletAddress,
@@ -468,13 +470,14 @@ const SDK_METHODS: MethodDefinition[] = [
     id: "lending.prepareBorrow",
     label: "lending.prepareBorrow",
     defaultArgs:
-      '{\n  "profileId": "aaaaa-aa",\n  "poolId": "bbbbb-bb",\n  "amount": "10000",\n  "receiver": {\n    "address": "bc1..."\n  },\n  "signerWalletAddress": "bc1..."\n}',
+      '{\n  "profileId": "aaaaa-aa",\n  "poolId": "bbbbb-bb",\n  "amount": "10000",\n  "chain": "BTC",\n  "receiver": {\n    "address": "bc1..."\n  },\n  "signerWalletAddress": "bc1..."\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
       return await client.lending.prepareBorrow({
         profileId: expectNonEmptyString(args.profileId, "profileId"),
         poolId: expectNonEmptyString(args.poolId, "poolId"),
         amount: expectBigInt(args.amount, "amount"),
+        chain: expectChain(args.chain, "chain"),
         receiver: expectReceiver(args.receiver, "receiver"),
         signerWalletAddress: expectNonEmptyString(
           args.signerWalletAddress,
@@ -487,13 +490,14 @@ const SDK_METHODS: MethodDefinition[] = [
     id: "lending.borrow",
     label: "lending.borrow",
     defaultArgs:
-      '{\n  "profileId": "aaaaa-aa",\n  "poolId": "bbbbb-bb",\n  "amount": "10000",\n  "receiver": {\n    "address": "bc1..."\n  },\n  "signerWalletAddress": "bc1...",\n  "signerChain": "BTC",\n  "mockSignature": "replace-with-real-signature"\n}',
+      '{\n  "profileId": "aaaaa-aa",\n  "poolId": "bbbbb-bb",\n  "amount": "10000",\n  "chain": "BTC",\n  "receiver": {\n    "address": "bc1..."\n  },\n  "signerWalletAddress": "bc1...",\n  "signerChain": "BTC",\n  "mockSignature": "replace-with-real-signature"\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
       return await client.lending.borrow({
         profileId: expectNonEmptyString(args.profileId, "profileId"),
         poolId: expectNonEmptyString(args.poolId, "poolId"),
         amount: expectBigInt(args.amount, "amount"),
+        chain: expectChain(args.chain, "chain"),
         receiver: expectReceiver(args.receiver, "receiver"),
         signerWalletAddress: expectNonEmptyString(
           args.signerWalletAddress,

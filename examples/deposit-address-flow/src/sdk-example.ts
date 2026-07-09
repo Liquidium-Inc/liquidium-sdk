@@ -41,6 +41,7 @@ type BorrowWithWalletParams = {
   profileId: string;
   poolId: string;
   amount: bigint;
+  chain: Chain;
   receiver: OutflowDestination;
   signerWalletAddress: string;
   signerWalletAdapter: WalletAdapter;
@@ -116,6 +117,7 @@ export async function borrowWithWallet({
   profileId,
   poolId,
   amount,
+  chain,
   receiver,
   signerWalletAddress,
   signerWalletAdapter,
@@ -124,6 +126,7 @@ export async function borrowWithWallet({
     profileId,
     poolId,
     amount,
+    chain,
     receiver,
     signerWalletAddress,
     signerChain: Chain.ETH,
