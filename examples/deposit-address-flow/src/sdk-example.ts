@@ -16,8 +16,6 @@ type MarketData = {
   assetPrices: AssetPrices;
 };
 
-type ChainSelection = "poolChain" | "icpLedger";
-
 type GetOrCreateWalletProfileParams = {
   account: string;
   walletAdapter: WalletAdapter;
@@ -26,7 +24,7 @@ type GetOrCreateWalletProfileParams = {
 type CreateDepositAddressSupplyParams = {
   profileId: string;
   poolId: string;
-  chainSelection: ChainSelection;
+  chain: Chain;
 };
 
 type RegisterSupplyTxidParams = {
@@ -87,13 +85,13 @@ export async function getOrCreateWalletProfile({
 export async function createDepositAddressSupply({
   profileId,
   poolId,
-  chainSelection,
+  chain,
 }: CreateDepositAddressSupplyParams): Promise<SupplyFlow> {
   return await client.lending.supply({
     profileId,
     poolId,
     action: SupplyAction.deposit,
-    chain: chainSelection === "icpLedger" ? Chain.ICP : Chain.ETH,
+    chain,
   });
 }
 

@@ -4,7 +4,6 @@ import type {
   GetActivityStatusResponse,
   InstantLoan,
   InstantLoanAsset,
-  InstantLoanDestination,
   InstantLoanFindResult,
   Pool,
 } from "@liquidium/client";
@@ -36,22 +35,14 @@ type CreateInstantLoanParams = {
     amount: bigint;
     chain: Chain;
     destinationAddress: string;
-    destinationType: InstantLoanDestinationType;
   };
   refund: {
     chain: Chain;
     destinationAddress: string;
-    destinationType: InstantLoanDestinationType;
   };
   ltvMaxBps: bigint;
   depositWindowSeconds: bigint;
 };
-
-export type InstantLoanDestinationType =
-  | "ChainAddress"
-  | "IcPrincipal"
-  | "IcpAccountIdentifier"
-  | "IcrcAccount";
 
 type GetInstantLoanParams =
   | {
@@ -118,17 +109,11 @@ export async function createInstantLoan({
       asset: typedBorrowAsset,
       amount: borrow.amount,
       chain: borrow.chain,
-      destination: toInstantLoanDestination(
-        borrow.destinationAddress,
-        borrow.destinationType
-      ),
+      destination: borrow.destinationAddress,
     },
     refund: {
       chain: refund.chain,
-      destination: toInstantLoanDestination(
-        refund.destinationAddress,
-        refund.destinationType
-      ),
+      destination: refund.destinationAddress,
     },
     ltvMaxBps,
     depositWindowSeconds,
@@ -159,32 +144,4 @@ export async function findInstantLoans(
 
 function toInstantLoanAsset(asset: string): InstantLoanAsset {
   return asset as InstantLoanAsset;
-}
-
-function toInstantLoanDestination(
-  address: string,
-  destinationType: InstantLoanDestinationType
-): InstantLoanDestination {
-  switch (destinationType) {
-    case "ChainAddress":
-      return {
-        type: "ChainAddress",
-        address,
-      };
-    case "IcPrincipal":
-      return {
-        type: "IcPrincipal",
-        address,
-      };
-    case "IcpAccountIdentifier":
-      return {
-        type: "IcpAccountIdentifier",
-        address,
-      };
-    case "IcrcAccount":
-      return {
-        type: "IcrcAccount",
-        address,
-      };
-  }
 }

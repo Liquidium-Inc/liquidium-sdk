@@ -25,7 +25,6 @@ import {
 import {
   calculateLoanLtv,
   createInstantLoan,
-  type InstantLoanDestinationType,
   loadMarketData,
 } from "./sdk-example";
 
@@ -33,17 +32,7 @@ const PRICE_DISPLAY_DECIMALS = 8;
 const DEFAULT_COLLATERAL_ASSET = "BTC";
 const DEFAULT_BORROW_ASSET = "USDC";
 const DEFAULT_TRANSFER_CHAIN: Chain = Chain.ETH;
-const DEFAULT_DESTINATION_TYPE: InstantLoanDestinationType = "ChainAddress";
 const CK_TARGET_ASSETS = new Set(["BTC", "USDC", "USDT"]);
-const CHAIN_ADDRESS_DESTINATION_TYPES: InstantLoanDestinationType[] = [
-  "ChainAddress",
-];
-const CK_DESTINATION_TYPES: InstantLoanDestinationType[] = ["IcPrincipal"];
-const ICP_DESTINATION_TYPES: InstantLoanDestinationType[] = [
-  "IcrcAccount",
-  "IcpAccountIdentifier",
-  "IcPrincipal",
-];
 
 type LoanTargetOptions = {
   initialDeposit: LoanTargetOption[];
@@ -66,13 +55,9 @@ export function App() {
   const [borrowAmount, setBorrowAmount] = useState("9");
   const [borrowChain, setBorrowChain] = useState<Chain>(DEFAULT_TRANSFER_CHAIN);
   const [refundChain, setRefundChain] = useState<Chain>(DEFAULT_TRANSFER_CHAIN);
-  const [borrowDestinationType, setBorrowDestinationType] =
-    useState<InstantLoanDestinationType>(DEFAULT_DESTINATION_TYPE);
   const [maxLtv, setMaxLtv] = useState("30");
   const [depositWindowSeconds, setDepositWindowSeconds] = useState("3600");
   const [borrowDestination, setBorrowDestination] = useState("");
-  const [refundDestinationType, setRefundDestinationType] =
-    useState<InstantLoanDestinationType>(DEFAULT_DESTINATION_TYPE);
   const [refundDestination, setRefundDestination] = useState("");
   const [loanResult, setLoanResult] = useState("No loan created yet.");
   const [recentLoanRefs, setRecentLoanRefs] = useState<string[]>(() =>
@@ -107,8 +92,6 @@ export function App() {
         borrowPool: defaultBorrowPool,
         setBorrowChain,
         setRefundChain,
-        setBorrowDestinationType,
-        setRefundDestinationType,
       });
 
       if (defaultCollateralPool) {
@@ -143,8 +126,6 @@ export function App() {
       borrowPool: defaultBorrowPool,
       setBorrowChain,
       setRefundChain,
-      setBorrowDestinationType,
-      setRefundDestinationType,
     });
 
     if (defaultCollateralPool) {
@@ -196,12 +177,10 @@ export function App() {
         amount: parsedBorrowAmount,
         chain: borrowChain,
         destinationAddress: trimmedBorrowDestination,
-        destinationType: borrowDestinationType,
       },
       refund: {
         chain: refundChain,
         destinationAddress: trimmedRefundDestination,
-        destinationType: refundDestinationType,
       },
       ltvMaxBps,
       depositWindowSeconds: parsedDepositWindowSeconds,
@@ -271,7 +250,6 @@ export function App() {
       pool,
       transferChain: DEFAULT_TRANSFER_CHAIN,
       setChain: setRefundChain,
-      setDestinationType: setRefundDestinationType,
       setDestination: setRefundDestination,
     });
 
@@ -288,7 +266,6 @@ export function App() {
       pool,
       transferChain: DEFAULT_TRANSFER_CHAIN,
       setChain: setBorrowChain,
-      setDestinationType: setBorrowDestinationType,
       setDestination: setBorrowDestination,
     });
   }
@@ -392,18 +369,15 @@ export function App() {
           onChange={(event) => setDepositWindowSeconds(event.target.value)}
         />
 
-        <label htmlFor="borrow-transfer-mode-select">
-          Borrow delivery mode
-        </label>
+        <label htmlFor="borrow-chain-select">Borrow chain</label>
         <select
-          id="borrow-transfer-mode-select"
+          id="borrow-chain-select"
           value={borrowChain}
           onChange={(event) =>
             setSelectedDestinationChain({
               pool: pools.find((pool) => pool.id === selectedBorrowPoolId),
               transferChain: event.target.value as Chain,
               setChain: setBorrowChain,
-              setDestinationType: setBorrowDestinationType,
               setDestination: setBorrowDestination,
             })
           }
@@ -412,48 +386,20 @@ export function App() {
             pools.find((pool) => pool.id === selectedBorrowPoolId)
           ).map((transferChain) => (
             <option key={transferChain} value={transferChain}>
-              {formatOutflowChain(
-                pools.find((pool) => pool.id === selectedBorrowPoolId),
-                transferChain
-              )}
+              {transferChain}
             </option>
           ))}
         </select>
-        {shouldShowDestinationTypeSelect(
-          pools.find((pool) => pool.id === selectedBorrowPoolId),
-          borrowChain
-        ) ? (
-          <>
-            <label htmlFor="borrow-destination-type-select">
-              Borrow destination type
-            </label>
-            <select
-              id="borrow-destination-type-select"
-              value={borrowDestinationType}
-              onChange={(event) =>
-                setBorrowDestinationType(
-                  event.target.value as InstantLoanDestinationType
-                )
-              }
-            >
-              {getDestinationTypeOptions(
-                pools.find((pool) => pool.id === selectedBorrowPoolId),
-                borrowChain
-              ).map((destinationType) => (
-                <option key={destinationType} value={destinationType}>
-                  {formatDestinationType(destinationType)}
-                </option>
-              ))}
-            </select>
-          </>
-        ) : null}
         <p>
-          Choose ck mode to send borrowed ck assets to an IC principal. Native
-          mode uses the chain address, except ICP where you can choose the ICP
-          destination format.
+          Select the chain where borrowed funds should be sent. The SDK uses the
+          right destination format for the selected chain.
         </p>
         <label htmlFor="borrow-destination-input">
-          Borrow destination address
+          {formatDestinationInputLabel(
+            "Borrow destination",
+            pools.find((pool) => pool.id === selectedBorrowPoolId),
+            borrowChain
+          )}
         </label>
         <input
           id="borrow-destination-input"
@@ -461,18 +407,15 @@ export function App() {
           onChange={(event) => setBorrowDestination(event.target.value)}
         />
 
-        <label htmlFor="refund-transfer-mode-select">
-          Refund/withdrawal delivery mode
-        </label>
+        <label htmlFor="refund-chain-select">Refund/withdrawal chain</label>
         <select
-          id="refund-transfer-mode-select"
+          id="refund-chain-select"
           value={refundChain}
           onChange={(event) =>
             setSelectedDestinationChain({
               pool: pools.find((pool) => pool.id === selectedCollateralPoolId),
               transferChain: event.target.value as Chain,
               setChain: setRefundChain,
-              setDestinationType: setRefundDestinationType,
               setDestination: setRefundDestination,
             })
           }
@@ -481,47 +424,20 @@ export function App() {
             pools.find((pool) => pool.id === selectedCollateralPoolId)
           ).map((transferChain) => (
             <option key={transferChain} value={transferChain}>
-              {formatOutflowChain(
-                pools.find((pool) => pool.id === selectedCollateralPoolId),
-                transferChain
-              )}
+              {transferChain}
             </option>
           ))}
         </select>
-        {shouldShowDestinationTypeSelect(
-          pools.find((pool) => pool.id === selectedCollateralPoolId),
-          refundChain
-        ) ? (
-          <>
-            <label htmlFor="refund-destination-type-select">
-              Refund/withdrawal destination type
-            </label>
-            <select
-              id="refund-destination-type-select"
-              value={refundDestinationType}
-              onChange={(event) =>
-                setRefundDestinationType(
-                  event.target.value as InstantLoanDestinationType
-                )
-              }
-            >
-              {getDestinationTypeOptions(
-                pools.find((pool) => pool.id === selectedCollateralPoolId),
-                refundChain
-              ).map((destinationType) => (
-                <option key={destinationType} value={destinationType}>
-                  {formatDestinationType(destinationType)}
-                </option>
-              ))}
-            </select>
-          </>
-        ) : null}
         <p>
-          Refunds and full collateral withdrawals use this delivery mode. ICP
-          pools also let you choose the native destination format.
+          Refunds and full collateral withdrawals use the selected chain. The
+          SDK uses the right destination format for that chain.
         </p>
         <label htmlFor="refund-destination-input">
-          Refund/withdrawal destination address
+          {formatDestinationInputLabel(
+            "Refund/withdrawal destination",
+            pools.find((pool) => pool.id === selectedCollateralPoolId),
+            refundChain
+          )}
         </label>
         <input
           id="refund-destination-input"
@@ -628,35 +544,23 @@ function resetDestinationControls(params: {
   borrowPool: Pool | undefined;
   setBorrowChain(transferChain: Chain): void;
   setRefundChain(transferChain: Chain): void;
-  setBorrowDestinationType(destinationType: InstantLoanDestinationType): void;
-  setRefundDestinationType(destinationType: InstantLoanDestinationType): void;
 }): void {
   const collateralChain = getDefaultChain(params.collateralPool);
   const borrowChain = getDefaultChain(params.borrowPool);
 
   params.setBorrowChain(borrowChain);
   params.setRefundChain(collateralChain);
-  params.setBorrowDestinationType(
-    getDefaultDestinationType(params.borrowPool, borrowChain)
-  );
-  params.setRefundDestinationType(
-    getDefaultDestinationType(params.collateralPool, collateralChain)
-  );
 }
 
 function setSelectedDestinationChain(params: {
   pool: Pool | undefined;
   transferChain: Chain;
   setChain(transferChain: Chain): void;
-  setDestinationType(destinationType: InstantLoanDestinationType): void;
   setDestination(destination: string): void;
 }): void {
   const transferChain = getSupportedChain(params.pool, params.transferChain);
 
   params.setChain(transferChain);
-  params.setDestinationType(
-    getDefaultDestinationType(params.pool, transferChain)
-  );
   params.setDestination("");
 }
 
@@ -698,10 +602,7 @@ function getInitialDepositTargetOptions(params: {
 }): LoanTargetOption[] {
   const targetOptions = [
     {
-      label: formatInflowChain(
-        params.collateralPool,
-        getDefaultChain(params.collateralPool)
-      ),
+      label: getDefaultChain(params.collateralPool),
       loan: params.loan,
       initialDeposit: params.loan.initialDeposit.targets.poolChain,
     },
@@ -727,10 +628,7 @@ function getRepaymentTargetOptions(params: {
 }): LoanTargetOption[] {
   const targetOptions = [
     {
-      label: formatInflowChain(
-        params.borrowPool,
-        getDefaultChain(params.borrowPool)
-      ),
+      label: getDefaultChain(params.borrowPool),
       loan: params.loan,
       repayment: params.loan.repayment.targets.poolChain,
     },
@@ -807,76 +705,29 @@ function formatRepaymentTargetOption(
   ].join("\n");
 }
 
-function getDefaultDestinationType(
-  pool: Pool | undefined,
-  transferChain: Chain
-): InstantLoanDestinationType {
-  if (pool?.chain === "ICP") {
-    return "IcrcAccount";
-  }
-
-  return transferChain === Chain.ICP ? "IcPrincipal" : "ChainAddress";
-}
-
-function getDestinationTypeOptions(
-  pool: Pool | undefined,
-  transferChain: Chain
-): InstantLoanDestinationType[] {
-  if (pool?.chain === "ICP") {
-    return ICP_DESTINATION_TYPES;
-  }
-
-  return transferChain === Chain.ICP
-    ? CK_DESTINATION_TYPES
-    : CHAIN_ADDRESS_DESTINATION_TYPES;
-}
-
-function shouldShowDestinationTypeSelect(
-  pool: Pool | undefined,
-  transferChain: Chain
-): boolean {
-  return getDestinationTypeOptions(pool, transferChain).length > 1;
-}
-
 function formatInflowChain(
   pool: Pool | undefined,
   transferChain: Chain
 ): string {
   if (pool?.chain === "ICP") {
-    return "Native ICP ledger account";
+    return Chain.ICP;
   }
 
-  return transferChain === Chain.ICP
-    ? `Direct ck${pool?.asset ?? "asset"} / ICRC ledger account`
-    : `Native ${pool?.chain ?? "chain"} ingress address`;
+  return transferChain;
 }
 
-function formatOutflowChain(
+function formatDestinationInputLabel(
+  prefix: string,
   pool: Pool | undefined,
   transferChain: Chain
 ): string {
   if (pool?.chain === "ICP") {
-    return "Native ICP ledger destination";
+    return `${prefix} ICRC account`;
   }
 
   return transferChain === Chain.ICP
-    ? `ck${pool?.asset ?? "asset"} to IC principal`
-    : `Native ${pool?.chain ?? "chain"} address`;
-}
-
-function formatDestinationType(
-  destinationType: InstantLoanDestinationType
-): string {
-  switch (destinationType) {
-    case "ChainAddress":
-      return "Chain-native address";
-    case "IcPrincipal":
-      return "IC principal";
-    case "IcpAccountIdentifier":
-      return "ICP account identifier";
-    case "IcrcAccount":
-      return "ICRC account";
-  }
+    ? `${prefix} IC principal`
+    : `${prefix} address`;
 }
 
 function findPoolByAsset(pools: Pool[], asset: string): Pool | undefined {

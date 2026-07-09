@@ -3,7 +3,6 @@ import { DynamicWidget, useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import type {
   ActivityFilter,
   AssetPrices,
-  OutflowAccountType,
   Pool,
   SupplyFlow,
 } from "@liquidium/client";
@@ -37,19 +36,6 @@ import {
 
 const DEFAULT_SUPPLY_ASSET = "USDC";
 const DEFAULT_BORROW_ASSET = "USDC";
-type ChainSelection = "poolChain" | "icpLedger";
-const DEFAULT_SUPPLY_CHAIN_SELECTION: ChainSelection = "poolChain";
-const DEFAULT_OUTFLOW_CHAIN_SELECTION: ChainSelection = "poolChain";
-const DEFAULT_OUTFLOW_ACCOUNT_TYPE: OutflowAccountType = "ChainAddress";
-const EXTERNAL_CHAIN_OUTFLOW_ACCOUNT_TYPES: OutflowAccountType[] = [
-  "ChainAddress",
-];
-const CK_OUTFLOW_ACCOUNT_TYPES: OutflowAccountType[] = ["IcPrincipal"];
-const ICP_OUTFLOW_ACCOUNT_TYPES: OutflowAccountType[] = [
-  "IcrcAccount",
-  "IcpAccountIdentifier",
-  "IcPrincipal",
-];
 
 export function App() {
   const isStatusPage = window.location.pathname.endsWith("/status.html");
@@ -63,8 +49,9 @@ function SupplyBorrowPage() {
   const [assetPrices, setAssetPrices] = useState<AssetPrices>({});
   const [profileId, setProfileId] = useState("");
   const [selectedSupplyPoolId, setSelectedSupplyPoolId] = useState("");
-  const [supplyChainSelection, setSupplyChainSelection] =
-    useState<ChainSelection>(DEFAULT_SUPPLY_CHAIN_SELECTION);
+  const [supplyChainSelection, setSupplyChainSelection] = useState<Chain>(
+    Chain.ETH
+  );
   const [selectedBorrowPoolId, setSelectedBorrowPoolId] = useState("");
   const [supplyAmount, setSupplyAmount] = useState("10");
   const [supplyTxid, setSupplyTxid] = useState("");
@@ -78,11 +65,10 @@ function SupplyBorrowPage() {
     "Generate a supply target first, then track the txid."
   );
   const [borrowAmount, setBorrowAmount] = useState("9");
-  const [borrowChainSelection, setBorrowChainSelection] =
-    useState<ChainSelection>(DEFAULT_OUTFLOW_CHAIN_SELECTION);
+  const [borrowChainSelection, setBorrowChainSelection] = useState<Chain>(
+    Chain.ETH
+  );
   const [borrowDestination, setBorrowDestination] = useState("");
-  const [borrowDestinationType, setBorrowDestinationType] =
-    useState<OutflowAccountType>(DEFAULT_OUTFLOW_ACCOUNT_TYPE);
   const [borrowResult, setBorrowResult] = useState(
     "Connect a wallet, then submit a borrow."
   );
@@ -116,13 +102,8 @@ function SupplyBorrowPage() {
       setSelectedBorrowPoolId(
         defaultBorrowPool?.id ?? loadedPools[0]?.id ?? ""
       );
-      setBorrowChainSelection(DEFAULT_OUTFLOW_CHAIN_SELECTION);
-      setBorrowDestinationType(
-        getDefaultOutflowAccountType(
-          defaultBorrowPool,
-          DEFAULT_OUTFLOW_CHAIN_SELECTION
-        )
-      );
+      setSupplyChainSelection(getDefaultChain(defaultSupplyPool));
+      setBorrowChainSelection(getDefaultChain(defaultBorrowPool));
       setStatus(`Loaded ${loadedPools.length} pools.`);
     }, setStatus);
   }, []);
@@ -139,13 +120,13 @@ function SupplyBorrowPage() {
     if (
       !selectedBorrowPool ||
       selectedBorrowPool.chain !== Chain.ETH ||
-      borrowDestinationType !== "ChainAddress"
+      borrowChainSelection !== Chain.ETH
     ) {
       return;
     }
 
     setBorrowDestination(walletAddress);
-  }, [walletAddress, selectedBorrowPoolId, borrowDestinationType, pools]);
+  }, [walletAddress, selectedBorrowPoolId, borrowChainSelection, pools]);
 
   async function loadPools(): Promise<void> {
     setStatus("Loading pools...");
@@ -164,13 +145,8 @@ function SupplyBorrowPage() {
     setAssetPrices(loadedAssetPrices);
     setSelectedSupplyPoolId(defaultSupplyPool?.id ?? loadedPools[0]?.id ?? "");
     setSelectedBorrowPoolId(defaultBorrowPool?.id ?? loadedPools[0]?.id ?? "");
-    setBorrowChainSelection(DEFAULT_OUTFLOW_CHAIN_SELECTION);
-    setBorrowDestinationType(
-      getDefaultOutflowAccountType(
-        defaultBorrowPool,
-        DEFAULT_OUTFLOW_CHAIN_SELECTION
-      )
-    );
+    setSupplyChainSelection(getDefaultChain(defaultSupplyPool));
+    setBorrowChainSelection(getDefaultChain(defaultBorrowPool));
     setStatus(`Loaded ${loadedPools.length} pools.`);
   }
 
@@ -192,14 +168,14 @@ function SupplyBorrowPage() {
     const supplyFlow = await createDepositAddressSupply({
       profileId: trimmedProfileId,
       poolId: selectedSupplyPool.id,
-      chainSelection: supplyChainSelection,
+      chain: supplyChainSelection,
     });
 
     setCurrentSupplyFlow(supplyFlow);
     setSupplyResult(
       [
         `Send amount: ${formatAmount(parsedSupplyAmount, selectedSupplyPool.decimals)} ${selectedSupplyPool.asset}`,
-        `Transfer chain: ${formatChainSelection(supplyChainSelection)}`,
+        `Transfer chain: ${supplyChainSelection}`,
         "",
         formatSupplyTarget(supplyFlow.target),
         "",
@@ -300,14 +276,14 @@ function SupplyBorrowPage() {
       profileId: result.profileId,
       poolId: selectedBorrowPool.id,
       amount: parsedBorrowAmount,
-      receiver: { address: destinationAddress, type: borrowDestinationType },
+      receiver: destinationAddress,
       signerWalletAddress,
       signerWalletAdapter: createDynamicWalletAdapter(primaryWallet),
     });
     saveRecentActivityId(outflow.id);
     setBorrowResult(
       [
-        `Transfer chain: ${formatOutflowChainSelection(selectedBorrowPool, borrowChainSelection)}`,
+        `Transfer chain: ${borrowChainSelection}`,
         "",
         formatOutflowDetails(outflow),
       ].join("\n")
@@ -406,15 +382,20 @@ function SupplyBorrowPage() {
           id="supply-chain-select"
           value={supplyChainSelection}
           onChange={(event) =>
-            setSupplyChainSelection(event.target.value as ChainSelection)
+            setSupplyChainSelection(event.target.value as Chain)
           }
         >
-          <option value="poolChain">Pool native chain</option>
-          <option value="icpLedger">ICP ck ledger</option>
+          {getChainOptions(
+            pools.find((pool) => pool.id === selectedSupplyPoolId)
+          ).map((chain) => (
+            <option key={chain} value={chain}>
+              {chain}
+            </option>
+          ))}
         </select>
         <p>
-          Choose native for BTC/EVM deposit addresses. Choose ck to get the
-          pool-owned ICRC account for ckBTC, ckUSDC, or ckUSDT transfers.
+          Choose the chain you will use to send supply. The SDK returns the
+          right target for that chain.
         </p>
 
         <label htmlFor="supply-amount-input">
@@ -462,10 +443,8 @@ function SupplyBorrowPage() {
             setSelectedBorrowPool({
               poolId: event.target.value,
               pools,
-              chainSelection: DEFAULT_OUTFLOW_CHAIN_SELECTION,
               setSelectedPoolId: setSelectedBorrowPoolId,
               setChainSelection: setBorrowChainSelection,
-              setDestinationType: setBorrowDestinationType,
               setDestination: setBorrowDestination,
             })
           }
@@ -483,28 +462,24 @@ function SupplyBorrowPage() {
           value={borrowChainSelection}
           onChange={(event) =>
             setSelectedOutflowChainSelection({
-              chainSelection: event.target.value as ChainSelection,
+              chain: event.target.value as Chain,
               pool: pools.find((pool) => pool.id === selectedBorrowPoolId),
               setChainSelection: setBorrowChainSelection,
-              setDestinationType: setBorrowDestinationType,
               setDestination: setBorrowDestination,
             })
           }
         >
-          {getOutflowChainSelectionOptions(
+          {getChainOptions(
             pools.find((pool) => pool.id === selectedBorrowPoolId)
-          ).map((chainSelection) => (
-            <option key={chainSelection} value={chainSelection}>
-              {formatOutflowChainSelection(
-                pools.find((pool) => pool.id === selectedBorrowPoolId),
-                chainSelection
-              )}
+          ).map((chain) => (
+            <option key={chain} value={chain}>
+              {chain}
             </option>
           ))}
         </select>
         <p>
-          Native mode sends borrowed assets to the chain address or ICP ledger
-          account. ck mode sends ck assets to an IC principal.
+          Choose the chain where borrowed funds should arrive. The SDK uses the
+          right destination format for that chain.
         </p>
 
         <label htmlFor="borrow-amount-input">Borrow amount</label>
@@ -516,28 +491,12 @@ function SupplyBorrowPage() {
         />
 
         <label htmlFor="borrow-destination-input">
-          Borrow destination address
-        </label>
-        <select
-          id="borrow-destination-type-select"
-          value={borrowDestinationType}
-          onChange={(event) =>
-            setBorrowDestinationType(event.target.value as OutflowAccountType)
-          }
-        >
-          {getOutflowAccountTypeOptions(
+          {formatDestinationInputLabel(
+            "Borrow destination",
             pools.find((pool) => pool.id === selectedBorrowPoolId),
             borrowChainSelection
-          ).map((accountType) => (
-            <option key={accountType} value={accountType}>
-              {formatOutflowAccountType(accountType)}
-            </option>
-          ))}
-        </select>
-        <p>
-          For ICP pools, choose ICRC account, ICP account identifier, or IC
-          principal. External addresses are for BTC and EVM-chain outflows.
-        </p>
+          )}
+        </label>
         <input
           id="borrow-destination-input"
           value={borrowDestination}
@@ -744,99 +703,50 @@ function ActivityTrackerPage() {
   );
 }
 
-function formatChainSelection(chainSelection: ChainSelection): string {
-  return chainSelection === "icpLedger"
-    ? "Direct ck / ICRC ledger account"
-    : "Native ingress address";
-}
-
-function getDefaultOutflowAccountType(
-  pool: Pool | undefined,
-  chainSelection: ChainSelection
-): OutflowAccountType {
-  if (chainSelection === "icpLedger" && pool?.chain !== Chain.ICP) {
-    return "IcPrincipal";
-  }
-
-  return pool?.chain === Chain.ICP ? "IcrcAccount" : "ChainAddress";
-}
-
-function getOutflowAccountTypeOptions(
-  pool: Pool | undefined,
-  chainSelection: ChainSelection
-): OutflowAccountType[] {
-  if (pool?.chain === Chain.ICP) {
-    return ICP_OUTFLOW_ACCOUNT_TYPES;
-  }
-
-  return chainSelection === "icpLedger"
-    ? CK_OUTFLOW_ACCOUNT_TYPES
-    : EXTERNAL_CHAIN_OUTFLOW_ACCOUNT_TYPES;
-}
-
-function formatOutflowAccountType(accountType: OutflowAccountType): string {
-  switch (accountType) {
-    case "ChainAddress":
-      return "Chain-native address";
-    case "IcPrincipal":
-      return "IC principal";
-    case "IcrcAccount":
-      return "ICRC account";
-    case "IcpAccountIdentifier":
-      return "ICP account identifier";
-  }
-}
-
 function setSelectedBorrowPool(params: {
   poolId: string;
   pools: Pool[];
-  chainSelection: ChainSelection;
   setSelectedPoolId(poolId: string): void;
-  setChainSelection(chainSelection: ChainSelection): void;
-  setDestinationType(accountType: OutflowAccountType): void;
+  setChainSelection(chain: Chain): void;
   setDestination(destination: string): void;
 }): void {
   const selectedPool = params.pools.find((pool) => pool.id === params.poolId);
 
   params.setSelectedPoolId(params.poolId);
-  params.setChainSelection(params.chainSelection);
-  params.setDestinationType(
-    getDefaultOutflowAccountType(selectedPool, params.chainSelection)
-  );
+  params.setChainSelection(getDefaultChain(selectedPool));
   params.setDestination("");
 }
 
 function setSelectedOutflowChainSelection(params: {
-  chainSelection: ChainSelection;
+  chain: Chain;
   pool: Pool | undefined;
-  setChainSelection(chainSelection: ChainSelection): void;
-  setDestinationType(accountType: OutflowAccountType): void;
+  setChainSelection(chain: Chain): void;
   setDestination(destination: string): void;
 }): void {
-  params.setChainSelection(params.chainSelection);
-  params.setDestinationType(
-    getDefaultOutflowAccountType(params.pool, params.chainSelection)
-  );
+  params.setChainSelection(params.chain);
   params.setDestination("");
 }
 
-function getOutflowChainSelectionOptions(
-  pool: Pool | undefined
-): ChainSelection[] {
-  return pool?.chain === Chain.ICP ? ["poolChain"] : ["poolChain", "icpLedger"];
+function getChainOptions(pool: Pool | undefined): Chain[] {
+  const defaultChain = getDefaultChain(pool);
+
+  return defaultChain === Chain.ICP ? [Chain.ICP] : [defaultChain, Chain.ICP];
 }
 
-function formatOutflowChainSelection(
+function getDefaultChain(pool: Pool | undefined): Chain {
+  return (pool?.chain as Chain | undefined) ?? Chain.ETH;
+}
+
+function formatDestinationInputLabel(
+  prefix: string,
   pool: Pool | undefined,
-  chainSelection: ChainSelection
+  chain: Chain
 ): string {
-  if (chainSelection === "icpLedger" && pool?.chain !== Chain.ICP) {
-    return `ck${pool?.asset ?? "asset"} to IC principal`;
+  if (pool?.chain === Chain.ICP) {
+    return `${prefix} ICRC account`;
   }
 
-  return pool?.chain === Chain.ICP
-    ? "Native ICP ledger account"
-    : "Native chain address";
+  return chain === Chain.ICP ? `${prefix} IC principal` : `${prefix} address`;
 }
 
 async function getOrCreateConnectedWalletProfile(

@@ -1,9 +1,5 @@
 import { DynamicWidget, useDynamicContext } from "@dynamic-labs/sdk-react-core";
-import type {
-  ActivityFilter,
-  OutflowAccountType,
-  Pool,
-} from "@liquidium/client";
+import type { ActivityFilter, Pool } from "@liquidium/client";
 import { Chain } from "@liquidium/client";
 import { useEffect, useState } from "react";
 import { formatConfig } from "./client";
@@ -41,21 +37,9 @@ const DEFAULT_BORROW_ASSET = "USDC";
 
 type ContractInteractionTab = "supply" | "repay" | "borrow" | "withdraw";
 type StablecoinInflowMode = "contractInteraction" | "ck";
-type ChainSelection = "poolChain" | "icpLedger";
 
 const DEFAULT_STABLECOIN_INFLOW_MODE: StablecoinInflowMode =
   "contractInteraction";
-const DEFAULT_OUTFLOW_CHAIN_SELECTION: ChainSelection = "poolChain";
-const DEFAULT_OUTFLOW_ACCOUNT_TYPE: OutflowAccountType = "ChainAddress";
-const EXTERNAL_CHAIN_OUTFLOW_ACCOUNT_TYPES: OutflowAccountType[] = [
-  "ChainAddress",
-];
-const CK_OUTFLOW_ACCOUNT_TYPES: OutflowAccountType[] = ["IcPrincipal"];
-const ICP_OUTFLOW_ACCOUNT_TYPES: OutflowAccountType[] = [
-  "IcrcAccount",
-  "IcpAccountIdentifier",
-  "IcPrincipal",
-];
 
 export function App() {
   const isStatusPage = window.location.pathname.endsWith("/status.html");
@@ -88,20 +72,18 @@ function ContractInteractionPage() {
     "No contract interaction repayment submitted yet."
   );
   const [borrowAmount, setBorrowAmount] = useState("9");
-  const [borrowChainSelection, setBorrowChainSelection] =
-    useState<ChainSelection>(DEFAULT_OUTFLOW_CHAIN_SELECTION);
+  const [borrowChainSelection, setBorrowChainSelection] = useState<Chain>(
+    Chain.ETH
+  );
   const [borrowDestination, setBorrowDestination] = useState("");
-  const [borrowDestinationType, setBorrowDestinationType] =
-    useState<OutflowAccountType>(DEFAULT_OUTFLOW_ACCOUNT_TYPE);
   const [borrowResult, setBorrowResult] = useState(
     "Connect a wallet, then submit a borrow."
   );
   const [withdrawAmount, setWithdrawAmount] = useState("1");
-  const [withdrawChainSelection, setWithdrawChainSelection] =
-    useState<ChainSelection>(DEFAULT_OUTFLOW_CHAIN_SELECTION);
+  const [withdrawChainSelection, setWithdrawChainSelection] = useState<Chain>(
+    Chain.ETH
+  );
   const [withdrawDestination, setWithdrawDestination] = useState("");
-  const [withdrawDestinationType, setWithdrawDestinationType] =
-    useState<OutflowAccountType>(DEFAULT_OUTFLOW_ACCOUNT_TYPE);
   const [withdrawResult, setWithdrawResult] = useState(
     "Connect a wallet, then submit a withdraw."
   );
@@ -132,20 +114,8 @@ function ContractInteractionPage() {
       setSelectedRepaymentPoolId(defaultContractInteractionPool?.id ?? "");
       setSelectedBorrowPoolId(defaultBorrowPool?.id ?? "");
       setSelectedWithdrawPoolId(defaultBorrowPool?.id ?? "");
-      setBorrowChainSelection(DEFAULT_OUTFLOW_CHAIN_SELECTION);
-      setWithdrawChainSelection(DEFAULT_OUTFLOW_CHAIN_SELECTION);
-      setBorrowDestinationType(
-        getDefaultOutflowAccountType(
-          defaultBorrowPool,
-          DEFAULT_OUTFLOW_CHAIN_SELECTION
-        )
-      );
-      setWithdrawDestinationType(
-        getDefaultOutflowAccountType(
-          defaultBorrowPool,
-          DEFAULT_OUTFLOW_CHAIN_SELECTION
-        )
-      );
+      setBorrowChainSelection(getDefaultChain(defaultBorrowPool));
+      setWithdrawChainSelection(getDefaultChain(defaultBorrowPool));
       setStatus(
         `Loaded ${availableContractInteractionPools.length} contract interaction pools.`
       );
@@ -164,13 +134,13 @@ function ContractInteractionPage() {
     if (
       !selectedBorrowPool ||
       selectedBorrowPool.chain !== Chain.ETH ||
-      borrowDestinationType !== "ChainAddress"
+      borrowChainSelection !== Chain.ETH
     ) {
       return;
     }
 
     setBorrowDestination(walletAddress);
-  }, [walletAddress, selectedBorrowPoolId, borrowDestinationType, pools]);
+  }, [walletAddress, selectedBorrowPoolId, borrowChainSelection, pools]);
 
   useEffect(() => {
     if (!walletAddress) {
@@ -184,13 +154,13 @@ function ContractInteractionPage() {
     if (
       !selectedWithdrawPool ||
       selectedWithdrawPool.chain !== Chain.ETH ||
-      withdrawDestinationType !== "ChainAddress"
+      withdrawChainSelection !== Chain.ETH
     ) {
       return;
     }
 
     setWithdrawDestination(walletAddress);
-  }, [walletAddress, selectedWithdrawPoolId, withdrawDestinationType, pools]);
+  }, [walletAddress, selectedWithdrawPoolId, withdrawChainSelection, pools]);
 
   async function loadPools(): Promise<void> {
     setStatus("Loading pools...");
@@ -212,20 +182,8 @@ function ContractInteractionPage() {
     setSelectedRepaymentPoolId(defaultContractInteractionPool?.id ?? "");
     setSelectedBorrowPoolId(defaultBorrowPool?.id ?? "");
     setSelectedWithdrawPoolId(defaultBorrowPool?.id ?? "");
-    setBorrowChainSelection(DEFAULT_OUTFLOW_CHAIN_SELECTION);
-    setWithdrawChainSelection(DEFAULT_OUTFLOW_CHAIN_SELECTION);
-    setBorrowDestinationType(
-      getDefaultOutflowAccountType(
-        defaultBorrowPool,
-        DEFAULT_OUTFLOW_CHAIN_SELECTION
-      )
-    );
-    setWithdrawDestinationType(
-      getDefaultOutflowAccountType(
-        defaultBorrowPool,
-        DEFAULT_OUTFLOW_CHAIN_SELECTION
-      )
-    );
+    setBorrowChainSelection(getDefaultChain(defaultBorrowPool));
+    setWithdrawChainSelection(getDefaultChain(defaultBorrowPool));
     setStatus(
       `Loaded ${availableContractInteractionPools.length} contract interaction pools.`
     );
@@ -398,7 +356,7 @@ function ContractInteractionPage() {
       profileId: trimmedProfileId,
       poolId: selectedBorrowPool.id,
       amount,
-      receiver: { address: destinationAddress, type: borrowDestinationType },
+      receiver: destinationAddress,
       signerWalletAddress,
       signerWalletAdapter: createDynamicWalletAdapter(primaryWallet),
     });
@@ -406,7 +364,7 @@ function ContractInteractionPage() {
     saveRecentActivityId(outflow.id);
     setBorrowResult(
       [
-        `Transfer chain: ${formatOutflowChainSelection(selectedBorrowPool, borrowChainSelection)}`,
+        `Transfer chain: ${borrowChainSelection}`,
         "",
         formatOutflowDetails(outflow),
       ].join("\n")
@@ -442,7 +400,7 @@ function ContractInteractionPage() {
       profileId: trimmedProfileId,
       poolId: selectedWithdrawPool.id,
       amount,
-      receiver: { address: destinationAddress, type: withdrawDestinationType },
+      receiver: destinationAddress,
       signerWalletAddress,
       signerWalletAdapter: createDynamicWalletAdapter(primaryWallet),
     });
@@ -450,7 +408,7 @@ function ContractInteractionPage() {
     saveRecentActivityId(outflow.id);
     setWithdrawResult(
       [
-        `Transfer chain: ${formatOutflowChainSelection(selectedWithdrawPool, withdrawChainSelection)}`,
+        `Transfer chain: ${withdrawChainSelection}`,
         "",
         formatOutflowDetails(outflow),
       ].join("\n")
@@ -693,10 +651,8 @@ function ContractInteractionPage() {
                 setSelectedOutflowPool({
                   poolId: event.target.value,
                   pools,
-                  chainSelection: DEFAULT_OUTFLOW_CHAIN_SELECTION,
                   setSelectedPoolId: setSelectedBorrowPoolId,
                   setChainSelection: setBorrowChainSelection,
-                  setDestinationType: setBorrowDestinationType,
                   setDestination: setBorrowDestination,
                 })
               }
@@ -714,28 +670,24 @@ function ContractInteractionPage() {
               value={borrowChainSelection}
               onChange={(event) =>
                 setSelectedOutflowChainSelection({
-                  chainSelection: event.target.value as ChainSelection,
+                  chain: event.target.value as Chain,
                   pool: pools.find((pool) => pool.id === selectedBorrowPoolId),
                   setChainSelection: setBorrowChainSelection,
-                  setDestinationType: setBorrowDestinationType,
                   setDestination: setBorrowDestination,
                 })
               }
             >
-              {getOutflowChainSelectionOptions(
+              {getChainOptions(
                 pools.find((pool) => pool.id === selectedBorrowPoolId)
-              ).map((chainSelection) => (
-                <option key={chainSelection} value={chainSelection}>
-                  {formatOutflowChainSelection(
-                    pools.find((pool) => pool.id === selectedBorrowPoolId),
-                    chainSelection
-                  )}
+              ).map((chain) => (
+                <option key={chain} value={chain}>
+                  {chain}
                 </option>
               ))}
             </select>
             <p>
-              Native mode sends borrowed assets to the chain address or ICP
-              ledger account. ck mode sends ck assets to an IC principal.
+              Choose the chain where borrowed funds should arrive. The SDK uses
+              the right destination format for that chain.
             </p>
 
             <label htmlFor="borrow-amount-input">Borrow amount</label>
@@ -747,30 +699,12 @@ function ContractInteractionPage() {
             />
 
             <label htmlFor="borrow-destination-input">
-              Borrow destination address
-            </label>
-            <select
-              id="borrow-destination-type-select"
-              value={borrowDestinationType}
-              onChange={(event) =>
-                setBorrowDestinationType(
-                  event.target.value as OutflowAccountType
-                )
-              }
-            >
-              {getOutflowAccountTypeOptions(
+              {formatDestinationInputLabel(
+                "Borrow destination",
                 pools.find((pool) => pool.id === selectedBorrowPoolId),
                 borrowChainSelection
-              ).map((accountType) => (
-                <option key={accountType} value={accountType}>
-                  {formatOutflowAccountType(accountType)}
-                </option>
-              ))}
-            </select>
-            <p>
-              For ICP pools, choose ICRC account, ICP account identifier, or IC
-              principal. External addresses are for BTC and EVM-chain outflows.
-            </p>
+              )}
+            </label>
             <input
               id="borrow-destination-input"
               value={borrowDestination}
@@ -796,10 +730,8 @@ function ContractInteractionPage() {
                 setSelectedOutflowPool({
                   poolId: event.target.value,
                   pools,
-                  chainSelection: DEFAULT_OUTFLOW_CHAIN_SELECTION,
                   setSelectedPoolId: setSelectedWithdrawPoolId,
                   setChainSelection: setWithdrawChainSelection,
-                  setDestinationType: setWithdrawDestinationType,
                   setDestination: setWithdrawDestination,
                 })
               }
@@ -817,30 +749,26 @@ function ContractInteractionPage() {
               value={withdrawChainSelection}
               onChange={(event) =>
                 setSelectedOutflowChainSelection({
-                  chainSelection: event.target.value as ChainSelection,
+                  chain: event.target.value as Chain,
                   pool: pools.find(
                     (pool) => pool.id === selectedWithdrawPoolId
                   ),
                   setChainSelection: setWithdrawChainSelection,
-                  setDestinationType: setWithdrawDestinationType,
                   setDestination: setWithdrawDestination,
                 })
               }
             >
-              {getOutflowChainSelectionOptions(
+              {getChainOptions(
                 pools.find((pool) => pool.id === selectedWithdrawPoolId)
-              ).map((chainSelection) => (
-                <option key={chainSelection} value={chainSelection}>
-                  {formatOutflowChainSelection(
-                    pools.find((pool) => pool.id === selectedWithdrawPoolId),
-                    chainSelection
-                  )}
+              ).map((chain) => (
+                <option key={chain} value={chain}>
+                  {chain}
                 </option>
               ))}
             </select>
             <p>
-              Native mode sends withdrawn assets to the chain address or ICP
-              ledger account. ck mode sends ck assets to an IC principal.
+              Choose the chain where withdrawn funds should arrive. The SDK uses
+              the right destination format for that chain.
             </p>
 
             <label htmlFor="withdraw-amount-input">Withdraw amount</label>
@@ -852,30 +780,12 @@ function ContractInteractionPage() {
             />
 
             <label htmlFor="withdraw-destination-input">
-              Withdraw destination address
-            </label>
-            <select
-              id="withdraw-destination-type-select"
-              value={withdrawDestinationType}
-              onChange={(event) =>
-                setWithdrawDestinationType(
-                  event.target.value as OutflowAccountType
-                )
-              }
-            >
-              {getOutflowAccountTypeOptions(
+              {formatDestinationInputLabel(
+                "Withdraw destination",
                 pools.find((pool) => pool.id === selectedWithdrawPoolId),
                 withdrawChainSelection
-              ).map((accountType) => (
-                <option key={accountType} value={accountType}>
-                  {formatOutflowAccountType(accountType)}
-                </option>
-              ))}
-            </select>
-            <p>
-              For ICP pools, choose ICRC account, ICP account identifier, or IC
-              principal. External addresses are for BTC and EVM-chain outflows.
-            </p>
+              )}
+            </label>
             <input
               id="withdraw-destination-input"
               value={withdrawDestination}
@@ -904,93 +814,50 @@ function formatStablecoinInflowMode(mode: StablecoinInflowMode): string {
     : "ETH contract interaction";
 }
 
-function getDefaultOutflowAccountType(
-  pool: Pool | undefined,
-  chainSelection: ChainSelection
-): OutflowAccountType {
-  if (chainSelection === "icpLedger" && pool?.chain !== Chain.ICP) {
-    return "IcPrincipal";
-  }
-
-  return pool?.chain === Chain.ICP ? "IcrcAccount" : "ChainAddress";
-}
-
-function getOutflowAccountTypeOptions(
-  pool: Pool | undefined,
-  chainSelection: ChainSelection
-): OutflowAccountType[] {
-  if (pool?.chain === Chain.ICP) {
-    return ICP_OUTFLOW_ACCOUNT_TYPES;
-  }
-
-  return chainSelection === "icpLedger"
-    ? CK_OUTFLOW_ACCOUNT_TYPES
-    : EXTERNAL_CHAIN_OUTFLOW_ACCOUNT_TYPES;
-}
-
-function formatOutflowAccountType(accountType: OutflowAccountType): string {
-  switch (accountType) {
-    case "ChainAddress":
-      return "Chain-native address";
-    case "IcPrincipal":
-      return "IC principal";
-    case "IcrcAccount":
-      return "ICRC account";
-    case "IcpAccountIdentifier":
-      return "ICP account identifier";
-  }
-}
-
 function setSelectedOutflowPool(params: {
   poolId: string;
   pools: Pool[];
-  chainSelection: ChainSelection;
   setSelectedPoolId(poolId: string): void;
-  setChainSelection(chainSelection: ChainSelection): void;
-  setDestinationType(accountType: OutflowAccountType): void;
+  setChainSelection(chain: Chain): void;
   setDestination(destination: string): void;
 }): void {
   const selectedPool = params.pools.find((pool) => pool.id === params.poolId);
 
   params.setSelectedPoolId(params.poolId);
-  params.setChainSelection(params.chainSelection);
-  params.setDestinationType(
-    getDefaultOutflowAccountType(selectedPool, params.chainSelection)
-  );
+  params.setChainSelection(getDefaultChain(selectedPool));
   params.setDestination("");
 }
 
 function setSelectedOutflowChainSelection(params: {
-  chainSelection: ChainSelection;
+  chain: Chain;
   pool: Pool | undefined;
-  setChainSelection(chainSelection: ChainSelection): void;
-  setDestinationType(accountType: OutflowAccountType): void;
+  setChainSelection(chain: Chain): void;
   setDestination(destination: string): void;
 }): void {
-  params.setChainSelection(params.chainSelection);
-  params.setDestinationType(
-    getDefaultOutflowAccountType(params.pool, params.chainSelection)
-  );
+  params.setChainSelection(params.chain);
   params.setDestination("");
 }
 
-function getOutflowChainSelectionOptions(
-  pool: Pool | undefined
-): ChainSelection[] {
-  return pool?.chain === Chain.ICP ? ["poolChain"] : ["poolChain", "icpLedger"];
+function getChainOptions(pool: Pool | undefined): Chain[] {
+  const defaultChain = getDefaultChain(pool);
+
+  return defaultChain === Chain.ICP ? [Chain.ICP] : [defaultChain, Chain.ICP];
 }
 
-function formatOutflowChainSelection(
+function getDefaultChain(pool: Pool | undefined): Chain {
+  return (pool?.chain as Chain | undefined) ?? Chain.ETH;
+}
+
+function formatDestinationInputLabel(
+  prefix: string,
   pool: Pool | undefined,
-  chainSelection: ChainSelection
+  chain: Chain
 ): string {
-  if (chainSelection === "icpLedger" && pool?.chain !== Chain.ICP) {
-    return `ck${pool?.asset ?? "asset"} to IC principal`;
+  if (pool?.chain === Chain.ICP) {
+    return `${prefix} ICRC account`;
   }
 
-  return pool?.chain === Chain.ICP
-    ? "Native ICP ledger account"
-    : "Native chain address";
+  return chain === Chain.ICP ? `${prefix} IC principal` : `${prefix} address`;
 }
 
 function ActivityTrackerPage() {
