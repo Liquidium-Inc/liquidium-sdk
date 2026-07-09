@@ -124,28 +124,17 @@ Nonce: 17`);
     });
   });
 
-  test("creates a BTC borrow action to an IC principal destination", async () => {
+  test("rejects a BTC borrow receiver that uses an IC principal before fetching a nonce", async () => {
     // given
-    vi.setSystemTime(new Date("2026-04-01T00:00:00.000Z"));
-    const borrowAssets = vi.fn().mockResolvedValue({
-      Ok: {
-        id: "outflow-principal",
-        txid: [],
-        outflow_type: { Borrow: null },
-        outflow_ref: [],
-        amount: 50_000n,
-        receiver: { Native: Principal.fromText(VALID_IC_PRINCIPAL) },
-      },
-    });
+    const getNonce = vi.fn().mockResolvedValue(17n);
     vi.spyOn(Actor, "createActor").mockReturnValue({
       list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord()]),
-      get_nonce: vi.fn().mockResolvedValue(17n),
-      borrow_assets: borrowAssets,
+      get_nonce: getNonce,
     } as never);
     const client = new LiquidiumClient({});
 
     // when
-    const borrowAction = await client.lending.prepareBorrow({
+    const result = client.lending.prepareBorrow({
       profileId: "aaaaa-aa",
       poolId: BTC_POOL_ID,
       amount: 50_000n,
@@ -155,72 +144,39 @@ Nonce: 17`);
       },
       signerWalletAddress: "0xsigner",
     });
-    const outflow = await borrowAction.submit({
-      signature: "0xsigned",
-      chain: "ETH",
-    });
 
     // then
-    expect(borrowAction.data.receiver).toEqual({
-      address: VALID_IC_PRINCIPAL,
-      type: "IcPrincipal",
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message: "Target pool does not support this address type",
     });
-    expect(borrowAction.message).toContain(`Principal:${VALID_IC_PRINCIPAL}`);
-    expect(borrowAssets.mock.calls[0]?.[1]).toMatchObject({
-      data: {
-        account: { Native: Principal.fromText(VALID_IC_PRINCIPAL) },
-      },
-    });
-    expect(outflow.receiver).toEqual({
-      type: "IcPrincipal",
-      principal: VALID_IC_PRINCIPAL,
-    });
+    expect(getNonce).not.toHaveBeenCalled();
   });
 
-  test("auto-detects an IC principal borrow receiver before an owner-only ICRC account", async () => {
+  test("rejects an auto-detected IC principal borrow receiver for a BTC pool before fetching a nonce", async () => {
     // given
-    vi.setSystemTime(new Date("2026-04-01T00:00:00.000Z"));
-    const borrowAssets = vi.fn().mockResolvedValue({
-      Ok: {
-        id: "outflow-principal-auto",
-        txid: [],
-        outflow_type: { Borrow: null },
-        outflow_ref: [],
-        amount: 50_000n,
-        receiver: { Native: Principal.fromText(VALID_IC_PRINCIPAL) },
-      },
-    });
+    const getNonce = vi.fn().mockResolvedValue(17n);
     vi.spyOn(Actor, "createActor").mockReturnValue({
       list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord()]),
-      get_nonce: vi.fn().mockResolvedValue(17n),
-      borrow_assets: borrowAssets,
+      get_nonce: getNonce,
     } as never);
     const client = new LiquidiumClient({});
 
     // when
-    const borrowAction = await client.lending.prepareBorrow({
+    const result = client.lending.prepareBorrow({
       profileId: "aaaaa-aa",
       poolId: BTC_POOL_ID,
       amount: 50_000n,
-      receiver: {
-        address: VALID_IC_PRINCIPAL,
-        type: "IcPrincipal",
-      },
+      receiver: VALID_IC_PRINCIPAL,
       signerWalletAddress: "0xsigner",
     });
-    await borrowAction.submit({ signature: "0xsigned", chain: "ETH" });
 
     // then
-    expect(borrowAction.data.receiver).toEqual({
-      address: VALID_IC_PRINCIPAL,
-      type: "IcPrincipal",
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message: "Target pool does not support this address type",
     });
-    expect(borrowAction.message).toContain(`Principal:${VALID_IC_PRINCIPAL}`);
-    expect(borrowAssets.mock.calls[0]?.[1]).toMatchObject({
-      data: {
-        account: { Native: Principal.fromText(VALID_IC_PRINCIPAL) },
-      },
-    });
+    expect(getNonce).not.toHaveBeenCalled();
   });
 
   test("creates an ICP borrow action to an ICRC destination", async () => {
@@ -280,37 +236,22 @@ Nonce: 17`);
     });
   });
 
-  test("creates an ETH stablecoin borrow action to an ICRC destination", async () => {
+  test("rejects an ETH stablecoin borrow receiver that uses an ICRC account before fetching a nonce", async () => {
     // given
     const ICRC_SUBACCOUNT = new Uint8Array(32).fill(7);
     const ICRC_ACCOUNT = encodeIcrcAccount({
       owner: Principal.fromText(VALID_IC_PRINCIPAL),
       subaccount: ICRC_SUBACCOUNT,
     });
-    const borrowAssets = vi.fn().mockResolvedValue({
-      Ok: {
-        id: "outflow-usdt-icrc",
-        txid: [],
-        outflow_type: { Borrow: null },
-        outflow_ref: [],
-        amount: 1_000_000n,
-        receiver: {
-          Icrc: {
-            owner: Principal.fromText(VALID_IC_PRINCIPAL),
-            subaccount: [ICRC_SUBACCOUNT],
-          },
-        },
-      },
-    });
+    const getNonce = vi.fn().mockResolvedValue(17n);
     vi.spyOn(Actor, "createActor").mockReturnValue({
       list_pools: vi.fn().mockResolvedValue([createUsdtPoolRecord()]),
-      get_nonce: vi.fn().mockResolvedValue(17n),
-      borrow_assets: borrowAssets,
+      get_nonce: getNonce,
     } as never);
     const client = new LiquidiumClient({});
 
     // when
-    const borrowAction = await client.lending.prepareBorrow({
+    const result = client.lending.prepareBorrow({
       profileId: "aaaaa-aa",
       poolId: USDT_POOL_ID,
       amount: 1_000_000n,
@@ -320,53 +261,31 @@ Nonce: 17`);
       },
       signerWalletAddress: "0xsigner",
     });
-    await borrowAction.submit({ signature: "0xsigned", chain: "ETH" });
 
     // then
-    expect(borrowAction.message).toContain(`Icrc:${ICRC_ACCOUNT}`);
-    expect(borrowAssets.mock.calls[0]?.[1]).toMatchObject({
-      data: {
-        account: {
-          Icrc: {
-            owner: Principal.fromText(VALID_IC_PRINCIPAL),
-            subaccount: [ICRC_SUBACCOUNT],
-          },
-        },
-      },
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message: "Target pool does not support this address type",
     });
+    expect(getNonce).not.toHaveBeenCalled();
   });
 
-  test("creates a BTC borrow action to an ICRC destination", async () => {
+  test("rejects a BTC borrow receiver that uses an ICRC account before fetching a nonce", async () => {
     // given
     const ICRC_SUBACCOUNT = new Uint8Array(32).fill(8);
     const ICRC_ACCOUNT = encodeIcrcAccount({
       owner: Principal.fromText(VALID_IC_PRINCIPAL),
       subaccount: ICRC_SUBACCOUNT,
     });
-    const borrowAssets = vi.fn().mockResolvedValue({
-      Ok: {
-        id: "outflow-btc-icrc",
-        txid: [],
-        outflow_type: { Borrow: null },
-        outflow_ref: [],
-        amount: 50_000n,
-        receiver: {
-          Icrc: {
-            owner: Principal.fromText(VALID_IC_PRINCIPAL),
-            subaccount: [ICRC_SUBACCOUNT],
-          },
-        },
-      },
-    });
+    const getNonce = vi.fn().mockResolvedValue(17n);
     vi.spyOn(Actor, "createActor").mockReturnValue({
       list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord()]),
-      get_nonce: vi.fn().mockResolvedValue(17n),
-      borrow_assets: borrowAssets,
+      get_nonce: getNonce,
     } as never);
     const client = new LiquidiumClient({});
 
     // when
-    const borrowAction = await client.lending.prepareBorrow({
+    const result = client.lending.prepareBorrow({
       profileId: "aaaaa-aa",
       poolId: BTC_POOL_ID,
       amount: 50_000n,
@@ -376,20 +295,13 @@ Nonce: 17`);
       },
       signerWalletAddress: "0xsigner",
     });
-    await borrowAction.submit({ signature: "0xsigned", chain: "ETH" });
 
     // then
-    expect(borrowAction.message).toContain(`Icrc:${ICRC_ACCOUNT}`);
-    expect(borrowAssets.mock.calls[0]?.[1]).toMatchObject({
-      data: {
-        account: {
-          Icrc: {
-            owner: Principal.fromText(VALID_IC_PRINCIPAL),
-            subaccount: [ICRC_SUBACCOUNT],
-          },
-        },
-      },
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message: "Target pool does not support this address type",
     });
+    expect(getNonce).not.toHaveBeenCalled();
   });
 
   test("rejects an invalid hinted IC principal borrow receiver before fetching a nonce", async () => {
