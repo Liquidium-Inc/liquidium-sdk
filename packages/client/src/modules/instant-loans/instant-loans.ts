@@ -71,10 +71,11 @@ import type {
   InstantLoanFindCollateral,
   InstantLoanFindResult,
   InstantLoanGetRequest,
-  InstantLoanInflowChainOptions,
+  InstantLoanInflowTargetQuotes,
   InstantLoanInitialDeposit,
   InstantLoanLeg,
   InstantLoanListEventsRequest,
+  InstantLoanRepaymentTargetQuote,
   InstantLoanWarmedProfile,
 } from "./types";
 
@@ -216,13 +217,10 @@ interface InstantLoanHydrationInput {
   started: boolean;
   depositDetectedTimestamp: bigint | null;
   expiryTimestamp: bigint | null;
-  initialDepositChain?: Chain;
   borrowChain: string;
-  repaymentChain?: Chain;
 }
 
-interface InstantLoanHydrationChainOptions
-  extends InstantLoanInflowChainOptions {
+interface InstantLoanHydrationChainOptions {
   borrowChain?: Chain;
 }
 
@@ -230,9 +228,15 @@ interface InstantLoanInitialDepositQuoteInput {
   collateralAmount: bigint;
   decimals: bigint;
   asset: string;
-  target: SupplyTarget;
+  targets: InstantLoanInflowTargetQuotes<SupplyTarget>;
   detectedTimestamp: bigint | null;
   expiryTimestamp: bigint | null;
+}
+
+interface ResolveInstantLoanInflowTargetsRequest {
+  profileId: string;
+  poolId: string;
+  action: SupplyAction;
 }
 
 interface RepaymentInflowFeeEstimate {
@@ -252,11 +256,6 @@ interface DeriveInstantLoanStatusInput {
 interface DeriveDepositExpiryTimestampInput {
   depositDetectedTimestamp: bigint | null;
   depositWindowSeconds: bigint;
-}
-
-interface NormalizedInstantLoanChainOptions {
-  initialDepositChain?: Chain;
-  repaymentChain?: Chain;
 }
 
 interface LtvCalculationErrorDetails {
@@ -299,28 +298,28 @@ export class InstantLoansModule {
    * selected pool decimals, and call `client.quote.calculateLtv(...)` before
    * creation to block invalid LTV input.
    *
-   * `borrowDestination` receives the borrowed asset after the loan starts.
-   * `refundDestination` receives collateral refunds or withdrawals. Use
+   * `borrow.destination` receives the borrowed asset after the loan starts.
+   * `refund.destination` receives collateral refunds or withdrawals. Use
    * `depositWindowSeconds` for the user-facing collateral deposit timeout; the
    * SDK maps it to the canister's internal `ltv_timer_s` field.
    *
-   * @param request - Pool ids, assets, base-unit amounts, LTV limit, timeout, and destinations.
+   * @param request - Collateral, borrow, refund, LTV limit, timeout, and inflow options.
    * @returns Hydrated loan state plus generated initial-deposit and repayment quote targets.
    */
   async create(request: CreateInstantLoanRequest): Promise<InstantLoan> {
     validateCreateRequest(request);
     const borrowDestination = resolveInstantLoanDestination({
-      destination: request.borrowDestination,
-      asset: request.borrowAsset,
+      destination: request.borrow.destination,
+      asset: request.borrow.asset,
       role: "borrow",
-      chain: request.borrowChain,
+      chain: request.borrow.chain,
       normalizeExternalDestination: validateInstantLoanBorrowDestination,
     });
     const refundDestination = resolveInstantLoanDestination({
-      destination: request.refundDestination,
-      asset: request.collateralAsset,
+      destination: request.refund.destination,
+      asset: request.collateral.asset,
       role: "refund",
-      chain: request.refundChain,
+      chain: request.refund.chain,
       normalizeExternalDestination: validateInstantLoanRefundDestination,
     });
     const apiClient = this.requireApi("Instant loan creation");
@@ -331,12 +330,12 @@ export class InstantLoansModule {
       V1InstantLoanCreateResponseWire,
       InstantLoanCreateRequestWire
     >(SdkApiPath.instantLoans, {
-      collateralPoolId: request.collateralPoolId,
-      borrowPoolId: request.borrowPoolId,
-      collateralAsset: request.collateralAsset,
-      borrowAsset: request.borrowAsset,
-      collateralAmount: request.collateralAmount.toString(),
-      borrowAmount: request.borrowAmount.toString(),
+      collateralPoolId: request.collateral.poolId,
+      borrowPoolId: request.borrow.poolId,
+      collateralAsset: request.collateral.asset,
+      borrowAsset: request.borrow.asset,
+      collateralAmount: request.collateral.amount.toString(),
+      borrowAmount: request.borrow.amount.toString(),
       ltvMaxBps: request.ltvMaxBps.toString(),
       depositWindowSeconds: request.depositWindowSeconds.toString(),
       borrowDestination,
@@ -357,9 +356,7 @@ export class InstantLoansModule {
     const record = await this.getLoanRecord(loanId);
 
     return await this.mapLoanRecord(record, collateralAmount, {
-      initialDepositChain: request.initialDepositChain,
-      borrowChain: request.borrowChain,
-      repaymentChain: request.repaymentChain,
+      borrowChain: request.borrow.chain,
     });
   }
 
@@ -379,10 +376,7 @@ export class InstantLoansModule {
     const record = await this.getLoanRecord(loanId);
     const collateralAmount = await this.getCollateralAmountHint(loanId);
 
-    return await this.mapLoanRecord(record, collateralAmount, {
-      initialDepositChain: request.initialDepositChain,
-      repaymentChain: request.repaymentChain,
-    });
+    return await this.mapLoanRecord(record, collateralAmount);
   }
 
   /**
@@ -573,8 +567,6 @@ export class InstantLoansModule {
     collateralAmount: bigint,
     chainOptions: InstantLoanHydrationChainOptions = {}
   ): Promise<InstantLoan> {
-    const normalizedChainOptions =
-      normalizeInstantLoanChainOptions(chainOptions);
     const borrowDestination = accountFromCanister(record.borrow_destination);
 
     return await this.hydrateLoan({
@@ -598,11 +590,9 @@ export class InstantLoansModule {
           depositDetectedTimestamp: record.deposit_detected_ts[0] ?? null,
           depositWindowSeconds: record.ltv_timer_s,
         }),
-      initialDepositChain: normalizedChainOptions.initialDepositChain,
       borrowChain:
         chainOptions.borrowChain ??
         inferInstantLoanDeliveryChain(borrowDestination, record.borrow_asset),
-      repaymentChain: normalizedChainOptions.repaymentChain,
     });
   }
 
@@ -629,26 +619,22 @@ export class InstantLoansModule {
     const borrowAsset = input.borrowAsset;
 
     const [
-      depositTarget,
-      repayTarget,
+      depositTargets,
+      repayTargets,
       collateralPosition,
       borrowPosition,
       borrowPoolRate,
       activeActivities,
     ] = await Promise.all([
-      resolveSupplyTarget(this.canisterContext, {
+      this.resolveInstantLoanInflowTargets({
         profileId,
         poolId: collateralPoolId,
         action: SupplyAction.deposit,
-        mechanism: SupplyPlanType.transfer,
-        chain: input.initialDepositChain,
       }),
-      resolveSupplyTarget(this.canisterContext, {
+      this.resolveInstantLoanInflowTargets({
         profileId,
         poolId: borrowPoolId,
         action: SupplyAction.repayment,
-        mechanism: SupplyPlanType.transfer,
-        chain: input.repaymentChain,
       }),
       this.positions.getPosition(profileId, collateralPoolId),
       this.positions.getPosition(profileId, borrowPoolId),
@@ -661,14 +647,6 @@ export class InstantLoansModule {
       borrowPosition,
       borrowPoolRate.borrowRate
     );
-
-    const repaymentInflowFee =
-      totalDebtAmount > 0n
-        ? await this.estimateRepaymentInflowFee(borrowAsset, repayTarget.chain)
-        : { totalFee: 0n, estimateAvailable: false };
-
-    const repaymentAmount =
-      totalDebtAmount + interestBufferAmount + repaymentInflowFee.totalFee;
 
     const currentCollateralAmount = collateralPosition?.deposited ?? 0n;
 
@@ -697,22 +675,24 @@ export class InstantLoansModule {
       collateralAmount,
       decimals: collateralDecimals,
       asset: collateralAsset,
-      target: depositTarget,
+      targets: depositTargets,
       detectedTimestamp: input.depositDetectedTimestamp,
       expiryTimestamp: input.expiryTimestamp,
     });
 
+    const repaymentTargets = await this.createRepaymentTargetQuotes({
+      baseRepaymentAmount: totalDebtAmount + interestBufferAmount,
+      asset: borrowAsset,
+      targets: repayTargets,
+    });
+
     const repayment = {
-      amount: repaymentAmount,
       decimals: borrowedDecimals,
       debtAmount: totalDebtAmount,
       interestBufferAmount,
       interestBufferSeconds: REPAYMENT_BUFFER_SECONDS,
-      inflowFeeAmount: repaymentInflowFee.totalFee,
-      inflowFeeEstimateAvailable: repaymentInflowFee.estimateAvailable,
       asset: borrowAsset,
-      chain: repayTarget.chain,
-      target: repayTarget,
+      targets: repaymentTargets,
     };
 
     return {
@@ -727,7 +707,7 @@ export class InstantLoansModule {
       collateral: {
         poolId: collateralPoolId,
         asset: collateralAsset,
-        chain: depositTarget.chain,
+        chain: depositTargets.poolChain.chain,
         decimals: collateralDecimals,
         amount: collateralAmount,
       },
@@ -757,22 +737,80 @@ export class InstantLoansModule {
   private async createInitialDepositQuote(
     input: InstantLoanInitialDepositQuoteInput
   ): Promise<InstantLoanInitialDeposit> {
-    const inflowFee = await this.lending.estimateInflowFee({
-      asset: input.asset as Asset,
-      chain: input.target.chain as Chain,
-    });
+    const targets = await mapInstantLoanTargetQuotes(
+      input.targets,
+      async (target) => {
+        const inflowFee = await this.lending.estimateInflowFee({
+          asset: input.asset as Asset,
+          chain: target.chain as Chain,
+        });
+
+        return {
+          amount: input.collateralAmount + inflowFee.totalFee,
+          chain: target.chain,
+          inflowFeeAmount: inflowFee.totalFee,
+          target,
+        };
+      }
+    );
 
     return {
-      amount: input.collateralAmount + inflowFee.totalFee,
       decimals: input.decimals,
       collateralAmount: input.collateralAmount,
-      inflowFeeAmount: inflowFee.totalFee,
       asset: input.asset,
-      chain: input.target.chain,
-      target: input.target,
+      targets,
       detectedTimestamp: input.detectedTimestamp,
       expiryTimestamp: input.expiryTimestamp,
     };
+  }
+
+  private async resolveInstantLoanInflowTargets(
+    request: ResolveInstantLoanInflowTargetsRequest
+  ): Promise<InstantLoanInflowTargetQuotes<SupplyTarget>> {
+    const poolChainTarget = await resolveSupplyTarget(this.canisterContext, {
+      profileId: request.profileId,
+      poolId: request.poolId,
+      action: request.action,
+      mechanism: SupplyPlanType.transfer,
+    });
+
+    if (poolChainTarget.chain === CoreChain.ICP) {
+      return { poolChain: poolChainTarget };
+    }
+
+    const icpTarget = await resolveSupplyTarget(this.canisterContext, {
+      profileId: request.profileId,
+      poolId: request.poolId,
+      action: request.action,
+      mechanism: SupplyPlanType.transfer,
+      chain: CoreChain.ICP,
+    });
+
+    return {
+      poolChain: poolChainTarget,
+      icp: icpTarget,
+    };
+  }
+
+  private async createRepaymentTargetQuotes(input: {
+    baseRepaymentAmount: bigint;
+    asset: string;
+    targets: InstantLoanInflowTargetQuotes<SupplyTarget>;
+  }): Promise<InstantLoanInflowTargetQuotes<InstantLoanRepaymentTargetQuote>> {
+    return await mapInstantLoanTargetQuotes(input.targets, async (target) => {
+      const repaymentInflowFee =
+        input.baseRepaymentAmount > 0n
+          ? await this.estimateRepaymentInflowFee(input.asset, target.chain)
+          : { totalFee: 0n, estimateAvailable: false };
+
+      return {
+        amount: input.baseRepaymentAmount + repaymentInflowFee.totalFee,
+        chain: target.chain,
+        inflowFeeAmount: repaymentInflowFee.totalFee,
+        inflowFeeEstimateAvailable: repaymentInflowFee.estimateAvailable,
+        target,
+      };
+    });
   }
 
   private async estimateRepaymentInflowFee(
@@ -833,10 +871,10 @@ export class InstantLoansModule {
     ]);
     const ltvCalculation = new QuoteModule().calculateLtv(
       {
-        borrowAmount: request.borrowAmount,
-        borrowPoolId: request.borrowPoolId,
-        collateralAmount: request.collateralAmount,
-        collateralPoolId: request.collateralPoolId,
+        borrowAmount: request.borrow.amount,
+        borrowPoolId: request.borrow.poolId,
+        collateralAmount: request.collateral.amount,
+        collateralPoolId: request.collateral.poolId,
       },
       pools,
       assetPrices
@@ -986,6 +1024,22 @@ function getCurrentUnixTimestampSeconds(): bigint {
   return BigInt(Math.floor(Date.now() / MILLISECONDS_PER_SECOND));
 }
 
+async function mapInstantLoanTargetQuotes<TTargetQuote>(
+  targets: InstantLoanInflowTargetQuotes<SupplyTarget>,
+  mapTarget: (target: SupplyTarget) => Promise<TTargetQuote>
+): Promise<InstantLoanInflowTargetQuotes<TTargetQuote>> {
+  const poolChain = await mapTarget(targets.poolChain);
+
+  if (!targets.icp) {
+    return { poolChain };
+  }
+
+  return {
+    poolChain,
+    icp: await mapTarget(targets.icp),
+  };
+}
+
 function deriveDepositExpiryTimestamp(
   input: DeriveDepositExpiryTimestampInput
 ): bigint | null {
@@ -996,23 +1050,14 @@ function deriveDepositExpiryTimestamp(
   return input.depositDetectedTimestamp + input.depositWindowSeconds;
 }
 
-function normalizeInstantLoanChainOptions(
-  options: InstantLoanInflowChainOptions
-): NormalizedInstantLoanChainOptions {
-  return {
-    initialDepositChain: options.initialDepositChain,
-    repaymentChain: options.repaymentChain,
-  };
-}
-
 function validateCreateRequest(request: CreateInstantLoanRequest): void {
-  if (request.collateralAmount <= 0n) {
+  if (request.collateral.amount <= 0n) {
     throw new LiquidiumError(
       LiquidiumErrorCode.VALIDATION_ERROR,
       "Instant loan collateral amount must be greater than zero"
     );
   }
-  if (request.borrowAmount <= 0n) {
+  if (request.borrow.amount <= 0n) {
     throw new LiquidiumError(
       LiquidiumErrorCode.VALIDATION_ERROR,
       "Instant loan borrow amount must be greater than zero"

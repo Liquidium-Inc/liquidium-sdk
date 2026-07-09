@@ -33,6 +33,14 @@ const DEFAULT_BORROW_AMOUNT_BASE_UNITS = 5_726_000_000n;
 const DEFAULT_ICP_AMOUNT_E8S = 1_000_000n;
 const DEFAULT_LTV_MAX_BPS = 6_000n;
 
+type CreateInstantLoanRequestOverrides = Partial<
+  Omit<CreateInstantLoanRequest, "borrow" | "collateral" | "refund">
+> & {
+  borrow?: Partial<CreateInstantLoanRequest["borrow"]>;
+  collateral?: Partial<CreateInstantLoanRequest["collateral"]>;
+  refund?: Partial<CreateInstantLoanRequest["refund"]>;
+};
+
 describeLive("live instant loans e2e", () => {
   test("should create and hydrate one instant loan", async () => {
     // given
@@ -59,8 +67,8 @@ describeLive("live instant loans e2e", () => {
     expect(loan.profileId).toBeTruthy();
     expect(loan.status.operation).toBe("deposit");
     expect(loan.borrow.asset).toBe(borrowPool.asset);
-    expect(loan.initialDeposit.target).toBeTruthy();
-    expect(loan.repayment.target).toBeTruthy();
+    expect(loan.initialDeposit.targets.poolChain.target).toBeTruthy();
+    expect(loan.repayment.targets.poolChain.target).toBeTruthy();
     expect(loanById.loanId).toBe(loan.loanId);
     expect(loanByRef.loanId).toBe(loan.loanId);
   });
@@ -96,10 +104,12 @@ describeLive("live instant loans e2e", () => {
     {
       name: "ck stablecoin borrow to an ETH L1 address",
       requestOverrides: {
-        borrowChain: "ICP",
-        borrowDestination: {
-          type: "ChainAddress",
-          address: VALID_ETH_L1_ADDRESS,
+        borrow: {
+          chain: "ICP",
+          destination: {
+            type: "ChainAddress",
+            address: VALID_ETH_L1_ADDRESS,
+          },
         },
       },
       expectedCode: LiquidiumErrorCode.VALIDATION_ERROR,
@@ -107,10 +117,12 @@ describeLive("live instant loans e2e", () => {
     {
       name: "ckBTC refund to a BTC L1 address",
       requestOverrides: {
-        refundChain: "ICP",
-        refundDestination: {
-          type: "ChainAddress",
-          address: VALID_BTC_L1_ADDRESS,
+        refund: {
+          chain: "ICP",
+          destination: {
+            type: "ChainAddress",
+            address: VALID_BTC_L1_ADDRESS,
+          },
         },
       },
       expectedCode: LiquidiumErrorCode.VALIDATION_ERROR,
@@ -118,13 +130,15 @@ describeLive("live instant loans e2e", () => {
     {
       name: "ICP borrow to an ETH L1 address",
       requestOverrides: {
-        borrowPoolId: ICP_POOL_ID_PLACEHOLDER,
-        borrowAsset: "ICP",
-        borrowAmount: DEFAULT_ICP_AMOUNT_E8S,
-        borrowChain: "ICP",
-        borrowDestination: {
-          type: "ChainAddress",
-          address: VALID_ETH_L1_ADDRESS,
+        borrow: {
+          poolId: ICP_POOL_ID_PLACEHOLDER,
+          asset: "ICP",
+          amount: DEFAULT_ICP_AMOUNT_E8S,
+          chain: "ICP",
+          destination: {
+            type: "ChainAddress",
+            address: VALID_ETH_L1_ADDRESS,
+          },
         },
       },
       expectedCode: LiquidiumErrorCode.INVALID_ADDRESS,
@@ -174,37 +188,65 @@ async function createLiveInstantLoan(params: {
   }
 
   return await params.client.instantLoans.create({
-    collateralPoolId: params.collateralPool.id,
-    borrowPoolId: params.borrowPool.id,
-    collateralAsset: "BTC",
-    borrowAsset: params.borrowPool.asset as "USDC" | "USDT",
-    collateralAmount: quote.requiredCollateralAmount,
-    borrowAmount,
+    collateral: {
+      poolId: params.collateralPool.id,
+      asset: "BTC",
+      amount: quote.requiredCollateralAmount,
+    },
+    borrow: {
+      poolId: params.borrowPool.id,
+      asset: params.borrowPool.asset as "USDC" | "USDT",
+      amount: borrowAmount,
+      chain: "ETH",
+      destination: evmAddress,
+    },
+    refund: {
+      chain: "BTC",
+      destination: bitcoinAddress,
+    },
     ltvMaxBps: quote.targetLtvBps + INSTANT_LOAN_LTV_BUFFER_BPS,
     depositWindowSeconds: DEFAULT_DEPOSIT_WINDOW_SECONDS,
-    borrowChain: "ETH",
-    borrowDestination: evmAddress,
-    refundChain: "BTC",
-    refundDestination: bitcoinAddress,
   });
 }
 
 function createInstantLoanValidationRequest(
-  overrides: Partial<CreateInstantLoanRequest> = {}
+  overrides: CreateInstantLoanRequestOverrides = {}
 ): CreateInstantLoanRequest {
-  return {
-    collateralPoolId: BTC_POOL_ID_PLACEHOLDER,
-    borrowPoolId: USDT_POOL_ID_PLACEHOLDER,
-    collateralAsset: "BTC",
-    borrowAsset: "USDT",
-    collateralAmount: DEFAULT_COLLATERAL_AMOUNT_BASE_UNITS,
-    borrowAmount: DEFAULT_BORROW_AMOUNT_BASE_UNITS,
+  const request: CreateInstantLoanRequest = {
+    collateral: {
+      poolId: BTC_POOL_ID_PLACEHOLDER,
+      asset: "BTC",
+      amount: DEFAULT_COLLATERAL_AMOUNT_BASE_UNITS,
+    },
+    borrow: {
+      poolId: USDT_POOL_ID_PLACEHOLDER,
+      asset: "USDT",
+      amount: DEFAULT_BORROW_AMOUNT_BASE_UNITS,
+      chain: "ETH",
+      destination: VALID_ETH_L1_ADDRESS,
+    },
+    refund: {
+      chain: "BTC",
+      destination: VALID_BTC_L1_ADDRESS,
+    },
     ltvMaxBps: DEFAULT_LTV_MAX_BPS,
     depositWindowSeconds: DEFAULT_DEPOSIT_WINDOW_SECONDS,
-    borrowChain: "ETH",
-    borrowDestination: VALID_ETH_L1_ADDRESS,
-    refundChain: "BTC",
-    refundDestination: VALID_BTC_L1_ADDRESS,
+  };
+
+  return {
+    ...request,
     ...overrides,
+    collateral: {
+      ...request.collateral,
+      ...overrides.collateral,
+    },
+    borrow: {
+      ...request.borrow,
+      ...overrides.borrow,
+    },
+    refund: {
+      ...request.refund,
+      ...overrides.refund,
+    },
   };
 }

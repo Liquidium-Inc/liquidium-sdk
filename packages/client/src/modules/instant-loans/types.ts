@@ -9,14 +9,6 @@ import type { SupplyTarget } from "../lending";
 /** Asset symbols supported by the instant-loans canister. */
 export type InstantLoanAsset = Asset;
 
-/** Inflow transfer-chain selection for instant-loan quotes. */
-export interface InstantLoanInflowChainOptions {
-  /** Transfer chain used for the initial collateral deposit target. Use ICP for ck-ledger transfers. */
-  initialDepositChain?: Chain;
-  /** Transfer chain used for the repayment target. Use ICP for ck-ledger transfers. */
-  repaymentChain?: Chain;
-}
-
 /** Delivery-chain selection for instant-loan creation. */
 export interface InstantLoanDeliveryChainOptions {
   /** Delivery chain used for the borrowed asset. Use ICP for ck-ledger delivery. */
@@ -27,6 +19,83 @@ export interface InstantLoanDeliveryChainOptions {
 
 /** Delivery-chain selection for instant-loan creation. */
 export type InstantLoanOutflowChainOptions = InstantLoanDeliveryChainOptions;
+
+/** Collateral leg used when creating an instant loan. */
+export interface CreateInstantLoanCollateral {
+  /**
+   * Principal text of the pool that receives the user's collateral deposit.
+   *
+   * This should be the `id` of the collateral `Pool` selected from
+   * `client.market.listPools()`. The pool asset must match `asset`.
+   */
+  poolId: string;
+  /**
+   * Asset the user will deposit as collateral.
+   *
+   * Must match the asset for `poolId`; for example, use `"BTC"` with a BTC
+   * collateral pool.
+   */
+  asset: InstantLoanAsset;
+  /**
+   * Intended credited collateral amount, in base units.
+   *
+   * This is used to validate LTV and initialize the loan record before
+   * deposit/inflow fees are deducted. For BTC, pass satoshis. For token assets,
+   * convert the UI amount using the selected pool's `decimals` value. After
+   * creation, use one of `loan.initialDeposit.targets` as the fee-inclusive
+   * transfer quote and destination.
+   */
+  amount: bigint;
+}
+
+/** Borrow leg used when creating an instant loan. */
+export interface CreateInstantLoanBorrow {
+  /**
+   * Principal text of the pool that funds the borrow.
+   *
+   * This should be the `id` of the borrow `Pool` selected from
+   * `client.market.listPools()`. The pool asset must match `asset`.
+   */
+  poolId: string;
+  /**
+   * Asset the user wants to borrow from the borrow pool.
+   *
+   * Must match the asset for `poolId`; for example, use `"USDC"` with a USDC
+   * borrow pool.
+   */
+  asset: InstantLoanAsset;
+  /**
+   * Amount to borrow, in the borrow asset's base units.
+   *
+   * For USDC/USDT, convert the UI amount using the selected borrow pool's
+   * `decimals` value before passing it here.
+   */
+  amount: bigint;
+  /** Delivery chain used for the borrowed asset. Use ICP for ck-ledger delivery. */
+  chain: Chain;
+  /**
+   * Destination that receives the borrowed asset after the loan starts.
+   *
+   * Pass either a string shorthand or a typed destination. For BTC/ETH chain
+   * outflows this is usually the user's chain address. For ICP or ck outflows,
+   * use `IcPrincipal`, `IcpAccountIdentifier`, or `IcrcAccount` destinations.
+   */
+  destination: InstantLoanDestination;
+}
+
+/** Refund leg used when creating an instant loan. */
+export interface CreateInstantLoanRefund {
+  /** Delivery chain used for collateral refunds and withdrawals. Use ICP for ck-ledger delivery. */
+  chain: Chain;
+  /**
+   * Destination that receives collateral refunds or withdrawals.
+   *
+   * Pass either a string shorthand or a typed destination. For BTC/ETH chain
+   * outflows this is usually the user's chain address. For ICP or ck outflows,
+   * use `IcPrincipal`, `IcpAccountIdentifier`, or `IcrcAccount` destinations.
+   */
+  destination: InstantLoanDestination;
+}
 
 /**
  * Borrow destination or refund account associated with an instant loan.
@@ -71,54 +140,13 @@ export type InstantLoanDestination = LiquidiumAccountInput;
  * satoshis and ERC-20 assets use token base units according to the selected
  * pool decimals.
  */
-export interface CreateInstantLoanRequest
-  extends InstantLoanInflowChainOptions,
-    InstantLoanDeliveryChainOptions {
-  /**
-   * Principal text of the pool that receives the user's collateral deposit.
-   *
-   * This should be the `id` of the collateral `Pool` selected from
-   * `client.market.listPools()`. The pool asset must match `collateralAsset`.
-   */
-  collateralPoolId: string;
-  /**
-   * Principal text of the pool that funds the borrow.
-   *
-   * This should be the `id` of the borrow `Pool` selected from
-   * `client.market.listPools()`. The pool asset must match `borrowAsset`.
-   */
-  borrowPoolId: string;
-  /**
-   * Asset the user will deposit as collateral.
-   *
-   * Must match the asset for `collateralPoolId`; for example, use `"BTC"` with
-   * a BTC collateral pool.
-   */
-  collateralAsset: InstantLoanAsset;
-  /**
-   * Asset the user wants to borrow from the borrow pool.
-   *
-   * Must match the asset for `borrowPoolId`; for example, use `"USDC"` with a
-   * USDC borrow pool.
-   */
-  borrowAsset: InstantLoanAsset;
-  /**
-   * Intended credited collateral amount, in base units.
-   *
-   * This is used to validate LTV and initialize the loan record before
-   * deposit/inflow fees are deducted. For BTC, pass satoshis. For token assets,
-   * convert the UI amount using the selected pool's `decimals` value. After
-   * creation, use `loan.initialDeposit.amount` as the fee-inclusive transfer
-   * amount to send to `loan.initialDeposit.target`.
-   */
-  collateralAmount: bigint;
-  /**
-   * Amount to borrow, in the borrow asset's base units.
-   *
-   * For USDC/USDT, convert the UI amount using the selected borrow pool's
-   * `decimals` value before passing it here.
-   */
-  borrowAmount: bigint;
+export interface CreateInstantLoanRequest {
+  /** Collateral leg: pool, asset, and amount the user deposits. */
+  collateral: CreateInstantLoanCollateral;
+  /** Borrow leg: pool, asset, amount, delivery chain, and destination. */
+  borrow: CreateInstantLoanBorrow;
+  /** Refund leg: chain and destination for returned collateral. */
+  refund: CreateInstantLoanRefund;
   /**
    * Maximum allowed loan-to-value ratio in basis points.
    *
@@ -136,22 +164,6 @@ export interface CreateInstantLoanRequest
    * `ltv_timer_s`.
    */
   depositWindowSeconds: bigint;
-  /**
-   * Destination that receives the borrowed asset after the loan starts.
-   *
-   * Pass either a string shorthand or a typed destination. For BTC/ETH chain
-   * outflows this is usually the user's chain address. For ICP or ck outflows,
-   * use `IcPrincipal`, `IcpAccountIdentifier`, or `IcrcAccount` destinations.
-   */
-  borrowDestination: InstantLoanDestination;
-  /**
-   * Destination that receives collateral refunds or withdrawals.
-   *
-   * Pass either a string shorthand or a typed destination. For BTC/ETH chain
-   * outflows this is usually the user's chain address. For ICP or ck outflows,
-   * use `IcPrincipal`, `IcpAccountIdentifier`, or `IcrcAccount` destinations.
-   */
-  refundDestination: InstantLoanDestination;
 }
 
 /** Lookup request for loading an instant loan by numeric canister id. */
@@ -168,8 +180,8 @@ export interface InstantLoanGetByRefRequest {
 
 /** Lookup request for loading canonical instant-loan state. */
 export type InstantLoanGetRequest =
-  | (InstantLoanGetByIdRequest & InstantLoanInflowChainOptions)
-  | (InstantLoanGetByRefRequest & InstantLoanInflowChainOptions);
+  | InstantLoanGetByIdRequest
+  | InstantLoanGetByRefRequest;
 
 /** Collateral leg returned by instant-loan search. */
 export interface InstantLoanFindCollateral {
@@ -332,10 +344,42 @@ export type InstantLoanEventType =
   | InstantLoanRepayCompleteEventType
   | InstantLoanDepositTimerStartedEventType;
 
-/** Current amount to send to the repayment target to close the debt. */
-export interface InstantLoanRepayment {
+/** Inflow target options returned for a generated transfer quote. */
+export interface InstantLoanInflowTargetQuotes<TTargetQuote> {
+  /** Target for the selected pool's own chain, such as BTC for BTC pools or ETH for ETH pools. */
+  poolChain: TTargetQuote;
+  /** ICP ledger/ICRC target when a ck-ledger transfer rail is distinct from the pool chain. */
+  icp?: TTargetQuote;
+}
+
+/** Fee-inclusive collateral deposit quote for one transfer target. */
+export interface InstantLoanInitialDepositTargetQuote {
+  /** Full amount to send to the collateral deposit target, including fee. */
+  amount: bigint;
+  /** Chain used for the collateral deposit. */
+  chain: MarketChain;
+  /** Inflow fee amount in base units added to the transfer amount. */
+  inflowFeeAmount: bigint;
+  /** Address or ICRC account where the collateral should be sent. */
+  target: SupplyTarget;
+}
+
+/** Fee-inclusive repayment quote for one transfer target. */
+export interface InstantLoanRepaymentTargetQuote {
   /** Full amount to send to the repayment target, including fee and interest buffer. */
   amount: bigint;
+  /** Chain used for repayment. */
+  chain: MarketChain;
+  /** Inflow fee amount in base units added to the repayment transfer. Falls back to the protocol minimum when live estimation is unavailable. */
+  inflowFeeAmount: bigint;
+  /** Whether `inflowFeeAmount` came from a live fee estimate. */
+  inflowFeeEstimateAvailable: boolean;
+  /** Address or ICRC account where the repayment should be sent. */
+  target: SupplyTarget;
+}
+
+/** Current amount to send to a repayment target to close the debt. */
+export interface InstantLoanRepayment {
   /** Decimal scale for `amount`. */
   decimals: bigint;
   /** Current debt in base units, before fee and interest buffer. */
@@ -344,34 +388,22 @@ export interface InstantLoanRepayment {
   interestBufferAmount: bigint;
   /** Seconds of interest accrual included in `interestBufferAmount`. */
   interestBufferSeconds: bigint;
-  /** Inflow fee amount in base units added to the repayment transfer. Falls back to the protocol minimum when live estimation is unavailable. */
-  inflowFeeAmount: bigint;
-  /** Whether `inflowFeeAmount` came from a live fee estimate. */
-  inflowFeeEstimateAvailable: boolean;
   /** Asset to repay. */
   asset: MarketAsset;
-  /** Chain used for repayment. */
-  chain: MarketChain;
-  /** Address or ICRC account where the repayment should be sent. */
-  target: SupplyTarget;
+  /** Available repayment targets keyed by transfer rail. */
+  targets: InstantLoanInflowTargetQuotes<InstantLoanRepaymentTargetQuote>;
 }
 
 /** Initial collateral deposit quote returned when an instant loan is created. */
 export interface InstantLoanInitialDeposit {
-  /** Full amount to send to the deposit target, including the estimated inflow fee. */
-  amount: bigint;
   /** Decimal scale for `amount`, `collateralAmount`, and `inflowFeeAmount`. */
   decimals: bigint;
   /** Intended credited collateral amount in base units, before inflow fees. */
   collateralAmount: bigint;
-  /** Inflow fee amount in base units added to the transfer amount. */
-  inflowFeeAmount: bigint;
   /** Collateral asset to deposit. */
   asset: MarketAsset;
-  /** Chain used for the collateral deposit. */
-  chain: MarketChain;
-  /** Address or ICRC account where the collateral should be sent. */
-  target: SupplyTarget;
+  /** Available collateral deposit targets keyed by transfer rail. */
+  targets: InstantLoanInflowTargetQuotes<InstantLoanInitialDepositTargetQuote>;
   /** Unix timestamp in seconds when the collateral deposit was detected, or null before detection. */
   detectedTimestamp: bigint | null;
   /** Unix timestamp in seconds when the collateral deposit window expires, or null before detection when unavailable. */

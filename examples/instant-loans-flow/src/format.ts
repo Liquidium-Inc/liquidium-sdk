@@ -3,6 +3,8 @@ import type {
   GetActivityStatusResponse,
   InstantLoan,
   InstantLoanFindResult,
+  InstantLoanInitialDepositTargetQuote,
+  InstantLoanRepaymentTargetQuote,
   LiquidiumStatus,
   Pool,
   SupplyTarget,
@@ -174,6 +176,65 @@ export function formatSupplyTarget(target: SupplyTarget): string {
   ].join("\n");
 }
 
+function formatInitialDepositTargetQuote(
+  label: string,
+  quote: InstantLoanInitialDepositTargetQuote,
+  asset: string,
+  decimals: bigint
+): string[] {
+  return [
+    label,
+    `Amount to send: ${formatAmount(quote.amount, decimals)} ${asset} on ${quote.chain}`,
+    `Estimated inflow fee: ${formatAmount(quote.inflowFeeAmount, decimals)} ${asset}`,
+    formatSupplyTarget(quote.target),
+  ];
+}
+
+function formatOptionalInitialDepositTargetQuote(
+  label: string,
+  quote: InstantLoanInitialDepositTargetQuote | undefined,
+  asset: string,
+  decimals: bigint
+): string[] {
+  if (!quote) {
+    return [];
+  }
+
+  return [
+    "",
+    ...formatInitialDepositTargetQuote(label, quote, asset, decimals),
+  ];
+}
+
+function formatRepaymentTargetQuote(
+  label: string,
+  quote: InstantLoanRepaymentTargetQuote,
+  asset: string,
+  decimals: bigint
+): string[] {
+  return [
+    label,
+    `Amount to repay: ${formatAmount(quote.amount, decimals)} ${asset} on ${quote.chain}`,
+    `Inflow fee: ${formatAmount(quote.inflowFeeAmount, decimals)} ${asset}${
+      quote.inflowFeeEstimateAvailable ? "" : " (estimate unavailable)"
+    }`,
+    formatSupplyTarget(quote.target),
+  ];
+}
+
+function formatOptionalRepaymentTargetQuote(
+  label: string,
+  quote: InstantLoanRepaymentTargetQuote | undefined,
+  asset: string,
+  decimals: bigint
+): string[] {
+  if (!quote) {
+    return [];
+  }
+
+  return ["", ...formatRepaymentTargetQuote(label, quote, asset, decimals)];
+}
+
 export function formatInstantLoan(
   loan: InstantLoan,
   options: InstantLoanFormatOptions = {}
@@ -192,20 +253,22 @@ export function formatInstantLoan(
   const targetLines = includeTargets
     ? [
         "",
-        "Deposit target:",
-        formatSupplyTarget(loan.initialDeposit.target),
-        "",
-        "Initial deposit quote:",
-        `Amount to send: ${formatAmount(
-          loan.initialDeposit.amount,
+        "Initial deposit targets:",
+        ...formatInitialDepositTargetQuote(
+          "Pool-chain target",
+          loan.initialDeposit.targets.poolChain,
+          loan.initialDeposit.asset,
           collateralDecimals
-        )} ${loan.initialDeposit.asset} on ${loan.initialDeposit.chain}`,
+        ),
+        ...formatOptionalInitialDepositTargetQuote(
+          "ICP target",
+          loan.initialDeposit.targets.icp,
+          loan.initialDeposit.asset,
+          collateralDecimals
+        ),
+        "",
         `Credited collateral: ${formatAmount(
           loan.initialDeposit.collateralAmount,
-          collateralDecimals
-        )} ${loan.initialDeposit.asset}`,
-        `Estimated inflow fee: ${formatAmount(
-          loan.initialDeposit.inflowFeeAmount,
           collateralDecimals
         )} ${loan.initialDeposit.asset}`,
         `Deposit detected: ${formatUnixTimestampSeconds(
@@ -218,9 +281,20 @@ export function formatInstantLoan(
     : [];
   const repaymentLines = includeTargets
     ? [
-        `Amount to repay: ${formatAmount(loan.repayment.amount, borrowDecimals)} ${
-          loan.repayment.asset
-        } on ${loan.repayment.chain}`,
+        "Repayment targets:",
+        ...formatRepaymentTargetQuote(
+          "Pool-chain target",
+          loan.repayment.targets.poolChain,
+          loan.repayment.asset,
+          borrowDecimals
+        ),
+        ...formatOptionalRepaymentTargetQuote(
+          "ICP target",
+          loan.repayment.targets.icp,
+          loan.repayment.asset,
+          borrowDecimals
+        ),
+        "",
         `Current debt: ${formatAmount(loan.repayment.debtAmount, borrowDecimals)} ${
           loan.repayment.asset
         }`,
@@ -228,11 +302,6 @@ export function formatInstantLoan(
           loan.repayment.interestBufferAmount,
           borrowDecimals
         )} ${loan.repayment.asset} (${loan.repayment.interestBufferSeconds.toString()} seconds)`,
-        `Inflow fee: ${formatAmount(loan.repayment.inflowFeeAmount, borrowDecimals)} ${
-          loan.repayment.asset
-        }${loan.repayment.inflowFeeEstimateAvailable ? "" : " (estimate unavailable)"}`,
-        "Repay target:",
-        formatSupplyTarget(loan.repayment.target),
       ]
     : [];
 

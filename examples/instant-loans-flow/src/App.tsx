@@ -1,4 +1,10 @@
-import type { AssetPrices, InstantLoan, Pool } from "@liquidium/client";
+import type {
+  AssetPrices,
+  InstantLoan,
+  InstantLoanInitialDepositTargetQuote,
+  InstantLoanRepaymentTargetQuote,
+  Pool,
+} from "@liquidium/client";
 import { Chain } from "@liquidium/client";
 import { useEffect, useState } from "react";
 import { formatConfig } from "./client";
@@ -19,7 +25,6 @@ import {
 import {
   calculateLoanLtv,
   createInstantLoan,
-  getInstantLoan,
   type InstantLoanDestinationType,
   loadMarketData,
 } from "./sdk-example";
@@ -48,6 +53,8 @@ type LoanTargetOptions = {
 type LoanTargetOption = {
   label: string;
   loan: InstantLoan;
+  initialDeposit?: InstantLoanInitialDepositTargetQuote;
+  repayment?: InstantLoanRepaymentTargetQuote;
 };
 
 export function App() {
@@ -178,26 +185,33 @@ export function App() {
     setLoanResult("Creating loan...");
 
     const loan = await createInstantLoan({
-      collateralPoolId: collateralPool.id,
-      borrowPoolId: borrowPool.id,
-      collateralAsset: collateralPool.asset,
-      borrowAsset: borrowPool.asset,
-      collateralAmount: parsedCollateralAmount,
-      borrowAmount: parsedBorrowAmount,
+      collateral: {
+        poolId: collateralPool.id,
+        asset: collateralPool.asset,
+        amount: parsedCollateralAmount,
+      },
+      borrow: {
+        poolId: borrowPool.id,
+        asset: borrowPool.asset,
+        amount: parsedBorrowAmount,
+        chain: borrowChain,
+        destinationAddress: trimmedBorrowDestination,
+        destinationType: borrowDestinationType,
+      },
+      refund: {
+        chain: refundChain,
+        destinationAddress: trimmedRefundDestination,
+        destinationType: refundDestinationType,
+      },
       ltvMaxBps,
       depositWindowSeconds: parsedDepositWindowSeconds,
-      borrowChain,
-      borrowDestinationAddress: trimmedBorrowDestination,
-      borrowDestinationType,
-      refundChain,
-      refundDestinationAddress: trimmedRefundDestination,
-      refundDestinationType,
     });
     const loanTargetOptions = await getLoanTargetOptions({
       loan,
       collateralPool,
       borrowPool,
     });
+    const initialDepositPoolChainTarget = loan.initialDeposit.targets.poolChain;
 
     saveRecentLoanRef(loan.ref);
     setRecentLoanRefs(getRecentLoanRefs());
@@ -206,7 +220,7 @@ export function App() {
         "Loan created. Save the reference and send the initial deposit amount to the deposit target.",
         "",
         `Amount to send: ${formatAmount(
-          loan.initialDeposit.amount,
+          initialDepositPoolChainTarget.amount,
           loan.initialDeposit.decimals
         )} ${collateralPool.asset}`,
         `Credited collateral: ${formatAmount(
@@ -214,7 +228,7 @@ export function App() {
           loan.initialDeposit.decimals
         )} ${collateralPool.asset}`,
         `Estimated inflow fee: ${formatAmount(
-          loan.initialDeposit.inflowFeeAmount,
+          initialDepositPoolChainTarget.inflowFeeAmount,
           loan.initialDeposit.decimals
         )} ${collateralPool.asset}`,
         `Deposit detected: ${formatUnixTimestampSeconds(
@@ -667,21 +681,21 @@ function getChainOptions(pool: Pool | undefined): Chain[] {
   return [getDefaultChain(pool), Chain.ICP];
 }
 
-async function getLoanTargetOptions(params: {
+function getLoanTargetOptions(params: {
   loan: InstantLoan;
   collateralPool: Pool;
   borrowPool: Pool;
-}): Promise<LoanTargetOptions> {
-  const initialDeposit = await getInitialDepositTargetOptions(params);
-  const repayment = await getRepaymentTargetOptions(params);
+}): LoanTargetOptions {
+  const initialDeposit = getInitialDepositTargetOptions(params);
+  const repayment = getRepaymentTargetOptions(params);
 
   return { initialDeposit, repayment };
 }
 
-async function getInitialDepositTargetOptions(params: {
+function getInitialDepositTargetOptions(params: {
   loan: InstantLoan;
   collateralPool: Pool;
-}): Promise<LoanTargetOption[]> {
+}): LoanTargetOption[] {
   const targetOptions = [
     {
       label: formatInflowChain(
@@ -689,31 +703,28 @@ async function getInitialDepositTargetOptions(params: {
         getDefaultChain(params.collateralPool)
       ),
       loan: params.loan,
+      initialDeposit: params.loan.initialDeposit.targets.poolChain,
     },
   ];
 
-  if (!getChainOptions(params.collateralPool).includes(Chain.ICP)) {
+  if (!params.loan.initialDeposit.targets.icp) {
     return targetOptions;
   }
-
-  const ckTargetLoan = await getInstantLoan({
-    loanId: params.loan.loanId,
-    initialDepositChain: Chain.ICP,
-  });
 
   return [
     ...targetOptions,
     {
       label: formatInflowChain(params.collateralPool, Chain.ICP),
-      loan: ckTargetLoan,
+      loan: params.loan,
+      initialDeposit: params.loan.initialDeposit.targets.icp,
     },
   ];
 }
 
-async function getRepaymentTargetOptions(params: {
+function getRepaymentTargetOptions(params: {
   loan: InstantLoan;
   borrowPool: Pool;
-}): Promise<LoanTargetOption[]> {
+}): LoanTargetOption[] {
   const targetOptions = [
     {
       label: formatInflowChain(
@@ -721,23 +732,20 @@ async function getRepaymentTargetOptions(params: {
         getDefaultChain(params.borrowPool)
       ),
       loan: params.loan,
+      repayment: params.loan.repayment.targets.poolChain,
     },
   ];
 
-  if (!getChainOptions(params.borrowPool).includes(Chain.ICP)) {
+  if (!params.loan.repayment.targets.icp) {
     return targetOptions;
   }
-
-  const ckTargetLoan = await getInstantLoan({
-    loanId: params.loan.loanId,
-    repaymentChain: Chain.ICP,
-  });
 
   return [
     ...targetOptions,
     {
       label: formatInflowChain(params.borrowPool, Chain.ICP),
-      loan: ckTargetLoan,
+      loan: params.loan,
+      repayment: params.loan.repayment.targets.icp,
     },
   ];
 }
@@ -746,22 +754,28 @@ function formatInitialDepositTargetOption(
   targetOption: LoanTargetOption,
   collateralPool: Pool
 ): string {
-  const initialDeposit = targetOption.loan.initialDeposit;
+  if (!targetOption.initialDeposit) {
+    throw new Error("Missing initial deposit target option.");
+  }
+
+  const initialDeposit = targetOption.initialDeposit;
+  const collateralAmount =
+    initialDeposit.amount - initialDeposit.inflowFeeAmount;
 
   return [
     targetOption.label,
     `Amount to send: ${formatAmount(
       initialDeposit.amount,
       collateralPool.decimals
-    )} ${initialDeposit.asset}`,
+    )} ${collateralPool.asset}`,
     `Credited collateral: ${formatAmount(
-      initialDeposit.collateralAmount,
+      collateralAmount,
       collateralPool.decimals
-    )} ${initialDeposit.asset}`,
+    )} ${collateralPool.asset}`,
     `Estimated inflow fee: ${formatAmount(
       initialDeposit.inflowFeeAmount,
       collateralPool.decimals
-    )} ${initialDeposit.asset}`,
+    )} ${collateralPool.asset}`,
     formatSupplyTarget(initialDeposit.target),
   ].join("\n");
 }
@@ -770,20 +784,25 @@ function formatRepaymentTargetOption(
   targetOption: LoanTargetOption,
   borrowPool: Pool
 ): string {
-  const repayment = targetOption.loan.repayment;
+  if (!targetOption.repayment) {
+    throw new Error("Missing repayment target option.");
+  }
+
+  const repayment = targetOption.repayment;
+  const repaymentSummary = targetOption.loan.repayment;
 
   return [
     targetOption.label,
-    `Amount to repay: ${formatAmount(repayment.amount, borrowPool.decimals)} ${repayment.asset}`,
-    `Current debt: ${formatAmount(repayment.debtAmount, borrowPool.decimals)} ${repayment.asset}`,
+    `Amount to repay: ${formatAmount(repayment.amount, borrowPool.decimals)} ${repaymentSummary.asset}`,
+    `Current debt: ${formatAmount(repaymentSummary.debtAmount, borrowPool.decimals)} ${repaymentSummary.asset}`,
     `Interest buffer: ${formatAmount(
-      repayment.interestBufferAmount,
+      repaymentSummary.interestBufferAmount,
       borrowPool.decimals
-    )} ${repayment.asset}`,
+    )} ${repaymentSummary.asset}`,
     `Estimated inflow fee: ${formatAmount(
       repayment.inflowFeeAmount,
       borrowPool.decimals
-    )} ${repayment.asset}${repayment.inflowFeeEstimateAvailable ? "" : " (estimate unavailable)"}`,
+    )} ${repaymentSummary.asset}${repayment.inflowFeeEstimateAvailable ? "" : " (estimate unavailable)"}`,
     formatSupplyTarget(repayment.target),
   ].join("\n");
 }

@@ -6,7 +6,6 @@ import type {
   InstantLoanAsset,
   InstantLoanDestination,
   InstantLoanFindResult,
-  InstantLoanInflowChainOptions,
   Pool,
 } from "@liquidium/client";
 import { client } from "./client";
@@ -26,20 +25,26 @@ type CalculateLoanLtvParams = {
 };
 
 type CreateInstantLoanParams = {
-  collateralPoolId: string;
-  borrowPoolId: string;
-  collateralAsset: string;
-  borrowAsset: string;
-  collateralAmount: bigint;
-  borrowAmount: bigint;
+  collateral: {
+    poolId: string;
+    asset: string;
+    amount: bigint;
+  };
+  borrow: {
+    poolId: string;
+    asset: string;
+    amount: bigint;
+    chain: Chain;
+    destinationAddress: string;
+    destinationType: InstantLoanDestinationType;
+  };
+  refund: {
+    chain: Chain;
+    destinationAddress: string;
+    destinationType: InstantLoanDestinationType;
+  };
   ltvMaxBps: bigint;
   depositWindowSeconds: bigint;
-  borrowChain: Chain;
-  borrowDestinationAddress: string;
-  borrowDestinationType: InstantLoanDestinationType;
-  refundChain: Chain;
-  refundDestinationAddress: string;
-  refundDestinationType: InstantLoanDestinationType;
 };
 
 export type InstantLoanDestinationType =
@@ -48,17 +53,15 @@ export type InstantLoanDestinationType =
   | "IcpAccountIdentifier"
   | "IcrcAccount";
 
-type GetInstantLoanParams = InstantLoanInflowChainOptions &
-  (
-    | {
-        ref: string;
-        loanId?: never;
-      }
-    | {
-        ref?: never;
-        loanId: bigint;
-      }
-  );
+type GetInstantLoanParams =
+  | {
+      ref: string;
+      loanId?: never;
+    }
+  | {
+      ref?: never;
+      loanId: bigint;
+    };
 
 type GetLoanActivityStatusParams = {
   shortRef: string;
@@ -95,43 +98,40 @@ export function calculateLoanLtv({
 }
 
 export async function createInstantLoan({
-  collateralPoolId,
-  borrowPoolId,
-  collateralAsset,
-  borrowAsset,
-  collateralAmount,
-  borrowAmount,
+  collateral,
+  borrow,
+  refund,
   ltvMaxBps,
   depositWindowSeconds,
-  borrowChain,
-  borrowDestinationAddress,
-  borrowDestinationType,
-  refundChain,
-  refundDestinationAddress,
-  refundDestinationType,
 }: CreateInstantLoanParams): Promise<InstantLoan> {
-  const typedCollateralAsset = toInstantLoanAsset(collateralAsset);
-  const typedBorrowAsset = toInstantLoanAsset(borrowAsset);
+  const typedCollateralAsset = toInstantLoanAsset(collateral.asset);
+  const typedBorrowAsset = toInstantLoanAsset(borrow.asset);
 
   return await client.instantLoans.create({
-    collateralPoolId,
-    borrowPoolId,
-    collateralAsset: typedCollateralAsset,
-    borrowAsset: typedBorrowAsset,
-    collateralAmount,
-    borrowAmount,
+    collateral: {
+      poolId: collateral.poolId,
+      asset: typedCollateralAsset,
+      amount: collateral.amount,
+    },
+    borrow: {
+      poolId: borrow.poolId,
+      asset: typedBorrowAsset,
+      amount: borrow.amount,
+      chain: borrow.chain,
+      destination: toInstantLoanDestination(
+        borrow.destinationAddress,
+        borrow.destinationType
+      ),
+    },
+    refund: {
+      chain: refund.chain,
+      destination: toInstantLoanDestination(
+        refund.destinationAddress,
+        refund.destinationType
+      ),
+    },
     ltvMaxBps,
     depositWindowSeconds,
-    borrowChain,
-    borrowDestination: toInstantLoanDestination(
-      borrowDestinationAddress,
-      borrowDestinationType
-    ),
-    refundChain,
-    refundDestination: toInstantLoanDestination(
-      refundDestinationAddress,
-      refundDestinationType
-    ),
   });
 }
 

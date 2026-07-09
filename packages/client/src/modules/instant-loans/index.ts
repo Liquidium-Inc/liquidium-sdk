@@ -1,6 +1,9 @@
 export { InstantLoansModule } from "./instant-loans";
 export { intFromPublicId, publicIdFromInt } from "./ref-code";
 export type {
+  CreateInstantLoanBorrow,
+  CreateInstantLoanCollateral,
+  CreateInstantLoanRefund,
   CreateInstantLoanRequest,
   InstantLoan,
   InstantLoanAccount,
@@ -24,8 +27,9 @@ export type {
   InstantLoanGetByIdRequest,
   InstantLoanGetByRefRequest,
   InstantLoanGetRequest,
-  InstantLoanInflowChainOptions,
+  InstantLoanInflowTargetQuotes,
   InstantLoanInitialDeposit,
+  InstantLoanInitialDepositTargetQuote,
   InstantLoanLeg,
   InstantLoanListEventsRequest,
   InstantLoanOutflowChainOptions,
@@ -33,6 +37,7 @@ export type {
   InstantLoanProfileWarmedEventType,
   InstantLoanRepayCompleteEventType,
   InstantLoanRepayment,
+  InstantLoanRepaymentTargetQuote,
   InstantLoanStuckFundsWithdrawalRequestedEventType,
   InstantLoanTerms,
   InstantLoanWarmedProfile,

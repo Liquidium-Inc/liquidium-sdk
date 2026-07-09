@@ -263,39 +263,40 @@ const SDK_METHODS: MethodDefinition[] = [
     id: "instantLoans.create",
     label: "instantLoans.create",
     defaultArgs:
-      '{\n  "collateralPoolId": "hkmli-faaaa-aaaar-qb4ba-cai",\n  "borrowPoolId": "hnnn4-iyaaa-aaaar-qb4bq-cai",\n  "collateralAsset": "BTC",\n  "borrowAsset": "USDT",\n  "collateralAmount": "37000",\n  "borrowAmount": "9000000",\n  "ltvMaxBps": "6800",\n  "depositWindowSeconds": "3600",\n  "borrowChain": "ETH",\n  "borrowDestination": {\n    "type": "ChainAddress",\n    "address": "0xYourBorrowAddress"\n  },\n  "refundChain": "BTC",\n  "refundDestination": {\n    "type": "ChainAddress",\n    "address": "bc1qYourRefundAddress"\n  }\n}',
+      '{\n  "collateral": {\n    "poolId": "hkmli-faaaa-aaaar-qb4ba-cai",\n    "asset": "BTC",\n    "amount": "37000"\n  },\n  "borrow": {\n    "poolId": "hnnn4-iyaaa-aaaar-qb4bq-cai",\n    "asset": "USDT",\n    "amount": "9000000",\n    "chain": "ETH",\n    "destination": {\n      "type": "ChainAddress",\n      "address": "0xYourBorrowAddress"\n    }\n  },\n  "refund": {\n    "chain": "BTC",\n    "destination": {\n      "type": "ChainAddress",\n      "address": "bc1qYourRefundAddress"\n    }\n  },\n  "ltvMaxBps": "6800",\n  "depositWindowSeconds": "3600"\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
+      const collateral = expectObject(args.collateral, "collateral");
+      const borrow = expectObject(args.borrow, "borrow");
+      const refund = expectObject(args.refund, "refund");
+
       return await client.instantLoans.create({
-        collateralPoolId: expectNonEmptyString(
-          args.collateralPoolId,
-          "collateralPoolId"
-        ),
-        borrowPoolId: expectNonEmptyString(args.borrowPoolId, "borrowPoolId"),
-        collateralAsset: expectInstantLoanAsset(
-          args.collateralAsset,
-          "collateralAsset"
-        ),
-        borrowAsset: expectInstantLoanAsset(args.borrowAsset, "borrowAsset"),
-        collateralAmount: expectBigInt(
-          args.collateralAmount,
-          "collateralAmount"
-        ),
-        borrowAmount: expectBigInt(args.borrowAmount, "borrowAmount"),
+        collateral: {
+          poolId: expectNonEmptyString(collateral.poolId, "collateral.poolId"),
+          asset: expectInstantLoanAsset(collateral.asset, "collateral.asset"),
+          amount: expectBigInt(collateral.amount, "collateral.amount"),
+        },
+        borrow: {
+          poolId: expectNonEmptyString(borrow.poolId, "borrow.poolId"),
+          asset: expectInstantLoanAsset(borrow.asset, "borrow.asset"),
+          amount: expectBigInt(borrow.amount, "borrow.amount"),
+          chain: expectChain(borrow.chain, "borrow.chain"),
+          destination: expectInstantLoanAccount(
+            borrow.destination,
+            "borrow.destination"
+          ),
+        },
+        refund: {
+          chain: expectChain(refund.chain, "refund.chain"),
+          destination: expectInstantLoanAccount(
+            refund.destination,
+            "refund.destination"
+          ),
+        },
         ltvMaxBps: expectBigInt(args.ltvMaxBps, "ltvMaxBps"),
         depositWindowSeconds: expectBigInt(
           args.depositWindowSeconds,
           "depositWindowSeconds"
-        ),
-        borrowChain: expectChain(args.borrowChain, "borrowChain"),
-        borrowDestination: expectInstantLoanAccount(
-          args.borrowDestination,
-          "borrowDestination"
-        ),
-        refundChain: expectChain(args.refundChain, "refundChain"),
-        refundDestination: expectInstantLoanAccount(
-          args.refundDestination,
-          "refundDestination"
         ),
       });
     },

@@ -74,24 +74,19 @@ describe("InstantLoansModule get", () => {
       ),
     ]);
 
-    vi.spyOn(Actor, "createActor")
-      .mockReturnValueOnce({ get_loan: getLoan } as never)
-      .mockReturnValueOnce({
-        list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord()]),
-      } as never)
-      .mockReturnValueOnce({
-        list_pools: vi.fn().mockResolvedValue([createUsdtPoolRecord()]),
-      } as never)
-      .mockReturnValueOnce({ get_position: getCollateralPosition } as never)
-      .mockReturnValueOnce({ get_position: getBorrowPosition } as never)
-      .mockReturnValueOnce({ get_pool_rate: getPoolRate } as never)
-      .mockReturnValueOnce({ get_btc_address: getBtcAddress } as never)
-      .mockReturnValueOnce({ get_deposit_address: getDepositAddress } as never)
-      .mockReturnValueOnce({
-        estimate_deposit_fee: estimateDepositFee,
-      } as never)
-      .mockReturnValueOnce({ get_deposit_fee: getDepositFee } as never)
-      .mockReturnValueOnce({ icrc1_fee: icrc1Fee } as never);
+    mockInstantLoanHydrationActors({
+      getLoan,
+      getPoolRate,
+      getBtcAddress,
+      getDepositAddress,
+      estimateDepositFee,
+      getDepositFee,
+      icrc1Fee,
+      positionsByPoolId: {
+        [BTC_POOL_ID]: await getCollateralPosition(),
+        [USDT_POOL_ID]: await getBorrowPosition(),
+      },
+    });
     const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
       canisterIds: { instantLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
@@ -151,34 +146,53 @@ describe("InstantLoansModule get", () => {
     expect(loan).not.toHaveProperty("depositTarget");
     expect(loan).not.toHaveProperty("repayTarget");
     expect(loan.initialDeposit).toMatchObject({
-      amount: 10_002_500n,
       decimals: 8n,
       collateralAmount: 10_000_000n,
-      inflowFeeAmount: 2_500n,
       asset: "BTC",
-      chain: "BTC",
       detectedTimestamp: DEPOSIT_DETECTED_TIMESTAMP_SECONDS,
       expiryTimestamp: EXPIRY_TIMESTAMP_SECONDS,
-      target: expect.objectContaining({
-        address: "bc1qinstantdeposit",
-      }),
+      targets: {
+        poolChain: {
+          amount: 10_002_500n,
+          chain: "BTC",
+          inflowFeeAmount: 2_500n,
+          target: expect.objectContaining({
+            address: "bc1qinstantdeposit",
+          }),
+        },
+        icp: {
+          amount: 10_000_010n,
+          chain: "ICP",
+          inflowFeeAmount: 10n,
+        },
+      },
     });
     expect(loan.repayment).toMatchObject({
-      amount: 3_501_054n,
       decimals: 6n,
       debtAmount: 2_001_000n,
       interestBufferAmount: 54n,
       interestBufferSeconds: 86_400n,
-      inflowFeeAmount: 1_500_000n,
-      inflowFeeEstimateAvailable: true,
       asset: "USDT",
-      chain: "ETH",
-      target: expect.objectContaining({
-        type: "ChainAddress",
-        asset: "USDT",
-        chain: "ETH",
-        address: "0x1111111111111111111111111111111111111111",
-      }),
+      targets: {
+        poolChain: {
+          amount: 3_501_054n,
+          chain: "ETH",
+          inflowFeeAmount: 1_500_000n,
+          inflowFeeEstimateAvailable: true,
+          target: expect.objectContaining({
+            type: "ChainAddress",
+            asset: "USDT",
+            chain: "ETH",
+            address: "0x1111111111111111111111111111111111111111",
+          }),
+        },
+        icp: {
+          amount: 2_001_064n,
+          chain: "ICP",
+          inflowFeeAmount: 10n,
+          inflowFeeEstimateAvailable: true,
+        },
+      },
     });
     expect(loan.position).toMatchObject({
       collateralAmount: 10_000_000n,
@@ -215,25 +229,14 @@ describe("InstantLoansModule get", () => {
       collateralAmountHint: "10000000",
     });
 
-    vi.spyOn(Actor, "createActor")
-      .mockReturnValueOnce({ get_loan: getLoan } as never)
-      .mockReturnValueOnce({
-        list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord()]),
-      } as never)
-      .mockReturnValueOnce({
-        list_pools: vi.fn().mockResolvedValue([createUsdtPoolRecord()]),
-      } as never)
-      .mockReturnValueOnce({
-        get_position: vi.fn().mockResolvedValue([]),
-      } as never)
-      .mockReturnValueOnce({
-        get_position: vi.fn().mockResolvedValue([]),
-      } as never)
-      .mockReturnValueOnce({ get_pool_rate: getPoolRate } as never)
-      .mockReturnValueOnce({ get_btc_address: getBtcAddress } as never)
-      .mockReturnValueOnce({ get_deposit_address: getDepositAddress } as never)
-      .mockReturnValueOnce({ get_deposit_fee: getDepositFee } as never)
-      .mockReturnValueOnce({ icrc1_fee: icrc1Fee } as never);
+    mockInstantLoanHydrationActors({
+      getLoan,
+      getPoolRate,
+      getBtcAddress,
+      getDepositAddress,
+      getDepositFee,
+      icrc1Fee,
+    });
     const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
       canisterIds: { instantLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
@@ -295,24 +298,19 @@ describe("InstantLoansModule get", () => {
       collateralPoolId: USDT_POOL_ID,
     });
 
-    vi.spyOn(Actor, "createActor")
-      .mockReturnValueOnce({ get_loan: getLoan } as never)
-      .mockReturnValueOnce({
-        list_pools: vi.fn().mockResolvedValue([createUsdtPoolRecord()]),
-      } as never)
-      .mockReturnValueOnce({
-        list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord()]),
-      } as never)
-      .mockReturnValueOnce({ get_position: getCollateralPosition } as never)
-      .mockReturnValueOnce({ get_position: getBorrowPosition } as never)
-      .mockReturnValueOnce({ get_pool_rate: getPoolRate } as never)
-      .mockReturnValueOnce({ get_deposit_address: getDepositAddress } as never)
-      .mockReturnValueOnce({ get_btc_address: getBtcAddress } as never)
-      .mockReturnValueOnce({ get_deposit_fee: getDepositFee } as never)
-      .mockReturnValueOnce({ icrc1_fee: icrc1Fee } as never)
-      .mockReturnValueOnce({
-        estimate_deposit_fee: estimateDepositFee,
-      } as never);
+    mockInstantLoanHydrationActors({
+      getLoan,
+      getPoolRate,
+      getBtcAddress,
+      getDepositAddress,
+      estimateDepositFee,
+      getDepositFee,
+      icrc1Fee,
+      positionsByPoolId: {
+        [USDT_POOL_ID]: await getCollateralPosition(),
+        [BTC_POOL_ID]: await getBorrowPosition(),
+      },
+    });
     const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
       canisterIds: { instantLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
@@ -325,22 +323,41 @@ describe("InstantLoansModule get", () => {
 
     // then
     expect(loan.repayment).toMatchObject({
-      amount: 1_003_027n,
       decimals: 8n,
       debtAmount: 1_000_500n,
       interestBufferAmount: 27n,
-      inflowFeeAmount: 2_500n,
-      inflowFeeEstimateAvailable: true,
       asset: "BTC",
-      chain: "BTC",
+      targets: {
+        poolChain: {
+          amount: 1_003_027n,
+          chain: "BTC",
+          inflowFeeAmount: 2_500n,
+          inflowFeeEstimateAvailable: true,
+        },
+        icp: {
+          amount: 1_000_537n,
+          chain: "ICP",
+          inflowFeeAmount: 10n,
+          inflowFeeEstimateAvailable: true,
+        },
+      },
     });
     expect(loan.initialDeposit).toMatchObject({
-      amount: 6_500_000n,
       decimals: 6n,
       collateralAmount: 5_000_000n,
-      inflowFeeAmount: 1_500_000n,
       asset: "USDT",
-      chain: "ETH",
+      targets: {
+        poolChain: {
+          amount: 6_500_000n,
+          chain: "ETH",
+          inflowFeeAmount: 1_500_000n,
+        },
+        icp: {
+          amount: 5_000_010n,
+          chain: "ICP",
+          inflowFeeAmount: 10n,
+        },
+      },
     });
     expect(getDepositFee).toHaveBeenCalledWith();
     expect(icrc1Fee).toHaveBeenCalledWith();
@@ -362,25 +379,14 @@ describe("InstantLoansModule get", () => {
       collateralAmountHint: "10000000",
     });
 
-    vi.spyOn(Actor, "createActor")
-      .mockReturnValueOnce({ get_loan: getLoan } as never)
-      .mockReturnValueOnce({
-        list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord()]),
-      } as never)
-      .mockReturnValueOnce({
-        list_pools: vi.fn().mockResolvedValue([createUsdtPoolRecord()]),
-      } as never)
-      .mockReturnValueOnce({
-        get_position: vi.fn().mockResolvedValue([]),
-      } as never)
-      .mockReturnValueOnce({
-        get_position: vi.fn().mockResolvedValue([]),
-      } as never)
-      .mockReturnValueOnce({ get_pool_rate: getPoolRate } as never)
-      .mockReturnValueOnce({ get_btc_address: getBtcAddress } as never)
-      .mockReturnValueOnce({ get_deposit_address: getDepositAddress } as never)
-      .mockReturnValueOnce({ get_deposit_fee: getDepositFee } as never)
-      .mockReturnValueOnce({ icrc1_fee: icrc1Fee } as never);
+    mockInstantLoanHydrationActors({
+      getLoan,
+      getPoolRate,
+      getBtcAddress,
+      getDepositAddress,
+      getDepositFee,
+      icrc1Fee,
+    });
     const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
       canisterIds: { instantLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
@@ -393,15 +399,19 @@ describe("InstantLoansModule get", () => {
 
     // then
     expect(loan.repayment).toMatchObject({
-      amount: 0n,
       debtAmount: 0n,
       interestBufferAmount: 0n,
-      inflowFeeAmount: 0n,
-      inflowFeeEstimateAvailable: false,
       asset: "USDT",
-      chain: "ETH",
+      targets: {
+        poolChain: {
+          amount: 0n,
+          inflowFeeAmount: 0n,
+          inflowFeeEstimateAvailable: false,
+          chain: "ETH",
+        },
+      },
     });
-    expect(loan.initialDeposit.amount).toBe(10_002_500n);
+    expect(loan.initialDeposit.targets.poolChain.amount).toBe(10_002_500n);
     expect(loan.status).toEqual({
       operation: "deposit",
       state: "action_required",
@@ -428,25 +438,14 @@ describe("InstantLoansModule get", () => {
       collateralAmountHint: "10000000",
     });
 
-    vi.spyOn(Actor, "createActor")
-      .mockReturnValueOnce({ get_loan: getLoan } as never)
-      .mockReturnValueOnce({
-        list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord()]),
-      } as never)
-      .mockReturnValueOnce({
-        list_pools: vi.fn().mockResolvedValue([createUsdtPoolRecord()]),
-      } as never)
-      .mockReturnValueOnce({
-        get_position: vi.fn().mockResolvedValue([]),
-      } as never)
-      .mockReturnValueOnce({
-        get_position: vi.fn().mockResolvedValue([]),
-      } as never)
-      .mockReturnValueOnce({ get_pool_rate: getPoolRate } as never)
-      .mockReturnValueOnce({ get_btc_address: getBtcAddress } as never)
-      .mockReturnValueOnce({ get_deposit_address: getDepositAddress } as never)
-      .mockReturnValueOnce({ get_deposit_fee: getDepositFee } as never)
-      .mockReturnValueOnce({ icrc1_fee: icrc1Fee } as never);
+    mockInstantLoanHydrationActors({
+      getLoan,
+      getPoolRate,
+      getBtcAddress,
+      getDepositAddress,
+      getDepositFee,
+      icrc1Fee,
+    });
     const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
       canisterIds: { instantLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
@@ -465,14 +464,49 @@ describe("InstantLoansModule get", () => {
       requiredConfirmations: null,
     });
     expect(loan.repayment).toMatchObject({
-      amount: 0n,
       debtAmount: 0n,
       interestBufferAmount: 0n,
-      inflowFeeAmount: 0n,
-      inflowFeeEstimateAvailable: false,
       asset: "USDT",
-      chain: "ETH",
+      targets: {
+        poolChain: {
+          amount: 0n,
+          chain: "ETH",
+          inflowFeeAmount: 0n,
+          inflowFeeEstimateAvailable: false,
+        },
+      },
     });
     expect(estimateDepositFee).not.toHaveBeenCalled();
   });
 });
+
+function mockInstantLoanHydrationActors(params: {
+  getLoan: ReturnType<typeof vi.fn>;
+  getPoolRate: ReturnType<typeof vi.fn>;
+  getBtcAddress: ReturnType<typeof vi.fn>;
+  getDepositAddress: ReturnType<typeof vi.fn>;
+  estimateDepositFee?: ReturnType<typeof vi.fn>;
+  getDepositFee: ReturnType<typeof vi.fn>;
+  icrc1Fee: ReturnType<typeof vi.fn>;
+  positionsByPoolId?: Record<string, unknown[]>;
+}): void {
+  const getPosition = vi.fn().mockImplementation((_, poolId: Principal) => {
+    return params.positionsByPoolId?.[poolId.toText()] ?? [];
+  });
+
+  vi.spyOn(Actor, "createActor").mockReturnValue({
+    get_loan: params.getLoan,
+    list_pools: vi
+      .fn()
+      .mockResolvedValue([createBtcPoolRecord(), createUsdtPoolRecord()]),
+    get_position: getPosition,
+    get_pool_rate: params.getPoolRate,
+    get_btc_address: params.getBtcAddress,
+    get_deposit_address: params.getDepositAddress,
+    estimate_deposit_fee:
+      params.estimateDepositFee ??
+      vi.fn().mockResolvedValue({ Ok: 1_500_000n }),
+    get_deposit_fee: params.getDepositFee,
+    icrc1_fee: params.icrc1Fee,
+  } as never);
+}
