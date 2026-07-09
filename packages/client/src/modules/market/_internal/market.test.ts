@@ -288,7 +288,7 @@ describe("MarketModule", () => {
     });
   });
 
-  test("finds a single pool by asset and chain", async () => {
+  test("resolves native and chain-key identifiers to their backing pool", async () => {
     // given
     const btcPoolPrincipal = "pool-btc";
     const usdtPoolPrincipal = "pool-usdt";
@@ -354,12 +354,37 @@ describe("MarketModule", () => {
     const client = new LiquidiumClient({});
 
     // when
-    const pool = await client.market.findPool({ asset: "BTC", chain: "BTC" });
+    const nativePool = await client.market.findPool({
+      asset: "BTC",
+      chain: "BTC",
+    });
+    const chainKeyPool = await client.market.findPool({
+      asset: "USDT",
+      chain: "ICP",
+    });
 
     // then
-    expect(pool.id).toBe(btcPoolPrincipal);
-    expect(pool.asset).toBe("BTC");
-    expect(pool.chain).toBe("BTC");
+    expect(nativePool).toMatchObject({
+      id: btcPoolPrincipal,
+      asset: "BTC",
+      chain: "BTC",
+    });
+    expect(chainKeyPool).toMatchObject({
+      id: usdtPoolPrincipal,
+      asset: "USDT",
+      chain: "ETH",
+    });
+  });
+
+  test("rejects an unsupported asset and chain pair", async () => {
+    const client = new LiquidiumClient({});
+
+    await expect(
+      client.market.findPool({ asset: "BTC", chain: "ETH" } as never)
+    ).rejects.toMatchObject({
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message: "Unsupported asset identifier: ETH/BTC",
+    });
   });
 
   test("throws VALIDATION_ERROR when multiple pools match the query", async () => {

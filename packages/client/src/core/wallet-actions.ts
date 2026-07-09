@@ -1,5 +1,5 @@
 import type { IcrcAccount } from "./accounts";
-import type { Asset, Chain } from "./types";
+import type { Asset, SigningChain } from "./types";
 
 /** Wallet capability required to execute a prepared SDK action. */
 export const WalletExecutionKind = {
@@ -34,7 +34,7 @@ export interface EthTransactionRequest {
 /** Message-signing request passed to wallet adapters. */
 export interface SignMessageRequest {
   /** Chain for the signing wallet. */
-  chain: Chain;
+  chain: SigningChain;
   /** Plaintext message to sign. */
   message: string;
   /** Optional account override for the signing wallet. */
@@ -46,7 +46,7 @@ export interface SignMessageRequest {
 /** ETH transaction-sending request passed to wallet adapters. */
 export interface SendEthTransactionRequest {
   /** ETH chain discriminator. */
-  chain: Extract<Chain, "ETH">;
+  chain: "ETH";
   /** Transaction payload to send. */
   transaction: EthTransactionRequest;
   /** Optional account override for the sending wallet. */
@@ -58,7 +58,7 @@ export interface SendEthTransactionRequest {
 /** BTC transaction-sending request passed to wallet adapters. */
 export interface SendBtcTransactionRequest {
   /** BTC chain discriminator. */
-  chain: Extract<Chain, "BTC">;
+  chain: "BTC";
   /** Recipient BTC address. */
   toAddress: string;
   /** Amount in satoshis when the SDK knows the transfer amount. */
@@ -85,10 +85,10 @@ export interface IcrcTransferDetails {
 
 /** ICRC transaction-sending request passed to wallet adapters. */
 export interface SendIcrcTransferRequest {
-  /** Source asset's protocol chain. */
-  chain: Extract<Chain, "BTC" | "ETH" | "ICP">;
+  /** ICRC transfers are submitted on the Internet Computer. */
+  chain: "ICP";
   /** Asset represented by the target ledger transfer. */
-  asset: Extract<Asset, "BTC" | "ICP" | "USDC" | "USDT">;
+  asset: Asset;
   /** Transfer details for the ledger call. */
   transfer: IcrcTransferDetails;
   /** Optional account override for the sending wallet. */
@@ -121,7 +121,7 @@ export interface SignatureInfo {
   /** Wallet signature over the action message. BTC signatures may be base64 BIP-322 or hex-encoded bytes. */
   signature: string;
   /** Chain used to produce the signature. */
-  chain: Chain;
+  chain: SigningChain;
   /** Account that produced the signature, when different from the action default. */
   account?: string;
 }
@@ -146,6 +146,3 @@ export interface SignMessageWalletAction<TData, TResult> {
 
 /** Any prepared action returned by SDK methods and executable by {@link executeWith}. */
 export type WalletAction<TResult> = SignMessageWalletAction<unknown, TResult>;
-
-// Future extension point: native Solana wallet capabilities will be added in a
-// later version once that chain is supported by the SDK.

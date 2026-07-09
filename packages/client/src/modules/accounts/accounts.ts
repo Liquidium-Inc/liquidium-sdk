@@ -248,7 +248,6 @@ function mapCanisterWalletToWallet(canisterWallet: WalletRecord): Wallet {
   switch (walletChain) {
     case Chain.BTC:
     case Chain.ETH:
-    case Chain.ICP:
       return {
         address: canisterWallet.address,
         chain: walletChain,

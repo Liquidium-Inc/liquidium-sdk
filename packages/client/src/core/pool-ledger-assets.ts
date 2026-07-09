@@ -26,7 +26,7 @@ export function getPoolLedgerAssetRoute(params: {
     (params.chain === Chain.BTC || params.chain === Chain.ICP)
   ) {
     return {
-      ledgerCanisterId: CK_CANISTER_IDS.ckBTC.ledger,
+      ledgerCanisterId: CK_CANISTER_IDS.BTC.ledger,
       asset: Asset.BTC,
       chain: params.chain,
     };
@@ -37,7 +37,7 @@ export function getPoolLedgerAssetRoute(params: {
     (params.chain === Chain.ETH || params.chain === Chain.ICP)
   ) {
     return {
-      ledgerCanisterId: CK_CANISTER_IDS.ckUSDT.ledger,
+      ledgerCanisterId: CK_CANISTER_IDS.USDT.ledger,
       asset: Asset.USDT,
       chain: params.chain,
     };
@@ -48,7 +48,7 @@ export function getPoolLedgerAssetRoute(params: {
     (params.chain === Chain.ETH || params.chain === Chain.ICP)
   ) {
     return {
-      ledgerCanisterId: CK_CANISTER_IDS.ckUSDC.ledger,
+      ledgerCanisterId: CK_CANISTER_IDS.USDC.ledger,
       asset: Asset.USDC,
       chain: params.chain,
     };
@@ -56,7 +56,7 @@ export function getPoolLedgerAssetRoute(params: {
 
   if (params.asset === Asset.ICP && params.chain === Chain.ICP) {
     return {
-      ledgerCanisterId: CK_CANISTER_IDS.icp.ledger,
+      ledgerCanisterId: CK_CANISTER_IDS.ICP.ledger,
       asset: Asset.ICP,
       chain: Chain.ICP,
     };

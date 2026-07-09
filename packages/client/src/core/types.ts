@@ -69,32 +69,6 @@ export type CanisterIdOverrides = Omit<Partial<CanisterIds>, "pools"> & {
   pools?: Partial<PoolCanisterIds>;
 };
 
-/** Ledger, index, minter, and archive canisters for one ledger family. */
-export interface CkLedgerFamilyCanisterIds {
-  /** ICRC or ICP ledger canister principal. */
-  ledger: string;
-  /** Ledger index canister principal, when available. */
-  index?: string;
-  /** Chain-key minter canister principal, when available. */
-  minter?: string;
-  /** Ledger archive canister principal, when available. */
-  archive?: string;
-}
-
-/** Mainnet ck-asset and ICP ledger-family canister principals. */
-export interface CkCanisterIds {
-  /** ckBTC canister principals. */
-  ckBTC: CkLedgerFamilyCanisterIds;
-  /** ckETH canister principals. */
-  ckETH: CkLedgerFamilyCanisterIds;
-  /** ckUSDT canister principals. */
-  ckUSDT: CkLedgerFamilyCanisterIds;
-  /** ckUSDC canister principals. */
-  ckUSDC: CkLedgerFamilyCanisterIds;
-  /** ICP ledger canister principals. */
-  icp: CkLedgerFamilyCanisterIds;
-}
-
 /** Supported deployment environments with bundled canister ids. */
 export const Environment = {
   mainnet: "mainnet",
@@ -106,7 +80,6 @@ export type Environment = (typeof Environment)[keyof typeof Environment];
 export const Asset = {
   BTC: "BTC",
   ICP: "ICP",
-  SOL: "SOL",
   USDC: "USDC",
   USDT: "USDT",
 } as const;
@@ -122,10 +95,40 @@ export const Chain = {
 /** Canonical chain identifier used by wallet and protocol actions. */
 export type Chain = (typeof Chain)[keyof typeof Chain];
 
-/** Asset symbol as returned by market-data APIs, including future assets. */
-export type MarketAsset = string;
-/** Chain name as returned by market-data APIs, including future chains. */
-export type MarketChain = string;
+/** Chains whose wallets can authorize Liquidium protocol actions. */
+export type SigningChain = typeof Chain.BTC | typeof Chain.ETH;
+
+/** Supported asset and transfer-chain combinations. */
+export type AssetIdentifier =
+  | { chain: typeof Chain.BTC; asset: typeof Asset.BTC }
+  | { chain: typeof Chain.ETH; asset: typeof Asset.USDC }
+  | { chain: typeof Chain.ETH; asset: typeof Asset.USDT }
+  | { chain: typeof Chain.ICP; asset: typeof Asset.BTC }
+  | { chain: typeof Chain.ICP; asset: typeof Asset.ICP }
+  | { chain: typeof Chain.ICP; asset: typeof Asset.USDC }
+  | { chain: typeof Chain.ICP; asset: typeof Asset.USDT };
+
+/** Returns whether an asset and chain form a supported SDK identifier. */
+export function isAssetIdentifier(identifier: {
+  chain: string;
+  asset: string;
+}): identifier is AssetIdentifier {
+  switch (identifier.chain) {
+    case Chain.BTC:
+      return identifier.asset === Asset.BTC;
+    case Chain.ETH:
+      return identifier.asset === Asset.USDC || identifier.asset === Asset.USDT;
+    case Chain.ICP:
+      return (
+        identifier.asset === Asset.BTC ||
+        identifier.asset === Asset.ICP ||
+        identifier.asset === Asset.USDC ||
+        identifier.asset === Asset.USDT
+      );
+    default:
+      return false;
+  }
+}
 
 /** Inflow operation performed by a supply target. */
 export const SupplyAction = {
@@ -147,7 +150,7 @@ export type OutflowType = (typeof OutflowType)[keyof typeof OutflowType];
 /** Wallet address and chain pair linked to a Liquidium profile. */
 export interface Wallet {
   /** Chain where the wallet address is valid. */
-  chain: Chain;
+  chain: SigningChain;
   /** Wallet address as stored by the protocol. */
   address: string;
 }

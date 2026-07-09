@@ -150,30 +150,16 @@ export function formatPool(pool: Pool): string {
 }
 
 export function formatSupplyTarget(target: SupplyTarget): string {
-  if (target.type === "ChainAddress") {
-    return [
-      `Send ${target.asset} on ${target.chain} to this address:`,
-      target.address,
-      `Pool: ${target.poolId}`,
-    ].join("\n");
-  }
-
-  if (target.type === "IcrcAccount") {
-    return [
-      `Send ${target.asset} on ${target.chain} to this ICRC account:`,
-      target.account.address,
-      `Owner: ${target.account.owner}`,
-      `Subaccount: ${formatBytes(target.account.subaccount)}`,
-    ].join("\n");
-  }
-
   return [
-    "Send ICP to this ledger account:",
-    target.account.icpIcrcAccount.address,
-    `ICP account identifier: ${target.account.icpAccountIdentifier}`,
-    `Owner: ${target.account.icpIcrcAccount.owner}`,
-    `Subaccount: ${formatBytes(target.account.icpIcrcAccount.subaccount)}`,
-  ].join("\n");
+    `Send ${target.asset} on ${target.chain} to:`,
+    target.address,
+    target.icpAccountIdentifier
+      ? `ICP account identifier: ${target.icpAccountIdentifier}`
+      : null,
+    `Pool: ${target.poolId}`,
+  ]
+    .filter((line): line is string => line !== null)
+    .join("\n");
 }
 
 function formatInitialDepositTargetQuote(
@@ -184,25 +170,9 @@ function formatInitialDepositTargetQuote(
 ): string[] {
   return [
     label,
-    `Amount to send: ${formatAmount(quote.amount, decimals)} ${asset} on ${quote.chain}`,
+    `Amount to send: ${formatAmount(quote.amount, decimals)} ${asset} on ${quote.target.chain}`,
     `Estimated inflow fee: ${formatAmount(quote.inflowFeeAmount, decimals)} ${asset}`,
     formatSupplyTarget(quote.target),
-  ];
-}
-
-function formatOptionalInitialDepositTargetQuote(
-  label: string,
-  quote: InstantLoanInitialDepositTargetQuote | undefined,
-  asset: string,
-  decimals: bigint
-): string[] {
-  if (!quote) {
-    return [];
-  }
-
-  return [
-    "",
-    ...formatInitialDepositTargetQuote(label, quote, asset, decimals),
   ];
 }
 
@@ -214,25 +184,12 @@ function formatRepaymentTargetQuote(
 ): string[] {
   return [
     label,
-    `Amount to repay: ${formatAmount(quote.amount, decimals)} ${asset} on ${quote.chain}`,
+    `Amount to repay: ${formatAmount(quote.amount, decimals)} ${asset} on ${quote.target.chain}`,
     `Inflow fee: ${formatAmount(quote.inflowFeeAmount, decimals)} ${asset}${
       quote.inflowFeeEstimateAvailable ? "" : " (estimate unavailable)"
     }`,
     formatSupplyTarget(quote.target),
   ];
-}
-
-function formatOptionalRepaymentTargetQuote(
-  label: string,
-  quote: InstantLoanRepaymentTargetQuote | undefined,
-  asset: string,
-  decimals: bigint
-): string[] {
-  if (!quote) {
-    return [];
-  }
-
-  return ["", ...formatRepaymentTargetQuote(label, quote, asset, decimals)];
 }
 
 export function formatInstantLoan(
@@ -250,22 +207,28 @@ export function formatInstantLoan(
     loan.borrow.decimals
   );
   const includeTargets = options.includeTargets ?? true;
+  const initialDepositQuotes = Object.values(
+    loan.initialDeposit.targets
+  ).filter(
+    (quote): quote is InstantLoanInitialDepositTargetQuote =>
+      quote !== undefined
+  );
+  const repaymentQuotes = Object.values(loan.repayment.targets).filter(
+    (quote): quote is InstantLoanRepaymentTargetQuote => quote !== undefined
+  );
   const targetLines = includeTargets
     ? [
         "",
         "Initial deposit targets:",
-        ...formatInitialDepositTargetQuote(
-          "Pool-chain target",
-          loan.initialDeposit.targets.poolChain,
-          loan.initialDeposit.asset,
-          collateralDecimals
-        ),
-        ...formatOptionalInitialDepositTargetQuote(
-          "ICP target",
-          loan.initialDeposit.targets.icp,
-          loan.initialDeposit.asset,
-          collateralDecimals
-        ),
+        ...initialDepositQuotes.flatMap((quote) => [
+          "",
+          ...formatInitialDepositTargetQuote(
+            `${quote.target.chain} target`,
+            quote,
+            loan.initialDeposit.asset,
+            collateralDecimals
+          ),
+        ]),
         "",
         `Credited collateral: ${formatAmount(
           loan.initialDeposit.collateralAmount,
@@ -282,18 +245,15 @@ export function formatInstantLoan(
   const repaymentLines = includeTargets
     ? [
         "Repayment targets:",
-        ...formatRepaymentTargetQuote(
-          "Pool-chain target",
-          loan.repayment.targets.poolChain,
-          loan.repayment.asset,
-          borrowDecimals
-        ),
-        ...formatOptionalRepaymentTargetQuote(
-          "ICP target",
-          loan.repayment.targets.icp,
-          loan.repayment.asset,
-          borrowDecimals
-        ),
+        ...repaymentQuotes.flatMap((quote) => [
+          "",
+          ...formatRepaymentTargetQuote(
+            `${quote.target.chain} target`,
+            quote,
+            loan.repayment.asset,
+            borrowDecimals
+          ),
+        ]),
         "",
         `Current debt: ${formatAmount(loan.repayment.debtAmount, borrowDecimals)} ${
           loan.repayment.asset
@@ -317,7 +277,7 @@ export function formatInstantLoan(
     "Collateral:",
     `${formatAmount(loan.collateral.amount, collateralDecimals)} ${
       loan.collateral.asset
-    } on ${loan.collateral.chain}`,
+    }`,
     `Pool: ${loan.collateral.poolId}`,
     "",
     "Borrow:",
@@ -402,7 +362,6 @@ function formatActivity(activity: Activity): string {
     `Pool: ${activity.poolId}`,
     `Asset: ${activity.asset ?? "not set"}`,
     `Chain: ${activity.chain ?? "not set"}`,
-    `Asset kind: ${activity.assetKind}`,
     `Amount: ${activity.amount.toString()} base units`,
     `Timestamp ms: ${activity.timestampMs.toString()}`,
     `Txids: ${activity.txids?.join(", ") ?? "not set"}`,
@@ -557,25 +516,5 @@ function getErrorDetails(error: Error): string | undefined {
 function formatInstantLoanAccount(
   account: InstantLoan["borrow"]["destination"]
 ): string {
-  if (account.type === "ChainAddress") {
-    return `chain address: ${account.address}`;
-  }
-  if (account.type === "IcpAccountIdentifier") {
-    return `ICP account identifier: ${account.accountIdentifier}`;
-  }
-  if (account.type === "IcrcAccount") {
-    return `ICRC account: ${account.address}`;
-  }
-
-  return `IC principal: ${account.principal}`;
-}
-
-function formatBytes(bytes: Uint8Array | undefined): string {
-  if (!bytes) {
-    return "not set";
-  }
-
-  return Array.from(bytes)
-    .map((byte) => byte.toString(16).padStart(2, "0"))
-    .join("");
+  return `${account.type}: ${account.address}`;
 }

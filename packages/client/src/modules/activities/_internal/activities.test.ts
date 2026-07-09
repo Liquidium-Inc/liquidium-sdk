@@ -3,7 +3,6 @@ import { Principal } from "@icp-sdk/core/principal";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { DEFAULT_API_BASE_URL } from "../../../core/config";
 import {
-  ActivityAssetKind,
   LiquidiumClient,
   LiquidiumErrorCode,
   publicIdFromInt,
@@ -55,7 +54,7 @@ describe("ActivitiesModule", () => {
           poolId: "pool-1",
           asset: "BTC",
           chain: "BTC" as const,
-          assetKind: ActivityAssetKind.ckAsset,
+          assetKind: "ck_asset" as const,
           amount: ACTIVITY_AMOUNT,
           timestampMs: ACTIVITY_TIMESTAMP_MS,
           txids: ["tx-1"],
@@ -91,8 +90,7 @@ describe("ActivitiesModule", () => {
         },
         poolId: "pool-1",
         asset: "BTC",
-        chain: "BTC",
-        assetKind: ActivityAssetKind.ckAsset,
+        chain: "ICP",
         amount: ACTIVITY_AMOUNT_BASE_UNITS,
         timestampMs: ACTIVITY_TIMESTAMP_MS,
         txids: ["tx-1"],
@@ -107,6 +105,48 @@ describe("ActivitiesModule", () => {
         signal: expect.any(AbortSignal),
       }
     );
+  });
+
+  test("preserves the source chain for native-asset activities", async () => {
+    // given
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          activities: [
+            {
+              id: "activity-native",
+              status: {
+                operation: "deposit",
+                state: "completed",
+              },
+              poolId: "pool-btc",
+              asset: "BTC",
+              chain: "BTC",
+              assetKind: "native_asset",
+              amount: "1000",
+              timestampMs: 1775001600000,
+            },
+          ],
+        }),
+        {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }
+      )
+    );
+    const client = new LiquidiumClient({});
+
+    // when
+    const [activity] = await client.activities.list({
+      profileId: "profile-1",
+    });
+
+    // then
+    expect(activity).toMatchObject({
+      asset: "BTC",
+      chain: "BTC",
+    });
+    expect(activity).not.toHaveProperty("assetKind");
   });
 
   test("lists activities by instant loan short ref", async () => {
@@ -180,7 +220,7 @@ describe("ActivitiesModule", () => {
         poolId: "pool-1",
         asset: "BTC",
         chain: "BTC" as const,
-        assetKind: ActivityAssetKind.ckAsset,
+        assetKind: "ck_asset" as const,
         amount: ACTIVITY_AMOUNT,
         timestampMs: ACTIVITY_TIMESTAMP_MS,
         txids: ["tx-1"],
@@ -217,8 +257,7 @@ describe("ActivitiesModule", () => {
         },
         poolId: "pool-1",
         asset: "BTC",
-        chain: "BTC",
-        assetKind: ActivityAssetKind.ckAsset,
+        chain: "ICP",
         amount: ACTIVITY_AMOUNT_BASE_UNITS,
         timestampMs: ACTIVITY_TIMESTAMP_MS,
         txids: ["tx-1"],
@@ -318,7 +357,7 @@ describe("ActivitiesModule", () => {
         poolId: "pool-1",
         asset: "BTC",
         chain: "BTC" as const,
-        assetKind: ActivityAssetKind.ckAsset,
+        assetKind: "ck_asset" as const,
         amount: ACTIVITY_AMOUNT,
         timestampMs: ACTIVITY_TIMESTAMP_MS,
         txids: ["tx-1"],
@@ -360,8 +399,7 @@ describe("ActivitiesModule", () => {
         },
         poolId: "pool-1",
         asset: "BTC",
-        chain: "BTC",
-        assetKind: ActivityAssetKind.ckAsset,
+        chain: "ICP",
         amount: ACTIVITY_AMOUNT_BASE_UNITS,
         timestampMs: ACTIVITY_TIMESTAMP_MS,
         txids: ["tx-1"],
@@ -402,7 +440,7 @@ describe("ActivitiesModule", () => {
         poolId: "7dcux-qqaaa-aaaae-qfc3a-cai",
         asset: "USDT",
         chain: "ETH" as const,
-        assetKind: ActivityAssetKind.ckAsset,
+        assetKind: "ck_asset" as const,
         amount: ACTIVITY_AMOUNT,
         timestampMs: ACTIVITY_TIMESTAMP_MS,
         txids: [
@@ -447,8 +485,7 @@ describe("ActivitiesModule", () => {
         },
         poolId: "7dcux-qqaaa-aaaae-qfc3a-cai",
         asset: "USDT",
-        chain: "ETH",
-        assetKind: ActivityAssetKind.ckAsset,
+        chain: "ICP",
         amount: ACTIVITY_AMOUNT_BASE_UNITS,
         timestampMs: ACTIVITY_TIMESTAMP_MS,
         txids: [

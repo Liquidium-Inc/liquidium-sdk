@@ -2,7 +2,6 @@ import { LiquidiumError, LiquidiumErrorCode } from "./errors";
 import {
   type CanisterIdOverrides,
   type CanisterIds,
-  type CkCanisterIds,
   Environment,
 } from "./types";
 
@@ -95,28 +94,23 @@ function validateCanisterIdOverrides(overrides?: CanisterIdOverrides): void {
 export const DEFAULT_TIMEOUT_MS = 30_000;
 
 /** Mainnet chain-key asset and ICP helper canister principals. */
-export const CK_CANISTER_IDS: CkCanisterIds = {
-  ckBTC: {
+export const CK_CANISTER_IDS = {
+  BTC: {
     minter: "mqygn-kiaaa-aaaar-qaadq-cai",
     ledger: "mxzaz-hqaaa-aaaar-qaada-cai",
     index: "n5wcd-faaaa-aaaar-qaaea-cai",
     archive: "nbsys-saaaa-aaaar-qaaga-cai",
   },
-  ckETH: {
-    minter: "sv3dd-oaaaa-aaaar-qacoa-cai",
-    ledger: "ss2fx-dyaaa-aaaar-qacoq-cai",
-    archive: "yhujl-liaaa-aaaar-qaiha-cai",
-  },
-  ckUSDT: {
+  USDT: {
     ledger: "cngnf-vqaaa-aaaar-qag4q-cai",
     index: "cefgz-dyaaa-aaaar-qag5a-cai",
   },
-  ckUSDC: {
+  USDC: {
     ledger: "xevnm-gaaaa-aaaar-qafnq-cai",
     index: "xrs4b-hiaaa-aaaar-qafoa-cai",
   },
-  icp: {
+  ICP: {
     ledger: "ryjl3-tyaaa-aaaaa-aaaba-cai",
     index: "qhbym-qaaaa-aaaaa-aaafq-cai",
   },
-};
+} as const;

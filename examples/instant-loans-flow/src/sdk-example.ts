@@ -1,10 +1,10 @@
 import type {
   AssetPrices,
-  Chain,
+  CreateInstantLoanRequest,
   GetActivityStatusResponse,
   InstantLoan,
-  InstantLoanAsset,
   InstantLoanFindResult,
+  InstantLoanGetRequest,
   Pool,
 } from "@liquidium/client";
 import { client } from "./client";
@@ -22,37 +22,6 @@ type CalculateLoanLtvParams = {
   pools: Pool[];
   assetPrices: AssetPrices;
 };
-
-type CreateInstantLoanParams = {
-  collateral: {
-    poolId: string;
-    asset: string;
-    amount: bigint;
-  };
-  borrow: {
-    poolId: string;
-    asset: string;
-    amount: bigint;
-    chain: Chain;
-    destinationAddress: string;
-  };
-  refund: {
-    chain: Chain;
-    destinationAddress: string;
-  };
-  ltvMaxBps: bigint;
-  depositWindowSeconds: bigint;
-};
-
-type GetInstantLoanParams =
-  | {
-      ref: string;
-      loanId?: never;
-    }
-  | {
-      ref?: never;
-      loanId: bigint;
-    };
 
 type GetLoanActivityStatusParams = {
   shortRef: string;
@@ -88,40 +57,14 @@ export function calculateLoanLtv({
   );
 }
 
-export async function createInstantLoan({
-  collateral,
-  borrow,
-  refund,
-  ltvMaxBps,
-  depositWindowSeconds,
-}: CreateInstantLoanParams): Promise<InstantLoan> {
-  const typedCollateralAsset = toInstantLoanAsset(collateral.asset);
-  const typedBorrowAsset = toInstantLoanAsset(borrow.asset);
-
-  return await client.instantLoans.create({
-    collateral: {
-      poolId: collateral.poolId,
-      asset: typedCollateralAsset,
-      amount: collateral.amount,
-    },
-    borrow: {
-      poolId: borrow.poolId,
-      asset: typedBorrowAsset,
-      amount: borrow.amount,
-      chain: borrow.chain,
-      destination: borrow.destinationAddress,
-    },
-    refund: {
-      chain: refund.chain,
-      destination: refund.destinationAddress,
-    },
-    ltvMaxBps,
-    depositWindowSeconds,
-  });
+export async function createInstantLoan(
+  request: CreateInstantLoanRequest
+): Promise<InstantLoan> {
+  return await client.instantLoans.create(request);
 }
 
 export async function getInstantLoan(
-  params: GetInstantLoanParams
+  params: InstantLoanGetRequest
 ): Promise<InstantLoan> {
   return await client.instantLoans.get(params);
 }
@@ -140,8 +83,4 @@ export async function findInstantLoans(
   query: string
 ): Promise<InstantLoanFindResult[]> {
   return await client.instantLoans.find(query);
-}
-
-function toInstantLoanAsset(asset: string): InstantLoanAsset {
-  return asset as InstantLoanAsset;
 }

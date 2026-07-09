@@ -4,14 +4,12 @@
   "version": "0.0.1",
   "type": "module",
   "scripts": {
-    "predev": "pnpm run generate:method-references",
     "dev": "vite",
-    "generate:method-references": "node scripts/generate-method-arg-references.mjs",
-    "prebuild": "pnpm run generate:method-references",
-    "build": "tsc --noEmit && vite build",
+    "generate:method-references": "node scripts/generate-method-arg-references.mjs --write",
+    "check:method-references": "node scripts/generate-method-arg-references.mjs --check",
+    "build": "pnpm run check:method-references && tsc --noEmit && vite build",
     "preview": "vite preview",
-    "pretypecheck": "pnpm run generate:method-references",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "pnpm run check:method-references && tsc --noEmit"
   },
   "dependencies": {
     "@dynamic-labs/ethereum": "^4.83.1",

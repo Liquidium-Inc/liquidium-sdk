@@ -29,7 +29,7 @@ export interface IcPrincipalAccount {
   /** Account type. */
   type: "IcPrincipal";
   /** Principal text. */
-  principal: string;
+  address: string;
 }
 
 /** Legacy ICP ledger account identifier. */
@@ -37,7 +37,7 @@ export interface IcpAccountIdentifierAccount {
   /** Account type. */
   type: "IcpAccountIdentifier";
   /** ICP ledger account identifier text. */
-  accountIdentifier: string;
+  address: string;
 }
 
 /** ICRC account display shape shared by lending and instant-loan responses. */
@@ -120,13 +120,13 @@ export function mapCanisterAccountToLiquidiumAccount(
   account: CanisterLiquidiumAccount
 ): LiquidiumAccount {
   if ("Native" in account) {
-    return { type: "IcPrincipal", principal: account.Native.toText() };
+    return { type: "IcPrincipal", address: account.Native.toText() };
   }
 
   if ("AccountIdentifier" in account) {
     return {
       type: "IcpAccountIdentifier",
-      accountIdentifier: account.AccountIdentifier,
+      address: account.AccountIdentifier,
     };
   }
 

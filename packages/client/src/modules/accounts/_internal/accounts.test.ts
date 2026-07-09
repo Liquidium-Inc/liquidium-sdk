@@ -347,4 +347,27 @@ describe("AccountsModule", () => {
       message: "Unsupported wallet chain returned for profile wallet: SOL",
     });
   });
+
+  test("rejects ICP as a profile signing wallet chain", async () => {
+    // given
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      get_profile_wallets: vi.fn().mockResolvedValue([
+        {
+          address: "aaaaa-aa",
+          chain: { Wallet: { ICP: null } },
+        },
+      ]),
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+
+    // then
+    await expect(
+      client.accounts.listLinkedWallets("aaaaa-aa")
+    ).rejects.toMatchObject({
+      code: LiquidiumErrorCode.INTERNAL,
+      message: "Unsupported wallet chain returned for profile wallet: ICP",
+    });
+  });
 });

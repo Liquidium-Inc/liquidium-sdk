@@ -68,7 +68,6 @@ describe("LendingModule supply", () => {
         get_btc_address: getBtcAddress,
       } as never);
     const client = new LiquidiumClient({});
-
     // when
     const supplyFlow = await client.lending.supply({
       profileId,
@@ -81,7 +80,6 @@ describe("LendingModule supply", () => {
     expect(supplyFlow).toMatchObject({
       type: "transfer",
       target: {
-        type: "ChainAddress",
         poolId: BTC_POOL_ID,
         asset: "BTC",
         chain: "BTC",
@@ -157,7 +155,6 @@ describe("LendingModule supply", () => {
     expect(supplyFlow).toMatchObject({
       type: "transfer",
       target: {
-        type: "ChainAddress",
         poolId: USDT_POOL_ID,
         asset: "USDT",
         chain: "ETH",
@@ -236,7 +233,6 @@ describe("LendingModule supply", () => {
     expect(supplyFlow).toMatchObject({
       type: "transfer",
       target: {
-        type: "ChainAddress",
         poolId: USDC_POOL_ID,
         asset: "USDC",
         chain: "ETH",
@@ -282,20 +278,14 @@ describe("LendingModule supply", () => {
 
     // then
     expect(supplyFlow.target).toEqual({
-      type: "IcrcAccount",
       poolId: BTC_POOL_ID,
       asset: "BTC",
       chain: "ICP",
       action: "deposit",
-      account: {
-        type: "IcrcAccount",
-        owner: BTC_POOL_ID,
+      address: encodeIcrcAccount({
+        owner: Principal.fromText(BTC_POOL_ID),
         subaccount: expectedSubaccount,
-        address: encodeIcrcAccount({
-          owner: Principal.fromText(BTC_POOL_ID),
-          subaccount: expectedSubaccount,
-        }),
-      },
+      }),
     });
   });
 
@@ -321,20 +311,14 @@ describe("LendingModule supply", () => {
 
     // then
     expect(supplyFlow.target).toEqual({
-      type: "IcrcAccount",
       poolId: USDC_POOL_ID,
       asset: "USDC",
       chain: "ICP",
       action: "repayment",
-      account: {
-        type: "IcrcAccount",
-        owner: USDC_POOL_ID,
+      address: encodeIcrcAccount({
+        owner: Principal.fromText(USDC_POOL_ID),
         subaccount: expectedSubaccount,
-        address: encodeIcrcAccount({
-          owner: Principal.fromText(USDC_POOL_ID),
-          subaccount: expectedSubaccount,
-        }),
-      },
+      }),
     });
   });
 
@@ -360,28 +344,16 @@ describe("LendingModule supply", () => {
 
     // then
     expect(supplyFlow.target).toMatchObject({
-      type: "IcpLedgerAccount",
       poolId: ICP_POOL_ID,
       asset: "ICP",
       chain: "ICP",
       action: "deposit",
-      account: {
-        icpIcrcAccount: {
-          type: "IcrcAccount",
-          owner: ICP_POOL_ID,
-          subaccount: expectedSubaccount,
-          address: encodeIcrcAccount({
-            owner: Principal.fromText(ICP_POOL_ID),
-            subaccount: expectedSubaccount,
-          }),
-        },
-      },
+      address: encodeIcrcAccount({
+        owner: Principal.fromText(ICP_POOL_ID),
+        subaccount: expectedSubaccount,
+      }),
     });
-    expect(
-      supplyFlow.target.type === "IcpLedgerAccount"
-        ? supplyFlow.target.account.icpAccountIdentifier
-        : ""
-    ).toMatch(/^[0-9a-f]{64}$/);
+    expect(supplyFlow.target.icpAccountIdentifier).toMatch(/^[0-9a-f]{64}$/);
   });
 
   test("should not submit eth stablecoin transfer txids through the inflow endpoint", async () => {
@@ -494,8 +466,62 @@ describe("LendingModule supply", () => {
       })
     ).rejects.toMatchObject({
       code: LiquidiumErrorCode.VALIDATION_ERROR,
-      message: "No supply mechanism is configured for ICP on ETH",
+      message: "Supply is not supported for ICP pool on ETH using ETH",
     });
+  });
+
+  test("rejects ETH supply for a BTC pool before deriving a target or broadcasting", async () => {
+    // given
+    vi.spyOn(Actor, "createActor").mockReturnValueOnce({
+      list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord()]),
+    } as never);
+    const sendEthTransaction = vi.fn();
+    const client = new LiquidiumClient({});
+
+    // when
+    const result = client.lending.supply({
+      profileId: "aaaaa-aa",
+      poolId: BTC_POOL_ID,
+      action: "deposit",
+      chain: "ETH",
+      amount: 100_000n,
+      account: "0x1234567890123456789012345678901234567890",
+      walletAdapter: { sendEthTransaction },
+    });
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message: "Supply is not supported for BTC pool on BTC using ETH",
+    });
+    expect(sendEthTransaction).not.toHaveBeenCalled();
+  });
+
+  test("rejects BTC supply for an ETH stablecoin pool before deriving a target or broadcasting", async () => {
+    // given
+    vi.spyOn(Actor, "createActor").mockReturnValueOnce({
+      list_pools: vi.fn().mockResolvedValue([createUsdcPoolRecord()]),
+    } as never);
+    const sendBtcTransaction = vi.fn();
+    const client = new LiquidiumClient({});
+
+    // when
+    const result = client.lending.supply({
+      profileId: "aaaaa-aa",
+      poolId: USDC_POOL_ID,
+      action: "deposit",
+      chain: "BTC",
+      amount: 1_000_000n,
+      account: "bc1qsender",
+      walletAdapter: { sendBtcTransaction },
+    });
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message: "Supply is not supported for USDC pool on ETH using BTC",
+    });
+    expect(sendBtcTransaction).not.toHaveBeenCalled();
   });
 
   test("rejects native btc supply when pool id is not configured btc pool", async () => {
@@ -585,23 +611,24 @@ describe("LendingModule supply", () => {
       ]),
     } as never);
     const client = new LiquidiumClient({});
+    const invalidContractInteractionRequest = {
+      profileId: "aaaaa-aa",
+      poolId: BTC_POOL_ID,
+      action: "deposit",
+      chain: "BTC",
+      mechanism: "contractInteraction",
+      walletAdapter: {
+        sendEthTransaction: vi.fn(),
+      },
+      account: "0x1234567890123456789012345678901234567890",
+      amount: 1_000_000n,
+    } as never;
 
     // when
 
     // then
     await expect(
-      client.lending.supply({
-        profileId: "aaaaa-aa",
-        poolId: BTC_POOL_ID,
-        action: "deposit",
-        chain: "BTC",
-        mechanism: "contractInteraction",
-        walletAdapter: {
-          sendEthTransaction: vi.fn(),
-        },
-        account: "0x1234567890123456789012345678901234567890",
-        amount: 1_000_000n,
-      })
+      client.lending.supply(invalidContractInteractionRequest)
     ).rejects.toMatchObject({
       code: LiquidiumErrorCode.VALIDATION_ERROR,
       message: "Contract-interaction supply is not supported for BTC on BTC",
@@ -749,7 +776,6 @@ describe("LendingModule supply", () => {
     // then
     expect(flow.type).toBe("transfer");
     expect(flow.target).toMatchObject({
-      type: "ChainAddress",
       asset: "USDT",
       chain: "ETH",
       address: "0x1111111111111111111111111111111111111111",
@@ -820,7 +846,6 @@ describe("LendingModule supply", () => {
     // then
     expect(flow.type).toBe("contractInteraction");
     expect(flow.target).toMatchObject({
-      type: "IcrcAccount",
       asset: "USDT",
       chain: "ETH",
     });
@@ -1005,7 +1030,6 @@ describe("LendingModule supply", () => {
     // then
     expect(flow.type).toBe("transfer");
     expect(flow.target).toMatchObject({
-      type: "ChainAddress",
       address: "bc1qexampledepositaddress",
     });
     expect(fetchSpy).toHaveBeenCalledWith(
@@ -1140,8 +1164,11 @@ describe("LendingModule supply", () => {
       chain: "ICP",
       transfer: {
         ledgerCanisterId: "xevnm-gaaaa-aaaar-qafnq-cai",
-        to:
-          flow.target.type === "IcrcAccount" ? flow.target.account : undefined,
+        to: expect.objectContaining({
+          type: "IcrcAccount",
+          owner: USDC_POOL_ID,
+          address: flow.target.address,
+        }),
         amount: 1_000_000n,
       },
     });
@@ -1180,10 +1207,11 @@ describe("LendingModule supply", () => {
       actionType: "supply-deposit",
       transfer: {
         ledgerCanisterId: "ryjl3-tyaaa-aaaaa-aaaba-cai",
-        to:
-          flow.target.type === "IcpLedgerAccount"
-            ? flow.target.account.icpIcrcAccount
-            : undefined,
+        to: expect.objectContaining({
+          type: "IcrcAccount",
+          owner: ICP_POOL_ID,
+          address: flow.target.address,
+        }),
         amount: 100_000_000n,
       },
     });
@@ -1525,5 +1553,30 @@ describe("LendingModule supply", () => {
       code: LiquidiumErrorCode.VALIDATION_ERROR,
       message: "BTC wallet adapter does not support transaction sending",
     });
+  });
+
+  test("rejects partial wallet fields instead of treating them as manual supply", async () => {
+    // given
+    const createActor = vi.spyOn(Actor, "createActor");
+    const client = new LiquidiumClient({});
+    const partialWalletRequest = {
+      profileId: "aaaaa-aa",
+      poolId: BTC_POOL_ID,
+      action: "deposit",
+      chain: "BTC",
+      amount: 100_000n,
+      account: "bc1qsender",
+    } as never;
+
+    // when
+    const result = client.lending.supply(partialWalletRequest);
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message:
+        "Wallet-executed supply requires walletAdapter, account, and amount",
+    });
+    expect(createActor).not.toHaveBeenCalled();
   });
 });

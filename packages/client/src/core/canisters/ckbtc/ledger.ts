@@ -9,7 +9,7 @@ export function createCkBtcLedgerActor(
 ): CkBtcLedgerActor {
   return createIcrcLedgerActor({
     canisterContext,
-    canisterId: CK_CANISTER_IDS.ckBTC.ledger,
+    canisterId: CK_CANISTER_IDS.BTC.ledger,
     ledgerName: "ckBTC",
   });
 }

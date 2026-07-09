@@ -8,12 +8,11 @@ import {
 import type { LiquidiumStatus } from "../../core/status";
 import type { ApiClient } from "../../core/transports/api-client";
 import type { CanisterContext } from "../../core/transports/canister-context";
-import type { Chain } from "../../core/types";
+import { Chain, type Chain as ChainName } from "../../core/types";
 import { parseBigInt } from "../../core/utils/bigint";
 import { intFromPublicId } from "../instant-loans/ref-code";
 import type {
   Activity,
-  ActivityAssetKind,
   ActivityTopUp,
   GetActivityStatusRequest,
   GetActivityStatusResponse,
@@ -24,6 +23,8 @@ import type {
   OutflowActivityStatus,
 } from "./types";
 import { ActivityFilter } from "./types";
+
+type ActivityAssetKindWire = "native_asset" | "ck_asset";
 
 interface ActivityTopUpWire
   extends Omit<
@@ -39,8 +40,8 @@ interface ActivityWire {
   id: string;
   poolId: string;
   asset: string | null;
-  chain: Chain | null;
-  assetKind: ActivityAssetKind;
+  chain: ChainName | null;
+  assetKind: ActivityAssetKindWire;
   amount: string;
   timestampMs: number;
   txids?: string[];
@@ -191,19 +192,16 @@ function mapInstantLoanLookupError(
 
 function mapActivity(wire: ActivityWire): Activity {
   const amount = parseBigInt(wire.amount, "activity amount");
-  const activityBase = {
-    id: wire.id,
-    poolId: wire.poolId,
-    asset: wire.asset,
-    chain: wire.chain,
-    assetKind: wire.assetKind,
-    amount,
-    timestampMs: wire.timestampMs,
-  };
+  const chain = wire.assetKind === "ck_asset" ? Chain.ICP : wire.chain;
 
   if (isInflowOperation(wire.status.operation)) {
     const activity: InflowActivity = {
-      ...activityBase,
+      id: wire.id,
+      poolId: wire.poolId,
+      asset: wire.asset,
+      chain,
+      amount,
+      timestampMs: wire.timestampMs,
       status: wire.status as InflowActivityStatus,
     };
 
@@ -220,7 +218,12 @@ function mapActivity(wire: ActivityWire): Activity {
 
   if (isOutflowOperation(wire.status.operation)) {
     const activity: OutflowActivity = {
-      ...activityBase,
+      id: wire.id,
+      poolId: wire.poolId,
+      asset: wire.asset,
+      chain,
+      amount,
+      timestampMs: wire.timestampMs,
       status: wire.status as OutflowActivityStatus,
     };
 

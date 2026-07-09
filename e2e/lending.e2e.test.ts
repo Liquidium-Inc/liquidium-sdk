@@ -10,11 +10,10 @@ import {
 import { CK_CANISTER_IDS } from "../packages/client/src/core/config";
 import { describeLive } from "./_internal/live";
 import {
-  selectBorrowPool,
   selectBtcCollateralPool,
+  selectEthStablecoinPoolByAsset,
   selectIcpPool,
 } from "./_internal/pools";
-import { createEthereumTestWallet } from "./_internal/test-wallets";
 
 const FAKE_ICP_TXID = "fake-icp-txid";
 const FAKE_CK_BTC_TXID = "fake-ck-btc-txid";
@@ -24,23 +23,18 @@ const CK_BTC_TRANSFER_AMOUNT_SATS = 100_000n;
 const CK_STABLECOIN_TRANSFER_AMOUNT_BASE_UNITS = 1_000_000n;
 const VALID_ETH_L1_ADDRESS = "0x52908400098527886E0F7030069857D2E4169EE7";
 const VALID_BTC_L1_ADDRESS = "1BoatSLRHtKNngkdXEeobR76b53LETtpyT";
+const TEST_PROFILE_ID = "aaaaa-aa";
 
 describeLive("live lending e2e", () => {
   test("should resolve a manual BTC supply target without broadcasting transactions", async () => {
     // given
     const client = new LiquidiumClient();
-    const { account, walletAdapter } = createEthereumTestWallet();
-    const profileId = await client.accounts.createProfile({
-      account,
-      chain: Chain.ETH,
-      walletAdapter,
-    });
     const pools = await client.market.listPools();
     const btcPool = selectBtcCollateralPool(pools);
 
     // when
     const btcSupplyFlow = await client.lending.supply({
-      profileId,
+      profileId: TEST_PROFILE_ID,
       poolId: btcPool.id,
       action: SupplyAction.deposit,
       chain: Chain.BTC,
@@ -49,7 +43,6 @@ describeLive("live lending e2e", () => {
     // then
     expect(btcSupplyFlow.txid).toBeUndefined();
     expect(btcSupplyFlow.target).toMatchObject({
-      type: "ChainAddress",
       poolId: btcPool.id,
       asset: Asset.BTC,
       chain: Chain.BTC,
@@ -60,18 +53,12 @@ describeLive("live lending e2e", () => {
   test("should resolve a manual ICP supply target in both ledger account formats", async () => {
     // given
     const client = new LiquidiumClient();
-    const { account, walletAdapter } = createEthereumTestWallet();
-    const profileId = await client.accounts.createProfile({
-      account,
-      chain: Chain.ETH,
-      walletAdapter,
-    });
     const pools = await client.market.listPools();
     const icpPool = selectIcpPool(pools);
 
     // when
     const icpSupplyFlow = await client.lending.supply({
-      profileId,
+      profileId: TEST_PROFILE_ID,
       poolId: icpPool.id,
       action: SupplyAction.deposit,
       chain: Chain.ICP,
@@ -80,40 +67,26 @@ describeLive("live lending e2e", () => {
     // then
     expect(icpSupplyFlow.txid).toBeUndefined();
     expect(icpSupplyFlow.target).toMatchObject({
-      type: "IcpLedgerAccount",
       poolId: icpPool.id,
       asset: Asset.ICP,
       chain: Chain.ICP,
       action: SupplyAction.deposit,
     });
 
-    if (icpSupplyFlow.target.type !== "IcpLedgerAccount") {
-      throw new Error("Expected an ICP ledger account supply target");
-    }
-
-    expect(icpSupplyFlow.target.account.icpIcrcAccount.owner).toBe(icpPool.id);
-    expect(icpSupplyFlow.target.account.icpIcrcAccount.address).toBeTruthy();
-    expect(icpSupplyFlow.target.account.icpAccountIdentifier).toMatch(
-      /^[0-9a-f]{64}$/
-    );
+    expect(icpSupplyFlow.target.address).toBeTruthy();
+    expect(icpSupplyFlow.target.icpAccountIdentifier).toMatch(/^[0-9a-f]{64}$/);
   });
 
   test("should build an ICP ledger wallet transfer without broadcasting funds", async () => {
     // given
     const client = new LiquidiumClient();
-    const { account, walletAdapter } = createEthereumTestWallet();
-    const profileId = await client.accounts.createProfile({
-      account,
-      chain: Chain.ETH,
-      walletAdapter,
-    });
     const pools = await client.market.listPools();
     const icpPool = selectIcpPool(pools);
     let capturedTransferRequest: SendIcrcTransferRequest | undefined;
 
     // when
     const icpSupplyFlow = await client.lending.supply({
-      profileId,
+      profileId: TEST_PROFILE_ID,
       poolId: icpPool.id,
       action: SupplyAction.deposit,
       chain: Chain.ICP,
@@ -135,36 +108,26 @@ describeLive("live lending e2e", () => {
       account: "icp-sender",
       actionType: "supply-deposit",
       transfer: {
-        ledgerCanisterId: CK_CANISTER_IDS.icp.ledger,
+        ledgerCanisterId: CK_CANISTER_IDS.ICP.ledger,
         amount: ICP_TRANSFER_AMOUNT_E8S,
       },
     });
 
-    if (icpSupplyFlow.target.type !== "IcpLedgerAccount") {
-      throw new Error("Expected an ICP ledger account supply target");
-    }
-
-    expect(capturedTransferRequest?.transfer.to).toEqual(
-      icpSupplyFlow.target.account.icpIcrcAccount
+    expect(capturedTransferRequest?.transfer.to.address).toBe(
+      icpSupplyFlow.target.address
     );
   });
 
   test("should build a ckBTC ledger wallet transfer without broadcasting funds", async () => {
     // given
     const client = new LiquidiumClient();
-    const { account, walletAdapter } = createEthereumTestWallet();
-    const profileId = await client.accounts.createProfile({
-      account,
-      chain: Chain.ETH,
-      walletAdapter,
-    });
     const pools = await client.market.listPools();
     const btcPool = selectBtcCollateralPool(pools);
     let capturedTransferRequest: SendIcrcTransferRequest | undefined;
 
     // when
     const ckBtcSupplyFlow = await client.lending.supply({
-      profileId,
+      profileId: TEST_PROFILE_ID,
       poolId: btcPool.id,
       action: SupplyAction.deposit,
       chain: Chain.ICP,
@@ -186,36 +149,29 @@ describeLive("live lending e2e", () => {
       account: "ck-btc-sender",
       actionType: "supply-deposit",
       transfer: {
-        ledgerCanisterId: CK_CANISTER_IDS.ckBTC.ledger,
+        ledgerCanisterId: CK_CANISTER_IDS.BTC.ledger,
         amount: CK_BTC_TRANSFER_AMOUNT_SATS,
       },
     });
 
-    if (ckBtcSupplyFlow.target.type !== "IcrcAccount") {
-      throw new Error("Expected a ckBTC ICRC account supply target");
-    }
-
-    expect(capturedTransferRequest?.transfer.to).toEqual(
-      ckBtcSupplyFlow.target.account
+    expect(capturedTransferRequest?.transfer.to.address).toBe(
+      ckBtcSupplyFlow.target.address
     );
   });
 
-  test("should build a ck stablecoin ledger wallet transfer without broadcasting funds", async () => {
+  test.each([
+    Asset.USDC,
+    Asset.USDT,
+  ] as const)("should build a ck%s ledger wallet transfer without broadcasting funds", async (asset) => {
     // given
     const client = new LiquidiumClient();
-    const { account, walletAdapter } = createEthereumTestWallet();
-    const profileId = await client.accounts.createProfile({
-      account,
-      chain: Chain.ETH,
-      walletAdapter,
-    });
     const pools = await client.market.listPools();
-    const stablecoinPool = selectBorrowPool(pools);
+    const stablecoinPool = selectEthStablecoinPoolByAsset(pools, asset);
     let capturedTransferRequest: SendIcrcTransferRequest | undefined;
 
     // when
     const ckStablecoinSupplyFlow = await client.lending.supply({
-      profileId,
+      profileId: TEST_PROFILE_ID,
       poolId: stablecoinPool.id,
       action: SupplyAction.repayment,
       chain: Chain.ICP,
@@ -244,12 +200,8 @@ describeLive("live lending e2e", () => {
       },
     });
 
-    if (ckStablecoinSupplyFlow.target.type !== "IcrcAccount") {
-      throw new Error("Expected a ck stablecoin ICRC account supply target");
-    }
-
-    expect(capturedTransferRequest?.transfer.to).toEqual(
-      ckStablecoinSupplyFlow.target.account
+    expect(capturedTransferRequest?.transfer.to.address).toBe(
+      ckStablecoinSupplyFlow.target.address
     );
   });
 
@@ -320,9 +272,9 @@ describeLive("live lending e2e", () => {
 function getExpectedStablecoinLedgerCanisterId(asset: string): string {
   switch (asset) {
     case Asset.USDC:
-      return CK_CANISTER_IDS.ckUSDC.ledger;
+      return CK_CANISTER_IDS.USDC.ledger;
     case Asset.USDT:
-      return CK_CANISTER_IDS.ckUSDT.ledger;
+      return CK_CANISTER_IDS.USDT.ledger;
     default:
       throw new Error(`Unsupported stablecoin asset for e2e test: ${asset}`);
   }

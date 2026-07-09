@@ -87,30 +87,16 @@ export function formatPool(pool: Pool): string {
 }
 
 export function formatSupplyTarget(target: SupplyTarget): string {
-  if (target.type === "ChainAddress") {
-    return [
-      `Send ${target.asset} on ${target.chain} to this address:`,
-      target.address,
-      `Pool: ${target.poolId}`,
-    ].join("\n");
-  }
-
-  if (target.type === "IcrcAccount") {
-    return [
-      `Send ${target.asset} on ${target.chain} to this ICRC account:`,
-      target.account.address,
-      `Owner: ${target.account.owner}`,
-      `Subaccount: ${formatBytes(target.account.subaccount)}`,
-    ].join("\n");
-  }
-
   return [
-    "Send ICP to this ledger account:",
-    target.account.icpIcrcAccount.address,
-    `ICP account identifier: ${target.account.icpAccountIdentifier}`,
-    `Owner: ${target.account.icpIcrcAccount.owner}`,
-    `Subaccount: ${formatBytes(target.account.icpIcrcAccount.subaccount)}`,
-  ].join("\n");
+    `Send ${target.asset} on ${target.chain} to:`,
+    target.address,
+    target.icpAccountIdentifier
+      ? `ICP account identifier: ${target.icpAccountIdentifier}`
+      : null,
+    `Pool: ${target.poolId}`,
+  ]
+    .filter((line): line is string => line !== null)
+    .join("\n");
 }
 
 export function formatOutflowDetails(outflow: OutflowDetails): string {
@@ -125,16 +111,7 @@ export function formatOutflowDetails(outflow: OutflowDetails): string {
 }
 
 function formatOutflowReceiver(receiver: OutflowDetails["receiver"]): string {
-  switch (receiver.type) {
-    case "ChainAddress":
-      return `${receiver.type} ${receiver.address}`;
-    case "IcPrincipal":
-      return `${receiver.type} ${receiver.principal}`;
-    case "IcpAccountIdentifier":
-      return `${receiver.type} ${receiver.accountIdentifier}`;
-    case "IcrcAccount":
-      return `${receiver.type} ${receiver.address}`;
-  }
+  return `${receiver.type} ${receiver.address}`;
 }
 
 export function formatActivityStatus(
@@ -199,7 +176,6 @@ function formatActivity(activity: Activity): string {
     `Pool: ${activity.poolId}`,
     `Asset: ${activity.asset ?? "not set"}`,
     `Chain: ${activity.chain ?? "not set"}`,
-    `Asset kind: ${activity.assetKind}`,
     `Amount: ${activity.amount.toString()} base units`,
     `Timestamp ms: ${activity.timestampMs.toString()}`,
     `Txids: ${activity.txids?.join(", ") ?? "not set"}`,
@@ -289,14 +265,4 @@ function stringifyForDisplay(value: unknown): string {
     },
     2
   );
-}
-
-function formatBytes(bytes: Uint8Array | undefined): string {
-  if (!bytes) {
-    return "not set";
-  }
-
-  return Array.from(bytes)
-    .map((byte) => byte.toString(16).padStart(2, "0"))
-    .join("");
 }

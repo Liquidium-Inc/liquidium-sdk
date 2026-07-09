@@ -1,13 +1,13 @@
-import type { MarketAsset, MarketChain } from "../../core/types";
+import type { Asset, AssetIdentifier, Chain } from "../../core/types";
 
 /** Current protocol metadata and rate state for a lending pool. */
 export interface Pool {
   /** Pool canister principal text. */
   id: string;
   /** Asset supplied to and borrowed from the pool. */
-  asset: MarketAsset;
+  asset: Asset;
   /** Chain associated with the pool asset. */
-  chain: MarketChain;
+  chain: Chain;
   /** Number of base-unit decimals for pool amounts. */
   decimals: bigint;
   /** Whether new pool activity is currently frozen. */
@@ -61,13 +61,8 @@ export interface Pool {
 /** USD price map keyed by market asset symbol. */
 export type AssetPrices = Record<string, number>;
 
-/** Asset and chain pair used to find a unique pool. */
-export interface FindPoolQuery {
-  /** Asset symbol to match. */
-  asset: MarketAsset;
-  /** Chain name to match. */
-  chain: MarketChain;
-}
+/** Supported Chain + Asset identifier used to find its backing lending pool. */
+export type FindPoolQuery = AssetIdentifier;
 
 /** Current borrow, lend, and utilization rates for a pool. */
 export interface PoolRate {

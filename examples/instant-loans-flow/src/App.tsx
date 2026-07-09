@@ -5,7 +5,7 @@ import type {
   InstantLoanRepaymentTargetQuote,
   Pool,
 } from "@liquidium/client";
-import { Chain } from "@liquidium/client";
+import { Chain, isAssetIdentifier } from "@liquidium/client";
 import { useEffect, useState } from "react";
 import { formatConfig } from "./client";
 import {
@@ -162,6 +162,17 @@ export function App() {
       throw new Error("Enter a refund destination address.");
     }
 
+    const borrowIdentifier = {
+      asset: borrowPool.asset,
+      chain: borrowChain,
+    };
+
+    if (!isAssetIdentifier(borrowIdentifier)) {
+      throw new Error(
+        `${borrowChain}/${borrowPool.asset} is not a supported borrow route.`
+      );
+    }
+
     setStatus("Creating instant loan...");
     setLoanResult("Creating loan...");
 
@@ -172,25 +183,27 @@ export function App() {
         amount: parsedCollateralAmount,
       },
       borrow: {
+        ...borrowIdentifier,
         poolId: borrowPool.id,
-        asset: borrowPool.asset,
         amount: parsedBorrowAmount,
-        chain: borrowChain,
-        destinationAddress: trimmedBorrowDestination,
+        destination: trimmedBorrowDestination,
       },
       refund: {
         chain: refundChain,
-        destinationAddress: trimmedRefundDestination,
+        destination: trimmedRefundDestination,
       },
       ltvMaxBps,
       depositWindowSeconds: parsedDepositWindowSeconds,
     });
-    const loanTargetOptions = await getLoanTargetOptions({
-      loan,
-      collateralPool,
-      borrowPool,
-    });
-    const initialDepositPoolChainTarget = loan.initialDeposit.targets.poolChain;
+    const loanTargetOptions = getLoanTargetOptions(loan);
+    const initialDepositPoolChainTarget =
+      loan.initialDeposit.targets[collateralPool.chain];
+
+    if (!initialDepositPoolChainTarget) {
+      throw new Error(
+        `Missing ${collateralPool.chain} initial-deposit target.`
+      );
+    }
 
     saveRecentLoanRef(loan.ref);
     setRecentLoanRefs(getRecentLoanRefs());
@@ -585,67 +598,43 @@ function getChainOptions(pool: Pool | undefined): Chain[] {
   return [getDefaultChain(pool), Chain.ICP];
 }
 
-function getLoanTargetOptions(params: {
-  loan: InstantLoan;
-  collateralPool: Pool;
-  borrowPool: Pool;
-}): LoanTargetOptions {
-  const initialDeposit = getInitialDepositTargetOptions(params);
-  const repayment = getRepaymentTargetOptions(params);
+function getLoanTargetOptions(loan: InstantLoan): LoanTargetOptions {
+  const initialDeposit = getInitialDepositTargetOptions(loan);
+  const repayment = getRepaymentTargetOptions(loan);
 
   return { initialDeposit, repayment };
 }
 
-function getInitialDepositTargetOptions(params: {
-  loan: InstantLoan;
-  collateralPool: Pool;
-}): LoanTargetOption[] {
-  const targetOptions = [
-    {
-      label: getDefaultChain(params.collateralPool),
-      loan: params.loan,
-      initialDeposit: params.loan.initialDeposit.targets.poolChain,
-    },
-  ];
+function getInitialDepositTargetOptions(loan: InstantLoan): LoanTargetOption[] {
+  const targetOptions: LoanTargetOption[] = [];
 
-  if (!params.loan.initialDeposit.targets.icp) {
-    return targetOptions;
+  for (const quote of Object.values(loan.initialDeposit.targets)) {
+    if (quote) {
+      targetOptions.push({
+        label: quote.target.chain,
+        loan,
+        initialDeposit: quote,
+      });
+    }
   }
 
-  return [
-    ...targetOptions,
-    {
-      label: formatInflowChain(params.collateralPool, Chain.ICP),
-      loan: params.loan,
-      initialDeposit: params.loan.initialDeposit.targets.icp,
-    },
-  ];
+  return targetOptions;
 }
 
-function getRepaymentTargetOptions(params: {
-  loan: InstantLoan;
-  borrowPool: Pool;
-}): LoanTargetOption[] {
-  const targetOptions = [
-    {
-      label: getDefaultChain(params.borrowPool),
-      loan: params.loan,
-      repayment: params.loan.repayment.targets.poolChain,
-    },
-  ];
+function getRepaymentTargetOptions(loan: InstantLoan): LoanTargetOption[] {
+  const targetOptions: LoanTargetOption[] = [];
 
-  if (!params.loan.repayment.targets.icp) {
-    return targetOptions;
+  for (const quote of Object.values(loan.repayment.targets)) {
+    if (quote) {
+      targetOptions.push({
+        label: quote.target.chain,
+        loan,
+        repayment: quote,
+      });
+    }
   }
 
-  return [
-    ...targetOptions,
-    {
-      label: formatInflowChain(params.borrowPool, Chain.ICP),
-      loan: params.loan,
-      repayment: params.loan.repayment.targets.icp,
-    },
-  ];
+  return targetOptions;
 }
 
 function formatInitialDepositTargetOption(
@@ -703,17 +692,6 @@ function formatRepaymentTargetOption(
     )} ${repaymentSummary.asset}${repayment.inflowFeeEstimateAvailable ? "" : " (estimate unavailable)"}`,
     formatSupplyTarget(repayment.target),
   ].join("\n");
-}
-
-function formatInflowChain(
-  pool: Pool | undefined,
-  transferChain: Chain
-): string {
-  if (pool?.chain === "ICP") {
-    return Chain.ICP;
-  }
-
-  return transferChain;
 }
 
 function formatDestinationInputLabel(

@@ -113,18 +113,12 @@ export function formatBtcSupplyFlow(
 }
 
 function formatBtcSupplyTarget(target: SupplyFlow["target"]): string {
-  if (target.type === "ChainAddress") {
-    return [
-      `Target type: ${target.type}`,
-      `Address: ${target.address}`,
-      `Pool: ${target.poolId}`,
-      `Action: ${target.action}`,
-    ].join("\n");
-  }
-
-  return ["Unexpected non-BTC target.", `Target type: ${target.type}`].join(
-    "\n"
-  );
+  return [
+    `Asset: ${target.asset} on ${target.chain}`,
+    `Address: ${target.address}`,
+    `Pool: ${target.poolId}`,
+    `Action: ${target.action}`,
+  ].join("\n");
 }
 
 export function formatActivityStatus(
@@ -146,7 +140,6 @@ export function formatActivity(activity: Activity): string {
     `Pool: ${activity.poolId}`,
     `Asset: ${activity.asset ?? "not set"}`,
     `Chain: ${activity.chain ?? "not set"}`,
-    `Asset kind: ${activity.assetKind}`,
     `Amount: ${activity.amount.toString()} base units`,
     `Timestamp ms: ${activity.timestampMs.toString()}`,
     `Txids: ${activity.txids?.join(", ") ?? "not set"}`,

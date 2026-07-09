@@ -38,5 +38,5 @@
     "viem": "^2.50.4",
     "vitest": "^4.1.7"
   },
-  "packageManager": "pnpm@11.10.0"
+  "packageManager": "pnpm@11.5.1"
 }

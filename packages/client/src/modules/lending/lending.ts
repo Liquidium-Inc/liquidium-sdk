@@ -1,4 +1,8 @@
 import { Principal } from "@icp-sdk/core/principal";
+import type {
+  CanisterLiquidiumAccount,
+  LiquidiumAccountInput,
+} from "../../core/accounts";
 import { getBorrowAmountMinimumValidationError } from "../../core/borrow-minimums";
 import { createCkBtcLedgerActor } from "../../core/canisters/ckbtc/ledger";
 import { createCkBtcMinterActor } from "../../core/canisters/ckbtc/minter";
@@ -9,11 +13,6 @@ import {
   mapCanisterCallErrorToLiquidiumError,
   mapLendingProtocolErrorToLiquidiumError,
 } from "../../core/canisters/lending/error-mappers";
-import {
-  createFlexibleLendingActor,
-  type DecodedPool,
-  decodeFlexiblePool,
-} from "../../core/canisters/lending/flexible-actor";
 import {
   createBorrowAssetMessage,
   createWithdrawAssetMessage,
@@ -41,6 +40,7 @@ import { encodeInflowSubaccount } from "../../core/utils/inflow-subaccount";
 import { normalizeWalletSignature } from "../../core/utils/signature";
 import { computeExpiryTimestampFromNow } from "../../core/utils/time";
 import {
+  type SignatureInfo,
   WalletActionKind,
   WalletExecutionKind,
 } from "../../core/wallet-actions";
@@ -50,11 +50,11 @@ import { roundInflowFeeEstimate } from "./_internal/inflow-fee-rounding";
 import { SupplyFlowExecutor } from "./_internal/supply-flow";
 import {
   getEthStablecoinContractAddress,
+  getPoolById,
   isEthStablecoin,
   mapDepositAccountErrorToLiquidiumError,
 } from "./_internal/supply-targets";
 import {
-  type CanisterOutflowReceiver,
   mapCanisterOutflowDetails,
   mapWalletChainToLendingChain,
   parseOutflowDestination,
@@ -62,7 +62,6 @@ import {
 import type {
   BorrowAction,
   BorrowOutflowDetails,
-  BorrowSubmitSignatureInfo,
   CreateBorrowRequest,
   CreateWithdrawRequest,
   EstimateInflowFeeRequest,
@@ -70,7 +69,6 @@ import type {
   GetDepositAddressRequest,
   GetEvmSupplyContextRequest,
   InflowFeeEstimate,
-  OutflowDestination,
   OutflowDetails,
   SubmitInflowRequest,
   SubmitInflowResponse,
@@ -79,7 +77,6 @@ import type {
   WalletExecutionParams,
   WithdrawAction,
   WithdrawOutflowDetails,
-  WithdrawSubmitSignatureInfo,
 } from "./types";
 
 interface OutflowActionData {
@@ -87,17 +84,17 @@ interface OutflowActionData {
   poolId: string;
   amount: bigint;
   chain: Chain;
-  receiver: OutflowDestination;
+  receiver: LiquidiumAccountInput;
   signerWalletAddress: string;
   expiryTimestamp: bigint;
 }
 
 interface OutflowSubmissionData extends OutflowActionData {
-  receiverAccount: CanisterOutflowReceiver;
+  receiverAccount: CanisterLiquidiumAccount;
 }
 
 interface ResolveOutflowDestinationInputParams {
-  receiver: OutflowDestination;
+  receiver: LiquidiumAccountInput;
   errorMessage: string;
 }
 
@@ -139,7 +136,10 @@ export class LendingModule {
         "Withdraw amount must be greater than 0"
       );
     }
-    const selectedPool = await this.getPoolById(request.poolId);
+    const selectedPool = await getPoolById(
+      this.canisterContext,
+      request.poolId
+    );
     const selectedAsset = selectedPool.asset;
     const minimumWithdrawAmountError = getWithdrawAmountMinimumValidationError({
       amount: request.amount,
@@ -195,7 +195,7 @@ export class LendingModule {
           nonce
         ),
         data: withdrawActionData,
-        submit: async (signatureInfo: WithdrawSubmitSignatureInfo) => {
+        submit: async (signatureInfo: SignatureInfo) => {
           return await this.submitWithdraw(
             withdrawSubmissionData,
             signatureInfo
@@ -213,7 +213,7 @@ export class LendingModule {
 
   private async submitWithdraw(
     request: OutflowSubmissionData,
-    signatureInfo: WithdrawSubmitSignatureInfo
+    signatureInfo: SignatureInfo
   ): Promise<WithdrawOutflowDetails> {
     try {
       const result = await createLendingActor(this.canisterContext).withdraw(
@@ -304,7 +304,10 @@ export class LendingModule {
         "Borrow amount must be greater than 0"
       );
     }
-    const selectedPool = await this.getPoolById(request.poolId);
+    const selectedPool = await getPoolById(
+      this.canisterContext,
+      request.poolId
+    );
     const selectedAsset = selectedPool.asset;
     const minimumBorrowAmountError = getBorrowAmountMinimumValidationError({
       amount: request.amount,
@@ -360,7 +363,7 @@ export class LendingModule {
           nonce
         ),
         data: borrowActionData,
-        submit: async (signatureInfo: BorrowSubmitSignatureInfo) => {
+        submit: async (signatureInfo: SignatureInfo) => {
           return await this.submitBorrow(borrowSubmissionData, signatureInfo);
         },
       };
@@ -375,7 +378,7 @@ export class LendingModule {
 
   private async submitBorrow(
     request: OutflowSubmissionData,
-    signatureInfo: BorrowSubmitSignatureInfo
+    signatureInfo: SignatureInfo
   ): Promise<BorrowOutflowDetails> {
     try {
       const result = await createLendingActor(
@@ -592,6 +595,17 @@ export class LendingModule {
   async submitInflow(
     request: SubmitInflowRequest
   ): Promise<SubmitInflowResponse> {
+    if (
+      request.chain !== undefined &&
+      request.chain !== Chain.BTC &&
+      request.chain !== Chain.ETH
+    ) {
+      throw new LiquidiumError(
+        LiquidiumErrorCode.VALIDATION_ERROR,
+        `Inflow submission is not supported for ${String(request.chain)}`
+      );
+    }
+
     const apiClient = this.requireApi();
 
     const response = await apiClient.post<
@@ -641,31 +655,11 @@ export class LendingModule {
     return new SupplyFlowExecutor({
       canisterContext: this.canisterContext,
       evmReadClient: this.evmReadClient,
-      getPoolById: async (poolId) => await this.getPoolById(poolId),
       requireApi: () => {
         this.requireApi();
       },
       submitInflow: async (request) => await this.submitInflow(request),
     });
-  }
-
-  private async getPoolById(poolId: string): Promise<DecodedPool> {
-    const pools = await createFlexibleLendingActor(
-      this.canisterContext
-    ).list_pools();
-    const selectedPool = pools.find(
-      (pool) => pool.principal.toText() === poolId
-    );
-
-    const decodedPool = selectedPool ? decodeFlexiblePool(selectedPool) : null;
-    if (!decodedPool) {
-      throw new LiquidiumError(
-        LiquidiumErrorCode.POOL_NOT_FOUND,
-        `Pool not found: ${poolId}`
-      );
-    }
-
-    return decodedPool;
   }
 }
 
@@ -679,28 +673,12 @@ function getInflowFeeLedgerAssetRoute(
     );
   }
 
-  switch (request.asset) {
-    case Asset.BTC:
-      return getPoolLedgerAssetRoute({ asset: Asset.BTC, chain: Chain.BTC });
-    case Asset.USDC:
-    case Asset.USDT:
-      return getPoolLedgerAssetRoute({
-        asset: request.asset,
-        chain: Chain.ETH,
-      });
-    case Asset.ICP:
-      return getPoolLedgerAssetRoute({ asset: Asset.ICP, chain: Chain.ICP });
-    case Asset.SOL:
-      throw new LiquidiumError(
-        LiquidiumErrorCode.VALIDATION_ERROR,
-        `IC ledger inflow fees are not supported for ${request.asset} on ${request.chain}`
-      );
-  }
+  return getPoolLedgerAssetRoute(request);
 }
 
 function resolveOutflowDestinationInput(
   params: ResolveOutflowDestinationInputParams
-): OutflowDestination {
+): LiquidiumAccountInput {
   const receiver = params.receiver;
   const address =
     typeof receiver === "string" ? receiver.trim() : receiver.address.trim();

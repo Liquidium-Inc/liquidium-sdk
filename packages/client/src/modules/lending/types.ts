@@ -1,52 +1,27 @@
-import {
-  type ChainAddressAccount,
-  type IcPrincipalAccount,
-  type IcpAccountIdentifierAccount,
-  type IcrcAccount,
-  type LiquidiumAccount,
-  type LiquidiumAccountInput,
-  type LiquidiumAccountType,
-  LiquidiumAccountType as SharedLiquidiumAccountType,
+import type {
+  LiquidiumAccount,
+  LiquidiumAccountInput,
 } from "../../core/accounts";
 import type { LiquidiumOperation, LiquidiumStatus } from "../../core/status";
 import type {
   Asset,
+  AssetIdentifier,
   Chain,
-  MarketAsset,
-  MarketChain,
   OutflowType,
+  SigningChain,
   SupplyAction,
 } from "../../core/types";
 import type {
-  IcrcTransferDetails,
-  SendIcrcTransferRequest,
-  SignatureInfo,
   SignMessageWalletAction,
   WalletActionKind,
   WalletAdapter,
   WalletExecutionKind,
 } from "../../core/wallet-actions";
 
-export type {
-  IcrcAccount,
-  IcrcTransferDetails,
-  LiquidiumAccount,
-  LiquidiumAccountInput,
-  SendIcrcTransferRequest,
-};
-
-/** Account type hint for borrow and withdraw outflow destinations. */
-export const OutflowAccountType = SharedLiquidiumAccountType;
-/** Account type hint for borrow and withdraw outflow destinations. */
-export type OutflowAccountType = LiquidiumAccountType;
-
-/** Borrow or withdraw destination input. */
-export type OutflowDestination = LiquidiumAccountInput;
-
 /** Wallet execution dependencies for borrow and withdraw convenience methods. */
 export interface WalletExecutionParams {
   /** Chain used by the signing wallet. */
-  signerChain: Chain;
+  signerChain: SigningChain;
   /** Wallet adapter used to execute the prepared action. */
   signerWalletAdapter: WalletAdapter;
 }
@@ -70,47 +45,6 @@ export interface CreateTransferErc20TransactionParams {
 }
 
 /**
- * Destination account for a completed outflow.
- *
- * @example
- * ```ts
- * const icPrincipalReceiver: OutflowReceiver = {
- *   type: "IcPrincipal",
- *   principal: "aaaaa-aa",
- * };
- *
- * const chainAddressReceiver: OutflowReceiver = {
- *   type: "ChainAddress",
- *   address: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",
- * };
- *
- * const icpAccountIdentifierReceiver: OutflowReceiver = {
- *   type: "IcpAccountIdentifier",
- *   accountIdentifier: "e2134f3f176b1429df3f92807b8f0f26a520debc313b2d6ad86a4a2e7f3d8f8d",
- * };
- *
- * const icrcAccountReceiver: OutflowReceiver = {
- *   type: "IcrcAccount",
- *   owner: "aaaaa-aa",
- *   address: "aaaaa-aa",
- * };
- * ```
- */
-export type OutflowReceiver = LiquidiumAccount;
-
-/** Chain-native destination for a completed outflow, such as a BTC or EVM address. */
-export type ChainAddressOutflowReceiver = ChainAddressAccount;
-
-/** IC principal destination for a completed outflow. */
-export type IcPrincipalOutflowReceiver = IcPrincipalAccount;
-
-/** Legacy ICP ledger account identifier destination for a completed outflow. */
-export type IcpAccountIdentifierOutflowReceiver = IcpAccountIdentifierAccount;
-
-/** ICRC account destination for a completed outflow. */
-export type IcrcAccountOutflowReceiver = IcrcAccount;
-
-/**
  * Receipt for a borrow or withdrawal outflow submitted to the lending canister.
  *
  * `id` is the outflow reference to show users immediately. `txid` may be unset until
@@ -128,7 +62,7 @@ export interface OutflowDetails {
   /** Outflow amount in the pool asset's base units. */
   amount: bigint;
   /** Outflow destination account. */
-  receiver: OutflowReceiver;
+  receiver: LiquidiumAccount;
 }
 
 /** Borrow receipt. */
@@ -145,12 +79,6 @@ export type WithdrawOutflowDetails = OutflowDetails & {
   status: LiquidiumStatus;
 };
 
-/** Signature payload for submitting a prepared borrow action. */
-export interface BorrowSubmitSignatureInfo extends SignatureInfo {}
-
-/** Signature payload for submitting a prepared withdraw action. */
-export interface WithdrawSubmitSignatureInfo extends SignatureInfo {}
-
 /**
  * Fields to build a borrow request. `amount` is in the borrow pool asset's base units
  * (e.g. satoshis, token smallest units).
@@ -165,7 +93,7 @@ export interface CreateBorrowRequest {
   /** Chain where borrowed funds should arrive. */
   chain: Chain;
   /** Destination that receives the borrowed asset. */
-  receiver: OutflowDestination;
+  receiver: LiquidiumAccountInput;
   /** Wallet address that signs the borrow authorization. */
   signerWalletAddress: string;
 }
@@ -201,7 +129,7 @@ export interface CreateWithdrawRequest {
   /** Chain where withdrawn funds should arrive. */
   chain: Chain;
   /** Destination that receives the withdrawn asset. */
-  receiver: OutflowDestination;
+  receiver: LiquidiumAccountInput;
   /** Wallet address that signs the withdraw authorization. */
   signerWalletAddress: string;
 }
@@ -232,67 +160,17 @@ export const SupplyPlanType = {
 export type SupplyPlanType =
   (typeof SupplyPlanType)[keyof typeof SupplyPlanType];
 
-/** Chain address target for manual or wallet-executed transfers. */
-export interface ChainAddressSupplyTarget {
-  /** Target discriminator. */
-  type: "ChainAddress";
-  /** Pool principal text receiving the inflow. */
-  poolId: string;
-  /** Asset expected by the target. */
-  asset: MarketAsset;
-  /** Chain where the target address is valid. */
-  chain: MarketChain;
-  /** Deposit or repayment action for the inflow. */
-  action: SupplyAction;
-  /** External-chain address where funds should be sent. */
-  address: string;
-}
-
-/** ICRC account target for ck-asset or contract-interaction inflows. */
-export interface IcrcAccountSupplyTarget {
-  /** Target discriminator. */
-  type: "IcrcAccount";
-  /** Pool principal text receiving the inflow. */
-  poolId: string;
-  /** Asset expected by the target. */
-  asset: MarketAsset;
-  /** Chain associated with the inflow. */
-  chain: MarketChain;
-  /** Deposit or repayment action for the inflow. */
-  action: SupplyAction;
-  /** ICRC account receiving the transfer. */
-  account: IcrcAccount;
-}
-
-/** ICP ledger target with both ICRC account and account identifier formats. */
-export interface IcpLedgerAccount {
-  /** ICRC ledger account. */
-  icpIcrcAccount: IcrcAccount;
-  /** ICP ledger account identifier text. */
-  icpAccountIdentifier: string;
-}
-
-/** ICP ledger account target for manual or wallet-executed transfers. */
-export interface IcpLedgerAccountSupplyTarget {
-  /** Target discriminator. */
-  type: "IcpLedgerAccount";
-  /** Pool principal text receiving the inflow. */
-  poolId: string;
-  /** ICP asset discriminator. */
-  asset: typeof Asset.ICP;
-  /** ICP chain discriminator. */
-  chain: typeof Chain.ICP;
-  /** Deposit or repayment action for the inflow. */
-  action: SupplyAction;
-  /** ICP ledger account formats for the same target. */
-  account: IcpLedgerAccount;
-}
-
 /** Supply destination returned by `lending.supply(...)`. */
-export type SupplyTarget =
-  | ChainAddressSupplyTarget
-  | IcrcAccountSupplyTarget
-  | IcpLedgerAccountSupplyTarget;
+export type SupplyTarget = AssetIdentifier & {
+  /** Pool principal text receiving the inflow. */
+  poolId: string;
+  /** Deposit or repayment action for the inflow. */
+  action: SupplyAction;
+  /** Address to use for this chain and asset pair. */
+  address: string;
+  /** Legacy account identifier for ICP ledger transfers. */
+  icpAccountIdentifier?: string;
+};
 
 interface BaseSupplyFlowRequest {
   profileId: string;
@@ -306,6 +184,12 @@ interface BaseSupplyFlowRequest {
 export interface ManualTransferSupplyFlowRequest extends BaseSupplyFlowRequest {
   /** Transfer supply uses the default mechanism and does not accept this field. */
   mechanism?: never;
+  /** Manual supply does not broadcast through a wallet adapter. */
+  walletAdapter?: never;
+  /** Manual supply does not accept a sender account. */
+  account?: never;
+  /** Manual supply does not accept an execution amount. */
+  amount?: never;
 }
 
 /** Wallet-executed transfer-based `lending.supply` request. */
@@ -333,6 +217,8 @@ export interface ContractInteractionSupplyFlowRequest
   extends BaseSupplyFlowRequest {
   /** Contract-interaction mechanism discriminator. */
   mechanism: typeof SupplyPlanType.contractInteraction;
+  /** Contract interaction is only supported for ETH stablecoin pools. */
+  chain: typeof Chain.ETH;
   /** ETH wallet adapter used to approve and deposit ERC-20 assets. */
   walletAdapter: Pick<WalletAdapter, "sendEthTransaction">;
   /** Sender EVM wallet address. */
@@ -386,7 +272,7 @@ export interface SubmitSupplyFlowInflowRequest {
   /** Broadcast transaction id or hash. */
   txid: string;
   /** Chain where the transaction was broadcast, when not implied by the flow. */
-  chain?: Chain;
+  chain?: Extract<Chain, "BTC" | "ETH">;
 }
 
 /** Body for direct `lending.submitInflow`. */
@@ -401,13 +287,8 @@ export interface SubmitInflowResponse {
   txid: string;
 }
 
-/** Request for estimating the fee needed for an inflow target. */
-export interface EstimateInflowFeeRequest {
-  /** Asset to estimate for. */
-  asset: Asset;
-  /** Transfer chain to estimate for. Use ICP for ck-ledger asset transfers. */
-  chain: Chain;
-}
+/** Chain and asset pair for estimating an inflow target fee. */
+export type EstimateInflowFeeRequest = AssetIdentifier;
 
 /** Request for an ETH stablecoin deposit address. */
 export interface GetDepositAddressRequest {
@@ -416,7 +297,7 @@ export interface GetDepositAddressRequest {
   /** Pool principal text receiving the inflow. */
   poolId: string;
   /** ETH stablecoin asset. */
-  asset: string;
+  asset: typeof Asset.USDC | typeof Asset.USDT;
   /** Deposit or repayment action for the inflow. */
   action: SupplyAction;
 }

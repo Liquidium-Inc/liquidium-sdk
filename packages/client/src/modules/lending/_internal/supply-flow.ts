@@ -1,3 +1,4 @@
+import { decodeIcrcAccountAddress } from "../../../core/accounts";
 import {
   type EvmAddress,
   normalizeAndValidateEvmAddress,
@@ -49,8 +50,9 @@ import {
 } from "../types";
 import {
   getEthStablecoinContractAddress,
+  getPoolById,
   isEthStablecoin,
-  resolveSupplyTarget,
+  resolveSupplyTargetForPool,
 } from "./supply-targets";
 
 const SUBMIT_INFLOW_MAX_ATTEMPTS = 4;
@@ -61,25 +63,11 @@ const ETH_APPROVAL_MAX_POLLS = 30;
 type SubmitInflowDefaults = Omit<SubmitInflowRequest, "txid">;
 type AllowanceExpectation = "zero" | "sufficient";
 
-interface PoolAssetAndChain {
-  asset: string;
-  chain: string;
-}
-
 interface SupplyFlowExecutorParams {
   canisterContext: CanisterContext;
   evmReadClient: EvmReadClient | undefined;
-  getPoolById(poolId: string): Promise<PoolAssetAndChain>;
   requireApi(): void;
   submitInflow(request: SubmitInflowRequest): Promise<SubmitInflowResponse>;
-}
-
-interface SupplyInstruction {
-  poolId: string;
-  asset: string;
-  chain: string;
-  action: SupplyAction;
-  target: SupplyTarget;
 }
 
 interface GetEvmSupplyContextForPoolParams {
@@ -90,12 +78,12 @@ interface GetEvmSupplyContextForPoolParams {
 
 interface SendAndSubmitTransferSupplyInflowParams {
   request: WalletTransferSupplyFlowRequest;
-  instruction: SupplyInstruction;
+  target: SupplyTarget;
   defaultSubmitInflowRequest: SubmitInflowDefaults | null;
 }
 
 interface SubmitSupplyFlowInflowParams {
-  instruction: SupplyInstruction;
+  target: SupplyTarget;
   mechanism: SupplyPlanType;
   defaultSubmitInflowRequest: SubmitInflowDefaults | null;
   submitRequest: SubmitSupplyFlowInflowRequest;
@@ -103,7 +91,7 @@ interface SubmitSupplyFlowInflowParams {
 
 interface ExecuteContractSupplyParams {
   request: ContractInteractionSupplyFlowRequest;
-  instruction: SupplyInstruction;
+  target: SupplyTarget;
   defaultSubmitInflowRequest: SubmitInflowDefaults | null;
 }
 
@@ -122,8 +110,8 @@ interface SendChainAddressSupplyTransactionParams {
 
 interface SendIcrcSupplyTransactionParams {
   walletAdapter: Pick<WalletAdapter, "sendIcrcTransfer">;
-  asset: string;
-  chain: string;
+  asset: Asset;
+  chain: typeof Chain.ICP;
   transfer: IcrcTransferDetails;
   senderAccount: string;
   action: SupplyAction;
@@ -161,7 +149,7 @@ interface DefaultSubmitInflowRequestParams {
 }
 
 interface ShouldSubmitInflowParams {
-  instruction: SupplyInstruction;
+  target: SupplyTarget;
   mechanism: SupplyPlanType;
 }
 
@@ -170,20 +158,32 @@ export class SupplyFlowExecutor {
 
   async create(request: SupplyFlowRequest): Promise<SupplyFlow> {
     const requestedMechanism = request.mechanism ?? null;
-    const target = await resolveSupplyTarget(this.params.canisterContext, {
-      profileId: request.profileId,
-      poolId: request.poolId,
-      action: request.action,
-      mechanism: requestedMechanism,
-      chain: request.chain,
-    });
-    const instruction: SupplyInstruction = {
-      poolId: request.poolId,
-      asset: target.asset,
-      chain: target.chain,
-      action: request.action,
-      target,
-    };
+    if (
+      requestedMechanism === null &&
+      request.walletAdapter === undefined &&
+      (request.account !== undefined || request.amount !== undefined)
+    ) {
+      throw new LiquidiumError(
+        LiquidiumErrorCode.VALIDATION_ERROR,
+        "Wallet-executed supply requires walletAdapter, account, and amount"
+      );
+    }
+
+    const selectedPool = await getPoolById(
+      this.params.canisterContext,
+      request.poolId
+    );
+    const target = await resolveSupplyTargetForPool(
+      this.params.canisterContext,
+      {
+        profileId: request.profileId,
+        poolId: request.poolId,
+        action: request.action,
+        mechanism: requestedMechanism,
+        chain: request.chain,
+      },
+      selectedPool
+    );
     const mechanism =
       requestedMechanism === PlanType.contractInteraction
         ? PlanType.contractInteraction
@@ -191,9 +191,7 @@ export class SupplyFlowExecutor {
     const defaultSubmitInflowRequest = getDefaultSubmitInflowRequest({
       action: request.action,
       chain:
-        mechanism === PlanType.contractInteraction
-          ? Chain.ETH
-          : instruction.chain,
+        mechanism === PlanType.contractInteraction ? Chain.ETH : target.chain,
     });
 
     let txid: string | undefined;
@@ -202,7 +200,7 @@ export class SupplyFlowExecutor {
         if (isWalletTransferSupplyRequest(request)) {
           txid = await this.sendAndSubmitTransferSupplyInflow({
             request,
-            instruction,
+            target,
             defaultSubmitInflowRequest,
           });
         }
@@ -217,7 +215,7 @@ export class SupplyFlowExecutor {
 
         txid = await this.executeContractSupply({
           request,
-          instruction,
+          target,
           defaultSubmitInflowRequest,
         });
         break;
@@ -225,7 +223,7 @@ export class SupplyFlowExecutor {
 
     return {
       type: mechanism,
-      target: instruction.target,
+      target,
       txid,
       status: createLiquidiumStatus({
         operation: mapSupplyActionToStatusOperation(request.action),
@@ -233,7 +231,7 @@ export class SupplyFlowExecutor {
       }),
       submit: async (submitRequest) => {
         return await this.submitSupplyFlowInflow({
-          instruction,
+          target,
           mechanism,
           defaultSubmitInflowRequest,
           submitRequest,
@@ -245,7 +243,10 @@ export class SupplyFlowExecutor {
   async getEvmSupplyContext(
     request: GetEvmSupplyContextRequest
   ): Promise<EvmSupplyContext> {
-    const selectedPool = await this.params.getPoolById(request.poolId);
+    const selectedPool = await getPoolById(
+      this.params.canisterContext,
+      request.poolId
+    );
 
     return await this.getEvmSupplyContextForPool({
       request,
@@ -321,7 +322,7 @@ export class SupplyFlowExecutor {
   private async sendAndSubmitTransferSupplyInflow(
     params: SendAndSubmitTransferSupplyInflowParams
   ): Promise<string> {
-    const { request, instruction, defaultSubmitInflowRequest } = params;
+    const { request, target, defaultSubmitInflowRequest } = params;
 
     if (!request.walletAdapter) {
       throw new LiquidiumError(
@@ -346,33 +347,31 @@ export class SupplyFlowExecutor {
     }
 
     const txid =
-      instruction.target.type === "ChainAddress"
-        ? await this.sendChainAddressSupplyTransaction({
+      target.chain === Chain.ICP
+        ? await this.sendIcrcSupplyTransaction({
             walletAdapter: request.walletAdapter,
-            chain: instruction.chain,
-            toAddress: instruction.target.address,
-            amount: request.amount,
-            senderAccount: account,
-            asset: instruction.asset,
-            action: request.action,
-          })
-        : await this.sendIcrcSupplyTransaction({
-            walletAdapter: request.walletAdapter,
-            asset: instruction.asset,
-            chain: instruction.chain,
+            asset: target.asset,
+            chain: target.chain,
             transfer: {
-              ledgerCanisterId: getPoolLedgerAssetRoute({
-                asset: instruction.asset,
-                chain: instruction.chain,
-              }).ledgerCanisterId,
-              to: getIcrcSupplyTargetAccount(instruction.target),
+              ledgerCanisterId:
+                getPoolLedgerAssetRoute(target).ledgerCanisterId,
+              to: decodeIcrcAccountAddress(target.address).account,
               amount: request.amount,
             },
             senderAccount: account,
             action: request.action,
+          })
+        : await this.sendChainAddressSupplyTransaction({
+            walletAdapter: request.walletAdapter,
+            chain: target.chain,
+            toAddress: target.address,
+            amount: request.amount,
+            senderAccount: account,
+            asset: target.asset,
+            action: request.action,
           });
 
-    if (shouldSubmitInflow({ instruction, mechanism: PlanType.transfer })) {
+    if (shouldSubmitInflow({ target, mechanism: PlanType.transfer })) {
       try {
         await this.submitInflowWithRetry(txid, defaultSubmitInflowRequest);
       } catch {
@@ -410,15 +409,12 @@ export class SupplyFlowExecutor {
   private async executeContractSupply(
     params: ExecuteContractSupplyParams
   ): Promise<string> {
-    const { request, instruction, defaultSubmitInflowRequest } = params;
+    const { request, target, defaultSubmitInflowRequest } = params;
 
-    if (
-      instruction.target.type !== "IcrcAccount" ||
-      instruction.chain !== Chain.ETH
-    ) {
+    if (!isEthStablecoin(target.asset, target.chain)) {
       throw new LiquidiumError(
         LiquidiumErrorCode.VALIDATION_ERROR,
-        "Contract-interaction supply is only supported for ETH ICRC-account targets"
+        "Contract-interaction supply is only supported for ETH stablecoin targets"
       );
     }
 
@@ -462,8 +458,8 @@ export class SupplyFlowExecutor {
         amount: request.amount,
         action: request.action,
       },
-      asset: instruction.asset,
-      chain: instruction.chain,
+      asset: target.asset,
+      chain: target.chain,
     });
     const supplyAmount = BigInt(evmSupplyContext.amount);
 
@@ -527,7 +523,7 @@ export class SupplyFlowExecutor {
         amount: supplyAmount,
         poolId: request.poolId,
         profileId: request.profileId,
-        destinationAccount: instruction.target.account.address,
+        destinationAccount: target.address,
         action: request.action,
       }),
       `supply-${request.action}-deposit-erc20`
@@ -618,7 +614,7 @@ export class SupplyFlowExecutor {
     });
 
     return await params.walletAdapter.sendIcrcTransfer({
-      chain: route.chain,
+      chain: Chain.ICP,
       asset: route.asset,
       transfer: {
         ...params.transfer,
@@ -805,26 +801,13 @@ function getDefaultSubmitInflowRequest(
   };
 }
 
-function getIcrcSupplyTargetAccount(
-  target: SupplyTarget
-): IcrcTransferDetails["to"] {
-  switch (target.type) {
-    case "IcrcAccount":
-      return target.account;
-    case "IcpLedgerAccount":
-      return target.account.icpIcrcAccount;
-    case "ChainAddress":
-      throw new LiquidiumError(
-        LiquidiumErrorCode.VALIDATION_ERROR,
-        "ICRC wallet execution requires an ICRC-compatible supply target"
-      );
-  }
-}
-
 function isWalletTransferSupplyRequest(
   request: SupplyFlowRequest
 ): request is WalletTransferSupplyFlowRequest {
-  return "walletAdapter" in request;
+  return (
+    request.mechanism !== PlanType.contractInteraction &&
+    request.walletAdapter !== undefined
+  );
 }
 
 function isContractInteractionSupplyRequest(
@@ -844,9 +827,9 @@ function shouldSubmitInflow(params: ShouldSubmitInflowParams): boolean {
     return true;
   }
 
-  if (params.instruction.target.type !== "ChainAddress") {
+  if (params.target.chain === Chain.ICP) {
     return false;
   }
 
-  return !isEthStablecoin(params.instruction.asset, params.instruction.chain);
+  return !isEthStablecoin(params.target.asset, params.target.chain);
 }

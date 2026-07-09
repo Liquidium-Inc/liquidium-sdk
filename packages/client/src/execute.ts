@@ -1,5 +1,5 @@
 import { LiquidiumError, LiquidiumErrorCode } from "./core/errors";
-import type { Chain } from "./core/types";
+import type { SigningChain } from "./core/types";
 import {
   type WalletAction,
   type WalletAdapter,
@@ -20,7 +20,7 @@ export interface ExecuteWithOptions {
   /** Must expose the methods required by the action's `executionKind`. */
   walletAdapter: WalletAdapter;
   /** Required for `sign-message` actions; forwarded to the adapter and submit payload. */
-  chain?: Chain;
+  chain?: SigningChain;
   /** Optional signing/sending account override. */
   account?: string;
 }

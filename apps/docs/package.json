@@ -22,5 +22,6 @@
     "@docusaurus/tsconfig": "^3.10.1",
     "@docusaurus/types": "^3.10.1",
     "typescript": "^5.9.3"
-  }
+  },
+  "packageManager": "pnpm@11.5.1"
 }

@@ -2,22 +2,18 @@ import { Principal } from "@icp-sdk/core/principal";
 import {
   type CanisterLiquidiumAccount,
   decodeIcrcAccountAddress,
+  type LiquidiumAccountInput,
+  type LiquidiumAccountType,
   mapCanisterAccountToLiquidiumAccount,
   normalizeIcpAccountIdentifier,
 } from "../../core/accounts";
 import { normalizeExternalAddress } from "../../core/address-validation";
 import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
-import { Chain, OutflowType } from "../../core/types";
+import { Chain, OutflowType, type SigningChain } from "../../core/types";
 import { getVariantKey } from "../../core/utils/variant";
-import type {
-  OutflowAccountType,
-  OutflowDestination,
-  OutflowDetails,
-} from "./types";
+import type { OutflowDetails } from "./types";
 
 type MessageAccountType = "AccountIdentifier" | "External" | "Icrc" | "Native";
-
-export type WalletChain = Chain;
 
 export interface LendingBtcChainVariant {
   BTC: null;
@@ -27,21 +23,14 @@ export interface LendingEthChainVariant {
   ETH: null;
 }
 
-export interface LendingIcpChainVariant {
-  ICP: null;
-}
-
 export type LendingChainVariant =
   | LendingBtcChainVariant
-  | LendingEthChainVariant
-  | LendingIcpChainVariant;
-
-export type CanisterOutflowReceiver = CanisterLiquidiumAccount;
+  | LendingEthChainVariant;
 
 export interface ParsedOutflowDestination {
   address: string;
-  accountType: OutflowAccountType;
-  canisterAccount: CanisterOutflowReceiver;
+  accountType: LiquidiumAccountType;
+  canisterAccount: CanisterLiquidiumAccount;
   messageAccount: {
     type: MessageAccountType;
     data: string;
@@ -49,7 +38,7 @@ export interface ParsedOutflowDestination {
 }
 
 export interface ParseOutflowDestinationParams {
-  destination: OutflowDestination;
+  destination: LiquidiumAccountInput;
   asset: string;
   poolChain: string;
   destinationChain: string;
@@ -57,7 +46,7 @@ export interface ParseOutflowDestinationParams {
 
 interface NormalizedOutflowDestinationInput {
   address: string;
-  type: OutflowAccountType | null;
+  type: LiquidiumAccountType | null;
 }
 
 export interface CanisterOutflowRecord {
@@ -66,7 +55,7 @@ export interface CanisterOutflowRecord {
   outflow_type: Record<string, null>;
   outflow_ref: [] | [string];
   amount: bigint;
-  receiver: CanisterOutflowReceiver;
+  receiver: CanisterLiquidiumAccount;
 }
 
 export function mapCanisterOutflowDetails(
@@ -85,7 +74,7 @@ export function mapCanisterOutflowDetails(
 }
 
 export function mapCanisterAccountType(
-  receiver: CanisterOutflowReceiver
+  receiver: CanisterLiquidiumAccount
 ): OutflowDetails["receiver"] {
   return mapCanisterAccountToLiquidiumAccount(receiver);
 }
@@ -141,20 +130,23 @@ export function normalizeOutflowType(
 }
 
 export function mapWalletChainToLendingChain(
-  chain: WalletChain
+  chain: SigningChain
 ): LendingChainVariant {
   switch (chain) {
     case Chain.BTC:
       return { BTC: null };
     case Chain.ETH:
       return { ETH: null };
-    case Chain.ICP:
-      return { ICP: null };
   }
+
+  throw new LiquidiumError(
+    LiquidiumErrorCode.VALIDATION_ERROR,
+    `Message signing is not supported for ${String(chain)}`
+  );
 }
 
 function normalizeOutflowDestinationInput(
-  destination: OutflowDestination
+  destination: LiquidiumAccountInput
 ): NormalizedOutflowDestinationInput {
   if (typeof destination === "string") {
     return { address: destination, type: null };
@@ -265,7 +257,7 @@ function parseAccountIdentifierDestination(
 }
 
 function assertDestinationTypeSupportedByChain(params: {
-  accountType: OutflowAccountType;
+  accountType: LiquidiumAccountType;
   poolChain: string;
   destinationChain: string;
 }): void {

@@ -52,6 +52,17 @@ export function selectBorrowPoolByAsset(
   return pool;
 }
 
+export function selectEthStablecoinPoolByAsset(
+  pools: Pool[],
+  asset: EthStablecoinBorrowAsset
+): Pool {
+  return selectPool({
+    pools,
+    asset,
+    chain: Chain.ETH,
+  });
+}
+
 export function listAvailableBorrowPools(pools: Pool[]): Pool[] {
   return ETH_STABLECOIN_BORROW_ASSETS.map((asset) =>
     findBorrowPoolByAsset(pools, asset)

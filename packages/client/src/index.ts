@@ -28,21 +28,20 @@ export type {
   LiquidiumStatus,
 } from "./core/status";
 export type {
+  AssetIdentifier,
   CanisterIdOverrides,
   CanisterIds,
-  CkCanisterIds,
-  CkLedgerFamilyCanisterIds,
   EvmReadClient,
   LiquidiumClientConfig,
-  MarketAsset,
-  MarketChain,
   PoolCanisterIds,
+  SigningChain,
   Wallet,
 } from "./core/types";
 export {
   Asset,
   Chain,
   Environment,
+  isAssetIdentifier,
   OutflowType,
   SupplyAction,
 } from "./core/types";
@@ -52,6 +51,7 @@ export type {
   SendBtcTransactionRequest,
   SendEthTransactionRequest,
   SendIcrcTransferRequest,
+  SignatureInfo,
   SignMessageRequest,
   SignMessageWalletAction,
   WalletAction,
@@ -74,8 +74,6 @@ export type {
   CreateAccountRequest,
   CreateProfileParams,
   PrepareCreateProfileOptions,
-  SignableAction,
-  SignatureInfo,
 } from "./modules/accounts";
 export { AccountsModule } from "./modules/accounts";
 export type {
@@ -99,11 +97,7 @@ export type {
   OutflowActivityOperation,
   OutflowActivityStatus,
 } from "./modules/activities";
-export {
-  ActivitiesModule,
-  ActivityAssetKind,
-  ActivityFilter,
-} from "./modules/activities";
+export { ActivitiesModule, ActivityFilter } from "./modules/activities";
 export type {
   PaginatedResponse,
   UserHistoryEntry,
@@ -132,7 +126,6 @@ export type {
   InstantLoanCollateral,
   InstantLoanConfig,
   InstantLoanCreatedEventType,
-  InstantLoanDeliveryChainOptions,
   InstantLoanDepositTimerExceededEventType,
   InstantLoanDepositTimerStartedEventType,
   InstantLoanDestination,
@@ -145,12 +138,10 @@ export type {
   InstantLoanGetByIdRequest,
   InstantLoanGetByRefRequest,
   InstantLoanGetRequest,
-  InstantLoanInflowTargetQuotes,
   InstantLoanInitialDeposit,
   InstantLoanInitialDepositTargetQuote,
   InstantLoanLeg,
   InstantLoanListEventsRequest,
-  InstantLoanOutflowChainOptions,
   InstantLoanPositionSummary,
   InstantLoanProfileWarmedEventType,
   InstantLoanRepayCompleteEventType,
@@ -161,6 +152,7 @@ export type {
   InstantLoanWarmedProfile,
 } from "./modules/instant-loans";
 export {
+  InstantLoanCreatedError,
   InstantLoansModule,
   intFromPublicId,
   publicIdFromInt,
@@ -168,9 +160,6 @@ export {
 export type {
   BorrowAction,
   BorrowOutflowDetails,
-  BorrowSubmitSignatureInfo,
-  ChainAddressOutflowReceiver,
-  ChainAddressSupplyTarget,
   ContractInteractionSupplyFlowRequest,
   CreateBorrowData,
   CreateBorrowRequest,
@@ -182,18 +171,10 @@ export type {
   EvmSupplyContext,
   GetDepositAddressRequest,
   GetEvmSupplyContextRequest,
-  IcPrincipalOutflowReceiver,
-  IcpAccountIdentifierOutflowReceiver,
-  IcpLedgerAccount,
-  IcpLedgerAccountSupplyTarget,
-  IcrcAccountOutflowReceiver,
-  IcrcAccountSupplyTarget,
   InflowFeeEstimate,
   InflowOperation,
   ManualTransferSupplyFlowRequest,
-  OutflowDestination,
   OutflowDetails,
-  OutflowReceiver,
   SubmitInflowRequest,
   SubmitInflowResponse,
   SubmitSupplyFlowInflowRequest,
@@ -205,13 +186,11 @@ export type {
   WalletTransferSupplyFlowRequest,
   WithdrawAction,
   WithdrawOutflowDetails,
-  WithdrawSubmitSignatureInfo,
 } from "./modules/lending";
 export {
   createTransferErc20Transaction,
   EvmSupplyApprovalStrategy,
   LendingModule,
-  OutflowAccountType,
   SupplyPlanType,
 } from "./modules/lending";
 export type {

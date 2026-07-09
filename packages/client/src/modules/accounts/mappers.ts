@@ -1,6 +1,6 @@
 import type { RegisterProfileRequest } from "../../core/canisters/lending/actor";
 import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
-import { Chain } from "../../core/types";
+import { Chain, type SigningChain } from "../../core/types";
 import { normalizeWalletSignature } from "../../core/utils/signature";
 import type { CreateAccountRequest } from "./types";
 
@@ -12,14 +12,7 @@ interface AccountEthChainVariant {
   ETH: null;
 }
 
-interface AccountIcpChainVariant {
-  ICP: null;
-}
-
-type AccountChainVariant =
-  | AccountBtcChainVariant
-  | AccountEthChainVariant
-  | AccountIcpChainVariant;
+type AccountChainVariant = AccountBtcChainVariant | AccountEthChainVariant;
 
 export function mapCreateAccountRequestToRegisterProfileRequest(
   request: CreateAccountRequest
@@ -52,14 +45,12 @@ export function mapCreateAccountRequestToRegisterProfileRequest(
 }
 
 function mapAccountChainToLendingChainVariant(
-  chain: Chain
+  chain: SigningChain
 ): AccountChainVariant {
   switch (chain) {
     case Chain.BTC:
       return { BTC: null };
     case Chain.ETH:
       return { ETH: null };
-    case Chain.ICP:
-      return { ICP: null };
   }
 }

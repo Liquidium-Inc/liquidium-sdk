@@ -1,7 +1,7 @@
 import { Actor } from "@icp-sdk/core/agent";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { DEFAULT_API_BASE_URL } from "../../../core/config";
-import { LiquidiumClient } from "../../../index";
+import { LiquidiumClient, LiquidiumErrorCode } from "../../../index";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -46,6 +46,28 @@ describe("LendingModule inflow", () => {
       }
     );
   });
+
+  test("rejects ICP inflow submission before calling the HTTP API", async () => {
+    // given
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    const client = new LiquidiumClient({});
+    const invalidRequest = {
+      txid: "icp-ledger-index",
+      chain: "ICP",
+      operation: "deposit",
+    } as never;
+
+    // when
+    const result = client.lending.submitInflow(invalidRequest);
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message: "Inflow submission is not supported for ICP",
+    });
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
   test("estimates eth usdt inflow fee by rounding up", async () => {
     // given
     const ETH_DEPOSIT_FEE_ESTIMATE = 1_198_098n;

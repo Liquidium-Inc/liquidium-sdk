@@ -608,7 +608,7 @@ Nonce: 17`);
     // then
     expect(outflow.receiver).toEqual({
       type: "IcpAccountIdentifier",
-      accountIdentifier: ACCOUNT_IDENTIFIER,
+      address: ACCOUNT_IDENTIFIER,
     });
   });
 

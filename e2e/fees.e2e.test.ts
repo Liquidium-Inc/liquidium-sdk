@@ -1,45 +1,53 @@
 import { expect, test } from "vitest";
 import { Asset, Chain, LiquidiumClient } from "../packages/client/src";
 import { describeLive } from "./_internal/live";
-import { selectBorrowPool } from "./_internal/pools";
 
 describeLive("live fee estimation e2e", () => {
   test("should estimate L1 inflow fees for BTC and ETH stablecoins", async () => {
     // given
     const client = new LiquidiumClient();
-    const pools = await client.market.listPools();
-    const stablecoinPool = selectBorrowPool(pools);
 
     // when
     const btcFeeEstimate = await client.lending.estimateInflowFee({
       asset: Asset.BTC,
       chain: Chain.BTC,
     });
-    const stablecoinFeeEstimate = await client.lending.estimateInflowFee({
-      asset: stablecoinPool.asset as typeof Asset.USDC | typeof Asset.USDT,
-      chain: Chain.ETH,
-    });
+    const [usdcFeeEstimate, usdtFeeEstimate] = await Promise.all([
+      client.lending.estimateInflowFee({
+        asset: Asset.USDC,
+        chain: Chain.ETH,
+      }),
+      client.lending.estimateInflowFee({
+        asset: Asset.USDT,
+        chain: Chain.ETH,
+      }),
+    ]);
 
     // then
     expect(btcFeeEstimate.totalFee).toBeGreaterThan(0n);
-    expect(stablecoinFeeEstimate.totalFee).toBeGreaterThan(0n);
+    expect(usdcFeeEstimate.totalFee).toBeGreaterThan(0n);
+    expect(usdtFeeEstimate.totalFee).toBeGreaterThan(0n);
   });
 
   test("should estimate ck asset and ICP ledger inflow fees", async () => {
     // given
     const client = new LiquidiumClient();
-    const pools = await client.market.listPools();
-    const stablecoinPool = selectBorrowPool(pools);
 
     // when
     const ckBtcFeeEstimate = await client.lending.estimateInflowFee({
       asset: Asset.BTC,
       chain: Chain.ICP,
     });
-    const ckStablecoinFeeEstimate = await client.lending.estimateInflowFee({
-      asset: stablecoinPool.asset as typeof Asset.USDC | typeof Asset.USDT,
-      chain: Chain.ICP,
-    });
+    const [ckUsdcFeeEstimate, ckUsdtFeeEstimate] = await Promise.all([
+      client.lending.estimateInflowFee({
+        asset: Asset.USDC,
+        chain: Chain.ICP,
+      }),
+      client.lending.estimateInflowFee({
+        asset: Asset.USDT,
+        chain: Chain.ICP,
+      }),
+    ]);
     const icpFeeEstimate = await client.lending.estimateInflowFee({
       asset: Asset.ICP,
       chain: Chain.ICP,
@@ -47,7 +55,8 @@ describeLive("live fee estimation e2e", () => {
 
     // then
     expect(ckBtcFeeEstimate.totalFee).toBeGreaterThan(0n);
-    expect(ckStablecoinFeeEstimate.totalFee).toBeGreaterThan(0n);
+    expect(ckUsdcFeeEstimate.totalFee).toBeGreaterThan(0n);
+    expect(ckUsdtFeeEstimate.totalFee).toBeGreaterThan(0n);
     expect(icpFeeEstimate.totalFee).toBeGreaterThan(0n);
   });
 

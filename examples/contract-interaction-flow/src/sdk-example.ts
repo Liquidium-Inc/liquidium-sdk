@@ -1,7 +1,7 @@
 import type {
   ActivityFilter,
   GetActivityStatusResponse,
-  OutflowDestination,
+  LiquidiumAccountInput,
   OutflowDetails,
   Pool,
   SupplyFlow,
@@ -42,7 +42,7 @@ type BorrowWithWalletParams = {
   poolId: string;
   amount: bigint;
   chain: Chain;
-  receiver: OutflowDestination;
+  receiver: LiquidiumAccountInput;
   signerWalletAddress: string;
   signerWalletAdapter: WalletAdapter;
 };
@@ -52,7 +52,7 @@ type WithdrawWithWalletParams = {
   poolId: string;
   amount: bigint;
   chain: Chain;
-  receiver: OutflowDestination;
+  receiver: LiquidiumAccountInput;
   signerWalletAddress: string;
   signerWalletAdapter: WalletAdapter;
 };

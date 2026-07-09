@@ -1,4 +1,4 @@
-import type { Chain } from "../../core/types";
+import type { SigningChain } from "../../core/types";
 import type {
   SignatureInfo,
   SignMessageWalletAction,
@@ -6,8 +6,6 @@ import type {
   WalletAdapter,
   WalletExecutionKind,
 } from "../../core/wallet-actions";
-
-export type { SignatureInfo } from "../../core/wallet-actions";
 
 /** Options for preparing a profile-creation action. */
 export interface PrepareCreateProfileOptions {
@@ -20,7 +18,7 @@ export interface CreateProfileParams {
   /** Wallet address that will own the new profile. */
   account: string;
   /** Chain used to sign the profile-creation message. */
-  chain: Chain;
+  chain: SigningChain;
   /** Wallet adapter used to sign the profile-creation message. */
   walletAdapter: WalletAdapter;
 }
@@ -31,13 +29,9 @@ export interface CreateAccountData {
   expiryTimestamp: bigint;
 }
 
-/** Sign-message action that can be submitted after wallet signing. */
-export interface SignableAction<TData, TResult>
-  extends SignMessageWalletAction<TData, TResult> {}
-
 /** Prepared action for creating a Liquidium profile. */
 export interface CreateAccountAction
-  extends SignableAction<CreateAccountData, string> {
+  extends SignMessageWalletAction<CreateAccountData, string> {
   /** Protocol action kind. */
   kind: typeof WalletActionKind.createAccount;
   /** Required wallet capability. */

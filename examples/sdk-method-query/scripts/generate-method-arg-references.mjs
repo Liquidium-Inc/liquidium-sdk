@@ -12,6 +12,26 @@ const outputPath = path.join(
   exampleDir,
   "src/generated-method-arg-references.ts"
 );
+const mode = process.argv[2];
+
+if (mode !== "--write" && mode !== "--check") {
+  throw new Error(
+    "Pass --write to update references or --check to verify them."
+  );
+}
+
+const OMITTED_DECLARATIONS = new Set([
+  "AssetPrices",
+  "EthTransactionRequest",
+  "IcrcAccount",
+  "IcrcTransferDetails",
+  "Pool",
+  "SendBtcTransactionRequest",
+  "SendEthTransactionRequest",
+  "SendIcrcTransferRequest",
+  "SignMessageRequest",
+  "WalletAdapter",
+]);
 
 const METHOD_REFERENCE_TARGETS = {
   "accounts.prepareCreateProfile": "accounts.prepareCreateProfile",
@@ -81,8 +101,21 @@ const references = Object.fromEntries(
     return [methodId, createMethodReference(target)];
   })
 );
+const output = formatReferencesModule(references);
 
-fs.writeFileSync(outputPath, formatReferencesModule(references));
+if (mode === "--check") {
+  const currentOutput = fs.existsSync(outputPath)
+    ? fs.readFileSync(outputPath, "utf8")
+    : "";
+
+  if (currentOutput !== output) {
+    throw new Error(
+      "Method argument references are stale. Run pnpm generate:method-references."
+    );
+  }
+} else {
+  fs.writeFileSync(outputPath, output);
+}
 
 function formatReferencesModule(methodReferences) {
   const entries = Object.entries(methodReferences)
@@ -185,16 +218,16 @@ function createSignatureText({
         ? "?"
         : "";
 
-    return `${parameter.getName()}${optionalMarker}: ${checker.typeToString(
-      type,
-      declaration,
-      ts.TypeFormatFlags.NoTruncation
+    return `${parameter.getName()}${optionalMarker}: ${normalizeTypeText(
+      checker.typeToString(type, declaration, ts.TypeFormatFlags.NoTruncation)
     )}`;
   });
-  const returnType = checker.typeToString(
-    signature.getReturnType(),
-    methodDeclaration,
-    ts.TypeFormatFlags.NoTruncation
+  const returnType = normalizeTypeText(
+    checker.typeToString(
+      signature.getReturnType(),
+      methodDeclaration,
+      ts.TypeFormatFlags.NoTruncation
+    )
   );
 
   return `client.${moduleName}.${methodName}(${parameterTexts.join(
@@ -271,7 +304,13 @@ function getTypeDeclaration(nameNode) {
     symbol = checker.getAliasedSymbol(symbol);
   }
 
-  return symbol.declarations?.find(isTypeDeclaration);
+  const declaration = symbol.declarations?.find(isTypeDeclaration);
+
+  if (declaration?.name && OMITTED_DECLARATIONS.has(declaration.name.text)) {
+    return undefined;
+  }
+
+  return declaration;
 }
 
 function isTypeDeclaration(declaration) {
@@ -295,11 +334,30 @@ function createDeclarationKey(declaration) {
 }
 
 function formatDeclaration(declaration) {
+  if (ts.isTypeAliasDeclaration(declaration)) {
+    const type = checker.getTypeFromTypeNode(declaration.type);
+
+    if (
+      type.isUnion() &&
+      type.types.every((member) => member.isStringLiteral())
+    ) {
+      const members = type.types.map((member) => JSON.stringify(member.value));
+      return `type ${declaration.name.text} = ${members.join(" | ")};`;
+    }
+  }
+
   const sourceText = declaration.getText();
-  return sourceText
-    .replace(/^export\s+/, "")
-    .replace(/\nexport\s+/g, "\n")
-    .replace(/\n/g, "\n");
+  return normalizeTypeText(
+    sourceText.replace(/^export\s+/, "").replace(/\nexport\s+/g, "\n")
+  );
+}
+
+function normalizeTypeText(value) {
+  return value
+    .replace(/import\("[^"]+"\)\./g, "")
+    .replace(/typeof Chain\.(BTC|ETH|ICP)/g, '"$1"')
+    .replace(/typeof Asset\.(BTC|ICP|USDC|USDT)/g, '"$1"')
+    .replace(/typeof SupplyPlanType\.(contractInteraction|transfer)/g, '"$1"');
 }
 
 function findClass(sourceFile, className) {

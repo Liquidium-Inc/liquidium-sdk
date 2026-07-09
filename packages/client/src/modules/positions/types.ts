@@ -1,4 +1,4 @@
-import type { MarketAsset } from "../../core/types";
+import type { Asset } from "../../core/types";
 import type { Pool } from "../market/types";
 
 /** Current profile position in one lending pool. */
@@ -6,7 +6,7 @@ export interface Position {
   /** Pool principal text. */
   poolId: string;
   /** Pool asset symbol. */
-  asset: MarketAsset;
+  asset: Asset;
   /** Current supplied amount in base units. */
   deposited: bigint;
   /** Decimal scale for supplied amounts. */

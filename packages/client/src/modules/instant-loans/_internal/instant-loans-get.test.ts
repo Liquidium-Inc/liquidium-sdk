@@ -121,17 +121,17 @@ describe("InstantLoansModule get", () => {
     expect(loan.collateral).toMatchObject({
       poolId: BTC_POOL_ID,
       asset: "BTC",
-      chain: "BTC",
       decimals: 8n,
       amount: 10_000_000n,
     });
+    expect(loan.collateral).not.toHaveProperty("chain");
     expect(loan.borrow).toMatchObject({
       chain: "ICP",
       amount: 2_000_000n,
       decimals: 6n,
       destination: {
         type: "IcPrincipal",
-        principal: PROFILE_ID,
+        address: PROFILE_ID,
       },
     });
     expect(loan.refundDestination).toEqual({
@@ -152,17 +152,15 @@ describe("InstantLoansModule get", () => {
       detectedTimestamp: DEPOSIT_DETECTED_TIMESTAMP_SECONDS,
       expiryTimestamp: EXPIRY_TIMESTAMP_SECONDS,
       targets: {
-        poolChain: {
+        BTC: {
           amount: 10_002_500n,
-          chain: "BTC",
           inflowFeeAmount: 2_500n,
           target: expect.objectContaining({
             address: "bc1qinstantdeposit",
           }),
         },
-        icp: {
+        ICP: {
           amount: 10_000_010n,
-          chain: "ICP",
           inflowFeeAmount: 10n,
         },
       },
@@ -174,21 +172,18 @@ describe("InstantLoansModule get", () => {
       interestBufferSeconds: 86_400n,
       asset: "USDT",
       targets: {
-        poolChain: {
+        ETH: {
           amount: 3_501_054n,
-          chain: "ETH",
           inflowFeeAmount: 1_500_000n,
           inflowFeeEstimateAvailable: true,
           target: expect.objectContaining({
-            type: "ChainAddress",
             asset: "USDT",
             chain: "ETH",
             address: "0x1111111111111111111111111111111111111111",
           }),
         },
-        icp: {
+        ICP: {
           amount: 2_001_064n,
-          chain: "ICP",
           inflowFeeAmount: 10n,
           inflowFeeEstimateAvailable: true,
         },
@@ -328,15 +323,13 @@ describe("InstantLoansModule get", () => {
       interestBufferAmount: 27n,
       asset: "BTC",
       targets: {
-        poolChain: {
+        BTC: {
           amount: 1_003_027n,
-          chain: "BTC",
           inflowFeeAmount: 2_500n,
           inflowFeeEstimateAvailable: true,
         },
-        icp: {
+        ICP: {
           amount: 1_000_537n,
-          chain: "ICP",
           inflowFeeAmount: 10n,
           inflowFeeEstimateAvailable: true,
         },
@@ -347,14 +340,12 @@ describe("InstantLoansModule get", () => {
       collateralAmount: 5_000_000n,
       asset: "USDT",
       targets: {
-        poolChain: {
+        ETH: {
           amount: 6_500_000n,
-          chain: "ETH",
           inflowFeeAmount: 1_500_000n,
         },
-        icp: {
+        ICP: {
           amount: 5_000_010n,
-          chain: "ICP",
           inflowFeeAmount: 10n,
         },
       },
@@ -403,15 +394,14 @@ describe("InstantLoansModule get", () => {
       interestBufferAmount: 0n,
       asset: "USDT",
       targets: {
-        poolChain: {
+        ETH: {
           amount: 0n,
           inflowFeeAmount: 0n,
           inflowFeeEstimateAvailable: false,
-          chain: "ETH",
         },
       },
     });
-    expect(loan.initialDeposit.targets.poolChain.amount).toBe(10_002_500n);
+    expect(loan.initialDeposit.targets.BTC?.amount).toBe(10_002_500n);
     expect(loan.status).toEqual({
       operation: "deposit",
       state: "action_required",
@@ -468,9 +458,8 @@ describe("InstantLoansModule get", () => {
       interestBufferAmount: 0n,
       asset: "USDT",
       targets: {
-        poolChain: {
+        ETH: {
           amount: 0n,
-          chain: "ETH",
           inflowFeeAmount: 0n,
           inflowFeeEstimateAvailable: false,
         },

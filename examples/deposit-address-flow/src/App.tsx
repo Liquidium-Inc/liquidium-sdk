@@ -196,10 +196,7 @@ function SupplyBorrowPage() {
       throw new Error("Enter a txid.");
     }
 
-    if (
-      currentSupplyFlow.target.type === "ChainAddress" &&
-      currentSupplyFlow.target.chain === Chain.ETH
-    ) {
+    if (currentSupplyFlow.target.chain === Chain.ETH) {
       await trackEthSupplyTxid(txid);
       return;
     }
@@ -369,7 +366,14 @@ function SupplyBorrowPage() {
         <select
           id="supply-pool-select"
           value={selectedSupplyPoolId}
-          onChange={(event) => setSelectedSupplyPoolId(event.target.value)}
+          onChange={(event) => {
+            const poolId = event.target.value;
+            const pool = pools.find((candidate) => candidate.id === poolId);
+
+            setSelectedSupplyPoolId(poolId);
+            setSupplyChainSelection(getDefaultChain(pool));
+            setCurrentSupplyFlow(null);
+          }}
         >
           {pools.map((pool) => (
             <option key={pool.id} value={pool.id}>
@@ -440,15 +444,14 @@ function SupplyBorrowPage() {
         <select
           id="borrow-pool-select"
           value={selectedBorrowPoolId}
-          onChange={(event) =>
-            setSelectedBorrowPool({
-              poolId: event.target.value,
-              pools,
-              setSelectedPoolId: setSelectedBorrowPoolId,
-              setChainSelection: setBorrowChainSelection,
-              setDestination: setBorrowDestination,
-            })
-          }
+          onChange={(event) => {
+            const poolId = event.target.value;
+            const pool = pools.find((candidate) => candidate.id === poolId);
+
+            setSelectedBorrowPoolId(poolId);
+            setBorrowChainSelection(getDefaultChain(pool));
+            setBorrowDestination("");
+          }}
         >
           {pools.map((pool) => (
             <option key={pool.id} value={pool.id}>
@@ -461,14 +464,10 @@ function SupplyBorrowPage() {
         <select
           id="borrow-chain-select"
           value={borrowChainSelection}
-          onChange={(event) =>
-            setSelectedOutflowChainSelection({
-              chain: event.target.value as Chain,
-              pool: pools.find((pool) => pool.id === selectedBorrowPoolId),
-              setChainSelection: setBorrowChainSelection,
-              setDestination: setBorrowDestination,
-            })
-          }
+          onChange={(event) => {
+            setBorrowChainSelection(event.target.value as Chain);
+            setBorrowDestination("");
+          }}
         >
           {getChainOptions(
             pools.find((pool) => pool.id === selectedBorrowPoolId)
@@ -702,30 +701,6 @@ function ActivityTrackerPage() {
       </section>
     </main>
   );
-}
-
-function setSelectedBorrowPool(params: {
-  poolId: string;
-  pools: Pool[];
-  setSelectedPoolId(poolId: string): void;
-  setChainSelection(chain: Chain): void;
-  setDestination(destination: string): void;
-}): void {
-  const selectedPool = params.pools.find((pool) => pool.id === params.poolId);
-
-  params.setSelectedPoolId(params.poolId);
-  params.setChainSelection(getDefaultChain(selectedPool));
-  params.setDestination("");
-}
-
-function setSelectedOutflowChainSelection(params: {
-  chain: Chain;
-  pool: Pool | undefined;
-  setChainSelection(chain: Chain): void;
-  setDestination(destination: string): void;
-}): void {
-  params.setChainSelection(params.chain);
-  params.setDestination("");
 }
 
 function getChainOptions(pool: Pool | undefined): Chain[] {

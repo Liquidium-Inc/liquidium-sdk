@@ -1,11 +1,14 @@
 import { Actor } from "@icp-sdk/core/agent";
 import { Principal } from "@icp-sdk/core/principal";
 import { afterEach, describe, expect, test, vi } from "vitest";
+import { encodeIcpAccountIdentifier } from "../../../core/accounts";
 import { DEFAULT_API_BASE_URL } from "../../../core/config";
 import {
   type CreateInstantLoanRequest,
+  InstantLoanCreatedError,
   LiquidiumClient,
   LiquidiumErrorCode,
+  publicIdFromInt,
 } from "../../../index";
 import {
   ACCOUNT_IDENTIFIER,
@@ -31,6 +34,9 @@ const VALID_ICRC_DESTINATION = encodeIcrcAccount({
   owner: Principal.fromText(PROFILE_ID),
   subaccount: ICRC_SUBACCOUNT,
 });
+const VALID_ACCOUNT_IDENTIFIER = encodeIcpAccountIdentifier({
+  owner: Principal.fromText(PROFILE_ID),
+});
 const DEFAULT_COLLATERAL_AMOUNT_BASE_UNITS = 10_000_000n;
 const DEFAULT_BORROW_AMOUNT_BASE_UNITS = 5_726_000_000n;
 const DEFAULT_ICP_AMOUNT_E8S = 1_000_000n;
@@ -47,9 +53,22 @@ interface InstantLoanDestinationValidationCase {
 type CreateInstantLoanRequestOverrides = Partial<
   Omit<CreateInstantLoanRequest, "borrow" | "collateral" | "refund">
 > & {
-  borrow?: Partial<CreateInstantLoanRequest["borrow"]>;
-  collateral?: Partial<CreateInstantLoanRequest["collateral"]>;
-  refund?: Partial<CreateInstantLoanRequest["refund"]>;
+  borrow?: {
+    poolId?: string;
+    asset?: string;
+    amount?: bigint;
+    chain?: string;
+    destination?: CreateInstantLoanRequest["borrow"]["destination"];
+  };
+  collateral?: {
+    poolId?: string;
+    asset?: string;
+    amount?: bigint;
+  };
+  refund?: {
+    chain?: string;
+    destination?: CreateInstantLoanRequest["refund"]["destination"];
+  };
 };
 
 afterEach(() => {
@@ -173,15 +192,13 @@ describe("InstantLoansModule create", () => {
       interestBufferAmount: 0n,
       asset: "USDT",
       targets: {
-        poolChain: {
+        ETH: {
           amount: 0n,
-          chain: "ETH",
           inflowFeeAmount: 0n,
           inflowFeeEstimateAvailable: false,
         },
-        icp: {
+        ICP: {
           amount: 0n,
-          chain: "ICP",
           inflowFeeAmount: 0n,
           inflowFeeEstimateAvailable: false,
         },
@@ -202,20 +219,17 @@ describe("InstantLoansModule create", () => {
       detectedTimestamp: null,
       expiryTimestamp: EXPIRY_TIMESTAMP_SECONDS,
       targets: {
-        poolChain: {
+        BTC: {
           amount: EXPECTED_INITIAL_DEPOSIT_AMOUNT_SATS,
-          chain: "BTC",
           inflowFeeAmount: 2_500n,
           target: expect.objectContaining({
             address: "bc1qinstantdeposit",
           }),
         },
-        icp: {
+        ICP: {
           amount: 10_000_000n + CKBTC_LEDGER_FEE_SATS,
-          chain: "ICP",
           inflowFeeAmount: CKBTC_LEDGER_FEE_SATS,
           target: expect.objectContaining({
-            type: "IcrcAccount",
             asset: "BTC",
             chain: "ICP",
           }),
@@ -224,7 +238,7 @@ describe("InstantLoansModule create", () => {
     });
   });
 
-  test("creates a loan with an ICP borrow destination and ck initial deposit target", async () => {
+  test("creates a ckUSDT loan with a principal destination", async () => {
     // given
     const CKBTC_LEDGER_FEE_SATS = 10n;
     const fetchSpy = vi
@@ -262,9 +276,6 @@ describe("InstantLoansModule create", () => {
       getLoan: vi.fn().mockResolvedValue({
         Ok: createInstantLoan({
           borrow_destination: { Native: Principal.fromText(PROFILE_ID) },
-          borrow_amount: 1_000_000n,
-          borrow_pool_id: Principal.fromText(ICP_POOL_ID),
-          borrow_asset: { ICP: null },
         }),
       }),
       btcMinterDepositFee: 2_000n,
@@ -282,9 +293,9 @@ describe("InstantLoansModule create", () => {
         amount: 10_000_000n,
       },
       borrow: {
-        poolId: ICP_POOL_ID,
-        asset: "ICP",
-        amount: 1_000_000n,
+        poolId: USDT_POOL_ID,
+        asset: "USDT",
+        amount: DEFAULT_BORROW_AMOUNT_BASE_UNITS,
         chain: "ICP",
         destination: PROFILE_ID,
       },
@@ -304,11 +315,11 @@ describe("InstantLoansModule create", () => {
       expect.objectContaining({
         body: JSON.stringify({
           collateralPoolId: BTC_POOL_ID,
-          borrowPoolId: ICP_POOL_ID,
+          borrowPoolId: USDT_POOL_ID,
           collateralAsset: "BTC",
-          borrowAsset: "ICP",
+          borrowAsset: "USDT",
           collateralAmount: "10000000",
-          borrowAmount: "1000000",
+          borrowAmount: DEFAULT_BORROW_AMOUNT_BASE_UNITS.toString(),
           ltvMaxBps: "6000",
           depositWindowSeconds: "3600",
           borrowDestination: { Native: PROFILE_ID },
@@ -318,25 +329,196 @@ describe("InstantLoansModule create", () => {
       })
     );
     expect(loan.borrow).toMatchObject({
-      asset: "ICP",
+      asset: "USDT",
       destination: {
         type: "IcPrincipal",
-        principal: PROFILE_ID,
+        address: PROFILE_ID,
       },
     });
     expect(loan.initialDeposit).toMatchObject({
       targets: {
-        icp: {
+        ICP: {
           amount: EXPECTED_INITIAL_DEPOSIT_AMOUNT_SATS,
           inflowFeeAmount: CKBTC_LEDGER_FEE_SATS,
           target: expect.objectContaining({
-            type: "IcrcAccount",
             asset: "BTC",
             chain: "ICP",
           }),
         },
       },
     });
+  });
+
+  test.each([
+    {
+      name: "principal",
+      destination: PROFILE_ID,
+      wireDestination: { Native: PROFILE_ID },
+      canisterDestination: { Native: Principal.fromText(PROFILE_ID) },
+    },
+    {
+      name: "account identifier",
+      destination: {
+        type: "IcpAccountIdentifier" as const,
+        address: VALID_ACCOUNT_IDENTIFIER,
+      },
+      wireDestination: { AccountIdentifier: VALID_ACCOUNT_IDENTIFIER },
+      canisterDestination: { AccountIdentifier: VALID_ACCOUNT_IDENTIFIER },
+    },
+    {
+      name: "ICRC account",
+      destination: {
+        type: "IcrcAccount" as const,
+        address: VALID_ICRC_DESTINATION,
+      },
+      wireDestination: { Icrc: VALID_ICRC_DESTINATION },
+      canisterDestination: {
+        Icrc: {
+          owner: Principal.fromText(PROFILE_ID),
+          subaccount: [ICRC_SUBACCOUNT],
+        },
+      },
+    },
+  ])("creates a native ICP loan with a $name destination", async ({
+    destination,
+    wireDestination,
+    canisterDestination,
+  }) => {
+    // given
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation(async (input, init) => {
+        if (init?.method === "POST") {
+          return new Response(
+            JSON.stringify({
+              success: true,
+              loan: {
+                loanId: LOAN_ID.toString(),
+                collateral: { amountHint: "10000000" },
+              },
+            }),
+            { status: 200, headers: { "content-type": "application/json" } }
+          );
+        }
+
+        if (input.toString().includes("/activities?")) {
+          return new Response(JSON.stringify({ activities: [] }), {
+            status: 200,
+            headers: { "content-type": "application/json" },
+          });
+        }
+
+        return new Response(JSON.stringify({ error: "not found" }), {
+          status: 404,
+          headers: { "content-type": "application/json" },
+        });
+      });
+    mockInstantLoanCreateHydrationActors({
+      getLoan: vi.fn().mockResolvedValue({
+        Ok: createInstantLoan({
+          borrow_destination: canisterDestination as never,
+          borrow_amount: DEFAULT_ICP_AMOUNT_E8S,
+          borrow_pool_id: Principal.fromText(ICP_POOL_ID),
+          borrow_asset: { ICP: null },
+        }),
+      }),
+      btcMinterDepositFee: 2_000n,
+      icrc1Fee: 10n,
+    });
+    const client = new LiquidiumClient({
+      canisterIds: { instantLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
+    });
+
+    // when
+    const loan = await client.instantLoans.create(
+      createInstantLoanRequest({
+        borrow: {
+          poolId: ICP_POOL_ID,
+          asset: "ICP",
+          amount: DEFAULT_ICP_AMOUNT_E8S,
+          chain: "ICP",
+          destination,
+        },
+      })
+    );
+
+    // then
+    const post = fetchSpy.mock.calls.find(
+      ([, init]) => init?.method === "POST"
+    );
+    expect(post).toBeDefined();
+    expect(JSON.parse(post?.[1]?.body as string).borrowDestination).toEqual(
+      wireDestination
+    );
+    expect(loan.borrow).toMatchObject({
+      asset: "ICP",
+      chain: "ICP",
+      destination: { address: expect.any(String) },
+    });
+  });
+
+  test("returns the created loan id when a second hydration fee lookup fails", async () => {
+    // given
+    const hydrationFailure = new Error("ICP ledger fee unavailable");
+    const icrc1Fee = vi
+      .fn()
+      .mockResolvedValueOnce(10n)
+      .mockRejectedValueOnce(hydrationFailure);
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation(async (input, init) => {
+        if (init?.method === "POST") {
+          return new Response(
+            JSON.stringify({
+              success: true,
+              loan: {
+                loanId: LOAN_ID.toString(),
+                collateral: { amountHint: "10000000" },
+              },
+            }),
+            { status: 200, headers: { "content-type": "application/json" } }
+          );
+        }
+
+        if (input.toString().includes("/activities?")) {
+          return new Response(JSON.stringify({ activities: [] }), {
+            status: 200,
+            headers: { "content-type": "application/json" },
+          });
+        }
+
+        return new Response(JSON.stringify({ error: "not found" }), {
+          status: 404,
+          headers: { "content-type": "application/json" },
+        });
+      });
+    mockInstantLoanCreateHydrationActors({
+      getLoan: vi.fn().mockResolvedValue({ Ok: createInstantLoan() }),
+      btcMinterDepositFee: 2_000n,
+      icrc1Fee: 10n,
+      icrc1FeeMock: icrc1Fee,
+    });
+    const client = new LiquidiumClient({
+      canisterIds: { instantLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
+    });
+
+    // when
+    const error = await client.instantLoans
+      .create(createInstantLoanRequest())
+      .catch((cause: unknown) => cause);
+
+    // then
+    expect(error).toBeInstanceOf(InstantLoanCreatedError);
+    expect(error).toMatchObject({
+      code: "INSTANT_LOAN_HYDRATION_FAILED",
+      loanId: LOAN_ID,
+      ref: publicIdFromInt(LOAN_ID),
+      cause: hydrationFailure,
+    });
+    expect(icrc1Fee).toHaveBeenCalledTimes(2);
+    expect(
+      fetchSpy.mock.calls.filter(([, init]) => init?.method === "POST")
+    ).toHaveLength(1);
   });
 
   test("rejects an invalid ICP borrow destination before creating the loan", async () => {
@@ -387,8 +569,7 @@ describe("InstantLoansModule create", () => {
     // then
     await expect(result).rejects.toMatchObject({
       code: LiquidiumErrorCode.VALIDATION_ERROR,
-      message:
-        "ICP instant loan borrow destination must be an IC principal or ICRC account",
+      message: "ICP instant loan borrow destination must be an IC principal",
     });
     expect(fetchSpy).not.toHaveBeenCalled();
     expect(actorCreateSpy).not.toHaveBeenCalled();
@@ -416,8 +597,7 @@ describe("InstantLoansModule create", () => {
     // then
     await expect(result).rejects.toMatchObject({
       code: LiquidiumErrorCode.VALIDATION_ERROR,
-      message:
-        "ICP instant loan borrow destination must be an IC principal or ICRC account",
+      message: "ICP instant loan borrow destination must be an IC principal",
     });
     expect(fetchSpy).not.toHaveBeenCalled();
     expect(actorCreateSpy).not.toHaveBeenCalled();
@@ -451,36 +631,7 @@ describe("InstantLoansModule create", () => {
     expect(actorCreateSpy).not.toHaveBeenCalled();
   });
 
-  test("rejects an unsupported typed ck borrow destination before creating the loan", async () => {
-    // given
-    const fetchSpy = vi.spyOn(globalThis, "fetch");
-    const actorCreateSpy = vi.spyOn(Actor, "createActor");
-    const client = new LiquidiumClient({});
-
-    // when
-    const result = client.instantLoans.create(
-      createInstantLoanRequest({
-        borrow: {
-          asset: "SOL",
-          chain: "ICP",
-          destination: {
-            type: "IcPrincipal",
-            address: PROFILE_ID,
-          },
-        },
-      })
-    );
-
-    // then
-    await expect(result).rejects.toMatchObject({
-      code: LiquidiumErrorCode.VALIDATION_ERROR,
-      message: "ICP instant loan borrow delivery is not supported for SOL",
-    });
-    expect(fetchSpy).not.toHaveBeenCalled();
-    expect(actorCreateSpy).not.toHaveBeenCalled();
-  });
-
-  test.each<InstantLoanDestinationValidationCase>([
+  test.each([
     {
       name: "native BTC borrow rejects ETH delivery chain",
       requestOverrides: {
@@ -495,8 +646,9 @@ describe("InstantLoansModule create", () => {
           },
         },
       },
-      expectedCode: LiquidiumErrorCode.INVALID_ADDRESS,
-      expectedMessage: "Address chain must match asset",
+      expectedCode: LiquidiumErrorCode.VALIDATION_ERROR,
+      expectedMessage:
+        "ETH instant loan borrow delivery is not supported for BTC",
     },
     {
       name: "native stablecoin borrow rejects BTC delivery chain",
@@ -509,8 +661,9 @@ describe("InstantLoansModule create", () => {
           },
         },
       },
-      expectedCode: LiquidiumErrorCode.INVALID_ADDRESS,
-      expectedMessage: "Address chain must match asset",
+      expectedCode: LiquidiumErrorCode.VALIDATION_ERROR,
+      expectedMessage:
+        "BTC instant loan borrow delivery is not supported for USDT",
     },
     {
       name: "native BTC refund rejects ETH delivery chain",
@@ -523,8 +676,9 @@ describe("InstantLoansModule create", () => {
           },
         },
       },
-      expectedCode: LiquidiumErrorCode.INVALID_ADDRESS,
-      expectedMessage: "Address chain must match asset",
+      expectedCode: LiquidiumErrorCode.VALIDATION_ERROR,
+      expectedMessage:
+        "ETH instant loan refund delivery is not supported for BTC",
     },
     {
       name: "ck stablecoin borrow rejects an ETH L1 address",
@@ -539,7 +693,7 @@ describe("InstantLoansModule create", () => {
       },
       expectedCode: LiquidiumErrorCode.VALIDATION_ERROR,
       expectedMessage:
-        "ICP instant loan borrow destination must be an IC principal or ICRC account",
+        "ICP instant loan borrow destination must be an IC principal",
     },
     {
       name: "ck stablecoin borrow rejects a BTC L1 address",
@@ -554,7 +708,7 @@ describe("InstantLoansModule create", () => {
       },
       expectedCode: LiquidiumErrorCode.VALIDATION_ERROR,
       expectedMessage:
-        "ICP instant loan borrow destination must be an IC principal or ICRC account",
+        "ICP instant loan borrow destination must be an IC principal",
     },
     {
       name: "ck stablecoin borrow rejects an ICP account identifier",
@@ -569,7 +723,22 @@ describe("InstantLoansModule create", () => {
       },
       expectedCode: LiquidiumErrorCode.VALIDATION_ERROR,
       expectedMessage:
-        "ICP instant loan borrow destination must be an IC principal or ICRC account",
+        "ICP instant loan borrow destination must be an IC principal",
+    },
+    {
+      name: "ck stablecoin borrow rejects an ICRC account",
+      requestOverrides: {
+        borrow: {
+          chain: "ICP",
+          destination: {
+            type: "IcrcAccount",
+            address: VALID_ICRC_DESTINATION,
+          },
+        },
+      },
+      expectedCode: LiquidiumErrorCode.VALIDATION_ERROR,
+      expectedMessage:
+        "ICP instant loan borrow destination must be an IC principal",
     },
     {
       name: "ckBTC refund rejects a BTC L1 address",
@@ -584,7 +753,7 @@ describe("InstantLoansModule create", () => {
       },
       expectedCode: LiquidiumErrorCode.VALIDATION_ERROR,
       expectedMessage:
-        "ICP instant loan refund destination must be an IC principal or ICRC account",
+        "ICP instant loan refund destination must be an IC principal",
     },
     {
       name: "ckBTC refund rejects an ETH L1 address",
@@ -599,7 +768,7 @@ describe("InstantLoansModule create", () => {
       },
       expectedCode: LiquidiumErrorCode.VALIDATION_ERROR,
       expectedMessage:
-        "ICP instant loan refund destination must be an IC principal or ICRC account",
+        "ICP instant loan refund destination must be an IC principal",
     },
     {
       name: "ckBTC refund rejects an ICP account identifier",
@@ -614,7 +783,22 @@ describe("InstantLoansModule create", () => {
       },
       expectedCode: LiquidiumErrorCode.VALIDATION_ERROR,
       expectedMessage:
-        "ICP instant loan refund destination must be an IC principal or ICRC account",
+        "ICP instant loan refund destination must be an IC principal",
+    },
+    {
+      name: "ckBTC refund rejects an ICRC account",
+      requestOverrides: {
+        refund: {
+          chain: "ICP",
+          destination: {
+            type: "IcrcAccount",
+            address: VALID_ICRC_DESTINATION,
+          },
+        },
+      },
+      expectedCode: LiquidiumErrorCode.VALIDATION_ERROR,
+      expectedMessage:
+        "ICP instant loan refund destination must be an IC principal",
     },
     {
       name: "native stablecoin borrow rejects an IC principal",
@@ -679,6 +863,7 @@ describe("InstantLoansModule create", () => {
           poolId: ICP_POOL_ID,
           asset: "ICP",
           amount: DEFAULT_ICP_AMOUNT_E8S,
+          chain: "ICP",
           destination: {
             type: "ChainAddress",
             address: CHECKSUM_EVM_BORROW_ADDRESS,
@@ -696,6 +881,7 @@ describe("InstantLoansModule create", () => {
           poolId: ICP_POOL_ID,
           asset: "ICP",
           amount: DEFAULT_ICP_AMOUNT_E8S,
+          chain: "ICP",
           destination: {
             type: "ChainAddress",
             address: VALID_BTC_REFUND_ADDRESS,
@@ -713,22 +899,7 @@ describe("InstantLoansModule create", () => {
           poolId: ICP_POOL_ID,
           asset: "ICP",
           amount: DEFAULT_ICP_AMOUNT_E8S,
-          destination: CHECKSUM_EVM_BORROW_ADDRESS,
-        },
-      },
-      expectedCode: LiquidiumErrorCode.INVALID_ADDRESS,
-      expectedMessage:
-        "ICP instant loan destination must be an IC principal, ICP account identifier, or ICRC account",
-    },
-    {
-      name: "native ICP borrow rejects a string shorthand address without a chain",
-      requestOverrides: {
-        borrow: {
-          poolId: ICP_POOL_ID,
-          asset: "ICP",
-          amount: DEFAULT_ICP_AMOUNT_E8S,
-          chain:
-            undefined as unknown as CreateInstantLoanRequest["borrow"]["chain"],
+          chain: "ICP",
           destination: CHECKSUM_EVM_BORROW_ADDRESS,
         },
       },
@@ -745,6 +916,7 @@ describe("InstantLoansModule create", () => {
           amount: DEFAULT_ICP_AMOUNT_E8S,
         },
         refund: {
+          chain: "ICP",
           destination: {
             type: "ChainAddress",
             address: CHECKSUM_EVM_BORROW_ADDRESS,
@@ -764,6 +936,7 @@ describe("InstantLoansModule create", () => {
           amount: DEFAULT_ICP_AMOUNT_E8S,
         },
         refund: {
+          chain: "ICP",
           destination: {
             type: "ChainAddress",
             address: VALID_BTC_REFUND_ADDRESS,
@@ -783,6 +956,7 @@ describe("InstantLoansModule create", () => {
           amount: DEFAULT_ICP_AMOUNT_E8S,
         },
         refund: {
+          chain: "ICP",
           destination: VALID_BTC_REFUND_ADDRESS,
         },
       },
@@ -790,7 +964,7 @@ describe("InstantLoansModule create", () => {
       expectedMessage:
         "ICP instant loan destination must be an IC principal, ICP account identifier, or ICRC account",
     },
-  ])("rejects unsafe instant loan destination combo: $name", async ({
+  ] satisfies InstantLoanDestinationValidationCase[])("rejects unsafe instant loan destination combo: $name", async ({
     requestOverrides,
     expectedCode,
     expectedMessage,
@@ -1133,13 +1307,14 @@ function createInstantLoanRequest(
       ...request.refund,
       ...overrides.refund,
     },
-  };
+  } as CreateInstantLoanRequest;
 }
 
 function mockInstantLoanCreateHydrationActors(params: {
   getLoan: ReturnType<typeof vi.fn>;
   btcMinterDepositFee: bigint;
   icrc1Fee: bigint;
+  icrc1FeeMock?: ReturnType<typeof vi.fn>;
 }): void {
   vi.spyOn(Actor, "createActor").mockReturnValue({
     list_pools: vi
@@ -1161,6 +1336,7 @@ function mockInstantLoanCreateHydrationActors(params: {
     }),
     estimate_deposit_fee: vi.fn().mockResolvedValue({ Ok: 1_500_000n }),
     get_deposit_fee: vi.fn().mockResolvedValue(params.btcMinterDepositFee),
-    icrc1_fee: vi.fn().mockResolvedValue(params.icrc1Fee),
+    icrc1_fee:
+      params.icrc1FeeMock ?? vi.fn().mockResolvedValue(params.icrc1Fee),
   } as never);
 }

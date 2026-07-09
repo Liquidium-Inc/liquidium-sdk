@@ -130,18 +130,4 @@ describe("roundInflowFeeEstimate", () => {
     expect(zeroResult).toBe(EXPECTED_FEE);
     expect(negativeResult).toBe(EXPECTED_FEE);
   });
-
-  test("should return unsupported asset pairs unchanged", () => {
-    // given
-    const SOL_FEE_ESTIMATE = 123_456n;
-
-    // when
-    const result = roundInflowFeeEstimate(
-      { asset: Asset.SOL, chain: Chain.ETH },
-      SOL_FEE_ESTIMATE
-    );
-
-    // then
-    expect(result).toBe(SOL_FEE_ESTIMATE);
-  });
 });

@@ -29,10 +29,11 @@ import { createLiquidiumStatus, type LiquidiumStatus } from "../../core/status";
 import type { ApiClient } from "../../core/transports/api-client";
 import type { CanisterContext } from "../../core/transports/canister-context";
 import {
-  type Asset,
+  type AssetIdentifier,
   type Chain,
   Asset as CoreAsset,
   Chain as CoreChain,
+  isAssetIdentifier,
   SupplyAction,
 } from "../../core/types";
 import {
@@ -45,7 +46,10 @@ import { getAssetNativeDecimals } from "../../core/utils/asset-decimals";
 import { getVariantKey } from "../../core/utils/variant";
 import type { ActivitiesModule, Activity } from "../activities";
 import { ActivityFilter } from "../activities";
-import { resolveSupplyTarget } from "../lending/_internal/supply-targets";
+import {
+  getPoolById,
+  resolveSupplyTargetForPool,
+} from "../lending/_internal/supply-targets";
 import type { LendingModule } from "../lending/lending";
 import { SupplyPlanType, type SupplyTarget } from "../lending/types";
 import type { PositionsModule } from "../positions";
@@ -71,8 +75,8 @@ import type {
   InstantLoanFindCollateral,
   InstantLoanFindResult,
   InstantLoanGetRequest,
-  InstantLoanInflowTargetQuotes,
   InstantLoanInitialDeposit,
+  InstantLoanInitialDepositTargetQuote,
   InstantLoanLeg,
   InstantLoanListEventsRequest,
   InstantLoanRepaymentTargetQuote,
@@ -90,15 +94,14 @@ const INSTANT_LOAN_WIRE_CONTEXT = "instant loan";
 const INSTANT_LOAN_ASSETS = [
   CoreAsset.BTC,
   CoreAsset.ICP,
-  CoreAsset.SOL,
   CoreAsset.USDC,
   CoreAsset.USDT,
 ] as const satisfies readonly InstantLoanAsset[];
-const CK_OUTFLOW_ASSETS = new Set<InstantLoanAsset>([
-  CoreAsset.BTC,
-  CoreAsset.USDC,
-  CoreAsset.USDT,
-]);
+const INSTANT_LOAN_CHAINS = [
+  CoreChain.BTC,
+  CoreChain.ETH,
+  CoreChain.ICP,
+] as const;
 
 const ICP_ACCOUNT_IDENTIFIER_HEX_LENGTH = 64;
 
@@ -209,15 +212,15 @@ interface InstantLoanHydrationInput {
   collateralPoolId: string;
   collateralAmount: bigint;
   borrowPoolId: string;
-  collateralAsset: string;
-  borrowAsset: string;
+  collateralAsset: InstantLoanAsset;
+  borrowAsset: InstantLoanAsset;
   borrowAmount: bigint;
   borrowDestination: InstantLoanAccount;
   refundDestination: InstantLoanAccount;
   started: boolean;
   depositDetectedTimestamp: bigint | null;
   expiryTimestamp: bigint | null;
-  borrowChain: string;
+  borrowChain: Chain;
 }
 
 interface InstantLoanHydrationChainOptions {
@@ -227,8 +230,8 @@ interface InstantLoanHydrationChainOptions {
 interface InstantLoanInitialDepositQuoteInput {
   collateralAmount: bigint;
   decimals: bigint;
-  asset: string;
-  targets: InstantLoanInflowTargetQuotes<SupplyTarget>;
+  asset: InstantLoanAsset;
+  targets: Partial<Record<Chain, SupplyTarget>>;
   detectedTimestamp: bigint | null;
   expiryTimestamp: bigint | null;
 }
@@ -237,6 +240,10 @@ interface ResolveInstantLoanInflowTargetsRequest {
   profileId: string;
   poolId: string;
   action: SupplyAction;
+}
+
+interface ResolvedInstantLoanInflowTargets {
+  targets: Partial<Record<Chain, SupplyTarget>>;
 }
 
 interface RepaymentInflowFeeEstimate {
@@ -277,6 +284,28 @@ interface ResolveInstantLoanDestinationParams {
   role: InstantLoanOutflowRole;
   chain: Chain;
   normalizeExternalDestination: ExternalDestinationNormalizer;
+}
+
+/**
+ * A loan was created remotely, but the SDK could not load its enriched state.
+ * Retry with `instantLoans.get({ loanId })`; do not create the loan again.
+ */
+export class InstantLoanCreatedError extends Error {
+  readonly code = "INSTANT_LOAN_HYDRATION_FAILED" as const;
+  readonly loanId: bigint;
+  readonly ref: string;
+  override readonly cause: unknown;
+
+  constructor(loanId: bigint, cause: unknown) {
+    const ref = publicIdFromInt(loanId);
+    super(
+      `Instant loan ${ref} was created, but its enriched state could not be loaded`
+    );
+    this.name = "InstantLoanCreatedError";
+    this.loanId = loanId;
+    this.ref = ref;
+    this.cause = cause;
+  }
 }
 
 /** Accountless instant-loan creation, lookup, recovery, and canister query helpers. */
@@ -346,18 +375,23 @@ export class InstantLoansModule {
       context: INSTANT_LOAN_WIRE_CONTEXT,
       label: "loan ID",
     });
-    const collateralAmount = parseUnsignedApiBigint(
-      response.loan.collateral.amountHint,
-      {
-        context: INSTANT_LOAN_WIRE_CONTEXT,
-        label: "collateral amount",
-      }
-    );
-    const record = await this.getLoanRecord(loanId);
 
-    return await this.mapLoanRecord(record, collateralAmount, {
-      borrowChain: request.borrow.chain,
-    });
+    try {
+      const collateralAmount = parseUnsignedApiBigint(
+        response.loan.collateral.amountHint,
+        {
+          context: INSTANT_LOAN_WIRE_CONTEXT,
+          label: "collateral amount",
+        }
+      );
+      const record = await this.getLoanRecord(loanId);
+
+      return await this.mapLoanRecord(record, collateralAmount, {
+        borrowChain: request.borrow.chain,
+      });
+    } catch (cause) {
+      throw new InstantLoanCreatedError(loanId, cause);
+    }
   }
 
   /**
@@ -568,6 +602,14 @@ export class InstantLoansModule {
     chainOptions: InstantLoanHydrationChainOptions = {}
   ): Promise<InstantLoan> {
     const borrowDestination = accountFromCanister(record.borrow_destination);
+    const collateralAsset = parseInstantLoanAsset(
+      record.lend_asset,
+      "collateral asset"
+    );
+    const borrowAsset = parseInstantLoanAsset(
+      record.borrow_asset,
+      "borrow asset"
+    );
 
     return await this.hydrateLoan({
       loanId: record.id,
@@ -577,8 +619,8 @@ export class InstantLoansModule {
       collateralPoolId: record.lend_pool_id.toText(),
       collateralAmount,
       borrowPoolId: record.borrow_pool_id.toText(),
-      collateralAsset: record.lend_asset,
-      borrowAsset: record.borrow_asset,
+      collateralAsset,
+      borrowAsset,
       borrowAmount: record.borrow_amount,
       borrowDestination,
       refundDestination: accountFromCanister(record.refund_destination),
@@ -592,7 +634,7 @@ export class InstantLoansModule {
         }),
       borrowChain:
         chainOptions.borrowChain ??
-        inferInstantLoanDeliveryChain(borrowDestination, record.borrow_asset),
+        inferInstantLoanDeliveryChain(borrowDestination, borrowAsset),
     });
   }
 
@@ -619,8 +661,8 @@ export class InstantLoansModule {
     const borrowAsset = input.borrowAsset;
 
     const [
-      depositTargets,
-      repayTargets,
+      depositTargetSet,
+      repaymentTargetSet,
       collateralPosition,
       borrowPosition,
       borrowPoolRate,
@@ -675,7 +717,7 @@ export class InstantLoansModule {
       collateralAmount,
       decimals: collateralDecimals,
       asset: collateralAsset,
-      targets: depositTargets,
+      targets: depositTargetSet.targets,
       detectedTimestamp: input.depositDetectedTimestamp,
       expiryTimestamp: input.expiryTimestamp,
     });
@@ -683,7 +725,7 @@ export class InstantLoansModule {
     const repaymentTargets = await this.createRepaymentTargetQuotes({
       baseRepaymentAmount: totalDebtAmount + interestBufferAmount,
       asset: borrowAsset,
-      targets: repayTargets,
+      targets: repaymentTargetSet.targets,
     });
 
     const repayment = {
@@ -694,6 +736,11 @@ export class InstantLoansModule {
       asset: borrowAsset,
       targets: repaymentTargets,
     };
+    const borrowIdentifier = getInstantLoanAssetIdentifier(
+      borrowAsset,
+      input.borrowChain,
+      "borrow"
+    );
 
     return {
       loanId: input.loanId,
@@ -705,16 +752,14 @@ export class InstantLoansModule {
         depositWindowSeconds: input.depositWindowSeconds,
       },
       collateral: {
-        poolId: collateralPoolId,
         asset: collateralAsset,
-        chain: depositTargets.poolChain.chain,
+        poolId: collateralPoolId,
         decimals: collateralDecimals,
         amount: collateralAmount,
       },
       borrow: {
+        ...borrowIdentifier,
         poolId: borrowPoolId,
-        asset: borrowAsset,
-        chain: input.borrowChain,
         decimals: borrowedDecimals,
         amount: input.borrowAmount,
         destination: input.borrowDestination,
@@ -737,22 +782,22 @@ export class InstantLoansModule {
   private async createInitialDepositQuote(
     input: InstantLoanInitialDepositQuoteInput
   ): Promise<InstantLoanInitialDeposit> {
-    const targets = await mapInstantLoanTargetQuotes(
-      input.targets,
-      async (target) => {
-        const inflowFee = await this.lending.estimateInflowFee({
-          asset: input.asset as Asset,
-          chain: target.chain as Chain,
-        });
+    const targets: Partial<
+      Record<Chain, InstantLoanInitialDepositTargetQuote>
+    > = {};
 
-        return {
-          amount: input.collateralAmount + inflowFee.totalFee,
-          chain: target.chain,
-          inflowFeeAmount: inflowFee.totalFee,
-          target,
-        };
-      }
-    );
+    for (const chain of INSTANT_LOAN_CHAINS) {
+      const target = input.targets[chain];
+      if (!target) continue;
+      assertTargetAsset(target, input.asset);
+
+      const inflowFee = await this.lending.estimateInflowFee(target);
+      targets[chain] = {
+        amount: input.collateralAmount + inflowFee.totalFee,
+        inflowFeeAmount: inflowFee.totalFee,
+        target,
+      };
+    }
 
     return {
       decimals: input.decimals,
@@ -766,66 +811,78 @@ export class InstantLoansModule {
 
   private async resolveInstantLoanInflowTargets(
     request: ResolveInstantLoanInflowTargetsRequest
-  ): Promise<InstantLoanInflowTargetQuotes<SupplyTarget>> {
-    const poolChainTarget = await resolveSupplyTarget(this.canisterContext, {
+  ): Promise<ResolvedInstantLoanInflowTargets> {
+    const selectedPool = await getPoolById(
+      this.canisterContext,
+      request.poolId
+    );
+    const baseRequest = {
       profileId: request.profileId,
       poolId: request.poolId,
       action: request.action,
       mechanism: SupplyPlanType.transfer,
-    });
+    };
+    const poolChainTarget = await resolveSupplyTargetForPool(
+      this.canisterContext,
+      baseRequest,
+      selectedPool
+    );
+    const poolChain = poolChainTarget.chain;
+    const targets: Partial<Record<Chain, SupplyTarget>> = {
+      [poolChain]: poolChainTarget,
+    };
 
-    if (poolChainTarget.chain === CoreChain.ICP) {
-      return { poolChain: poolChainTarget };
+    if (poolChain === CoreChain.ICP) {
+      return { targets };
     }
 
-    const icpTarget = await resolveSupplyTarget(this.canisterContext, {
-      profileId: request.profileId,
-      poolId: request.poolId,
-      action: request.action,
-      mechanism: SupplyPlanType.transfer,
-      chain: CoreChain.ICP,
-    });
+    const icpTarget = await resolveSupplyTargetForPool(
+      this.canisterContext,
+      { ...baseRequest, chain: CoreChain.ICP },
+      selectedPool
+    );
 
-    return {
-      poolChain: poolChainTarget,
-      icp: icpTarget,
-    };
+    targets[CoreChain.ICP] = icpTarget;
+    return { targets };
   }
 
   private async createRepaymentTargetQuotes(input: {
     baseRepaymentAmount: bigint;
-    asset: string;
-    targets: InstantLoanInflowTargetQuotes<SupplyTarget>;
-  }): Promise<InstantLoanInflowTargetQuotes<InstantLoanRepaymentTargetQuote>> {
-    return await mapInstantLoanTargetQuotes(input.targets, async (target) => {
+    asset: InstantLoanAsset;
+    targets: Partial<Record<Chain, SupplyTarget>>;
+  }): Promise<Partial<Record<Chain, InstantLoanRepaymentTargetQuote>>> {
+    const quotes: Partial<Record<Chain, InstantLoanRepaymentTargetQuote>> = {};
+
+    for (const chain of INSTANT_LOAN_CHAINS) {
+      const target = input.targets[chain];
+      if (!target) continue;
+      assertTargetAsset(target, input.asset);
+
       const repaymentInflowFee =
         input.baseRepaymentAmount > 0n
-          ? await this.estimateRepaymentInflowFee(input.asset, target.chain)
+          ? await this.estimateRepaymentInflowFee(target)
           : { totalFee: 0n, estimateAvailable: false };
 
-      return {
+      quotes[chain] = {
         amount: input.baseRepaymentAmount + repaymentInflowFee.totalFee,
-        chain: target.chain,
         inflowFeeAmount: repaymentInflowFee.totalFee,
         inflowFeeEstimateAvailable: repaymentInflowFee.estimateAvailable,
         target,
       };
-    });
+    }
+
+    return quotes;
   }
 
   private async estimateRepaymentInflowFee(
-    asset: string,
-    chain: string
+    target: SupplyTarget
   ): Promise<RepaymentInflowFeeEstimate> {
     try {
-      const fee = await this.lending.estimateInflowFee({
-        asset: asset as Asset,
-        chain: chain as Chain,
-      });
+      const fee = await this.lending.estimateInflowFee(target);
       return { totalFee: fee.totalFee, estimateAvailable: true };
     } catch {
       return {
-        totalFee: getRepaymentInflowFeeFallback(asset, chain),
+        totalFee: getRepaymentInflowFeeFallback(target.asset, target.chain),
         estimateAvailable: false,
       };
     }
@@ -895,12 +952,29 @@ export class InstantLoansModule {
   }
 }
 
-function getRepaymentInflowFeeFallback(asset: string, chain: string): bigint {
+function getRepaymentInflowFeeFallback(
+  asset: InstantLoanAsset,
+  chain: Chain
+): bigint {
   if (chain === "ETH" && (asset === "USDT" || asset === "USDC")) {
     return ETH_STABLECOIN_INFLOW_FEE_FALLBACK;
   }
 
   return 0n;
+}
+
+function assertTargetAsset(
+  target: SupplyTarget,
+  expectedAsset: InstantLoanAsset
+): void {
+  if (target.asset === expectedAsset) {
+    return;
+  }
+
+  throw new LiquidiumError(
+    LiquidiumErrorCode.INTERNAL,
+    `Instant loan pool target asset ${target.asset} does not match ${expectedAsset}`
+  );
 }
 
 function calculateInterestBufferAmount(
@@ -1024,22 +1098,6 @@ function getCurrentUnixTimestampSeconds(): bigint {
   return BigInt(Math.floor(Date.now() / MILLISECONDS_PER_SECOND));
 }
 
-async function mapInstantLoanTargetQuotes<TTargetQuote>(
-  targets: InstantLoanInflowTargetQuotes<SupplyTarget>,
-  mapTarget: (target: SupplyTarget) => Promise<TTargetQuote>
-): Promise<InstantLoanInflowTargetQuotes<TTargetQuote>> {
-  const poolChain = await mapTarget(targets.poolChain);
-
-  if (!targets.icp) {
-    return { poolChain };
-  }
-
-  return {
-    poolChain,
-    icp: await mapTarget(targets.icp),
-  };
-}
-
 function deriveDepositExpiryTimestamp(
   input: DeriveDepositExpiryTimestampInput
 ): bigint | null {
@@ -1051,6 +1109,17 @@ function deriveDepositExpiryTimestamp(
 }
 
 function validateCreateRequest(request: CreateInstantLoanRequest): void {
+  getInstantLoanAssetIdentifier(
+    request.borrow.asset,
+    request.borrow.chain,
+    "borrow"
+  );
+  getInstantLoanAssetIdentifier(
+    request.collateral.asset,
+    request.refund.chain,
+    "refund"
+  );
+
   if (request.collateral.amount <= 0n) {
     throw new LiquidiumError(
       LiquidiumErrorCode.VALIDATION_ERROR,
@@ -1090,8 +1159,8 @@ function throwLtvCalculationError(
 
 function inferInstantLoanDeliveryChain(
   destination: InstantLoanAccount,
-  asset: string
-): string {
+  asset: InstantLoanAsset
+): Chain {
   if (destination.type !== "ChainAddress") {
     return CoreChain.ICP;
   }
@@ -1104,27 +1173,17 @@ function inferInstantLoanDeliveryChain(
     return CoreChain.ETH;
   }
 
-  return asset;
+  return CoreChain.ICP;
 }
 
 function resolveInstantLoanDestination(
   params: ResolveInstantLoanDestinationParams
 ): InstantLoanApiAccountType {
-  assertInstantLoanOutflowChainSupported(params);
+  getInstantLoanAssetIdentifier(params.asset, params.chain, params.role);
 
   if (typeof params.destination === "string") {
     return resolveInstantLoanStringDestination({
       destination: params.destination,
-      asset: params.asset,
-      role: params.role,
-      chain: params.chain,
-      normalizeExternalDestination: params.normalizeExternalDestination,
-    });
-  }
-
-  if (!params.destination.type) {
-    return resolveInstantLoanStringDestination({
-      destination: params.destination.address,
       asset: params.asset,
       role: params.role,
       chain: params.chain,
@@ -1177,16 +1236,11 @@ function resolveInstantLoanStringDestination(params: {
   const address = normalizeInstantLoanDestinationAddress(params.destination);
 
   if (params.chain === CoreChain.ICP && params.asset !== CoreAsset.ICP) {
-    for (const parser of [
-      parsePrincipalInstantLoanDestination,
-      parseIcrcInstantLoanDestination,
-    ]) {
-      try {
-        return parser(address);
-      } catch {}
+    try {
+      return parsePrincipalInstantLoanDestination(address);
+    } catch {
+      throwInvalidCkInstantLoanDestination(params.role);
     }
-
-    throwInvalidCkInstantLoanDestination(params.role);
   }
 
   if (params.chain !== CoreChain.ICP) {
@@ -1214,27 +1268,19 @@ function resolveInstantLoanStringDestination(params: {
   throwInvalidIcpInstantLoanDestination();
 }
 
-function assertInstantLoanOutflowChainSupported(
-  params: Pick<ResolveInstantLoanDestinationParams, "asset" | "role" | "chain">
-): void {
-  if (params.chain !== CoreChain.ICP) {
-    return;
+function getInstantLoanAssetIdentifier(
+  asset: InstantLoanAsset,
+  chain: Chain,
+  role: InstantLoanOutflowRole
+): AssetIdentifier {
+  const identifier = { asset, chain };
+  if (isAssetIdentifier(identifier)) {
+    return identifier;
   }
 
-  if (params.asset === CoreAsset.ICP || CK_OUTFLOW_ASSETS.has(params.asset)) {
-    return;
-  }
-
-  throwUnsupportedCkInstantLoanDelivery(params);
-}
-
-function throwUnsupportedCkInstantLoanDelivery(params: {
-  asset: InstantLoanAsset;
-  role: InstantLoanOutflowRole;
-}): never {
   throw new LiquidiumError(
     LiquidiumErrorCode.VALIDATION_ERROR,
-    `ICP instant loan ${params.role} delivery is not supported for ${params.asset}`
+    `${chain} instant loan ${role} delivery is not supported for ${asset}`
   );
 }
 
@@ -1245,10 +1291,7 @@ function assertInstantLoanDestinationTypeMatchesChain(params: {
   chain: Chain;
 }): void {
   if (params.chain === CoreChain.ICP && params.asset !== CoreAsset.ICP) {
-    if (
-      params.destinationType === "IcPrincipal" ||
-      params.destinationType === "IcrcAccount"
-    ) {
+    if (params.destinationType === "IcPrincipal") {
       return;
     }
 
@@ -1285,7 +1328,7 @@ function throwInvalidCkInstantLoanDestination(
 ): never {
   throw new LiquidiumError(
     LiquidiumErrorCode.VALIDATION_ERROR,
-    `ICP instant loan ${role} destination must be an IC principal or ICRC account`
+    `ICP instant loan ${role} destination must be an IC principal`
   );
 }
 
@@ -1399,7 +1442,10 @@ function mapInstantLoanEventType(
       type: "LoanCreated",
       loanId: event.loan_id,
       borrowDestination: accountFromCanister(event.borrow_destination),
-      collateralAsset: event.lend_asset as InstantLoanAsset,
+      collateralAsset: parseInstantLoanAsset(
+        event.lend_asset,
+        "event collateral asset"
+      ),
       borrowAmount: event.borrow_amount,
       collateralPoolId: event.lend_pool_id.toText(),
       refundDestination: accountFromCanister(event.refund_destination),
@@ -1407,7 +1453,10 @@ function mapInstantLoanEventType(
       depositWindowSeconds: event.ltv_timer_s,
       profileId: event.lending_profile.toText(),
       borrowPoolId: event.borrow_pool_id.toText(),
-      borrowAsset: event.borrow_asset as InstantLoanAsset,
+      borrowAsset: parseInstantLoanAsset(
+        event.borrow_asset,
+        "event borrow asset"
+      ),
     };
   }
 
@@ -1597,6 +1646,13 @@ function mapCandidateWire(
       label: "profile ID",
     }),
   };
+}
+
+function parseInstantLoanAsset(value: string, label: string): InstantLoanAsset {
+  return parseApiStringUnion(value, INSTANT_LOAN_ASSETS, {
+    context: INSTANT_LOAN_WIRE_CONTEXT,
+    label,
+  });
 }
 
 function mapInstantLoansErrorToLiquidiumError(
