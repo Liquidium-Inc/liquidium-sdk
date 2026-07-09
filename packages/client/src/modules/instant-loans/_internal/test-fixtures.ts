@@ -33,6 +33,8 @@ export const LOWERCASE_EVM_BORROW_ADDRESS =
   "0x52908400098527886e0f7030069857d2e4169ee7";
 export const CHECKSUM_EVM_BORROW_ADDRESS =
   "0x52908400098527886E0F7030069857D2E4169EE7";
+export const CANISTER_EVM_BORROW_ADDRESS =
+  "0x2222222222222222222222222222222222222222";
 
 export function createInstantLoan(
   overrides: Partial<FlexibleInstantLoanCanisterRecord> = {}
@@ -47,7 +49,7 @@ export function createInstantLoan(
       },
     },
     borrow_destination: {
-      External: "0x2222222222222222222222222222222222222222",
+      External: CANISTER_EVM_BORROW_ADDRESS,
     },
     started: false,
     borrow_amount: 2_000_000n,

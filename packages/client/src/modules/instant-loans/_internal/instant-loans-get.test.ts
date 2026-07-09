@@ -131,6 +131,7 @@ describe("InstantLoansModule get", () => {
       amount: 10_000_000n,
     });
     expect(loan.borrow).toMatchObject({
+      chain: "ICP",
       amount: 2_000_000n,
       decimals: 6n,
       destination: {

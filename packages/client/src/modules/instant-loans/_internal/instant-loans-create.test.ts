@@ -10,6 +10,7 @@ import {
 import {
   ACCOUNT_IDENTIFIER,
   BTC_POOL_ID,
+  CANISTER_EVM_BORROW_ADDRESS,
   CHECKSUM_EVM_BORROW_ADDRESS,
   createBtcPoolRecord,
   createIcpPoolRecord,
@@ -125,11 +126,6 @@ describe("InstantLoansModule create", () => {
         get_btc_address: vi.fn().mockResolvedValue("bc1qinstantdeposit"),
       } as never)
       .mockReturnValueOnce({
-        get_deposit_address: vi.fn().mockResolvedValue({
-          Ok: "0x1111111111111111111111111111111111111111",
-        }),
-      } as never)
-      .mockReturnValueOnce({
         get_deposit_fee: vi.fn().mockResolvedValue(BTC_MINTER_DEPOSIT_FEE_SATS),
       } as never)
       .mockReturnValueOnce({
@@ -156,6 +152,7 @@ describe("InstantLoansModule create", () => {
       },
       refundChain: "BTC",
       refundDestination: VALID_BTC_REFUND_ADDRESS,
+      repaymentChain: "ICP",
     });
 
     // then
@@ -202,7 +199,15 @@ describe("InstantLoansModule create", () => {
       inflowFeeAmount: 0n,
       inflowFeeEstimateAvailable: false,
       asset: "USDT",
+      chain: "ICP",
+    });
+    expect(loan.borrow).toMatchObject({
+      asset: "USDT",
       chain: "ETH",
+      destination: {
+        type: "ChainAddress",
+        address: CANISTER_EVM_BORROW_ADDRESS,
+      },
     });
     expect(loan.initialDeposit).toMatchObject({
       amount: EXPECTED_INITIAL_DEPOSIT_AMOUNT_SATS,

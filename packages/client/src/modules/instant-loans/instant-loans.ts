@@ -217,7 +217,13 @@ interface InstantLoanHydrationInput {
   depositDetectedTimestamp: bigint | null;
   expiryTimestamp: bigint | null;
   initialDepositChain?: Chain;
+  borrowChain: string;
   repaymentChain?: Chain;
+}
+
+interface InstantLoanHydrationChainOptions
+  extends InstantLoanInflowChainOptions {
+  borrowChain?: Chain;
 }
 
 interface InstantLoanInitialDepositQuoteInput {
@@ -351,6 +357,7 @@ export class InstantLoansModule {
 
     return await this.mapLoanRecord(record, collateralAmount, {
       initialDepositChain: request.initialDepositChain,
+      borrowChain: request.borrowChain,
       repaymentChain: request.repaymentChain,
     });
   }
@@ -563,10 +570,11 @@ export class InstantLoansModule {
   private async mapLoanRecord(
     record: DecodedInstantLoanCanisterRecord,
     collateralAmount: bigint,
-    chainOptions: InstantLoanInflowChainOptions = {}
+    chainOptions: InstantLoanHydrationChainOptions = {}
   ): Promise<InstantLoan> {
     const normalizedChainOptions =
       normalizeInstantLoanChainOptions(chainOptions);
+    const borrowDestination = accountFromCanister(record.borrow_destination);
 
     return await this.hydrateLoan({
       loanId: record.id,
@@ -579,7 +587,7 @@ export class InstantLoansModule {
       collateralAsset: record.lend_asset,
       borrowAsset: record.borrow_asset,
       borrowAmount: record.borrow_amount,
-      borrowDestination: accountFromCanister(record.borrow_destination),
+      borrowDestination,
       refundDestination: accountFromCanister(record.refund_destination),
       started: record.started,
       depositDetectedTimestamp: record.deposit_detected_ts[0] ?? null,
@@ -590,6 +598,9 @@ export class InstantLoansModule {
           depositWindowSeconds: record.ltv_timer_s,
         }),
       initialDepositChain: normalizedChainOptions.initialDepositChain,
+      borrowChain:
+        chainOptions.borrowChain ??
+        inferInstantLoanDeliveryChain(borrowDestination, record.borrow_asset),
       repaymentChain: normalizedChainOptions.repaymentChain,
     });
   }
@@ -722,7 +733,7 @@ export class InstantLoansModule {
       borrow: {
         poolId: borrowPoolId,
         asset: borrowAsset,
-        chain: repayTarget.chain,
+        chain: input.borrowChain,
         decimals: borrowedDecimals,
         amount: input.borrowAmount,
         destination: input.borrowDestination,
@@ -1029,6 +1040,25 @@ function throwLtvCalculationError(
       : LiquidiumErrorCode.VALIDATION_ERROR,
     error?.message ?? "Unable to calculate instant loan LTV"
   );
+}
+
+function inferInstantLoanDeliveryChain(
+  destination: InstantLoanAccount,
+  asset: string
+): string {
+  if (destination.type !== "ChainAddress") {
+    return CoreChain.ICP;
+  }
+
+  if (asset === CoreAsset.BTC) {
+    return CoreChain.BTC;
+  }
+
+  if (asset === CoreAsset.USDC || asset === CoreAsset.USDT) {
+    return CoreChain.ETH;
+  }
+
+  return asset;
 }
 
 function resolveInstantLoanDestination(

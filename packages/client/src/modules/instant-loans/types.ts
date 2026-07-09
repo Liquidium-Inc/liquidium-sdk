@@ -424,7 +424,7 @@ export interface InstantLoanBorrow {
   poolId: string;
   /** Borrow asset symbol. */
   asset: MarketAsset;
-  /** Chain used for repayment. */
+  /** Chain where borrowed funds are delivered. */
   chain: MarketChain;
   /** Decimal scale for borrow and debt amounts. */
   decimals: bigint;
