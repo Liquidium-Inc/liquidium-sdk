@@ -266,7 +266,8 @@ interface LtvCalculationErrorDetails {
 
 type ExternalDestinationNormalizer = (
   address: string,
-  asset: InstantLoanAsset
+  asset: InstantLoanAsset,
+  chain: Chain
 ) => string;
 
 type InstantLoanOutflowRole = "borrow" | "refund";
@@ -1100,7 +1101,8 @@ function resolveInstantLoanDestination(
       return {
         External: params.normalizeExternalDestination(
           normalizeInstantLoanDestinationAddress(params.destination.address),
-          params.asset
+          params.asset,
+          params.chain
         ),
       };
     case "IcPrincipal":
@@ -1146,7 +1148,11 @@ function resolveInstantLoanStringDestination(params: {
     assertExternalInstantLoanDestinationSupported(params.asset);
 
     return {
-      External: params.normalizeExternalDestination(address, params.asset),
+      External: params.normalizeExternalDestination(
+        address,
+        params.asset,
+        params.chain
+      ),
     };
   }
 

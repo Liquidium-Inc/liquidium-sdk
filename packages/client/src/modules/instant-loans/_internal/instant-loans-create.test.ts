@@ -530,6 +530,45 @@ describe("InstantLoansModule create", () => {
 
   test.each<InstantLoanDestinationValidationCase>([
     {
+      name: "native BTC borrow rejects ETH delivery chain",
+      requestOverrides: {
+        borrowPoolId: BTC_POOL_ID,
+        borrowAsset: "BTC",
+        borrowAmount: DEFAULT_COLLATERAL_AMOUNT_BASE_UNITS,
+        borrowChain: "ETH",
+        borrowDestination: {
+          type: "ChainAddress",
+          address: VALID_BTC_REFUND_ADDRESS,
+        },
+      },
+      expectedCode: LiquidiumErrorCode.INVALID_ADDRESS,
+      expectedMessage: "Address chain must match asset",
+    },
+    {
+      name: "native stablecoin borrow rejects BTC delivery chain",
+      requestOverrides: {
+        borrowChain: "BTC",
+        borrowDestination: {
+          type: "ChainAddress",
+          address: CHECKSUM_EVM_BORROW_ADDRESS,
+        },
+      },
+      expectedCode: LiquidiumErrorCode.INVALID_ADDRESS,
+      expectedMessage: "Address chain must match asset",
+    },
+    {
+      name: "native BTC refund rejects ETH delivery chain",
+      requestOverrides: {
+        refundChain: "ETH",
+        refundDestination: {
+          type: "ChainAddress",
+          address: VALID_BTC_REFUND_ADDRESS,
+        },
+      },
+      expectedCode: LiquidiumErrorCode.INVALID_ADDRESS,
+      expectedMessage: "Address chain must match asset",
+    },
+    {
       name: "ck stablecoin borrow rejects an ETH L1 address",
       requestOverrides: {
         borrowChain: "ICP",
@@ -896,9 +935,9 @@ describe("InstantLoansModule create", () => {
       borrowAmount: 10_000_000n,
       ltvMaxBps: 6_000n,
       depositWindowSeconds: 3_600n,
-      borrowChain: "ETH",
+      borrowChain: "BTC",
       borrowDestination: "tb1qnotmainnet",
-      refundChain: "BTC",
+      refundChain: "ETH",
       refundDestination: CHECKSUM_EVM_BORROW_ADDRESS,
     });
 
@@ -927,9 +966,9 @@ describe("InstantLoansModule create", () => {
       borrowAmount: 10_000_000n,
       ltvMaxBps: 6_000n,
       depositWindowSeconds: 3_600n,
-      borrowChain: "ETH",
+      borrowChain: "BTC",
       borrowDestination: VALID_BTC_REFUND_ADDRESS,
-      refundChain: "BTC",
+      refundChain: "ETH",
       refundDestination: "not-an-evm-address",
     });
 
