@@ -43,6 +43,7 @@ describeLive("live lending e2e", () => {
       profileId,
       poolId: btcPool.id,
       action: SupplyAction.deposit,
+      chain: Chain.BTC,
     });
 
     // then
@@ -73,6 +74,7 @@ describeLive("live lending e2e", () => {
       profileId,
       poolId: icpPool.id,
       action: SupplyAction.deposit,
+      chain: Chain.ICP,
     });
 
     // then
@@ -114,6 +116,7 @@ describeLive("live lending e2e", () => {
       profileId,
       poolId: icpPool.id,
       action: SupplyAction.deposit,
+      chain: Chain.ICP,
       amount: ICP_TRANSFER_AMOUNT_E8S,
       account: "icp-sender",
       walletAdapter: {

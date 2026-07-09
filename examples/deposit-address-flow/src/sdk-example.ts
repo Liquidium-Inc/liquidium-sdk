@@ -93,7 +93,7 @@ export async function createDepositAddressSupply({
     profileId,
     poolId,
     action: SupplyAction.deposit,
-    chain: chainSelection === "icpLedger" ? Chain.ICP : undefined,
+    chain: chainSelection === "icpLedger" ? Chain.ICP : Chain.ETH,
   });
 }
 

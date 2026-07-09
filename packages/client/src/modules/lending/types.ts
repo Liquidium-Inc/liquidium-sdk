@@ -294,8 +294,8 @@ interface BaseSupplyFlowRequest {
   profileId: string;
   poolId: string;
   action: SupplyAction;
-  /** Transfer chain to use. Pass ICP for ck-ledger transfers. Defaults to the pool chain. */
-  chain?: Chain;
+  /** Transfer chain to use. Pass ICP for ck-ledger transfers. */
+  chain: Chain;
 }
 
 /** Manual transfer-based `lending.supply` request. */

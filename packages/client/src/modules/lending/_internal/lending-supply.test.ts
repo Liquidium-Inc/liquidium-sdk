@@ -74,6 +74,7 @@ describe("LendingModule supply", () => {
       profileId,
       poolId: BTC_POOL_ID,
       action: "deposit",
+      chain: "BTC",
     });
 
     // then
@@ -149,6 +150,7 @@ describe("LendingModule supply", () => {
       profileId,
       poolId: USDT_POOL_ID,
       action: "repayment",
+      chain: "ETH",
     });
 
     // then
@@ -227,6 +229,7 @@ describe("LendingModule supply", () => {
       profileId,
       poolId: USDC_POOL_ID,
       action: "deposit",
+      chain: "ETH",
     });
 
     // then
@@ -352,6 +355,7 @@ describe("LendingModule supply", () => {
       profileId,
       poolId: ICP_POOL_ID,
       action: "deposit",
+      chain: "ICP",
     });
 
     // then
@@ -432,6 +436,7 @@ describe("LendingModule supply", () => {
       profileId,
       poolId: USDC_POOL_ID,
       action: "deposit",
+      chain: "ETH",
     });
     const result = await supplyFlow.submit({ txid });
 
@@ -485,6 +490,7 @@ describe("LendingModule supply", () => {
         profileId: "aaaaa-aa",
         poolId: USDT_POOL_ID,
         action: "deposit",
+        chain: "ETH",
       })
     ).rejects.toMatchObject({
       code: LiquidiumErrorCode.VALIDATION_ERROR,
@@ -536,6 +542,7 @@ describe("LendingModule supply", () => {
         profileId: "aaaaa-aa",
         poolId: NON_CONFIGURED_BTC_POOL_ID,
         action: "deposit",
+        chain: "BTC",
       })
     ).rejects.toMatchObject({
       code: LiquidiumErrorCode.VALIDATION_ERROR,
@@ -587,6 +594,7 @@ describe("LendingModule supply", () => {
         profileId: "aaaaa-aa",
         poolId: BTC_POOL_ID,
         action: "deposit",
+        chain: "BTC",
         mechanism: "contractInteraction",
         walletAdapter: {
           sendEthTransaction: vi.fn(),
@@ -730,6 +738,7 @@ describe("LendingModule supply", () => {
       profileId: "aaaaa-aa",
       poolId: USDT_POOL_ID,
       action: "deposit",
+      chain: "ETH",
       account: "0x1234567890123456789012345678901234567890",
       amount: 1_000_000n,
       walletAdapter: {
@@ -799,6 +808,7 @@ describe("LendingModule supply", () => {
       profileId,
       poolId: USDT_POOL_ID,
       action: "deposit",
+      chain: "ETH",
       account: "0x1234567890123456789012345678901234567890",
       amount: 1_000_000n,
       mechanism: "contractInteraction",
@@ -886,6 +896,7 @@ describe("LendingModule supply", () => {
       profileId,
       poolId: USDT_POOL_ID,
       action: "deposit",
+      chain: "ETH",
       account: "0x1234567890123456789012345678901234567890",
       amount: 1_000_000n,
       mechanism: "contractInteraction",
@@ -914,6 +925,7 @@ describe("LendingModule supply", () => {
       profileId: "aaaaa-aa",
       poolId: USDT_POOL_ID,
       action: "deposit",
+      chain: "ETH",
       account: "0x1234567890123456789012345678901234567890",
       amount: 1_000_000n,
       mechanism: "contractInteraction",
@@ -986,6 +998,7 @@ describe("LendingModule supply", () => {
       profileId: "aaaaa-aa",
       poolId: BTC_POOL_ID,
       action: "deposit",
+      chain: "BTC",
     });
     await flow.submit({ txid });
 
@@ -1064,6 +1077,7 @@ describe("LendingModule supply", () => {
       profileId: "aaaaa-aa",
       poolId: BTC_POOL_ID,
       action: "deposit",
+      chain: "BTC",
       amount: 100_000n,
       walletAdapter: {
         sendBtcTransaction,
@@ -1149,6 +1163,7 @@ describe("LendingModule supply", () => {
       profileId: "aaaaa-aa",
       poolId: ICP_POOL_ID,
       action: "deposit",
+      chain: "ICP",
       amount: 100_000_000n,
       account: "icp-sender",
       walletAdapter: {
@@ -1245,6 +1260,7 @@ describe("LendingModule supply", () => {
       profileId: "aaaaa-aa",
       poolId: BTC_POOL_ID,
       action: "deposit",
+      chain: "BTC",
       amount: 100_000n,
       walletAdapter: {
         sendBtcTransaction,
@@ -1335,6 +1351,7 @@ describe("LendingModule supply", () => {
         profileId: "aaaaa-aa",
         poolId: BTC_POOL_ID,
         action: "deposit",
+        chain: "BTC",
         amount: 100_000n,
         walletAdapter: {
           sendBtcTransaction,
@@ -1419,6 +1436,7 @@ describe("LendingModule supply", () => {
       profileId: "aaaaa-aa",
       poolId: BTC_POOL_ID,
       action: "repayment",
+      chain: "BTC",
       amount: 100_000n,
       walletAdapter: {
         sendBtcTransaction,
@@ -1498,6 +1516,7 @@ describe("LendingModule supply", () => {
         profileId: "aaaaa-aa",
         poolId: BTC_POOL_ID,
         action: "deposit",
+        chain: "BTC",
         amount: 100_000n,
         account: "bc1qsender",
         walletAdapter: {},
