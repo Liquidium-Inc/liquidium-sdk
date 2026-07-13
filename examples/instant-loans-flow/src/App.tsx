@@ -53,6 +53,9 @@ export function App() {
   const [selectedBorrowPoolId, setSelectedBorrowPoolId] = useState("");
   const [collateralAmount, setCollateralAmount] = useState("0.0002");
   const [borrowAmount, setBorrowAmount] = useState("9");
+  const [collateralDepositChain, setCollateralDepositChain] = useState<Chain>(
+    DEFAULT_TRANSFER_CHAIN
+  );
   const [borrowChain, setBorrowChain] = useState<Chain>(DEFAULT_TRANSFER_CHAIN);
   const [refundChain, setRefundChain] = useState<Chain>(DEFAULT_TRANSFER_CHAIN);
   const [maxLtv, setMaxLtv] = useState("30");
@@ -90,6 +93,7 @@ export function App() {
       resetDestinationControls({
         collateralPool: defaultCollateralPool,
         borrowPool: defaultBorrowPool,
+        setCollateralDepositChain,
         setBorrowChain,
         setRefundChain,
       });
@@ -124,6 +128,7 @@ export function App() {
     resetDestinationControls({
       collateralPool: defaultCollateralPool,
       borrowPool: defaultBorrowPool,
+      setCollateralDepositChain,
       setBorrowChain,
       setRefundChain,
     });
@@ -196,12 +201,12 @@ export function App() {
       depositWindowSeconds: parsedDepositWindowSeconds,
     });
     const loanTargetOptions = getLoanTargetOptions(loan);
-    const initialDepositPoolChainTarget =
-      loan.initialDeposit.targets[collateralPool.chain];
+    const selectedInitialDepositTarget =
+      loan.initialDeposit.targets[collateralDepositChain];
 
-    if (!initialDepositPoolChainTarget) {
+    if (!selectedInitialDepositTarget) {
       throw new Error(
-        `Missing ${collateralPool.chain} initial-deposit target.`
+        `Missing ${collateralDepositChain} initial-deposit target.`
       );
     }
 
@@ -212,15 +217,15 @@ export function App() {
         "Loan created. Save the reference and send the initial deposit amount to the deposit target.",
         "",
         `Amount to send: ${formatAmount(
-          initialDepositPoolChainTarget.amount,
+          selectedInitialDepositTarget.amount,
           loan.initialDeposit.decimals
-        )} ${collateralPool.asset}`,
+        )} ${formatTransferAssetLabel(collateralPool, collateralDepositChain)}`,
         `Credited collateral: ${formatAmount(
           loan.initialDeposit.collateralAmount,
           loan.initialDeposit.decimals
         )} ${collateralPool.asset}`,
         `Estimated inflow fee: ${formatAmount(
-          initialDepositPoolChainTarget.inflowFeeAmount,
+          selectedInitialDepositTarget.inflowFeeAmount,
           loan.initialDeposit.decimals
         )} ${collateralPool.asset}`,
         `Deposit detected: ${formatUnixTimestampSeconds(
@@ -258,6 +263,8 @@ export function App() {
   function handleCollateralPoolChange(poolId: string): void {
     setSelectedCollateralPoolId(poolId);
     const pool = pools.find((candidatePool) => candidatePool.id === poolId);
+
+    setCollateralDepositChain(getDefaultChain(pool));
 
     setSelectedDestinationChain({
       pool,
@@ -328,10 +335,36 @@ export function App() {
         >
           {pools.map((pool) => (
             <option key={pool.id} value={pool.id}>
-              {pool.asset} on {pool.chain}
+              Asset: {pool.asset} | Pool chain: {pool.chain}
             </option>
           ))}
         </select>
+
+        <label htmlFor="collateral-deposit-chain-select">
+          Collateral deposit asset / chain
+        </label>
+        <select
+          id="collateral-deposit-chain-select"
+          value={collateralDepositChain}
+          onChange={(event) =>
+            setCollateralDepositChain(event.target.value as Chain)
+          }
+        >
+          {getChainOptions(
+            pools.find((pool) => pool.id === selectedCollateralPoolId)
+          ).map((transferChain) => (
+            <option key={transferChain} value={transferChain}>
+              {formatTransferAssetLabel(
+                pools.find((pool) => pool.id === selectedCollateralPoolId),
+                transferChain
+              )}
+            </option>
+          ))}
+        </select>
+        <p>
+          Choose the native asset or its ck representation for the collateral
+          deposit.
+        </p>
 
         <label htmlFor="borrow-pool-select">Borrow pool</label>
         <select
@@ -341,10 +374,39 @@ export function App() {
         >
           {pools.map((pool) => (
             <option key={pool.id} value={pool.id}>
-              {pool.asset} on {pool.chain}
+              Asset: {pool.asset} | Pool chain: {pool.chain}
             </option>
           ))}
         </select>
+
+        <label htmlFor="borrow-chain-select">Borrow asset / chain</label>
+        <select
+          id="borrow-chain-select"
+          value={borrowChain}
+          onChange={(event) =>
+            setSelectedDestinationChain({
+              pool: pools.find((pool) => pool.id === selectedBorrowPoolId),
+              transferChain: event.target.value as Chain,
+              setChain: setBorrowChain,
+              setDestination: setBorrowDestination,
+            })
+          }
+        >
+          {getChainOptions(
+            pools.find((pool) => pool.id === selectedBorrowPoolId)
+          ).map((transferChain) => (
+            <option key={transferChain} value={transferChain}>
+              {formatTransferAssetLabel(
+                pools.find((pool) => pool.id === selectedBorrowPoolId),
+                transferChain
+              )}
+            </option>
+          ))}
+        </select>
+        <p>
+          Select the asset representation and chain where borrowed funds should
+          be sent.
+        </p>
 
         <div className="list-box">{getPricePreview()}</div>
 
@@ -382,31 +444,6 @@ export function App() {
           onChange={(event) => setDepositWindowSeconds(event.target.value)}
         />
 
-        <label htmlFor="borrow-chain-select">Borrow chain</label>
-        <select
-          id="borrow-chain-select"
-          value={borrowChain}
-          onChange={(event) =>
-            setSelectedDestinationChain({
-              pool: pools.find((pool) => pool.id === selectedBorrowPoolId),
-              transferChain: event.target.value as Chain,
-              setChain: setBorrowChain,
-              setDestination: setBorrowDestination,
-            })
-          }
-        >
-          {getChainOptions(
-            pools.find((pool) => pool.id === selectedBorrowPoolId)
-          ).map((transferChain) => (
-            <option key={transferChain} value={transferChain}>
-              {transferChain}
-            </option>
-          ))}
-        </select>
-        <p>
-          Select the chain where borrowed funds should be sent. The SDK uses the
-          right destination format for the selected chain.
-        </p>
         <label htmlFor="borrow-destination-input">
           {formatDestinationInputLabel(
             "Borrow destination",
@@ -420,7 +457,9 @@ export function App() {
           onChange={(event) => setBorrowDestination(event.target.value)}
         />
 
-        <label htmlFor="refund-chain-select">Refund/withdrawal chain</label>
+        <label htmlFor="refund-chain-select">
+          Refund/withdrawal asset / chain
+        </label>
         <select
           id="refund-chain-select"
           value={refundChain}
@@ -437,7 +476,10 @@ export function App() {
             pools.find((pool) => pool.id === selectedCollateralPoolId)
           ).map((transferChain) => (
             <option key={transferChain} value={transferChain}>
-              {transferChain}
+              {formatTransferAssetLabel(
+                pools.find((pool) => pool.id === selectedCollateralPoolId),
+                transferChain
+              )}
             </option>
           ))}
         </select>
@@ -555,12 +597,14 @@ export function App() {
 function resetDestinationControls(params: {
   collateralPool: Pool | undefined;
   borrowPool: Pool | undefined;
+  setCollateralDepositChain(transferChain: Chain): void;
   setBorrowChain(transferChain: Chain): void;
   setRefundChain(transferChain: Chain): void;
 }): void {
   const collateralChain = getDefaultChain(params.collateralPool);
   const borrowChain = getDefaultChain(params.borrowPool);
 
+  params.setCollateralDepositChain(collateralChain);
   params.setBorrowChain(borrowChain);
   params.setRefundChain(collateralChain);
 }
@@ -596,6 +640,23 @@ function getChainOptions(pool: Pool | undefined): Chain[] {
   }
 
   return [getDefaultChain(pool), Chain.ICP];
+}
+
+function formatTransferAssetLabel(
+  pool: Pool | undefined,
+  transferChain: Chain
+): string {
+  if (!pool) {
+    return transferChain;
+  }
+
+  if (transferChain === Chain.ICP && pool.chain !== Chain.ICP) {
+    return `ck${pool.asset} on ${transferChain}`;
+  }
+
+  const nativeSuffix = getChainOptions(pool).length > 1 ? " (native)" : "";
+
+  return `${pool.asset} on ${transferChain}${nativeSuffix}`;
 }
 
 function getLoanTargetOptions(loan: InstantLoan): LoanTargetOptions {
