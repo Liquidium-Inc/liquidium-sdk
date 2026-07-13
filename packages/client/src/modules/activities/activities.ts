@@ -8,7 +8,7 @@ import {
 import type { LiquidiumStatus } from "../../core/status";
 import type { ApiClient } from "../../core/transports/api-client";
 import type { CanisterContext } from "../../core/transports/canister-context";
-import { Chain, type Chain as ChainName } from "../../core/types";
+import type { Chain } from "../../core/types";
 import { parseBigInt } from "../../core/utils/bigint";
 import { intFromPublicId } from "../instant-loans/ref-code";
 import type {
@@ -24,8 +24,6 @@ import type {
 } from "./types";
 import { ActivityFilter } from "./types";
 
-type ActivityAssetKindWire = "native_asset" | "ck_asset";
-
 interface ActivityTopUpWire
   extends Omit<
     ActivityTopUp,
@@ -40,8 +38,7 @@ interface ActivityWire {
   id: string;
   poolId: string;
   asset: string | null;
-  chain: ChainName | null;
-  assetKind: ActivityAssetKindWire;
+  chain: Chain | null;
   amount: string;
   timestampMs: number;
   txids?: string[];
@@ -192,14 +189,13 @@ function mapInstantLoanLookupError(
 
 function mapActivity(wire: ActivityWire): Activity {
   const amount = parseBigInt(wire.amount, "activity amount");
-  const chain = wire.assetKind === "ck_asset" ? Chain.ICP : wire.chain;
 
   if (isInflowOperation(wire.status.operation)) {
     const activity: InflowActivity = {
       id: wire.id,
       poolId: wire.poolId,
       asset: wire.asset,
-      chain,
+      chain: wire.chain,
       amount,
       timestampMs: wire.timestampMs,
       status: wire.status as InflowActivityStatus,
@@ -221,7 +217,7 @@ function mapActivity(wire: ActivityWire): Activity {
       id: wire.id,
       poolId: wire.poolId,
       asset: wire.asset,
-      chain,
+      chain: wire.chain,
       amount,
       timestampMs: wire.timestampMs,
       status: wire.status as OutflowActivityStatus,

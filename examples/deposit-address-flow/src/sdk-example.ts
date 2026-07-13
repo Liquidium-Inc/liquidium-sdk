@@ -5,10 +5,11 @@ import type {
   LiquidiumAccountInput,
   OutflowDetails,
   Pool,
+  SupplyAction,
   SupplyFlow,
   WalletAdapter,
 } from "@liquidium/client";
-import { Chain, SupplyAction } from "@liquidium/client";
+import { Chain } from "@liquidium/client";
 import { client } from "./client";
 
 type MarketData = {
@@ -21,9 +22,10 @@ type GetOrCreateWalletProfileParams = {
   walletAdapter: WalletAdapter;
 };
 
-type CreateDepositAddressSupplyParams = {
+type CreateSupplyFlowParams = {
   profileId: string;
   poolId: string;
+  action: SupplyAction;
   chain: Chain;
 };
 
@@ -83,15 +85,16 @@ export async function getOrCreateWalletProfile({
   return { profileId, wasCreated: true };
 }
 
-export async function createDepositAddressSupply({
+export async function createSupplyFlow({
   profileId,
   poolId,
+  action,
   chain,
-}: CreateDepositAddressSupplyParams): Promise<SupplyFlow> {
+}: CreateSupplyFlowParams): Promise<SupplyFlow> {
   return await client.lending.supply({
     profileId,
     poolId,
-    action: SupplyAction.deposit,
+    action,
     chain,
   });
 }
