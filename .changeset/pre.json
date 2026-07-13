@@ -1,0 +1,14 @@
+{
+  "mode": "pre",
+  "tag": "rc",
+  "initialVersions": {
+    "docs": "0.1.0",
+    "@liquidium/example-btc-interactions-flow": "0.0.1",
+    "@liquidium/example-contract-interaction-flow": "0.0.1",
+    "@liquidium/example-deposit-address-flow": "0.0.1",
+    "@liquidium/example-instant-loans-flow": "0.0.1",
+    "@liquidium/example-sdk-method-query": "0.0.1",
+    "@liquidium/client": "0.4.1"
+  },
+  "changesets": ["simple-ck-asset-routes"]
+}
