@@ -1,7 +1,7 @@
 import { Actor } from "@icp-sdk/core/agent";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { DEFAULT_API_BASE_URL } from "../../../core/config";
-import { LiquidiumClient } from "../../../index";
+import { LiquidiumClient, LiquidiumErrorCode } from "../../../index";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -46,6 +46,28 @@ describe("LendingModule inflow", () => {
       }
     );
   });
+
+  test("rejects ICP inflow submission before calling the HTTP API", async () => {
+    // given
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    const client = new LiquidiumClient({});
+    const invalidRequest = {
+      txid: "icp-ledger-index",
+      chain: "ICP",
+      operation: "deposit",
+    } as never;
+
+    // when
+    const result = client.lending.submitInflow(invalidRequest);
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message: "Inflow submission is not supported for ICP",
+    });
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
   test("estimates eth usdt inflow fee by rounding up", async () => {
     // given
     const ETH_DEPOSIT_FEE_ESTIMATE = 1_198_098n;
@@ -118,6 +140,67 @@ describe("LendingModule inflow", () => {
     expect(getDepositFee).toHaveBeenCalledWith();
     expect(icrc1Fee).toHaveBeenCalledWith();
   });
+
+  test("estimates ckUSDC inflow fee from the ledger without deposit-fee rounding", async () => {
+    // given
+    const CKUSDC_LEDGER_FEE = 10_000n;
+    const icrc1Fee = vi.fn().mockResolvedValue(CKUSDC_LEDGER_FEE);
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      icrc1_fee: icrc1Fee,
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const estimate = await client.lending.estimateInflowFee({
+      asset: "USDC",
+      chain: "ICP",
+    });
+
+    // then
+    expect(estimate.totalFee).toBe(CKUSDC_LEDGER_FEE);
+    expect(icrc1Fee).toHaveBeenCalledWith();
+  });
+
+  test("estimates ckBTC inflow fee from the ledger without deposit-fee rounding", async () => {
+    // given
+    const CKBTC_LEDGER_FEE = 10n;
+    const icrc1Fee = vi.fn().mockResolvedValue(CKBTC_LEDGER_FEE);
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      icrc1_fee: icrc1Fee,
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const estimate = await client.lending.estimateInflowFee({
+      asset: "BTC",
+      chain: "ICP",
+    });
+
+    // then
+    expect(estimate.totalFee).toBe(CKBTC_LEDGER_FEE);
+    expect(icrc1Fee).toHaveBeenCalledWith();
+  });
+
+  test("estimates ICP inflow fee from the ICP ledger", async () => {
+    // given
+    const ICP_LEDGER_FEE_E8S = 10_000n;
+    const icrc1Fee = vi.fn().mockResolvedValue(ICP_LEDGER_FEE_E8S);
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      icrc1_fee: icrc1Fee,
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const estimate = await client.lending.estimateInflowFee({
+      asset: "ICP",
+      chain: "ICP",
+    });
+
+    // then
+    expect(estimate.totalFee).toBe(ICP_LEDGER_FEE_E8S);
+    expect(icrc1Fee).toHaveBeenCalledWith();
+  });
+
   test("uses default prod API base URL for inflow submission without apiBaseUrl", async () => {
     // given
     const TXID = "abc";

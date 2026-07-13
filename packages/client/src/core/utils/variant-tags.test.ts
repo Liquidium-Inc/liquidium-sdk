@@ -30,6 +30,17 @@ describe("extractVariantTag", () => {
     expect(tag).toBe("USDT");
   });
 
+  test("should decode an ICP asset tag", () => {
+    // given
+    const variant = { ICP: null };
+
+    // when
+    const tag = extractVariantTag(variant, KNOWN_ASSET_TAGS);
+
+    // then
+    expect(tag).toBe("ICP");
+  });
+
   test("should return null for an unsupported hashed tag", () => {
     // given
     const hash = idlLabelToId("SOL");
@@ -86,5 +97,16 @@ describe("extractVariantTag", () => {
 
     // then
     expect(tag).toBe("ETH");
+  });
+
+  test("should decode an ICP chain tag", () => {
+    // given
+    const variant = { ICP: null };
+
+    // when
+    const tag = extractVariantTag(variant, KNOWN_CHAIN_TAGS);
+
+    // then
+    expect(tag).toBe("ICP");
   });
 });

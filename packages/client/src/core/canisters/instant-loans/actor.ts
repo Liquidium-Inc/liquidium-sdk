@@ -1,19 +1,26 @@
 import type { Principal } from "@icp-sdk/core/principal";
+import type {
+  CanisterAccountIdentifierAccount,
+  CanisterExternalAccount,
+  CanisterIcrcAccount,
+  CanisterLiquidiumAccount,
+  CanisterNativeAccount,
+} from "../../accounts";
 
-export interface InstantLoanNativeAccountType {
-  Native: Principal;
-}
-
-export interface InstantLoanExternalAccountType {
-  External: string;
-}
-
-export type InstantLoanAccountType =
-  | InstantLoanNativeAccountType
-  | InstantLoanExternalAccountType;
+export type InstantLoanIcrcAccount = CanisterIcrcAccount["Icrc"];
+export type InstantLoanIcrcAccountType = CanisterIcrcAccount;
+export type InstantLoanNativeAccountType = CanisterNativeAccount;
+export type InstantLoanAccountIdentifierAccountType =
+  CanisterAccountIdentifierAccount;
+export type InstantLoanExternalAccountType = CanisterExternalAccount;
+export type InstantLoanAccountType = CanisterLiquidiumAccount;
 
 export interface InstantLoanBtcAsset {
   BTC: null;
+}
+
+export interface InstantLoanIcpAsset {
+  ICP: null;
 }
 
 export interface InstantLoanSolAsset {
@@ -30,6 +37,7 @@ export interface InstantLoanUsdtAsset {
 
 export type InstantLoanAsset =
   | InstantLoanBtcAsset
+  | InstantLoanIcpAsset
   | InstantLoanSolAsset
   | InstantLoanUsdcAsset
   | InstantLoanUsdtAsset;

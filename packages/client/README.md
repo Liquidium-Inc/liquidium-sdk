@@ -54,7 +54,13 @@ npm install @liquidium/client
 Create an instant loan, display the deposit target, and restore the loan by reference:
 
 ```ts
-import { LiquidiumClient, type Pool, type SupplyTarget } from "@liquidium/client";
+import {
+  Asset,
+  Chain,
+  LiquidiumClient,
+  type Pool,
+  type SupplyTarget,
+} from "@liquidium/client";
 
 const client = new LiquidiumClient();
 
@@ -63,8 +69,8 @@ const [pools, prices] = await Promise.all([
   client.market.getAssetPrices(),
 ]);
 
-const collateralPool = requirePool(pools, "BTC");
-const borrowPool = requirePool(pools, "USDC");
+const collateralPool = requirePool(pools, Asset.BTC, Chain.BTC);
+const borrowPool = requirePool(pools, Asset.USDC, Chain.ETH);
 
 const collateralAmount = 50_000n; // BTC sats
 const borrowAmount = 9_000_000n; // USDC base units
@@ -85,34 +91,44 @@ if (ltv.validationErrors.length > 0) {
 }
 
 const loan = await client.instantLoans.create({
-  collateralPoolId: collateralPool.id,
-  borrowPoolId: borrowPool.id,
-  collateralAsset: "BTC",
-  borrowAsset: "USDC",
-  collateralAmount,
-  borrowAmount,
+  collateral: {
+    poolId: collateralPool.id,
+    asset: Asset.BTC,
+    amount: collateralAmount,
+  },
+  borrow: {
+    poolId: borrowPool.id,
+    asset: Asset.USDC,
+    amount: borrowAmount,
+    chain: Chain.ETH,
+    destination: "0x2222222222222222222222222222222222222222",
+  },
+  refund: {
+    chain: Chain.BTC,
+    destination: "1BoatSLRHtKNngkdXEeobR76b53LETtpyT",
+  },
   ltvMaxBps: ltv.maxAllowedLtvBps,
   depositWindowSeconds: 3_600n,
-  borrowDestination: {
-    type: "External",
-    address: "0x2222222222222222222222222222222222222222",
-  },
-  refundDestination: {
-    type: "External",
-    address: "bc1qrefunddestination",
-  },
 });
 
+const initialDeposit = loan.initialDeposit.targets[Chain.BTC];
+if (!initialDeposit) {
+  throw new Error("Missing BTC initial-deposit target.");
+}
+
 console.log("Save this loan reference:", loan.ref);
-console.log("Send initial deposit amount:", loan.initialDeposit.amount.toString());
-console.log("Send collateral to:", formatSupplyTarget(loan.initialDeposit.target));
+console.log("Send initial deposit amount:", initialDeposit.amount.toString());
+console.log("Send collateral to:", formatSupplyTarget(initialDeposit.target));
 
 const restoredLoan = await client.instantLoans.get({ ref: loan.ref });
+const repayment = restoredLoan.repayment.targets[Chain.ETH];
 
 console.log("Loan status:", restoredLoan.status);
-console.log("Restored initial deposit amount:", restoredLoan.initialDeposit.amount.toString());
-console.log("Repay amount:", restoredLoan.repayment.amount.toString());
-console.log("Repay target:", formatSupplyTarget(restoredLoan.repayment.target));
+console.log("Repay amount:", repayment?.amount.toString() ?? "0");
+console.log(
+  "Repay target:",
+  repayment ? formatSupplyTarget(repayment.target) : "No repayment due"
+);
 
 const activities = await client.activities.list({ shortRef: loan.ref });
 
@@ -123,26 +139,28 @@ const foundLoans = await client.instantLoans.find(loan.ref);
 console.log("Found loan reference:", foundLoans[0]?.ref);
 console.log("Found loan collateral:", foundLoans[0]?.collateral.amount.toString());
 
-function requirePool(pools: Pool[], asset: string): Pool {
-  const pool = pools.find((candidatePool) => candidatePool.asset === asset);
+function requirePool(
+  pools: Pool[],
+  asset: Pool["asset"],
+  chain: Pool["chain"]
+): Pool {
+  const pool = pools.find(
+    (candidate) => candidate.asset === asset && candidate.chain === chain
+  );
 
   if (!pool) {
-    throw new Error(`Missing ${asset} pool.`);
+    throw new Error(`Missing ${chain}/${asset} pool.`);
   }
 
   if (pool.frozen) {
-    throw new Error(`${asset} pool is frozen.`);
+    throw new Error(`${chain}/${asset} pool is frozen.`);
   }
 
   return pool;
 }
 
 function formatSupplyTarget(target: SupplyTarget): string {
-  if (target.type === "nativeAddress") {
-    return target.address;
-  }
-
-  return target.account;
+  return target.address;
 }
 ```
 
@@ -154,13 +172,15 @@ Instant-loan integrations use this sequence:
 | --- | --- | --- |
 | Load market data | `client.market.listPools()` and `client.market.getAssetPrices()` | Show supported collateral and borrow assets |
 | Validate amounts | `client.quote.calculateLtv(...)` | Block too-small borrow amounts, invalid LTV, or frozen-pool input before creating a loan |
-| Create loan | `client.instantLoans.create(...)` | Store `loan.ref` and show `loan.initialDeposit.amount` plus `loan.initialDeposit.target` |
+| Create loan | `client.instantLoans.create(...)` | Store `loan.ref` and show the quote in `loan.initialDeposit.targets[chain]` |
 | Track loan | `client.instantLoans.get({ ref })`, `client.instantLoans.find(...)`, and `client.activities.list({ shortRef: ref })` | Reload loan state, initial deposit quote, and repayment activity |
-| Repay loan | Read `loan.repayment` | Ask the user to send `loan.repayment.amount` to `loan.repayment.target`; amount is `0n` when no repayment is due |
+| Repay loan | Read `loan.repayment.targets[chain]` | Ask the user to send the quote amount to its target; no quote means no repayment is due on that chain |
 
-`client.instantLoans.create(...)` and `client.instantLoans.get(...)` return the generated Liquidium profile, current position state, an initial deposit quote with its transfer target, and a repayment quote with its transfer target. Repayment amount fields are zero when the loan has no debt. Users do not manage the generated profile.
+`client.instantLoans.create(...)` and `client.instantLoans.get(...)` return the generated Liquidium profile, current position state, and transfer quotes keyed by the chain the user will send on. Users do not manage the generated profile.
 
-`client.market.listPools()` returns only pools whose asset and chain variants are supported by this SDK version. Canister pools for unsupported variants such as `ICP` or `SOL` are omitted from the returned list.
+`client.market.listPools()` returns only pools whose asset and chain variants are supported by this SDK version. BTC, USDC, USDT, and ICP lending pools are returned. Future unsupported variants such as `SOL` are omitted from the returned list.
+
+`client.market.findPool({ chain, asset })` accepts the same Chain + Asset identifiers used by transfer flows. Chain-key identifiers resolve to their backing pool, so both `{ chain: "ETH", asset: "USDT" }` and `{ chain: "ICP", asset: "USDT" }` return the USDT pool.
 
 ## Core API
 
@@ -170,18 +190,26 @@ Creates an accountless instant loan and returns generated transfer targets.
 
 | Field | Description |
 | --- | --- |
-| `collateralPoolId` | Pool that receives the collateral deposit |
-| `borrowPoolId` | Pool the loan borrows from |
-| `collateralAsset` | Collateral asset symbol, for example `"BTC"` |
-| `borrowAsset` | Borrow asset symbol, for example `"USDC"` |
-| `collateralAmount` | Intended credited collateral amount in base units, before deposit/inflow fees |
-| `borrowAmount` | Borrow amount in base units. The SDK rejects values below the asset minimum. |
+| `collateral` | Collateral `poolId`, `asset`, and intended credited `amount` in base units |
+| `borrow` | Borrow `poolId`, `asset`, `amount`, delivery `chain`, and `destination` |
+| `refund` | Refund `chain` and `destination` for returned collateral |
 | `ltvMaxBps` | Maximum LTV in basis points, where `6_000n` is 60% |
 | `depositWindowSeconds` | How long the user has to send collateral |
-| `borrowDestination` | External address that receives borrowed funds |
-| `refundDestination` | External address that receives collateral refunds |
 
-`borrowDestination` and `refundDestination` can be address strings or account objects such as `{ type: "External", address: "bc1q..." }`.
+`borrow.destination` and `refund.destination` can be address strings or typed account objects such as `{ type: "ChainAddress", address: "bc1q..." }`, `{ type: "IcPrincipal", address: "aaaaa-aa" }`, or `{ type: "IcrcAccount", address: "aaaaa-aa" }`. Prefer typed objects when the destination family matters.
+
+Destination validation is chain-specific and runs before loan creation:
+
+| Asset path | Chain | Valid destination family |
+| --- | --- | --- |
+| BTC L1 | `"BTC"` | BTC mainnet chain address |
+| ETH L1 USDC/USDT | `"ETH"` | EVM chain address |
+| ICP native | `"ICP"` | IC principal, ICRC account, or ICP account identifier |
+| ckBTC, ckUSDC, ckUSDT | `"ICP"` | IC principal |
+
+The SDK rejects mismatched L1-vs-IC destination families, such as an ETH address for a ck-ledger delivery or a BTC/EVM address for an ICP destination.
+
+If creation succeeds remotely but response hydration fails, the SDK throws `InstantLoanCreatedError`. The error includes `loanId` and `ref`; recover with `instantLoans.get(...)` and do not submit `create(...)` again.
 
 ### `client.instantLoans.get({ ref })`
 
@@ -265,13 +293,11 @@ Most instant-loan UIs show or store these fields:
 | --- | --- |
 | `loan.ref` | Save and show this reference so the loan can be restored later |
 | `loan.status` | Shared lifecycle status: `{ operation, state, confirmations, requiredConfirmations }` |
-| `loan.initialDeposit.amount` | Fee-inclusive collateral amount to send after creation or restore |
 | `loan.initialDeposit.collateralAmount` | Intended credited collateral target used for LTV |
-| `loan.initialDeposit.target` | Address or ICRC account where the user sends collateral |
+| `loan.initialDeposit.targets[chain]` | Fee-inclusive amount, fee estimate, and destination for that transfer chain |
 | `loan.initialDeposit.detectedTimestamp` | Unix timestamp in seconds when the collateral deposit was detected, or `null` before detection |
 | `loan.initialDeposit.expiryTimestamp` | Unix timestamp in seconds when the collateral deposit window expires, or `null` before detection when unavailable |
-| `loan.repayment.amount` | Full amount to repay, including fee and interest buffer. Zero when no repayment is due |
-| `loan.repayment.target` | Address or ICRC account where the user sends repayment |
+| `loan.repayment.targets[chain]` | Full repayment quote and destination for that transfer chain |
 | `loan.position` | Current collateral, debt, and interest state for the generated profile |
 
 `client.instantLoans.find(...)` returns lightweight search matches with `loanId`, `ref`, `createdAt`, `profileId`, `collateral`, and `borrow`. Use `client.instantLoans.get(...)` to load full loan fields, and use `client.activities.list(...)` separately when you need deposit, borrow, repayment, or withdrawal activity.
@@ -283,6 +309,7 @@ The SDK returns amount fields as `bigint` values in the asset's smallest unit.
 | Asset type | Example |
 | --- | --- |
 | BTC | Satoshis |
+| ICP | e8s |
 | USDC / USDT | Token base units using the pool decimals |
 
 Use `Pool.decimals` from `client.market.listPools()` when converting user-entered decimals to base units. Hydrated instant loans also include `loan.collateral.decimals`, `loan.borrow.decimals`, and `loan.initialDeposit.decimals` for display.

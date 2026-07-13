@@ -5,9 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build",
+    "generate:method-references": "node scripts/generate-method-arg-references.mjs --write",
+    "check:method-references": "node scripts/generate-method-arg-references.mjs --check",
+    "build": "pnpm run check:method-references && tsc --noEmit && vite build",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "pnpm run check:method-references && tsc --noEmit"
   },
   "dependencies": {
     "@dynamic-labs/ethereum": "^4.83.1",

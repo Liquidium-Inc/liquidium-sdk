@@ -7,6 +7,8 @@ import {
   extractVariantTag,
   KNOWN_ASSET_TAGS,
   KNOWN_CHAIN_TAGS,
+  type KnownAssetTag,
+  type KnownChainTag,
 } from "../../utils/variant-tags";
 
 const flexibleLendingIdlFactory: IDL.InterfaceFactory = ({ IDL }) => {
@@ -190,8 +192,8 @@ export interface FlexibleLendingActor {
 
 export interface DecodedPool {
   principal: Principal;
-  asset: string;
-  chain: string;
+  asset: KnownAssetTag;
+  chain: KnownChainTag;
   total_supply_at_last_sync: bigint;
   total_debt_at_last_sync: bigint;
   supply_cap: [bigint] | [];
@@ -213,7 +215,7 @@ export interface DecodedPool {
 }
 
 export interface DecodedPosition {
-  asset: string;
+  asset: KnownAssetTag;
   total_debt_interest: bigint;
   borrow_index_snapshot: bigint;
   lending_index_snapshot: bigint;
@@ -238,7 +240,7 @@ export interface DecodedUserStats {
 export interface DecodedPositionView {
   lending_index_now: bigint;
   interest_since_snapshot: bigint;
-  asset: string;
+  asset: KnownAssetTag;
   total_debt_interest: bigint;
   borrow_index_snapshot: bigint;
   debt_native_now: bigint;

@@ -82,6 +82,51 @@ describe("MarketModule", () => {
     ]);
   });
 
+  test("maps ICP pools with 8 native decimals", async () => {
+    // given
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi.fn().mockResolvedValue([
+        {
+          optimal_utilization_rate: 80n,
+          principal: { toString: () => "pool-icp", toText: () => "pool-icp" },
+          total_generated_interest_snapshot: 0n,
+          supply_cap: [],
+          same_asset_borrowing: [],
+          asset: { ICP: null },
+          rate_slope_before: 1n,
+          borrow_cap: [],
+          total_debt_at_last_sync: 25_000n,
+          chain: { ICP: null },
+          rate_slope_after: 2n,
+          reserve_factor: 100n,
+          last_updated: [],
+          lending_index: 300n,
+          protocol_liquidation_fee: 50n,
+          borrow_index: 400n,
+          base_rate: 5n,
+          frozen: false,
+          liquidation_bonus: 200n,
+          liquidation_threshold: 7_500n,
+          max_ltv: 0n,
+          total_supply_at_last_sync: 50_000n,
+        },
+      ]),
+      get_pool_rate: vi.fn().mockResolvedValue([]),
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const pools = await client.market.listPools();
+
+    // then
+    expect(pools[0]).toMatchObject({
+      id: "pool-icp",
+      asset: "ICP",
+      chain: "ICP",
+      decimals: 8n,
+    });
+  });
+
   test("defaults pool rates to zero when get_pool_rate returns none", async () => {
     // given
     vi.spyOn(Actor, "createActor").mockReturnValue({
@@ -243,7 +288,7 @@ describe("MarketModule", () => {
     });
   });
 
-  test("finds a single pool by asset and chain", async () => {
+  test("resolves native and chain-key identifiers to their backing pool", async () => {
     // given
     const btcPoolPrincipal = "pool-btc";
     const usdtPoolPrincipal = "pool-usdt";
@@ -309,12 +354,37 @@ describe("MarketModule", () => {
     const client = new LiquidiumClient({});
 
     // when
-    const pool = await client.market.findPool({ asset: "BTC", chain: "BTC" });
+    const nativePool = await client.market.findPool({
+      asset: "BTC",
+      chain: "BTC",
+    });
+    const chainKeyPool = await client.market.findPool({
+      asset: "USDT",
+      chain: "ICP",
+    });
 
     // then
-    expect(pool.id).toBe(btcPoolPrincipal);
-    expect(pool.asset).toBe("BTC");
-    expect(pool.chain).toBe("BTC");
+    expect(nativePool).toMatchObject({
+      id: btcPoolPrincipal,
+      asset: "BTC",
+      chain: "BTC",
+    });
+    expect(chainKeyPool).toMatchObject({
+      id: usdtPoolPrincipal,
+      asset: "USDT",
+      chain: "ETH",
+    });
+  });
+
+  test("rejects an unsupported asset and chain pair", async () => {
+    const client = new LiquidiumClient({});
+
+    await expect(
+      client.market.findPool({ asset: "BTC", chain: "ETH" } as never)
+    ).rejects.toMatchObject({
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message: "Unsupported asset identifier: ETH/BTC",
+    });
   });
 
   test("throws VALIDATION_ERROR when multiple pools match the query", async () => {

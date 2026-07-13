@@ -5,7 +5,6 @@ import type {
   Pool,
   SupplyAction,
   SupplyFlow,
-  SupplyTarget,
 } from "@liquidium/client";
 import { SupplyAction as SupplyActionValue } from "@liquidium/client";
 
@@ -97,10 +96,11 @@ export function formatBtcSupplyFlow(
   flow: SupplyFlow,
   action: SupplyAction
 ): string {
-  const title =
-    action === SupplyActionValue.repayment
-      ? "BTC repayment submitted."
-      : "BTC supply submitted.";
+  const actionLabel =
+    action === SupplyActionValue.repayment ? "repayment" : "supply";
+  const title = flow.txid
+    ? `BTC ${actionLabel} submitted.`
+    : `BTC ${actionLabel} target generated.`;
 
   return [
     title,
@@ -108,25 +108,15 @@ export function formatBtcSupplyFlow(
     `Txid: ${flow.txid ?? "not set"}`,
     "Status: track the txid on the Activity tracker page.",
     "",
-    formatSupplyTarget(flow.target),
+    formatBtcSupplyTarget(flow.target),
   ].join("\n");
 }
 
-export function formatSupplyTarget(target: SupplyTarget): string {
-  if (target.type === "nativeAddress") {
-    return [
-      `Target type: ${target.type}`,
-      `Address: ${target.address}`,
-      `Pool: ${target.poolId}`,
-      `Action: ${target.action}`,
-    ].join("\n");
-  }
-
+function formatBtcSupplyTarget(target: SupplyFlow["target"]): string {
   return [
-    `Target type: ${target.type}`,
-    `Account: ${target.account}`,
-    `Owner: ${target.owner}`,
-    `Subaccount: ${formatBytes(target.subaccount)}`,
+    `Asset: ${target.asset} on ${target.chain}`,
+    `Address: ${target.address}`,
+    `Pool: ${target.poolId}`,
     `Action: ${target.action}`,
   ].join("\n");
 }
@@ -282,10 +272,4 @@ function stringifyForDisplay(value: unknown): string {
     },
     2
   );
-}
-
-function formatBytes(bytes: Uint8Array): string {
-  return Array.from(bytes)
-    .map((byte) => byte.toString(16).padStart(2, "0"))
-    .join("");
 }

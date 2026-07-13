@@ -11,6 +11,7 @@ import {
 } from "../../core/canisters/lending/flexible-actor";
 import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
 import type { CanisterContext } from "../../core/transports/canister-context";
+import { Asset, Chain, isAssetIdentifier } from "../../core/types";
 import {
   mapDecodedPoolToPool,
   mapGetPoolRateResponseToPoolRate,
@@ -19,6 +20,12 @@ import {
 import type { AssetPrices, FindPoolQuery, Pool, PoolRate } from "./types";
 
 const ZERO_POOL_RATE: PoolRateTuple = [0n, 0n, 0n];
+const BACKING_POOL_CHAIN_BY_ASSET = {
+  [Asset.BTC]: Chain.BTC,
+  [Asset.ICP]: Chain.ICP,
+  [Asset.USDC]: Chain.ETH,
+  [Asset.USDT]: Chain.ETH,
+} satisfies Record<Asset, Chain>;
 
 /** Pool metadata, prices, and current rate helpers. */
 export class MarketModule {
@@ -83,15 +90,29 @@ export class MarketModule {
   }
 
   /**
-   * Resolves a single pool for the given asset and chain pair.
+   * Resolves a single backing pool for the given Chain + Asset identifier.
+   *
+   * Native and chain-key identifiers share a pool. For example, both
+   * `ETH/USDT` and `ICP/USDT` resolve to the USDT lending pool.
    *
    * @param query - The market asset and chain pair to match.
    * @returns The single pool that matches the requested asset and chain.
    */
   async findPool(query: FindPoolQuery): Promise<Pool> {
+    const identifier = { chain: query.chain, asset: query.asset };
+
+    if (!isAssetIdentifier(identifier)) {
+      throw new LiquidiumError(
+        LiquidiumErrorCode.VALIDATION_ERROR,
+        `Unsupported asset identifier: ${identifier.chain}/${identifier.asset}`
+      );
+    }
+
     const pools = await this.listPools();
+    const backingPoolChain = BACKING_POOL_CHAIN_BY_ASSET[identifier.asset];
     const matchedPools = pools.filter(
-      (pool) => pool.asset === query.asset && pool.chain === query.chain
+      (pool) =>
+        pool.asset === identifier.asset && pool.chain === backingPoolChain
     );
 
     if (matchedPools.length === 0) {

@@ -87,20 +87,16 @@ export function formatPool(pool: Pool): string {
 }
 
 export function formatSupplyTarget(target: SupplyTarget): string {
-  if (target.type === "nativeAddress") {
-    return [
-      `Send ${target.asset} on ${target.chain} to this address:`,
-      target.address,
-      `Pool: ${target.poolId}`,
-    ].join("\n");
-  }
-
   return [
-    `Send ${target.asset} on ${target.chain} to this ICRC account:`,
-    target.account,
-    `Owner: ${target.owner}`,
-    `Subaccount: ${formatBytes(target.subaccount)}`,
-  ].join("\n");
+    `Send ${target.asset} on ${target.chain} to:`,
+    target.address,
+    target.icpAccountIdentifier
+      ? `ICP account identifier: ${target.icpAccountIdentifier}`
+      : null,
+    `Pool: ${target.poolId}`,
+  ]
+    .filter((line): line is string => line !== null)
+    .join("\n");
 }
 
 export function formatOutflowDetails(outflow: OutflowDetails): string {
@@ -108,10 +104,14 @@ export function formatOutflowDetails(outflow: OutflowDetails): string {
     `Outflow id: ${outflow.id}`,
     `Type: ${outflow.outflowType}`,
     `Amount: ${outflow.amount.toString()} base units`,
-    `Receiver: ${outflow.receiver.type} ${outflow.receiver.account}`,
+    `Receiver: ${formatOutflowReceiver(outflow.receiver)}`,
     `Outflow ref: ${outflow.outflowRef ?? "not set"}`,
     `Txid: ${outflow.txid ?? "not set"}`,
   ].join("\n");
+}
+
+function formatOutflowReceiver(receiver: OutflowDetails["receiver"]): string {
+  return `${receiver.type} ${receiver.address}`;
 }
 
 export function formatActivityStatus(
@@ -265,10 +265,4 @@ function stringifyForDisplay(value: unknown): string {
     },
     2
   );
-}
-
-function formatBytes(bytes: Uint8Array): string {
-  return Array.from(bytes)
-    .map((byte) => byte.toString(16).padStart(2, "0"))
-    .join("");
 }

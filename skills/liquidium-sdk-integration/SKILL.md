@@ -106,11 +106,11 @@ client.instantLoans.find(query);
 client.quote.calculateLtv(...); // pure helper for current LTV previews
 ```
 
-`create(...)` accepts direct `collateralAmount`, `borrowAmount`, `ltvMaxBps`, and
-`depositWindowSeconds` values in base units, plus external borrow/refund
-destinations. It validates positive amounts, loads pools and prices, applies
-SDK-side instant-loan LTV guards, creates the loan, then returns the hydrated
-loan with `initialDeposit.amount` for the fee-inclusive collateral transfer.
+`create(...)` accepts nested `collateral`, `borrow`, and `refund` legs plus
+`ltvMaxBps` and `depositWindowSeconds`. Amounts use base units. The borrow and
+refund legs include the delivery chain and destination. The SDK validates the
+request, creates the loan, then returns hydrated deposit and repayment quotes
+keyed by transfer chain.
 
 Current LTV guards require `ltvMaxBps` to be at least the current implied LTV
 plus the SDK slippage buffer and no higher than the collateral pool max LTV. Do
@@ -119,30 +119,28 @@ not confuse the quote module's `targetLtvBps` with `create(...)`'s `ltvMaxBps`. 
 from chosen borrow and collateral amounts before calling `create(...)`.
 
 `create(...)` and `get(...)` do not require a wallet adapter, profile ID, or
-message signing. The SDK returns quote targets for the generated profile;
-`create(...)` and `get(...)` return `initialDeposit.amount` for the full amount
-to send to the deposit target, including the estimated inflow fee. They also
-return `position` plus a non-null `repayment` quote. Repayment amount fields are
-zero when no debt exists; once debt exists, `repayment.amount` is the full amount
-to send to the repayment target, including inflow fee and interest buffer.
+message signing. Read a quote from `initialDeposit.targets[chain]` or
+`repayment.targets[chain]`. Each quote contains the full amount to send, its fee
+estimate, and a flat target with a primary `address`.
 
-Deposit and repayment targets are distinct generated inflow targets. Show
-`loan.initialDeposit.target` only when asking the user to send collateral. Show
-`loan.repayment.target` only when `loan.repayment.amount > 0n` and the user
-needs to repay debt. Do not assume these addresses/accounts match, do not reuse
-the collateral deposit target for repayment, and do not cache one target for
-both phases.
+Deposit and repayment targets are distinct generated inflow targets. Select the
+quote for the chain the user will transfer on. Do not assume the addresses
+match, reuse the collateral deposit target for repayment, or cache one target
+for both phases.
 
 Hydrated instant loans use the current public shape: read terms from
 `loan.terms.ltvMaxBps` and `loan.terms.depositWindowSeconds`; read deposit
-instructions from `loan.initialDeposit.amount` and `loan.initialDeposit.target`;
-read repayment instructions from `loan.repayment.amount` and
-`loan.repayment.target`. Do not use removed top-level fields such as
+instructions from `loan.initialDeposit.targets[chain]`; read repayment
+instructions from `loan.repayment.targets[chain]`. Do not use removed top-level fields such as
 `loan.depositTarget`, `loan.repayTarget`, `loan.ltvMaxBps`, or
 `loan.depositWindowSeconds`.
 
 Reload with `client.instantLoans.get({ ref })` before displaying repayment
 instructions so the app uses the canonical repayment amount and target.
+
+If `create(...)` throws `InstantLoanCreatedError`, the loan was already created.
+Use the error's `loanId` or `ref` with `get(...)`; do not call `create(...)`
+again, because that can create a duplicate loan.
 
 Status-returning methods use the shared `LiquidiumStatus` shape:
 `{ operation, state, confirmations, requiredConfirmations }`. `operation` is one
@@ -372,32 +370,32 @@ const walletAdapter: WalletAdapter = {
 - `signMessage`: account creation, borrow, and withdraw flows (signs a Liquidium message)
 - `sendBtcTransaction`: transfer-path supply automation for BTC targets
 - `sendEthTransaction`: transfer-path automation for ETH targets and contract-interaction supply automation
+- `sendIcrcTransfer`: transfer-path supply automation for ICP-ledger targets
 
 ## Flows
 
 ### Instant loan default flow
 
 Use `client.instantLoans.create(...)` when the user should not create or manage
-a Liquidium profile. The user supplies external destination addresses, receives
-a short loan ID, then sends collateral to the generated deposit address.
+a Liquidium profile. The user supplies chain-specific borrow and refund
+destinations, receives a short loan ID, then sends collateral to the generated
+deposit address.
 
 Default app sequence:
 
 1. Fetch pools and prices for pool selection and optional quote display.
 2. Optionally call `client.quote.calculateLtv(...)` to show current LTV and the collateral pool's max allowed LTV.
-3. Call `client.instantLoans.create(...)` with direct base-unit amounts and external destination addresses.
+3. Call `client.instantLoans.create(...)` with direct base-unit amounts, transfer chains, and matching destination account families.
 4. Persist or display `loan.ref` as the primary recovery key.
-5. Show `loan.initialDeposit.amount` plus `loan.initialDeposit.target` for collateral deposit and, when `loan.repayment.amount > 0n`, `loan.repayment.target` plus `loan.repayment.amount` for repayment.
+5. Select and show the quote in `loan.initialDeposit.targets[chain]`; later reload the loan and select `loan.repayment.targets[chain]`.
 
 The default instant-loan flow does not need a wallet adapter. The user signs or
 broadcasts only the external wallet transfer to the generated deposit or repay
 target outside the SDK.
 
-The deposit target and repayment target are not interchangeable. Collateral goes
-to `loan.initialDeposit.target`. Repayment goes to `loan.repayment.target` when
-`loan.repayment.amount > 0n`. If a UI has separate deposit and repay screens,
-each screen must read the target for that exact phase instead of sharing one
-saved address.
+The deposit target and repayment target are not interchangeable. If a UI has
+separate deposit and repay screens, each screen must read the quote for that
+exact phase and transfer chain instead of sharing one saved address.
 
 ```ts
 const ltv = client.quote.calculateLtv(
@@ -412,45 +410,64 @@ const ltv = client.quote.calculateLtv(
 );
 
 const loan = await client.instantLoans.create({
-  collateralPoolId: btcPool.id,
-  borrowPoolId: usdtPool.id,
-  collateralAsset: "BTC",
-  borrowAsset: "USDT",
-  collateralAmount: 10_000_000n,
-  borrowAmount: 2_000_000n,
+  collateral: {
+    poolId: btcPool.id,
+    asset: "BTC",
+    amount: 10_000_000n,
+  },
+  borrow: {
+    poolId: usdtPool.id,
+    asset: "USDT",
+    amount: 2_000_000n,
+    chain: "ETH",
+    destination: "0x2222222222222222222222222222222222222222",
+  },
+  refund: {
+    chain: "BTC",
+    destination: "1BoatSLRHtKNngkdXEeobR76b53LETtpyT",
+  },
   ltvMaxBps: ltv.maxAllowedLtvBps,
   depositWindowSeconds: 3_600n,
-  borrowDestination: {
-    type: "External",
-    address: "0x2222222222222222222222222222222222222222",
-  },
-  refundDestination: { type: "External", address: "bc1qrefunddestination" },
 });
 
 const ref = loan.ref;
-const initialDepositAmount = loan.initialDeposit.amount;
-const depositTarget = loan.initialDeposit.target;
-const repayTarget = loan.repayment.amount > 0n ? loan.repayment.target : null;
+const initialDeposit = loan.initialDeposit.targets.BTC;
+const repayment = loan.repayment.targets.ETH;
 ```
 
-Create destinations are external-only. Pass an external address string or an
-external account object: `{ type: "External", address: "..." }`.
+Create destinations are validated against the requested chain before the SDK
+creates a loan. Use `"BTC"` for L1 BTC, `"ETH"` for L1 ETH stablecoins, and
+`"ICP"` for ICP-native or ck-ledger destinations.
 
-`collateralAmount` and `borrowAmount` are in each asset's base units.
-`collateralAmount` is the intended credited collateral target before
-deposit/inflow fees; use `loan.initialDeposit.amount` as the amount to transfer
-after creation. Use pool `decimals` and the quote module when building UI inputs.
+Destination families:
+
+| Asset path | Chain | Valid destination family |
+| --- | --- | --- |
+| BTC L1 | `"BTC"` | BTC mainnet chain address |
+| ETH L1 USDC/USDT | `"ETH"` | EVM chain address |
+| ICP native | `"ICP"` | IC principal, ICRC account, or ICP account identifier |
+| ckBTC, ckUSDC, ckUSDT | `"ICP"` | IC principal |
+
+Use typed destination objects when preventing fund-loss mistakes matters:
+`{ type: "ChainAddress", address: "..." }`,
+`{ type: "IcPrincipal", address: "..." }`,
+`{ type: "IcrcAccount", address: "..." }`, or
+`{ type: "IcpAccountIdentifier", address: "..." }`. The SDK rejects mismatched
+families such as an ETH L1 address for a ck-ledger destination or a BTC/EVM
+address for an ICP native destination before any create request is sent.
+
+`collateral.amount` and `borrow.amount` are in each asset's base units.
+`collateral.amount` is the intended credited collateral target before
+deposit/inflow fees; use the selected initial-deposit quote's `amount` after
+creation. Use pool `decimals` and the quote module when building UI inputs.
 Keep the initial loan LTV under the SDK's instant-loan starting-LTV guard and set
 `ltvMaxBps` within the collateral pool's accepted max-LTV range.
 
-If the target is a native address, show `target.address`. If it is an ICRC
-account, show `target.account`.
+Every public supply target has a primary `address`. Native ICP targets may also
+include `icpAccountIdentifier` for legacy ledger integrations.
 
 ```ts
-const depositAddress =
-  depositTarget.type === "nativeAddress"
-    ? depositTarget.address
-    : depositTarget.account;
+const depositAddress = initialDeposit?.target.address;
 ```
 
 Transfer targets also include `poolId`, `asset`, `chain`, and `action`. Use
@@ -460,13 +477,9 @@ Restore a loan by `ref` whenever possible:
 
 ```ts
 const loan = await client.instantLoans.get({ ref: "8Y9AQQ" });
-const repayAmount = loan.repayment.amount;
-const repayAddress =
-  repayAmount === 0n
-    ? null
-    : loan.repayment.target.type === "nativeAddress"
-      ? loan.repayment.target.address
-      : loan.repayment.target.account;
+const repayment = loan.repayment.targets.ETH;
+const repayAmount = repayment?.amount ?? 0n;
+const repayAddress = repayAmount > 0n ? repayment?.target.address : null;
 ```
 
 Use search only as recovery when the user lost the loan reference:
@@ -490,11 +503,11 @@ after collateral arrives.
 
 Instant loan status is UI-facing:
 
-- `{ operation: "deposit", state: "action_required" }`: show `loan.initialDeposit.target` and the deposit deadline
+- `{ operation: "deposit", state: "action_required" }`: show the selected initial-deposit quote and deadline
 - `{ operation: "deposit", state: "confirming" }`: show deposit confirmation progress
 - `{ operation: "deposit", state: "processing" }`: keep polling while Liquidium processes the confirmed collateral
 - `{ operation: "borrow", state: "processing" }`: keep polling while the borrow outflow is created
-- `{ operation: "repayment", state: "active" }`: show `loan.repayment.amount` and `loan.repayment.target`
+- `{ operation: "repayment", state: "active" }`: show the selected repayment quote
 - `{ operation: "repayment", state: "confirming" }`: show repayment confirmation progress
 - `{ operation: "repayment", state: "processing" }`: keep polling while Liquidium applies the repayment
 - `{ operation: "repayment", state: "completed" }`: show final state and stop prompting for repayment
@@ -571,7 +584,11 @@ const outflow = await client.lending.borrow({
   profileId,
   poolId: quote.borrowPoolId,
   amount: quote.borrowAmount,
-  receiverAddress,
+  chain: "ETH",
+  receiver: {
+    type: "ChainAddress",
+    address: destinationAddress,
+  },
   signerWalletAddress: walletAddress,
   signerChain: "ETH",
   signerWalletAdapter: {
@@ -580,7 +597,7 @@ const outflow = await client.lending.borrow({
 });
 
 // `outflow.id` is the outflow reference assigned by the canister. `outflow.txid`
-// may be null until the canister broadcasts the on-chain transaction. The SDK
+// may be undefined until the canister broadcasts the on-chain transaction. The SDK
 // does not poll for the txid; consumers should display `outflow.id` immediately
 // and resolve the txid separately if needed.
 ```
@@ -595,12 +612,10 @@ const supplyFlow = await client.lending.supply({
   profileId,
   poolId,
   action: "deposit",
+  chain: "BTC",
 });
 
-if (
-  supplyFlow.type === "transfer" &&
-  supplyFlow.target.type === "nativeAddress"
-) {
+if (supplyFlow.type === "transfer") {
   const depositAddress = supplyFlow.target.address;
 }
 
@@ -625,6 +640,7 @@ const autoBroadcastFlow = await client.lending.supply({
   profileId,
   poolId,
   action: "deposit",
+  chain: "BTC",
   amount: 100_000n,
   account: walletAddress,
   walletAdapter: {
@@ -643,6 +659,7 @@ const supplyFlow = await client.lending.supply({
   profileId,
   poolId,
   action: "deposit",
+  chain: "ETH",
   account: walletAddress,
   amount: 10_000_000n,
   walletAdapter: {
@@ -661,7 +678,7 @@ contract-interaction flow.
 ETH USDT/USDC deposit-address supply uses the ETH deposit-address canister
 directly. It does not require `apiBaseUrl` for target resolution.
 
-For `mechanism: "transfer"`, the SDK resolves the deposit address by calling:
+For the default transfer mechanism (omit `mechanism`), the SDK resolves the deposit address by calling:
 
 ```ts
 get_deposit_address(
@@ -705,6 +722,7 @@ const contractInteractionFlow = await client.lending.supply({
   profileId,
   poolId,
   action: "deposit",
+  chain: "ETH",
   mechanism: "contractInteraction",
   account: walletAddress,
   amount: 10_000_000n,
@@ -715,7 +733,7 @@ const contractInteractionFlow = await client.lending.supply({
 });
 ```
 
-`mechanism: "transfer"` keeps the deposit-address path explicit. `mechanism: "contractInteraction"` requires `apiBaseUrl`, `evmRpcUrl` or `evmPublicClient`, `account`, `amount`, and `sendEthTransaction`.
+Omitting `mechanism` selects the transfer path. `mechanism: "contractInteraction"` requires `apiBaseUrl`, `evmRpcUrl` or `evmPublicClient`, `account`, `amount`, and `sendEthTransaction`.
 
 ## Common Mistakes
 
@@ -737,7 +755,7 @@ const contractInteractionFlow = await client.lending.supply({
 16. Do not trust address lookup as canonical loan state. Use it to find candidates, then hydrate the selected loan through `instantLoans.get(...)`.
 17. Do not confuse deposit/supply targets with repayment targets. They are generated for different inflow actions and may be different addresses/accounts.
 18. Do not render raw `rateDecimals = 27` fixed-point values as percentages. Format scaled rates first or the UI can show scientific notation such as `3.7e+24%`.
-19. Do not model `loan.repayment` as nullable. It is always present; check `loan.repayment.amount > 0n` before prompting repayment.
+19. Do not model `loan.repayment` as nullable. Select the desired chain quote and check its `amount > 0n` before prompting repayment.
 20. Do not use removed instant-loan fields: `loan.depositTarget`, `loan.repayTarget`, `loan.ltvMaxBps`, or `loan.depositWindowSeconds`.
 
 ## Preferred Style
@@ -754,7 +772,7 @@ const contractInteractionFlow = await client.lending.supply({
 - Start with `new LiquidiumClient({})` for market reads and authless `instantLoans.create(...)`
 - Override `apiBaseUrl` only when the app uses a custom Liquidium service deployment
 - Add `evmRpcUrl` or `evmPublicClient` when the requested flow reads Ethereum chain state
-- Use `chain: "ETH"` or `chain: "BTC"` exactly as required by the SDK
+- Use `chain: "BTC"`, `chain: "ETH"`, or `chain: "ICP"` as required by the selected Chain + Asset pair
 - Prefer a quote-first flow for advanced profile-based borrowing
 - Prefer the BTC payment address when the wallet exposes both ordinals and payment addresses
 

@@ -5,8 +5,12 @@ import { vi } from "vitest";
 export const LONG_RETRY_TEST_TIMEOUT_MS = 15_000;
 export const BTC_POOL_ID = "hkmli-faaaa-aaaar-qb4ba-cai";
 export const USDT_POOL_ID = "hnnn4-iyaaa-aaaar-qb4bq-cai";
-export const USDC_POOL_ID = "ryjl3-tyaaa-aaaaa-aaaba-cai";
+export const USDC_POOL_ID = "6sna2-oiaaa-aaaar-qb66q-cai";
+export const ICP_POOL_ID = "r2pk3-4yaaa-aaaar-qb7zq-cai";
 export const VALID_BTC_OUTFLOW_ADDRESS = "1BoatSLRHtKNngkdXEeobR76b53LETtpyT";
+export const VALID_IC_PRINCIPAL = "aaaaa-aa";
+export const VALID_ICP_ACCOUNT_IDENTIFIER =
+  "2d0e897f7e862d2b57d9bc9ea5c65f9a24ac6c074575f47898314b8d6cb0929d";
 export const LOWERCASE_EVM_OUTFLOW_ADDRESS =
   "0x52908400098527886e0f7030069857d2e4169ee7";
 export const CHECKSUM_EVM_OUTFLOW_ADDRESS =
@@ -78,6 +82,66 @@ export function createBtcPoolRecord(poolId = BTC_POOL_ID) {
     borrow_cap: [],
     total_debt_at_last_sync: 0n,
     chain: { BTC: null },
+    rate_slope_after: 2n,
+    reserve_factor: 100n,
+    last_updated: [],
+    lending_index: 300n,
+    protocol_liquidation_fee: 50n,
+    borrow_index: 400n,
+    base_rate: 5n,
+    frozen: false,
+    liquidation_bonus: 200n,
+    liquidation_threshold: 7_500n,
+    max_ltv: 7_000n,
+    total_supply_at_last_sync: 50_000n,
+  };
+}
+
+export function createUsdcPoolRecord(poolId = USDC_POOL_ID) {
+  return {
+    optimal_utilization_rate: 80n,
+    principal: {
+      toString: () => poolId,
+      toText: () => poolId,
+    },
+    total_generated_interest_snapshot: 0n,
+    supply_cap: [],
+    same_asset_borrowing: [],
+    asset: { USDC: null },
+    rate_slope_before: 1n,
+    borrow_cap: [],
+    total_debt_at_last_sync: 0n,
+    chain: { ETH: null },
+    rate_slope_after: 2n,
+    reserve_factor: 100n,
+    last_updated: [],
+    lending_index: 300n,
+    protocol_liquidation_fee: 50n,
+    borrow_index: 400n,
+    base_rate: 5n,
+    frozen: false,
+    liquidation_bonus: 200n,
+    liquidation_threshold: 7_500n,
+    max_ltv: 7_000n,
+    total_supply_at_last_sync: 50_000n,
+  };
+}
+
+export function createIcpPoolRecord(poolId = ICP_POOL_ID) {
+  return {
+    optimal_utilization_rate: 80n,
+    principal: {
+      toString: () => poolId,
+      toText: () => poolId,
+    },
+    total_generated_interest_snapshot: 0n,
+    supply_cap: [],
+    same_asset_borrowing: [],
+    asset: { ICP: null },
+    rate_slope_before: 1n,
+    borrow_cap: [],
+    total_debt_at_last_sync: 0n,
+    chain: { ICP: null },
     rate_slope_after: 2n,
     reserve_factor: 100n,
     last_updated: [],

@@ -1,6 +1,7 @@
 import type {
   ActivityFilter,
   GetActivityStatusResponse,
+  LiquidiumAccountInput,
   OutflowDetails,
   Pool,
   SupplyFlow,
@@ -30,11 +31,18 @@ type SubmitContractInteractionRepaymentParams = {
   walletAdapter: WalletAdapter;
 };
 
+type CreateCkTransferTargetParams = {
+  profileId: string;
+  poolId: string;
+  action: SupplyAction;
+};
+
 type BorrowWithWalletParams = {
   profileId: string;
   poolId: string;
   amount: bigint;
-  receiverAddress: string;
+  chain: Chain;
+  receiver: LiquidiumAccountInput;
   signerWalletAddress: string;
   signerWalletAdapter: WalletAdapter;
 };
@@ -43,7 +51,8 @@ type WithdrawWithWalletParams = {
   profileId: string;
   poolId: string;
   amount: bigint;
-  receiverAddress: string;
+  chain: Chain;
+  receiver: LiquidiumAccountInput;
   signerWalletAddress: string;
   signerWalletAdapter: WalletAdapter;
 };
@@ -96,6 +105,7 @@ export async function submitContractInteractionSupply({
     profileId,
     poolId,
     action: SupplyAction.deposit,
+    chain: Chain.ETH,
     mechanism: SupplyPlanType.contractInteraction,
     account,
     amount,
@@ -114,6 +124,7 @@ export async function submitContractInteractionRepayment({
     profileId,
     poolId,
     action: SupplyAction.repayment,
+    chain: Chain.ETH,
     mechanism: SupplyPlanType.contractInteraction,
     account,
     amount,
@@ -121,11 +132,25 @@ export async function submitContractInteractionRepayment({
   });
 }
 
+export async function createCkTransferTarget({
+  profileId,
+  poolId,
+  action,
+}: CreateCkTransferTargetParams): Promise<SupplyFlow> {
+  return await createClient().lending.supply({
+    profileId,
+    poolId,
+    action,
+    chain: Chain.ICP,
+  });
+}
+
 export async function borrowWithWallet({
   profileId,
   poolId,
   amount,
-  receiverAddress,
+  chain,
+  receiver,
   signerWalletAddress,
   signerWalletAdapter,
 }: BorrowWithWalletParams): Promise<OutflowDetails> {
@@ -133,7 +158,8 @@ export async function borrowWithWallet({
     profileId,
     poolId,
     amount,
-    receiverAddress,
+    chain,
+    receiver,
     signerWalletAddress,
     signerChain: Chain.ETH,
     signerWalletAdapter,
@@ -144,7 +170,8 @@ export async function withdrawWithWallet({
   profileId,
   poolId,
   amount,
-  receiverAddress,
+  chain,
+  receiver,
   signerWalletAddress,
   signerWalletAdapter,
 }: WithdrawWithWalletParams): Promise<OutflowDetails> {
@@ -152,7 +179,8 @@ export async function withdrawWithWallet({
     profileId,
     poolId,
     amount,
-    receiverAddress,
+    chain,
+    receiver,
     signerWalletAddress,
     signerChain: Chain.ETH,
     signerWalletAdapter,

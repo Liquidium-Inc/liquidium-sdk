@@ -1,11 +1,5 @@
-import type { Chain } from "./types";
-
-/** Asset transfer path used for wallet-executed actions. */
-export const TransferMode = {
-  native: "native",
-} as const;
-/** Asset transfer path used for wallet-executed actions. */
-export type TransferMode = (typeof TransferMode)[keyof typeof TransferMode];
+import type { IcrcAccount } from "./accounts";
+import type { Asset, SigningChain } from "./types";
 
 /** Wallet capability required to execute a prepared SDK action. */
 export const WalletExecutionKind = {
@@ -40,35 +34,31 @@ export interface EthTransactionRequest {
 /** Message-signing request passed to wallet adapters. */
 export interface SignMessageRequest {
   /** Chain for the signing wallet. */
-  chain: Chain;
+  chain: SigningChain;
   /** Plaintext message to sign. */
   message: string;
   /** Optional account override for the signing wallet. */
   account?: string;
   /** SDK action type that produced this request. */
   actionType: string;
-  /** Transfer path associated with the action. */
-  transferMode: TransferMode;
 }
 
 /** ETH transaction-sending request passed to wallet adapters. */
 export interface SendEthTransactionRequest {
   /** ETH chain discriminator. */
-  chain: Extract<Chain, "ETH">;
+  chain: "ETH";
   /** Transaction payload to send. */
   transaction: EthTransactionRequest;
   /** Optional account override for the sending wallet. */
   account?: string;
   /** SDK action type that produced this request. */
   actionType: string;
-  /** Transfer path associated with the action. */
-  transferMode: TransferMode;
 }
 
 /** BTC transaction-sending request passed to wallet adapters. */
 export interface SendBtcTransactionRequest {
   /** BTC chain discriminator. */
-  chain: Extract<Chain, "BTC">;
+  chain: "BTC";
   /** Recipient BTC address. */
   toAddress: string;
   /** Amount in satoshis when the SDK knows the transfer amount. */
@@ -77,16 +67,43 @@ export interface SendBtcTransactionRequest {
   account?: string;
   /** SDK action type that produced this request. */
   actionType: string;
-  /** Transfer path associated with the action. */
-  transferMode: TransferMode;
+}
+
+/** ICRC ledger transfer payload passed to wallet adapters. */
+export interface IcrcTransferDetails {
+  /** Ledger canister principal that should receive the transfer call. */
+  ledgerCanisterId: string;
+  /** Recipient ICRC account. */
+  to: IcrcAccount;
+  /** Transfer amount in ledger base units. */
+  amount: bigint;
+  /** Optional ledger fee in base units. */
+  fee?: bigint;
+  /** Optional ledger memo bytes. */
+  memo?: Uint8Array;
+}
+
+/** ICRC transaction-sending request passed to wallet adapters. */
+export interface SendIcrcTransferRequest {
+  /** ICRC transfers are submitted on the Internet Computer. */
+  chain: "ICP";
+  /** Asset represented by the target ledger transfer. */
+  asset: Asset;
+  /** Transfer details for the ledger call. */
+  transfer: IcrcTransferDetails;
+  /** Optional account override for the sending wallet. */
+  account?: string;
+  /** SDK action type that produced this request. */
+  actionType: string;
 }
 
 /**
  * Optional wallet capabilities. Implement only what your flow uses:
  *
  * - `signMessage` - account creation, borrow, withdraw
- * - `sendBtcTransaction` / `sendEthTransaction` - automated transfer-path supply
- * - `sendEthTransaction` - contract-interaction supply and ETH native sends
+ * - `sendBtcTransaction` / `sendEthTransaction` - automated native-asset transfer supply
+ * - `sendIcrcTransfer` - automated ck-ledger and ICP ledger transfer supply
+ * - `sendEthTransaction` - contract-interaction supply and ETH native-asset sends
  */
 export interface WalletAdapter {
   /** Signs an SDK plaintext message and returns the wallet signature. BTC adapters may return base64 BIP-322 or hex-encoded signature bytes. */
@@ -95,6 +112,8 @@ export interface WalletAdapter {
   sendEthTransaction?: (request: SendEthTransactionRequest) => Promise<string>;
   /** Sends a BTC transaction and returns its transaction id. */
   sendBtcTransaction?: (request: SendBtcTransactionRequest) => Promise<string>;
+  /** Sends an ICRC ledger transfer and returns the ledger transaction reference. */
+  sendIcrcTransfer?: (request: SendIcrcTransferRequest) => Promise<string>;
 }
 
 /** Signature payload submitted to a sign-message action. */
@@ -102,7 +121,7 @@ export interface SignatureInfo {
   /** Wallet signature over the action message. BTC signatures may be base64 BIP-322 or hex-encoded bytes. */
   signature: string;
   /** Chain used to produce the signature. */
-  chain: Chain;
+  chain: SigningChain;
   /** Account that produced the signature, when different from the action default. */
   account?: string;
 }
@@ -115,8 +134,6 @@ export interface SignMessageWalletAction<TData, TResult> {
   executionKind: typeof WalletExecutionKind.signMessage;
   /** Adapter-facing action type. */
   actionType: string;
-  /** Transfer path associated with the action. */
-  transferMode: TransferMode;
   /** Default account to pass to the wallet adapter. */
   account: string;
   /** Plaintext message that must be signed. */
@@ -129,7 +146,3 @@ export interface SignMessageWalletAction<TData, TResult> {
 
 /** Any prepared action returned by SDK methods and executable by {@link executeWith}. */
 export type WalletAction<TResult> = SignMessageWalletAction<unknown, TResult>;
-
-// Future extension point:
-// native ICP and native Solana wallet capabilities will be added in a later
-// version once those chains are supported by the SDK.

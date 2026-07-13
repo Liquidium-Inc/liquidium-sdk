@@ -71,6 +71,7 @@ export async function submitBtcSupply({
     profileId,
     poolId,
     action,
+    chain: Chain.BTC,
     account,
     amount,
     walletAdapter,

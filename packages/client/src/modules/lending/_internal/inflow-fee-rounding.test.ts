@@ -76,6 +76,40 @@ describe("roundInflowFeeEstimate", () => {
     expect(result).toBe(BTC_FEE_ESTIMATE_SATS);
   });
 
+  test("should not round ckBTC ledger fees", () => {
+    // given
+    const CKBTC_LEDGER_FEE_SATS = 10n;
+
+    // when
+    const result = roundInflowFeeEstimate(
+      {
+        asset: Asset.BTC,
+        chain: Chain.ICP,
+      },
+      CKBTC_LEDGER_FEE_SATS
+    );
+
+    // then
+    expect(result).toBe(CKBTC_LEDGER_FEE_SATS);
+  });
+
+  test("should not round ckUSDC ledger fees", () => {
+    // given
+    const CKUSDC_LEDGER_FEE = 10_000n;
+
+    // when
+    const result = roundInflowFeeEstimate(
+      {
+        asset: Asset.USDC,
+        chain: Chain.ICP,
+      },
+      CKUSDC_LEDGER_FEE
+    );
+
+    // then
+    expect(result).toBe(CKUSDC_LEDGER_FEE);
+  });
+
   test("should return zero for zero or negative inflow fee estimates", () => {
     // given
     const ZERO_FEE_ESTIMATE = 0n;
@@ -95,19 +129,5 @@ describe("roundInflowFeeEstimate", () => {
     // then
     expect(zeroResult).toBe(EXPECTED_FEE);
     expect(negativeResult).toBe(EXPECTED_FEE);
-  });
-
-  test("should return unsupported asset pairs unchanged", () => {
-    // given
-    const SOL_FEE_ESTIMATE = 123_456n;
-
-    // when
-    const result = roundInflowFeeEstimate(
-      { asset: Asset.SOL, chain: Chain.ETH },
-      SOL_FEE_ESTIMATE
-    );
-
-    // then
-    expect(result).toBe(SOL_FEE_ESTIMATE);
   });
 });

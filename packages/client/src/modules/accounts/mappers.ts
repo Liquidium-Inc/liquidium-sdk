@@ -1,6 +1,6 @@
 import type { RegisterProfileRequest } from "../../core/canisters/lending/actor";
 import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
-import { Chain } from "../../core/types";
+import { Chain, type SigningChain } from "../../core/types";
 import { normalizeWalletSignature } from "../../core/utils/signature";
 import type { CreateAccountRequest } from "./types";
 
@@ -45,7 +45,7 @@ export function mapCreateAccountRequestToRegisterProfileRequest(
 }
 
 function mapAccountChainToLendingChainVariant(
-  chain: Chain
+  chain: SigningChain
 ): AccountChainVariant {
   switch (chain) {
     case Chain.BTC:

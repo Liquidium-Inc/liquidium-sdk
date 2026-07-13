@@ -49,8 +49,10 @@ describeLive("live instant loans e2e", () => {
     expect(loan.profileId).toBeTruthy();
     expect(loan.status.operation).toBe("deposit");
     expect(loan.borrow.asset).toBe(borrowPool.asset);
-    expect(loan.initialDeposit.target).toBeTruthy();
-    expect(loan.repayment.target).toBeTruthy();
+    expect(loan.initialDeposit.targets.BTC?.target).toBeTruthy();
+    expect(loan.initialDeposit.targets.ICP?.target).toBeTruthy();
+    expect(loan.repayment.targets.ETH?.target).toBeTruthy();
+    expect(loan.repayment.targets.ICP?.target).toBeTruthy();
     expect(loanById.loanId).toBe(loan.loanId);
     expect(loanByRef.loanId).toBe(loan.loanId);
   });
@@ -109,15 +111,23 @@ async function createLiveInstantLoan(params: {
   }
 
   return await params.client.instantLoans.create({
-    collateralPoolId: params.collateralPool.id,
-    borrowPoolId: params.borrowPool.id,
-    collateralAsset: "BTC",
-    borrowAsset: params.borrowPool.asset as "USDC" | "USDT",
-    collateralAmount: quote.requiredCollateralAmount,
-    borrowAmount,
+    collateral: {
+      poolId: params.collateralPool.id,
+      asset: "BTC",
+      amount: quote.requiredCollateralAmount,
+    },
+    borrow: {
+      poolId: params.borrowPool.id,
+      asset: params.borrowPool.asset as "USDC" | "USDT",
+      amount: borrowAmount,
+      chain: "ETH",
+      destination: evmAddress,
+    },
+    refund: {
+      chain: "BTC",
+      destination: bitcoinAddress,
+    },
     ltvMaxBps: quote.targetLtvBps + INSTANT_LOAN_LTV_BUFFER_BPS,
     depositWindowSeconds: DEFAULT_DEPOSIT_WINDOW_SECONDS,
-    borrowDestination: evmAddress,
-    refundDestination: bitcoinAddress,
   });
 }

@@ -94,7 +94,6 @@ function BtcInteractionsPage() {
   }
 
   async function submitBtcInteraction(): Promise<void> {
-    const account = getConnectedBitcoinAddress(primaryWallet);
     const selectedPool = getSelectedBtcPool(btcPools, selectedPoolId);
     const amount = parseAmountToBaseUnits(supplyAmount, selectedPool.decimals);
     const trimmedProfileId = profileId.trim();
@@ -110,28 +109,29 @@ function BtcInteractionsPage() {
       profileId: trimmedProfileId,
       poolId: selectedPool.id,
       action: supplyAction,
-      account,
+      account: getConnectedBitcoinAddress(primaryWallet),
       amount,
       walletAdapter: createDynamicBitcoinWalletAdapter(primaryWallet),
     });
 
-    if (supplyFlow.txid) {
-      saveRecentActivityId(supplyFlow.txid);
+    if (!supplyFlow.txid) {
+      throw new Error("BTC wallet transaction did not return a txid.");
     }
+
+    saveRecentActivityId(supplyFlow.txid);
 
     setSupplyResult(
       [
         `Sent amount: ${formatAmount(amount, selectedPool.decimals)} ${selectedPool.asset}`,
         `Action: ${supplyAction}`,
+        "Transfer chain: Native BTC wallet transaction",
         "",
         formatBtcSupplyFlow(supplyFlow, supplyAction),
         "",
         "Use the txid on the Activity tracker page to follow status.",
       ].join("\n")
     );
-    setStatus(
-      `Submitted BTC ${supplyAction} ${supplyFlow.txid ?? "without txid"}.`
-    );
+    setStatus(`Submitted BTC ${supplyAction} ${supplyFlow.txid}.`);
   }
 
   return (

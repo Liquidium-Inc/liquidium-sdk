@@ -42,7 +42,6 @@ describe("AccountsModule", () => {
     expect(createAction.kind).toBe("create-account");
     expect(createAction.executionKind).toBe("sign-message");
     expect(createAction.actionType).toBe("create-account");
-    expect(createAction.transferMode).toBe("native");
     expect(createAction.account).toBe("0xabc");
     expect(createAction.message).toContain("Liquidium: Initialize Account");
     expect(profileId).toBe("ccccc-cc");
@@ -79,7 +78,6 @@ describe("AccountsModule", () => {
     expect(profileId).toBe("ccccc-cc");
     expect(signMessage).toHaveBeenCalledWith({
       actionType: "create-account",
-      transferMode: "native",
       chain: "ETH",
       message: expect.stringContaining("Liquidium: Initialize Account"),
       account: "0xabc",
@@ -347,6 +345,29 @@ describe("AccountsModule", () => {
     ).rejects.toMatchObject({
       code: LiquidiumErrorCode.INTERNAL,
       message: "Unsupported wallet chain returned for profile wallet: SOL",
+    });
+  });
+
+  test("rejects ICP as a profile signing wallet chain", async () => {
+    // given
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      get_profile_wallets: vi.fn().mockResolvedValue([
+        {
+          address: "aaaaa-aa",
+          chain: { Wallet: { ICP: null } },
+        },
+      ]),
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+
+    // then
+    await expect(
+      client.accounts.listLinkedWallets("aaaaa-aa")
+    ).rejects.toMatchObject({
+      code: LiquidiumErrorCode.INTERNAL,
+      message: "Unsupported wallet chain returned for profile wallet: ICP",
     });
   });
 });

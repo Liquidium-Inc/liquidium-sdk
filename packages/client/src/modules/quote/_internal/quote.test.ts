@@ -10,7 +10,7 @@ describe("QuoteModule", () => {
   const btcPool: Pool = {
     id: "aaaaa-btc-pool",
     asset: "BTC",
-    chain: "Bitcoin",
+    chain: "BTC",
     decimals: 8n,
     frozen: false,
     totalSupply: 100000000000n,
@@ -37,7 +37,7 @@ describe("QuoteModule", () => {
   const usdtPool: Pool = {
     id: "xxxxx-usdt-pool",
     asset: "USDT",
-    chain: "Ethereum",
+    chain: "ETH",
     decimals: 6n,
     frozen: false,
     totalSupply: 500000000000n,
@@ -163,29 +163,29 @@ describe("QuoteModule", () => {
 
   test("should use pool decimals for quote calculations", () => {
     // given
-    const ETH_BASE_UNITS_PER_TOKEN = 1_000_000_000_000_000_000n;
-    const ethPool: Pool = {
+    const TOKEN_BASE_UNITS = 1_000_000_000_000_000_000n;
+    const highPrecisionUsdcPool: Pool = {
       ...usdtPool,
-      id: "eeee-eth-pool",
-      asset: "ETH",
+      id: "eeee-usdc-pool",
+      asset: "USDC",
       decimals: 18n,
     };
     const request = {
-      borrowAmount: ETH_BASE_UNITS_PER_TOKEN,
-      borrowPoolId: ethPool.id,
+      borrowAmount: TOKEN_BASE_UNITS,
+      borrowPoolId: highPrecisionUsdcPool.id,
       collateralPoolId: btcPool.id,
       targetLtvBps: 5_000n,
     };
-    const pricesWithEth: AssetPrices = {
+    const pricesWithUsdc: AssetPrices = {
       ...prices,
-      ETH: 2_500,
+      USDC: 2_500,
     };
 
     // when
     const result = quoteModule.getQuote(
       request,
-      [btcPool, ethPool],
-      pricesWithEth
+      [btcPool, highPrecisionUsdcPool],
+      pricesWithUsdc
     );
 
     // then
@@ -453,21 +453,21 @@ describe("QuoteModule", () => {
 
   test("returns error when price not available", () => {
     // given
-    const ethPool: Pool = {
+    const usdcPool: Pool = {
       ...usdtPool,
-      id: "eeee-eth-pool",
-      asset: "ETH",
-      chain: "Ethereum",
+      id: "eeee-usdc-pool",
+      asset: "USDC",
+      chain: "ETH",
     };
     const request = {
       borrowAmount: 100000000n,
-      borrowPoolId: "eeee-eth-pool",
+      borrowPoolId: usdcPool.id,
       collateralPoolId: "aaaaa-btc-pool",
       targetLtvBps: 5000n,
     };
 
     // when
-    const result = quoteModule.getQuote(request, [btcPool, ethPool], prices);
+    const result = quoteModule.getQuote(request, [btcPool, usdcPool], prices);
 
     // then
     expect(result.validationErrors).toHaveLength(1);

@@ -1,5 +1,8 @@
-import { encodeIcrcAccount } from "@icp-sdk/canisters/ledger/icrc";
 import { Principal } from "@icp-sdk/core/principal";
+import {
+  createIcrcAccount,
+  encodeIcpAccountIdentifier,
+} from "../../../core/accounts";
 import { createCkBtcMinterActor } from "../../../core/canisters/ckbtc/minter";
 import {
   createDepositAccountsActor,
@@ -16,97 +19,88 @@ import {
   USDT_CONTRACT_ADDRESS,
 } from "../../../core/evm";
 import type { CanisterContext } from "../../../core/transports/canister-context";
-import { Asset, Chain, type SupplyAction } from "../../../core/types";
-import { encodeInflowSubaccount } from "../../../core/utils/inflow-subaccount";
 import {
-  type IcrcAccountSupplyTarget,
-  type NativeAddressSupplyTarget,
-  SupplyPlanType,
-  type SupplyTarget,
-} from "../types";
+  Asset,
+  type AssetIdentifier,
+  Chain,
+  type SupplyAction,
+} from "../../../core/types";
+import { encodeInflowSubaccount } from "../../../core/utils/inflow-subaccount";
+import { SupplyPlanType, type SupplyTarget } from "../types";
 
-export type SupplyMechanism = SupplyPlanType;
-
-export interface InternalSupplyTargetRequest {
+export interface ResolveSupplyTargetRequest {
   profileId: string;
   poolId: string;
   action: SupplyAction;
-  mechanism?: SupplyMechanism;
+  mechanism: SupplyPlanType | null;
+  chain?: Chain;
 }
 
-interface SupplyTargetRequest {
+type SupplyTargetRequest = AssetIdentifier & {
   poolId: string;
-  asset: string;
-  chain: string;
   action: SupplyAction;
-}
+};
 
 interface ResolveSupplyMechanismParams {
-  asset: string;
-  chain: string;
-  requestedMechanism?: SupplyMechanism;
+  identifier: AssetIdentifier;
+  mechanism: SupplyPlanType | null;
 }
 
-export async function resolveSupplyTarget(
+export async function resolveSupplyTargetForPool(
   canisterContext: CanisterContext,
-  request: InternalSupplyTargetRequest
+  request: ResolveSupplyTargetRequest,
+  selectedPool: DecodedPool
 ): Promise<SupplyTarget> {
-  const selectedPool = await getPoolById(canisterContext, request.poolId);
-  const asset = selectedPool.asset;
-  const chain = selectedPool.chain;
-  const mechanism = resolveSupplyMechanism({
-    asset,
-    chain,
-    requestedMechanism: request.mechanism,
+  const identifier = resolveSupplyAssetIdentifier({
+    asset: selectedPool.asset,
+    poolChain: selectedPool.chain,
+    transferChain: request.chain ?? selectedPool.chain,
   });
+  const mechanism = resolveSupplyMechanism({
+    identifier,
+    mechanism: request.mechanism,
+  });
+  const targetRequest: SupplyTargetRequest = {
+    ...identifier,
+    poolId: request.poolId,
+    action: request.action,
+  };
 
-  switch (mechanism) {
-    case SupplyPlanType.transfer:
-      return await getNativeAddressSupplyTarget(
-        canisterContext,
-        request.profileId,
-        {
-          poolId: request.poolId,
-          asset,
-          chain,
-          action: request.action,
-        }
-      );
-    case SupplyPlanType.contractInteraction:
-      return getIcrcAccountSupplyTarget(request.profileId, {
-        poolId: request.poolId,
-        asset,
-        chain,
-        action: request.action,
-      });
+  if (mechanism === SupplyPlanType.contractInteraction) {
+    return getIcrcAccountSupplyTarget(request.profileId, targetRequest);
   }
+
+  if (identifier.chain === Chain.ICP) {
+    return identifier.asset === Asset.ICP
+      ? getIcpLedgerSupplyTarget(request.profileId, targetRequest)
+      : getIcrcAccountSupplyTarget(request.profileId, targetRequest);
+  }
+
+  return await getChainAddressSupplyTarget(
+    canisterContext,
+    request.profileId,
+    targetRequest
+  );
 }
 
-export function resolveSupplyMechanism(
+function resolveSupplyMechanism(
   params: ResolveSupplyMechanismParams
-): SupplyMechanism {
-  if (params.asset === Asset.BTC && params.chain === Chain.BTC) {
-    if (params.requestedMechanism === SupplyPlanType.contractInteraction) {
-      throw new LiquidiumError(
-        LiquidiumErrorCode.VALIDATION_ERROR,
-        "Contract-interaction supply is not supported for BTC on BTC"
-      );
-    }
-
+): SupplyPlanType {
+  if (params.mechanism !== SupplyPlanType.contractInteraction) {
     return SupplyPlanType.transfer;
   }
 
-  if (isEthStablecoin(params.asset, params.chain)) {
-    if (params.requestedMechanism) {
-      return params.requestedMechanism;
-    }
-
-    return SupplyPlanType.transfer;
+  if (
+    params.identifier.chain === Chain.ETH &&
+    (params.identifier.asset === Asset.USDC ||
+      params.identifier.asset === Asset.USDT)
+  ) {
+    return SupplyPlanType.contractInteraction;
   }
 
   throw new LiquidiumError(
     LiquidiumErrorCode.VALIDATION_ERROR,
-    `No supply mechanism is configured for ${params.asset} on ${params.chain}`
+    `Contract-interaction supply is not supported for ${params.identifier.asset} on ${params.identifier.chain}`
   );
 }
 
@@ -180,14 +174,14 @@ export function mapDepositAccountErrorToLiquidiumError(
   );
 }
 
-async function getPoolById(
+export async function getPoolById(
   canisterContext: CanisterContext,
   poolId: string
 ): Promise<DecodedPool> {
   const pools = await createFlexibleLendingActor(canisterContext).list_pools();
   const selectedPool = pools.find((pool) => pool.principal.toText() === poolId);
-
   const decodedPool = selectedPool ? decodeFlexiblePool(selectedPool) : null;
+
   if (!decodedPool) {
     throw new LiquidiumError(
       LiquidiumErrorCode.POOL_NOT_FOUND,
@@ -198,14 +192,58 @@ async function getPoolById(
   return decodedPool;
 }
 
-async function getNativeAddressSupplyTarget(
+interface ResolveSupplyAssetIdentifierParams {
+  asset: string;
+  poolChain: string;
+  transferChain: string;
+}
+
+function resolveSupplyAssetIdentifier(
+  params: ResolveSupplyAssetIdentifierParams
+): AssetIdentifier {
+  if (params.asset === Asset.BTC && params.poolChain === Chain.BTC) {
+    if (params.transferChain === Chain.BTC) {
+      return { asset: Asset.BTC, chain: Chain.BTC };
+    }
+
+    if (params.transferChain === Chain.ICP) {
+      return { asset: Asset.BTC, chain: Chain.ICP };
+    }
+  }
+
+  if (
+    (params.asset === Asset.USDC || params.asset === Asset.USDT) &&
+    params.poolChain === Chain.ETH
+  ) {
+    if (params.transferChain === Chain.ETH) {
+      return { asset: params.asset, chain: Chain.ETH };
+    }
+
+    if (params.transferChain === Chain.ICP) {
+      return { asset: params.asset, chain: Chain.ICP };
+    }
+  }
+
+  if (
+    params.asset === Asset.ICP &&
+    params.poolChain === Chain.ICP &&
+    params.transferChain === Chain.ICP
+  ) {
+    return { asset: Asset.ICP, chain: Chain.ICP };
+  }
+
+  throw new LiquidiumError(
+    LiquidiumErrorCode.VALIDATION_ERROR,
+    `Supply is not supported for ${params.asset} pool on ${params.poolChain} using ${params.transferChain}`
+  );
+}
+
+async function getChainAddressSupplyTarget(
   canisterContext: CanisterContext,
   profileId: string,
   request: SupplyTargetRequest
-): Promise<NativeAddressSupplyTarget> {
-  assertSupportsNativeAddressInflowTarget(request.asset, request.chain);
-
-  if (isEthStablecoin(request.asset, request.chain)) {
+): Promise<SupplyTarget> {
+  if (request.chain === Chain.ETH) {
     const tokenAddress = getEthStablecoinContractAddress(request.asset);
     const subaccount = encodeInflowSubaccount({
       action: request.action,
@@ -226,7 +264,6 @@ async function getNativeAddressSupplyTarget(
     }
 
     return {
-      type: "nativeAddress",
       poolId: request.poolId,
       asset: request.asset,
       chain: request.chain,
@@ -235,11 +272,11 @@ async function getNativeAddressSupplyTarget(
     };
   }
 
-  const configuredBtcPoolId = canisterContext.canisterIds.btcPool;
+  const configuredBtcPoolId = canisterContext.canisterIds.pools.btc;
   if (request.poolId !== configuredBtcPoolId) {
     throw new LiquidiumError(
       LiquidiumErrorCode.VALIDATION_ERROR,
-      `Native BTC inflow targets require the configured BTC pool ${configuredBtcPoolId}, received ${request.poolId}`
+      `Chain-address BTC inflow targets require the configured BTC pool ${configuredBtcPoolId}, received ${request.poolId}`
     );
   }
 
@@ -254,68 +291,54 @@ async function getNativeAddressSupplyTarget(
     }
   );
 
-  return {
-    type: "nativeAddress",
-    poolId: request.poolId,
-    asset: request.asset,
-    chain: request.chain,
-    action: request.action,
-    address,
-  };
+  return { ...request, address };
 }
 
 function getIcrcAccountSupplyTarget(
   profileId: string,
   request: SupplyTargetRequest
-): IcrcAccountSupplyTarget {
-  assertSupportsIcrcAccountInflowTarget(request.asset);
+): SupplyTarget {
+  const account = createInflowIcrcAccount(profileId, request);
 
+  return { ...request, address: account.address };
+}
+
+function getIcpLedgerSupplyTarget(
+  profileId: string,
+  request: SupplyTargetRequest
+): SupplyTarget {
   const poolPrincipal = Principal.fromText(request.poolId);
   const subaccount = encodeInflowSubaccount({
     action: request.action,
     principal: Principal.fromText(profileId),
   });
+  const account = createIcrcAccount({
+    owner: poolPrincipal,
+    subaccount,
+  });
 
   return {
-    type: "icrcAccount",
     poolId: request.poolId,
-    asset: request.asset,
-    chain: request.chain,
+    asset: Asset.ICP,
+    chain: Chain.ICP,
     action: request.action,
-    owner: poolPrincipal.toText(),
-    subaccount,
-    account: encodeIcrcAccount({
+    address: account.address,
+    icpAccountIdentifier: encodeIcpAccountIdentifier({
       owner: poolPrincipal,
       subaccount,
     }),
   };
 }
 
-function assertSupportsNativeAddressInflowTarget(
-  asset: string,
-  chain: string
-): void {
-  if (asset === Asset.BTC && chain === Chain.BTC) {
-    return;
-  }
-
-  if (isEthStablecoin(asset, chain)) {
-    return;
-  }
-
-  throw new LiquidiumError(
-    LiquidiumErrorCode.VALIDATION_ERROR,
-    `Native address inflow targets are not supported for ${asset} on ${chain}`
-  );
-}
-
-function assertSupportsIcrcAccountInflowTarget(asset: string): void {
-  if (asset === Asset.BTC || asset === Asset.USDT || asset === Asset.USDC) {
-    return;
-  }
-
-  throw new LiquidiumError(
-    LiquidiumErrorCode.VALIDATION_ERROR,
-    `ICRC account inflow targets are not supported for ${asset}`
-  );
+function createInflowIcrcAccount(
+  profileId: string,
+  request: SupplyTargetRequest
+) {
+  return createIcrcAccount({
+    owner: Principal.fromText(request.poolId),
+    subaccount: encodeInflowSubaccount({
+      action: request.action,
+      principal: Principal.fromText(profileId),
+    }),
+  });
 }

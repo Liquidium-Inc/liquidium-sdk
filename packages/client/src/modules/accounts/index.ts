@@ -5,6 +5,4 @@ export type {
   CreateAccountRequest,
   CreateProfileParams,
   PrepareCreateProfileOptions,
-  SignableAction,
-  SignatureInfo,
 } from "./types";

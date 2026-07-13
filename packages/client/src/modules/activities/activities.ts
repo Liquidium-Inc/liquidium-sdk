@@ -189,18 +189,15 @@ function mapInstantLoanLookupError(
 
 function mapActivity(wire: ActivityWire): Activity {
   const amount = parseBigInt(wire.amount, "activity amount");
-  const activityBase = {
-    id: wire.id,
-    poolId: wire.poolId,
-    asset: wire.asset,
-    chain: wire.chain,
-    amount,
-    timestampMs: wire.timestampMs,
-  };
 
   if (isInflowOperation(wire.status.operation)) {
     const activity: InflowActivity = {
-      ...activityBase,
+      id: wire.id,
+      poolId: wire.poolId,
+      asset: wire.asset,
+      chain: wire.chain,
+      amount,
+      timestampMs: wire.timestampMs,
       status: wire.status as InflowActivityStatus,
     };
 
@@ -217,7 +214,12 @@ function mapActivity(wire: ActivityWire): Activity {
 
   if (isOutflowOperation(wire.status.operation)) {
     const activity: OutflowActivity = {
-      ...activityBase,
+      id: wire.id,
+      poolId: wire.poolId,
+      asset: wire.asset,
+      chain: wire.chain,
+      amount,
+      timestampMs: wire.timestampMs,
       status: wire.status as OutflowActivityStatus,
     };
 

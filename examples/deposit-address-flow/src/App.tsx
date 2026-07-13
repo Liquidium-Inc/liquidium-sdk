@@ -6,7 +6,7 @@ import type {
   Pool,
   SupplyFlow,
 } from "@liquidium/client";
-import { Chain } from "@liquidium/client";
+import { Chain, SupplyAction } from "@liquidium/client";
 import { useEffect, useState } from "react";
 import { formatConfig } from "./client";
 import {
@@ -26,7 +26,7 @@ import {
 } from "./format";
 import {
   borrowWithWallet,
-  createDepositAddressSupply,
+  createSupplyFlow,
   getActivityStatus,
   getOrCreateWalletProfile,
   listProfileActivities,
@@ -49,6 +49,12 @@ function SupplyBorrowPage() {
   const [assetPrices, setAssetPrices] = useState<AssetPrices>({});
   const [profileId, setProfileId] = useState("");
   const [selectedSupplyPoolId, setSelectedSupplyPoolId] = useState("");
+  const [supplyAction, setSupplyAction] = useState<SupplyAction>(
+    SupplyAction.deposit
+  );
+  const [supplyChainSelection, setSupplyChainSelection] = useState<Chain>(
+    Chain.ETH
+  );
   const [selectedBorrowPoolId, setSelectedBorrowPoolId] = useState("");
   const [supplyAmount, setSupplyAmount] = useState("10");
   const [supplyTxid, setSupplyTxid] = useState("");
@@ -56,12 +62,15 @@ function SupplyBorrowPage() {
     null
   );
   const [supplyResult, setSupplyResult] = useState(
-    "No deposit address loaded yet."
+    "No deposit or repayment target loaded yet."
   );
   const [submitSupplyResult, setSubmitSupplyResult] = useState(
-    "Generate a deposit address first, then track the txid."
+    "Generate a deposit or repayment target first, then track the txid."
   );
   const [borrowAmount, setBorrowAmount] = useState("9");
+  const [borrowChainSelection, setBorrowChainSelection] = useState<Chain>(
+    Chain.ETH
+  );
   const [borrowDestination, setBorrowDestination] = useState("");
   const [borrowResult, setBorrowResult] = useState(
     "Connect a wallet, then submit a borrow."
@@ -96,6 +105,8 @@ function SupplyBorrowPage() {
       setSelectedBorrowPoolId(
         defaultBorrowPool?.id ?? loadedPools[0]?.id ?? ""
       );
+      setSupplyChainSelection(getDefaultChain(defaultSupplyPool));
+      setBorrowChainSelection(getDefaultChain(defaultBorrowPool));
       setStatus(`Loaded ${loadedPools.length} pools.`);
     }, setStatus);
   }, []);
@@ -109,12 +120,16 @@ function SupplyBorrowPage() {
       (pool) => pool.id === selectedBorrowPoolId
     );
 
-    if (!selectedBorrowPool || selectedBorrowPool.chain !== Chain.ETH) {
+    if (
+      !selectedBorrowPool ||
+      selectedBorrowPool.chain !== Chain.ETH ||
+      borrowChainSelection !== Chain.ETH
+    ) {
       return;
     }
 
     setBorrowDestination(walletAddress);
-  }, [walletAddress, selectedBorrowPoolId, pools]);
+  }, [walletAddress, selectedBorrowPoolId, borrowChainSelection, pools]);
 
   async function loadPools(): Promise<void> {
     setStatus("Loading pools...");
@@ -133,10 +148,12 @@ function SupplyBorrowPage() {
     setAssetPrices(loadedAssetPrices);
     setSelectedSupplyPoolId(defaultSupplyPool?.id ?? loadedPools[0]?.id ?? "");
     setSelectedBorrowPoolId(defaultBorrowPool?.id ?? loadedPools[0]?.id ?? "");
+    setSupplyChainSelection(getDefaultChain(defaultSupplyPool));
+    setBorrowChainSelection(getDefaultChain(defaultBorrowPool));
     setStatus(`Loaded ${loadedPools.length} pools.`);
   }
 
-  async function createSupplyTarget(): Promise<void> {
+  async function generateSupplyTarget(): Promise<void> {
     const selectedSupplyPool = getSelectedPool(pools, selectedSupplyPoolId);
     const parsedSupplyAmount = parseAmountToBaseUnits(
       supplyAmount,
@@ -148,32 +165,37 @@ function SupplyBorrowPage() {
       throw new Error("Enter a profile id.");
     }
 
-    setStatus("Generating deposit address...");
-    setSupplyResult("Generating deposit address...");
+    const actionLabel = formatSupplyAction(supplyAction);
 
-    const supplyFlow = await createDepositAddressSupply({
+    setStatus(`Generating ${actionLabel.toLowerCase()} target...`);
+    setSupplyResult(`Generating ${actionLabel.toLowerCase()} target...`);
+
+    const supplyFlow = await createSupplyFlow({
       profileId: trimmedProfileId,
       poolId: selectedSupplyPool.id,
+      action: supplyAction,
+      chain: supplyChainSelection,
     });
 
     setCurrentSupplyFlow(supplyFlow);
     setSupplyResult(
       [
-        `Send amount: ${formatAmount(parsedSupplyAmount, selectedSupplyPool.decimals)} ${selectedSupplyPool.asset}`,
+        `${actionLabel} amount to send: ${formatAmount(parsedSupplyAmount, selectedSupplyPool.decimals)} ${selectedSupplyPool.asset}`,
+        `Transfer chain: ${supplyChainSelection}`,
         "",
         formatSupplyTarget(supplyFlow.target),
         "",
         "After broadcasting the transfer, paste the txid below to track it.",
       ].join("\n")
     );
-    setStatus("Deposit address generated.");
+    setStatus(`${actionLabel} target generated.`);
   }
 
   async function submitSupplyTxid(): Promise<void> {
     const txid = supplyTxid.trim();
 
     if (!currentSupplyFlow) {
-      throw new Error("Generate a deposit address first.");
+      throw new Error("Generate a deposit or repayment target first.");
     }
 
     if (!txid) {
@@ -185,17 +207,19 @@ function SupplyBorrowPage() {
       return;
     }
 
-    setStatus("Registering supply txid...");
-    setSubmitSupplyResult("Registering txid...");
+    const actionLabel = formatSupplyAction(currentSupplyFlow.target.action);
+
+    setStatus(`Registering ${actionLabel.toLowerCase()} txid...`);
+    setSubmitSupplyResult(`Registering ${actionLabel.toLowerCase()} txid...`);
     const response = await registerSupplyTxid({
       supplyFlow: currentSupplyFlow,
       txid,
     });
     saveRecentActivityId(response.txid);
     setSubmitSupplyResult(
-      ["Supply txid registered.", `Txid: ${response.txid}`].join("\n")
+      [`${actionLabel} txid registered.`, `Txid: ${response.txid}`].join("\n")
     );
-    setStatus(`Registered supply txid ${response.txid}.`);
+    setStatus(`Registered ${actionLabel.toLowerCase()} txid ${response.txid}.`);
   }
 
   async function trackEthSupplyTxid(txid: string): Promise<void> {
@@ -239,10 +263,10 @@ function SupplyBorrowPage() {
       borrowAmount,
       selectedBorrowPool.decimals
     );
-    const receiverAddress = borrowDestination.trim();
+    const destinationAddress = borrowDestination.trim();
     const signerWalletAddress = getConnectedWalletAddress(primaryWallet);
 
-    if (!receiverAddress) {
+    if (!destinationAddress) {
       throw new Error("Enter a borrow destination address.");
     }
 
@@ -257,12 +281,19 @@ function SupplyBorrowPage() {
       profileId: result.profileId,
       poolId: selectedBorrowPool.id,
       amount: parsedBorrowAmount,
-      receiverAddress,
+      chain: borrowChainSelection,
+      receiver: destinationAddress,
       signerWalletAddress,
       signerWalletAdapter: createDynamicWalletAdapter(primaryWallet),
     });
     saveRecentActivityId(outflow.id);
-    setBorrowResult(formatOutflowDetails(outflow));
+    setBorrowResult(
+      [
+        `Transfer chain: ${borrowChainSelection}`,
+        "",
+        formatOutflowDetails(outflow),
+      ].join("\n")
+    );
     setStatus(`Submitted borrow ${outflow.id}.`);
   }
 
@@ -270,7 +301,7 @@ function SupplyBorrowPage() {
     <main>
       <nav className="page-switcher" aria-label="Example pages">
         <a className="page-switcher-link page-switcher-link-active" href="/">
-          Supply / borrow
+          Deposit / repay / borrow
         </a>
         <a className="page-switcher-link" href="/status.html">
           Activity tracker
@@ -279,8 +310,8 @@ function SupplyBorrowPage() {
 
       <h1>Liquidium Deposit Address Flow</h1>
       <p>
-        Create or load a profile, generate a deposit address for supply, then
-        borrow with a Dynamic-connected wallet.
+        Create or load a profile, generate a native or ck deposit or repayment
+        target, then borrow with a Dynamic-connected wallet.
       </p>
 
       <section>
@@ -338,12 +369,32 @@ function SupplyBorrowPage() {
       </section>
 
       <section>
-        <h2>Supply By Deposit Address</h2>
-        <label htmlFor="supply-pool-select">Supply pool</label>
+        <h2>Deposit Or Repayment Target</h2>
+        <label htmlFor="supply-action-select">Action</label>
+        <select
+          id="supply-action-select"
+          value={supplyAction}
+          onChange={(event) => {
+            setSupplyAction(event.target.value as SupplyAction);
+            setCurrentSupplyFlow(null);
+          }}
+        >
+          <option value={SupplyAction.deposit}>Deposit</option>
+          <option value={SupplyAction.repayment}>Repayment</option>
+        </select>
+
+        <label htmlFor="supply-pool-select">Pool</label>
         <select
           id="supply-pool-select"
           value={selectedSupplyPoolId}
-          onChange={(event) => setSelectedSupplyPoolId(event.target.value)}
+          onChange={(event) => {
+            const poolId = event.target.value;
+            const pool = pools.find((candidate) => candidate.id === poolId);
+
+            setSelectedSupplyPoolId(poolId);
+            setSupplyChainSelection(getDefaultChain(pool));
+            setCurrentSupplyFlow(null);
+          }}
         >
           {pools.map((pool) => (
             <option key={pool.id} value={pool.id}>
@@ -352,8 +403,29 @@ function SupplyBorrowPage() {
           ))}
         </select>
 
+        <label htmlFor="supply-chain-select">Transfer chain</label>
+        <select
+          id="supply-chain-select"
+          value={supplyChainSelection}
+          onChange={(event) =>
+            setSupplyChainSelection(event.target.value as Chain)
+          }
+        >
+          {getChainOptions(
+            pools.find((pool) => pool.id === selectedSupplyPoolId)
+          ).map((chain) => (
+            <option key={chain} value={chain}>
+              {chain}
+            </option>
+          ))}
+        </select>
+        <p>
+          Choose the chain you will use to send funds. The SDK returns the
+          correct deposit or repayment target for that chain.
+        </p>
+
         <label htmlFor="supply-amount-input">
-          Supply amount to send manually
+          {formatSupplyAction(supplyAction)} amount to send manually
         </label>
         <input
           id="supply-amount-input"
@@ -364,9 +436,9 @@ function SupplyBorrowPage() {
 
         <button
           type="button"
-          onClick={() => void run(createSupplyTarget, setStatus)}
+          onClick={() => void run(generateSupplyTarget, setStatus)}
         >
-          Get Deposit Address
+          Get {formatSupplyAction(supplyAction)} Target
         </button>
         <div className="result-box">{supplyResult}</div>
 
@@ -382,7 +454,7 @@ function SupplyBorrowPage() {
           type="button"
           onClick={() => void run(submitSupplyTxid, setStatus)}
         >
-          Track Supply Txid
+          Track Transfer Txid
         </button>
         <div className="result-box">{submitSupplyResult}</div>
       </section>
@@ -393,7 +465,14 @@ function SupplyBorrowPage() {
         <select
           id="borrow-pool-select"
           value={selectedBorrowPoolId}
-          onChange={(event) => setSelectedBorrowPoolId(event.target.value)}
+          onChange={(event) => {
+            const poolId = event.target.value;
+            const pool = pools.find((candidate) => candidate.id === poolId);
+
+            setSelectedBorrowPoolId(poolId);
+            setBorrowChainSelection(getDefaultChain(pool));
+            setBorrowDestination("");
+          }}
         >
           {pools.map((pool) => (
             <option key={pool.id} value={pool.id}>
@@ -401,6 +480,28 @@ function SupplyBorrowPage() {
             </option>
           ))}
         </select>
+
+        <label htmlFor="borrow-chain-select">Borrow chain</label>
+        <select
+          id="borrow-chain-select"
+          value={borrowChainSelection}
+          onChange={(event) => {
+            setBorrowChainSelection(event.target.value as Chain);
+            setBorrowDestination("");
+          }}
+        >
+          {getChainOptions(
+            pools.find((pool) => pool.id === selectedBorrowPoolId)
+          ).map((chain) => (
+            <option key={chain} value={chain}>
+              {chain}
+            </option>
+          ))}
+        </select>
+        <p>
+          Choose the chain where borrowed funds should arrive. The SDK uses the
+          right destination format for that chain.
+        </p>
 
         <label htmlFor="borrow-amount-input">Borrow amount</label>
         <input
@@ -411,7 +512,11 @@ function SupplyBorrowPage() {
         />
 
         <label htmlFor="borrow-destination-input">
-          Borrow destination address
+          {formatDestinationInputLabel(
+            "Borrow destination",
+            pools.find((pool) => pool.id === selectedBorrowPoolId),
+            borrowChainSelection
+          )}
         </label>
         <input
           id="borrow-destination-input"
@@ -617,6 +722,32 @@ function ActivityTrackerPage() {
       </section>
     </main>
   );
+}
+
+function getChainOptions(pool: Pool | undefined): Chain[] {
+  const defaultChain = getDefaultChain(pool);
+
+  return defaultChain === Chain.ICP ? [Chain.ICP] : [defaultChain, Chain.ICP];
+}
+
+function formatSupplyAction(action: SupplyAction): string {
+  return action === SupplyAction.repayment ? "Repayment" : "Deposit";
+}
+
+function getDefaultChain(pool: Pool | undefined): Chain {
+  return (pool?.chain as Chain | undefined) ?? Chain.ETH;
+}
+
+function formatDestinationInputLabel(
+  prefix: string,
+  pool: Pool | undefined,
+  chain: Chain
+): string {
+  if (pool?.chain === Chain.ICP) {
+    return `${prefix} ICRC account`;
+  }
+
+  return chain === Chain.ICP ? `${prefix} IC principal` : `${prefix} address`;
 }
 
 async function getOrCreateConnectedWalletProfile(

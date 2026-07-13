@@ -1,10 +1,10 @@
-export { InstantLoansModule } from "./instant-loans";
+export { InstantLoanCreatedError, InstantLoansModule } from "./instant-loans";
 export { intFromPublicId, publicIdFromInt } from "./ref-code";
 export type {
-  AccountIdentifierAccount,
+  CreateInstantLoanBorrow,
+  CreateInstantLoanCollateral,
+  CreateInstantLoanRefund,
   CreateInstantLoanRequest,
-  ExternalAccount,
-  IcrcAccount,
   InstantLoan,
   InstantLoanAccount,
   InstantLoanAsset,
@@ -16,6 +16,7 @@ export type {
   InstantLoanCreatedEventType,
   InstantLoanDepositTimerExceededEventType,
   InstantLoanDepositTimerStartedEventType,
+  InstantLoanDestination,
   InstantLoanEvent,
   InstantLoanEventType,
   InstantLoanFindBorrow,
@@ -26,14 +27,15 @@ export type {
   InstantLoanGetByRefRequest,
   InstantLoanGetRequest,
   InstantLoanInitialDeposit,
+  InstantLoanInitialDepositTargetQuote,
   InstantLoanLeg,
   InstantLoanListEventsRequest,
   InstantLoanPositionSummary,
   InstantLoanProfileWarmedEventType,
   InstantLoanRepayCompleteEventType,
   InstantLoanRepayment,
+  InstantLoanRepaymentTargetQuote,
   InstantLoanStuckFundsWithdrawalRequestedEventType,
   InstantLoanTerms,
   InstantLoanWarmedProfile,
-  NativeAccount,
 } from "./types";

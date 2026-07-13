@@ -1,7 +1,7 @@
 import { base64, base64nopad } from "@scure/base";
 import { bytesToHex as encodeBytesToHex, isHex } from "viem";
 import { LiquidiumError, LiquidiumErrorCode } from "../errors";
-import { Chain, type Chain as ChainName } from "../types";
+import { Chain, type SigningChain } from "../types";
 
 const HEX_PREFIX = "0x";
 const HEX_BYTE_CHAR_LENGTH = 2;
@@ -9,7 +9,7 @@ const BASE64_PADDING = "=";
 
 export function normalizeWalletSignature(
   signature: string,
-  chain: ChainName
+  chain: SigningChain
 ): string {
   switch (chain) {
     case Chain.BTC:

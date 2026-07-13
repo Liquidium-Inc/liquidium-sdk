@@ -11,10 +11,18 @@ interface TestUsdtAssetVariant {
   USDT: null;
 }
 
-type TestInstantLoanPositionAsset = TestBtcAssetVariant | TestUsdtAssetVariant;
+interface TestIcpAssetVariant {
+  ICP: null;
+}
+
+type TestInstantLoanPositionAsset =
+  | TestBtcAssetVariant
+  | TestIcpAssetVariant
+  | TestUsdtAssetVariant;
 
 export const PROFILE_ID = "aaaaa-aa";
 export const BTC_POOL_ID = "hkmli-faaaa-aaaar-qb4ba-cai";
+export const ICP_POOL_ID = "r2pk3-4yaaa-aaaar-qb7zq-cai";
 export const USDT_POOL_ID = "hnnn4-iyaaa-aaaar-qb4bq-cai";
 export const LOAN_ID = 42n;
 export const VALID_BTC_REFUND_ADDRESS = "1BoatSLRHtKNngkdXEeobR76b53LETtpyT";
@@ -25,6 +33,8 @@ export const LOWERCASE_EVM_BORROW_ADDRESS =
   "0x52908400098527886e0f7030069857d2e4169ee7";
 export const CHECKSUM_EVM_BORROW_ADDRESS =
   "0x52908400098527886E0F7030069857D2E4169EE7";
+export const CANISTER_EVM_BORROW_ADDRESS =
+  "0x2222222222222222222222222222222222222222";
 
 export function createInstantLoan(
   overrides: Partial<FlexibleInstantLoanCanisterRecord> = {}
@@ -39,7 +49,7 @@ export function createInstantLoan(
       },
     },
     borrow_destination: {
-      External: "0x2222222222222222222222222222222222222222",
+      External: CANISTER_EVM_BORROW_ADDRESS,
     },
     started: false,
     borrow_amount: 2_000_000n,
@@ -158,6 +168,7 @@ export function createInstantLoanPosition(
 export function prices() {
   return [
     ["BTC_USDT", 10_000_000n, 2],
+    ["ICP_USDT", 500n, 2],
     ["USDT_USDT", 100n, 2],
   ];
 }
@@ -220,6 +231,37 @@ export function createUsdtPoolRecord() {
     liquidation_threshold: 7_500n,
     max_ltv: 7_000n,
     total_supply_at_last_sync: 50_000n,
+  };
+}
+
+export function createIcpPoolRecord(overrides = {}) {
+  return {
+    optimal_utilization_rate: 80n,
+    principal: {
+      toString: () => ICP_POOL_ID,
+      toText: () => ICP_POOL_ID,
+    },
+    total_generated_interest_snapshot: 0n,
+    supply_cap: [],
+    same_asset_borrowing: [],
+    asset: { ICP: null },
+    rate_slope_before: 1n,
+    borrow_cap: [],
+    total_debt_at_last_sync: 0n,
+    chain: { ICP: null },
+    rate_slope_after: 2n,
+    reserve_factor: 100n,
+    last_updated: [],
+    lending_index: 300n,
+    protocol_liquidation_fee: 50n,
+    borrow_index: 400n,
+    base_rate: 5n,
+    frozen: false,
+    liquidation_bonus: 200n,
+    liquidation_threshold: 7_500n,
+    max_ltv: 7_000n,
+    total_supply_at_last_sync: 50_000n,
+    ...overrides,
   };
 }
 

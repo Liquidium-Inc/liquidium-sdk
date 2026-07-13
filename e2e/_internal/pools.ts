@@ -17,6 +17,14 @@ export function selectBtcCollateralPool(pools: Pool[]): Pool {
   });
 }
 
+export function selectIcpPool(pools: Pool[]): Pool {
+  return selectPool({
+    pools,
+    asset: "ICP",
+    chain: Chain.ICP,
+  });
+}
+
 export function selectBorrowPool(pools: Pool[]): Pool {
   for (const asset of ETH_STABLECOIN_BORROW_ASSETS) {
     const pool = findBorrowPoolByAsset(pools, asset);
@@ -42,6 +50,17 @@ export function selectBorrowPoolByAsset(
   }
 
   return pool;
+}
+
+export function selectEthStablecoinPoolByAsset(
+  pools: Pool[],
+  asset: EthStablecoinBorrowAsset
+): Pool {
+  return selectPool({
+    pools,
+    asset,
+    chain: Chain.ETH,
+  });
 }
 
 export function listAvailableBorrowPools(pools: Pool[]): Pool[] {
