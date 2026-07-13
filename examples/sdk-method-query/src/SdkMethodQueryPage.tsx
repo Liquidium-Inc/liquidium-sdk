@@ -613,6 +613,8 @@ const SDK_METHODS: MethodDefinition[] = [
   },
 ];
 
+const SDK_METHOD_GROUPS = groupMethodsByModule(SDK_METHODS);
+
 type SdkMethodQueryPageProps = Pick<
   SharedExampleState,
   "profileId" | "pools" | "prices"
@@ -854,10 +856,14 @@ export function SdkMethodQueryPage({
                 loadMethodTemplate(event.target.value);
               }}
             >
-              {SDK_METHODS.map((method) => (
-                <option key={method.id} value={method.id}>
-                  {method.label}
-                </option>
+              {SDK_METHOD_GROUPS.map(({ moduleName, methods }) => (
+                <optgroup key={moduleName} label={moduleName}>
+                  {methods.map((method) => (
+                    <option key={method.id} value={method.id}>
+                      {method.label}
+                    </option>
+                  ))}
+                </optgroup>
               ))}
             </select>
           </label>
@@ -922,6 +928,23 @@ export function SdkMethodQueryPage({
       </section>
     </main>
   );
+}
+
+function groupMethodsByModule(methods: MethodDefinition[]) {
+  const methodsByModule = new Map<string, MethodDefinition[]>();
+
+  for (const method of methods) {
+    const moduleName = method.id.split(".", 1)[0];
+    const moduleMethods = methodsByModule.get(moduleName) ?? [];
+
+    moduleMethods.push(method);
+    methodsByModule.set(moduleName, moduleMethods);
+  }
+
+  return Array.from(methodsByModule, ([moduleName, moduleMethods]) => ({
+    moduleName,
+    methods: moduleMethods,
+  }));
 }
 
 function createMockWalletAdapter(
