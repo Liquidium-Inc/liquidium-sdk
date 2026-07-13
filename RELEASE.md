@@ -53,3 +53,72 @@ git push origin @liquidium/client@<version>
 ```
 
 Pushing the tag creates the GitHub Release from `packages/client/CHANGELOG.md`.
+
+## Release Candidates
+
+Use Changesets prerelease mode to publish a release candidate without changing
+the npm `latest` dist-tag. Users must explicitly install the candidate with
+`@liquidium/client@rc` or its exact prerelease version.
+
+### First Candidate
+
+1. Add or confirm the changesets for the release as described in [Prepare](#prepare).
+2. Enter prerelease mode:
+
+```sh
+pnpm changeset pre enter rc
+```
+
+3. Create the prerelease version and changelogs:
+
+```sh
+pnpm release:version
+```
+
+4. Format the generated prerelease state and fold it and the docs changelog into
+   the Changesets commit. Replace `<version>` with the generated version from
+   `packages/client/package.json`:
+
+```sh
+pnpm exec biome format --write .changeset/pre.json
+git add .changeset/pre.json docs/changelog.mdx
+git commit --amend -m "chore(client): prepare <version> release"
+```
+
+5. Review and merge the release PR, then follow [Publish](#publish). Use
+   `pnpm changeset publish`; do not use `npm publish` directly. Changesets uses
+   the `rc` dist-tag recorded in `.changeset/pre.json`.
+6. Confirm that the RC was published without changing `latest`:
+
+```sh
+npm view @liquidium/client dist-tags
+```
+
+The result should show the previous stable version under `latest` and the new
+candidate under `rc`.
+
+### Additional Candidates
+
+Remain in prerelease mode and add changesets for fixes normally. Then run the
+same version, amend, review, merge, and publish flow. Changesets increments the
+prerelease number for each candidate.
+
+### Promote To Stable
+
+1. Exit prerelease mode and create the stable version:
+
+```sh
+pnpm changeset pre exit
+pnpm release:version
+```
+
+2. Fold the generated docs changelog into the Changesets commit and reword it
+   using the stable version:
+
+```sh
+git add docs/changelog.mdx
+git commit --amend -m "chore(client): prepare <version> release"
+```
+
+3. Review and merge the release PR, then follow [Publish](#publish). The stable
+   publish updates the npm `latest` dist-tag.
