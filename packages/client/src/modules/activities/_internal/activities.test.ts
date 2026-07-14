@@ -147,7 +147,7 @@ describe("ActivitiesModule", () => {
     expect(activity).not.toHaveProperty("assetKind");
   });
 
-  test("lists activities by instant loan short ref", async () => {
+  test("lists activities by simple loan short ref", async () => {
     // given
     const LOAN_ID = 42n;
     const PROFILE_ID = "aaaaa-aa";
@@ -175,7 +175,7 @@ describe("ActivitiesModule", () => {
     );
     const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
-      canisterIds: { instantLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
+      canisterIds: { simpleLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
     });
 
     // when
@@ -304,7 +304,7 @@ describe("ActivitiesModule", () => {
     );
   });
 
-  test("rejects malformed instant loan references before resolving activities", async () => {
+  test("rejects malformed simple loan references before resolving activities", async () => {
     // given
     const fetchSpy = vi.spyOn(globalThis, "fetch");
     const actorCreateSpy = vi.spyOn(Actor, "createActor");
@@ -320,13 +320,13 @@ describe("ActivitiesModule", () => {
     // then
     await expect(result).rejects.toMatchObject({
       code: LiquidiumErrorCode.VALIDATION_ERROR,
-      message: "Invalid instant loan reference",
+      message: "Invalid simple loan reference",
     });
     expect(fetchSpy).not.toHaveBeenCalled();
     expect(actorCreateSpy).not.toHaveBeenCalled();
   });
 
-  test("gets activity status by instant loan short ref", async () => {
+  test("gets activity status by simple loan short ref", async () => {
     // given
     const LOAN_ID = 42n;
     const PROFILE_ID = "aaaaa-aa";
@@ -372,7 +372,7 @@ describe("ActivitiesModule", () => {
     );
     const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
-      canisterIds: { instantLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
+      canisterIds: { simpleLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
     });
 
     // when

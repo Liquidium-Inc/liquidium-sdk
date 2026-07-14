@@ -1,11 +1,11 @@
 import { expect, test } from "vitest";
 import {
   type AssetPrices,
-  type InstantLoan,
   LiquidiumClient,
   LiquidiumErrorCode,
   type Pool,
   publicIdFromInt,
+  type SimpleLoan,
 } from "../packages/client/src";
 import { describeLive } from "./_internal/live";
 import {
@@ -19,12 +19,12 @@ import {
 } from "./_internal/test-wallets";
 
 const DEFAULT_DEPOSIT_WINDOW_SECONDS = 3_600n;
-const INSTANT_LOAN_TARGET_LTV_BPS = 2_000n;
-const INSTANT_LOAN_LTV_BUFFER_BPS = 200n;
+const SIMPLE_LOAN_TARGET_LTV_BPS = 2_000n;
+const SIMPLE_LOAN_LTV_BUFFER_BPS = 200n;
 const NONEXISTENT_LOAN_ID = 1_000_000_000n;
 
-describeLive("live instant loans e2e", () => {
-  test("should create and hydrate one instant loan", async () => {
+describeLive("live Simple Loans e2e", () => {
+  test("should create and hydrate one simple loan", async () => {
     // given
     const client = new LiquidiumClient();
     const pools = await client.market.listPools();
@@ -33,15 +33,15 @@ describeLive("live instant loans e2e", () => {
     const borrowPool = selectBorrowPool(pools);
 
     // when
-    const loan = await createLiveInstantLoan({
+    const loan = await createLiveSimpleLoan({
       client,
       collateralPool,
       borrowPool,
       pools,
       assetPrices,
     });
-    const loanById = await client.instantLoans.get({ loanId: loan.loanId });
-    const loanByRef = await client.instantLoans.get({ ref: loan.ref });
+    const loanById = await client.simpleLoans.get({ loanId: loan.loanId });
+    const loanByRef = await client.simpleLoans.get({ ref: loan.ref });
 
     // then
     expect(loan.loanId).toBeGreaterThan(0n);
@@ -57,12 +57,12 @@ describeLive("live instant loans e2e", () => {
     expect(loanByRef.loanId).toBe(loan.loanId);
   });
 
-  test("should fail cleanly for a nonexistent instant loan id", async () => {
+  test("should fail cleanly for a nonexistent simple loan id", async () => {
     // given
     const client = new LiquidiumClient();
 
     // when
-    const result = client.instantLoans.get({ loanId: NONEXISTENT_LOAN_ID });
+    const result = client.simpleLoans.get({ loanId: NONEXISTENT_LOAN_ID });
 
     // then
     await expect(result).rejects.toMatchObject({
@@ -70,13 +70,13 @@ describeLive("live instant loans e2e", () => {
     });
   });
 
-  test("should fail cleanly for a nonexistent instant loan ref", async () => {
+  test("should fail cleanly for a nonexistent simple loan ref", async () => {
     // given
     const client = new LiquidiumClient();
     const ref = publicIdFromInt(NONEXISTENT_LOAN_ID);
 
     // when
-    const result = client.instantLoans.get({ ref });
+    const result = client.simpleLoans.get({ ref });
 
     // then
     await expect(result).rejects.toMatchObject({
@@ -85,13 +85,13 @@ describeLive("live instant loans e2e", () => {
   });
 });
 
-async function createLiveInstantLoan(params: {
+async function createLiveSimpleLoan(params: {
   client: LiquidiumClient;
   collateralPool: Pool;
   borrowPool: Pool;
   pools: Pool[];
   assetPrices: AssetPrices;
-}): Promise<InstantLoan> {
+}): Promise<SimpleLoan> {
   const { account: evmAddress } = createEthereumTestWallet();
   const { account: bitcoinAddress } = createBitcoinjsTestWallet();
   const borrowAmount = getMinimumBorrowAmount(params.borrowPool);
@@ -100,7 +100,7 @@ async function createLiveInstantLoan(params: {
       borrowAmount,
       borrowPoolId: params.borrowPool.id,
       collateralPoolId: params.collateralPool.id,
-      targetLtvBps: INSTANT_LOAN_TARGET_LTV_BPS,
+      targetLtvBps: SIMPLE_LOAN_TARGET_LTV_BPS,
     },
     params.pools,
     params.assetPrices
@@ -110,7 +110,7 @@ async function createLiveInstantLoan(params: {
     throw new Error(quote.validationErrors[0]?.message);
   }
 
-  return await params.client.instantLoans.create({
+  return await params.client.simpleLoans.create({
     collateral: {
       poolId: params.collateralPool.id,
       asset: "BTC",
@@ -127,7 +127,7 @@ async function createLiveInstantLoan(params: {
       chain: "BTC",
       destination: bitcoinAddress,
     },
-    ltvMaxBps: quote.targetLtvBps + INSTANT_LOAN_LTV_BUFFER_BPS,
+    ltvMaxBps: quote.targetLtvBps + SIMPLE_LOAN_LTV_BUFFER_BPS,
     depositWindowSeconds: DEFAULT_DEPOSIT_WINDOW_SECONDS,
   });
 }

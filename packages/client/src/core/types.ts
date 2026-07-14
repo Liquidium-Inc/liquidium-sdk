@@ -59,8 +59,8 @@ export interface CanisterIds {
   pools: PoolCanisterIds;
   /** ckETH minter deposit helper canister principal. */
   ethDeposit: string;
-  /** Accountless instant-loans canister principal. */
-  instantLoans: string;
+  /** Accountless Simple Loans canister principal. */
+  simpleLoans: string;
 }
 
 /** Custom canister principal overrides accepted by client configuration. */

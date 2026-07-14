@@ -5,15 +5,15 @@ import { DEFAULT_API_BASE_URL } from "../../../core/config";
 import { LiquidiumClient, publicIdFromInt } from "../../../index";
 import {
   BTC_POOL_ID,
-  createBtcBorrowInstantLoan,
+  createBtcBorrowSimpleLoan,
   createBtcPoolRecord,
-  createInstantLoan,
-  createInstantLoanPosition,
+  createSimpleLoan,
+  createSimpleLoanPosition,
   createUsdtPoolRecord,
   encodeIcrcAccount,
   ICRC_SUBACCOUNT,
   LOAN_ID,
-  mockInstantLoanCollateralHintFetch,
+  mockSimpleLoanCollateralHintFetch,
   PROFILE_ID,
   USDT_POOL_ID,
 } from "./test-fixtures";
@@ -23,13 +23,13 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-describe("InstantLoansModule get", () => {
+describe("SimpleLoansModule get", () => {
   test("gets canonical loan state by ref and derives flow targets", async () => {
     // given
     const DEPOSIT_DETECTED_TIMESTAMP_SECONDS = 1_775_232_000n;
     const EXPIRY_TIMESTAMP_SECONDS = 1_775_235_600n;
     const getLoan = vi.fn().mockResolvedValue({
-      Ok: createInstantLoan({
+      Ok: createSimpleLoan({
         borrow_destination: { Native: Principal.fromText(PROFILE_ID) },
         refund_destination: {
           Icrc: {
@@ -51,11 +51,11 @@ describe("InstantLoansModule get", () => {
     const estimateDepositFee = vi.fn().mockResolvedValue({ Ok: 1_500_000n });
     const getDepositFee = vi.fn().mockResolvedValue(2_000n);
     const icrc1Fee = vi.fn().mockResolvedValue(10n);
-    const fetchSpy = mockInstantLoanCollateralHintFetch({
+    const fetchSpy = mockSimpleLoanCollateralHintFetch({
       collateralAmountHint: "10000000",
     });
     const getCollateralPosition = vi.fn().mockResolvedValue([
-      createInstantLoanPosition(
+      createSimpleLoanPosition(
         BTC_POOL_ID,
         { BTC: null },
         {
@@ -64,7 +64,7 @@ describe("InstantLoansModule get", () => {
       ),
     ]);
     const getBorrowPosition = vi.fn().mockResolvedValue([
-      createInstantLoanPosition(
+      createSimpleLoanPosition(
         USDT_POOL_ID,
         { USDT: null },
         {
@@ -74,7 +74,7 @@ describe("InstantLoansModule get", () => {
       ),
     ]);
 
-    mockInstantLoanHydrationActors({
+    mockSimpleLoanHydrationActors({
       getLoan,
       getPoolRate,
       getBtcAddress,
@@ -89,11 +89,11 @@ describe("InstantLoansModule get", () => {
     });
     const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
-      canisterIds: { instantLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
+      canisterIds: { simpleLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
     });
 
     // when
-    const loan = await client.instantLoans.get({
+    const loan = await client.simpleLoans.get({
       ref: publicIdFromInt(LOAN_ID),
     });
 
@@ -205,7 +205,7 @@ describe("InstantLoansModule get", () => {
     const EXPECTED_EXPIRY_TIMESTAMP_SECONDS =
       DEPOSIT_DETECTED_TIMESTAMP_SECONDS + DEPOSIT_WINDOW_SECONDS;
     const getLoan = vi.fn().mockResolvedValue({
-      Ok: createInstantLoan({
+      Ok: createSimpleLoan({
         ltv_timer_s: DEPOSIT_WINDOW_SECONDS,
         deposit_detected_ts: [DEPOSIT_DETECTED_TIMESTAMP_SECONDS],
         expires_at: [],
@@ -220,11 +220,11 @@ describe("InstantLoansModule get", () => {
       .mockResolvedValue([[10_000_000_000_000_000_000_000_000n, 0n, 0n]]);
     const getDepositFee = vi.fn().mockResolvedValue(2_000n);
     const icrc1Fee = vi.fn().mockResolvedValue(10n);
-    mockInstantLoanCollateralHintFetch({
+    mockSimpleLoanCollateralHintFetch({
       collateralAmountHint: "10000000",
     });
 
-    mockInstantLoanHydrationActors({
+    mockSimpleLoanHydrationActors({
       getLoan,
       getPoolRate,
       getBtcAddress,
@@ -234,11 +234,11 @@ describe("InstantLoansModule get", () => {
     });
     const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
-      canisterIds: { instantLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
+      canisterIds: { simpleLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
     });
 
     // when
-    const loan = await client.instantLoans.get({
+    const loan = await client.simpleLoans.get({
       ref: publicIdFromInt(LOAN_ID),
     });
 
@@ -251,10 +251,10 @@ describe("InstantLoansModule get", () => {
     );
   });
 
-  test("includes btc inflow fee in the instant loan repayment quote", async () => {
+  test("includes btc inflow fee in the simple loan repayment quote", async () => {
     // given
     const getLoan = vi.fn().mockResolvedValue({
-      Ok: createBtcBorrowInstantLoan(),
+      Ok: createBtcBorrowSimpleLoan(),
     });
     const getDepositAddress = vi.fn().mockResolvedValue({
       Ok: "0x1111111111111111111111111111111111111111",
@@ -264,7 +264,7 @@ describe("InstantLoansModule get", () => {
       .fn()
       .mockResolvedValue([[10_000_000_000_000_000_000_000_000n, 0n, 0n]]);
     const getCollateralPosition = vi.fn().mockResolvedValue([
-      createInstantLoanPosition(
+      createSimpleLoanPosition(
         USDT_POOL_ID,
         { USDT: null },
         {
@@ -273,7 +273,7 @@ describe("InstantLoansModule get", () => {
       ),
     ]);
     const getBorrowPosition = vi.fn().mockResolvedValue([
-      createInstantLoanPosition(
+      createSimpleLoanPosition(
         BTC_POOL_ID,
         { BTC: null },
         {
@@ -285,7 +285,7 @@ describe("InstantLoansModule get", () => {
     const getDepositFee = vi.fn().mockResolvedValue(2_000n);
     const icrc1Fee = vi.fn().mockResolvedValue(10n);
     const estimateDepositFee = vi.fn().mockResolvedValue({ Ok: 1_500_000n });
-    mockInstantLoanCollateralHintFetch({
+    mockSimpleLoanCollateralHintFetch({
       borrowAsset: "BTC",
       borrowPoolId: BTC_POOL_ID,
       collateralAmountHint: "5000000",
@@ -293,7 +293,7 @@ describe("InstantLoansModule get", () => {
       collateralPoolId: USDT_POOL_ID,
     });
 
-    mockInstantLoanHydrationActors({
+    mockSimpleLoanHydrationActors({
       getLoan,
       getPoolRate,
       getBtcAddress,
@@ -308,11 +308,11 @@ describe("InstantLoansModule get", () => {
     });
     const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
-      canisterIds: { instantLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
+      canisterIds: { simpleLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
     });
 
     // when
-    const loan = await client.instantLoans.get({
+    const loan = await client.simpleLoans.get({
       ref: publicIdFromInt(LOAN_ID),
     });
 
@@ -355,7 +355,7 @@ describe("InstantLoansModule get", () => {
   });
   test("returns zero repayment quote when the loan has no debt", async () => {
     // given
-    const getLoan = vi.fn().mockResolvedValue({ Ok: createInstantLoan() });
+    const getLoan = vi.fn().mockResolvedValue({ Ok: createSimpleLoan() });
     const getBtcAddress = vi.fn().mockResolvedValue("bc1qinstantdeposit");
     const getDepositAddress = vi.fn().mockResolvedValue({
       Ok: "0x1111111111111111111111111111111111111111",
@@ -366,11 +366,11 @@ describe("InstantLoansModule get", () => {
     const estimateDepositFee = vi.fn().mockResolvedValue({ Ok: 1_500_000n });
     const getDepositFee = vi.fn().mockResolvedValue(2_000n);
     const icrc1Fee = vi.fn().mockResolvedValue(10n);
-    mockInstantLoanCollateralHintFetch({
+    mockSimpleLoanCollateralHintFetch({
       collateralAmountHint: "10000000",
     });
 
-    mockInstantLoanHydrationActors({
+    mockSimpleLoanHydrationActors({
       getLoan,
       getPoolRate,
       getBtcAddress,
@@ -380,11 +380,11 @@ describe("InstantLoansModule get", () => {
     });
     const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
-      canisterIds: { instantLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
+      canisterIds: { simpleLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
     });
 
     // when
-    const loan = await client.instantLoans.get({
+    const loan = await client.simpleLoans.get({
       ref: publicIdFromInt(LOAN_ID),
     });
 
@@ -413,7 +413,7 @@ describe("InstantLoansModule get", () => {
 
   test("returns awaiting deposit status when collateral has not arrived", async () => {
     // given
-    const getLoan = vi.fn().mockResolvedValue({ Ok: createInstantLoan() });
+    const getLoan = vi.fn().mockResolvedValue({ Ok: createSimpleLoan() });
     const getBtcAddress = vi.fn().mockResolvedValue("bc1qinstantdeposit");
     const getDepositAddress = vi.fn().mockResolvedValue({
       Ok: "0x1111111111111111111111111111111111111111",
@@ -424,11 +424,11 @@ describe("InstantLoansModule get", () => {
     const estimateDepositFee = vi.fn().mockResolvedValue({ Ok: 1_500_000n });
     const getDepositFee = vi.fn().mockResolvedValue(2_000n);
     const icrc1Fee = vi.fn().mockResolvedValue(10n);
-    mockInstantLoanCollateralHintFetch({
+    mockSimpleLoanCollateralHintFetch({
       collateralAmountHint: "10000000",
     });
 
-    mockInstantLoanHydrationActors({
+    mockSimpleLoanHydrationActors({
       getLoan,
       getPoolRate,
       getBtcAddress,
@@ -438,11 +438,11 @@ describe("InstantLoansModule get", () => {
     });
     const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
-      canisterIds: { instantLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
+      canisterIds: { simpleLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
     });
 
     // when
-    const loan = await client.instantLoans.get({
+    const loan = await client.simpleLoans.get({
       ref: publicIdFromInt(LOAN_ID),
     });
 
@@ -469,7 +469,7 @@ describe("InstantLoansModule get", () => {
   });
 });
 
-function mockInstantLoanHydrationActors(params: {
+function mockSimpleLoanHydrationActors(params: {
   getLoan: ReturnType<typeof vi.fn>;
   getPoolRate: ReturnType<typeof vi.fn>;
   getBtcAddress: ReturnType<typeof vi.fn>;

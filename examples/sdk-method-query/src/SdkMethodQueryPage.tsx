@@ -259,8 +259,8 @@ const SDK_METHODS: MethodDefinition[] = [
     },
   },
   {
-    id: "instantLoans.create",
-    label: "instantLoans.create",
+    id: "simpleLoans.create",
+    label: "simpleLoans.create",
     defaultArgs:
       '{\n  "collateral": {\n    "poolId": "hkmli-faaaa-aaaar-qb4ba-cai",\n    "asset": "BTC",\n    "amount": "37000"\n  },\n  "borrow": {\n    "poolId": "hnnn4-iyaaa-aaaar-qb4bq-cai",\n    "asset": "USDT",\n    "amount": "9000000",\n    "chain": "ETH",\n    "destination": {\n      "type": "ChainAddress",\n      "address": "0xYourBorrowAddress"\n    }\n  },\n  "refund": {\n    "chain": "BTC",\n    "destination": {\n      "type": "ChainAddress",\n      "address": "bc1qYourRefundAddress"\n    }\n  },\n  "ltvMaxBps": "6800",\n  "depositWindowSeconds": "3600"\n}',
     execute: async (client, input) => {
@@ -274,7 +274,7 @@ const SDK_METHODS: MethodDefinition[] = [
         "borrow"
       );
 
-      return await client.instantLoans.create({
+      return await client.simpleLoans.create({
         collateral: {
           poolId: expectNonEmptyString(collateral.poolId, "collateral.poolId"),
           asset: expectAsset(collateral.asset, "collateral.asset"),
@@ -284,14 +284,14 @@ const SDK_METHODS: MethodDefinition[] = [
           ...borrowIdentifier,
           poolId: expectNonEmptyString(borrow.poolId, "borrow.poolId"),
           amount: expectBigInt(borrow.amount, "borrow.amount"),
-          destination: expectInstantLoanAccount(
+          destination: expectSimpleLoanAccount(
             borrow.destination,
             "borrow.destination"
           ),
         },
         refund: {
           chain: expectChain(refund.chain, "refund.chain"),
-          destination: expectInstantLoanAccount(
+          destination: expectSimpleLoanAccount(
             refund.destination,
             "refund.destination"
           ),
@@ -305,34 +305,34 @@ const SDK_METHODS: MethodDefinition[] = [
     },
   },
   {
-    id: "instantLoans.getByRef",
-    label: "instantLoans.get({ ref })",
+    id: "simpleLoans.getByRef",
+    label: "simpleLoans.get({ ref })",
     defaultArgs: '{\n  "ref": "Y7R19F"\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
-      return await client.instantLoans.get({
+      return await client.simpleLoans.get({
         ref: expectNonEmptyString(args.ref, "ref"),
       });
     },
   },
   {
-    id: "instantLoans.getByLoanId",
-    label: "instantLoans.get({ loanId })",
+    id: "simpleLoans.getByLoanId",
+    label: "simpleLoans.get({ loanId })",
     defaultArgs: '{\n  "loanId": "66"\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
-      return await client.instantLoans.get({
+      return await client.simpleLoans.get({
         loanId: expectBigInt(args.loanId, "loanId"),
       });
     },
   },
   {
-    id: "instantLoans.find",
-    label: "instantLoans.find",
+    id: "simpleLoans.find",
+    label: "simpleLoans.find",
     defaultArgs: '{\n  "query": "bc1qYourRefundOrDepositAddress"\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
-      return await client.instantLoans.find(
+      return await client.simpleLoans.find(
         expectNonEmptyString(args.query, "query")
       );
     },
@@ -756,7 +756,7 @@ export function SdkMethodQueryPage({
         nextArgs.poolId = pools[0]?.id;
       }
 
-      if (selectedMethod.id === "instantLoans.create") {
+      if (selectedMethod.id === "simpleLoans.create") {
         const compatiblePools = pools.filter(
           (pool) => pool.chain === walletChain
         );
@@ -1204,7 +1204,7 @@ function expectLiquidiumAccountType(
   );
 }
 
-function expectInstantLoanAccount(
+function expectSimpleLoanAccount(
   value: unknown,
   fieldName: string
 ): LiquidiumAccountInput {

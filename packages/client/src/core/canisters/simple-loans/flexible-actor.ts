@@ -6,46 +6,46 @@ import { LiquidiumError, LiquidiumErrorCode } from "../../errors";
 import type { CanisterContext } from "../../transports/canister-context";
 import { extractVariantTag, KNOWN_ASSET_TAGS } from "../../utils/variant-tags";
 import type {
-  CreateInstantLoanCanisterRequest,
+  CreateSimpleLoanCanisterRequest,
   HeadlessLoanCreatedEventPayload,
   HeadlessLoanEventType,
   HeadlessLoansConfig,
-  InstantLoanAccountType,
-  InstantLoanAuthorisation,
-  InstantLoansCanisterError,
+  SimpleLoanAccountType,
+  SimpleLoanAuthorisation,
+  SimpleLoansCanisterError,
   WarmedProfile,
 } from "./actor";
 
-interface FlexibleInstantLoanAccountIdentifierAccountType {
+interface FlexibleSimpleLoanAccountIdentifierAccountType {
   AccountIdentifier: string;
 }
 
-interface FlexibleInstantLoanIcrcAccount {
+interface FlexibleSimpleLoanIcrcAccount {
   owner: Principal;
   subaccount: [] | [Uint8Array];
 }
 
-interface FlexibleInstantLoanIcrcAccountType {
-  Icrc: FlexibleInstantLoanIcrcAccount;
+interface FlexibleSimpleLoanIcrcAccountType {
+  Icrc: FlexibleSimpleLoanIcrcAccount;
 }
 
-type FlexibleInstantLoanAccountType =
-  | InstantLoanAccountType
-  | FlexibleInstantLoanAccountIdentifierAccountType
-  | FlexibleInstantLoanIcrcAccountType;
+type FlexibleSimpleLoanAccountType =
+  | SimpleLoanAccountType
+  | FlexibleSimpleLoanAccountIdentifierAccountType
+  | FlexibleSimpleLoanIcrcAccountType;
 
-export interface FlexibleCreateInstantLoanCanisterResponse {
+export interface FlexibleCreateSimpleLoanCanisterResponse {
   loan_id: bigint;
   lending_profile: Principal;
 }
 
 export interface FlexibleHeadlessLoanCreatedEventPayload {
   loan_id: bigint;
-  borrow_destination: FlexibleInstantLoanAccountType;
+  borrow_destination: FlexibleSimpleLoanAccountType;
   lend_asset: object;
   borrow_amount: bigint;
   lend_pool_id: Principal;
-  refund_destination: FlexibleInstantLoanAccountType;
+  refund_destination: FlexibleSimpleLoanAccountType;
   ltv_max_bps: bigint;
   ltv_timer_s: bigint;
   lending_profile: Principal;
@@ -73,17 +73,17 @@ export interface FlexibleHeadlessLoanEvent {
   event_type: FlexibleHeadlessLoanEventType;
 }
 
-export interface FlexibleInstantLoanCanisterRecord {
+export interface FlexibleSimpleLoanCanisterRecord {
   id: bigint;
-  authorisation: InstantLoanAuthorisation;
-  borrow_destination: FlexibleInstantLoanAccountType;
+  authorisation: SimpleLoanAuthorisation;
+  borrow_destination: FlexibleSimpleLoanAccountType;
   started: boolean;
   lend_asset: object;
   created_at: bigint;
   schema_version: number;
   borrow_amount: bigint;
   lend_pool_id: Principal;
-  refund_destination: FlexibleInstantLoanAccountType;
+  refund_destination: FlexibleSimpleLoanAccountType;
   ltv_max_bps: bigint;
   ltv_timer_s: bigint;
   lending_profile: Principal;
@@ -95,11 +95,11 @@ export interface FlexibleInstantLoanCanisterRecord {
 
 export interface DecodedHeadlessLoanCreatedEventPayload {
   loan_id: bigint;
-  borrow_destination: FlexibleInstantLoanAccountType;
+  borrow_destination: FlexibleSimpleLoanAccountType;
   lend_asset: string;
   borrow_amount: bigint;
   lend_pool_id: Principal;
-  refund_destination: FlexibleInstantLoanAccountType;
+  refund_destination: FlexibleSimpleLoanAccountType;
   ltv_max_bps: bigint;
   ltv_timer_s: bigint;
   lending_profile: Principal;
@@ -118,17 +118,17 @@ export interface DecodedHeadlessLoanEvent {
   event_type: DecodedHeadlessLoanEventType;
 }
 
-export interface DecodedInstantLoanCanisterRecord {
+export interface DecodedSimpleLoanCanisterRecord {
   id: bigint;
-  authorisation: InstantLoanAuthorisation;
-  borrow_destination: FlexibleInstantLoanAccountType;
+  authorisation: SimpleLoanAuthorisation;
+  borrow_destination: FlexibleSimpleLoanAccountType;
   started: boolean;
   lend_asset: string;
   created_at: bigint;
   schema_version: number;
   borrow_amount: bigint;
   lend_pool_id: Principal;
-  refund_destination: FlexibleInstantLoanAccountType;
+  refund_destination: FlexibleSimpleLoanAccountType;
   ltv_max_bps: bigint;
   ltv_timer_s: bigint;
   lending_profile: Principal;
@@ -138,19 +138,19 @@ export interface DecodedInstantLoanCanisterRecord {
   deposit_detected_ts: [] | [bigint];
 }
 
-type FlexibleResult<T> = { Ok: T } | { Err: InstantLoansCanisterError };
+type FlexibleResult<T> = { Ok: T } | { Err: SimpleLoansCanisterError };
 
-export interface FlexibleInstantLoansActor {
+export interface FlexibleSimpleLoansActor {
   create_loan: ActorMethod<
-    [CreateInstantLoanCanisterRequest],
-    FlexibleResult<FlexibleCreateInstantLoanCanisterResponse>
+    [CreateSimpleLoanCanisterRequest],
+    FlexibleResult<FlexibleCreateSimpleLoanCanisterResponse>
   >;
   count_warmed_profiles: ActorMethod<[], bigint>;
   get_config: ActorMethod<[], HeadlessLoansConfig>;
   get_event: ActorMethod<[bigint], [] | [FlexibleHeadlessLoanEvent]>;
   get_loan: ActorMethod<
     [bigint],
-    FlexibleResult<FlexibleInstantLoanCanisterRecord>
+    FlexibleResult<FlexibleSimpleLoanCanisterRecord>
   >;
   list_access_list: ActorMethod<[], Principal[]>;
   list_events: ActorMethod<
@@ -160,7 +160,7 @@ export interface FlexibleInstantLoansActor {
   list_warmed_profiles: ActorMethod<[], WarmedProfile[]>;
 }
 
-const flexibleInstantLoansIdlFactory: IDL.InterfaceFactory = ({ IDL }) => {
+const flexibleSimpleLoansIdlFactory: IDL.InterfaceFactory = ({ IDL }) => {
   const IcrcAccount = IDL.Record({
     owner: IDL.Principal,
     subaccount: IDL.Opt(IDL.Vec(IDL.Nat8)),
@@ -208,7 +208,7 @@ const flexibleInstantLoansIdlFactory: IDL.InterfaceFactory = ({ IDL }) => {
     CannotRemoveSoleAccount: IDL.Null,
     InsufficientFunds: IDL.Null,
   });
-  const InstantLoansError = IDL.Variant({
+  const SimpleLoansError = IDL.Variant({
     BorrowAmountRequired: IDL.Null,
     NoCollateralPosition: IDL.Record({ loan_id: IDL.Nat }),
     LtvTimerOutOfRange: IDL.Record({ max: IDL.Nat64 }),
@@ -256,7 +256,7 @@ const flexibleInstantLoansIdlFactory: IDL.InterfaceFactory = ({ IDL }) => {
   });
   const CreateLoanResult = IDL.Variant({
     Ok: CreateLoanResponse,
-    Err: InstantLoansError,
+    Err: SimpleLoansError,
   });
   const LoanLeg = IDL.Variant({ Lend: IDL.Null, Borrow: IDL.Null });
   const HeadlessLoanEventType = IDL.Variant({
@@ -336,7 +336,7 @@ const flexibleInstantLoansIdlFactory: IDL.InterfaceFactory = ({ IDL }) => {
     borrow_asset: IDL.Unknown,
     deposit_detected_ts: IDL.Opt(IDL.Nat64),
   });
-  const LoanResult = IDL.Variant({ Ok: Loan, Err: InstantLoansError });
+  const LoanResult = IDL.Variant({ Ok: Loan, Err: SimpleLoansError });
   const HeadlessLoansConfig = IDL.Record({
     lending_canister: IDL.Principal,
   });
@@ -363,20 +363,20 @@ const flexibleInstantLoansIdlFactory: IDL.InterfaceFactory = ({ IDL }) => {
   });
 };
 
-export function createFlexibleInstantLoansActor(
+export function createFlexibleSimpleLoansActor(
   canisterContext: CanisterContext
-): FlexibleInstantLoansActor {
-  const canisterId = canisterContext.canisterIds.instantLoans;
+): FlexibleSimpleLoansActor {
+  const canisterId = canisterContext.canisterIds.simpleLoans;
 
   if (!canisterId) {
     throw new LiquidiumError(
       LiquidiumErrorCode.SERVICE_UNAVAILABLE,
-      "Instant loans canister ID is not configured"
+      "Simple Loans canister ID is not configured"
     );
   }
 
-  return Actor.createActor<FlexibleInstantLoansActor>(
-    flexibleInstantLoansIdlFactory,
+  return Actor.createActor<FlexibleSimpleLoansActor>(
+    flexibleSimpleLoansIdlFactory,
     {
       agent: canisterContext.agent,
       canisterId,
@@ -384,9 +384,9 @@ export function createFlexibleInstantLoansActor(
   );
 }
 
-export function decodeFlexibleInstantLoanRecord(
-  record: FlexibleInstantLoanCanisterRecord
-): DecodedInstantLoanCanisterRecord | null {
+export function decodeFlexibleSimpleLoanRecord(
+  record: FlexibleSimpleLoanCanisterRecord
+): DecodedSimpleLoanCanisterRecord | null {
   const lend_asset = extractVariantTag(record.lend_asset, KNOWN_ASSET_TAGS);
   const borrow_asset = extractVariantTag(record.borrow_asset, KNOWN_ASSET_TAGS);
 

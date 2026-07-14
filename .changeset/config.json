@@ -11,7 +11,7 @@
     "@liquidium/example-btc-interactions-flow",
     "@liquidium/example-contract-interaction-flow",
     "@liquidium/example-deposit-address-flow",
-    "@liquidium/example-instant-loans-flow",
+    "@liquidium/example-simple-loans-flow",
     "@liquidium/example-sdk-method-query"
   ]
 }

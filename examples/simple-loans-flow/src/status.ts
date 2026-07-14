@@ -5,16 +5,16 @@ import {
   formatActivityStatus,
   formatError,
   formatFindResult,
-  formatInstantLoan,
+  formatSimpleLoan,
   getElement,
   getRecentLoanRefs,
   parsePositiveBigInt,
   saveRecentLoanRef,
 } from "./format";
 import {
-  findInstantLoans,
-  getInstantLoan,
+  findSimpleLoans,
   getLoanActivityStatus,
+  getSimpleLoan,
   loadMarketData,
 } from "./sdk-example";
 
@@ -55,8 +55,8 @@ async function loadLoan(): Promise<void> {
 
   const [loan, marketData] = await Promise.all([
     ref
-      ? getInstantLoan({ ref })
-      : getInstantLoan({
+      ? getSimpleLoan({ ref })
+      : getSimpleLoan({
           loanId: parsePositiveBigInt(loanIdText, "Loan id"),
         }),
     loadMarketData(),
@@ -67,8 +67,8 @@ async function loadLoan(): Promise<void> {
   saveRecentLoanRef(loan.ref);
   refreshRecentLoans();
 
-  loanOutput.textContent = formatInstantLoan(loan, { pools: marketData.pools });
-  setStatus(`Loaded instant loan ${loan.ref}.`);
+  loanOutput.textContent = formatSimpleLoan(loan, { pools: marketData.pools });
+  setStatus(`Loaded simple loan ${loan.ref}.`);
 }
 
 async function loadActivityStatus(): Promise<void> {
@@ -107,7 +107,7 @@ async function findLoansByQuery(): Promise<void> {
   setStatus("Finding candidate loans...");
   candidatesOutput.textContent = "Searching...";
 
-  const results = await findInstantLoans(query);
+  const results = await findSimpleLoans(query);
 
   if (results.length === 0) {
     candidatesOutput.textContent = "No loans found for this query.";

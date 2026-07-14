@@ -3,9 +3,9 @@ import type { Principal } from "@icp-sdk/core/principal";
 import { describe, expect, test } from "vitest";
 import {
   decodeFlexibleHeadlessLoanEvent,
-  decodeFlexibleInstantLoanRecord,
+  decodeFlexibleSimpleLoanRecord,
   type FlexibleHeadlessLoanEvent,
-  type FlexibleInstantLoanCanisterRecord,
+  type FlexibleSimpleLoanCanisterRecord,
 } from "./flexible-actor";
 
 const POOL_PRINCIPAL = {
@@ -24,9 +24,9 @@ const AUTHORISATION = {
   },
 };
 
-function createFlexibleInstantLoanRecord(
-  overrides?: Partial<FlexibleInstantLoanCanisterRecord>
-): FlexibleInstantLoanCanisterRecord {
+function createFlexibleSimpleLoanRecord(
+  overrides?: Partial<FlexibleSimpleLoanCanisterRecord>
+): FlexibleSimpleLoanCanisterRecord {
   return {
     id: 1n,
     authorisation: AUTHORISATION,
@@ -75,13 +75,13 @@ function createFlexibleHeadlessLoanEvent(
   };
 }
 
-describe("decodeFlexibleInstantLoanRecord", () => {
+describe("decodeFlexibleSimpleLoanRecord", () => {
   test("should decode a loan with known asset tags", () => {
     // given
-    const record = createFlexibleInstantLoanRecord();
+    const record = createFlexibleSimpleLoanRecord();
 
     // when
-    const decoded = decodeFlexibleInstantLoanRecord(record);
+    const decoded = decodeFlexibleSimpleLoanRecord(record);
 
     // then
     expect(decoded).not.toBeNull();
@@ -93,13 +93,13 @@ describe("decodeFlexibleInstantLoanRecord", () => {
     // given
     const lendHash = idlLabelToId("USDT");
     const borrowHash = idlLabelToId("USDT");
-    const record = createFlexibleInstantLoanRecord({
+    const record = createFlexibleSimpleLoanRecord({
       lend_asset: { [`_${lendHash}_`]: null },
       borrow_asset: { [`_${borrowHash}_`]: null },
     });
 
     // when
-    const decoded = decodeFlexibleInstantLoanRecord(record);
+    const decoded = decodeFlexibleSimpleLoanRecord(record);
 
     // then
     expect(decoded).not.toBeNull();
@@ -109,12 +109,12 @@ describe("decodeFlexibleInstantLoanRecord", () => {
 
   test("should return null for an unsupported SOL asset tag", () => {
     // given
-    const record = createFlexibleInstantLoanRecord({
+    const record = createFlexibleSimpleLoanRecord({
       lend_asset: { SOL: null },
     });
 
     // when
-    const decoded = decodeFlexibleInstantLoanRecord(record);
+    const decoded = decodeFlexibleSimpleLoanRecord(record);
 
     // then
     expect(decoded).toBeNull();
@@ -122,12 +122,12 @@ describe("decodeFlexibleInstantLoanRecord", () => {
 
   test("should return null for an unknown lend asset tag", () => {
     // given
-    const record = createFlexibleInstantLoanRecord({
+    const record = createFlexibleSimpleLoanRecord({
       lend_asset: { DOGE: null },
     });
 
     // when
-    const decoded = decodeFlexibleInstantLoanRecord(record);
+    const decoded = decodeFlexibleSimpleLoanRecord(record);
 
     // then
     expect(decoded).toBeNull();
@@ -135,12 +135,12 @@ describe("decodeFlexibleInstantLoanRecord", () => {
 
   test("should return null for an unknown borrow asset tag", () => {
     // given
-    const record = createFlexibleInstantLoanRecord({
+    const record = createFlexibleSimpleLoanRecord({
       borrow_asset: { DOGE: null },
     });
 
     // when
-    const decoded = decodeFlexibleInstantLoanRecord(record);
+    const decoded = decodeFlexibleSimpleLoanRecord(record);
 
     // then
     expect(decoded).toBeNull();
@@ -148,10 +148,10 @@ describe("decodeFlexibleInstantLoanRecord", () => {
 
   test("should return null when an asset variant is empty", () => {
     // given
-    const record = createFlexibleInstantLoanRecord({ lend_asset: {} });
+    const record = createFlexibleSimpleLoanRecord({ lend_asset: {} });
 
     // when
-    const decoded = decodeFlexibleInstantLoanRecord(record);
+    const decoded = decodeFlexibleSimpleLoanRecord(record);
 
     // then
     expect(decoded).toBeNull();

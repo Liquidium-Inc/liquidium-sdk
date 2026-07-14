@@ -40,7 +40,7 @@ export interface IcpAccountIdentifierAccount {
   address: string;
 }
 
-/** ICRC account display shape shared by lending and instant-loan responses. */
+/** ICRC account display shape shared by lending and Simple Loans responses. */
 export interface IcrcAccount {
   /** Account type. */
   type: "IcrcAccount";

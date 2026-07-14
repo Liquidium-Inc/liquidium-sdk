@@ -9,8 +9,8 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-describe("InstantLoansModule canister queries", () => {
-  test("calls public instant-loan query methods directly on the canister", async () => {
+describe("SimpleLoansModule canister queries", () => {
+  test("calls public Simple Loans query methods directly on the canister", async () => {
     // given
     const getConfig = vi.fn().mockResolvedValue({
       lending_canister: Principal.fromText("aaaaa-aa"),
@@ -46,19 +46,19 @@ describe("InstantLoansModule canister queries", () => {
       list_warmed_profiles: listWarmedProfiles,
     } as never);
     const client = new LiquidiumClient({
-      canisterIds: { instantLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
+      canisterIds: { simpleLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
     });
 
     // when
-    const config = await client.instantLoans.getConfig();
-    const event = await client.instantLoans.getEvent(1n);
-    const events = await client.instantLoans.listEvents({
+    const config = await client.simpleLoans.getConfig();
+    const event = await client.simpleLoans.getEvent(1n);
+    const events = await client.simpleLoans.listEvents({
       start: 1n,
       limit: 10n,
     });
-    const accessList = await client.instantLoans.listAccessList();
-    const warmedProfileCount = await client.instantLoans.countWarmedProfiles();
-    const warmedProfiles = await client.instantLoans.listWarmedProfiles();
+    const accessList = await client.simpleLoans.listAccessList();
+    const warmedProfileCount = await client.simpleLoans.countWarmedProfiles();
+    const warmedProfiles = await client.simpleLoans.listWarmedProfiles();
 
     // then
     expect(getConfig).toHaveBeenCalledWith();

@@ -28,18 +28,18 @@ interface BuildActivityStatusPathRequest {
   id: string;
 }
 
-interface BuildInstantLoanFindPathRequest {
+interface BuildSimpleLoanFindPathRequest {
   query: string;
 }
 
-interface BuildInstantLoanCollateralHintPathRequest {
+interface BuildSimpleLoanCollateralHintPathRequest {
   loanId: bigint;
 }
 
 const ACTIVITIES = `${SDK_API_V2_PATH}/activities`;
 const HISTORY_USERS = `${SDK_API_V2_PATH}/history/users`;
 const INFLOW = `${SDK_API_V2_PATH}/inflow`;
-const INSTANT_LOANS = `${SDK_API_V1_PATH}/instant-loans`;
+const SIMPLE_LOANS = `${SDK_API_V1_PATH}/instant-loans`;
 
 export function buildHistoryUserTransactionsPath(
   user: string,
@@ -84,22 +84,22 @@ export function buildActivityStatusPath(
   )}/status?${query.toString()}`;
 }
 
-export function buildInstantLoanFindPath(
-  request: BuildInstantLoanFindPathRequest
+export function buildSimpleLoanFindPath(
+  request: BuildSimpleLoanFindPathRequest
 ): string {
   const query = new URLSearchParams({ query: request.query });
-  return `${INSTANT_LOANS}/find?${query.toString()}`;
+  return `${SIMPLE_LOANS}/find?${query.toString()}`;
 }
 
-export function buildInstantLoanCollateralHintPath(
-  request: BuildInstantLoanCollateralHintPathRequest
+export function buildSimpleLoanCollateralHintPath(
+  request: BuildSimpleLoanCollateralHintPathRequest
 ): string {
-  return `${INSTANT_LOANS}/${encodeURIComponent(
+  return `${SIMPLE_LOANS}/${encodeURIComponent(
     request.loanId.toString()
   )}/collateral-hint`;
 }
 
 export const SdkApiPath = {
   inflow: INFLOW,
-  instantLoans: INSTANT_LOANS,
+  simpleLoans: SIMPLE_LOANS,
 } as const;

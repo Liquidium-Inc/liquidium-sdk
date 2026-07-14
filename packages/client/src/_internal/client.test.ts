@@ -48,7 +48,7 @@ describe("LiquidiumClient", () => {
     });
 
     // when
-    const results = await client.instantLoans.find(QUERY);
+    const results = await client.simpleLoans.find(QUERY);
 
     // then
     expect(results).toEqual([]);

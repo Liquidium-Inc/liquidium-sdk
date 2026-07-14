@@ -7,10 +7,13 @@ identifiers.
 
 ## Breaking changes
 
-- Instant-loan creation now groups fields under `collateral`, `borrow`, and
+- Rename the Instant Loans SDK surface to Simple Loans. Use
+  `client.simpleLoans`, `SimpleLoansModule`, `SimpleLoan*` types, and
+  `canisterIds.simpleLoans`.
+- Simple Loans creation now groups fields under `collateral`, `borrow`, and
   `refund`. Both `borrow` and `refund` require an explicit delivery `chain` and
   `destination`.
-- Instant-loan deposit and repayment quotes now live in chain-keyed `targets`
+- Simple Loans deposit and repayment quotes now live in chain-keyed `targets`
   maps. Replace fields such as `initialDeposit.target` and `repayment.amount`
   with `initialDeposit.targets[chain]` and `repayment.targets[chain]`.
 - Borrow and withdraw requests replace `receiverAddress` with `chain` and
@@ -34,6 +37,6 @@ identifiers.
 ## Added
 
 - Add ICP, ckBTC, ckUSDC, and ckUSDT transfer routes, ICRC wallet transfers,
-  ledger fee estimates, and chain-keyed instant-loan quotes.
-- Add `InstantLoanCreatedError` for recovering a created loan when subsequent
-  state hydration fails. Retry `instantLoans.get(...)` instead of creation.
+  ledger fee estimates, and chain-keyed Simple Loans quotes.
+- Add `SimpleLoanCreatedError` for recovering a created loan when subsequent
+  state hydration fails. Retry `simpleLoans.get(...)` instead of creation.

@@ -1,10 +1,10 @@
 import { normalizeExternalAddress } from "../../../core/address-validation";
 import type { Chain } from "../../../core/types";
-import type { InstantLoanAsset } from "../types";
+import type { SimpleLoanAsset } from "../types";
 
-export function validateInstantLoanBorrowDestination(
+export function validateSimpleLoanBorrowDestination(
   address: string,
-  asset: InstantLoanAsset,
+  asset: SimpleLoanAsset,
   chain: Chain
 ): string {
   return normalizeExternalAddress({
@@ -14,9 +14,9 @@ export function validateInstantLoanBorrowDestination(
   });
 }
 
-export function validateInstantLoanRefundDestination(
+export function validateSimpleLoanRefundDestination(
   address: string,
-  asset: InstantLoanAsset,
+  asset: SimpleLoanAsset,
   chain: Chain
 ): string {
   return normalizeExternalAddress({
