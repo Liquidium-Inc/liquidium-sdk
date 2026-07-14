@@ -6,7 +6,7 @@
 
 # Interface: PoolRate
 
-Defined in: [packages/client/src/modules/market/types.ts:73](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/types.ts#L73)
+Defined in: [packages/client/src/modules/market/types.ts:70](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/types.ts#L70)
 
 Current borrow, lend, and utilization rates for a pool.
 
@@ -16,7 +16,7 @@ Current borrow, lend, and utilization rates for a pool.
 
 > **borrowRate**: `bigint`
 
-Defined in: [packages/client/src/modules/market/types.ts:77](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/types.ts#L77)
+Defined in: [packages/client/src/modules/market/types.ts:74](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/types.ts#L74)
 
 Borrow APR scaled by `rateDecimals`.
 
@@ -26,7 +26,7 @@ Borrow APR scaled by `rateDecimals`.
 
 > **lendRate**: `bigint`
 
-Defined in: [packages/client/src/modules/market/types.ts:79](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/types.ts#L79)
+Defined in: [packages/client/src/modules/market/types.ts:76](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/types.ts#L76)
 
 Lend APR scaled by `rateDecimals`.
 
@@ -36,7 +36,7 @@ Lend APR scaled by `rateDecimals`.
 
 > **rateDecimals**: `bigint`
 
-Defined in: [packages/client/src/modules/market/types.ts:75](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/types.ts#L75)
+Defined in: [packages/client/src/modules/market/types.ts:72](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/types.ts#L72)
 
 Decimal scale used by rate fields.
 
@@ -46,6 +46,6 @@ Decimal scale used by rate fields.
 
 > **utilizationRate**: `bigint`
 
-Defined in: [packages/client/src/modules/market/types.ts:81](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/types.ts#L81)
+Defined in: [packages/client/src/modules/market/types.ts:78](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/types.ts#L78)
 
 Utilization rate scaled by `rateDecimals`.

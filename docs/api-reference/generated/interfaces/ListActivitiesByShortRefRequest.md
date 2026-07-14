@@ -8,7 +8,7 @@
 
 Defined in: [packages/client/src/modules/activities/types.ts:88](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L88)
 
-Activity list request scoped to an instant-loan short reference.
+Activity list request scoped to a simple loan short reference.
 
 ## Extends
 
@@ -36,4 +36,4 @@ Optional lifecycle filter; defaults to `active`.
 
 Defined in: [packages/client/src/modules/activities/types.ts:91](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L91)
 
-Instant-loan short reference to list activities for.
+Simple loan short reference to list activities for.

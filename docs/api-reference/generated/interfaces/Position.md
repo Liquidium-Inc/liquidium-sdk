@@ -14,7 +14,7 @@ Current profile position in one lending pool.
 
 ### asset
 
-> **asset**: `string`
+> **asset**: [`Asset`](../type-aliases/Asset.md)
 
 Defined in: [packages/client/src/modules/positions/types.ts:9](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/types.ts#L9)
 

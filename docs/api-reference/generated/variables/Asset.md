@@ -8,7 +8,7 @@
 
 > `const` **Asset**: `object`
 
-Defined in: [packages/client/src/core/types.ts:64](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L64)
+Defined in: [packages/client/src/core/types.ts:80](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L80)
 
 Canonical asset symbols supported by state-mutating protocol flows.
 
@@ -18,9 +18,9 @@ Canonical asset symbols supported by state-mutating protocol flows.
 
 > `readonly` **BTC**: `"BTC"` = `"BTC"`
 
-### SOL
+### ICP
 
-> `readonly` **SOL**: `"SOL"` = `"SOL"`
+> `readonly` **ICP**: `"ICP"` = `"ICP"`
 
 ### USDC
 

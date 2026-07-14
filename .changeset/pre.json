@@ -10,5 +10,5 @@
     "@liquidium/example-sdk-method-query": "0.0.1",
     "@liquidium/client": "0.4.1"
   },
-  "changesets": ["simple-ck-asset-routes"]
+  "changesets": ["rename-and-guard-simple-loans", "simple-ck-asset-routes"]
 }

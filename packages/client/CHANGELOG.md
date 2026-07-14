@@ -1,5 +1,17 @@
 # @liquidium/client
 
+## 0.5.0-rc.1
+
+### Patch Changes
+
+- Rename the Instant Loans SDK surface to Simple Loans. Use
+  `client.simpleLoans`, `SimpleLoansModule`, `SimpleLoan*` types, and
+  `canisterIds.simpleLoans`.
+
+  Expose each pool's `sameAssetBorrowingDustThreshold` and enforce the pool's
+  same-asset borrowing policy in quotes, Simple Loans creation, and profile-based
+  borrow preparation.
+
 ## 0.5.0-rc.0
 
 ### Minor Changes

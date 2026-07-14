@@ -8,7 +8,7 @@
 
 > **publicIdFromInt**(`id`): `string`
 
-Defined in: [packages/client/src/modules/instant-loans/ref-code.ts:22](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/instant-loans/ref-code.ts#L22)
+Defined in: [packages/client/src/modules/simple-loans/ref-code.ts:22](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/ref-code.ts#L22)
 
 Converts a canister loan id into a short user-facing reference.
 

@@ -27,7 +27,7 @@ Optional signing/sending account override.
 
 ### chain?
 
-> `optional` **chain?**: [`Chain`](../type-aliases/Chain.md)
+> `optional` **chain?**: [`SigningChain`](../type-aliases/SigningChain.md)
 
 Defined in: [packages/client/src/execute.ts:23](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/execute.ts#L23)
 

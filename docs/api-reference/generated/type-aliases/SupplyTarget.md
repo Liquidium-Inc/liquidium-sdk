@@ -6,8 +6,34 @@
 
 # Type Alias: SupplyTarget
 
-> **SupplyTarget** = [`NativeAddressSupplyTarget`](../interfaces/NativeAddressSupplyTarget.md) \| [`IcrcAccountSupplyTarget`](../interfaces/IcrcAccountSupplyTarget.md)
+> **SupplyTarget** = [`AssetIdentifier`](AssetIdentifier.md) & `object`
 
-Defined in: [packages/client/src/modules/lending/types.ts:242](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L242)
+Defined in: [packages/client/src/modules/lending/types.ts:164](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L164)
 
 Supply destination returned by `lending.supply(...)`.
+
+## Type Declaration
+
+### action
+
+> **action**: [`SupplyAction`](SupplyAction.md)
+
+Deposit or repayment action for the inflow.
+
+### address
+
+> **address**: `string`
+
+Address to use for this chain and asset pair.
+
+### icpAccountIdentifier?
+
+> `optional` **icpAccountIdentifier?**: `string`
+
+Legacy account identifier for ICP ledger transfers.
+
+### poolId
+
+> **poolId**: `string`
+
+Pool principal text receiving the inflow.

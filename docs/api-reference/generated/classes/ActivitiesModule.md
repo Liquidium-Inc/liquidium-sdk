@@ -50,7 +50,7 @@ Uses the Liquidium SDK API.
 
 [`GetActivityStatusRequest`](../type-aliases/GetActivityStatusRequest.md)
 
-Activity id plus profile id or instant-loan short reference.
+Activity id plus profile id or simple loan short reference.
 
 #### Returns
 
@@ -76,7 +76,7 @@ Uses the Liquidium SDK API.
 
 [`ListActivitiesRequest`](../type-aliases/ListActivitiesRequest.md)
 
-Profile id or instant-loan short reference plus optional lifecycle filter.
+Profile id or simple loan short reference plus optional lifecycle filter.
 
 #### Returns
 

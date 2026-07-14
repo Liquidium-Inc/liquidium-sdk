@@ -10,4 +10,4 @@
 
 Defined in: [packages/client/src/modules/activities/types.ts:95](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L95)
 
-Request for listing activities by profile id or instant-loan short reference.
+Request for listing activities by profile id or simple loan short reference.

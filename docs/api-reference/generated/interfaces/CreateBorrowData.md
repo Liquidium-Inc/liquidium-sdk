@@ -6,7 +6,7 @@
 
 # Interface: CreateBorrowData
 
-Defined in: [packages/client/src/modules/lending/types.ts:146](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L146)
+Defined in: [packages/client/src/modules/lending/types.ts:102](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L102)
 
 Prepared borrow request data embedded in the signable action.
 
@@ -20,7 +20,7 @@ Prepared borrow request data embedded in the signable action.
 
 > **amount**: `bigint`
 
-Defined in: [packages/client/src/modules/lending/types.ts:138](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L138)
+Defined in: [packages/client/src/modules/lending/types.ts:92](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L92)
 
 Amount to borrow in the borrow asset's base units.
 
@@ -30,11 +30,25 @@ Amount to borrow in the borrow asset's base units.
 
 ***
 
+### chain
+
+> **chain**: [`Chain`](../type-aliases/Chain.md)
+
+Defined in: [packages/client/src/modules/lending/types.ts:94](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L94)
+
+Chain where borrowed funds should arrive.
+
+#### Inherited from
+
+[`CreateBorrowRequest`](CreateBorrowRequest.md).[`chain`](CreateBorrowRequest.md#chain)
+
+***
+
 ### expiryTimestamp
 
 > **expiryTimestamp**: `bigint`
 
-Defined in: [packages/client/src/modules/lending/types.ts:148](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L148)
+Defined in: [packages/client/src/modules/lending/types.ts:104](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L104)
 
 Unix expiry timestamp in seconds, included in the signed message.
 
@@ -44,7 +58,7 @@ Unix expiry timestamp in seconds, included in the signed message.
 
 > **poolId**: `string`
 
-Defined in: [packages/client/src/modules/lending/types.ts:136](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L136)
+Defined in: [packages/client/src/modules/lending/types.ts:90](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L90)
 
 Borrow pool principal text.
 
@@ -58,7 +72,7 @@ Borrow pool principal text.
 
 > **profileId**: `string`
 
-Defined in: [packages/client/src/modules/lending/types.ts:134](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L134)
+Defined in: [packages/client/src/modules/lending/types.ts:88](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L88)
 
 Liquidium profile principal text.
 
@@ -68,17 +82,17 @@ Liquidium profile principal text.
 
 ***
 
-### receiverAddress
+### receiver
 
-> **receiverAddress**: `string`
+> **receiver**: [`LiquidiumAccountInput`](../type-aliases/LiquidiumAccountInput.md)
 
-Defined in: [packages/client/src/modules/lending/types.ts:140](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L140)
+Defined in: [packages/client/src/modules/lending/types.ts:96](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L96)
 
-External-chain address that receives the borrowed asset. Must match the borrow pool chain.
+Destination that receives the borrowed asset.
 
 #### Inherited from
 
-[`CreateBorrowRequest`](CreateBorrowRequest.md).[`receiverAddress`](CreateBorrowRequest.md#receiveraddress)
+[`CreateBorrowRequest`](CreateBorrowRequest.md).[`receiver`](CreateBorrowRequest.md#receiver)
 
 ***
 
@@ -86,7 +100,7 @@ External-chain address that receives the borrowed asset. Must match the borrow p
 
 > **signerWalletAddress**: `string`
 
-Defined in: [packages/client/src/modules/lending/types.ts:142](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L142)
+Defined in: [packages/client/src/modules/lending/types.ts:98](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L98)
 
 Wallet address that signs the borrow authorization.
 

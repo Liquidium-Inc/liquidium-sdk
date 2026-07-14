@@ -8,6 +8,6 @@
 
 > **Chain** = *typeof* [`Chain`](../variables/Chain.md)\[keyof *typeof* [`Chain`](../variables/Chain.md)\]
 
-Defined in: [packages/client/src/core/types.ts:74](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L74)
+Defined in: [packages/client/src/core/types.ts:90](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L90)
 
 Canonical chain identifier used by wallet and protocol actions.

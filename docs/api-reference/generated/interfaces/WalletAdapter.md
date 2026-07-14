@@ -6,13 +6,14 @@
 
 # Interface: WalletAdapter
 
-Defined in: [packages/client/src/core/wallet-actions.ts:91](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L91)
+Defined in: [packages/client/src/core/wallet-actions.ts:108](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L108)
 
 Optional wallet capabilities. Implement only what your flow uses:
 
 - `signMessage` - account creation, borrow, withdraw
-- `sendBtcTransaction` / `sendEthTransaction` - automated transfer-path supply
-- `sendEthTransaction` - contract-interaction supply and ETH native sends
+- `sendBtcTransaction` / `sendEthTransaction` - automated native-asset transfer supply
+- `sendIcrcTransfer` - automated ck-ledger and ICP ledger transfer supply
+- `sendEthTransaction` - contract-interaction supply and ETH native-asset sends
 
 ## Properties
 
@@ -20,7 +21,7 @@ Optional wallet capabilities. Implement only what your flow uses:
 
 > `optional` **sendBtcTransaction?**: (`request`) => `Promise`\<`string`\>
 
-Defined in: [packages/client/src/core/wallet-actions.ts:97](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L97)
+Defined in: [packages/client/src/core/wallet-actions.ts:114](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L114)
 
 Sends a BTC transaction and returns its transaction id.
 
@@ -40,7 +41,7 @@ Sends a BTC transaction and returns its transaction id.
 
 > `optional` **sendEthTransaction?**: (`request`) => `Promise`\<`string`\>
 
-Defined in: [packages/client/src/core/wallet-actions.ts:95](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L95)
+Defined in: [packages/client/src/core/wallet-actions.ts:112](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L112)
 
 Sends an EVM transaction and returns its transaction hash.
 
@@ -56,11 +57,31 @@ Sends an EVM transaction and returns its transaction hash.
 
 ***
 
+### sendIcrcTransfer?
+
+> `optional` **sendIcrcTransfer?**: (`request`) => `Promise`\<`string`\>
+
+Defined in: [packages/client/src/core/wallet-actions.ts:116](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L116)
+
+Sends an ICRC ledger transfer and returns the ledger transaction reference.
+
+#### Parameters
+
+##### request
+
+[`SendIcrcTransferRequest`](SendIcrcTransferRequest.md)
+
+#### Returns
+
+`Promise`\<`string`\>
+
+***
+
 ### signMessage?
 
 > `optional` **signMessage?**: (`request`) => `Promise`\<`string`\>
 
-Defined in: [packages/client/src/core/wallet-actions.ts:93](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L93)
+Defined in: [packages/client/src/core/wallet-actions.ts:110](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L110)
 
 Signs an SDK plaintext message and returns the wallet signature. BTC adapters may return base64 BIP-322 or hex-encoded signature bytes.
 

@@ -66,16 +66,6 @@ Pool and user history through the Liquidium SDK API.
 
 ***
 
-### instantLoans
-
-> `readonly` **instantLoans**: [`InstantLoansModule`](InstantLoansModule.md)
-
-Defined in: [packages/client/src/client.ts:42](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/client.ts#L42)
-
-Accountless instant loans backed by generated deposit/repay targets.
-
-***
-
 ### lending
 
 > `readonly` **lending**: [`LendingModule`](LendingModule.md)
@@ -113,3 +103,13 @@ Per-pool positions, health, aggregate stats.
 Defined in: [packages/client/src/client.ts:44](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/client.ts#L44)
 
 Pure quote helpers from market inputs.
+
+***
+
+### simpleLoans
+
+> `readonly` **simpleLoans**: [`SimpleLoansModule`](SimpleLoansModule.md)
+
+Defined in: [packages/client/src/client.ts:42](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/client.ts#L42)
+
+Accountless Simple Loans backed by generated deposit/repay targets.

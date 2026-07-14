@@ -6,7 +6,7 @@
 
 # Interface: SignMessageRequest
 
-Defined in: [packages/client/src/core/wallet-actions.ts:41](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L41)
+Defined in: [packages/client/src/core/wallet-actions.ts:35](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L35)
 
 Message-signing request passed to wallet adapters.
 
@@ -16,7 +16,7 @@ Message-signing request passed to wallet adapters.
 
 > `optional` **account?**: `string`
 
-Defined in: [packages/client/src/core/wallet-actions.ts:47](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L47)
+Defined in: [packages/client/src/core/wallet-actions.ts:41](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L41)
 
 Optional account override for the signing wallet.
 
@@ -26,7 +26,7 @@ Optional account override for the signing wallet.
 
 > **actionType**: `string`
 
-Defined in: [packages/client/src/core/wallet-actions.ts:49](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L49)
+Defined in: [packages/client/src/core/wallet-actions.ts:43](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L43)
 
 SDK action type that produced this request.
 
@@ -34,9 +34,9 @@ SDK action type that produced this request.
 
 ### chain
 
-> **chain**: [`Chain`](../type-aliases/Chain.md)
+> **chain**: [`SigningChain`](../type-aliases/SigningChain.md)
 
-Defined in: [packages/client/src/core/wallet-actions.ts:43](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L43)
+Defined in: [packages/client/src/core/wallet-actions.ts:37](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L37)
 
 Chain for the signing wallet.
 
@@ -46,16 +46,6 @@ Chain for the signing wallet.
 
 > **message**: `string`
 
-Defined in: [packages/client/src/core/wallet-actions.ts:45](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L45)
+Defined in: [packages/client/src/core/wallet-actions.ts:39](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L39)
 
 Plaintext message to sign.
-
-***
-
-### transferMode
-
-> **transferMode**: `"native"`
-
-Defined in: [packages/client/src/core/wallet-actions.ts:51](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L51)
-
-Transfer path associated with the action.

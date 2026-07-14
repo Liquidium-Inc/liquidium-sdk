@@ -6,7 +6,7 @@
 
 # Class: QuoteModule
 
-Defined in: [packages/client/src/modules/quote/quote.ts:60](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/quote/quote.ts#L60)
+Defined in: [packages/client/src/modules/quote/quote.ts:61](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/quote/quote.ts#L61)
 
 Pure quote helpers for LTV and required-collateral calculations.
 
@@ -26,7 +26,7 @@ Pure quote helpers for LTV and required-collateral calculations.
 
 > **calculateLtv**(`request`, `pools`, `prices`): [`LtvCalculation`](../interfaces/LtvCalculation.md)
 
-Defined in: [packages/client/src/modules/quote/quote.ts:71](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/quote/quote.ts#L71)
+Defined in: [packages/client/src/modules/quote/quote.ts:72](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/quote/quote.ts#L72)
 
 Calculates current LTV from caller-supplied borrow and collateral amounts.
 
@@ -64,7 +64,7 @@ LTV calculation plus validation errors when inputs are unusable.
 
 > **getQuote**(`request`, `pools`, `prices`): [`QuoteResult`](../interfaces/QuoteResult.md)
 
-Defined in: [packages/client/src/modules/quote/quote.ts:210](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/quote/quote.ts#L210)
+Defined in: [packages/client/src/modules/quote/quote.ts:225](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/quote/quote.ts#L225)
 
 Calculates a loan quote based on borrow amount, LTV, and pool selections.
 

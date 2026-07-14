@@ -8,7 +8,7 @@
 
 Defined in: [packages/client/src/modules/activities/types.ts:113](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L113)
 
-Activity status lookup scoped to an instant-loan short reference.
+Activity status lookup scoped to a simple loan short reference.
 
 ## Extends
 
@@ -36,4 +36,4 @@ Activity or receipt id to look up.
 
 Defined in: [packages/client/src/modules/activities/types.ts:116](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L116)
 
-Instant-loan short reference that owns the activity.
+Simple loan short reference that owns the activity.

@@ -14,7 +14,7 @@ Current protocol metadata and rate state for a lending pool.
 
 ### asset
 
-> **asset**: `string`
+> **asset**: [`Asset`](../type-aliases/Asset.md)
 
 Defined in: [packages/client/src/modules/market/types.ts:8](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/types.ts#L8)
 
@@ -74,7 +74,7 @@ Current borrow APR, scaled by `rateDecimals`.
 
 ### chain
 
-> **chain**: `string`
+> **chain**: [`Chain`](../type-aliases/Chain.md)
 
 Defined in: [packages/client/src/modules/market/types.ts:10](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/types.ts#L10)
 
@@ -116,7 +116,7 @@ Pool canister principal text.
 
 > `optional` **lastUpdated?**: `bigint`
 
-Defined in: [packages/client/src/modules/market/types.ts:58](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/types.ts#L58)
+Defined in: [packages/client/src/modules/market/types.ts:60](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/types.ts#L60)
 
 Unix timestamp in seconds of the last pool update when available.
 
@@ -239,6 +239,16 @@ Reserve factor, scaled by `rateDecimals`.
 Defined in: [packages/client/src/modules/market/types.ts:56](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/types.ts#L56)
 
 Whether borrowing the same asset as collateral is allowed.
+
+***
+
+### sameAssetBorrowingDustThreshold
+
+> **sameAssetBorrowingDustThreshold**: `bigint`
+
+Defined in: [packages/client/src/modules/market/types.ts:58](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/types.ts#L58)
+
+Same-asset collateral below this base-unit amount is treated as dust.
 
 ***
 
