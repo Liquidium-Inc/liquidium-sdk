@@ -1,31 +1,19 @@
 ---
 title: Transfer Targets
-description: Understand native address and ICRC account targets returned by the SDK.
+description: Understand transfer targets returned by the SDK.
 order: 220
 ---
 
 # Transfer Targets
 
-The SDK returns transfer targets for deposits and repayments. Your UI should render the target based on its discriminator.
+The SDK returns a flat `SupplyTarget` for deposits and repayments. Every target has a primary `address` that your UI can display or pass to a wallet.
 
-## Native Address Target
+## Display A Target
 
-Use `target.address` when the target is an external-chain address:
-
-```ts
-if (target.type === "nativeAddress") {
-  showAddress(target.address);
-}
-```
-
-## ICRC Account Target
-
-Use `target.account` when the target is an ICRC account:
+Use `target.address` for every transfer route:
 
 ```ts
-if (target.type === "icrcAccount") {
-  showAccount(target.account);
-}
+showAddress(target.address);
 ```
 
-Each target also includes `poolId`, `asset`, `chain`, and `action`. Use those fields to validate the UI label before the user sends funds.
+Each target also includes `poolId`, `asset`, `chain`, and `action`. Native ICP targets may include `icpAccountIdentifier` for legacy ledger integrations. Do not branch on removed `type` or `account` fields.

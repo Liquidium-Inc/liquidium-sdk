@@ -21,17 +21,16 @@ Use deposit-address flows when your app needs:
 ## Shape
 
 ```ts
+import { Chain } from "@liquidium/client";
+
 const supplyFlow = await client.lending.supply({
   profileId,
   poolId,
   action: "deposit",
+  chain: Chain.BTC,
 });
 
-if (supplyFlow.target.type === "nativeAddress") {
-  console.log("Send funds to", supplyFlow.target.address);
-} else {
-  console.log("Send funds to", supplyFlow.target.account);
-}
+console.log("Send funds to", supplyFlow.target.address);
 ```
 
 When the flow needs a transaction ID, call `supplyFlow.submit(...)` after the user broadcasts the transfer.

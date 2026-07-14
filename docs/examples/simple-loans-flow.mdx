@@ -1,0 +1,28 @@
+---
+title: Simple Loans Flow Example
+description: Run the Simple Loans browser example.
+order: 300
+---
+
+# Simple Loans Flow Example
+
+Use `examples/simple-loans-flow` as the starting point for accountless borrow UX.
+
+It covers:
+
+| Area | What to inspect |
+| --- | --- |
+| App setup | Browser flow using bundled SDK defaults |
+| Pool selection | Market data and frozen-pool handling |
+| LTV preview | Client-side quote validation before creation |
+| Loan creation | `client.simpleLoans.create(...)` request shape |
+| Loan status reload | `client.simpleLoans.get({ ref })` and `loan.status` |
+| Activity status | `client.activities.list(...)`, `client.activities.getStatus(...)`, and top-up state |
+| Recovery | `client.simpleLoans.find(...)` |
+
+Run it from the SDK root:
+
+```bash
+pnpm install
+pnpm --filter @liquidium/example-simple-loans-flow dev
+```

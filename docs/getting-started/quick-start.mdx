@@ -1,17 +1,17 @@
 ---
 title: Quick Start
-description: Create and restore an accountless instant loan.
+description: Create and restore an accountless Simple Loan.
 order: 20
 ---
 
 # Quick Start
 
-Create an instant loan, show the deposit target, and restore the loan by reference.
+Create a Simple Loan, show the deposit target, and restore the loan by reference.
 
 Borrow amounts must meet the SDK minimum for the selected asset. Use `getMinimumBorrowAmount(borrowPool.asset)` when your UI needs to show that minimum.
 
 ```ts
-import { LiquidiumClient, type Pool, type SupplyTarget } from "@liquidium/client";
+import { Asset, Chain, LiquidiumClient, type Pool } from "@liquidium/client";
 
 const client = new LiquidiumClient();
 
@@ -20,8 +20,8 @@ const [pools, prices] = await Promise.all([
   client.market.getAssetPrices(),
 ]);
 
-const collateralPool = requirePool(pools, "BTC");
-const borrowPool = requirePool(pools, "USDC");
+const collateralPool = requirePool(pools, Asset.BTC, Chain.BTC);
+const borrowPool = requirePool(pools, Asset.USDC, Chain.ETH);
 
 const collateralAmount = 50_000n;
 const borrowAmount = 9_000_000n;
@@ -41,59 +41,66 @@ if (ltv.validationErrors.length > 0) {
   throw new Error(ltv.validationErrors.map((error) => error.message).join(" "));
 }
 
-const loan = await client.instantLoans.create({
-  collateralPoolId: collateralPool.id,
-  borrowPoolId: borrowPool.id,
-  collateralAsset: "BTC",
-  borrowAsset: "USDC",
-  collateralAmount,
-  borrowAmount,
+const loan = await client.simpleLoans.create({
+  collateral: {
+    poolId: collateralPool.id,
+    asset: Asset.BTC,
+    amount: collateralAmount,
+  },
+  borrow: {
+    poolId: borrowPool.id,
+    asset: Asset.USDC,
+    amount: borrowAmount,
+    chain: Chain.ETH,
+    destination: "0x2222222222222222222222222222222222222222",
+  },
+  refund: {
+    chain: Chain.BTC,
+    destination: "1BoatSLRHtKNngkdXEeobR76b53LETtpyT",
+  },
   ltvMaxBps: ltv.maxAllowedLtvBps,
   depositWindowSeconds: 3_600n,
-  borrowDestination: {
-    type: "External",
-    address: "0x2222222222222222222222222222222222222222",
-  },
-  refundDestination: {
-    type: "External",
-    address: "bc1qrefunddestination",
-  },
 });
 
-console.log("Save this loan reference:", loan.ref);
-console.log("Send collateral amount:", loan.initialDeposit.amount.toString());
-console.log("Send collateral to:", formatSupplyTarget(loan.initialDeposit.target));
+const initialDeposit = loan.initialDeposit.targets[Chain.BTC];
+if (!initialDeposit) {
+  throw new Error("Missing BTC initial-deposit target.");
+}
 
-const restoredLoan = await client.instantLoans.get({ ref: loan.ref });
+console.log("Save this loan reference:", loan.ref);
+console.log("Send collateral amount:", initialDeposit.amount.toString());
+console.log("Send collateral to:", initialDeposit.target.address);
+
+const restoredLoan = await client.simpleLoans.get({ ref: loan.ref });
+const repayment = restoredLoan.repayment.targets[Chain.ETH];
 
 console.log("Loan status:", restoredLoan.status);
-if (restoredLoan.repayment) {
-  console.log("Repay amount:", restoredLoan.repayment.amount.toString());
-  console.log("Repay target:", formatSupplyTarget(restoredLoan.repayment.target));
+if (repayment && repayment.amount > 0n) {
+  console.log("Repay amount:", repayment.amount.toString());
+  console.log("Repay target:", repayment.target.address);
 } else {
   console.log("No repayment due yet.");
 }
 
-function requirePool(pools: Pool[], asset: string): Pool {
-  const pool = pools.find((candidatePool) => candidatePool.asset === asset);
+function requirePool(
+  pools: Pool[],
+  asset: Pool["asset"],
+  chain: Pool["chain"]
+): Pool {
+  const pool = pools.find(
+    (candidatePool) =>
+      candidatePool.asset === asset && candidatePool.chain === chain
+  );
 
   if (!pool) {
-    throw new Error(`Missing ${asset} pool.`);
+    throw new Error(`Missing ${chain}/${asset} pool.`);
   }
 
   if (pool.frozen) {
-    throw new Error(`${asset} pool is frozen.`);
+    throw new Error(`${chain}/${asset} pool is frozen.`);
   }
 
   return pool;
-}
-
-function formatSupplyTarget(target: SupplyTarget): string {
-  if (target.type === "nativeAddress") {
-    return target.address;
-  }
-
-  return target.account;
 }
 ```
 

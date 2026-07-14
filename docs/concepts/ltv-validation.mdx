@@ -1,12 +1,12 @@
 ---
 title: LTV Validation
-description: Validate borrow and collateral amounts before creating an instant loan.
+description: Validate borrow and collateral amounts before creating a Simple Loan.
 order: 230
 ---
 
 # LTV Validation
 
-Call `client.quote.calculateLtv(...)` before creating an instant loan. This lets your app reject invalid amount pairs before it asks the protocol to create a loan.
+Call `client.quote.calculateLtv(...)` before creating a Simple Loan. This lets your app reject invalid amount pairs before it asks the protocol to create a loan.
 
 ```ts
 const ltv = client.quote.calculateLtv(
@@ -28,3 +28,5 @@ if (ltv.validationErrors.length > 0) {
 Amounts must use each asset's smallest unit. BTC uses satoshis. USDC and USDT use token base units based on the selected pool decimals.
 
 The SDK also validates minimum borrow amounts. BTC borrows must be at least `5_100n` sats. USDC and USDT borrows must be at least `1_000_000n` base units. Use `getMinimumBorrowAmount(asset)` to display the same minimum before the user submits.
+
+Pools expose `sameAssetBorrowing` and `sameAssetBorrowingDustThreshold`. When same-asset borrowing is disabled, same-asset collateral must be strictly below the base-unit dust threshold; equality is rejected. The quote helpers, `client.simpleLoans.create(...)`, and `client.lending.prepareBorrow(...)` enforce this policy.

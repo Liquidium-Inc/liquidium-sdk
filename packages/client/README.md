@@ -51,6 +51,8 @@ Install the client package:
 npm install @liquidium/client
 ```
 
+Use `npm install @liquidium/client@rc` when integrating against the current 0.5 release candidate. Untagged installs resolve to the latest stable release.
+
 Create a simple loan, display the deposit target, and restore the loan by reference:
 
 ```ts
@@ -174,7 +176,7 @@ Simple Loans integrations use this sequence:
 | Validate amounts | `client.quote.calculateLtv(...)` | Block too-small borrow amounts, invalid LTV, or frozen-pool input before creating a loan |
 | Create loan | `client.simpleLoans.create(...)` | Store `loan.ref` and show the quote in `loan.initialDeposit.targets[chain]` |
 | Track loan | `client.simpleLoans.get({ ref })`, `client.simpleLoans.find(...)`, and `client.activities.list({ shortRef: ref })` | Reload loan state, initial deposit quote, and repayment activity |
-| Repay loan | Read `loan.repayment.targets[chain]` | Ask the user to send the quote amount to its target; no quote means no repayment is due on that chain |
+| Repay loan | Read `loan.repayment.targets[chain]` | If debt exists, ask the user to send the selected chain quote amount to its target; a missing quote means that transfer rail is unavailable |
 
 `client.simpleLoans.create(...)` and `client.simpleLoans.get(...)` return the generated Liquidium profile, current position state, and transfer quotes keyed by the chain the user will send on. Users do not manage the generated profile.
 
@@ -380,7 +382,7 @@ Use the SDK in browser apps and modern TypeScript runtimes.
 | Requirement | Notes |
 | --- | --- |
 | Node.js | 20+ for this repository |
-| Package manager | pnpm 9+ for local development |
+| Package manager | pnpm 11+ for local development |
 | Browser APIs | `fetch`, `BigInt`, and standard ESM support |
 | Wallet UI | Bring your own wallet provider; wallet-backed examples use Dynamic |
 

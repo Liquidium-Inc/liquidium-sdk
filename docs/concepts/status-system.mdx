@@ -30,7 +30,7 @@ Use `status.operation` to decide which user action or receipt type you are showi
 
 | Operation | Meaning |
 | --- | --- |
-| `deposit` | The user sends funds into Liquidium for supply or initial instant-loan collateral |
+| `deposit` | The user sends funds into Liquidium for supply or initial Simple Loan collateral |
 | `borrow` | Liquidium sends borrowed funds to the configured destination |
 | `repayment` | The user sends funds back to repay debt |
 | `withdrawal` | Liquidium sends supplied funds or collateral out |
@@ -56,7 +56,7 @@ Activities narrow the operation by direction. Inflow activities use `deposit` or
 
 | Surface | Field |
 | --- | --- |
-| `client.instantLoans.create(...)` and `client.instantLoans.get(...)` | `loan.status` |
+| `client.simpleLoans.create(...)` and `client.simpleLoans.get(...)` | `loan.status` |
 | `client.activities.list(...)` | `activity.status` |
 | `client.activities.getStatus(...)` | `result.activity.status` when `result.found` is `true` |
 | `client.history.getUserTransactionHistory(...)` | `item.status` |

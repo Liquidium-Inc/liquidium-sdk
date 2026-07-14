@@ -1,6 +1,6 @@
 ---
 name: liquidium-sdk-integration
-description: "Use this skill first for the Liquidium TypeScript SDK authless Simple Loans flow, `@liquidium/client`, `LiquidiumClient`, `client.simpleLoans`, wallet adapters, Liquidium profile creation, market data, quotes, borrowing, supply flows, positions, activities, or history. Use it whenever the user wants to integrate Liquidium into a TypeScript, React, or Vite app, or asks how to call Liquidium SDK methods correctly."
+description: "Use this skill first for the Liquidium TypeScript SDK accountless Simple Loans flow, `@liquidium/client`, `LiquidiumClient`, `client.simpleLoans`, wallet adapters, Liquidium profile creation, market data, quotes, borrowing, supply flows, positions, activities, or history. Use it whenever the user wants to integrate Liquidium into a TypeScript, React, or Vite app, or asks how to call Liquidium SDK methods correctly."
 license: MIT
 metadata:
   title: Liquidium SDK Integration
@@ -9,13 +9,13 @@ metadata:
 
 # Liquidium SDK Integration
 
-`@liquidium/client` reads Liquidium market and position data, then executes authless Simple Loans and advanced profile-based lending flows.
+`@liquidium/client` reads Liquidium market and position data, then executes accountless Simple Loans and advanced profile-based lending flows.
 
-Priority: authless Simple Loans are the default product flow. Use `client.simpleLoans` first, deposit-address profile flows second, and ETH contract interaction only when explicitly needed.
+Priority: accountless Simple Loans are the default product flow. Use `client.simpleLoans` first, deposit-address profile flows second, and ETH contract interaction only when explicitly needed.
 
 ## Default Decision
 
-When the user asks for a simple borrow, loan, collateral deposit, repayment target, or Liquidium integration and does not explicitly ask to manage Liquidium profiles, implement the authless Simple Loans flow with `client.simpleLoans`.
+When the user asks for a simple borrow, loan, collateral deposit, repayment target, or Liquidium integration and does not explicitly ask to manage Liquidium profiles, implement the accountless Simple Loans flow with `client.simpleLoans`.
 
 Do not require the user to create a Liquidium profile, sign a borrow message, or call `client.lending.borrow(...)` for the default flow. The SDK creates the backing profile and returns generated initial-deposit and repayment quote targets.
 
@@ -40,6 +40,9 @@ npm install @liquidium/client
 pnpm add @liquidium/client
 bun add @liquidium/client
 ```
+
+Use the `@rc` tag when integrating against the current 0.5 release candidate.
+Untagged installs resolve to the latest stable release.
 
 Use the SDK in browser apps and modern TypeScript runtimes. Browser integrations
 need `fetch`, `BigInt`, and standard ESM support. Follow the host app's package
@@ -71,7 +74,7 @@ const client = new LiquidiumClient({
 - `fetch`: supplies a custom fetch implementation when the runtime needs one
 - `evmRpcUrl` / `evmPublicClient`: required for lower-level ETH contract-interaction supply planning and allowance polling. Use `evmRpcHeaders` when the RPC provider authenticates with HTTP headers
 - `identity` / `icHost`: custom ICP agent configuration
-- `canisterIds`: accepts partial overrides for `lending`, `ethDeposit`, `simpleLoans`, and `pools.{btc,usdt,usdc,icp}`. Removed flat keys such as `btcPool` and `ercPool` are rejected
+- `canisterIds`: accepts partial overrides for `lending`, `ethDeposit`, `simpleLoans`, and `pools.{btc,usdt,usdc,icp}`. Removed keys such as `instantLoans`, `btcPool`, and `ercPool` are rejected
 - `canisterIds.simpleLoans`: defaults to mainnet `u5rm3-niaaa-aaaar-qb7eq-cai`; override it for custom deployments
 
 Partial `canisterIds` overrides merge with mainnet defaults. For a fully custom
@@ -115,7 +118,7 @@ when constructing or validating routes. `ICP` is a transfer chain, but not a
 
 ### simpleLoans
 
-Authless Simple Loans. This is the default simple borrow UX: create a loan,
+Accountless Simple Loans. This is the default simple borrow UX: create a loan,
 show the fee-inclusive initial deposit quote and generated collateral deposit
 address, restore by reference, and show the actionable repayment amount after
 debt exists.
@@ -146,6 +149,11 @@ not confuse the quote module's `targetLtvBps` with `create(...)`'s `ltvMaxBps`. 
 `client.quote.calculateLtv(...)` when clients need to preview the current LTV
 from chosen borrow and collateral amounts before calling `create(...)`.
 
+Pools expose `sameAssetBorrowing` and `sameAssetBorrowingDustThreshold`. When
+same-asset borrowing is disabled, same-asset collateral must be strictly below
+the base-unit dust threshold; equality is rejected. Quote helpers, Simple Loans
+creation, and profile borrow preparation enforce this policy.
+
 `create(...)` and `get(...)` do not require a wallet adapter, profile ID, or
 message signing. Read a quote from `initialDeposit.targets[chain]` or
 `repayment.targets[chain]`. Each quote contains the full amount to send, its fee
@@ -165,7 +173,7 @@ quote for the chain the user will transfer on. Do not assume the addresses
 match, reuse the collateral deposit target for repayment, or cache one target
 for both phases.
 
-Hydrated simple loans use the current public shape: read terms from
+Hydrated Simple Loans use the current public shape: read terms from
 `loan.terms.ltvMaxBps` and `loan.terms.depositWindowSeconds`; read deposit
 instructions from `loan.initialDeposit.targets[chain]`; read repayment
 instructions from `loan.repayment.targets[chain]`. Do not use removed top-level fields such as
@@ -219,7 +227,7 @@ pool. There are no separate ckBTC, ckUSDC, or ckUSDT pools.
 
 Quote-first planning. Use this to calculate borrow USD value, required
 collateral, current LTV, validation errors, and warnings from caller-supplied market data.
-For default authless loans, the quote can help choose `collateralAmount` and
+For default accountless Simple Loans, the quote can help choose `collateralAmount` and
 `borrowAmount`; execution still goes through `client.simpleLoans.create(...)`.
 For advanced profile-based borrowing, fetch pools and prices first, then call
 `quote` before preparing the signed borrow.
@@ -383,11 +391,19 @@ Catch SDK errors at the boundary where the app can show user-facing copy,
 retry, or log diagnostic context:
 
 ```ts
-import { LiquidiumError, LiquidiumErrorCode } from "@liquidium/client";
+import {
+  LiquidiumError,
+  LiquidiumErrorCode,
+  SimpleLoanCreatedError,
+} from "@liquidium/client";
 
 try {
-  return await client.simpleLoans.get({ ref });
+  return await client.simpleLoans.create(request);
 } catch (error) {
+  if (error instanceof SimpleLoanCreatedError) {
+    return await client.simpleLoans.get({ loanId: error.loanId });
+  }
+
   if (error instanceof LiquidiumError) {
     if (error.code === LiquidiumErrorCode.REQUEST_TIMEOUT) {
       // Show retry copy or trigger the app's retry path.
@@ -405,11 +421,15 @@ timeout, transport, validation, or protocol failures. Quote validation failures
 are returned in `validationErrors`; do not rely on thrown errors for normal quote
 invalidity.
 
+`SimpleLoanCreatedError` means creation succeeded remotely but hydration failed.
+Recover through `simpleLoans.get(...)` with its `loanId` or `ref`; never retry
+`create(...)`, because that can create a duplicate loan.
+
 ## Wallet Adapter
 
 The SDK uses a `WalletAdapter` for signing and transaction execution. Implement only the methods the selected flow needs.
 
-Default authless Simple Loans do not need a `WalletAdapter`. Add one only
+Default accountless Simple Loans do not need a `WalletAdapter`. Add one only
 for advanced profile creation, signed borrow/withdraw, or automated transfer
 execution.
 
@@ -445,12 +465,12 @@ const walletAdapter: WalletAdapter = {
 
 ## Flows
 
-### Simple Loans default flow
+### Simple Loan default flow
 
 Use `client.simpleLoans.create(...)` when the user should not create or manage
 a Liquidium profile. The user supplies chain-specific borrow and refund
-destinations, receives a short loan ID, then sends collateral to the generated
-deposit address.
+destinations, receives a numeric loan ID and short user-facing reference, then
+sends collateral to the generated deposit address.
 
 Default app sequence:
 
@@ -540,7 +560,7 @@ objects; returned `IcrcAccount` values additionally contain `owner` and optional
 `collateral.amount` is the intended credited collateral target before
 deposit/inflow fees; use the selected initial-deposit quote's `amount` after
 creation. Use pool `decimals` and the quote module when building UI inputs.
-Keep the initial loan LTV under the SDK's Simple Loans starting-LTV guard and set
+Keep the initial loan LTV under the SDK's Simple Loan starting-LTV guard and set
 `ltvMaxBps` within the collateral pool's accepted max-LTV range.
 
 Every public supply target has a primary `address`. Native ICP targets may also
@@ -581,9 +601,9 @@ Do not use `client.lending.borrow(...)` for this flow. `lending.borrow(...)` is
 the profile-based signed borrow primitive. Simple Loans automate the borrow
 after collateral arrives.
 
-Simple loan status is UI-facing:
+Simple Loan status is UI-facing:
 
-- `{ operation: "deposit", state: "action_required" }`: show the selected initial-deposit quote and deadline
+- `{ operation: "deposit", state: "action_required" }`: show the selected initial-deposit quote and show `expiryTimestamp` only when it is non-null
 - `{ operation: "deposit", state: "confirming" }`: show deposit confirmation progress
 - `{ operation: "deposit", state: "processing" }`: keep polling while Liquidium processes the confirmed collateral
 - `{ operation: "borrow", state: "processing" }`: keep polling while the borrow outflow is created
@@ -596,7 +616,7 @@ Simple loan status is UI-facing:
 ### Advanced: create a profile
 
 Only use this when the app intentionally manages Liquidium profiles. Do not add
-profile creation to the default authless Simple Loans flow.
+profile creation to the default accountless Simple Loans flow.
 
 Convenience method when the app already has wallet signing wired:
 
@@ -651,7 +671,7 @@ const reserves = await client.positions.getUserReserves(profileId);
 ### Advanced profile-based quote-first borrow
 
 Use this only for apps that already manage profiles and need signed borrow
-execution. For the authless product flow, use the quote only for planning and
+execution. For the accountless product flow, use the quote only for planning and
 execute with `client.simpleLoans.create(...)`.
 
 ```ts
@@ -685,7 +705,7 @@ const outflow = await client.lending.borrow({
 ### Advanced profile-based supply flow
 
 Use this only for profile-based integrations that intentionally manage Liquidium
-profiles. Use `client.simpleLoans` for the default authless borrow UX.
+profiles. Use `client.simpleLoans` for the default accountless borrow UX.
 
 ```ts
 const supplyFlow = await client.lending.supply({
@@ -817,9 +837,9 @@ Omitting `mechanism` selects the transfer path. `mechanism: "contractInteraction
 
 ## Common Mistakes
 
-1. Treating profile lending as the default borrow flow. Use `client.simpleLoans.create(...)` for the authless product flow unless the user explicitly asks for profiles.
+1. Treating profile lending as the default borrow flow. Use `client.simpleLoans.create(...)` for the accountless product flow unless the user explicitly asks for profiles.
 2. Adding profile creation, signed borrow, or wallet adapter requirements to Simple Loans. `simpleLoans.create(...)` and `simpleLoans.get(...)` do not need them.
-3. Confusing `quote.targetLtvBps` with Simple Loans `ltvMaxBps`. The quote target helps plan amounts; `ltvMaxBps` is validated by the Simple Loans LTV guards.
+3. Confusing `quote.targetLtvBps` with Simple Loan `ltvMaxBps`. The quote target helps plan amounts; `ltvMaxBps` is validated by the Simple Loan LTV guards.
 4. `new LiquidiumClient({})` uses the default Liquidium service configuration. Override `apiBaseUrl` for custom service deployments. Lower-level contract-interaction planning also needs `evmRpcUrl` or `evmPublicClient`. Default ETH stablecoin deposit-address supply, `borrow(...)`, and `withdraw(...)` do not use the service configuration.
 5. Prepare methods return signable actions, not completed actions. `prepareCreateProfile`, `prepareBorrow`, and `prepareWithdraw` still need signing and submission.
 6. Build a wallet adapter with only the methods the selected flow needs. Avoid adding `signMessage`, `sendBtcTransaction`, `sendEthTransaction`, or `sendIcrcTransfer` unless the flow uses them.
@@ -831,12 +851,12 @@ Omitting `mechanism` selects the transfer path. `mechanism: "contractInteraction
 12. After `borrow(...)`, treat `outflow.id` as the user-visible reference immediately. Do not assume `outflow.txid` is set on the first response; resolve it later via activities or history if you need the chain transaction id.
 13. History entries use `txids?: string[]`; do not look for legacy direction-specific txid fields.
 14. ETH deposit-address `unauthorized` is usually not an `apiBaseUrl` problem. The deposit-address lookup is a direct canister call. Check the `poolId`, `ethDeposit` canister ID, token address, and deployment/environment alignment first.
-15. Do not model Simple Loans as a `lending.supply(...)` mechanism. Use `client.simpleLoans` for the authless product flow and `client.lending.supply(...)` only for advanced profile-based supply/repay integrations.
+15. Do not model Simple Loans as a `lending.supply(...)` mechanism. Use `client.simpleLoans` for the accountless product flow and `client.lending.supply(...)` only for advanced profile-based supply/repay integrations.
 16. Do not trust address lookup as canonical loan state. Use it to find candidates, then hydrate the selected loan through `simpleLoans.get(...)`.
 17. Do not confuse deposit/supply targets with repayment targets. They are generated for different inflow actions and may be different addresses/accounts.
 18. Do not render raw `rateDecimals = 27` fixed-point values as percentages. Format scaled rates first or the UI can show scientific notation such as `3.7e+24%`.
 19. Do not model `loan.repayment` as nullable. Select the desired chain quote and check its `amount > 0n` before prompting repayment.
-20. Do not use removed Simple Loans fields: `loan.depositTarget`, `loan.repayTarget`, `loan.ltvMaxBps`, or `loan.depositWindowSeconds`.
+20. Do not use removed instant-loan fields: `loan.depositTarget`, `loan.repayTarget`, `loan.ltvMaxBps`, or `loan.depositWindowSeconds`.
 21. Do not use `"ckBTC"`, `"ckUSDC"`, or `"ckUSDT"` as asset symbols. Pair `"BTC"`, `"USDC"`, or `"USDT"` with `chain: "ICP"`.
 22. Do not assume `Pool.chain` is the user's transfer chain or derive deposit, borrow, and refund rails from one shared selection.
 
@@ -850,8 +870,8 @@ Omitting `mechanism` selects the transfer path. `mechanism: "contractInteraction
 
 ## Defaults
 
-- Prefer `client.simpleLoans.create(...)` for the simple authless borrow UX
-- Start with `new LiquidiumClient({})` for market reads and authless `simpleLoans.create(...)`
+- Prefer `client.simpleLoans.create(...)` for the simple accountless borrow UX
+- Start with `new LiquidiumClient({})` for market reads and accountless `simpleLoans.create(...)`
 - Override `apiBaseUrl` only when the app uses a custom Liquidium service deployment
 - Add `evmRpcUrl` or `evmPublicClient` when the requested flow reads Ethereum chain state
 - Use `chain: "BTC"`, `chain: "ETH"`, or `chain: "ICP"` as required by the selected Chain + Asset pair

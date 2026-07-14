@@ -15,7 +15,7 @@ The SDK exports `LiquidiumClient`, error types, constants, module request types,
 | `client.accounts` | Profile lifecycle, account lookup, and linked wallets |
 | `client.activities` | Activity lists and receipt-oriented status |
 | `client.history` | Pool and user history through the Liquidium SDK API |
-| `client.instantLoans` | Accountless instant loans with generated deposit and repayment targets |
+| `client.simpleLoans` | Accountless Simple Loans with generated deposit and repayment targets |
 | `client.lending` | Supply, borrow, withdraw, and inflow reporting |
 | `client.market` | Pools, prices, and pool rate lookups |
 | `client.positions` | Per-pool positions, health, and aggregate stats |
@@ -23,7 +23,7 @@ The SDK exports `LiquidiumClient`, error types, constants, module request types,
 
 ## Shared Status Types
 
-Use [`LiquidiumStatus`](./generated/interfaces/LiquidiumStatus.md) for flow state across instant loans, activities, lending responses, and history entries.
+Use [`LiquidiumStatus`](./generated/interfaces/LiquidiumStatus.md) for flow state across Simple Loans, activities, lending responses, and history entries.
 
 | Type | Purpose |
 | --- | --- |
@@ -37,9 +37,9 @@ See [Status System](../concepts/status-system.mdx) for UI guidance.
 
 ## Generated Reference
 
-Generated API reference files should live in `api-reference/generated/`.
+The [generated API reference](./generated/README.md) is built from the current `@liquidium/client` exports.
 
-Use TypeDoc with `typedoc-plugin-markdown` when we add the generator:
+Regenerate it with TypeDoc and `typedoc-plugin-markdown` after changing exported APIs:
 
 ```bash
 pnpm docs:api
