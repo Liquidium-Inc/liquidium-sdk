@@ -41,6 +41,7 @@ function createFlexiblePool(overrides?: Partial<FlexiblePool>): FlexiblePool {
     lending_index: 300n,
     borrow_index: 400n,
     same_asset_borrowing: [true],
+    same_asset_borrowing_dust_threshold: 100n,
     frozen: false,
     last_updated: [123n],
     ...overrides,
@@ -119,6 +120,7 @@ describe("decodeFlexiblePool", () => {
     expect(decoded).not.toBeNull();
     expect(decoded?.asset).toBe("BTC");
     expect(decoded?.chain).toBe("BTC");
+    expect(decoded?.same_asset_borrowing_dust_threshold).toBe(100n);
   });
 
   test("should decode an ICP pool", () => {

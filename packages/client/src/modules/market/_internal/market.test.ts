@@ -22,6 +22,7 @@ describe("MarketModule", () => {
           total_generated_interest_snapshot: 0n,
           supply_cap: [1_000_000n],
           same_asset_borrowing: [true],
+          same_asset_borrowing_dust_threshold: 100n,
           asset: { BTC: null },
           rate_slope_before: 1n,
           borrow_cap: [500_000n],
@@ -77,6 +78,7 @@ describe("MarketModule", () => {
         lendingIndex: 300n,
         borrowIndex: 400n,
         sameAssetBorrowing: true,
+        sameAssetBorrowingDustThreshold: 100n,
         lastUpdated: 123n,
       },
     ]);

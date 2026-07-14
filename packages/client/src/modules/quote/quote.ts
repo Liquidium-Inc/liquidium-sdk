@@ -1,4 +1,5 @@
 import { getBorrowAmountMinimumValidationError } from "../../core/borrow-minimums";
+import { getSameAssetBorrowingValidationError } from "../../core/same-asset-borrowing";
 import { ceilDivBigint } from "../../core/utils/bigint";
 import type { AssetPrices, Pool } from "../market/types";
 import type {
@@ -135,6 +136,20 @@ export class QuoteModule {
       validationErrors.push({
         code: QuoteValidationErrorCode.INVALID_LTV,
         message: "Collateral amount must be greater than 0",
+      });
+    }
+
+    const sameAssetBorrowingError = getSameAssetBorrowingValidationError({
+      borrowAsset: borrowPool.asset,
+      collateralAsset: collateralPool.asset,
+      collateralAmount: request.collateralAmount,
+      poolId: request.borrowPoolId,
+      policy: borrowPool,
+    });
+    if (sameAssetBorrowingError) {
+      validationErrors.push({
+        code: QuoteValidationErrorCode.SAME_ASSET_NOT_ALLOWED,
+        message: sameAssetBorrowingError.message,
       });
     }
 
@@ -310,20 +325,6 @@ export class QuoteModule {
     }
 
     const isSameAssetBorrowingRequest = borrowAsset === collateralAsset;
-    if (isSameAssetBorrowingRequest && !collateralPool.sameAssetBorrowing) {
-      validationErrors.push({
-        code: QuoteValidationErrorCode.SAME_ASSET_NOT_ALLOWED,
-        message: `Same asset borrowing not allowed for pool ${collateralPoolId}`,
-      });
-    }
-
-    if (isSameAssetBorrowingRequest && collateralPool.sameAssetBorrowing) {
-      warnings.push({
-        code: QuoteWarningCode.SAME_ASSET_BORROWING,
-        message: `Using same asset for borrow and collateral`,
-      });
-    }
-
     if (targetLtvBps >= HIGH_LTV_WARNING_THRESHOLD_BPS) {
       warnings.push({
         code: QuoteWarningCode.HIGH_LTV,
@@ -371,6 +372,27 @@ export class QuoteModule {
       priceScaled: collateralPriceScaled,
       assetDecimalPlaces: collateralAssetDecimals,
     });
+
+    const sameAssetBorrowingError = getSameAssetBorrowingValidationError({
+      borrowAsset,
+      collateralAsset,
+      collateralAmount: requiredCollateralAmount,
+      poolId: borrowPoolId,
+      policy: borrowPool,
+    });
+    if (sameAssetBorrowingError) {
+      validationErrors.push({
+        code: QuoteValidationErrorCode.SAME_ASSET_NOT_ALLOWED,
+        message: sameAssetBorrowingError.message,
+      });
+    }
+
+    if (isSameAssetBorrowingRequest && !sameAssetBorrowingError) {
+      warnings.push({
+        code: QuoteWarningCode.SAME_ASSET_BORROWING,
+        message: `Using same asset for borrow and collateral`,
+      });
+    }
 
     return createQuoteResult({
       borrowAmount,

@@ -32,6 +32,7 @@ const flexibleLendingIdlFactory: IDL.InterfaceFactory = ({ IDL }) => {
     lending_index: IDL.Nat,
     borrow_index: IDL.Nat,
     same_asset_borrowing: IDL.Opt(IDL.Bool),
+    same_asset_borrowing_dust_threshold: IDL.Nat,
     frozen: IDL.Bool,
     last_updated: IDL.Opt(IDL.Nat64),
   });
@@ -124,6 +125,7 @@ export type FlexiblePool = {
   lending_index: bigint;
   borrow_index: bigint;
   same_asset_borrowing: [boolean] | [];
+  same_asset_borrowing_dust_threshold: bigint;
   frozen: boolean;
   last_updated: [bigint] | [];
 };
@@ -210,6 +212,7 @@ export interface DecodedPool {
   lending_index: bigint;
   borrow_index: bigint;
   same_asset_borrowing: [boolean] | [];
+  same_asset_borrowing_dust_threshold: bigint;
   frozen: boolean;
   last_updated: [bigint] | [];
 }
@@ -302,6 +305,8 @@ export function decodeFlexiblePool(pool: FlexiblePool): DecodedPool | null {
     lending_index: pool.lending_index,
     borrow_index: pool.borrow_index,
     same_asset_borrowing: pool.same_asset_borrowing,
+    same_asset_borrowing_dust_threshold:
+      pool.same_asset_borrowing_dust_threshold,
     frozen: pool.frozen,
     last_updated: pool.last_updated,
   };

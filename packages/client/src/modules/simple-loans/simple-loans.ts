@@ -331,6 +331,7 @@ export class SimpleLoansModule {
    * `refund.destination` receives collateral refunds or withdrawals. Use
    * `depositWindowSeconds` for the user-facing collateral deposit timeout; the
    * SDK maps it to the canister's internal `ltv_timer_s` field.
+   * Pool assets and same-asset borrowing policy are validated before creation.
    *
    * @param request - Collateral, borrow, refund, LTV limit, timeout, and inflow options.
    * @returns Hydrated loan state plus generated initial-deposit and repayment quote targets.
@@ -925,6 +926,25 @@ export class SimpleLoansModule {
       this.positions.market.listPools(),
       this.positions.market.getAssetPrices(),
     ]);
+    const collateralPool = pools.find(
+      (pool) => pool.id === request.collateral.poolId
+    );
+    const borrowPool = pools.find((pool) => pool.id === request.borrow.poolId);
+
+    if (collateralPool && collateralPool.asset !== request.collateral.asset) {
+      throw new LiquidiumError(
+        LiquidiumErrorCode.VALIDATION_ERROR,
+        "Simple loan collateral asset does not match its pool"
+      );
+    }
+
+    if (borrowPool && borrowPool.asset !== request.borrow.asset) {
+      throw new LiquidiumError(
+        LiquidiumErrorCode.VALIDATION_ERROR,
+        "Simple loan borrow asset does not match its pool"
+      );
+    }
+
     const ltvCalculation = new QuoteModule().calculateLtv(
       {
         borrowAmount: request.borrow.amount,

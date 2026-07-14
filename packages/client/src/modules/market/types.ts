@@ -54,6 +54,8 @@ export interface Pool {
   borrowIndex: bigint;
   /** Whether borrowing the same asset as collateral is allowed. */
   sameAssetBorrowing: boolean;
+  /** Same-asset collateral below this base-unit amount is treated as dust. */
+  sameAssetBorrowingDustThreshold: bigint;
   /** Unix timestamp in seconds of the last pool update when available. */
   lastUpdated?: bigint;
 }
