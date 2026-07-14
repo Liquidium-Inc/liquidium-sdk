@@ -24,13 +24,25 @@ if (ltv.validationErrors.length > 0) {
 ## SDK Errors
 
 ```ts
-import { LiquidiumError } from "@liquidium/client";
+import {
+  LiquidiumError,
+  LiquidiumErrorCode,
+  SimpleLoanCreatedError,
+} from "@liquidium/client";
 
 try {
-  const loan = await client.instantLoans.get({ ref });
+  const loan = await client.simpleLoans.create(request);
   return loan;
 } catch (error) {
+  if (error instanceof SimpleLoanCreatedError) {
+    return client.simpleLoans.get({ loanId: error.loanId });
+  }
+
   if (error instanceof LiquidiumError) {
+    if (error.code === LiquidiumErrorCode.REQUEST_TIMEOUT) {
+      // Show retry copy or use the app's retry path.
+    }
+
     throw new Error(error.message);
   }
 
@@ -40,17 +52,21 @@ try {
 
 Use the exported `LiquidiumErrorCode` values when your UI needs different copy for timeout, transport, validation, or protocol failures.
 
+`SimpleLoanCreatedError` means the remote loan was created but response hydration failed. Recover with the error's `loanId` or `ref` through `client.simpleLoans.get(...)`. Do not call `create(...)` again because that can create a duplicate loan.
+
 Borrow and withdraw amounts below SDK minimums throw or return validation errors before state-changing calls. Use `getMinimumBorrowAmount(asset)` and `getMinimumWithdrawAmount(asset)` to show the minimum next to amount inputs.
 
-## External Address Validation
+## Destination Validation
 
-Lending outflow and instant-loan destination fields accept external addresses for the pool or loan asset:
+Lending outflow and Simple Loan destinations are validated against the selected asset and delivery chain:
 
-| Asset target | Accepted format |
-| --- | --- |
-| BTC mainnet | A valid mainnet Bitcoin address |
-| ETH stablecoins | A valid EVM address |
+| Asset path | Chain | Accepted destination family |
+| --- | --- | --- |
+| BTC L1 | `"BTC"` | Bitcoin mainnet chain address |
+| ETH L1 USDC/USDT | `"ETH"` | EVM chain address |
+| ICP native | `"ICP"` | IC principal, ICRC account, or ICP account identifier |
+| ckBTC, ckUSDC, ckUSDT | `"ICP"` | IC principal |
 
-The SDK validates BTC mainnet addresses with Bitcoin mainnet rules and leaves the address unchanged. It validates EVM addresses with `viem` and stores the checksummed `getAddress(...)` form.
+Lending uses `chain` and `receiver`. Simple Loans use `borrow.chain`, `borrow.destination`, `refund.chain`, and `refund.destination`. Prefer typed destination objects when the account family matters.
 
-Invalid lending `receiverAddress`, instant-loan `borrowDestination`, instant-loan `refundDestination`, and contract-interaction `account` values throw `LiquidiumError` with `LiquidiumErrorCode.INVALID_ADDRESS`. Catch that code at the form boundary and ask the user to enter an address for the selected asset and chain before retrying the flow.
+Malformed addresses throw `LiquidiumError` with `LiquidiumErrorCode.INVALID_ADDRESS`. Asset, chain, or destination-family mismatches throw `LiquidiumErrorCode.VALIDATION_ERROR`. Catch both at the form boundary before retrying the flow.

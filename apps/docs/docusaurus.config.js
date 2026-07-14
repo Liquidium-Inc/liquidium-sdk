@@ -81,8 +81,8 @@ const config = {
                 to: "/getting-started/quick-start",
               },
               {
-                label: "Instant Loans",
-                to: "/guides/instant-loans",
+                label: "Simple Loans",
+                to: "/guides/simple-loans",
               },
               {
                 label: "API Reference",

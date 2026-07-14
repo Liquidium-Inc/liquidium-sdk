@@ -19,11 +19,14 @@ Use contract-interaction flows when an EVM wallet should approve and deposit ERC
 ## Shape
 
 ```ts
+import { Chain } from "@liquidium/client";
+
 const supplyFlow = await client.lending.supply({
   mechanism: "contractInteraction",
   profileId,
   poolId,
   action: "deposit",
+  chain: Chain.ETH,
   walletAdapter,
   account: evmAddress,
   amount,
@@ -32,4 +35,4 @@ const supplyFlow = await client.lending.supply({
 console.log("Deposit txid", supplyFlow.txid);
 ```
 
-Use this for account-based ETH stablecoin flows. Instant loans return their own deposit and repayment targets.
+Use this for account-based ETH stablecoin flows. Simple Loans return their own deposit and repayment targets.

@@ -1,0 +1,88 @@
+---
+title: Simple Loans
+description: Create, restore, and track accountless Simple Loans.
+order: 100
+---
+
+# Simple Loans
+
+Use Simple Loans for a checkout-style borrow flow. The SDK creates a generated Liquidium profile, returns transfer targets, and lets your app restore the loan from a short reference.
+
+## Flow
+
+| Step | SDK call | Your app does |
+| --- | --- | --- |
+| Load market data | `client.market.listPools()` and `client.market.getAssetPrices()` | Show supported collateral and borrow assets |
+| Validate amounts | `client.quote.calculateLtv(...)` | Block too-small borrow amounts, invalid LTV, or frozen-pool input before creation |
+| Create loan | `client.simpleLoans.create(...)` | Store `loan.ref` and show the selected quote from `loan.initialDeposit.targets[chain]` |
+| Track loan | `client.simpleLoans.get({ ref })`, `client.simpleLoans.find(...)`, and `client.activities.list({ shortRef: ref })` | Reload state and monitor deposits, borrows, and repayments |
+| Repay loan | Read `loan.repayment.targets[chain]` | If the selected quote exists and its `amount > 0n`, ask the user to send it to `quote.target.address` |
+
+## Create Request
+
+| Field | Description |
+| --- | --- |
+| `collateral` | Collateral `poolId`, `asset`, and intended credited `amount` in base units |
+| `borrow` | Borrow `poolId`, `asset`, `amount`, delivery `chain`, and `destination` |
+| `refund` | Refund `chain` and `destination` for returned collateral |
+| `ltvMaxBps` | Maximum LTV in basis points, where `6_000n` is 60% |
+| `depositWindowSeconds` | How long the user has to send collateral |
+`borrow.destination` and `refund.destination` can be strings or typed account objects such as `{ type: "ChainAddress", address: "bc1q..." }`, `{ type: "IcPrincipal", address: "aaaaa-aa" }`, or `{ type: "IcrcAccount", address: "aaaaa-aa" }`. The SDK validates that each destination family matches its selected asset and chain before creation.
+
+## Borrow Minimums
+
+The SDK enforces these minimum borrow amounts before creation:
+
+| Asset | Minimum borrow amount |
+| --- | --- |
+| BTC | `5_100n` sats |
+| USDC | `1_000_000n` base units |
+| USDT | `1_000_000n` base units |
+
+Use `getMinimumBorrowAmount(asset)` when your UI needs to display or pre-check the same minimum.
+
+## Restore State
+
+Use the user-facing reference for refreshes, status pages, and support links:
+
+```ts
+const loan = await client.simpleLoans.get({ ref: savedReference });
+```
+
+Use the numeric loan ID when your backend stores it:
+
+```ts
+const loan = await client.simpleLoans.get({ loanId });
+```
+
+Use `find(...)` when the user may paste a short reference, numeric loan id string, address, or transaction id:
+
+```ts
+const results = await client.simpleLoans.find(addressOrTxidOrRef);
+```
+
+String `find(...)` calls the SDK API search index and returns lightweight matches without hydrating every loan. It supports short references, numeric canister loan id strings, generated deposit or repayment addresses, borrow or refund destination addresses, and indexed transaction ids. Use `get({ ref })` or `get({ loanId })` after the user selects a match.
+
+## Response Fields
+
+Most UIs need these fields after `create(...)` or `get(...)`:
+
+| Field | Description |
+| --- | --- |
+| `loan.ref` | Short reference to save and show the user |
+| `loan.status` | Shared `LiquidiumStatus` with `operation`, `state`, `confirmations`, and `requiredConfirmations` |
+| `loan.terms.ltvMaxBps` | Maximum LTV selected at creation |
+| `loan.terms.depositWindowSeconds` | Deposit timeout selected at creation |
+| `loan.collateral.decimals` | Decimal scale for collateral display |
+| `loan.borrow.decimals` | Decimal scale for borrow, debt, and repayment display |
+| `loan.initialDeposit.collateralAmount` | Intended credited collateral target used for LTV |
+| `loan.initialDeposit.decimals` | Decimal scale for initial deposit amounts |
+| `loan.initialDeposit.targets[chain]` | Fee-inclusive amount, inflow fee, and target for an available collateral transfer rail |
+| `loan.repayment.debtAmount` | Current debt before transfer fees |
+| `loan.repayment.targets[chain]` | Fee-inclusive repayment amount, fee metadata, and target for an available repayment rail |
+
+Target maps are partial. A missing chain entry means that transfer rail is unavailable, not that no debt exists. Check `loan.repayment.debtAmount > 0n` or the selected quote's `amount > 0n` before prompting for repayment.
+
+`client.simpleLoans.find(...)` returns lightweight indexed fields, including `loanId`, `ref`, `profileId`, `createdAt`, `collateral`, and `borrow`. Use `client.simpleLoans.get(...)` to load full loan fields for a selected match. Use `client.activities.list(...)` separately when you need active or completed flow activity.
+
+See [Status System](../concepts/status-system.mdx) for `loan.status`, activity status, confirmation fields, and top-up handling.
