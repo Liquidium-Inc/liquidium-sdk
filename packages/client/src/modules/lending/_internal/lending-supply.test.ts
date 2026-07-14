@@ -9,8 +9,10 @@ import { LiquidiumClient, LiquidiumErrorCode } from "../../../index";
 import {
   BTC_POOL_ID,
   createBtcPoolRecord,
+  createEthPoolRecord,
   createIcpPoolRecord,
   createUsdcPoolRecord,
+  ETH_POOL_ID,
   encodeBytes32Hex,
   encodePrincipalToBytes32,
   ICP_POOL_ID,
@@ -26,6 +28,70 @@ afterEach(() => {
 });
 
 describe("LendingModule supply", () => {
+  test("returns a native ETH deposit address target without a token contract", async () => {
+    // given
+    const profileId = "aaaaa-aa";
+    const depositAddress = "0x1111111111111111111111111111111111111111";
+    const getDepositAddress = vi.fn().mockResolvedValue({ Ok: depositAddress });
+    vi.spyOn(Actor, "createActor")
+      .mockReturnValueOnce({
+        list_pools: vi.fn().mockResolvedValue([createEthPoolRecord()]),
+      } as never)
+      .mockReturnValueOnce({ get_deposit_address: getDepositAddress } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const supplyFlow = await client.lending.supply({
+      profileId,
+      poolId: ETH_POOL_ID,
+      action: "deposit",
+      chain: "ETH",
+    });
+
+    // then
+    expect(supplyFlow.target).toEqual({
+      poolId: ETH_POOL_ID,
+      asset: "ETH",
+      chain: "ETH",
+      action: "deposit",
+      address: depositAddress,
+    });
+    expect(getDepositAddress.mock.calls[0]?.[1]).toEqual([]);
+  });
+
+  test("returns a ckETH ICRC account target for an ICP transfer", async () => {
+    // given
+    const profileId = "aaaaa-aa";
+    const expectedSubaccount = encodeInflowSubaccount({
+      action: "repayment",
+      principal: Principal.fromText(profileId),
+    });
+    vi.spyOn(Actor, "createActor").mockReturnValueOnce({
+      list_pools: vi.fn().mockResolvedValue([createEthPoolRecord()]),
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const supplyFlow = await client.lending.supply({
+      profileId,
+      poolId: ETH_POOL_ID,
+      action: "repayment",
+      chain: "ICP",
+    });
+
+    // then
+    expect(supplyFlow.target).toEqual({
+      poolId: ETH_POOL_ID,
+      asset: "ETH",
+      chain: "ICP",
+      action: "repayment",
+      address: encodeIcrcAccount({
+        owner: Principal.fromText(ETH_POOL_ID),
+        subaccount: expectedSubaccount,
+      }),
+    });
+  });
+
   test("returns a native supply target for the btc pool", async () => {
     // given
     const profileId = "aaaaa-aa";
@@ -635,6 +701,34 @@ describe("LendingModule supply", () => {
     });
   });
 
+  test("rejects contract-interaction supply for native ETH", async () => {
+    // given
+    vi.spyOn(Actor, "createActor").mockReturnValueOnce({
+      list_pools: vi.fn().mockResolvedValue([createEthPoolRecord()]),
+    } as never);
+    const sendEthTransaction = vi.fn();
+    const client = new LiquidiumClient({});
+
+    // when
+    const result = client.lending.supply({
+      profileId: "aaaaa-aa",
+      poolId: ETH_POOL_ID,
+      action: "deposit",
+      chain: "ETH",
+      mechanism: "contractInteraction",
+      walletAdapter: { sendEthTransaction },
+      account: "0x1234567890123456789012345678901234567890",
+      amount: 5_000_000_000_000_000n,
+    });
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message: "Contract-interaction supply is not supported for ETH on ETH",
+    });
+    expect(sendEthTransaction).not.toHaveBeenCalled();
+  });
+
   test("computes evm supply context with the configured EVM read client", async () => {
     // given
     mockUsdtPoolList();
@@ -803,6 +897,51 @@ describe("LendingModule supply", () => {
       1_000_000n,
     ]);
     expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  test("auto-executes native ETH supply as a value transfer", async () => {
+    // given
+    const depositAddress = "0x1111111111111111111111111111111111111111";
+    const amountWei = 5_000_000_000_000_000n;
+    vi.spyOn(Actor, "createActor")
+      .mockReturnValueOnce({
+        list_pools: vi.fn().mockResolvedValue([createEthPoolRecord()]),
+      } as never)
+      .mockReturnValueOnce({
+        get_deposit_address: vi.fn().mockResolvedValue({ Ok: depositAddress }),
+      } as never);
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      new Response(JSON.stringify({ txid: "0xdeposit" }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      })
+    );
+    const sendEthTransaction = vi.fn().mockResolvedValueOnce("0xdeposit");
+    const client = new LiquidiumClient({});
+
+    // when
+    const flow = await client.lending.supply({
+      profileId: "aaaaa-aa",
+      poolId: ETH_POOL_ID,
+      action: "deposit",
+      chain: "ETH",
+      account: "0x1234567890123456789012345678901234567890",
+      amount: amountWei,
+      walletAdapter: { sendEthTransaction },
+    });
+
+    // then
+    expect(flow.txid).toBe("0xdeposit");
+    expect(sendEthTransaction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        chain: "ETH",
+        actionType: "supply-deposit",
+        transaction: {
+          to: depositAddress,
+          value: amountWei.toString(),
+        },
+      })
+    );
   });
 
   test("auto-executes eth usdt supply with contract interaction when requested", async () => {

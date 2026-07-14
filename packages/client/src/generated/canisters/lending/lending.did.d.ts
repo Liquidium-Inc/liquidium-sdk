@@ -15,6 +15,7 @@ export interface AddAccountRequest {
 export type AssetType = { 'CkAsset' : Principal } |
   { 'Unknown' : null };
 export type Assets = { 'BTC' : null } |
+  { 'ETH' : null } |
   { 'ICP' : null } |
   { 'SOL' : null } |
   { 'USDC' : null } |

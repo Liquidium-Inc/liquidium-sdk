@@ -55,7 +55,7 @@ import { executeWith } from "../../execute";
 import { roundInflowFeeEstimate } from "./_internal/inflow-fee-rounding";
 import { SupplyFlowExecutor } from "./_internal/supply-flow";
 import {
-  getEthStablecoinContractAddress,
+  getEthDepositTokenAddress,
   getPoolById,
   isEthStablecoin,
   mapDepositAccountErrorToLiquidiumError,
@@ -494,7 +494,7 @@ export class LendingModule {
   }
 
   /**
-   * Returns the read-only deposit address for an ETH stablecoin inflow target.
+   * Returns the read-only deposit address for an ETH-chain inflow target.
    *
    * This is a query call that does not create or mutate state. Use it when you
    * need the deposit address without hitting the authorization-gated update path.
@@ -503,14 +503,16 @@ export class LendingModule {
    * @returns The EVM deposit address for the derived account.
    */
   async getDepositAddress(request: GetDepositAddressRequest): Promise<string> {
-    if (!isEthStablecoin(request.asset, Chain.ETH)) {
+    if (
+      request.asset !== Asset.ETH &&
+      !isEthStablecoin(request.asset, Chain.ETH)
+    ) {
       throw new LiquidiumError(
         LiquidiumErrorCode.VALIDATION_ERROR,
-        "getDepositAddress is only supported for ETH stablecoins"
+        "getDepositAddress is only supported for ETH-chain assets"
       );
     }
 
-    const tokenAddress = getEthStablecoinContractAddress(request.asset);
     const subaccount = encodeInflowSubaccount({
       action: request.action,
       principal: Principal.fromText(request.profileId),
@@ -523,7 +525,7 @@ export class LendingModule {
         owner: Principal.fromText(request.poolId),
         subaccount: [subaccount],
       },
-      [tokenAddress]
+      getEthDepositTokenAddress(request.asset)
     );
 
     if ("Err" in result) {
@@ -536,7 +538,7 @@ export class LendingModule {
   /**
    * Estimates the network/deposit fee for an inflow target.
    *
-   * ETH stablecoin deposit-address estimates are served by the deposit-address
+   * ETH-chain deposit-address estimates are served by the deposit-address
    * canister. BTC estimates include the ckBTC minter deposit fee and ledger fee.
    * ICP-chain estimates return the corresponding ICRC ledger fee.
    *
@@ -553,10 +555,14 @@ export class LendingModule {
       };
     }
 
-    if (isEthStablecoin(request.asset, request.chain)) {
+    if (
+      request.chain === Chain.ETH &&
+      (request.asset === Asset.ETH ||
+        isEthStablecoin(request.asset, request.chain))
+    ) {
       const result = await createDepositAccountsActor(
         this.canisterContext
-      ).estimate_deposit_fee([getEthStablecoinContractAddress(request.asset)]);
+      ).estimate_deposit_fee(getEthDepositTokenAddress(request.asset));
 
       if ("Err" in result) {
         throw mapDepositAccountErrorToLiquidiumError(result.Err);

@@ -126,6 +126,34 @@ describe("PositionsModule", () => {
     });
   });
 
+  test("returns a mapped native ETH position with 18 decimals", async () => {
+    // given
+    const DEPOSITED_ETH_WEI = 2_000_000_000_000_000_000n;
+    const BORROWED_ETH_WEI = 5_000_000_000_000_000n;
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      get_position: vi.fn().mockResolvedValue([
+        makePositionView({
+          asset: { ETH: null },
+          deposited_native_now: DEPOSITED_ETH_WEI,
+          debt_native_now: BORROWED_ETH_WEI,
+        }),
+      ]),
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const position = await client.positions.getPosition(PROFILE_ID, POOL_ID);
+
+    // then
+    expect(position).toMatchObject({
+      asset: "ETH",
+      deposited: DEPOSITED_ETH_WEI,
+      depositedDecimals: 18n,
+      borrowed: BORROWED_ETH_WEI,
+      borrowedDecimals: 18n,
+    });
+  });
+
   test("returns null when the canister reports no position", async () => {
     // given
     vi.spyOn(Actor, "createActor").mockReturnValue({

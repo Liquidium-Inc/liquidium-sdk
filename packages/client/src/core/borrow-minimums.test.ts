@@ -11,8 +11,8 @@ describe("borrow minimums", () => {
     const usdcAsset = "USDC";
     const ethAsset = "ETH";
     const EXPECTED_BTC_MINIMUM_AMOUNT = 5_100n;
+    const EXPECTED_ETH_MINIMUM_AMOUNT = 5_000_000_000_000_000n;
     const EXPECTED_STABLECOIN_MINIMUM_AMOUNT = 1_000_000n;
-    const EXPECTED_UNCONFIGURED_MINIMUM_AMOUNT = 0n;
 
     // when
     const usdcMinimumAmount = getMinimumBorrowAmount(usdcAsset);
@@ -21,11 +21,12 @@ describe("borrow minimums", () => {
     // then
     expect(MIN_BORROW_AMOUNTS_BY_ASSET).toMatchObject({
       BTC: EXPECTED_BTC_MINIMUM_AMOUNT,
+      ETH: EXPECTED_ETH_MINIMUM_AMOUNT,
       USDC: EXPECTED_STABLECOIN_MINIMUM_AMOUNT,
       USDT: EXPECTED_STABLECOIN_MINIMUM_AMOUNT,
     });
     expect(usdcMinimumAmount).toBe(EXPECTED_STABLECOIN_MINIMUM_AMOUNT);
-    expect(ethMinimumAmount).toBe(EXPECTED_UNCONFIGURED_MINIMUM_AMOUNT);
+    expect(ethMinimumAmount).toBe(EXPECTED_ETH_MINIMUM_AMOUNT);
   });
 
   test("should not treat inherited object properties as configured assets", () => {

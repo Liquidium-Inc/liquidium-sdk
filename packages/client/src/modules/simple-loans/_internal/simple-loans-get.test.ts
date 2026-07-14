@@ -7,9 +7,11 @@ import {
   BTC_POOL_ID,
   createBtcBorrowSimpleLoan,
   createBtcPoolRecord,
+  createEthPoolRecord,
   createSimpleLoan,
   createSimpleLoanPosition,
   createUsdtPoolRecord,
+  ETH_POOL_ID,
   encodeIcrcAccount,
   ICRC_SUBACCOUNT,
   LOAN_ID,
@@ -353,6 +355,134 @@ describe("SimpleLoansModule get", () => {
     expect(getDepositFee).toHaveBeenCalledWith();
     expect(icrc1Fee).toHaveBeenCalledWith();
   });
+  test("hydrates native ETH delivery with ETH and ckETH repayment targets and fee fallback", async () => {
+    // given
+    const DEBT_ETH_WEI = 5_000_000_000_000_000n;
+    const CKETH_LEDGER_FEE_WEI = 2_000_000_000_000n;
+    const NATIVE_ETH_FEE_FALLBACK_WEI = 250_000_000_000_000n;
+    const getDepositAddress = vi.fn().mockResolvedValue({
+      Ok: "0x1111111111111111111111111111111111111111",
+    });
+    const estimateDepositFee = vi
+      .fn()
+      .mockRejectedValue(new Error("fee estimate unavailable"));
+    const getBorrowPosition = vi
+      .fn()
+      .mockResolvedValue([
+        createSimpleLoanPosition(
+          ETH_POOL_ID,
+          { ETH: null },
+          { debt_native_now: DEBT_ETH_WEI }
+        ),
+      ]);
+    mockSimpleLoanCollateralHintFetch({ collateralAmountHint: "10000000" });
+    mockSimpleLoanHydrationActors({
+      getLoan: vi.fn().mockResolvedValue({
+        Ok: createSimpleLoan({
+          borrow_amount: DEBT_ETH_WEI,
+          borrow_pool_id: Principal.fromText(ETH_POOL_ID),
+          borrow_asset: { ETH: null },
+        }),
+      }),
+      getPoolRate: vi.fn().mockResolvedValue([[0n, 0n, 0n]]),
+      getBtcAddress: vi.fn().mockResolvedValue("bc1qinstantdeposit"),
+      getDepositAddress,
+      estimateDepositFee,
+      getDepositFee: vi.fn().mockResolvedValue(2_000n),
+      icrc1Fee: vi.fn().mockResolvedValue(CKETH_LEDGER_FEE_WEI),
+      positionsByPoolId: {
+        [ETH_POOL_ID]: await getBorrowPosition(),
+      },
+    });
+    const client = new LiquidiumClient({
+      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
+      canisterIds: { simpleLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
+    });
+
+    // when
+    const loan = await client.simpleLoans.get({ loanId: LOAN_ID });
+
+    // then
+    expect(loan.borrow).toMatchObject({
+      asset: "ETH",
+      chain: "ETH",
+      decimals: 18n,
+    });
+    expect(loan.repayment.targets.ETH).toMatchObject({
+      amount: DEBT_ETH_WEI + NATIVE_ETH_FEE_FALLBACK_WEI,
+      inflowFeeAmount: NATIVE_ETH_FEE_FALLBACK_WEI,
+      inflowFeeEstimateAvailable: false,
+      target: {
+        asset: "ETH",
+        chain: "ETH",
+        address: "0x1111111111111111111111111111111111111111",
+      },
+    });
+    expect(loan.repayment.targets.ICP).toMatchObject({
+      amount: DEBT_ETH_WEI + CKETH_LEDGER_FEE_WEI,
+      inflowFeeAmount: CKETH_LEDGER_FEE_WEI,
+      inflowFeeEstimateAvailable: true,
+      target: { asset: "ETH", chain: "ICP" },
+    });
+    expect(getDepositAddress.mock.calls[0]?.[1]).toEqual([]);
+  });
+
+  test("hydrates ETH collateral with the native fee fallback when estimation fails", async () => {
+    // given
+    const COLLATERAL_ETH_WEI = 10_000_000_000_000_000n;
+    const CKETH_LEDGER_FEE_WEI = 2_000_000_000_000n;
+    const NATIVE_ETH_FEE_FALLBACK_WEI = 250_000_000_000_000n;
+    const getDepositAddress = vi.fn().mockResolvedValue({
+      Ok: "0x1111111111111111111111111111111111111111",
+    });
+    mockSimpleLoanCollateralHintFetch({
+      collateralAmountHint: COLLATERAL_ETH_WEI.toString(),
+    });
+    mockSimpleLoanHydrationActors({
+      getLoan: vi.fn().mockResolvedValue({
+        Ok: createSimpleLoan({
+          lend_asset: { ETH: null },
+          lend_pool_id: Principal.fromText(ETH_POOL_ID),
+          refund_destination: {
+            External: "0x2222222222222222222222222222222222222222",
+          },
+        }),
+      }),
+      getPoolRate: vi.fn().mockResolvedValue([[0n, 0n, 0n]]),
+      getBtcAddress: vi.fn().mockResolvedValue("bc1qinstantdeposit"),
+      getDepositAddress,
+      estimateDepositFee: vi
+        .fn()
+        .mockRejectedValue(new Error("fee estimate unavailable")),
+      getDepositFee: vi.fn().mockResolvedValue(2_000n),
+      icrc1Fee: vi.fn().mockResolvedValue(CKETH_LEDGER_FEE_WEI),
+    });
+    const client = new LiquidiumClient({
+      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
+      canisterIds: { simpleLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
+    });
+
+    // when
+    const loan = await client.simpleLoans.get({ loanId: LOAN_ID });
+
+    // then
+    expect(loan.initialDeposit).toMatchObject({
+      asset: "ETH",
+      decimals: 18n,
+      collateralAmount: COLLATERAL_ETH_WEI,
+      targets: {
+        ETH: {
+          amount: COLLATERAL_ETH_WEI + NATIVE_ETH_FEE_FALLBACK_WEI,
+          inflowFeeAmount: NATIVE_ETH_FEE_FALLBACK_WEI,
+        },
+        ICP: {
+          amount: COLLATERAL_ETH_WEI + CKETH_LEDGER_FEE_WEI,
+          inflowFeeAmount: CKETH_LEDGER_FEE_WEI,
+        },
+      },
+    });
+  });
+
   test("returns zero repayment quote when the loan has no debt", async () => {
     // given
     const getLoan = vi.fn().mockResolvedValue({ Ok: createSimpleLoan() });
@@ -487,7 +617,11 @@ function mockSimpleLoanHydrationActors(params: {
     get_loan: params.getLoan,
     list_pools: vi
       .fn()
-      .mockResolvedValue([createBtcPoolRecord(), createUsdtPoolRecord()]),
+      .mockResolvedValue([
+        createBtcPoolRecord(),
+        createEthPoolRecord(),
+        createUsdtPoolRecord(),
+      ]),
     get_position: getPosition,
     get_pool_rate: params.getPoolRate,
     get_btc_address: params.getBtcAddress,

@@ -2,7 +2,7 @@ import { idlLabelToId } from "@icp-sdk/core/candid";
 
 // Asset and chain tags supported by this SDK version. Unknown tags returned by
 // the canister are ignored rather than causing the whole call to fail.
-export const KNOWN_ASSET_TAGS = ["BTC", "ICP", "USDC", "USDT"] as const;
+export const KNOWN_ASSET_TAGS = ["BTC", "ETH", "ICP", "USDC", "USDT"] as const;
 export const KNOWN_CHAIN_TAGS = ["BTC", "ETH", "ICP"] as const;
 
 export type KnownAssetTag = (typeof KNOWN_ASSET_TAGS)[number];

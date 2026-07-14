@@ -15,14 +15,20 @@ interface TestIcpAssetVariant {
   ICP: null;
 }
 
+interface TestEthAssetVariant {
+  ETH: null;
+}
+
 type TestSimpleLoanPositionAsset =
   | TestBtcAssetVariant
+  | TestEthAssetVariant
   | TestIcpAssetVariant
   | TestUsdtAssetVariant;
 
 export const PROFILE_ID = "aaaaa-aa";
 export const BTC_POOL_ID = "hkmli-faaaa-aaaar-qb4ba-cai";
 export const ICP_POOL_ID = "r2pk3-4yaaa-aaaar-qb7zq-cai";
+export const ETH_POOL_ID = "qcg7y-syaaa-aaaar-qb75q-cai";
 export const USDT_POOL_ID = "hnnn4-iyaaa-aaaar-qb4bq-cai";
 export const LOAN_ID = 42n;
 export const VALID_BTC_REFUND_ADDRESS = "1BoatSLRHtKNngkdXEeobR76b53LETtpyT";
@@ -168,6 +174,7 @@ export function createSimpleLoanPosition(
 export function prices() {
   return [
     ["BTC_USDT", 10_000_000n, 2],
+    ["ETH_USDT", 200_000n, 2],
     ["ICP_USDT", 500n, 2],
     ["USDT_USDT", 100n, 2],
   ];
@@ -233,6 +240,18 @@ export function createUsdtPoolRecord(overrides = {}) {
     liquidation_threshold: 7_500n,
     max_ltv: 7_000n,
     total_supply_at_last_sync: 50_000n,
+    ...overrides,
+  };
+}
+
+export function createEthPoolRecord(overrides = {}) {
+  return {
+    ...createUsdtPoolRecord(),
+    principal: {
+      toString: () => ETH_POOL_ID,
+      toText: () => ETH_POOL_ID,
+    },
+    asset: { ETH: null },
     ...overrides,
   };
 }

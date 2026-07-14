@@ -129,6 +129,56 @@ describe("MarketModule", () => {
     });
   });
 
+  test("maps native ETH reserves with 18 decimals", async () => {
+    // given
+    const ETH_POOL_ID = "pool-eth";
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi.fn().mockResolvedValue([
+        {
+          optimal_utilization_rate: 80n,
+          principal: { toString: () => ETH_POOL_ID, toText: () => ETH_POOL_ID },
+          total_generated_interest_snapshot: 0n,
+          supply_cap: [],
+          same_asset_borrowing: [],
+          asset: { ETH: null },
+          rate_slope_before: 1n,
+          borrow_cap: [],
+          total_debt_at_last_sync: 1_000_000_000_000_000_000n,
+          chain: { ETH: null },
+          rate_slope_after: 2n,
+          reserve_factor: 100n,
+          last_updated: [],
+          lending_index: 300n,
+          protocol_liquidation_fee: 50n,
+          borrow_index: 400n,
+          base_rate: 5n,
+          frozen: false,
+          liquidation_bonus: 200n,
+          liquidation_threshold: 7_500n,
+          max_ltv: 7_000n,
+          total_supply_at_last_sync: 3_000_000_000_000_000_000n,
+        },
+      ]),
+      get_pool_rate: vi.fn().mockResolvedValue([[10n, 20n, 30n]]),
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const reserve = await client.market.getReserveData({
+      asset: "ETH",
+      chain: "ETH",
+    });
+
+    // then
+    expect(reserve).toMatchObject({
+      id: ETH_POOL_ID,
+      asset: "ETH",
+      chain: "ETH",
+      decimals: 18n,
+      availableLiquidity: 2_000_000_000_000_000_000n,
+    });
+  });
+
   test("defaults pool rates to zero when get_pool_rate returns none", async () => {
     // given
     vi.spyOn(Actor, "createActor").mockReturnValue({
@@ -376,6 +426,37 @@ describe("MarketModule", () => {
       asset: "USDT",
       chain: "ETH",
     });
+  });
+
+  test("resolves native and chain-key ETH identifiers to the ETH backing pool", async () => {
+    // given
+    const ethPoolPrincipal = "pool-eth";
+    const client = new LiquidiumClient({});
+    vi.spyOn(client.market, "listPools").mockResolvedValue([
+      {
+        id: ethPoolPrincipal,
+        asset: "ETH",
+        chain: "ETH",
+      } as never,
+    ]);
+
+    // when
+    const nativePool = await client.market.findPool({
+      asset: "ETH",
+      chain: "ETH",
+    });
+    const chainKeyPool = await client.market.findPool({
+      asset: "ETH",
+      chain: "ICP",
+    });
+
+    // then
+    expect(nativePool).toMatchObject({
+      id: ethPoolPrincipal,
+      asset: "ETH",
+      chain: "ETH",
+    });
+    expect(chainKeyPool).toBe(nativePool);
   });
 
   test("rejects an unsupported asset and chain pair", async () => {

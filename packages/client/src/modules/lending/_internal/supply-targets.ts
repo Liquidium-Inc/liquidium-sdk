@@ -123,6 +123,14 @@ export function getEthStablecoinContractAddress(asset: string): string {
   );
 }
 
+export function getEthDepositTokenAddress(asset: string): [] | [string] {
+  if (asset === Asset.ETH) {
+    return [];
+  }
+
+  return [getEthStablecoinContractAddress(asset)];
+}
+
 export function mapDepositAccountErrorToLiquidiumError(
   error: DepositAccountErrors
 ): LiquidiumError {
@@ -212,7 +220,9 @@ function resolveSupplyAssetIdentifier(
   }
 
   if (
-    (params.asset === Asset.USDC || params.asset === Asset.USDT) &&
+    (params.asset === Asset.ETH ||
+      params.asset === Asset.USDC ||
+      params.asset === Asset.USDT) &&
     params.poolChain === Chain.ETH
   ) {
     if (params.transferChain === Chain.ETH) {
@@ -244,7 +254,6 @@ async function getChainAddressSupplyTarget(
   request: SupplyTargetRequest
 ): Promise<SupplyTarget> {
   if (request.chain === Chain.ETH) {
-    const tokenAddress = getEthStablecoinContractAddress(request.asset);
     const subaccount = encodeInflowSubaccount({
       action: request.action,
       principal: Principal.fromText(profileId),
@@ -256,7 +265,7 @@ async function getChainAddressSupplyTarget(
         owner: Principal.fromText(request.poolId),
         subaccount: [subaccount],
       },
-      [tokenAddress]
+      getEthDepositTokenAddress(request.asset)
     );
 
     if ("Err" in result) {

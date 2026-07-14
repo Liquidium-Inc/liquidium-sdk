@@ -123,7 +123,8 @@ export interface CreateWithdrawRequest {
   poolId: string;
   /**
    * Amount to withdraw in the pool asset's base units. BTC withdrawals require
-   * at least 5,000 sats. USDC and USDT withdrawals require at least 1 token.
+   * at least 5,000 sats, ETH requires at least 0.005 ETH, and USDC and USDT
+   * require at least 1 token.
    */
   amount: bigint;
   /** Chain where withdrawn funds should arrive. */
@@ -290,14 +291,14 @@ export interface SubmitInflowResponse {
 /** Chain and asset pair for estimating an inflow target fee. */
 export type EstimateInflowFeeRequest = AssetIdentifier;
 
-/** Request for an ETH stablecoin deposit address. */
+/** Request for a native ETH or ETH stablecoin deposit address. */
 export interface GetDepositAddressRequest {
   /** Liquidium profile principal text. */
   profileId: string;
   /** Pool principal text receiving the inflow. */
   poolId: string;
-  /** ETH stablecoin asset. */
-  asset: typeof Asset.USDC | typeof Asset.USDT;
+  /** Native ETH or ETH stablecoin asset. */
+  asset: typeof Asset.ETH | typeof Asset.USDC | typeof Asset.USDT;
   /** Deposit or repayment action for the inflow. */
   action: SupplyAction;
 }

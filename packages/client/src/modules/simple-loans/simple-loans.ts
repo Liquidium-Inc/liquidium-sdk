@@ -51,7 +51,11 @@ import {
   resolveSupplyTargetForPool,
 } from "../lending/_internal/supply-targets";
 import type { LendingModule } from "../lending/lending";
-import { SupplyPlanType, type SupplyTarget } from "../lending/types";
+import {
+  type InflowFeeEstimate,
+  SupplyPlanType,
+  type SupplyTarget,
+} from "../lending/types";
 import type { PositionsModule } from "../positions";
 import type { Position } from "../positions/types";
 import { QuoteModule } from "../quote";
@@ -87,12 +91,14 @@ const REPAYMENT_BUFFER_SECONDS = 86_400n;
 const RATE_SCALE = 10n ** 27n;
 const SECONDS_PER_YEAR = 31_536_000n;
 const MILLISECONDS_PER_SECOND = 1_000;
+const ETH_NATIVE_INFLOW_FEE_FALLBACK_WEI = 250_000_000_000_000n;
 const ETH_STABLECOIN_INFLOW_FEE_FALLBACK = 1_500_000n;
 const SIMPLE_LOAN_MIN_SLIPPAGE_BUFFER_BPS = 200n;
 const SIMPLE_LOAN_FIND_QUERY_MAX_LENGTH = 256;
 const SIMPLE_LOAN_WIRE_CONTEXT = "simple loan";
 const SIMPLE_LOAN_ASSETS = [
   CoreAsset.BTC,
+  CoreAsset.ETH,
   CoreAsset.ICP,
   CoreAsset.USDC,
   CoreAsset.USDT,
@@ -791,7 +797,7 @@ export class SimpleLoansModule {
       if (!target) continue;
       assertTargetAsset(target, input.asset);
 
-      const inflowFee = await this.lending.estimateInflowFee(target);
+      const inflowFee = await this.estimateInitialDepositInflowFee(target);
       targets[chain] = {
         amount: input.collateralAmount + inflowFee.totalFee,
         inflowFeeAmount: inflowFee.totalFee,
@@ -807,6 +813,22 @@ export class SimpleLoansModule {
       detectedTimestamp: input.detectedTimestamp,
       expiryTimestamp: input.expiryTimestamp,
     };
+  }
+
+  private async estimateInitialDepositInflowFee(
+    target: SupplyTarget
+  ): Promise<InflowFeeEstimate> {
+    try {
+      return await this.lending.estimateInflowFee(target);
+    } catch (error) {
+      if (target.asset !== CoreAsset.ETH || target.chain !== CoreChain.ETH) {
+        throw error;
+      }
+
+      return {
+        totalFee: getRepaymentInflowFeeFallback(target.asset, target.chain),
+      };
+    }
   }
 
   private async resolveSimpleLoanInflowTargets(
@@ -975,6 +997,10 @@ function getRepaymentInflowFeeFallback(
   asset: SimpleLoanAsset,
   chain: Chain
 ): bigint {
+  if (chain === CoreChain.ETH && asset === CoreAsset.ETH) {
+    return ETH_NATIVE_INFLOW_FEE_FALLBACK_WEI;
+  }
+
   if (chain === "ETH" && (asset === "USDT" || asset === "USDC")) {
     return ETH_STABLECOIN_INFLOW_FEE_FALLBACK;
   }
@@ -1188,7 +1214,11 @@ function inferSimpleLoanDeliveryChain(
     return CoreChain.BTC;
   }
 
-  if (asset === CoreAsset.USDC || asset === CoreAsset.USDT) {
+  if (
+    asset === CoreAsset.ETH ||
+    asset === CoreAsset.USDC ||
+    asset === CoreAsset.USDT
+  ) {
     return CoreChain.ETH;
   }
 

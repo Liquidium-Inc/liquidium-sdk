@@ -23,6 +23,10 @@ export interface SimpleLoanIcpAsset {
   ICP: null;
 }
 
+export interface SimpleLoanEthAsset {
+  ETH: null;
+}
+
 export interface SimpleLoanSolAsset {
   SOL: null;
 }
@@ -37,6 +41,7 @@ export interface SimpleLoanUsdtAsset {
 
 export type SimpleLoanAsset =
   | SimpleLoanBtcAsset
+  | SimpleLoanEthAsset
   | SimpleLoanIcpAsset
   | SimpleLoanSolAsset
   | SimpleLoanUsdcAsset

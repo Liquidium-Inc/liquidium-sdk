@@ -43,6 +43,8 @@ export interface LiquidiumClientConfig {
 export interface PoolCanisterIds {
   /** BTC pool canister principal. */
   btc: string;
+  /** ETH pool canister principal. */
+  eth?: string;
   /** USDT pool canister principal. */
   usdt: string;
   /** USDC pool canister principal. */
@@ -79,6 +81,7 @@ export type Environment = (typeof Environment)[keyof typeof Environment];
 /** Canonical asset symbols supported by state-mutating protocol flows. */
 export const Asset = {
   BTC: "BTC",
+  ETH: "ETH",
   ICP: "ICP",
   USDC: "USDC",
   USDT: "USDT",
@@ -101,9 +104,11 @@ export type SigningChain = typeof Chain.BTC | typeof Chain.ETH;
 /** Supported asset and transfer-chain combinations. */
 export type AssetIdentifier =
   | { chain: typeof Chain.BTC; asset: typeof Asset.BTC }
+  | { chain: typeof Chain.ETH; asset: typeof Asset.ETH }
   | { chain: typeof Chain.ETH; asset: typeof Asset.USDC }
   | { chain: typeof Chain.ETH; asset: typeof Asset.USDT }
   | { chain: typeof Chain.ICP; asset: typeof Asset.BTC }
+  | { chain: typeof Chain.ICP; asset: typeof Asset.ETH }
   | { chain: typeof Chain.ICP; asset: typeof Asset.ICP }
   | { chain: typeof Chain.ICP; asset: typeof Asset.USDC }
   | { chain: typeof Chain.ICP; asset: typeof Asset.USDT };
@@ -117,10 +122,15 @@ export function isAssetIdentifier(identifier: {
     case Chain.BTC:
       return identifier.asset === Asset.BTC;
     case Chain.ETH:
-      return identifier.asset === Asset.USDC || identifier.asset === Asset.USDT;
+      return (
+        identifier.asset === Asset.ETH ||
+        identifier.asset === Asset.USDC ||
+        identifier.asset === Asset.USDT
+      );
     case Chain.ICP:
       return (
         identifier.asset === Asset.BTC ||
+        identifier.asset === Asset.ETH ||
         identifier.asset === Asset.ICP ||
         identifier.asset === Asset.USDC ||
         identifier.asset === Asset.USDT

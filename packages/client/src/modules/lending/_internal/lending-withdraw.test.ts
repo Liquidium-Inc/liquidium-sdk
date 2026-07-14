@@ -6,8 +6,10 @@ import { Chain, LiquidiumClient, LiquidiumErrorCode } from "../../../index";
 import {
   BTC_POOL_ID,
   createBtcPoolRecord,
+  createEthPoolRecord,
   createIcpPoolRecord,
   createUsdtPoolRecord,
+  ETH_POOL_ID,
   ICP_POOL_ID,
   LOWERCASE_EVM_OUTFLOW_ADDRESS,
   USDT_POOL_ID,
@@ -22,6 +24,94 @@ afterEach(() => {
 });
 
 describe("LendingModule withdraw", () => {
+  test("allows a native ETH withdraw at the 0.005 ETH minimum", async () => {
+    // given
+    const MINIMUM_ETH_AMOUNT_WEI = 5_000_000_000_000_000n;
+    const getNonce = vi.fn().mockResolvedValue(23n);
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi.fn().mockResolvedValue([createEthPoolRecord()]),
+      get_nonce: getNonce,
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const withdrawAction = await client.lending.prepareWithdraw({
+      profileId: "aaaaa-aa",
+      poolId: ETH_POOL_ID,
+      amount: MINIMUM_ETH_AMOUNT_WEI,
+      chain: Chain.ETH,
+      receiver: LOWERCASE_EVM_OUTFLOW_ADDRESS,
+      signerWalletAddress: "0xsigner",
+    });
+
+    // then
+    expect(withdrawAction.data).toMatchObject({
+      amount: MINIMUM_ETH_AMOUNT_WEI,
+      receiver: {
+        type: "ChainAddress",
+        address: "0x52908400098527886E0F7030069857D2E4169EE7",
+      },
+    });
+    expect(getNonce).toHaveBeenCalledWith("0xsigner");
+  });
+
+  test("rejects a native ETH withdraw below 0.005 ETH before signing", async () => {
+    // given
+    const BELOW_MINIMUM_ETH_AMOUNT_WEI = 4_999_999_999_999_999n;
+    const getNonce = vi.fn().mockResolvedValue(23n);
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi.fn().mockResolvedValue([createEthPoolRecord()]),
+      get_nonce: getNonce,
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const result = client.lending.prepareWithdraw({
+      profileId: "aaaaa-aa",
+      poolId: ETH_POOL_ID,
+      amount: BELOW_MINIMUM_ETH_AMOUNT_WEI,
+      chain: Chain.ETH,
+      receiver: LOWERCASE_EVM_OUTFLOW_ADDRESS,
+      signerWalletAddress: "0xsigner",
+    });
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message:
+        "Withdraw amount must be at least 5000000000000000 base units for ETH",
+    });
+    expect(getNonce).not.toHaveBeenCalled();
+  });
+
+  test("rejects an invalid native ETH withdraw destination before signing", async () => {
+    // given
+    const MINIMUM_ETH_AMOUNT_WEI = 5_000_000_000_000_000n;
+    const getNonce = vi.fn().mockResolvedValue(23n);
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi.fn().mockResolvedValue([createEthPoolRecord()]),
+      get_nonce: getNonce,
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const result = client.lending.prepareWithdraw({
+      profileId: "aaaaa-aa",
+      poolId: ETH_POOL_ID,
+      amount: MINIMUM_ETH_AMOUNT_WEI,
+      chain: Chain.ETH,
+      receiver: "not-an-evm-address",
+      signerWalletAddress: "0xsigner",
+    });
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.INVALID_ADDRESS,
+      message: "Address must be a valid EVM address",
+    });
+    expect(getNonce).not.toHaveBeenCalled();
+  });
+
   test("creates and submits a withdraw action with a custom outflow account", async () => {
     // given
     vi.setSystemTime(new Date("2026-04-01T00:00:00.000Z"));

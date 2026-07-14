@@ -9,6 +9,52 @@ afterEach(() => {
 });
 
 describe("LendingModule inflow", () => {
+  test("returns a native ETH deposit address without a token contract", async () => {
+    // given
+    const expectedAddress = "0x1111111111111111111111111111111111111111";
+    const getDepositAddress = vi
+      .fn()
+      .mockResolvedValue({ Ok: expectedAddress });
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      get_deposit_address: getDepositAddress,
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const address = await client.lending.getDepositAddress({
+      profileId: "aaaaa-aa",
+      poolId: "qcg7y-syaaa-aaaar-qb75q-cai",
+      asset: "ETH",
+      action: "deposit",
+    });
+
+    // then
+    expect(address).toBe(expectedAddress);
+    expect(getDepositAddress.mock.calls[0]?.[1]).toEqual([]);
+  });
+
+  test("estimates native ETH inflow fee in wei", async () => {
+    // given
+    const feeEstimateWei = 250_000_000_000_000n;
+    const estimateDepositFee = vi.fn().mockResolvedValue({
+      Ok: feeEstimateWei,
+    });
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      estimate_deposit_fee: estimateDepositFee,
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const estimate = await client.lending.estimateInflowFee({
+      asset: "ETH",
+      chain: "ETH",
+    });
+
+    // then
+    expect(estimate.totalFee).toBe(feeEstimateWei);
+    expect(estimateDepositFee).toHaveBeenCalledWith([]);
+  });
+
   test("submits an inflow transaction id through the sdk api", async () => {
     // given
     const txid = "7f4f3c2b1a";

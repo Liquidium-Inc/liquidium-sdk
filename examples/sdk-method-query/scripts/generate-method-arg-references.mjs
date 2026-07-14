@@ -360,7 +360,7 @@ function normalizeTypeText(value) {
   return value
     .replace(/import\("[^"]+"\)\./g, "")
     .replace(/typeof Chain\.(BTC|ETH|ICP)/g, '"$1"')
-    .replace(/typeof Asset\.(BTC|ICP|USDC|USDT)/g, '"$1"')
+    .replace(/typeof Asset\.(BTC|ETH|ICP|USDC|USDT)/g, '"$1"')
     .replace(/typeof SupplyPlanType\.(contractInteraction|transfer)/g, '"$1"');
 }
 

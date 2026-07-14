@@ -7,9 +7,11 @@ import {
   BTC_POOL_ID,
   CHECKSUM_EVM_OUTFLOW_ADDRESS,
   createBtcPoolRecord,
+  createEthPoolRecord,
   createIcpPoolRecord,
   createUsdcPoolRecord,
   createUsdtPoolRecord,
+  ETH_POOL_ID,
   ICP_POOL_ID,
   LOWERCASE_EVM_OUTFLOW_ADDRESS,
   USDC_POOL_ID,
@@ -24,6 +26,108 @@ afterEach(() => {
 });
 
 describe("LendingModule borrow", () => {
+  test("creates a native ETH borrow at the 0.005 ETH minimum", async () => {
+    // given
+    const MINIMUM_ETH_AMOUNT_WEI = 5_000_000_000_000_000n;
+    const getNonce = vi.fn().mockResolvedValue(17n);
+    const borrowAssets = vi.fn().mockResolvedValue({
+      Ok: {
+        id: "outflow-eth",
+        txid: [],
+        outflow_type: { Borrow: null },
+        outflow_ref: [],
+        amount: MINIMUM_ETH_AMOUNT_WEI,
+        receiver: { External: CHECKSUM_EVM_OUTFLOW_ADDRESS },
+      },
+    });
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi.fn().mockResolvedValue([createEthPoolRecord()]),
+      get_nonce: getNonce,
+      borrow_assets: borrowAssets,
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const borrowAction = await client.lending.prepareBorrow({
+      profileId: "aaaaa-aa",
+      poolId: ETH_POOL_ID,
+      amount: MINIMUM_ETH_AMOUNT_WEI,
+      chain: Chain.ETH,
+      receiver: LOWERCASE_EVM_OUTFLOW_ADDRESS,
+      signerWalletAddress: "0xsigner",
+    });
+    await borrowAction.submit({ signature: "0xsigned", chain: "ETH" });
+
+    // then
+    expect(borrowAction.data.receiver).toEqual({
+      type: "ChainAddress",
+      address: CHECKSUM_EVM_OUTFLOW_ADDRESS,
+    });
+    expect(borrowAssets.mock.calls[0]?.[1]).toMatchObject({
+      data: {
+        amount: MINIMUM_ETH_AMOUNT_WEI,
+        account: { External: CHECKSUM_EVM_OUTFLOW_ADDRESS },
+      },
+    });
+  });
+
+  test("rejects a native ETH borrow below 0.005 ETH before signing", async () => {
+    // given
+    const BELOW_MINIMUM_ETH_AMOUNT_WEI = 4_999_999_999_999_999n;
+    const getNonce = vi.fn().mockResolvedValue(17n);
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi.fn().mockResolvedValue([createEthPoolRecord()]),
+      get_nonce: getNonce,
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const result = client.lending.prepareBorrow({
+      profileId: "aaaaa-aa",
+      poolId: ETH_POOL_ID,
+      amount: BELOW_MINIMUM_ETH_AMOUNT_WEI,
+      chain: Chain.ETH,
+      receiver: LOWERCASE_EVM_OUTFLOW_ADDRESS,
+      signerWalletAddress: "0xsigner",
+    });
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message:
+        "Borrow amount must be at least 5000000000000000 base units for ETH",
+    });
+    expect(getNonce).not.toHaveBeenCalled();
+  });
+
+  test("rejects an invalid native ETH destination before signing", async () => {
+    // given
+    const MINIMUM_ETH_AMOUNT_WEI = 5_000_000_000_000_000n;
+    const getNonce = vi.fn().mockResolvedValue(17n);
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi.fn().mockResolvedValue([createEthPoolRecord()]),
+      get_nonce: getNonce,
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const result = client.lending.prepareBorrow({
+      profileId: "aaaaa-aa",
+      poolId: ETH_POOL_ID,
+      amount: MINIMUM_ETH_AMOUNT_WEI,
+      chain: Chain.ETH,
+      receiver: "not-an-evm-address",
+      signerWalletAddress: "0xsigner",
+    });
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.INVALID_ADDRESS,
+      message: "Address must be a valid EVM address",
+    });
+    expect(getNonce).not.toHaveBeenCalled();
+  });
+
   test("creates and submits a borrow action with a custom outflow account", async () => {
     // given
     vi.setSystemTime(new Date("2026-04-01T00:00:00.000Z"));

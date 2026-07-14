@@ -16,9 +16,11 @@ import {
   CANISTER_EVM_BORROW_ADDRESS,
   CHECKSUM_EVM_BORROW_ADDRESS,
   createBtcPoolRecord,
+  createEthPoolRecord,
   createIcpPoolRecord,
   createSimpleLoan,
   createUsdtPoolRecord,
+  ETH_POOL_ID,
   encodeIcrcAccount,
   ICP_POOL_ID,
   ICRC_SUBACCOUNT,
@@ -77,6 +79,108 @@ afterEach(() => {
 });
 
 describe("SimpleLoansModule create", () => {
+  test("creates a native ETH loan at the 0.005 ETH minimum", async () => {
+    // given
+    const MINIMUM_ETH_AMOUNT_WEI = 5_000_000_000_000_000n;
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation(async (input, init) => {
+        if (init?.method === "POST") {
+          return new Response(
+            JSON.stringify({
+              success: true,
+              loan: {
+                loanId: LOAN_ID.toString(),
+                collateral: { amountHint: "10000000" },
+              },
+            }),
+            { status: 200, headers: { "content-type": "application/json" } }
+          );
+        }
+        if (input.toString().includes("/activities?")) {
+          return new Response(JSON.stringify({ activities: [] }), {
+            status: 200,
+            headers: { "content-type": "application/json" },
+          });
+        }
+
+        return new Response(JSON.stringify({ error: "not found" }), {
+          status: 404,
+          headers: { "content-type": "application/json" },
+        });
+      });
+    mockSimpleLoanCreateHydrationActors({
+      getLoan: vi.fn().mockResolvedValue({
+        Ok: createSimpleLoan({
+          borrow_amount: MINIMUM_ETH_AMOUNT_WEI,
+          borrow_pool_id: Principal.fromText(ETH_POOL_ID),
+          borrow_asset: { ETH: null },
+        }),
+      }),
+      btcMinterDepositFee: 2_000n,
+      icrc1Fee: 2_000_000_000_000n,
+    });
+    const client = new LiquidiumClient({});
+
+    // when
+    const loan = await client.simpleLoans.create(
+      createSimpleLoanRequest({
+        borrow: {
+          poolId: ETH_POOL_ID,
+          asset: "ETH",
+          amount: MINIMUM_ETH_AMOUNT_WEI,
+          chain: "ETH",
+          destination: LOWERCASE_EVM_BORROW_ADDRESS,
+        },
+      })
+    );
+
+    // then
+    const post = fetchSpy.mock.calls.find(
+      ([, init]) => init?.method === "POST"
+    );
+    expect(JSON.parse(post?.[1]?.body as string)).toMatchObject({
+      borrowPoolId: ETH_POOL_ID,
+      borrowAsset: "ETH",
+      borrowAmount: MINIMUM_ETH_AMOUNT_WEI.toString(),
+      borrowDestination: { External: CHECKSUM_EVM_BORROW_ADDRESS },
+    });
+    expect(loan.borrow).toMatchObject({
+      asset: "ETH",
+      chain: "ETH",
+      decimals: 18n,
+      amount: MINIMUM_ETH_AMOUNT_WEI,
+    });
+  });
+
+  test("rejects an invalid native ETH destination before creating the loan", async () => {
+    // given
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    const actorCreateSpy = vi.spyOn(Actor, "createActor");
+    const client = new LiquidiumClient({});
+
+    // when
+    const result = client.simpleLoans.create(
+      createSimpleLoanRequest({
+        borrow: {
+          poolId: ETH_POOL_ID,
+          asset: "ETH",
+          amount: 5_000_000_000_000_000n,
+          chain: "ETH",
+          destination: "not-an-evm-address",
+        },
+      })
+    );
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.INVALID_ADDRESS,
+      message: "Address must be a valid EVM address",
+    });
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(actorCreateSpy).not.toHaveBeenCalled();
+  });
+
   test("creates a loan through the default SDK API and hydrates canonical canister state", async () => {
     // given
     const BTC_MINTER_DEPOSIT_FEE_SATS = 2_000n;
@@ -1448,6 +1552,7 @@ function mockSimpleLoanCreateHydrationActors(params: {
       .fn()
       .mockResolvedValue([
         createBtcPoolRecord({ max_ltv: 6_500n }),
+        createEthPoolRecord(),
         createUsdtPoolRecord(),
         createIcpPoolRecord(),
       ]),

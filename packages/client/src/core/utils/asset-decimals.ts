@@ -2,6 +2,7 @@ import { LiquidiumError, LiquidiumErrorCode } from "../errors";
 
 const ASSET_NATIVE_DECIMALS: Record<string, bigint> = {
   BTC: 8n,
+  ETH: 18n,
   ICP: 8n,
   USDC: 6n,
   USDT: 6n,

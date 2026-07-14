@@ -11,9 +11,11 @@ describe("AssetIdentifier", () => {
   test("accepts exactly the supported asset and chain pairs", () => {
     const supported: AssetIdentifier[] = [
       { chain: Chain.BTC, asset: Asset.BTC },
+      { chain: Chain.ETH, asset: Asset.ETH },
       { chain: Chain.ETH, asset: Asset.USDC },
       { chain: Chain.ETH, asset: Asset.USDT },
       { chain: Chain.ICP, asset: Asset.BTC },
+      { chain: Chain.ICP, asset: Asset.ETH },
       { chain: Chain.ICP, asset: Asset.ICP },
       { chain: Chain.ICP, asset: Asset.USDC },
       { chain: Chain.ICP, asset: Asset.USDT },
@@ -34,6 +36,10 @@ describe("AssetIdentifier", () => {
   });
 
   test("keeps asset and chain pairs correlated in the public type", () => {
+    expectTypeOf<{
+      chain: "ICP";
+      asset: "ETH";
+    }>().toMatchTypeOf<AssetIdentifier>();
     expectTypeOf<{
       chain: "ICP";
       asset: "USDT";

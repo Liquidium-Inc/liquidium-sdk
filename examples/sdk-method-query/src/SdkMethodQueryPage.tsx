@@ -1125,6 +1125,7 @@ function expectAsset(value: unknown, fieldName: string): Asset {
 
   if (
     asset === "BTC" ||
+    asset === "ETH" ||
     asset === "ICP" ||
     asset === "USDC" ||
     asset === "USDT"
@@ -1132,7 +1133,7 @@ function expectAsset(value: unknown, fieldName: string): Asset {
     return asset;
   }
 
-  throw new Error(`${fieldName} must be BTC, ICP, USDC, or USDT.`);
+  throw new Error(`${fieldName} must be BTC, ETH, ICP, USDC, or USDT.`);
 }
 
 function expectAssetIdentifier(

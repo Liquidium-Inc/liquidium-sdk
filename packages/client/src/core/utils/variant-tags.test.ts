@@ -41,6 +41,18 @@ describe("extractVariantTag", () => {
     expect(tag).toBe("ICP");
   });
 
+  test("should decode a hashed ETH asset tag", () => {
+    // given
+    const hash = idlLabelToId("ETH");
+    const variant = { [`_${hash}_`]: null };
+
+    // when
+    const tag = extractVariantTag(variant, KNOWN_ASSET_TAGS);
+
+    // then
+    expect(tag).toBe("ETH");
+  });
+
   test("should return null for an unsupported hashed tag", () => {
     // given
     const hash = idlLabelToId("SOL");

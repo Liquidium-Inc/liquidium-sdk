@@ -104,6 +104,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const Assets = IDL.Variant({
     'BTC' : IDL.Null,
+    'ETH' : IDL.Null,
     'ICP' : IDL.Null,
     'SOL' : IDL.Null,
     'USDC' : IDL.Null,
