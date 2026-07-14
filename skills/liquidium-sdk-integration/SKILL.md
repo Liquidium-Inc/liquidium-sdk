@@ -74,7 +74,7 @@ const client = new LiquidiumClient({
 - `fetch`: supplies a custom fetch implementation when the runtime needs one
 - `evmRpcUrl` / `evmPublicClient`: required for lower-level ETH contract-interaction supply planning and allowance polling. Use `evmRpcHeaders` when the RPC provider authenticates with HTTP headers
 - `identity` / `icHost`: custom ICP agent configuration
-- `canisterIds`: accepts partial overrides for `lending`, `ethDeposit`, `simpleLoans`, and `pools.{btc,usdt,usdc,icp}`. Removed keys such as `instantLoans`, `btcPool`, and `ercPool` are rejected
+- `canisterIds`: accepts partial overrides for `lending`, `ethDeposit`, `simpleLoans`, and `pools.{btc,usdt,usdc,icp}`
 - `canisterIds.simpleLoans`: defaults to mainnet `u5rm3-niaaa-aaaar-qb7eq-cai`; override it for custom deployments
 
 Partial `canisterIds` overrides merge with mainnet defaults. For a fully custom
@@ -856,9 +856,8 @@ Omitting `mechanism` selects the transfer path. `mechanism: "contractInteraction
 17. Do not confuse deposit/supply targets with repayment targets. They are generated for different inflow actions and may be different addresses/accounts.
 18. Do not render raw `rateDecimals = 27` fixed-point values as percentages. Format scaled rates first or the UI can show scientific notation such as `3.7e+24%`.
 19. Do not model `loan.repayment` as nullable. Select the desired chain quote and check its `amount > 0n` before prompting repayment.
-20. Do not use removed instant-loan fields: `loan.depositTarget`, `loan.repayTarget`, `loan.ltvMaxBps`, or `loan.depositWindowSeconds`.
-21. Do not use `"ckBTC"`, `"ckUSDC"`, or `"ckUSDT"` as asset symbols. Pair `"BTC"`, `"USDC"`, or `"USDT"` with `chain: "ICP"`.
-22. Do not assume `Pool.chain` is the user's transfer chain or derive deposit, borrow, and refund rails from one shared selection.
+20. Do not use `"ckBTC"`, `"ckUSDC"`, or `"ckUSDT"` as asset symbols. Pair `"BTC"`, `"USDC"`, or `"USDT"` with `chain: "ICP"`.
+21. Do not assume `Pool.chain` is the user's transfer chain or derive deposit, borrow, and refund rails from one shared selection.
 
 ## Preferred Style
 
