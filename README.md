@@ -22,18 +22,47 @@ Use `npm install @liquidium/client@rc` when integrating against the current 0.5 
 ## Usage
 
 ```ts
-import { LiquidiumClient } from "@liquidium/client";
+import { Asset, Chain, LiquidiumClient } from "@liquidium/client";
 
 const client = new LiquidiumClient();
-const pools = await client.market.listPools();
-const prices = await client.market.getAssetPrices();
+
+const [collateralPool, borrowPool] = await Promise.all([
+  client.market.findPool({ asset: Asset.BTC, chain: Chain.BTC }),
+  client.market.findPool({ asset: Asset.USDC, chain: Chain.ETH }),
+]);
+
+const loan = await client.simpleLoans.create({
+  collateral: {
+    poolId: collateralPool.id,
+    asset: Asset.BTC,
+    amount: 50_000n,
+  },
+  borrow: {
+    poolId: borrowPool.id,
+    asset: Asset.USDC,
+    amount: 9_000_000n,
+    chain: Chain.ETH,
+    destination: "0x2222222222222222222222222222222222222222",
+  },
+  refund: {
+    chain: Chain.BTC,
+    destination: "1BoatSLRHtKNngkdXEeobR76b53LETtpyT",
+  },
+  ltvMaxBps: 6_000n,
+  depositWindowSeconds: 3_600n,
+});
+
+const deposit = loan.initialDeposit.targets[Chain.BTC];
+
+console.log("Loan reference:", loan.ref);
+console.log("Send collateral to:", deposit?.target.address);
 ```
 
 Use `client.simpleLoans` for accountless borrowing. Use `client.accounts`, `client.lending`, and `client.positions` for profile-based lending.
 
 Amounts use `bigint` values in each asset's smallest unit. Read pool decimals before converting user input.
 
-See the [quick start](https://liquidium-inc.github.io/liquidium-sdk/getting-started/quick-start/) for loan creation, transfer targets, repayment, and recovery.
+See the [quick start](https://liquidium-inc.github.io/liquidium-sdk/getting-started/quick-start/) for LTV validation, repayment, and recovery.
 
 ## Examples
 
