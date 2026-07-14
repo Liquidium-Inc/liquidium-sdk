@@ -18,7 +18,7 @@ const MAINNET_CANISTER_IDS: CanisterIds = {
     icp: "r2pk3-4yaaa-aaaar-qb7zq-cai",
   },
   ethDeposit: "z5jz7-nyaaa-aaaar-qb6pq-cai",
-  instantLoans: "u5rm3-niaaa-aaaar-qb7eq-cai",
+  simpleLoans: "u5rm3-niaaa-aaaar-qb7eq-cai",
 };
 
 const CANISTER_IDS_BY_ENVIRONMENT: Record<Environment, CanisterIds> = {
@@ -29,7 +29,7 @@ const SUPPORTED_CANISTER_ID_OVERRIDE_KEYS = new Set([
   "lending",
   "pools",
   "ethDeposit",
-  "instantLoans",
+  "simpleLoans",
 ]);
 const SUPPORTED_POOL_CANISTER_ID_OVERRIDE_KEYS = new Set([
   "btc",
@@ -59,7 +59,7 @@ export function resolveCanisterIds(
     lending: overrides?.lending ?? defaults.lending,
     pools,
     ethDeposit: overrides?.ethDeposit ?? defaults.ethDeposit,
-    instantLoans: overrides?.instantLoans ?? defaults.instantLoans,
+    simpleLoans: overrides?.simpleLoans ?? defaults.simpleLoans,
   };
 }
 

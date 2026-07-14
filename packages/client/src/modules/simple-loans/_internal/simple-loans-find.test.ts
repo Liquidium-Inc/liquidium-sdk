@@ -8,8 +8,8 @@ import {
 import {
   BTC_POOL_ID,
   createBtcPoolRecord,
-  createInstantLoan,
-  createInstantLoanPosition,
+  createSimpleLoan,
+  createSimpleLoanPosition,
   createUsdtPoolRecord,
   LOAN_ID,
   PROFILE_ID,
@@ -21,11 +21,11 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-describe("InstantLoansModule find", () => {
+describe("SimpleLoansModule find", () => {
   test("finds manage-ready loan results by string query", async () => {
     // given
     const getLoan = vi.fn().mockResolvedValue({
-      Ok: createInstantLoan(),
+      Ok: createSimpleLoan(),
     });
     const getBtcAddress = vi.fn().mockResolvedValue("bc1qinstantdeposit");
     const getDepositAddress = vi.fn().mockResolvedValue({
@@ -38,7 +38,7 @@ describe("InstantLoansModule find", () => {
     const getDepositFee = vi.fn().mockResolvedValue(2_000n);
     const icrc1Fee = vi.fn().mockResolvedValue(10n);
     const getCollateralPosition = vi.fn().mockResolvedValue([
-      createInstantLoanPosition(
+      createSimpleLoanPosition(
         BTC_POOL_ID,
         { BTC: null },
         {
@@ -47,7 +47,7 @@ describe("InstantLoansModule find", () => {
       ),
     ]);
     const getBorrowPosition = vi.fn().mockResolvedValue([
-      createInstantLoanPosition(
+      createSimpleLoanPosition(
         USDT_POOL_ID,
         { USDT: null },
         {
@@ -119,11 +119,11 @@ describe("InstantLoansModule find", () => {
       .mockReturnValueOnce({ icrc1_fee: icrc1Fee } as never);
     const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
-      canisterIds: { instantLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
+      canisterIds: { simpleLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
     });
 
     // when
-    const results = await client.instantLoans.find(LOAN_ID.toString());
+    const results = await client.simpleLoans.find(LOAN_ID.toString());
 
     // then
     expect(results).toHaveLength(1);
@@ -175,12 +175,12 @@ describe("InstantLoansModule find", () => {
     });
 
     // when
-    const result = client.instantLoans.find(LOAN_ID.toString());
+    const result = client.simpleLoans.find(LOAN_ID.toString());
 
     // then
     await expect(result).rejects.toMatchObject({
       code: LiquidiumErrorCode.VALIDATION_ERROR,
-      message: "Invalid instant loan loan ID",
+      message: "Invalid simple loan loan ID",
     });
   });
 });

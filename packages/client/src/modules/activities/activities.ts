@@ -1,5 +1,5 @@
-import type { InstantLoansCanisterError } from "../../core/canisters/instant-loans/actor";
-import { createFlexibleInstantLoansActor } from "../../core/canisters/instant-loans/flexible-actor";
+import type { SimpleLoansCanisterError } from "../../core/canisters/simple-loans/actor";
+import { createFlexibleSimpleLoansActor } from "../../core/canisters/simple-loans/flexible-actor";
 import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
 import {
   buildActivitiesPath,
@@ -10,7 +10,7 @@ import type { ApiClient } from "../../core/transports/api-client";
 import type { CanisterContext } from "../../core/transports/canister-context";
 import type { Chain } from "../../core/types";
 import { parseBigInt } from "../../core/utils/bigint";
-import { intFromPublicId } from "../instant-loans/ref-code";
+import { intFromPublicId } from "../simple-loans/ref-code";
 import type {
   Activity,
   ActivityTopUp,
@@ -76,7 +76,7 @@ export class ActivitiesModule {
    *
    * Uses the Liquidium SDK API.
    *
-   * @param request - Profile id or instant-loan short reference plus optional lifecycle filter.
+   * @param request - Profile id or simple loan short reference plus optional lifecycle filter.
    * @returns Activities owned by the resolved profile.
    */
   async list(request: ListActivitiesRequest): Promise<Activity[]> {
@@ -97,7 +97,7 @@ export class ActivitiesModule {
    *
    * Uses the Liquidium SDK API.
    *
-   * @param request - Activity id plus profile id or instant-loan short reference.
+   * @param request - Activity id plus profile id or simple loan short reference.
    * @returns The activity when found, otherwise `{ found: false }` with the requested id.
    */
   async getStatus(
@@ -143,18 +143,18 @@ export class ActivitiesModule {
     } catch (error) {
       throw new LiquidiumError(
         LiquidiumErrorCode.VALIDATION_ERROR,
-        "Invalid instant loan reference",
+        "Invalid simple loan reference",
         error
       );
     }
 
     try {
-      const result = await createFlexibleInstantLoansActor(
+      const result = await createFlexibleSimpleLoansActor(
         this.canisterContext
       ).get_loan(loanId);
 
       if ("Err" in result) {
-        throw mapInstantLoanLookupError(result.Err);
+        throw mapSimpleLoanLookupError(result.Err);
       }
 
       return result.Ok.lending_profile.toText();
@@ -165,22 +165,22 @@ export class ActivitiesModule {
 
       throw new LiquidiumError(
         LiquidiumErrorCode.CANISTER_REJECTED,
-        "Unable to resolve instant loan reference",
+        "Unable to resolve simple loan reference",
         error
       );
     }
   }
 }
 
-function mapInstantLoanLookupError(
-  error: InstantLoansCanisterError
+function mapSimpleLoanLookupError(
+  error: SimpleLoansCanisterError
 ): LiquidiumError {
   const [key] = Object.entries(error)[0] ?? ["Unknown"];
 
   if (key === "LoanNotFound") {
     return new LiquidiumError(
       LiquidiumErrorCode.POSITION_NOT_FOUND,
-      "Instant loan not found"
+      "Simple loan not found"
     );
   }
 

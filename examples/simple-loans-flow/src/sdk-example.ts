@@ -1,11 +1,11 @@
 import type {
   AssetPrices,
-  CreateInstantLoanRequest,
+  CreateSimpleLoanRequest,
   GetActivityStatusResponse,
-  InstantLoan,
-  InstantLoanFindResult,
-  InstantLoanGetRequest,
   Pool,
+  SimpleLoan,
+  SimpleLoanFindResult,
+  SimpleLoanGetRequest,
 } from "@liquidium/client";
 import { client } from "./client";
 
@@ -57,16 +57,16 @@ export function calculateLoanLtv({
   );
 }
 
-export async function createInstantLoan(
-  request: CreateInstantLoanRequest
-): Promise<InstantLoan> {
-  return await client.instantLoans.create(request);
+export async function createSimpleLoan(
+  request: CreateSimpleLoanRequest
+): Promise<SimpleLoan> {
+  return await client.simpleLoans.create(request);
 }
 
-export async function getInstantLoan(
-  params: InstantLoanGetRequest
-): Promise<InstantLoan> {
-  return await client.instantLoans.get(params);
+export async function getSimpleLoan(
+  params: SimpleLoanGetRequest
+): Promise<SimpleLoan> {
+  return await client.simpleLoans.get(params);
 }
 
 export async function getLoanActivityStatus({
@@ -79,8 +79,8 @@ export async function getLoanActivityStatus({
   });
 }
 
-export async function findInstantLoans(
+export async function findSimpleLoans(
   query: string
-): Promise<InstantLoanFindResult[]> {
-  return await client.instantLoans.find(query);
+): Promise<SimpleLoanFindResult[]> {
+  return await client.simpleLoans.find(query);
 }

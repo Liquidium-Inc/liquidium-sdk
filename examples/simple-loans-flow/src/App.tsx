@@ -1,9 +1,9 @@
 import type {
   AssetPrices,
-  InstantLoan,
-  InstantLoanInitialDepositTargetQuote,
-  InstantLoanRepaymentTargetQuote,
   Pool,
+  SimpleLoan,
+  SimpleLoanInitialDepositTargetQuote,
+  SimpleLoanRepaymentTargetQuote,
 } from "@liquidium/client";
 import { Chain, isAssetIdentifier } from "@liquidium/client";
 import { useEffect, useState } from "react";
@@ -11,9 +11,9 @@ import { formatConfig } from "./client";
 import {
   formatAmount,
   formatError,
-  formatInstantLoan,
   formatPercentFromBps,
   formatPool,
+  formatSimpleLoan,
   formatSupplyTarget,
   formatUnixTimestampSeconds,
   getRecentLoanRefs,
@@ -24,7 +24,7 @@ import {
 } from "./format";
 import {
   calculateLoanLtv,
-  createInstantLoan,
+  createSimpleLoan,
   loadMarketData,
 } from "./sdk-example";
 
@@ -41,9 +41,9 @@ type LoanTargetOptions = {
 
 type LoanTargetOption = {
   label: string;
-  loan: InstantLoan;
-  initialDeposit?: InstantLoanInitialDepositTargetQuote;
-  repayment?: InstantLoanRepaymentTargetQuote;
+  loan: SimpleLoan;
+  initialDeposit?: SimpleLoanInitialDepositTargetQuote;
+  repayment?: SimpleLoanRepaymentTargetQuote;
 };
 
 export function App() {
@@ -140,7 +140,7 @@ export function App() {
     setStatus(`Loaded ${loadedPools.length} pools.`);
   }
 
-  async function createInstantLoanFromForm(): Promise<void> {
+  async function createSimpleLoanFromForm(): Promise<void> {
     const collateralPool = getSelectedPool(pools, selectedCollateralPoolId);
     const borrowPool = getSelectedPool(pools, selectedBorrowPoolId);
     const parsedCollateralAmount = parseAmountToBaseUnits(
@@ -178,10 +178,10 @@ export function App() {
       );
     }
 
-    setStatus("Creating instant loan...");
+    setStatus("Creating simple loan...");
     setLoanResult("Creating loan...");
 
-    const loan = await createInstantLoan({
+    const loan = await createSimpleLoan({
       collateral: {
         poolId: collateralPool.id,
         asset: collateralPool.asset,
@@ -254,10 +254,10 @@ export function App() {
           )
           .join("\n\n"),
         "",
-        formatInstantLoan(loan, { pools, includeTargets: false }),
+        formatSimpleLoan(loan, { pools, includeTargets: false }),
       ].join("\n")
     );
-    setStatus(`Created instant loan ${loan.ref}.`);
+    setStatus(`Created simple loan ${loan.ref}.`);
   }
 
   function handleCollateralPoolChange(poolId: string): void {
@@ -301,7 +301,7 @@ export function App() {
         </a>
       </nav>
 
-      <h1>Liquidium Instant Loan Flow</h1>
+      <h1>Liquidium Simple Loans Flow</h1>
       <p>
         Create an accountless loan, then send collateral to the generated
         deposit target. Enter the borrow destination and refund address
@@ -326,7 +326,7 @@ export function App() {
       </section>
 
       <section>
-        <h2>Create Instant Loan</h2>
+        <h2>Create Simple Loan</h2>
         <label htmlFor="collateral-pool-select">Collateral pool</label>
         <select
           id="collateral-pool-select"
@@ -503,9 +503,9 @@ export function App() {
         <button
           id="create-loan-button"
           type="button"
-          onClick={() => void run(createInstantLoanFromForm, setStatus)}
+          onClick={() => void run(createSimpleLoanFromForm, setStatus)}
         >
-          Create Instant Loan
+          Create Simple Loan
         </button>
         <div className="result-box">{loanResult}</div>
       </section>
@@ -659,14 +659,14 @@ function formatTransferAssetLabel(
   return `${pool.asset} on ${transferChain}${nativeSuffix}`;
 }
 
-function getLoanTargetOptions(loan: InstantLoan): LoanTargetOptions {
+function getLoanTargetOptions(loan: SimpleLoan): LoanTargetOptions {
   const initialDeposit = getInitialDepositTargetOptions(loan);
   const repayment = getRepaymentTargetOptions(loan);
 
   return { initialDeposit, repayment };
 }
 
-function getInitialDepositTargetOptions(loan: InstantLoan): LoanTargetOption[] {
+function getInitialDepositTargetOptions(loan: SimpleLoan): LoanTargetOption[] {
   const targetOptions: LoanTargetOption[] = [];
 
   for (const quote of Object.values(loan.initialDeposit.targets)) {
@@ -682,7 +682,7 @@ function getInitialDepositTargetOptions(loan: InstantLoan): LoanTargetOption[] {
   return targetOptions;
 }
 
-function getRepaymentTargetOptions(loan: InstantLoan): LoanTargetOption[] {
+function getRepaymentTargetOptions(loan: SimpleLoan): LoanTargetOption[] {
   const targetOptions: LoanTargetOption[] = [];
 
   for (const quote of Object.values(loan.repayment.targets)) {

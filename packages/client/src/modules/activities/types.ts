@@ -84,14 +84,14 @@ export interface ListActivitiesByProfileRequest
   profileId: string;
 }
 
-/** Activity list request scoped to an instant-loan short reference. */
+/** Activity list request scoped to a simple loan short reference. */
 export interface ListActivitiesByShortRefRequest
   extends BaseListActivitiesRequest {
-  /** Instant-loan short reference to list activities for. */
+  /** Simple loan short reference to list activities for. */
   shortRef: string;
 }
 
-/** Request for listing activities by profile id or instant-loan short reference. */
+/** Request for listing activities by profile id or simple loan short reference. */
 export type ListActivitiesRequest =
   | ListActivitiesByProfileRequest
   | ListActivitiesByShortRefRequest;
@@ -109,10 +109,10 @@ export interface GetActivityStatusByProfileRequest
   profileId: string;
 }
 
-/** Activity status lookup scoped to an instant-loan short reference. */
+/** Activity status lookup scoped to a simple loan short reference. */
 export interface GetActivityStatusByShortRefRequest
   extends BaseGetActivityStatusRequest {
-  /** Instant-loan short reference that owns the activity. */
+  /** Simple loan short reference that owns the activity. */
   shortRef: string;
 }
 

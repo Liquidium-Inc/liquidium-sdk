@@ -4,11 +4,11 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 import { encodeIcpAccountIdentifier } from "../../../core/accounts";
 import { DEFAULT_API_BASE_URL } from "../../../core/config";
 import {
-  type CreateInstantLoanRequest,
-  InstantLoanCreatedError,
+  type CreateSimpleLoanRequest,
   LiquidiumClient,
   LiquidiumErrorCode,
   publicIdFromInt,
+  SimpleLoanCreatedError,
 } from "../../../index";
 import {
   ACCOUNT_IDENTIFIER,
@@ -17,7 +17,7 @@ import {
   CHECKSUM_EVM_BORROW_ADDRESS,
   createBtcPoolRecord,
   createIcpPoolRecord,
-  createInstantLoan,
+  createSimpleLoan,
   createUsdtPoolRecord,
   encodeIcrcAccount,
   ICP_POOL_ID,
@@ -43,22 +43,22 @@ const DEFAULT_ICP_AMOUNT_E8S = 1_000_000n;
 const DEFAULT_LTV_MAX_BPS = 6_000n;
 const DEFAULT_DEPOSIT_WINDOW_SECONDS = 3_600n;
 
-interface InstantLoanDestinationValidationCase {
+interface SimpleLoanDestinationValidationCase {
   name: string;
-  requestOverrides: CreateInstantLoanRequestOverrides;
+  requestOverrides: CreateSimpleLoanRequestOverrides;
   expectedCode: LiquidiumErrorCode;
   expectedMessage: string;
 }
 
-type CreateInstantLoanRequestOverrides = Partial<
-  Omit<CreateInstantLoanRequest, "borrow" | "collateral" | "refund">
+type CreateSimpleLoanRequestOverrides = Partial<
+  Omit<CreateSimpleLoanRequest, "borrow" | "collateral" | "refund">
 > & {
   borrow?: {
     poolId?: string;
     asset?: string;
     amount?: bigint;
     chain?: string;
-    destination?: CreateInstantLoanRequest["borrow"]["destination"];
+    destination?: CreateSimpleLoanRequest["borrow"]["destination"];
   };
   collateral?: {
     poolId?: string;
@@ -67,7 +67,7 @@ type CreateInstantLoanRequestOverrides = Partial<
   };
   refund?: {
     chain?: string;
-    destination?: CreateInstantLoanRequest["refund"]["destination"];
+    destination?: CreateSimpleLoanRequest["refund"]["destination"];
   };
 };
 
@@ -76,14 +76,14 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-describe("InstantLoansModule create", () => {
+describe("SimpleLoansModule create", () => {
   test("creates a loan through the default SDK API and hydrates canonical canister state", async () => {
     // given
     const BTC_MINTER_DEPOSIT_FEE_SATS = 2_000n;
     const CKBTC_LEDGER_FEE_SATS = 10n;
     const EXPIRY_TIMESTAMP_SECONDS = 1_775_235_600n;
     const getLoan = vi.fn().mockResolvedValue({
-      Ok: createInstantLoan({ expires_at: [EXPIRY_TIMESTAMP_SECONDS] }),
+      Ok: createSimpleLoan({ expires_at: [EXPIRY_TIMESTAMP_SECONDS] }),
     });
     const fetchSpy = vi
       .spyOn(globalThis, "fetch")
@@ -116,17 +116,17 @@ describe("InstantLoansModule create", () => {
         });
       });
 
-    mockInstantLoanCreateHydrationActors({
+    mockSimpleLoanCreateHydrationActors({
       getLoan,
       btcMinterDepositFee: BTC_MINTER_DEPOSIT_FEE_SATS,
       icrc1Fee: CKBTC_LEDGER_FEE_SATS,
     });
     const client = new LiquidiumClient({
-      canisterIds: { instantLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
+      canisterIds: { simpleLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
     });
 
     // when
-    const loan = await client.instantLoans.create({
+    const loan = await client.simpleLoans.create({
       collateral: {
         poolId: BTC_POOL_ID,
         asset: "BTC",
@@ -272,9 +272,9 @@ describe("InstantLoansModule create", () => {
         });
       });
 
-    mockInstantLoanCreateHydrationActors({
+    mockSimpleLoanCreateHydrationActors({
       getLoan: vi.fn().mockResolvedValue({
-        Ok: createInstantLoan({
+        Ok: createSimpleLoan({
           borrow_destination: { Native: Principal.fromText(PROFILE_ID) },
         }),
       }),
@@ -282,11 +282,11 @@ describe("InstantLoansModule create", () => {
       icrc1Fee: CKBTC_LEDGER_FEE_SATS,
     });
     const client = new LiquidiumClient({
-      canisterIds: { instantLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
+      canisterIds: { simpleLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
     });
 
     // when
-    const loan = await client.instantLoans.create({
+    const loan = await client.simpleLoans.create({
       collateral: {
         poolId: BTC_POOL_ID,
         asset: "BTC",
@@ -413,9 +413,9 @@ describe("InstantLoansModule create", () => {
           headers: { "content-type": "application/json" },
         });
       });
-    mockInstantLoanCreateHydrationActors({
+    mockSimpleLoanCreateHydrationActors({
       getLoan: vi.fn().mockResolvedValue({
-        Ok: createInstantLoan({
+        Ok: createSimpleLoan({
           borrow_destination: canisterDestination as never,
           borrow_amount: DEFAULT_ICP_AMOUNT_E8S,
           borrow_pool_id: Principal.fromText(ICP_POOL_ID),
@@ -426,12 +426,12 @@ describe("InstantLoansModule create", () => {
       icrc1Fee: 10n,
     });
     const client = new LiquidiumClient({
-      canisterIds: { instantLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
+      canisterIds: { simpleLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
     });
 
     // when
-    const loan = await client.instantLoans.create(
-      createInstantLoanRequest({
+    const loan = await client.simpleLoans.create(
+      createSimpleLoanRequest({
         borrow: {
           poolId: ICP_POOL_ID,
           asset: "ICP",
@@ -492,25 +492,25 @@ describe("InstantLoansModule create", () => {
           headers: { "content-type": "application/json" },
         });
       });
-    mockInstantLoanCreateHydrationActors({
-      getLoan: vi.fn().mockResolvedValue({ Ok: createInstantLoan() }),
+    mockSimpleLoanCreateHydrationActors({
+      getLoan: vi.fn().mockResolvedValue({ Ok: createSimpleLoan() }),
       btcMinterDepositFee: 2_000n,
       icrc1Fee: 10n,
       icrc1FeeMock: icrc1Fee,
     });
     const client = new LiquidiumClient({
-      canisterIds: { instantLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
+      canisterIds: { simpleLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
     });
 
     // when
-    const error = await client.instantLoans
-      .create(createInstantLoanRequest())
+    const error = await client.simpleLoans
+      .create(createSimpleLoanRequest())
       .catch((cause: unknown) => cause);
 
     // then
-    expect(error).toBeInstanceOf(InstantLoanCreatedError);
+    expect(error).toBeInstanceOf(SimpleLoanCreatedError);
     expect(error).toMatchObject({
-      code: "INSTANT_LOAN_HYDRATION_FAILED",
+      code: "SIMPLE_LOAN_HYDRATION_FAILED",
       loanId: LOAN_ID,
       ref: publicIdFromInt(LOAN_ID),
       cause: hydrationFailure,
@@ -528,8 +528,8 @@ describe("InstantLoansModule create", () => {
     const client = new LiquidiumClient({});
 
     // when
-    const result = client.instantLoans.create(
-      createInstantLoanRequest({
+    const result = client.simpleLoans.create(
+      createSimpleLoanRequest({
         borrow: {
           poolId: ICP_POOL_ID,
           asset: "ICP",
@@ -544,7 +544,7 @@ describe("InstantLoansModule create", () => {
     await expect(result).rejects.toMatchObject({
       code: LiquidiumErrorCode.INVALID_ADDRESS,
       message:
-        "ICP instant loan destination must be an IC principal, ICP account identifier, or ICRC account",
+        "ICP simple loan destination must be an IC principal, ICP account identifier, or ICRC account",
     });
     expect(fetchSpy).not.toHaveBeenCalled();
     expect(actorCreateSpy).not.toHaveBeenCalled();
@@ -557,8 +557,8 @@ describe("InstantLoansModule create", () => {
     const client = new LiquidiumClient({});
 
     // when
-    const result = client.instantLoans.create(
-      createInstantLoanRequest({
+    const result = client.simpleLoans.create(
+      createSimpleLoanRequest({
         borrow: {
           chain: "ICP",
           destination: "not-an-ic-principal",
@@ -569,7 +569,7 @@ describe("InstantLoansModule create", () => {
     // then
     await expect(result).rejects.toMatchObject({
       code: LiquidiumErrorCode.VALIDATION_ERROR,
-      message: "ICP instant loan borrow destination must be an IC principal",
+      message: "ICP simple loan borrow destination must be an IC principal",
     });
     expect(fetchSpy).not.toHaveBeenCalled();
     expect(actorCreateSpy).not.toHaveBeenCalled();
@@ -582,8 +582,8 @@ describe("InstantLoansModule create", () => {
     const client = new LiquidiumClient({});
 
     // when
-    const result = client.instantLoans.create(
-      createInstantLoanRequest({
+    const result = client.simpleLoans.create(
+      createSimpleLoanRequest({
         borrow: {
           chain: "ICP",
           destination: {
@@ -597,7 +597,7 @@ describe("InstantLoansModule create", () => {
     // then
     await expect(result).rejects.toMatchObject({
       code: LiquidiumErrorCode.VALIDATION_ERROR,
-      message: "ICP instant loan borrow destination must be an IC principal",
+      message: "ICP simple loan borrow destination must be an IC principal",
     });
     expect(fetchSpy).not.toHaveBeenCalled();
     expect(actorCreateSpy).not.toHaveBeenCalled();
@@ -610,8 +610,8 @@ describe("InstantLoansModule create", () => {
     const client = new LiquidiumClient({});
 
     // when
-    const result = client.instantLoans.create(
-      createInstantLoanRequest({
+    const result = client.simpleLoans.create(
+      createSimpleLoanRequest({
         borrow: {
           destination: {
             type: "IcPrincipal",
@@ -625,7 +625,7 @@ describe("InstantLoansModule create", () => {
     await expect(result).rejects.toMatchObject({
       code: LiquidiumErrorCode.VALIDATION_ERROR,
       message:
-        "ETH instant loan borrow destination must be an external chain address for USDT",
+        "ETH simple loan borrow destination must be an external chain address for USDT",
     });
     expect(fetchSpy).not.toHaveBeenCalled();
     expect(actorCreateSpy).not.toHaveBeenCalled();
@@ -648,7 +648,7 @@ describe("InstantLoansModule create", () => {
       },
       expectedCode: LiquidiumErrorCode.VALIDATION_ERROR,
       expectedMessage:
-        "ETH instant loan borrow delivery is not supported for BTC",
+        "ETH simple loan borrow delivery is not supported for BTC",
     },
     {
       name: "native stablecoin borrow rejects BTC delivery chain",
@@ -663,7 +663,7 @@ describe("InstantLoansModule create", () => {
       },
       expectedCode: LiquidiumErrorCode.VALIDATION_ERROR,
       expectedMessage:
-        "BTC instant loan borrow delivery is not supported for USDT",
+        "BTC simple loan borrow delivery is not supported for USDT",
     },
     {
       name: "native BTC refund rejects ETH delivery chain",
@@ -678,7 +678,7 @@ describe("InstantLoansModule create", () => {
       },
       expectedCode: LiquidiumErrorCode.VALIDATION_ERROR,
       expectedMessage:
-        "ETH instant loan refund delivery is not supported for BTC",
+        "ETH simple loan refund delivery is not supported for BTC",
     },
     {
       name: "ck stablecoin borrow rejects an ETH L1 address",
@@ -693,7 +693,7 @@ describe("InstantLoansModule create", () => {
       },
       expectedCode: LiquidiumErrorCode.VALIDATION_ERROR,
       expectedMessage:
-        "ICP instant loan borrow destination must be an IC principal",
+        "ICP simple loan borrow destination must be an IC principal",
     },
     {
       name: "ck stablecoin borrow rejects a BTC L1 address",
@@ -708,7 +708,7 @@ describe("InstantLoansModule create", () => {
       },
       expectedCode: LiquidiumErrorCode.VALIDATION_ERROR,
       expectedMessage:
-        "ICP instant loan borrow destination must be an IC principal",
+        "ICP simple loan borrow destination must be an IC principal",
     },
     {
       name: "ck stablecoin borrow rejects an ICP account identifier",
@@ -723,7 +723,7 @@ describe("InstantLoansModule create", () => {
       },
       expectedCode: LiquidiumErrorCode.VALIDATION_ERROR,
       expectedMessage:
-        "ICP instant loan borrow destination must be an IC principal",
+        "ICP simple loan borrow destination must be an IC principal",
     },
     {
       name: "ck stablecoin borrow rejects an ICRC account",
@@ -738,7 +738,7 @@ describe("InstantLoansModule create", () => {
       },
       expectedCode: LiquidiumErrorCode.VALIDATION_ERROR,
       expectedMessage:
-        "ICP instant loan borrow destination must be an IC principal",
+        "ICP simple loan borrow destination must be an IC principal",
     },
     {
       name: "ckBTC refund rejects a BTC L1 address",
@@ -753,7 +753,7 @@ describe("InstantLoansModule create", () => {
       },
       expectedCode: LiquidiumErrorCode.VALIDATION_ERROR,
       expectedMessage:
-        "ICP instant loan refund destination must be an IC principal",
+        "ICP simple loan refund destination must be an IC principal",
     },
     {
       name: "ckBTC refund rejects an ETH L1 address",
@@ -768,7 +768,7 @@ describe("InstantLoansModule create", () => {
       },
       expectedCode: LiquidiumErrorCode.VALIDATION_ERROR,
       expectedMessage:
-        "ICP instant loan refund destination must be an IC principal",
+        "ICP simple loan refund destination must be an IC principal",
     },
     {
       name: "ckBTC refund rejects an ICP account identifier",
@@ -783,7 +783,7 @@ describe("InstantLoansModule create", () => {
       },
       expectedCode: LiquidiumErrorCode.VALIDATION_ERROR,
       expectedMessage:
-        "ICP instant loan refund destination must be an IC principal",
+        "ICP simple loan refund destination must be an IC principal",
     },
     {
       name: "ckBTC refund rejects an ICRC account",
@@ -798,7 +798,7 @@ describe("InstantLoansModule create", () => {
       },
       expectedCode: LiquidiumErrorCode.VALIDATION_ERROR,
       expectedMessage:
-        "ICP instant loan refund destination must be an IC principal",
+        "ICP simple loan refund destination must be an IC principal",
     },
     {
       name: "native stablecoin borrow rejects an IC principal",
@@ -812,7 +812,7 @@ describe("InstantLoansModule create", () => {
       },
       expectedCode: LiquidiumErrorCode.VALIDATION_ERROR,
       expectedMessage:
-        "ETH instant loan borrow destination must be an external chain address for USDT",
+        "ETH simple loan borrow destination must be an external chain address for USDT",
     },
     {
       name: "native stablecoin borrow rejects an ICRC account",
@@ -826,7 +826,7 @@ describe("InstantLoansModule create", () => {
       },
       expectedCode: LiquidiumErrorCode.VALIDATION_ERROR,
       expectedMessage:
-        "USDT instant loan borrow destination only supports ChainAddress or IcPrincipal destinations",
+        "USDT simple loan borrow destination only supports ChainAddress or IcPrincipal destinations",
     },
     {
       name: "native BTC refund rejects an IC principal",
@@ -840,7 +840,7 @@ describe("InstantLoansModule create", () => {
       },
       expectedCode: LiquidiumErrorCode.VALIDATION_ERROR,
       expectedMessage:
-        "BTC instant loan refund destination must be an external chain address for BTC",
+        "BTC simple loan refund destination must be an external chain address for BTC",
     },
     {
       name: "native BTC refund rejects an ICRC account",
@@ -854,7 +854,7 @@ describe("InstantLoansModule create", () => {
       },
       expectedCode: LiquidiumErrorCode.VALIDATION_ERROR,
       expectedMessage:
-        "BTC instant loan refund destination only supports ChainAddress or IcPrincipal destinations",
+        "BTC simple loan refund destination only supports ChainAddress or IcPrincipal destinations",
     },
     {
       name: "native ICP borrow rejects an ETH L1 address",
@@ -872,7 +872,7 @@ describe("InstantLoansModule create", () => {
       },
       expectedCode: LiquidiumErrorCode.INVALID_ADDRESS,
       expectedMessage:
-        "ICP instant loan destination must be an IC principal, ICP account identifier, or ICRC account",
+        "ICP simple loan destination must be an IC principal, ICP account identifier, or ICRC account",
     },
     {
       name: "native ICP borrow rejects a BTC L1 address",
@@ -890,7 +890,7 @@ describe("InstantLoansModule create", () => {
       },
       expectedCode: LiquidiumErrorCode.INVALID_ADDRESS,
       expectedMessage:
-        "ICP instant loan destination must be an IC principal, ICP account identifier, or ICRC account",
+        "ICP simple loan destination must be an IC principal, ICP account identifier, or ICRC account",
     },
     {
       name: "native ICP borrow rejects an ETH string shorthand address",
@@ -905,7 +905,7 @@ describe("InstantLoansModule create", () => {
       },
       expectedCode: LiquidiumErrorCode.INVALID_ADDRESS,
       expectedMessage:
-        "ICP instant loan destination must be an IC principal, ICP account identifier, or ICRC account",
+        "ICP simple loan destination must be an IC principal, ICP account identifier, or ICRC account",
     },
     {
       name: "native ICP refund rejects an ETH L1 address",
@@ -925,7 +925,7 @@ describe("InstantLoansModule create", () => {
       },
       expectedCode: LiquidiumErrorCode.INVALID_ADDRESS,
       expectedMessage:
-        "ICP instant loan destination must be an IC principal, ICP account identifier, or ICRC account",
+        "ICP simple loan destination must be an IC principal, ICP account identifier, or ICRC account",
     },
     {
       name: "native ICP refund rejects a BTC L1 address",
@@ -945,7 +945,7 @@ describe("InstantLoansModule create", () => {
       },
       expectedCode: LiquidiumErrorCode.INVALID_ADDRESS,
       expectedMessage:
-        "ICP instant loan destination must be an IC principal, ICP account identifier, or ICRC account",
+        "ICP simple loan destination must be an IC principal, ICP account identifier, or ICRC account",
     },
     {
       name: "native ICP refund rejects a BTC string shorthand address",
@@ -962,9 +962,9 @@ describe("InstantLoansModule create", () => {
       },
       expectedCode: LiquidiumErrorCode.INVALID_ADDRESS,
       expectedMessage:
-        "ICP instant loan destination must be an IC principal, ICP account identifier, or ICRC account",
+        "ICP simple loan destination must be an IC principal, ICP account identifier, or ICRC account",
     },
-  ] satisfies InstantLoanDestinationValidationCase[])("rejects unsafe instant loan destination combo: $name", async ({
+  ] satisfies SimpleLoanDestinationValidationCase[])("rejects unsafe simple loan destination combo: $name", async ({
     requestOverrides,
     expectedCode,
     expectedMessage,
@@ -975,8 +975,8 @@ describe("InstantLoansModule create", () => {
     const client = new LiquidiumClient({});
 
     // when
-    const result = client.instantLoans.create(
-      createInstantLoanRequest(requestOverrides)
+    const result = client.simpleLoans.create(
+      createSimpleLoanRequest(requestOverrides)
     );
 
     // then
@@ -988,7 +988,7 @@ describe("InstantLoansModule create", () => {
     expect(actorCreateSpy).not.toHaveBeenCalled();
   });
 
-  test("rejects an instant loan with a borrow amount below the asset minimum", async () => {
+  test("rejects a simple loan with a borrow amount below the asset minimum", async () => {
     // given
     const fetchSpy = vi.spyOn(globalThis, "fetch");
     vi.spyOn(Actor, "createActor")
@@ -1006,8 +1006,8 @@ describe("InstantLoansModule create", () => {
     const client = new LiquidiumClient({});
 
     // when
-    const result = client.instantLoans.create(
-      createInstantLoanRequest({
+    const result = client.simpleLoans.create(
+      createSimpleLoanRequest({
         borrow: {
           amount: 999_999n,
         },
@@ -1022,15 +1022,15 @@ describe("InstantLoansModule create", () => {
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
-  test("rejects an instant loan with an invalid BTC refund destination", async () => {
+  test("rejects a simple loan with an invalid BTC refund destination", async () => {
     // given
     const fetchSpy = vi.spyOn(globalThis, "fetch");
     const actorCreateSpy = vi.spyOn(Actor, "createActor");
     const client = new LiquidiumClient({});
 
     // when
-    const result = client.instantLoans.create(
-      createInstantLoanRequest({
+    const result = client.simpleLoans.create(
+      createSimpleLoanRequest({
         refund: {
           destination: "bc1qrefunddestination",
         },
@@ -1046,15 +1046,15 @@ describe("InstantLoansModule create", () => {
     expect(actorCreateSpy).not.toHaveBeenCalled();
   });
 
-  test("rejects an instant loan with an invalid EVM borrow destination", async () => {
+  test("rejects a simple loan with an invalid EVM borrow destination", async () => {
     // given
     const fetchSpy = vi.spyOn(globalThis, "fetch");
     const actorCreateSpy = vi.spyOn(Actor, "createActor");
     const client = new LiquidiumClient({});
 
     // when
-    const result = client.instantLoans.create(
-      createInstantLoanRequest({
+    const result = client.simpleLoans.create(
+      createSimpleLoanRequest({
         borrow: {
           destination: "not-an-evm-address",
         },
@@ -1070,15 +1070,15 @@ describe("InstantLoansModule create", () => {
     expect(actorCreateSpy).not.toHaveBeenCalled();
   });
 
-  test("rejects an instant loan with an invalid BTC borrow destination", async () => {
+  test("rejects a simple loan with an invalid BTC borrow destination", async () => {
     // given
     const fetchSpy = vi.spyOn(globalThis, "fetch");
     const actorCreateSpy = vi.spyOn(Actor, "createActor");
     const client = new LiquidiumClient({});
 
     // when
-    const result = client.instantLoans.create(
-      createInstantLoanRequest({
+    const result = client.simpleLoans.create(
+      createSimpleLoanRequest({
         collateral: {
           poolId: USDT_POOL_ID,
           asset: "USDT",
@@ -1107,15 +1107,15 @@ describe("InstantLoansModule create", () => {
     expect(actorCreateSpy).not.toHaveBeenCalled();
   });
 
-  test("rejects an instant loan with an invalid EVM refund destination", async () => {
+  test("rejects a simple loan with an invalid EVM refund destination", async () => {
     // given
     const fetchSpy = vi.spyOn(globalThis, "fetch");
     const actorCreateSpy = vi.spyOn(Actor, "createActor");
     const client = new LiquidiumClient({});
 
     // when
-    const result = client.instantLoans.create(
-      createInstantLoanRequest({
+    const result = client.simpleLoans.create(
+      createSimpleLoanRequest({
         collateral: {
           poolId: USDT_POOL_ID,
           asset: "USDT",
@@ -1164,12 +1164,12 @@ describe("InstantLoansModule create", () => {
       } as never);
     const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
-      canisterIds: { instantLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
+      canisterIds: { simpleLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
     });
 
     // when
-    const result = client.instantLoans.create(
-      createInstantLoanRequest({
+    const result = client.simpleLoans.create(
+      createSimpleLoanRequest({
         borrow: {
           amount: 6_500_000_000n,
           destination: "0x2222222222222222222222222222222222222222",
@@ -1182,7 +1182,7 @@ describe("InstantLoansModule create", () => {
     await expect(result).rejects.toMatchObject({
       code: LiquidiumErrorCode.VALIDATION_ERROR,
       message:
-        "Instant loan max LTV 65.00% is below minimum allowed 67.00% (current implied LTV 65.00% + 2.00% buffer)",
+        "Simple loan max LTV 65.00% is below minimum allowed 67.00% (current implied LTV 65.00% + 2.00% buffer)",
     });
     expect(fetchSpy).not.toHaveBeenCalled();
   });
@@ -1207,12 +1207,12 @@ describe("InstantLoansModule create", () => {
       } as never);
     const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
-      canisterIds: { instantLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
+      canisterIds: { simpleLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
     });
 
     // when
-    const result = client.instantLoans.create(
-      createInstantLoanRequest({
+    const result = client.simpleLoans.create(
+      createSimpleLoanRequest({
         borrow: {
           destination: "0x2222222222222222222222222222222222222222",
         },
@@ -1224,7 +1224,7 @@ describe("InstantLoansModule create", () => {
     await expect(result).rejects.toMatchObject({
       code: LiquidiumErrorCode.VALIDATION_ERROR,
       message:
-        "Instant loan max LTV 59.25% is below minimum allowed 59.26% (current implied LTV 57.26% + 2.00% buffer)",
+        "Simple loan max LTV 59.25% is below minimum allowed 59.26% (current implied LTV 57.26% + 2.00% buffer)",
     });
     expect(fetchSpy).not.toHaveBeenCalled();
   });
@@ -1246,12 +1246,12 @@ describe("InstantLoansModule create", () => {
       } as never);
     const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
-      canisterIds: { instantLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
+      canisterIds: { simpleLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
     });
 
     // when
-    const result = client.instantLoans.create(
-      createInstantLoanRequest({
+    const result = client.simpleLoans.create(
+      createSimpleLoanRequest({
         borrow: {
           amount: 2_000_000n,
           destination: "0x2222222222222222222222222222222222222222",
@@ -1268,10 +1268,10 @@ describe("InstantLoansModule create", () => {
   });
 });
 
-function createInstantLoanRequest(
-  overrides: CreateInstantLoanRequestOverrides = {}
-): CreateInstantLoanRequest {
-  const request: CreateInstantLoanRequest = {
+function createSimpleLoanRequest(
+  overrides: CreateSimpleLoanRequestOverrides = {}
+): CreateSimpleLoanRequest {
+  const request: CreateSimpleLoanRequest = {
     collateral: {
       poolId: BTC_POOL_ID,
       asset: "BTC",
@@ -1307,10 +1307,10 @@ function createInstantLoanRequest(
       ...request.refund,
       ...overrides.refund,
     },
-  } as CreateInstantLoanRequest;
+  } as CreateSimpleLoanRequest;
 }
 
-function mockInstantLoanCreateHydrationActors(params: {
+function mockSimpleLoanCreateHydrationActors(params: {
   getLoan: ReturnType<typeof vi.fn>;
   btcMinterDepositFee: bigint;
   icrc1Fee: bigint;

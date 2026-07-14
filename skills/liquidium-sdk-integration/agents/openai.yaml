@@ -3,4 +3,4 @@ interface:
   short_description: "Integrate the Liquidium TypeScript SDK"
   icon_small: "./assets/liquidium-icon.svg"
   icon_large: "./assets/liquidium-icon.svg"
-  default_prompt: "Use $liquidium-sdk-integration to add an accountless Liquidium instant-loan flow to my TypeScript app."
+  default_prompt: "Use $liquidium-sdk-integration to add an accountless Liquidium Simple Loans flow to my TypeScript app."

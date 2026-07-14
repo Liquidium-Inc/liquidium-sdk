@@ -1,12 +1,12 @@
 import type {
   Activity,
   GetActivityStatusResponse,
-  InstantLoan,
-  InstantLoanFindResult,
-  InstantLoanInitialDepositTargetQuote,
-  InstantLoanRepaymentTargetQuote,
   LiquidiumStatus,
   Pool,
+  SimpleLoan,
+  SimpleLoanFindResult,
+  SimpleLoanInitialDepositTargetQuote,
+  SimpleLoanRepaymentTargetQuote,
   SupplyTarget,
 } from "@liquidium/client";
 
@@ -14,11 +14,11 @@ const DISPLAY_DECIMALS = 6;
 const PERCENT_DECIMALS = 2n;
 const PERCENT_SCALE = 100n;
 const MILLISECONDS_PER_SECOND = 1_000n;
-const RECENT_LOANS_STORAGE_KEY = "liquidium-instant-loans.recentRefs";
+const RECENT_LOANS_STORAGE_KEY = "liquidium-simple-loans.recentRefs";
 const MAX_RECENT_LOANS = 10;
 const ERROR_FIELD_EXCLUDE_LIST = new Set(["name", "message", "stack", "cause"]);
 
-type InstantLoanFormatOptions = {
+type SimpleLoanFormatOptions = {
   pools?: Pool[];
   includeTargets?: boolean;
 };
@@ -164,7 +164,7 @@ export function formatSupplyTarget(target: SupplyTarget): string {
 
 function formatInitialDepositTargetQuote(
   label: string,
-  quote: InstantLoanInitialDepositTargetQuote,
+  quote: SimpleLoanInitialDepositTargetQuote,
   asset: string,
   decimals: bigint
 ): string[] {
@@ -178,7 +178,7 @@ function formatInitialDepositTargetQuote(
 
 function formatRepaymentTargetQuote(
   label: string,
-  quote: InstantLoanRepaymentTargetQuote,
+  quote: SimpleLoanRepaymentTargetQuote,
   asset: string,
   decimals: bigint
 ): string[] {
@@ -192,16 +192,16 @@ function formatRepaymentTargetQuote(
   ];
 }
 
-export function formatInstantLoan(
-  loan: InstantLoan,
-  options: InstantLoanFormatOptions = {}
+export function formatSimpleLoan(
+  loan: SimpleLoan,
+  options: SimpleLoanFormatOptions = {}
 ): string {
-  const collateralDecimals = getInstantLoanPoolDecimals(
+  const collateralDecimals = getSimpleLoanPoolDecimals(
     options.pools,
     loan.collateral.poolId,
     loan.collateral.decimals
   );
-  const borrowDecimals = getInstantLoanPoolDecimals(
+  const borrowDecimals = getSimpleLoanPoolDecimals(
     options.pools,
     loan.borrow.poolId,
     loan.borrow.decimals
@@ -210,11 +210,10 @@ export function formatInstantLoan(
   const initialDepositQuotes = Object.values(
     loan.initialDeposit.targets
   ).filter(
-    (quote): quote is InstantLoanInitialDepositTargetQuote =>
-      quote !== undefined
+    (quote): quote is SimpleLoanInitialDepositTargetQuote => quote !== undefined
   );
   const repaymentQuotes = Object.values(loan.repayment.targets).filter(
-    (quote): quote is InstantLoanRepaymentTargetQuote => quote !== undefined
+    (quote): quote is SimpleLoanRepaymentTargetQuote => quote !== undefined
   );
   const targetLines = includeTargets
     ? [
@@ -284,10 +283,10 @@ export function formatInstantLoan(
     `Amount: ${formatAmount(loan.borrow.amount, borrowDecimals)} ${
       loan.borrow.asset
     } on ${loan.borrow.chain}`,
-    `Destination: ${formatInstantLoanAccount(loan.borrow.destination)}`,
+    `Destination: ${formatSimpleLoanAccount(loan.borrow.destination)}`,
     `Pool: ${loan.borrow.poolId}`,
     "",
-    `Refund destination: ${formatInstantLoanAccount(loan.refundDestination)}`,
+    `Refund destination: ${formatSimpleLoanAccount(loan.refundDestination)}`,
     ...targetLines,
     "",
     "Current position:",
@@ -314,7 +313,7 @@ export function formatInstantLoan(
   ].join("\n");
 }
 
-function getInstantLoanPoolDecimals(
+function getSimpleLoanPoolDecimals(
   pools: Pool[] | undefined,
   poolId: string,
   fallbackDecimals: bigint
@@ -335,7 +334,7 @@ export function formatActivityStatus(
 }
 
 export function formatFindResult(
-  result: InstantLoanFindResult,
+  result: SimpleLoanFindResult,
   index: number,
   totalResults: number
 ): string {
@@ -513,8 +512,8 @@ function getErrorDetails(error: Error): string | undefined {
   return stringifyForDisplay(Object.fromEntries(entries));
 }
 
-function formatInstantLoanAccount(
-  account: InstantLoan["borrow"]["destination"]
+function formatSimpleLoanAccount(
+  account: SimpleLoan["borrow"]["destination"]
 ): string {
   return `${account.type}: ${account.address}`;
 }

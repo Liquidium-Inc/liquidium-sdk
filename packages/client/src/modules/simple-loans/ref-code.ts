@@ -1,7 +1,7 @@
-/** Number of characters in a public instant-loan reference. */
+/** Number of characters in a public simple loan reference. */
 export const REF_LENGTH = 6;
 
-/** Crockford-style base32 alphabet used for public instant-loan references. */
+/** Crockford-style base32 alphabet used for public simple loan references. */
 export const REF_ALPHABET = "0123456789ABCDEFGHJKMNPQRSTVWXYZ";
 
 const BASE = 32n;

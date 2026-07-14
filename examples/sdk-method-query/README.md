@@ -37,16 +37,16 @@ pnpm --filter @liquidium/example-sdk-method-query dev
 ## Included Method Templates
 
 The query page includes templates for account, market, position, activity,
-history, quote, lending, and instant-loan methods:
+history, quote, lending, and Simple Loans methods:
 
 - `history.getUserTransactionHistory`
 - `history.getLiquidationHistory`
 - `positions.getFullWithdrawAmount`
-- `instantLoans.create`
-- `instantLoans.get({ ref })`
-- `instantLoans.get({ loanId })`
-- `instantLoans.find`
+- `simpleLoans.create`
+- `simpleLoans.get({ ref })`
+- `simpleLoans.get({ loanId })`
+- `simpleLoans.find`
 
-`instantLoans.get(...)` returns current loan state plus generated targets,
+`simpleLoans.get(...)` returns current loan state plus generated targets,
 initial deposit detection/expiry timestamps, position state, and the actionable
 repayment amount.

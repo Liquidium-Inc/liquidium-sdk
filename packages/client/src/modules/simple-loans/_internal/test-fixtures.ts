@@ -1,7 +1,7 @@
 import { encodeIcrcAccount } from "@icp-sdk/canisters/ledger/icrc";
 import { Principal } from "@icp-sdk/core/principal";
 import { vi } from "vitest";
-import type { FlexibleInstantLoanCanisterRecord } from "../../../core/canisters/instant-loans/flexible-actor";
+import type { FlexibleSimpleLoanCanisterRecord } from "../../../core/canisters/simple-loans/flexible-actor";
 
 interface TestBtcAssetVariant {
   BTC: null;
@@ -15,7 +15,7 @@ interface TestIcpAssetVariant {
   ICP: null;
 }
 
-type TestInstantLoanPositionAsset =
+type TestSimpleLoanPositionAsset =
   | TestBtcAssetVariant
   | TestIcpAssetVariant
   | TestUsdtAssetVariant;
@@ -36,9 +36,9 @@ export const CHECKSUM_EVM_BORROW_ADDRESS =
 export const CANISTER_EVM_BORROW_ADDRESS =
   "0x2222222222222222222222222222222222222222";
 
-export function createInstantLoan(
-  overrides: Partial<FlexibleInstantLoanCanisterRecord> = {}
-): FlexibleInstantLoanCanisterRecord {
+export function createSimpleLoan(
+  overrides: Partial<FlexibleSimpleLoanCanisterRecord> = {}
+): FlexibleSimpleLoanCanisterRecord {
   return {
     id: LOAN_ID,
     authorisation: {
@@ -69,7 +69,7 @@ export function createInstantLoan(
   };
 }
 
-export function mockInstantLoanCollateralHintFetch(
+export function mockSimpleLoanCollateralHintFetch(
   overrides: Partial<{
     borrowAsset: string;
     borrowPoolId: string;
@@ -97,9 +97,9 @@ export function mockInstantLoanCollateralHintFetch(
   });
 }
 
-export function createBtcBorrowInstantLoan() {
+export function createBtcBorrowSimpleLoan() {
   return {
-    ...createInstantLoan(),
+    ...createSimpleLoan(),
     borrow_destination: { External: VALID_BTC_REFUND_ADDRESS },
     borrow_amount: 1_000_000n,
     lend_asset: { USDT: null },
@@ -135,9 +135,9 @@ export function createLoanCreatedEvent() {
   };
 }
 
-export function createInstantLoanPosition(
+export function createSimpleLoanPosition(
   poolId: string,
-  asset: TestInstantLoanPositionAsset,
+  asset: TestSimpleLoanPositionAsset,
   overrides: Record<string, unknown> = {}
 ) {
   return {

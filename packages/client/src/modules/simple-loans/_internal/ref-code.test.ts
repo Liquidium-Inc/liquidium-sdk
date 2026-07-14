@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { intFromPublicId, publicIdFromInt } from "../ref-code";
 
-describe("instant loan reference codes", () => {
+describe("simple loan reference codes", () => {
   test("should encode known loan ids to fixed public references", () => {
     // given
     const FIRST_LOAN_ID = 0n;

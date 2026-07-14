@@ -7,74 +7,74 @@ import type {
   CanisterNativeAccount,
 } from "../../accounts";
 
-export type InstantLoanIcrcAccount = CanisterIcrcAccount["Icrc"];
-export type InstantLoanIcrcAccountType = CanisterIcrcAccount;
-export type InstantLoanNativeAccountType = CanisterNativeAccount;
-export type InstantLoanAccountIdentifierAccountType =
+export type SimpleLoanIcrcAccount = CanisterIcrcAccount["Icrc"];
+export type SimpleLoanIcrcAccountType = CanisterIcrcAccount;
+export type SimpleLoanNativeAccountType = CanisterNativeAccount;
+export type SimpleLoanAccountIdentifierAccountType =
   CanisterAccountIdentifierAccount;
-export type InstantLoanExternalAccountType = CanisterExternalAccount;
-export type InstantLoanAccountType = CanisterLiquidiumAccount;
+export type SimpleLoanExternalAccountType = CanisterExternalAccount;
+export type SimpleLoanAccountType = CanisterLiquidiumAccount;
 
-export interface InstantLoanBtcAsset {
+export interface SimpleLoanBtcAsset {
   BTC: null;
 }
 
-export interface InstantLoanIcpAsset {
+export interface SimpleLoanIcpAsset {
   ICP: null;
 }
 
-export interface InstantLoanSolAsset {
+export interface SimpleLoanSolAsset {
   SOL: null;
 }
 
-export interface InstantLoanUsdcAsset {
+export interface SimpleLoanUsdcAsset {
   USDC: null;
 }
 
-export interface InstantLoanUsdtAsset {
+export interface SimpleLoanUsdtAsset {
   USDT: null;
 }
 
-export type InstantLoanAsset =
-  | InstantLoanBtcAsset
-  | InstantLoanIcpAsset
-  | InstantLoanSolAsset
-  | InstantLoanUsdcAsset
-  | InstantLoanUsdtAsset;
+export type SimpleLoanAsset =
+  | SimpleLoanBtcAsset
+  | SimpleLoanIcpAsset
+  | SimpleLoanSolAsset
+  | SimpleLoanUsdcAsset
+  | SimpleLoanUsdtAsset;
 
-export interface InstantLoanLendLeg {
+export interface SimpleLoanLendLeg {
   Lend: null;
 }
 
-export interface InstantLoanBorrowLeg {
+export interface SimpleLoanBorrowLeg {
   Borrow: null;
 }
 
-export type InstantLoanLeg = InstantLoanLendLeg | InstantLoanBorrowLeg;
+export type SimpleLoanLeg = SimpleLoanLendLeg | SimpleLoanBorrowLeg;
 
-export interface InstantLoanEthSignatureAuthorisation {
+export interface SimpleLoanEthSignatureAuthorisation {
   derivation_index: Uint8Array;
   pubkey: Uint8Array;
   address: string;
 }
 
-export interface InstantLoanAuthorisation {
-  EthSignature: InstantLoanEthSignatureAuthorisation;
+export interface SimpleLoanAuthorisation {
+  EthSignature: SimpleLoanEthSignatureAuthorisation;
 }
 
-export interface CreateInstantLoanCanisterRequest {
-  borrow_destination: InstantLoanAccountType;
-  lend_asset: InstantLoanAsset;
+export interface CreateSimpleLoanCanisterRequest {
+  borrow_destination: SimpleLoanAccountType;
+  lend_asset: SimpleLoanAsset;
   borrow_amount: bigint;
   lend_pool_id: Principal;
-  refund_destination: InstantLoanAccountType;
+  refund_destination: SimpleLoanAccountType;
   ltv_max_bps: bigint;
   borrow_pool_id: Principal;
-  borrow_asset: InstantLoanAsset;
+  borrow_asset: SimpleLoanAsset;
   ltv_timer_s: bigint;
 }
 
-export interface CreateInstantLoanCanisterResponse {
+export interface CreateSimpleLoanCanisterResponse {
   loan_id: bigint;
   lending_profile: Principal;
 }
@@ -85,16 +85,16 @@ export interface HeadlessLoansConfig {
 
 export interface HeadlessLoanCreatedEventPayload {
   loan_id: bigint;
-  borrow_destination: InstantLoanAccountType;
-  lend_asset: InstantLoanAsset;
+  borrow_destination: SimpleLoanAccountType;
+  lend_asset: SimpleLoanAsset;
   borrow_amount: bigint;
   lend_pool_id: Principal;
-  refund_destination: InstantLoanAccountType;
+  refund_destination: SimpleLoanAccountType;
   ltv_max_bps: bigint;
   ltv_timer_s: bigint;
   lending_profile: Principal;
   borrow_pool_id: Principal;
-  borrow_asset: InstantLoanAsset;
+  borrow_asset: SimpleLoanAsset;
 }
 
 export interface HeadlessLoanCreatedEventType {
@@ -103,7 +103,7 @@ export interface HeadlessLoanCreatedEventType {
 
 export interface HeadlessLoanFullLendWithdrawalRequestedEventPayload {
   loan_id: bigint;
-  account: InstantLoanAccountType;
+  account: SimpleLoanAccountType;
   pool_id: Principal;
 }
 
@@ -113,7 +113,7 @@ export interface HeadlessLoanFullLendWithdrawalRequestedEventType {
 
 export interface HeadlessLoanBorrowRequestedEventPayload {
   loan_id: bigint;
-  account: InstantLoanAccountType;
+  account: SimpleLoanAccountType;
   pool_id: Principal;
   amount: bigint;
 }
@@ -131,9 +131,9 @@ export interface HeadlessLoanDepositTimerExceededEventType {
 }
 
 export interface HeadlessLoanStuckFundsWithdrawalRequestedEventPayload {
-  leg: InstantLoanLeg;
+  leg: SimpleLoanLeg;
   loan_id: bigint;
-  account: InstantLoanAccountType;
+  account: SimpleLoanAccountType;
   pool_id: Principal;
   amount: bigint;
 }
@@ -154,7 +154,7 @@ export interface HeadlessLoanProfileWarmedEventType {
 }
 
 export interface HeadlessLoanRepayCompleteEventType {
-  RepayComplete: CreateInstantLoanCanisterResponse;
+  RepayComplete: CreateSimpleLoanCanisterResponse;
 }
 
 export interface HeadlessLoanDepositTimerStartedEventPayload {
@@ -183,29 +183,29 @@ export interface HeadlessLoanEvent {
   event_type: HeadlessLoanEventType;
 }
 
-export interface InstantLoanCanisterRecord {
+export interface SimpleLoanCanisterRecord {
   id: bigint;
-  authorisation: InstantLoanAuthorisation;
-  borrow_destination: InstantLoanAccountType;
+  authorisation: SimpleLoanAuthorisation;
+  borrow_destination: SimpleLoanAccountType;
   started: boolean;
-  lend_asset: InstantLoanAsset;
+  lend_asset: SimpleLoanAsset;
   created_at: bigint;
   schema_version: number;
   borrow_amount: bigint;
   lend_pool_id: Principal;
-  refund_destination: InstantLoanAccountType;
+  refund_destination: SimpleLoanAccountType;
   ltv_max_bps: bigint;
   ltv_timer_s: bigint;
   lending_profile: Principal;
   borrow_pool_id: Principal;
-  borrow_asset: InstantLoanAsset;
+  borrow_asset: SimpleLoanAsset;
   expires_at: [] | [bigint];
   deposit_detected_ts: [] | [bigint];
 }
 
 export interface WarmedProfile {
   id: bigint;
-  authorisation: InstantLoanAuthorisation;
+  authorisation: SimpleLoanAuthorisation;
   created_at: bigint;
   lending_profile: Principal;
 }
@@ -232,7 +232,7 @@ type LendingClientError =
   | LendingClientCallRejectedError
   | LendingClientDecodeFailedError;
 
-export type InstantLoansCanisterError =
+export type SimpleLoansCanisterError =
   | BorrowAmountRequiredError
   | NoCollateralPositionError
   | LtvTimerOutOfRangeError
