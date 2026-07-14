@@ -14,6 +14,11 @@ import {
   mapLendingProtocolErrorToLiquidiumError,
 } from "../../core/canisters/lending/error-mappers";
 import {
+  createFlexibleLendingActor,
+  type DecodedPool,
+  decodeFlexiblePositionView,
+} from "../../core/canisters/lending/flexible-actor";
+import {
   createBorrowAssetMessage,
   createWithdrawAssetMessage,
 } from "../../core/canisters/lending/messages";
@@ -23,6 +28,7 @@ import {
   getPoolLedgerAssetRoute,
   type PoolLedgerAssetRoute,
 } from "../../core/pool-ledger-assets";
+import { guardSameAssetBorrowing } from "../../core/same-asset-borrowing";
 import { SdkApiPath } from "../../core/sdk-api-paths";
 import {
   createLiquidiumStatus,
@@ -98,6 +104,11 @@ interface ResolveOutflowDestinationInputParams {
   errorMessage: string;
 }
 
+interface GuardBorrowSameAssetPolicyParams {
+  profileId: string;
+  pool: DecodedPool;
+}
+
 /** Borrow, withdraw, supply, inflow reporting, and fee-estimation helpers. */
 export class LendingModule {
   constructor(
@@ -110,7 +121,6 @@ export class LendingModule {
    * Prepares a withdraw action that can be signed and submitted later.
    *
    * Use this when you need explicit control over signing and submission.
-   *
    * @param request - Profile, pool, amount (pool asset base units), outflow address, and signer wallet.
    * @returns A signable {@link WithdrawAction} with `submit` wired to the canister.
    */
@@ -280,6 +290,8 @@ export class LendingModule {
    * Prepares a borrow action that can be signed and submitted later.
    *
    * Use this when you need explicit control over signing and submission.
+   * When the selected pool disables same-asset borrowing, preparation rejects
+   * profiles whose supplied balance in that pool is at or above its dust threshold.
    *
    * @param request - Profile, pool, amount (borrow asset base units), outflow address, and signer wallet.
    * @returns A signable {@link BorrowAction} with `submit` wired to the canister.
@@ -324,6 +336,10 @@ export class LendingModule {
       asset: selectedAsset,
       poolChain: selectedPool.chain,
       destinationChain: request.chain,
+    });
+    await this.guardBorrowSameAssetPolicy({
+      profileId: request.profileId,
+      pool: selectedPool,
     });
 
     const lendingActor = createLendingActor(this.canisterContext);
@@ -424,6 +440,7 @@ export class LendingModule {
    * Creates a borrow outflow using the provided wallet adapter.
    *
    * This is the convenience form of `prepareBorrow(...)` plus execution.
+   * Same-asset policy validation runs before the wallet is asked to sign.
    *
    * @param params - Borrow request fields plus `signerChain` and `signerWalletAdapter`.
    * @returns The lending canister receipt as {@link OutflowDetails}.
@@ -659,6 +676,34 @@ export class LendingModule {
         this.requireApi();
       },
       submitInflow: async (request) => await this.submitInflow(request),
+    });
+  }
+
+  private async guardBorrowSameAssetPolicy(
+    params: GuardBorrowSameAssetPolicyParams
+  ): Promise<void> {
+    const sameAssetBorrowing = params.pool.same_asset_borrowing[0] ?? false;
+    if (sameAssetBorrowing) {
+      return;
+    }
+
+    const positionResult = await createFlexibleLendingActor(
+      this.canisterContext
+    ).get_position(Principal.fromText(params.profileId), params.pool.principal);
+    const position = positionResult[0]
+      ? decodeFlexiblePositionView(positionResult[0])
+      : null;
+
+    guardSameAssetBorrowing({
+      borrowAsset: params.pool.asset,
+      collateralAsset: params.pool.asset,
+      collateralAmount: position?.deposited_native_now ?? 0n,
+      poolId: params.pool.principal.toText(),
+      policy: {
+        sameAssetBorrowing,
+        sameAssetBorrowingDustThreshold:
+          params.pool.same_asset_borrowing_dust_threshold,
+      },
     });
   }
 }

@@ -269,6 +269,10 @@ The SDK enforces product minimums before borrow creation:
 
 Use `getMinimumBorrowAmount(asset)` to display the same minimum that `client.quote.calculateLtv(...)`, `client.quote.getQuote(...)`, `client.simpleLoans.create(...)`, and `client.lending.prepareBorrow(...)` enforce.
 
+### Same-asset borrowing
+
+Pools expose `sameAssetBorrowing` and `sameAssetBorrowingDustThreshold`. When the flag is disabled, same-asset collateral must be strictly below the base-unit dust threshold; equality is rejected. `client.quote.calculateLtv(...)`, `client.quote.getQuote(...)`, and `client.simpleLoans.create(...)` validate the requested collateral amount, while `client.lending.prepareBorrow(...)` validates the profile's current supplied balance before fetching a nonce or asking the wallet to sign.
+
 ### Withdraw minimums
 
 The SDK enforces product minimums before withdraw creation:

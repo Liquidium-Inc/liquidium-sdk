@@ -183,6 +183,7 @@ export function createBtcPoolRecord(overrides = {}) {
     total_generated_interest_snapshot: 0n,
     supply_cap: [],
     same_asset_borrowing: [],
+    same_asset_borrowing_dust_threshold: 0n,
     asset: { BTC: null },
     rate_slope_before: 1n,
     borrow_cap: [],
@@ -204,7 +205,7 @@ export function createBtcPoolRecord(overrides = {}) {
   };
 }
 
-export function createUsdtPoolRecord() {
+export function createUsdtPoolRecord(overrides = {}) {
   return {
     optimal_utilization_rate: 80n,
     principal: {
@@ -214,6 +215,7 @@ export function createUsdtPoolRecord() {
     total_generated_interest_snapshot: 0n,
     supply_cap: [],
     same_asset_borrowing: [],
+    same_asset_borrowing_dust_threshold: 0n,
     asset: { USDT: null },
     rate_slope_before: 1n,
     borrow_cap: [],
@@ -231,6 +233,7 @@ export function createUsdtPoolRecord() {
     liquidation_threshold: 7_500n,
     max_ltv: 7_000n,
     total_supply_at_last_sync: 50_000n,
+    ...overrides,
   };
 }
 
@@ -244,6 +247,7 @@ export function createIcpPoolRecord(overrides = {}) {
     total_generated_interest_snapshot: 0n,
     supply_cap: [],
     same_asset_borrowing: [],
+    same_asset_borrowing_dust_threshold: 0n,
     asset: { ICP: null },
     rate_slope_before: 1n,
     borrow_cap: [],

@@ -47,6 +47,7 @@ export function mapDecodedPoolToPool(
     lendingIndex: pool.lending_index,
     borrowIndex: pool.borrow_index,
     sameAssetBorrowing: pool.same_asset_borrowing[0] ?? false,
+    sameAssetBorrowingDustThreshold: pool.same_asset_borrowing_dust_threshold,
     lastUpdated: pool.last_updated[0],
   };
 }

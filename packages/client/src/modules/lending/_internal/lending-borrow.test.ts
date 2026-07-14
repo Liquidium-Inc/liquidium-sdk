@@ -850,6 +850,60 @@ Nonce: 17`);
     expect(getNonce).not.toHaveBeenCalled();
   });
 
+  test("rejects disabled same-asset borrowing at the dust threshold before fetching a nonce", async () => {
+    // given
+    const DUST_THRESHOLD_SATS = 100n;
+    const getNonce = vi.fn().mockResolvedValue(17n);
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi.fn().mockResolvedValue([
+        {
+          ...createBtcPoolRecord(),
+          same_asset_borrowing: [false],
+          same_asset_borrowing_dust_threshold: DUST_THRESHOLD_SATS,
+        },
+      ]),
+      get_position: vi.fn().mockResolvedValue([
+        {
+          lending_index_now: 300n,
+          interest_since_snapshot: 0n,
+          asset: { BTC: null },
+          total_debt_interest: 0n,
+          borrow_index_snapshot: 400n,
+          debt_native_now: 0n,
+          borrow_index_now: 400n,
+          lending_index_snapshot: 300n,
+          debt_scaled: 0n,
+          total_earned_interest: 0n,
+          deposit_scaled: DUST_THRESHOLD_SATS,
+          earned_since_snapshot: 0n,
+          deposited_native_now: DUST_THRESHOLD_SATS,
+          pool_id: Principal.fromText(BTC_POOL_ID),
+          last_update: 0n,
+          user_profile: Principal.fromText("aaaaa-aa"),
+        },
+      ]),
+      get_nonce: getNonce,
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const result = client.lending.prepareBorrow({
+      profileId: "aaaaa-aa",
+      poolId: BTC_POOL_ID,
+      amount: 50_000n,
+      chain: Chain.BTC,
+      receiver: VALID_BTC_OUTFLOW_ADDRESS,
+      signerWalletAddress: "0xsigner",
+    });
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message: `Same asset borrowing not allowed for pool ${BTC_POOL_ID}`,
+    });
+    expect(getNonce).not.toHaveBeenCalled();
+  });
+
   test("rejects an ETH stablecoin borrow below the asset minimum before signing", async () => {
     // given
     const getNonce = vi.fn().mockResolvedValue(17n);

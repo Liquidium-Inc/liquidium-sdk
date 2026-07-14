@@ -1022,6 +1022,133 @@ describe("SimpleLoansModule create", () => {
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
+  test("rejects disabled same-asset borrowing at the dust threshold before creation", async () => {
+    // given
+    const DUST_THRESHOLD_SATS = 10_000n;
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    vi.spyOn(Actor, "createActor")
+      .mockReturnValueOnce({
+        list_pools: vi.fn().mockResolvedValue([
+          createBtcPoolRecord({
+            same_asset_borrowing: [false],
+            same_asset_borrowing_dust_threshold: DUST_THRESHOLD_SATS,
+          }),
+        ]),
+        get_pool_rate: vi
+          .fn()
+          .mockResolvedValue([[10_000_000_000_000_000_000_000_000n, 0n, 0n]]),
+      } as never)
+      .mockReturnValueOnce({
+        get_prices: vi.fn().mockResolvedValue(prices()),
+      } as never);
+    const client = new LiquidiumClient({
+      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
+    });
+
+    // when
+    const result = client.simpleLoans.create(
+      createSimpleLoanRequest({
+        collateral: {
+          poolId: BTC_POOL_ID,
+          asset: "BTC",
+          amount: DUST_THRESHOLD_SATS,
+        },
+        borrow: {
+          poolId: BTC_POOL_ID,
+          asset: "BTC",
+          amount: 5_100n,
+          chain: "BTC",
+          destination: VALID_BTC_REFUND_ADDRESS,
+        },
+      })
+    );
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message: `Same asset borrowing not allowed for pool ${BTC_POOL_ID}`,
+    });
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  test("rejects a simple loan asset that does not match its pool", async () => {
+    // given
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    vi.spyOn(Actor, "createActor")
+      .mockReturnValueOnce({
+        list_pools: vi
+          .fn()
+          .mockResolvedValue([createBtcPoolRecord(), createUsdtPoolRecord()]),
+        get_pool_rate: vi
+          .fn()
+          .mockResolvedValue([[10_000_000_000_000_000_000_000_000n, 0n, 0n]]),
+      } as never)
+      .mockReturnValueOnce({
+        get_prices: vi.fn().mockResolvedValue(prices()),
+      } as never);
+    const client = new LiquidiumClient({
+      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
+    });
+
+    // when
+    const result = client.simpleLoans.create(
+      createSimpleLoanRequest({
+        collateral: {
+          asset: "USDT",
+        },
+        refund: {
+          chain: "ETH",
+          destination: CHECKSUM_EVM_BORROW_ADDRESS,
+        },
+      })
+    );
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message: "Simple loan collateral asset does not match its pool",
+    });
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  test("rejects a simple loan borrow asset that does not match its pool", async () => {
+    // given
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    vi.spyOn(Actor, "createActor")
+      .mockReturnValueOnce({
+        list_pools: vi
+          .fn()
+          .mockResolvedValue([createBtcPoolRecord(), createUsdtPoolRecord()]),
+        get_pool_rate: vi
+          .fn()
+          .mockResolvedValue([[10_000_000_000_000_000_000_000_000n, 0n, 0n]]),
+      } as never)
+      .mockReturnValueOnce({
+        get_prices: vi.fn().mockResolvedValue(prices()),
+      } as never);
+    const client = new LiquidiumClient({
+      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
+    });
+
+    // when
+    const result = client.simpleLoans.create(
+      createSimpleLoanRequest({
+        borrow: {
+          asset: "BTC",
+          chain: "BTC",
+          destination: VALID_BTC_REFUND_ADDRESS,
+        },
+      })
+    );
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message: "Simple loan borrow asset does not match its pool",
+    });
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
   test("rejects a simple loan with an invalid BTC refund destination", async () => {
     // given
     const fetchSpy = vi.spyOn(globalThis, "fetch");

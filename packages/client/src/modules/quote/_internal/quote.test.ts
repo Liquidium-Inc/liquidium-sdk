@@ -6,6 +6,7 @@ import { QuoteValidationErrorCode, QuoteWarningCode } from "../types";
 
 describe("QuoteModule", () => {
   const quoteModule = new QuoteModule();
+  const SAME_ASSET_DUST_THRESHOLD_SATS = 1_000_000n;
 
   const btcPool: Pool = {
     id: "aaaaa-btc-pool",
@@ -32,6 +33,7 @@ describe("QuoteModule", () => {
     lendingIndex: 100000000n,
     borrowIndex: 100000000n,
     sameAssetBorrowing: false,
+    sameAssetBorrowingDustThreshold: 0n,
   };
 
   const usdtPool: Pool = {
@@ -59,6 +61,7 @@ describe("QuoteModule", () => {
     lendingIndex: 1000000n,
     borrowIndex: 1000000n,
     sameAssetBorrowing: true,
+    sameAssetBorrowingDustThreshold: 0n,
   };
 
   const pools = [btcPool, usdtPool];
@@ -139,6 +142,35 @@ describe("QuoteModule", () => {
       code: QuoteValidationErrorCode.BORROW_AMOUNT_TOO_LOW,
       message: "Borrow amount must be at least 1000000 base units for USDT",
     });
+  });
+
+  test.each([
+    ["below", SAME_ASSET_DUST_THRESHOLD_SATS - 1n, false],
+    ["at", SAME_ASSET_DUST_THRESHOLD_SATS, true],
+    ["above", SAME_ASSET_DUST_THRESHOLD_SATS + 1n, true],
+  ])("applies the same-asset dust policy %s the threshold", (_position, collateralAmount, shouldReject) => {
+    // given
+    const sameAssetPool: Pool = {
+      ...btcPool,
+      sameAssetBorrowingDustThreshold: SAME_ASSET_DUST_THRESHOLD_SATS,
+    };
+    const request = {
+      borrowAmount: 10_000n,
+      borrowPoolId: sameAssetPool.id,
+      collateralAmount,
+      collateralPoolId: sameAssetPool.id,
+    };
+
+    // when
+    const result = quoteModule.calculateLtv(request, [sameAssetPool], prices);
+
+    // then
+    expect(
+      result.validationErrors.some(
+        (error) =>
+          error.code === QuoteValidationErrorCode.SAME_ASSET_NOT_ALLOWED
+      )
+    ).toBe(shouldReject);
   });
 
   test("calculates required collateral for valid cross-asset quote", () => {
@@ -346,23 +378,24 @@ describe("QuoteModule", () => {
     );
   });
 
-  test("warns when same asset borrowing uses different pool ids and is enabled", () => {
+  test("uses the borrow pool policy for same-asset borrowing with different pool ids", () => {
     // given
-    const secondUsdtPool: Pool = {
-      ...usdtPool,
-      id: "yyyyy-usdt-pool",
+    const enabledBtcBorrowPool: Pool = {
+      ...btcPool,
+      id: "bbbbb-btc-pool",
+      sameAssetBorrowing: true,
     };
     const request = {
       borrowAmount: 100000000n,
-      borrowPoolId: "yyyyy-usdt-pool",
-      collateralPoolId: "xxxxx-usdt-pool",
+      borrowPoolId: enabledBtcBorrowPool.id,
+      collateralPoolId: btcPool.id,
       targetLtvBps: 5000n,
     };
 
     // when
     const result = quoteModule.getQuote(
       request,
-      [btcPool, usdtPool, secondUsdtPool],
+      [btcPool, enabledBtcBorrowPool],
       prices
     );
 
