@@ -1,5 +1,58 @@
 # @liquidium/client
 
+## 0.5.0
+
+### Minor Changes
+
+- cff20c5: Add native ICP and chain-key asset routes using explicit `Chain` + `Asset`
+  identifiers.
+
+  ## Breaking changes
+
+  - Rename the Instant Loans SDK surface to Simple Loans. Use
+    `client.simpleLoans`, `SimpleLoansModule`, `SimpleLoan*` types, and
+    `canisterIds.simpleLoans`.
+  - Simple Loans creation now groups fields under `collateral`, `borrow`, and
+    `refund`. Both `borrow` and `refund` require an explicit delivery `chain` and
+    `destination`.
+  - Simple Loans deposit and repayment quotes now live in chain-keyed `targets`
+    maps. Replace fields such as `initialDeposit.target` and `repayment.amount`
+    with `initialDeposit.targets[chain]` and `repayment.targets[chain]`.
+  - Borrow and withdraw requests replace `receiverAddress` with `chain` and
+    `receiver`.
+  - Every `lending.supply(...)` request requires `chain`. Transfer flows must no
+    longer pass `mechanism: SupplyPlanType.transfer`.
+  - Account responses now use `LiquidiumAccount`: `External`, `Native`,
+    `AccountIdentifier`, and `Icrc` become `ChainAddress`, `IcPrincipal`,
+    `IcpAccountIdentifier`, and `IcrcAccount`. Response fields use `address`
+    instead of `account` or `principal`.
+  - `SupplyTarget` is now a flat shape with `chain`, `asset`, and `address`.
+    Remove `target.type` checks and stop reading ICRC-specific target fields.
+  - Pool canister overrides move from `btcPool` and `ercPool` to `pools.btc` and
+    `pools.usdt`.
+  - `TransferMode`, `MarketAsset`, `MarketChain`, legacy account and supply-target
+    types, and borrow/withdraw signature aliases are removed. Use
+    `SignMessageWalletAction`, `Asset`, `Chain`, `LiquidiumAccount`,
+    `SupplyTarget`, and `SignatureInfo` instead.
+  - `Asset.SOL` is removed. Chain-key activities now report `Chain.ICP`.
+
+  ## Added
+
+  - Add ICP, ckBTC, ckUSDC, and ckUSDT transfer routes, ICRC wallet transfers,
+    ledger fee estimates, and chain-keyed Simple Loans quotes.
+  - Add `SimpleLoanCreatedError` for recovering a created loan when subsequent
+    state hydration fails. Retry `simpleLoans.get(...)` instead of creation.
+
+### Patch Changes
+
+- 9c8532d: Rename the Instant Loans SDK surface to Simple Loans. Use
+  `client.simpleLoans`, `SimpleLoansModule`, `SimpleLoan*` types, and
+  `canisterIds.simpleLoans`.
+
+  Expose each pool's `sameAssetBorrowingDustThreshold` and enforce the pool's
+  same-asset borrowing policy in quotes, Simple Loans creation, and profile-based
+  borrow preparation.
+
 ## 0.5.0-rc.1
 
 ### Patch Changes
