@@ -146,12 +146,13 @@ describe("QuoteModule", () => {
 
   test.each([
     ["below", SAME_ASSET_DUST_THRESHOLD_SATS - 1n, false],
-    ["at", SAME_ASSET_DUST_THRESHOLD_SATS, true],
-    ["above", SAME_ASSET_DUST_THRESHOLD_SATS + 1n, true],
+    ["at", SAME_ASSET_DUST_THRESHOLD_SATS, false],
+    ["above", SAME_ASSET_DUST_THRESHOLD_SATS + 1n, false],
   ])("applies the same-asset dust policy %s the threshold", (_position, collateralAmount, shouldReject) => {
     // given
     const sameAssetPool: Pool = {
       ...btcPool,
+      sameAssetBorrowing: true,
       sameAssetBorrowingDustThreshold: SAME_ASSET_DUST_THRESHOLD_SATS,
     };
     const request = {

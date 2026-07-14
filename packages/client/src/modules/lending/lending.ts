@@ -687,9 +687,16 @@ export class LendingModule {
       return;
     }
 
-    const positionResult = await createFlexibleLendingActor(
-      this.canisterContext
-    ).get_position(Principal.fromText(params.profileId), params.pool.principal);
+    const lendingActor = createFlexibleLendingActor(this.canisterContext);
+    let positionResult: Awaited<ReturnType<typeof lendingActor.get_position>>;
+    try {
+      positionResult = await lendingActor.get_position(
+        Principal.fromText(params.profileId),
+        params.pool.principal
+      );
+    } catch (error) {
+      throw mapCanisterCallErrorToLiquidiumError("get_position", error);
+    }
     const position = positionResult[0]
       ? decodeFlexiblePositionView(positionResult[0])
       : null;

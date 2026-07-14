@@ -904,6 +904,39 @@ Nonce: 17`);
     expect(getNonce).not.toHaveBeenCalled();
   });
 
+  test("maps a same-asset position canister failure before fetching a nonce", async () => {
+    // given
+    const getNonce = vi.fn().mockResolvedValue(17n);
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi.fn().mockResolvedValue([
+        {
+          ...createBtcPoolRecord(),
+          same_asset_borrowing: [false],
+        },
+      ]),
+      get_position: vi.fn().mockRejectedValue(new Error("canister timeout")),
+      get_nonce: getNonce,
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const result = client.lending.prepareBorrow({
+      profileId: "aaaaa-aa",
+      poolId: BTC_POOL_ID,
+      amount: 50_000n,
+      chain: Chain.BTC,
+      receiver: VALID_BTC_OUTFLOW_ADDRESS,
+      signerWalletAddress: "0xsigner",
+    });
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.CANISTER_REJECTED,
+      message: "Canister call failed: get_position",
+    });
+    expect(getNonce).not.toHaveBeenCalled();
+  });
+
   test("rejects an ETH stablecoin borrow below the asset minimum before signing", async () => {
     // given
     const getNonce = vi.fn().mockResolvedValue(17n);
