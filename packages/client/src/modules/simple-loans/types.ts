@@ -29,10 +29,11 @@ export interface CreateSimpleLoanCollateral {
    * Intended credited collateral amount, in base units.
    *
    * This is used to validate LTV and initialize the loan record before
-   * deposit/inflow fees are deducted. For BTC, pass satoshis. For token assets,
-   * convert the UI amount using the selected pool's `decimals` value. After
-   * creation, use one of `loan.initialDeposit.targets` as the fee-inclusive
-   * transfer quote and destination.
+   * deposit/inflow fees are deducted. For BTC, pass satoshis. ETH and ckETH use
+   * 18-decimal wei base units; do not pass human-readable ETH values directly.
+   * For token assets, convert the UI amount using the selected pool's `decimals`
+   * value. After creation, use one of `loan.initialDeposit.targets` as the
+   * fee-inclusive transfer quote and destination.
    */
   amount: bigint;
 }
@@ -54,8 +55,9 @@ export type CreateSimpleLoanBorrow = AssetIdentifier & {
   /**
    * Amount to borrow, in the borrow asset's base units.
    *
-   * For USDC/USDT, convert the UI amount using the selected borrow pool's
-   * `decimals` value before passing it here.
+   * ETH and ckETH use 18-decimal wei base units; do not pass human-readable ETH
+   * values directly. For USDC/USDT, convert the UI amount using the selected
+   * borrow pool's `decimals` value before passing it here.
    */
   amount: bigint;
   /**
