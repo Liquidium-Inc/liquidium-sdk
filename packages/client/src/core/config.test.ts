@@ -28,15 +28,16 @@ describe("config", () => {
 
   test("should resolve mainnet ETH pool and ckETH canister ids", () => {
     // given
+    const environment = "mainnet";
+
+    // when
+    const canisterIds = resolveCanisterIds(environment);
+
+    // then
     const EXPECTED_ETH_POOL_CANISTER_ID = "qcg7y-syaaa-aaaar-qb75q-cai";
     const EXPECTED_CKETH_MINTER_CANISTER_ID = "sv3dd-oaaaa-aaaar-qacoa-cai";
     const EXPECTED_CKETH_LEDGER_CANISTER_ID = "ss2fx-dyaaa-aaaar-qacoq-cai";
     const EXPECTED_CKETH_ARCHIVE_CANISTER_ID = "yhujl-liaaa-aaaar-qaiha-cai";
-
-    // when
-    const canisterIds = resolveCanisterIds("mainnet");
-
-    // then
     expect(canisterIds.pools.eth).toBe(EXPECTED_ETH_POOL_CANISTER_ID);
     expect(CK_CANISTER_IDS.ETH).toEqual({
       minter: EXPECTED_CKETH_MINTER_CANISTER_ID,

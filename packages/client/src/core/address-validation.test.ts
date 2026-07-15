@@ -6,8 +6,6 @@ describe("normalizeExternalAddress for ETH", () => {
   test("should normalize a valid EVM address", () => {
     // given
     const address = "0x52908400098527886e0f7030069857d2e4169ee7";
-    const EXPECTED_CHECKSUM_ADDRESS =
-      "0x52908400098527886E0F7030069857D2E4169EE7";
 
     // when
     const result = normalizeExternalAddress({
@@ -17,6 +15,8 @@ describe("normalizeExternalAddress for ETH", () => {
     });
 
     // then
+    const EXPECTED_CHECKSUM_ADDRESS =
+      "0x52908400098527886E0F7030069857D2E4169EE7";
     expect(result).toBe(EXPECTED_CHECKSUM_ADDRESS);
   });
 

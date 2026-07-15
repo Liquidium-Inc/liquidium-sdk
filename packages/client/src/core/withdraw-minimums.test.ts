@@ -12,9 +12,6 @@ describe("withdraw minimums", () => {
     const usdcAsset = "USDC";
     const usdtAsset = "USDT";
     const ethAsset = "ETH";
-    const EXPECTED_BTC_MINIMUM_AMOUNT = 5_000n;
-    const EXPECTED_ETH_MINIMUM_AMOUNT = 5_000_000_000_000_000n;
-    const EXPECTED_STABLECOIN_MINIMUM_AMOUNT = 1_000_000n;
 
     // when
     const btcMinimumAmount = getMinimumWithdrawAmount(btcAsset);
@@ -23,6 +20,9 @@ describe("withdraw minimums", () => {
     const ethMinimumAmount = getMinimumWithdrawAmount(ethAsset);
 
     // then
+    const EXPECTED_BTC_MINIMUM_AMOUNT = 5_000n;
+    const EXPECTED_ETH_MINIMUM_AMOUNT = 5_000_000_000_000_000n;
+    const EXPECTED_STABLECOIN_MINIMUM_AMOUNT = 1_000_000n;
     expect(MIN_WITHDRAW_AMOUNTS_BY_ASSET).toMatchObject({
       BTC: EXPECTED_BTC_MINIMUM_AMOUNT,
       ETH: EXPECTED_ETH_MINIMUM_AMOUNT,
@@ -38,12 +38,12 @@ describe("withdraw minimums", () => {
   test("should not treat inherited object properties as configured assets", () => {
     // given
     const inheritedPropertyName = "toString";
-    const EXPECTED_MINIMUM_AMOUNT = 0n;
 
     // when
     const minimumAmount = getMinimumWithdrawAmount(inheritedPropertyName);
 
     // then
+    const EXPECTED_MINIMUM_AMOUNT = 0n;
     expect(minimumAmount).toBe(EXPECTED_MINIMUM_AMOUNT);
   });
 
@@ -51,9 +51,6 @@ describe("withdraw minimums", () => {
     // given
     const amount = 4_999n;
     const asset = "BTC";
-    const EXPECTED_MINIMUM_AMOUNT = 5_000n;
-    const EXPECTED_MESSAGE =
-      "Withdraw amount must be at least 5000 base units for BTC";
 
     // when
     const validationError = getWithdrawAmountMinimumValidationError({
@@ -62,6 +59,9 @@ describe("withdraw minimums", () => {
     });
 
     // then
+    const EXPECTED_MINIMUM_AMOUNT = 5_000n;
+    const EXPECTED_MESSAGE =
+      "Withdraw amount must be at least 5000 base units for BTC";
     expect(validationError).toEqual({
       asset,
       minimumAmount: EXPECTED_MINIMUM_AMOUNT,

@@ -10,15 +10,15 @@ describe("borrow minimums", () => {
     // given
     const usdcAsset = "USDC";
     const ethAsset = "ETH";
-    const EXPECTED_BTC_MINIMUM_AMOUNT = 5_100n;
-    const EXPECTED_ETH_MINIMUM_AMOUNT = 5_000_000_000_000_000n;
-    const EXPECTED_STABLECOIN_MINIMUM_AMOUNT = 1_000_000n;
 
     // when
     const usdcMinimumAmount = getMinimumBorrowAmount(usdcAsset);
     const ethMinimumAmount = getMinimumBorrowAmount(ethAsset);
 
     // then
+    const EXPECTED_BTC_MINIMUM_AMOUNT = 5_100n;
+    const EXPECTED_ETH_MINIMUM_AMOUNT = 5_000_000_000_000_000n;
+    const EXPECTED_STABLECOIN_MINIMUM_AMOUNT = 1_000_000n;
     expect(MIN_BORROW_AMOUNTS_BY_ASSET).toMatchObject({
       BTC: EXPECTED_BTC_MINIMUM_AMOUNT,
       ETH: EXPECTED_ETH_MINIMUM_AMOUNT,
@@ -32,12 +32,12 @@ describe("borrow minimums", () => {
   test("should not treat inherited object properties as configured assets", () => {
     // given
     const inheritedPropertyName = "toString";
-    const EXPECTED_MINIMUM_AMOUNT = 0n;
 
     // when
     const minimumAmount = getMinimumBorrowAmount(inheritedPropertyName);
 
     // then
+    const EXPECTED_MINIMUM_AMOUNT = 0n;
     expect(minimumAmount).toBe(EXPECTED_MINIMUM_AMOUNT);
   });
 
@@ -45,9 +45,6 @@ describe("borrow minimums", () => {
     // given
     const amount = 5_099n;
     const asset = "BTC";
-    const EXPECTED_MINIMUM_AMOUNT = 5_100n;
-    const EXPECTED_MESSAGE =
-      "Borrow amount must be at least 5100 base units for BTC";
 
     // when
     const validationError = getBorrowAmountMinimumValidationError({
@@ -56,6 +53,9 @@ describe("borrow minimums", () => {
     });
 
     // then
+    const EXPECTED_MINIMUM_AMOUNT = 5_100n;
+    const EXPECTED_MESSAGE =
+      "Borrow amount must be at least 5100 base units for BTC";
     expect(validationError).toEqual({
       asset,
       minimumAmount: EXPECTED_MINIMUM_AMOUNT,
