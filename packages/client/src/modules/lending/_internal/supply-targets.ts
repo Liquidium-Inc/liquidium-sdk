@@ -3,6 +3,7 @@ import {
   createIcrcAccount,
   encodeIcpAccountIdentifier,
 } from "../../../core/accounts";
+import { normalizeAndValidateEvmAddress } from "../../../core/address-validation";
 import { createCkBtcMinterActor } from "../../../core/canisters/ckbtc/minter";
 import {
   createDepositAccountsActor,
@@ -272,12 +273,17 @@ async function getChainAddressSupplyTarget(
       throw mapDepositAccountErrorToLiquidiumError(result.Err);
     }
 
+    const address = normalizeAndValidateEvmAddress(
+      result.Ok,
+      "Deposit address canister returned an invalid EVM address"
+    );
+
     return {
       poolId: request.poolId,
       asset: request.asset,
       chain: request.chain,
       action: request.action,
-      address: result.Ok,
+      address,
     };
   }
 

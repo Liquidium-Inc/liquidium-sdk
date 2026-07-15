@@ -3,6 +3,7 @@ import type {
   CanisterLiquidiumAccount,
   LiquidiumAccountInput,
 } from "../../core/accounts";
+import { normalizeAndValidateEvmAddress } from "../../core/address-validation";
 import { getBorrowAmountMinimumValidationError } from "../../core/borrow-minimums";
 import { createCkBtcLedgerActor } from "../../core/canisters/ckbtc/ledger";
 import { createCkBtcMinterActor } from "../../core/canisters/ckbtc/minter";
@@ -513,6 +514,20 @@ export class LendingModule {
       );
     }
 
+    const selectedPool = await getPoolById(
+      this.canisterContext,
+      request.poolId
+    );
+    if (
+      selectedPool.asset !== request.asset ||
+      selectedPool.chain !== Chain.ETH
+    ) {
+      throw new LiquidiumError(
+        LiquidiumErrorCode.VALIDATION_ERROR,
+        `Deposit address asset ${request.asset} does not match pool ${request.poolId}`
+      );
+    }
+
     const subaccount = encodeInflowSubaccount({
       action: request.action,
       principal: Principal.fromText(request.profileId),
@@ -532,7 +547,10 @@ export class LendingModule {
       throw mapDepositAccountErrorToLiquidiumError(result.Err);
     }
 
-    return result.Ok;
+    return normalizeAndValidateEvmAddress(
+      result.Ok,
+      "Deposit address canister returned an invalid EVM address"
+    );
   }
 
   /**

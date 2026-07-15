@@ -2,6 +2,12 @@ import { Actor } from "@icp-sdk/core/agent";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { DEFAULT_API_BASE_URL } from "../../../core/config";
 import { LiquidiumClient, LiquidiumErrorCode } from "../../../index";
+import {
+  createEthPoolRecord,
+  createUsdtPoolRecord,
+  ETH_POOL_ID,
+  USDT_POOL_ID,
+} from "./test-fixtures";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -15,15 +21,19 @@ describe("LendingModule inflow", () => {
     const getDepositAddress = vi
       .fn()
       .mockResolvedValue({ Ok: expectedAddress });
-    vi.spyOn(Actor, "createActor").mockReturnValue({
-      get_deposit_address: getDepositAddress,
-    } as never);
+    vi.spyOn(Actor, "createActor")
+      .mockReturnValueOnce({
+        list_pools: vi.fn().mockResolvedValue([createEthPoolRecord()]),
+      } as never)
+      .mockReturnValueOnce({
+        get_deposit_address: getDepositAddress,
+      } as never);
     const client = new LiquidiumClient({});
 
     // when
     const address = await client.lending.getDepositAddress({
       profileId: "aaaaa-aa",
-      poolId: "qcg7y-syaaa-aaaar-qb75q-cai",
+      poolId: ETH_POOL_ID,
       asset: "ETH",
       action: "deposit",
     });
@@ -31,6 +41,59 @@ describe("LendingModule inflow", () => {
     // then
     expect(address).toBe(expectedAddress);
     expect(getDepositAddress.mock.calls[0]?.[1]).toEqual([]);
+  });
+
+  test("rejects a native ETH deposit address for a different asset pool", async () => {
+    // given
+    const getDepositAddress = vi.fn();
+    vi.spyOn(Actor, "createActor").mockReturnValueOnce({
+      list_pools: vi.fn().mockResolvedValue([createUsdtPoolRecord()]),
+      get_deposit_address: getDepositAddress,
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const result = client.lending.getDepositAddress({
+      profileId: "aaaaa-aa",
+      poolId: USDT_POOL_ID,
+      asset: "ETH",
+      action: "deposit",
+    });
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message: `Deposit address asset ETH does not match pool ${USDT_POOL_ID}`,
+    });
+    expect(getDepositAddress).not.toHaveBeenCalled();
+  });
+
+  test("rejects an invalid EVM deposit address returned by the canister", async () => {
+    // given
+    vi.spyOn(Actor, "createActor")
+      .mockReturnValueOnce({
+        list_pools: vi.fn().mockResolvedValue([createEthPoolRecord()]),
+      } as never)
+      .mockReturnValueOnce({
+        get_deposit_address: vi.fn().mockResolvedValue({
+          Ok: "invalid-deposit-address",
+        }),
+      } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const result = client.lending.getDepositAddress({
+      profileId: "aaaaa-aa",
+      poolId: ETH_POOL_ID,
+      asset: "ETH",
+      action: "deposit",
+    });
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.INVALID_ADDRESS,
+      message: "Deposit address canister returned an invalid EVM address",
+    });
   });
 
   test("estimates native ETH inflow fee in wei", async () => {
