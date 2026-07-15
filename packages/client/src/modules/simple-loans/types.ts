@@ -335,7 +335,7 @@ export type SimpleLoanEventType =
 export interface SimpleLoanInitialDepositTargetQuote {
   /** Full amount to send to the collateral deposit target, including fee. */
   amount: bigint;
-  /** Inflow fee amount in base units added to the transfer amount. */
+  /** Inflow fee amount in base units added to the transfer amount. Native ETH falls back to 0.00025 ETH when the live estimate fails or is non-positive. */
   inflowFeeAmount: bigint;
   /** Address or ICRC account where the collateral should be sent. */
   target: SupplyTarget;
@@ -345,7 +345,7 @@ export interface SimpleLoanInitialDepositTargetQuote {
 export interface SimpleLoanRepaymentTargetQuote {
   /** Full amount to send to the repayment target, including fee and interest buffer. */
   amount: bigint;
-  /** Inflow fee amount in base units added to the repayment transfer. Falls back to the protocol minimum when live estimation is unavailable. */
+  /** Inflow fee amount in base units added to the repayment transfer. Native ETH falls back to 0.00025 ETH when the live estimate fails or is non-positive. */
   inflowFeeAmount: bigint;
   /** Whether `inflowFeeAmount` came from a live fee estimate. */
   inflowFeeEstimateAvailable: boolean;

@@ -819,7 +819,14 @@ export class SimpleLoansModule {
     target: SupplyTarget
   ): Promise<InflowFeeEstimate> {
     try {
-      return await this.lending.estimateInflowFee(target);
+      const fee = await this.lending.estimateInflowFee(target);
+      if (shouldUseNativeEthInflowFeeFallback(target, fee.totalFee)) {
+        return {
+          totalFee: getRepaymentInflowFeeFallback(target.asset, target.chain),
+        };
+      }
+
+      return fee;
     } catch (error) {
       if (target.asset !== CoreAsset.ETH || target.chain !== CoreChain.ETH) {
         throw error;
@@ -901,6 +908,13 @@ export class SimpleLoansModule {
   ): Promise<RepaymentInflowFeeEstimate> {
     try {
       const fee = await this.lending.estimateInflowFee(target);
+      if (shouldUseNativeEthInflowFeeFallback(target, fee.totalFee)) {
+        return {
+          totalFee: getRepaymentInflowFeeFallback(target.asset, target.chain),
+          estimateAvailable: false,
+        };
+      }
+
       return { totalFee: fee.totalFee, estimateAvailable: true };
     } catch {
       return {
@@ -1006,6 +1020,17 @@ function getRepaymentInflowFeeFallback(
   }
 
   return 0n;
+}
+
+function shouldUseNativeEthInflowFeeFallback(
+  target: SupplyTarget,
+  totalFee: bigint
+): boolean {
+  return (
+    totalFee <= 0n &&
+    target.asset === CoreAsset.ETH &&
+    target.chain === CoreChain.ETH
+  );
 }
 
 function assertTargetAsset(

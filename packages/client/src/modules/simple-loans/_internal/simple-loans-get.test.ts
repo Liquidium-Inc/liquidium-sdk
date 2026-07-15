@@ -483,6 +483,66 @@ describe("SimpleLoansModule get", () => {
     });
   });
 
+  test("hydrates ETH quotes with the native fee fallback when estimation returns zero", async () => {
+    // given
+    const COLLATERAL_ETH_WEI = 10_000_000_000_000_000n;
+    const DEBT_ETH_WEI = 5_000_000_000_000_000n;
+    const CKETH_LEDGER_FEE_WEI = 2_000_000_000_000n;
+    const NATIVE_ETH_FEE_FALLBACK_WEI = 250_000_000_000_000n;
+    const getBorrowPosition = vi
+      .fn()
+      .mockResolvedValue([
+        createSimpleLoanPosition(
+          ETH_POOL_ID,
+          { ETH: null },
+          { debt_native_now: DEBT_ETH_WEI }
+        ),
+      ]);
+    mockSimpleLoanCollateralHintFetch({
+      collateralAmountHint: COLLATERAL_ETH_WEI.toString(),
+    });
+    mockSimpleLoanHydrationActors({
+      getLoan: vi.fn().mockResolvedValue({
+        Ok: createSimpleLoan({
+          lend_asset: { ETH: null },
+          lend_pool_id: Principal.fromText(ETH_POOL_ID),
+          borrow_amount: DEBT_ETH_WEI,
+          borrow_pool_id: Principal.fromText(ETH_POOL_ID),
+          borrow_asset: { ETH: null },
+        }),
+      }),
+      getPoolRate: vi.fn().mockResolvedValue([[0n, 0n, 0n]]),
+      getBtcAddress: vi.fn().mockResolvedValue("bc1qinstantdeposit"),
+      getDepositAddress: vi.fn().mockResolvedValue({
+        Ok: "0x1111111111111111111111111111111111111111",
+      }),
+      estimateDepositFee: vi.fn().mockResolvedValue({ Ok: 0n }),
+      getDepositFee: vi.fn().mockResolvedValue(2_000n),
+      icrc1Fee: vi.fn().mockResolvedValue(CKETH_LEDGER_FEE_WEI),
+      positionsByPoolId: {
+        [ETH_POOL_ID]: await getBorrowPosition(),
+      },
+    });
+    const client = new LiquidiumClient({
+      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
+      canisterIds: { simpleLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
+    });
+
+    // when
+    const loan = await client.simpleLoans.get({ loanId: LOAN_ID });
+
+    // then
+    expect(loan.initialDeposit.targets.ETH).toMatchObject({
+      amount: COLLATERAL_ETH_WEI + NATIVE_ETH_FEE_FALLBACK_WEI,
+      inflowFeeAmount: NATIVE_ETH_FEE_FALLBACK_WEI,
+    });
+    expect(loan.repayment.targets.ETH).toMatchObject({
+      amount: DEBT_ETH_WEI + NATIVE_ETH_FEE_FALLBACK_WEI,
+      inflowFeeAmount: NATIVE_ETH_FEE_FALLBACK_WEI,
+      inflowFeeEstimateAvailable: false,
+    });
+  });
+
   test("returns zero repayment quote when the loan has no debt", async () => {
     // given
     const getLoan = vi.fn().mockResolvedValue({ Ok: createSimpleLoan() });

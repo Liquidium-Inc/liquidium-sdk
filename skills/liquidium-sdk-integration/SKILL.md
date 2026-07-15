@@ -169,6 +169,9 @@ or executing it.
 Initial-deposit quotes expose `amount` and `inflowFeeAmount`. Repayment quotes
 also expose `inflowFeeEstimateAvailable`; use that flag when labeling the fee
 rather than presenting every repayment fee as a live estimate.
+For native ETH, Simple Loan quotes use a `0.00025 ETH` fallback when the live
+deposit-canister estimate fails or returns a non-positive amount. Repayment
+quotes mark that fallback with `inflowFeeEstimateAvailable: false`.
 
 Deposit and repayment targets are distinct generated inflow targets. Select the
 quote for the chain the user will transfer on. Do not assume the addresses
