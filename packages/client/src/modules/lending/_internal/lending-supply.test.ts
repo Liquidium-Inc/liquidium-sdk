@@ -944,6 +944,38 @@ describe("LendingModule supply", () => {
     );
   });
 
+  test("rejects native ETH supply from an invalid EVM sender account", async () => {
+    // given
+    const depositAddress = "0x1111111111111111111111111111111111111111";
+    vi.spyOn(Actor, "createActor")
+      .mockReturnValueOnce({
+        list_pools: vi.fn().mockResolvedValue([createEthPoolRecord()]),
+      } as never)
+      .mockReturnValueOnce({
+        get_deposit_address: vi.fn().mockResolvedValue({ Ok: depositAddress }),
+      } as never);
+    const sendEthTransaction = vi.fn();
+    const client = new LiquidiumClient({});
+
+    // when
+    const result = client.lending.supply({
+      profileId: "aaaaa-aa",
+      poolId: ETH_POOL_ID,
+      action: "deposit",
+      chain: "ETH",
+      account: "invalid-evm-account",
+      amount: 5_000_000_000_000_000n,
+      walletAdapter: { sendEthTransaction },
+    });
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.INVALID_ADDRESS,
+      message: "Invalid EVM wallet address",
+    });
+    expect(sendEthTransaction).not.toHaveBeenCalled();
+  });
+
   test("auto-executes eth usdt supply with contract interaction when requested", async () => {
     // given
     const profileId = "aaaaa-aa";

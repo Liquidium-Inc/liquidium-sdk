@@ -44,7 +44,7 @@ export interface PoolCanisterIds {
   /** BTC pool canister principal. */
   btc: string;
   /** ETH pool canister principal. */
-  eth?: string;
+  eth: string;
   /** USDT pool canister principal. */
   usdt: string;
   /** USDC pool canister principal. */

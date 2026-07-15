@@ -331,13 +331,20 @@ export class SupplyFlowExecutor {
       );
     }
 
-    const account = request.account?.trim();
-    if (!account) {
+    const accountInput = request.account?.trim();
+    if (!accountInput) {
       throw new LiquidiumError(
         LiquidiumErrorCode.VALIDATION_ERROR,
         "Wallet-executed transfer supply requires an account"
       );
     }
+    const senderAccount =
+      target.chain === Chain.ETH
+        ? normalizeAndValidateEvmAddress(
+            accountInput,
+            "Invalid EVM wallet address"
+          )
+        : accountInput;
 
     if (!request.amount || request.amount <= 0n) {
       throw new LiquidiumError(
@@ -358,7 +365,7 @@ export class SupplyFlowExecutor {
               to: decodeIcrcAccountAddress(target.address).account,
               amount: request.amount,
             },
-            senderAccount: account,
+            senderAccount,
             action: request.action,
           })
         : await this.sendChainAddressSupplyTransaction({
@@ -366,7 +373,7 @@ export class SupplyFlowExecutor {
             chain: target.chain,
             toAddress: target.address,
             amount: request.amount,
-            senderAccount: account,
+            senderAccount,
             asset: target.asset,
             action: request.action,
           });
