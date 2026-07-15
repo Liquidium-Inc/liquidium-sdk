@@ -1,6 +1,6 @@
 import { idlLabelToId } from "@icp-sdk/core/candid";
 import type { Principal } from "@icp-sdk/core/principal";
-import { describe, expect, test } from "vitest";
+import { assert, describe, expect, test } from "vitest";
 import {
   decodeFlexibleHeadlessLoanEvent,
   decodeFlexibleSimpleLoanRecord,
@@ -220,10 +220,9 @@ describe("decodeFlexibleHeadlessLoanEvent", () => {
     // then
     expect(decoded).not.toBeNull();
     const eventType = decoded?.event_type;
-    if (eventType && "LoanCreated" in eventType) {
-      expect(eventType.LoanCreated.lend_asset).toBe("ETH");
-      expect(eventType.LoanCreated.borrow_asset).toBe("ETH");
-    }
+    assert(eventType && "LoanCreated" in eventType);
+    expect(eventType.LoanCreated.lend_asset).toBe("ETH");
+    expect(eventType.LoanCreated.borrow_asset).toBe("ETH");
   });
 
   test("should decode a LoanCreated event with hashed variant keys", () => {
