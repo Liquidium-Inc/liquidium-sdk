@@ -41,9 +41,6 @@ pnpm add @liquidium/client
 bun add @liquidium/client
 ```
 
-Use the `@rc` tag when integrating against the current 0.5 release candidate.
-Untagged installs resolve to the latest stable release.
-
 Use the SDK in browser apps and modern TypeScript runtimes. Browser integrations
 need `fetch`, `BigInt`, and standard ESM support. Follow the host app's package
 manager and build tooling.

@@ -25,8 +25,8 @@ if (ltv.validationErrors.length > 0) {
 }
 ```
 
-Amounts must use each asset's smallest unit. BTC uses satoshis. USDC and USDT use token base units based on the selected pool decimals.
+Amounts must use each asset's smallest unit. BTC uses satoshis. Native ETH and ckETH use wei with 18 decimals. USDC and USDT use token base units based on the selected pool decimals.
 
-The SDK also validates minimum borrow amounts. BTC borrows must be at least `5_100n` sats. USDC and USDT borrows must be at least `1_000_000n` base units. Use `getMinimumBorrowAmount(asset)` to display the same minimum before the user submits.
+The SDK also validates minimum borrow amounts. BTC borrows must be at least `5_100n` sats. ETH borrows must be at least `5_000_000_000_000_000n` wei (`0.005 ETH`). USDC and USDT borrows must be at least `1_000_000n` base units. Use `getMinimumBorrowAmount(asset)` to display the same minimum before the user submits.
 
 Pools expose `sameAssetBorrowing` and `sameAssetBorrowingDustThreshold`. When same-asset borrowing is disabled, same-asset collateral must be strictly below the base-unit dust threshold; equality is rejected. The quote helpers, `client.simpleLoans.create(...)`, and `client.lending.prepareBorrow(...)` enforce this policy.
