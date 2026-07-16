@@ -38,6 +38,22 @@ export interface CreateDepositErc20TransactionParams {
   action: SupplyAction;
 }
 
+/** Parameters for a native ETH deposit-helper transaction. */
+export interface CreateDepositEthTransactionParams {
+  /** Deposit helper contract address. */
+  depositContractAddress: string;
+  /** Deposit amount in wei. */
+  amount: bigint;
+  /** Pool principal text receiving the inflow. */
+  poolId: string;
+  /** Liquidium profile principal text. */
+  profileId: string;
+  /** Expected ICRC destination account text. */
+  destinationAccount: string;
+  /** Deposit or repayment action for the inflow. */
+  action: SupplyAction;
+}
+
 /** Builds calldata for an ERC-20 `approve(spender, amount)` transaction. */
 export function createApproveTransaction(
   params: CreateApproveTransactionParams
@@ -70,30 +86,8 @@ export function createTransferErc20Transaction(
 export function createDepositErc20Transaction(
   params: CreateDepositErc20TransactionParams
 ): EvmContractTransaction {
-  const expectedDestinationAccount = encodeIcrcAccount({
-    owner: Principal.fromText(params.poolId),
-    subaccount: encodeInflowSubaccount({
-      action: params.action,
-      principal: Principal.fromText(params.profileId),
-    }),
-  });
-
-  if (params.destinationAccount !== expectedDestinationAccount) {
-    throw new LiquidiumError(
-      LiquidiumErrorCode.VALIDATION_ERROR,
-      "ETH supply destination account does not match the expected inflow account"
-    );
-  }
-
-  const principalBytes32 = encodePrincipalToBytes32(
-    Principal.fromText(params.poolId)
-  );
-  const subaccountHex = encodeBytes32Hex(
-    encodeInflowSubaccount({
-      action: params.action,
-      principal: Principal.fromText(params.profileId),
-    })
-  );
+  const { principalBytes32, subaccountHex } =
+    createDepositAccountContext(params);
 
   return {
     to: params.depositContractAddress,
@@ -107,6 +101,59 @@ export function createDepositErc20Transaction(
         subaccountHex,
       ],
     }),
+  };
+}
+
+/** Builds calldata and value for depositing native ETH into the ckETH deposit helper. */
+export function createDepositEthTransaction(
+  params: CreateDepositEthTransactionParams
+): EvmContractTransaction {
+  const { principalBytes32, subaccountHex } =
+    createDepositAccountContext(params);
+
+  return {
+    to: params.depositContractAddress,
+    data: encodeFunctionData({
+      abi: CK_DEPOSIT_ABI,
+      functionName: "depositEth",
+      args: [principalBytes32, subaccountHex],
+    }),
+    value: params.amount.toString(),
+  };
+}
+
+interface DepositAccountContextParams {
+  poolId: string;
+  profileId: string;
+  destinationAccount: string;
+  action: SupplyAction;
+}
+
+function createDepositAccountContext(params: DepositAccountContextParams): {
+  principalBytes32: `0x${string}`;
+  subaccountHex: `0x${string}`;
+} {
+  const inflowSubaccount = encodeInflowSubaccount({
+    action: params.action,
+    principal: Principal.fromText(params.profileId),
+  });
+  const expectedDestinationAccount = encodeIcrcAccount({
+    owner: Principal.fromText(params.poolId),
+    subaccount: inflowSubaccount,
+  });
+
+  if (params.destinationAccount !== expectedDestinationAccount) {
+    throw new LiquidiumError(
+      LiquidiumErrorCode.VALIDATION_ERROR,
+      "ETH supply destination account does not match the expected inflow account"
+    );
+  }
+
+  return {
+    principalBytes32: encodePrincipalToBytes32(
+      Principal.fromText(params.poolId)
+    ),
+    subaccountHex: encodeBytes32Hex(inflowSubaccount),
   };
 }
 

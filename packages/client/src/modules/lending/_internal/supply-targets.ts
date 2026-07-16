@@ -93,7 +93,8 @@ function resolveSupplyMechanism(
 
   if (
     params.identifier.chain === Chain.ETH &&
-    (params.identifier.asset === Asset.USDC ||
+    (params.identifier.asset === Asset.ETH ||
+      params.identifier.asset === Asset.USDC ||
       params.identifier.asset === Asset.USDT)
   ) {
     return SupplyPlanType.contractInteraction;

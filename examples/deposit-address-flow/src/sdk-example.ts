@@ -9,7 +9,7 @@ import type {
   SupplyFlow,
   WalletAdapter,
 } from "@liquidium/client";
-import { Chain } from "@liquidium/client";
+import { Chain, SupplyPlanType } from "@liquidium/client";
 import { client } from "./client";
 
 type MarketData = {
@@ -96,6 +96,7 @@ export async function createSupplyFlow({
     poolId,
     action,
     chain,
+    mechanism: SupplyPlanType.transfer,
   });
 }
 

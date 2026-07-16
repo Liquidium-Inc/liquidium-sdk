@@ -28,9 +28,12 @@ const supplyFlow = await client.lending.supply({
   poolId,
   action: "deposit",
   chain: Chain.BTC,
+  mechanism: "transfer",
 });
 
 console.log("Send funds to", supplyFlow.target.address);
 ```
 
-When the flow needs a transaction ID, call `supplyFlow.submit(...)` after the user broadcasts the transfer.
+`mechanism: "transfer"` is optional because transfer is the default. Set it when your app exposes an explicit deposit-address versus contract-interaction choice. When the flow needs a transaction ID, call `supplyFlow.submit(...)` after the user broadcasts the transfer.
+
+Manual transfer requests do not include an amount, so the SDK cannot validate the eventual transaction value. For native ETH, require at least `0.005 ETH` (`5_000_000_000_000_000n` wei) and add the current inflow fee returned by `client.lending.estimateInflowFee(...)`. Use `getMinimumDepositAmount(Asset.ETH)` to read the product minimum.

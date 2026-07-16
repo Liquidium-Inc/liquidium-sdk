@@ -3,6 +3,7 @@ import {
   type EvmAddress,
   normalizeAndValidateEvmAddress,
 } from "../../../core/address-validation";
+import { getDepositAmountMinimumValidationError } from "../../../core/deposit-minimums";
 import { LiquidiumError, LiquidiumErrorCode } from "../../../core/errors";
 import {
   CK_ETH_DEPOSIT_CONTRACT_ADDRESS,
@@ -13,7 +14,7 @@ import { getPoolLedgerAssetRoute } from "../../../core/pool-ledger-assets";
 import { createLiquidiumStatus } from "../../../core/status";
 import type { CanisterContext } from "../../../core/transports/canister-context";
 import {
-  type Asset,
+  Asset,
   Chain,
   type EvmReadClient,
   SupplyAction,
@@ -27,6 +28,7 @@ import type {
 import {
   createApproveTransaction,
   createDepositErc20Transaction,
+  createDepositEthTransaction,
   createTransferErc20Transaction,
 } from "../evm-transactions";
 import type {
@@ -159,7 +161,18 @@ export class SupplyFlowExecutor {
   async create(request: SupplyFlowRequest): Promise<SupplyFlow> {
     const requestedMechanism = request.mechanism ?? null;
     if (
-      requestedMechanism === null &&
+      requestedMechanism !== null &&
+      requestedMechanism !== PlanType.transfer &&
+      requestedMechanism !== PlanType.contractInteraction
+    ) {
+      throw new LiquidiumError(
+        LiquidiumErrorCode.VALIDATION_ERROR,
+        `Unsupported supply mechanism: ${String(requestedMechanism)}`
+      );
+    }
+
+    if (
+      requestedMechanism !== PlanType.contractInteraction &&
       request.walletAdapter === undefined &&
       (request.account !== undefined || request.amount !== undefined)
     ) {
@@ -173,6 +186,21 @@ export class SupplyFlowExecutor {
       this.params.canisterContext,
       request.poolId
     );
+    if (
+      request.action === SupplyAction.deposit &&
+      request.amount !== undefined
+    ) {
+      const minimumDepositAmountError = getDepositAmountMinimumValidationError({
+        amount: request.amount,
+        asset: selectedPool.asset,
+      });
+      if (minimumDepositAmountError) {
+        throw new LiquidiumError(
+          LiquidiumErrorCode.VALIDATION_ERROR,
+          minimumDepositAmountError.message
+        );
+      }
+    }
     const target = await resolveSupplyTargetForPool(
       this.params.canisterContext,
       {
@@ -418,10 +446,14 @@ export class SupplyFlowExecutor {
   ): Promise<string> {
     const { request, target, defaultSubmitInflowRequest } = params;
 
-    if (!isEthStablecoin(target.asset, target.chain)) {
+    if (
+      target.chain !== Chain.ETH ||
+      (target.asset !== Asset.ETH &&
+        !isEthStablecoin(target.asset, target.chain))
+    ) {
       throw new LiquidiumError(
         LiquidiumErrorCode.VALIDATION_ERROR,
-        "Contract-interaction supply is only supported for ETH stablecoin targets"
+        "Contract-interaction supply is only supported for native ETH and ETH stablecoin targets"
       );
     }
 
@@ -444,6 +476,13 @@ export class SupplyFlowExecutor {
       );
     }
 
+    if (request.amount > MAX_UINT256) {
+      throw new LiquidiumError(
+        LiquidiumErrorCode.VALIDATION_ERROR,
+        "Contract-interaction supply amount exceeds uint256 maximum"
+      );
+    }
+
     const walletAdapter = request.walletAdapter;
     if (!walletAdapter?.sendEthTransaction) {
       throw new LiquidiumError(
@@ -453,6 +492,30 @@ export class SupplyFlowExecutor {
     }
 
     this.params.requireApi();
+
+    if (target.asset === Asset.ETH) {
+      const depositTxid = await this.sendEthContractTransaction(
+        walletAdapter,
+        walletAddress,
+        createDepositEthTransaction({
+          depositContractAddress: CK_ETH_DEPOSIT_CONTRACT_ADDRESS,
+          amount: request.amount,
+          poolId: request.poolId,
+          profileId: request.profileId,
+          destinationAccount: target.address,
+          action: request.action,
+        }),
+        `supply-${request.action}-deposit-eth`
+      );
+
+      await this.registerContractSupplyInflow(
+        depositTxid,
+        defaultSubmitInflowRequest
+      );
+
+      return depositTxid;
+    }
+
     this.requireEvmReadClient(
       "Contract-interaction supply requires an EVM RPC URL or public client"
     );
@@ -536,14 +599,23 @@ export class SupplyFlowExecutor {
       `supply-${request.action}-deposit-erc20`
     );
 
-    try {
-      await this.submitInflowWithRetry(depositTxid, defaultSubmitInflowRequest);
-    } catch {
-      // The deposit transaction is already broadcast and cannot be rolled back.
-      // Return the txid so callers can track it even if the indexing hint fails.
-    }
+    await this.registerContractSupplyInflow(
+      depositTxid,
+      defaultSubmitInflowRequest
+    );
 
     return depositTxid;
+  }
+
+  private async registerContractSupplyInflow(
+    txid: string,
+    defaultSubmitInflowRequest: SubmitInflowDefaults | null
+  ): Promise<void> {
+    try {
+      await this.submitInflowWithRetry(txid, defaultSubmitInflowRequest);
+    } catch {
+      // The transaction is already broadcast and cannot be rolled back.
+    }
   }
 
   private async sendChainAddressSupplyTransaction(

@@ -51,4 +51,4 @@ history, quote, lending, and Simple Loans methods:
 initial deposit detection/expiry timestamps, position state, and the actionable
 repayment amount.
 
-Asset arguments accept `"ETH"` with `chain: "ETH"` for native ETH and `chain: "ICP"` for ckETH. Both routes use 18-decimal wei amounts. Native ETH supply is a deposit-address value transfer, while ckETH uses ICRC; `mechanism: "contractInteraction"` remains USDC/USDT-only.
+Asset arguments accept `"ETH"` with `chain: "ETH"` for native ETH and `chain: "ICP"` for ckETH. Both routes use 18-decimal wei amounts. Native ETH supply supports a deposit-address value transfer with `mechanism: "transfer"` and a payable helper call with `mechanism: "contractInteraction"`; ckETH uses ICRC.

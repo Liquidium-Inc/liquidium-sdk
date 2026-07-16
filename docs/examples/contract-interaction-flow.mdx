@@ -6,7 +6,7 @@ order: 320
 
 # Contract Interaction Flow Example
 
-Use `examples/contract-interaction-flow` to inspect wallet-executed ERC-20 supply flows.
+Use `examples/contract-interaction-flow` to inspect wallet-executed native ETH and ERC-20 supply and repayment flows.
 
 Run it from the SDK root:
 
@@ -15,4 +15,4 @@ pnpm install
 pnpm --filter @liquidium/example-contract-interaction-flow dev
 ```
 
-Set `VITE_EVM_RPC_URL` or `VITE_INFURA_API_KEY` to override the example's public mainnet RPC fallback.
+Set `VITE_EVM_RPC_URL` or `VITE_INFURA_API_KEY` to override the example's public mainnet RPC fallback used for USDC and USDT reads. Native ETH contract interaction does not require allowance or token-balance reads.

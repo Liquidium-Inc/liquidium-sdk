@@ -14,6 +14,11 @@ export {
   MIN_BORROW_AMOUNTS_BY_ASSET,
   type MinimumBorrowAsset,
 } from "./core/borrow-minimums";
+export {
+  getMinimumDepositAmount,
+  MIN_DEPOSIT_AMOUNTS_BY_ASSET,
+  type MinimumDepositAsset,
+} from "./core/deposit-minimums";
 export type { LiquidiumErrorContext } from "./core/errors";
 export { LiquidiumError, LiquidiumErrorCode } from "./core/errors";
 export {

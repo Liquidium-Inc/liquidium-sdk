@@ -54,7 +54,7 @@ Use the exported `LiquidiumErrorCode` values when your UI needs different copy f
 
 `SimpleLoanCreatedError` means the remote loan was created but response hydration failed. Recover with the error's `loanId` or `ref` through `client.simpleLoans.get(...)`. Do not call `create(...)` again because that can create a duplicate loan.
 
-Borrow and withdraw amounts below SDK minimums throw or return validation errors before state-changing calls. Use `getMinimumBorrowAmount(asset)` and `getMinimumWithdrawAmount(asset)` to show the minimum next to amount inputs.
+Wallet-executed deposit, borrow, and withdraw amounts below SDK minimums throw or return validation errors before state-changing calls. Use `getMinimumDepositAmount(asset)`, `getMinimumBorrowAmount(asset)`, and `getMinimumWithdrawAmount(asset)` to show the minimum next to amount inputs. Manual deposit-address flows do not accept an amount, so callers must apply the deposit minimum before broadcasting.
 
 ## Destination Validation
 

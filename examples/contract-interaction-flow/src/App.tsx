@@ -31,15 +31,14 @@ import {
   withdrawWithWallet,
 } from "./sdk-example";
 
-const CONTRACT_INTERACTION_ASSETS = new Set(["USDC", "USDT"]);
+const CONTRACT_INTERACTION_ASSETS = new Set(["ETH", "USDC", "USDT"]);
 const DEFAULT_CONTRACT_INTERACTION_ASSET = "USDC";
 const DEFAULT_BORROW_ASSET = "USDC";
 
 type ContractInteractionTab = "supply" | "repay" | "borrow" | "withdraw";
-type StablecoinInflowMode = "contractInteraction" | "ck";
+type InflowMode = "contractInteraction" | "ck";
 
-const DEFAULT_STABLECOIN_INFLOW_MODE: StablecoinInflowMode =
-  "contractInteraction";
+const DEFAULT_INFLOW_MODE: InflowMode = "contractInteraction";
 
 export function App() {
   const isStatusPage = window.location.pathname.endsWith("/status.html");
@@ -60,9 +59,9 @@ function ContractInteractionPage() {
   const [selectedBorrowPoolId, setSelectedBorrowPoolId] = useState("");
   const [selectedWithdrawPoolId, setSelectedWithdrawPoolId] = useState("");
   const [supplyInflowMode, setSupplyInflowMode] =
-    useState<StablecoinInflowMode>(DEFAULT_STABLECOIN_INFLOW_MODE);
+    useState<InflowMode>(DEFAULT_INFLOW_MODE);
   const [repaymentInflowMode, setRepaymentInflowMode] =
-    useState<StablecoinInflowMode>(DEFAULT_STABLECOIN_INFLOW_MODE);
+    useState<InflowMode>(DEFAULT_INFLOW_MODE);
   const [supplyAmount, setSupplyAmount] = useState("10");
   const [supplyResult, setSupplyResult] = useState(
     "No contract interaction submitted yet."
@@ -248,7 +247,7 @@ function ContractInteractionPage() {
     setSupplyResult(
       [
         `Supplied amount: ${formatAmount(amount, selectedPool.decimals)} ${selectedPool.asset}`,
-        `Inflow mode: ${formatStablecoinInflowMode(supplyInflowMode)}`,
+        `Inflow mode: ${formatInflowMode(supplyInflowMode)}`,
         "",
         formatSupplyFlow(supplyFlow),
         "",
@@ -312,7 +311,7 @@ function ContractInteractionPage() {
     setRepaymentResult(
       [
         `Repaid amount: ${formatAmount(amount, selectedPool.decimals)} ${selectedPool.asset}`,
-        `Inflow mode: ${formatStablecoinInflowMode(repaymentInflowMode)}`,
+        `Inflow mode: ${formatInflowMode(repaymentInflowMode)}`,
         "",
         formatSupplyFlow(repaymentFlow),
         "",
@@ -431,8 +430,8 @@ function ContractInteractionPage() {
 
       <h1>Liquidium Contract Interaction Flow</h1>
       <p>
-        Supply and repay USDC or USDT through the ETH contract interaction path,
-        then borrow or withdraw from a Liquidium profile.
+        Supply and repay ETH, USDC, or USDT through the Ethereum contract
+        interaction path, then borrow or withdraw from a Liquidium profile.
       </p>
 
       <section>
@@ -527,7 +526,7 @@ function ContractInteractionPage() {
 
         {activeTab === "supply" ? (
           <div className="tab-panel">
-            <h3>Supply Stablecoin</h3>
+            <h3>Supply Ethereum Asset</h3>
 
             <label htmlFor="supply-pool-select">Supply pool</label>
             <select
@@ -547,7 +546,7 @@ function ContractInteractionPage() {
               id="supply-inflow-mode-select"
               value={supplyInflowMode}
               onChange={(event) =>
-                setSupplyInflowMode(event.target.value as StablecoinInflowMode)
+                setSupplyInflowMode(event.target.value as InflowMode)
               }
             >
               <option value="contractInteraction">
@@ -556,9 +555,9 @@ function ContractInteractionPage() {
               <option value="ck">Direct ck / ICRC ledger account</option>
             </select>
             <p>
-              Contract mode sends ERC-20 tokens through Ethereum. ck mode
-              returns the pool-owned ICRC account for a manual ckUSDC or ckUSDT
-              transfer.
+              Contract mode sends native ETH or ERC-20 tokens through the
+              deposit helper. ck mode returns the pool-owned ICRC account for a
+              manual ckETH, ckUSDC, or ckUSDT transfer.
             </p>
 
             <label htmlFor="supply-amount-input">Supply amount</label>
@@ -583,7 +582,7 @@ function ContractInteractionPage() {
 
         {activeTab === "repay" ? (
           <div className="tab-panel">
-            <h3>Repay Stablecoin</h3>
+            <h3>Repay Ethereum Asset</h3>
 
             <label htmlFor="repayment-pool-select">Repayment pool</label>
             <select
@@ -605,9 +604,7 @@ function ContractInteractionPage() {
               id="repayment-inflow-mode-select"
               value={repaymentInflowMode}
               onChange={(event) =>
-                setRepaymentInflowMode(
-                  event.target.value as StablecoinInflowMode
-                )
+                setRepaymentInflowMode(event.target.value as InflowMode)
               }
             >
               <option value="contractInteraction">
@@ -616,9 +613,9 @@ function ContractInteractionPage() {
               <option value="ck">Direct ck / ICRC ledger account</option>
             </select>
             <p>
-              Contract mode sends ERC-20 tokens through Ethereum. ck mode
-              returns the pool-owned ICRC account for a manual ckUSDC or ckUSDT
-              transfer.
+              Contract mode sends native ETH or ERC-20 tokens through the
+              deposit helper. ck mode returns the pool-owned ICRC account for a
+              manual ckETH, ckUSDC, or ckUSDT transfer.
             </p>
 
             <label htmlFor="repayment-amount-input">Repayment amount</label>
@@ -810,7 +807,7 @@ function ContractInteractionPage() {
   );
 }
 
-function formatStablecoinInflowMode(mode: StablecoinInflowMode): string {
+function formatInflowMode(mode: InflowMode): string {
   return mode === "ck"
     ? "Direct ck / ICRC ledger account"
     : "ETH contract interaction";

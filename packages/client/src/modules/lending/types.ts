@@ -32,6 +32,8 @@ export interface EvmContractTransaction {
   to: string;
   /** Hex-encoded calldata. */
   data: string;
+  /** Native ETH value in wei, serialized as a decimal string. */
+  value?: string;
 }
 
 /** Parameters for an ERC-20 transfer transaction. */
@@ -183,8 +185,8 @@ interface BaseSupplyFlowRequest {
 
 /** Manual transfer-based `lending.supply` request. */
 export interface ManualTransferSupplyFlowRequest extends BaseSupplyFlowRequest {
-  /** Transfer supply uses the default mechanism and does not accept this field. */
-  mechanism?: never;
+  /** Explicit transfer mechanism. Omit this field to use the same default. */
+  mechanism?: typeof SupplyPlanType.transfer;
   /** Manual supply does not broadcast through a wallet adapter. */
   walletAdapter?: never;
   /** Manual supply does not accept a sender account. */
@@ -195,8 +197,8 @@ export interface ManualTransferSupplyFlowRequest extends BaseSupplyFlowRequest {
 
 /** Wallet-executed transfer-based `lending.supply` request. */
 export interface WalletTransferSupplyFlowRequest extends BaseSupplyFlowRequest {
-  /** Transfer supply uses the default mechanism and does not accept this field. */
-  mechanism?: never;
+  /** Explicit transfer mechanism. Omit this field to use the same default. */
+  mechanism?: typeof SupplyPlanType.transfer;
   /** Wallet adapter used to broadcast the transfer. */
   walletAdapter: Pick<
     WalletAdapter,
@@ -204,7 +206,7 @@ export interface WalletTransferSupplyFlowRequest extends BaseSupplyFlowRequest {
   >;
   /** Sender wallet account. */
   account: string;
-  /** Transfer amount in the target asset's base units. */
+  /** Transfer amount in the target asset's base units. ETH deposits require at least 0.005 ETH. */
   amount: bigint;
 }
 
@@ -218,13 +220,13 @@ export interface ContractInteractionSupplyFlowRequest
   extends BaseSupplyFlowRequest {
   /** Contract-interaction mechanism discriminator. */
   mechanism: typeof SupplyPlanType.contractInteraction;
-  /** Contract interaction is only supported for ETH stablecoin pools. */
+  /** Contract interaction is supported for native ETH, USDC, and USDT pools on Ethereum. */
   chain: typeof Chain.ETH;
-  /** ETH wallet adapter used to approve and deposit ERC-20 assets. */
+  /** ETH wallet adapter used to deposit native ETH or approve and deposit ERC-20 assets. */
   walletAdapter: Pick<WalletAdapter, "sendEthTransaction">;
   /** Sender EVM wallet address. */
   account: string;
-  /** Deposit or repayment amount in token base units. */
+  /** Deposit or repayment amount in token base units. ETH deposits require at least 0.005 ETH. */
   amount: bigint;
 }
 
