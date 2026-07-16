@@ -13,8 +13,12 @@ afterEach(() => {
 });
 
 describe("MarketModule", () => {
-  test("gets pools from the lending canister", async () => {
+  test("applies pool indexes to current supply and debt totals", async () => {
     // given
+    const totalSupplyShares = 50_000n;
+    const totalDebtShares = 25_000n;
+    const lendingIndex = 2n * RATE_SCALE;
+    const borrowIndex = 3n * RATE_SCALE;
     vi.spyOn(Actor, "createActor").mockReturnValue({
       list_pools: vi.fn().mockResolvedValue([
         {
@@ -27,20 +31,20 @@ describe("MarketModule", () => {
           asset: { BTC: null },
           rate_slope_before: 1n,
           borrow_cap: [500_000n],
-          total_debt_at_last_sync: 25_000n,
+          total_debt_at_last_sync: totalDebtShares,
           chain: { BTC: null },
           rate_slope_after: 2n,
           reserve_factor: 100n,
           last_updated: [123n],
-          lending_index: 300n,
+          lending_index: lendingIndex,
           protocol_liquidation_fee: 50n,
-          borrow_index: 400n,
+          borrow_index: borrowIndex,
           base_rate: 5n,
           frozen: false,
           liquidation_bonus: 200n,
           liquidation_threshold: 7_500n,
           max_ltv: 7_000n,
-          total_supply_at_last_sync: 50_000n,
+          total_supply_at_last_sync: totalSupplyShares,
         },
       ]),
       get_pool_rate: vi.fn().mockResolvedValue([[10n, 20n, 30n]]),
@@ -51,6 +55,9 @@ describe("MarketModule", () => {
     const pools = await client.market.listPools();
 
     // then
+    const EXPECTED_TOTAL_SUPPLY = 100_000n;
+    const EXPECTED_TOTAL_DEBT = 75_000n;
+    const EXPECTED_AVAILABLE_LIQUIDITY = 25_000n;
     expect(pools).toEqual([
       {
         id: "pool-1",
@@ -58,9 +65,9 @@ describe("MarketModule", () => {
         chain: "BTC",
         decimals: 8n,
         frozen: false,
-        totalSupply: 50_000n,
-        totalDebt: 25_000n,
-        availableLiquidity: 25_000n,
+        totalSupply: EXPECTED_TOTAL_SUPPLY,
+        totalDebt: EXPECTED_TOTAL_DEBT,
+        availableLiquidity: EXPECTED_AVAILABLE_LIQUIDITY,
         supplyCap: 1_000_000n,
         borrowCap: 500_000n,
         maxLtv: 7_000n,
@@ -76,8 +83,8 @@ describe("MarketModule", () => {
         optimalUtilizationRate: 80n,
         rateSlopeBefore: 1n,
         rateSlopeAfter: 2n,
-        lendingIndex: 300n,
-        borrowIndex: 400n,
+        lendingIndex,
+        borrowIndex,
         sameAssetBorrowing: true,
         sameAssetBorrowingDustThreshold: 100n,
         lastUpdated: 123n,
@@ -645,9 +652,9 @@ describe("MarketModule", () => {
           rate_slope_after: 2n,
           reserve_factor: 100n,
           last_updated: [],
-          lending_index: 300n,
+          lending_index: RATE_SCALE,
           protocol_liquidation_fee: 50n,
-          borrow_index: 400n,
+          borrow_index: RATE_SCALE,
           base_rate: 5n,
           frozen: false,
           liquidation_bonus: 200n,

@@ -1,5 +1,11 @@
 # @liquidium/client
 
+## 0.5.1
+
+### Patch Changes
+
+- 88cfd04: Apply lending and borrow indexes when mapping current pool totals.
+
 ## 0.5.0
 
 ### Minor Changes

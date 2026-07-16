@@ -3,7 +3,7 @@ import type {
   PriceRecord,
 } from "../../core/canisters/lending/actor";
 import type { DecodedPool } from "../../core/canisters/lending/flexible-actor";
-import { RATE_DECIMALS } from "../../core/rates";
+import { RATE_DECIMALS, RATE_SCALE } from "../../core/rates";
 import { getAssetNativeDecimals } from "../../core/utils/asset-decimals";
 import type { AssetPrices, Pool, PoolRate } from "./types";
 
@@ -15,8 +15,10 @@ export function mapDecodedPoolToPool(
   pool: DecodedPool,
   rate: PoolRateTuple
 ): Pool {
-  const totalSupply = pool.total_supply_at_last_sync;
-  const totalDebt = pool.total_debt_at_last_sync;
+  const totalSupply =
+    (pool.total_supply_at_last_sync * pool.lending_index) / RATE_SCALE;
+  const totalDebt =
+    (pool.total_debt_at_last_sync * pool.borrow_index) / RATE_SCALE;
   const availableLiquidity =
     totalSupply > totalDebt ? totalSupply - totalDebt : 0n;
 
