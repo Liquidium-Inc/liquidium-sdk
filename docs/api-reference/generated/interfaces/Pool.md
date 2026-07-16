@@ -268,7 +268,7 @@ Optional supply cap in base units.
 
 Defined in: [packages/client/src/modules/market/types.ts:18](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/types.ts#L18)
 
-Total borrowed amount in base units.
+Current borrowed amount in base units after applying the borrow index.
 
 ***
 
@@ -278,7 +278,7 @@ Total borrowed amount in base units.
 
 Defined in: [packages/client/src/modules/market/types.ts:16](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/types.ts#L16)
 
-Total supplied amount in base units.
+Current supplied amount in base units after applying the lending index.
 
 ***
 

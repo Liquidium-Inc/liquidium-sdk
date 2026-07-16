@@ -12,9 +12,9 @@ export interface Pool {
   decimals: bigint;
   /** Whether new pool activity is currently frozen. */
   frozen: boolean;
-  /** Total supplied amount in base units. */
+  /** Current supplied amount in base units after applying the lending index. */
   totalSupply: bigint;
-  /** Total borrowed amount in base units. */
+  /** Current borrowed amount in base units after applying the borrow index. */
   totalDebt: bigint;
   /** Currently available liquidity in base units. */
   availableLiquidity: bigint;
