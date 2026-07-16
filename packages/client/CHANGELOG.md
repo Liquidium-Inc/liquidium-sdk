@@ -1,5 +1,11 @@
 # @liquidium/client
 
+## 0.6.0-rc.1
+
+### Patch Changes
+
+- Validate Simple Loans collateral deposit minimums and reject native ETH transfer amounts above the uint256 maximum.
+
 ## 0.6.0-rc.0
 
 ### Minor Changes

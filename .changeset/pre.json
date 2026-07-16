@@ -10,5 +10,5 @@
     "@liquidium/example-simple-loans-flow": "0.0.1",
     "@liquidium/client": "0.5.1"
   },
-  "changesets": ["strong-pools-support-eth"]
+  "changesets": ["fix-eth-validation-bounds", "strong-pools-support-eth"]
 }
