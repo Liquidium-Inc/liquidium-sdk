@@ -1096,10 +1096,10 @@ describe("LendingModule supply", () => {
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
-  test("auto-executes native ETH supply as a value transfer", async () => {
+  test("auto-executes native ETH supply at the uint256 maximum", async () => {
     // given
     const depositAddress = "0x1111111111111111111111111111111111111111";
-    const amountWei = 5_000_000_000_000_000n;
+    const amountWei = MAX_UINT256;
     vi.spyOn(Actor, "createActor")
       .mockReturnValueOnce({
         list_pools: vi.fn().mockResolvedValue([createEthPoolRecord()]),
@@ -1139,6 +1139,43 @@ describe("LendingModule supply", () => {
         },
       })
     );
+  });
+
+  test("rejects a native ETH transfer amount above the uint256 maximum", async () => {
+    // given
+    const DEPOSIT_ADDRESS = "0x1111111111111111111111111111111111111111";
+    const PROFILE_ID = "aaaaa-aa";
+    const WALLET_ADDRESS = "0x1234567890123456789012345678901234567890";
+    const AMOUNT_ABOVE_UINT256_MAXIMUM_WEI = MAX_UINT256 + 1n;
+    vi.spyOn(Actor, "createActor")
+      .mockReturnValueOnce({
+        list_pools: vi.fn().mockResolvedValue([createEthPoolRecord()]),
+      } as never)
+      .mockReturnValueOnce({
+        get_deposit_address: vi.fn().mockResolvedValue({ Ok: DEPOSIT_ADDRESS }),
+      } as never);
+    const sendEthTransaction = vi.fn();
+    const client = new LiquidiumClient({});
+
+    // when
+    const result = client.lending.supply({
+      profileId: PROFILE_ID,
+      poolId: ETH_POOL_ID,
+      action: "deposit",
+      chain: "ETH",
+      account: WALLET_ADDRESS,
+      amount: AMOUNT_ABOVE_UINT256_MAXIMUM_WEI,
+      walletAdapter: { sendEthTransaction },
+    });
+
+    // then
+    const EXPECTED_ERROR_MESSAGE =
+      "ETH transfer amount exceeds uint256 maximum";
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message: EXPECTED_ERROR_MESSAGE,
+    });
+    expect(sendEthTransaction).not.toHaveBeenCalled();
   });
 
   test("rejects a native ETH transfer deposit below the minimum", async () => {

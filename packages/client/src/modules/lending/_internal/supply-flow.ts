@@ -642,6 +642,13 @@ export class SupplyFlowExecutor {
         });
       }
       case Chain.ETH: {
+        if (params.amount > MAX_UINT256) {
+          throw new LiquidiumError(
+            LiquidiumErrorCode.VALIDATION_ERROR,
+            "ETH transfer amount exceeds uint256 maximum"
+          );
+        }
+
         if (!params.walletAdapter.sendEthTransaction) {
           throw new LiquidiumError(
             LiquidiumErrorCode.VALIDATION_ERROR,

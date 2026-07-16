@@ -79,9 +79,10 @@ afterEach(() => {
 });
 
 describe("SimpleLoansModule create", () => {
-  test("creates a native ETH loan at the 0.005 ETH minimum", async () => {
+  test("creates a loan with ETH collateral at the 0.005 ETH minimum", async () => {
     // given
     const MINIMUM_ETH_AMOUNT_WEI = 5_000_000_000_000_000n;
+    const MINIMUM_USDT_BORROW_AMOUNT_BASE_UNITS = 1_000_000n;
     const fetchSpy = vi
       .spyOn(globalThis, "fetch")
       .mockImplementation(async (input, init) => {
@@ -91,7 +92,7 @@ describe("SimpleLoansModule create", () => {
               success: true,
               loan: {
                 loanId: LOAN_ID.toString(),
-                collateral: { amountHint: "10000000" },
+                collateral: { amountHint: MINIMUM_ETH_AMOUNT_WEI.toString() },
               },
             }),
             { status: 200, headers: { "content-type": "application/json" } }
@@ -112,9 +113,9 @@ describe("SimpleLoansModule create", () => {
     mockSimpleLoanCreateHydrationActors({
       getLoan: vi.fn().mockResolvedValue({
         Ok: createSimpleLoan({
-          borrow_amount: MINIMUM_ETH_AMOUNT_WEI,
-          borrow_pool_id: Principal.fromText(ETH_POOL_ID),
-          borrow_asset: { ETH: null },
+          lend_asset: { ETH: null },
+          lend_pool_id: Principal.fromText(ETH_POOL_ID),
+          refund_destination: { External: CANISTER_EVM_BORROW_ADDRESS },
         }),
       }),
       btcMinterDepositFee: 2_000n,
@@ -125,10 +126,15 @@ describe("SimpleLoansModule create", () => {
     // when
     const loan = await client.simpleLoans.create(
       createSimpleLoanRequest({
-        borrow: {
+        collateral: {
           poolId: ETH_POOL_ID,
           asset: "ETH",
           amount: MINIMUM_ETH_AMOUNT_WEI,
+        },
+        borrow: {
+          amount: MINIMUM_USDT_BORROW_AMOUNT_BASE_UNITS,
+        },
+        refund: {
           chain: "ETH",
           destination: LOWERCASE_EVM_BORROW_ADDRESS,
         },
@@ -140,14 +146,13 @@ describe("SimpleLoansModule create", () => {
       ([, init]) => init?.method === "POST"
     );
     expect(JSON.parse(post?.[1]?.body as string)).toMatchObject({
-      borrowPoolId: ETH_POOL_ID,
-      borrowAsset: "ETH",
-      borrowAmount: MINIMUM_ETH_AMOUNT_WEI.toString(),
-      borrowDestination: { External: CHECKSUM_EVM_BORROW_ADDRESS },
+      collateralPoolId: ETH_POOL_ID,
+      collateralAsset: "ETH",
+      collateralAmount: MINIMUM_ETH_AMOUNT_WEI.toString(),
+      refundDestination: { External: CHECKSUM_EVM_BORROW_ADDRESS },
     });
-    expect(loan.borrow).toMatchObject({
+    expect(loan.collateral).toMatchObject({
       asset: "ETH",
-      chain: "ETH",
       decimals: 18n,
       amount: MINIMUM_ETH_AMOUNT_WEI,
     });
@@ -1124,6 +1129,41 @@ describe("SimpleLoansModule create", () => {
       message: "Borrow amount must be at least 1000000 base units for USDT",
     });
     expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  test("rejects ETH collateral below the deposit minimum before creation", async () => {
+    // given
+    const MINIMUM_ETH_COLLATERAL_AMOUNT_WEI = 5_000_000_000_000_000n;
+    const ETH_COLLATERAL_AMOUNT_BELOW_MINIMUM_WEI =
+      MINIMUM_ETH_COLLATERAL_AMOUNT_WEI - 1n;
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    const actorCreateSpy = vi.spyOn(Actor, "createActor");
+    const client = new LiquidiumClient({});
+
+    // when
+    const result = client.simpleLoans.create(
+      createSimpleLoanRequest({
+        collateral: {
+          poolId: ETH_POOL_ID,
+          asset: "ETH",
+          amount: ETH_COLLATERAL_AMOUNT_BELOW_MINIMUM_WEI,
+        },
+        refund: {
+          chain: "ETH",
+          destination: LOWERCASE_EVM_BORROW_ADDRESS,
+        },
+      })
+    );
+
+    // then
+    const EXPECTED_ERROR_MESSAGE =
+      "Deposit amount must be at least 5000000000000000 base units for ETH";
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message: EXPECTED_ERROR_MESSAGE,
+    });
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(actorCreateSpy).not.toHaveBeenCalled();
   });
 
   test("rejects disabled same-asset borrowing at the dust threshold before creation", async () => {

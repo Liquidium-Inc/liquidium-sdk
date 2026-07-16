@@ -19,6 +19,7 @@ import {
   decodeFlexibleHeadlessLoanEvent,
   decodeFlexibleSimpleLoanRecord,
 } from "../../core/canisters/simple-loans/flexible-actor";
+import { getDepositAmountMinimumValidationError } from "../../core/deposit-minimums";
 import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
 import {
   buildSimpleLoanCollateralHintPath,
@@ -1196,6 +1197,17 @@ function validateCreateRequest(request: CreateSimpleLoanRequest): void {
       "Simple loan collateral amount must be greater than zero"
     );
   }
+  const collateralMinimumError = getDepositAmountMinimumValidationError({
+    amount: request.collateral.amount,
+    asset: request.collateral.asset,
+  });
+  if (collateralMinimumError) {
+    throw new LiquidiumError(
+      LiquidiumErrorCode.VALIDATION_ERROR,
+      collateralMinimumError.message
+    );
+  }
+
   if (request.borrow.amount <= 0n) {
     throw new LiquidiumError(
       LiquidiumErrorCode.VALIDATION_ERROR,
