@@ -11,13 +11,13 @@ export interface Position {
   deposited: bigint;
   /** Decimal scale for supplied amounts. */
   depositedDecimals: bigint;
-  /** Borrowed principal in base units. */
+  /** Current outstanding debt in base units after applying the borrow index. */
   borrowed: bigint;
   /** Decimal scale for borrowed amounts. */
   borrowedDecimals: bigint;
   /** Accrued supply interest in base units. */
   earnedInterest: bigint;
-  /** Accrued borrow interest in base units. */
+  /** Reported borrow-interest metric; do not add it to `borrowed`. */
   debtInterest: bigint;
   /** Unix timestamp in seconds of the last position update. */
   lastUpdate: bigint;
@@ -89,7 +89,7 @@ export interface UserReserve {
   priceUsd: number;
   /** Supplied value in USD-scaled units. */
   suppliedUsd: bigint;
-  /** Borrowed value in USD-scaled units. */
+  /** Current outstanding debt value in USD-scaled units. */
   borrowedUsd: bigint;
   /** Decimal scale for USD fields. */
   usdDecimals: bigint;

@@ -230,7 +230,7 @@ export class PositionsModule {
             priceUsd
           ),
           borrowedUsd: nativeAmountToUsdScaled(
-            position.borrowed + position.debtInterest,
+            position.borrowed,
             position.borrowedDecimals,
             priceUsd
           ),
@@ -259,7 +259,7 @@ export class PositionsModule {
       return { amount: 0n, decimals: 0n };
     }
 
-    const rawDebt = position.borrowed + position.debtInterest;
+    const rawDebt = position.borrowed;
     if (rawDebt <= 0n) {
       return { amount: 0n, decimals: position.borrowedDecimals };
     }

@@ -18,7 +18,7 @@ Position joined with pool metadata and current USD valuation.
 
 Defined in: [packages/client/src/modules/positions/types.ts:93](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/types.ts#L93)
 
-Borrowed value in USD-scaled units.
+Current outstanding debt value in USD-scaled units.
 
 ***
 

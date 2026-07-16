@@ -167,13 +167,13 @@ describe("SimpleLoansModule get", () => {
     });
     expect(loan.repayment).toMatchObject({
       decimals: 6n,
-      debtAmount: 2_001_000n,
+      debtAmount: 2_000_000n,
       interestBufferAmount: 54n,
       interestBufferSeconds: 86_400n,
       asset: "USDT",
       targets: {
         ETH: {
-          amount: 3_501_054n,
+          amount: 3_500_054n,
           inflowFeeAmount: 1_500_000n,
           inflowFeeEstimateAvailable: true,
           target: expect.objectContaining({
@@ -183,7 +183,7 @@ describe("SimpleLoansModule get", () => {
           }),
         },
         ICP: {
-          amount: 2_001_064n,
+          amount: 2_000_064n,
           inflowFeeAmount: 10n,
           inflowFeeEstimateAvailable: true,
         },
@@ -195,7 +195,7 @@ describe("SimpleLoansModule get", () => {
       borrowedAmount: 2_000_000n,
       borrowedDecimals: 6n,
       debtInterestAmount: 1_000n,
-      totalDebtAmount: 2_001_000n,
+      totalDebtAmount: 2_000_000n,
     });
   });
   test("should derive initial deposit expiry from detection timestamp when canister expiry is absent", async () => {
@@ -319,17 +319,17 @@ describe("SimpleLoansModule get", () => {
     // then
     expect(loan.repayment).toMatchObject({
       decimals: 8n,
-      debtAmount: 1_000_500n,
+      debtAmount: 1_000_000n,
       interestBufferAmount: 27n,
       asset: "BTC",
       targets: {
         BTC: {
-          amount: 1_003_027n,
+          amount: 1_002_527n,
           inflowFeeAmount: 2_500n,
           inflowFeeEstimateAvailable: true,
         },
         ICP: {
-          amount: 1_000_537n,
+          amount: 1_000_037n,
           inflowFeeAmount: 10n,
           inflowFeeEstimateAvailable: true,
         },

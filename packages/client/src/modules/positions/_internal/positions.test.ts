@@ -406,7 +406,7 @@ describe("PositionsModule", () => {
     expect(summary.currentLtvBps).toBe(16_000n);
   });
 
-  test("joins positions with pools and prices into per-reserve USD breakdowns", async () => {
+  test("values current reserve debt without adding reported interest", async () => {
     // given
     const BTC_POOL_ID = "pool-btc";
     const USDT_POOL_ID = "pool-usdt";
@@ -444,6 +444,8 @@ describe("PositionsModule", () => {
             asset: { USDT: null },
             deposited_native_now: 0n,
             debt_native_now: 1_000_000n,
+            total_debt_interest: 250_000n,
+            interest_since_snapshot: 50_000n,
             pool_id: { toText: () => USDT_POOL_ID },
           }),
         ]),
@@ -609,10 +611,10 @@ describe("PositionsModule", () => {
     expect(repay).toEqual({ amount: 0n, decimals: 8n });
   });
 
-  test("applies the default 0.1 percent accrual buffer to the repay amount", async () => {
+  test("buffers current indexed debt without adding reported interest", async () => {
     // given
     const DEBT_NATIVE = 1_000_000n;
-    const DEBT_INTEREST_NATIVE = 0n;
+    const DEBT_INTEREST_NATIVE = 200_000n;
     vi.spyOn(Actor, "createActor").mockReturnValue({
       get_position: vi.fn().mockResolvedValue([
         makePositionView({

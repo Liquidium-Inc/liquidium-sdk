@@ -393,13 +393,13 @@ export interface SimpleLoanPositionSummary {
   collateralDecimals: bigint;
   /** Earned interest on the collateral side in base units. */
   collateralInterestAmount: bigint;
-  /** Borrowed principal in the borrow asset's base units. */
+  /** Current outstanding debt in the borrow asset's base units. */
   borrowedAmount: bigint;
   /** Decimal scale for borrowed/debt amounts. */
   borrowedDecimals: bigint;
-  /** Accrued borrow interest in base units. */
+  /** Reported borrow-interest metric; do not add it to `borrowedAmount`. */
   debtInterestAmount: bigint;
-  /** Borrowed principal plus accrued interest in base units, before repayment buffer. */
+  /** Current outstanding debt in base units, before the repayment buffer. */
   totalDebtAmount: bigint;
 }
 
