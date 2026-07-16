@@ -1,5 +1,11 @@
 # @liquidium/client
 
+## 0.6.0-rc.0
+
+### Minor Changes
+
+- e53daf1: Add native ETH and ckETH support across market, lending, positions, quotes, and Simple Loans. Profile inflows support explicit transfer and payable contract-interaction mechanisms and enforce asset deposit minimums.
+
 ## 0.5.1
 
 ### Patch Changes
