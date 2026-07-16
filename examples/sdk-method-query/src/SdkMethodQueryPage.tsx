@@ -517,7 +517,7 @@ const SDK_METHODS: MethodDefinition[] = [
     id: "lending.supply",
     label: "lending.supply",
     defaultArgs:
-      '{\n  "profileId": "aaaaa-aa",\n  "poolId": "bbbbb-bb",\n  "action": "deposit",\n  "chain": "ETH",\n  "account": "0xYourWalletAddress",\n  "amount": "1000000",\n  "mockTxHash": "0xmockedtxhash"\n}',
+      '{\n  "profileId": "aaaaa-aa",\n  "poolId": "bbbbb-bb",\n  "action": "deposit",\n  "chain": "ETH",\n  "account": "0xYourWalletAddress",\n  "amount": "5000000000000000",\n  "mockTxHash": "0xmockedtxhash"\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
       const mockTxHash =

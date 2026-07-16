@@ -28,6 +28,7 @@ import {
   listProfileActivities,
   submitContractInteractionRepayment,
   submitContractInteractionSupply,
+  validateDepositAmount,
   withdrawWithWallet,
 } from "./sdk-example";
 
@@ -215,6 +216,9 @@ function ContractInteractionPage() {
     }
 
     const isCkInflowMode = supplyInflowMode === "ck";
+    if (isCkInflowMode) {
+      validateDepositAmount({ amount, asset: selectedPool.asset });
+    }
     setStatus(
       isCkInflowMode
         ? "Generating direct ck supply target..."

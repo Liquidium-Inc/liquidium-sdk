@@ -345,11 +345,12 @@ Amount fields are `bigint` base units. Format them with the asset or pool
 `decimals`; do not display raw base-unit values as user amounts.
 BTC uses satoshis, ETH and ckETH use wei with 18 decimals, ICP uses e8s, and
 USDC/USDT use token base units according to the selected pool's `decimals`.
-The ETH deposit, borrow, and withdrawal minimum is
-`5_000_000_000_000_000n` wei (`0.005 ETH`). Wallet-executed deposits enforce
-this minimum; manual deposit-address flows must apply
-`getMinimumDepositAmount(Asset.ETH)` before broadcasting. Repayments do not use
-the deposit minimum.
+Deposit minimums are `5_100n` sats for BTC/ckBTC,
+`5_000_000_000_000_000n` wei for ETH/ckETH, `10_000n` e8s for ICP, and
+`1_000_000n` base units for USDC/ckUSDC and USDT/ckUSDT. Wallet-executed
+deposits enforce these values. Manual flows must apply
+`getMinimumDepositAmount(asset)` before broadcasting and account for inflow
+fees separately. Repayments do not use deposit minimums.
 
 Rate and risk-ratio fields such as `lendingRate`, `borrowingRate`,
 `utilizationRate`, `maxLtv`, and `liquidationThreshold` are fixed-point values scaled by `rateDecimals`, usually

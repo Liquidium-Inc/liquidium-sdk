@@ -6,19 +6,38 @@ import {
 } from "./deposit-minimums";
 
 describe("deposit minimums", () => {
-  test("should expose the configured ETH deposit amount minimum", () => {
+  test("should expose configured deposit amount minimums", () => {
     // given
+    const btcAsset = "BTC";
     const ethAsset = "ETH";
+    const icpAsset = "ICP";
+    const usdcAsset = "USDC";
+    const usdtAsset = "USDT";
 
     // when
+    const btcMinimumAmount = getMinimumDepositAmount(btcAsset);
     const ethMinimumAmount = getMinimumDepositAmount(ethAsset);
+    const icpMinimumAmount = getMinimumDepositAmount(icpAsset);
+    const usdcMinimumAmount = getMinimumDepositAmount(usdcAsset);
+    const usdtMinimumAmount = getMinimumDepositAmount(usdtAsset);
 
     // then
+    const EXPECTED_BTC_MINIMUM_AMOUNT = 5_100n;
     const EXPECTED_ETH_MINIMUM_AMOUNT = 5_000_000_000_000_000n;
+    const EXPECTED_ICP_MINIMUM_AMOUNT = 10_000n;
+    const EXPECTED_STABLECOIN_MINIMUM_AMOUNT = 1_000_000n;
     expect(MIN_DEPOSIT_AMOUNTS_BY_ASSET).toEqual({
+      BTC: EXPECTED_BTC_MINIMUM_AMOUNT,
       ETH: EXPECTED_ETH_MINIMUM_AMOUNT,
+      ICP: EXPECTED_ICP_MINIMUM_AMOUNT,
+      USDC: EXPECTED_STABLECOIN_MINIMUM_AMOUNT,
+      USDT: EXPECTED_STABLECOIN_MINIMUM_AMOUNT,
     });
+    expect(btcMinimumAmount).toBe(EXPECTED_BTC_MINIMUM_AMOUNT);
     expect(ethMinimumAmount).toBe(EXPECTED_ETH_MINIMUM_AMOUNT);
+    expect(icpMinimumAmount).toBe(EXPECTED_ICP_MINIMUM_AMOUNT);
+    expect(usdcMinimumAmount).toBe(EXPECTED_STABLECOIN_MINIMUM_AMOUNT);
+    expect(usdtMinimumAmount).toBe(EXPECTED_STABLECOIN_MINIMUM_AMOUNT);
   });
 
   test("should not treat inherited object properties as configured assets", () => {
@@ -33,32 +52,53 @@ describe("deposit minimums", () => {
     expect(minimumAmount).toBe(EXPECTED_MINIMUM_AMOUNT);
   });
 
-  test("should return a minimum validation error when an ETH deposit is too low", () => {
+  test("should return minimum validation errors below every configured asset boundary", () => {
     // given
-    const amount = 4_999_999_999_999_999n;
-    const asset = "ETH";
+    const belowMinimumCases = [
+      { amount: 5_099n, asset: "BTC", minimumAmount: 5_100n },
+      {
+        amount: 4_999_999_999_999_999n,
+        asset: "ETH",
+        minimumAmount: 5_000_000_000_000_000n,
+      },
+      { amount: 9_999n, asset: "ICP", minimumAmount: 10_000n },
+      { amount: 999_999n, asset: "USDC", minimumAmount: 1_000_000n },
+      { amount: 999_999n, asset: "USDT", minimumAmount: 1_000_000n },
+    ];
 
     // when
-    const validationError = getDepositAmountMinimumValidationError({
-      amount,
-      asset,
-    });
+    const validationErrors = belowMinimumCases.map(({ amount, asset }) =>
+      getDepositAmountMinimumValidationError({ amount, asset })
+    );
 
     // then
-    const EXPECTED_MINIMUM_AMOUNT = 5_000_000_000_000_000n;
-    const EXPECTED_MESSAGE =
-      "Deposit amount must be at least 5000000000000000 base units for ETH";
-    expect(validationError).toEqual({
-      asset,
-      minimumAmount: EXPECTED_MINIMUM_AMOUNT,
-      message: EXPECTED_MESSAGE,
-    });
+    for (const [index, validationError] of validationErrors.entries()) {
+      const currentCase = belowMinimumCases[index];
+      expect(validationError).toEqual({
+        asset: currentCase?.asset,
+        minimumAmount: currentCase?.minimumAmount,
+        message: `Deposit amount must be at least ${currentCase?.minimumAmount} base units for ${currentCase?.asset}`,
+      });
+    }
   });
 
-  test("should accept an ETH deposit equal to the minimum", () => {
+  test("should accept deposits equal to every configured asset minimum", () => {
     // given
-    const amount = 5_000_000_000_000_000n;
-    const asset = "ETH";
+    const minimumCases = Object.entries(MIN_DEPOSIT_AMOUNTS_BY_ASSET);
+
+    // when
+    const validationErrors = minimumCases.map(([asset, amount]) =>
+      getDepositAmountMinimumValidationError({ amount, asset })
+    );
+
+    // then
+    expect(validationErrors).toEqual(minimumCases.map(() => null));
+  });
+
+  test("should not return a minimum validation error for unsupported assets", () => {
+    // given
+    const amount = 1n;
+    const asset = "SOL";
 
     // when
     const validationError = getDepositAmountMinimumValidationError({

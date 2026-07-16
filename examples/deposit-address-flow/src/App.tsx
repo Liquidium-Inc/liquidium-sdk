@@ -32,6 +32,7 @@ import {
   listProfileActivities,
   loadMarketData,
   registerSupplyTxid,
+  validateDepositAmount,
 } from "./sdk-example";
 
 const DEFAULT_SUPPLY_ASSET = "USDC";
@@ -164,6 +165,12 @@ function SupplyBorrowPage() {
     if (!trimmedProfileId) {
       throw new Error("Enter a profile id.");
     }
+
+    validateDepositAmount({
+      action: supplyAction,
+      amount: parsedSupplyAmount,
+      asset: selectedSupplyPool.asset,
+    });
 
     const actionLabel = formatSupplyAction(supplyAction);
 

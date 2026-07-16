@@ -150,6 +150,12 @@ interface DefaultSubmitInflowRequestParams {
   chain: string;
 }
 
+interface ValidateDepositMinimumParams {
+  action: SupplyAction;
+  amount: bigint;
+  asset: string;
+}
+
 interface ShouldSubmitInflowParams {
   target: SupplyTarget;
   mechanism: SupplyPlanType;
@@ -186,20 +192,12 @@ export class SupplyFlowExecutor {
       this.params.canisterContext,
       request.poolId
     );
-    if (
-      request.action === SupplyAction.deposit &&
-      request.amount !== undefined
-    ) {
-      const minimumDepositAmountError = getDepositAmountMinimumValidationError({
+    if (request.amount !== undefined) {
+      validateDepositMinimum({
+        action: request.action,
         amount: request.amount,
         asset: selectedPool.asset,
       });
-      if (minimumDepositAmountError) {
-        throw new LiquidiumError(
-          LiquidiumErrorCode.VALIDATION_ERROR,
-          minimumDepositAmountError.message
-        );
-      }
     }
     const target = await resolveSupplyTargetForPool(
       this.params.canisterContext,
@@ -275,6 +273,11 @@ export class SupplyFlowExecutor {
       this.params.canisterContext,
       request.poolId
     );
+    validateDepositMinimum({
+      action: request.action,
+      amount: request.amount,
+      asset: selectedPool.asset,
+    });
 
     return await this.getEvmSupplyContextForPool({
       request,
@@ -899,6 +902,25 @@ function mapSupplyActionToStatusOperation(
   action: SupplyAction
 ): InflowOperation {
   return action === SupplyAction.repayment ? "repayment" : "deposit";
+}
+
+function validateDepositMinimum(params: ValidateDepositMinimumParams): void {
+  if (params.action !== SupplyAction.deposit) {
+    return;
+  }
+
+  const minimumDepositAmountError = getDepositAmountMinimumValidationError({
+    amount: params.amount,
+    asset: params.asset,
+  });
+  if (!minimumDepositAmountError) {
+    return;
+  }
+
+  throw new LiquidiumError(
+    LiquidiumErrorCode.VALIDATION_ERROR,
+    minimumDepositAmountError.message
+  );
 }
 
 function shouldSubmitInflow(params: ShouldSubmitInflowParams): boolean {

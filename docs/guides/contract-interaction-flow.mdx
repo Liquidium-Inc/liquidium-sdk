@@ -16,7 +16,15 @@ Use contract-interaction flows when an EVM wallet should deposit native ETH or a
 | Wallet adapter with `sendEthTransaction` | The SDK asks the wallet to broadcast approval and deposit transactions |
 | Token base-unit amount | The SDK sends protocol amounts as integers |
 
-Native ETH deposits must be at least `0.005 ETH` (`5_000_000_000_000_000n` wei). The SDK rejects smaller deposits before asking the wallet to broadcast. Use `getMinimumDepositAmount(Asset.ETH)` to read the same minimum. Repayments are not subject to this deposit minimum.
+The SDK rejects deposits below the asset product minimum before reading ERC-20 state or asking the wallet to broadcast:
+
+| Asset | Minimum deposit |
+| --- | --- |
+| ETH | `5_000_000_000_000_000n` wei (`0.005 ETH`) |
+| USDC | `1_000_000n` base units (`1 USDC`) |
+| USDT | `1_000_000n` base units (`1 USDT`) |
+
+Use `getMinimumDepositAmount(asset)` to read the same minimum. Repayments are not subject to deposit minimums.
 
 ## Shape
 

@@ -12,6 +12,7 @@ import {
   createEthPoolRecord,
   createIcpPoolRecord,
   createUsdcPoolRecord,
+  createUsdtPoolRecord,
   ETH_POOL_ID,
   encodeBytes32Hex,
   encodePrincipalToBytes32,
@@ -956,6 +957,32 @@ describe("LendingModule supply", () => {
     );
   });
 
+  test("rejects EVM deposit planning below the stablecoin minimum", async () => {
+    // given
+    const amountBelowMinimum = 999_999n;
+    mockUsdtPoolList();
+    const readContract = vi.fn();
+    const client = new LiquidiumClient({
+      evmPublicClient: { readContract } as never,
+    });
+
+    // when
+    const result = client.lending.getEvmSupplyContext({
+      profileId: "aaaaa-aa",
+      poolId: USDT_POOL_ID,
+      walletAddress: "0x1234567890123456789012345678901234567890",
+      amount: amountBelowMinimum,
+      action: "deposit",
+    });
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message: "Deposit amount must be at least 1000000 base units for USDT",
+    });
+    expect(readContract).not.toHaveBeenCalled();
+  });
+
   test("should return reset approval strategy for partial EVM allowance", async () => {
     // given
     mockUsdtPoolList();
@@ -1141,6 +1168,83 @@ describe("LendingModule supply", () => {
         "Deposit amount must be at least 5000000000000000 base units for ETH",
     });
     expect(sendEthTransaction).not.toHaveBeenCalled();
+  });
+
+  test("rejects wallet deposits below every configured asset minimum", async () => {
+    // given
+    const depositCases = [
+      {
+        poolId: BTC_POOL_ID,
+        chain: "BTC" as const,
+        asset: "BTC",
+        amount: 5_099n,
+        minimumAmount: 5_100n,
+      },
+      {
+        poolId: ICP_POOL_ID,
+        chain: "ICP" as const,
+        asset: "ICP",
+        amount: 9_999n,
+        minimumAmount: 10_000n,
+      },
+      {
+        poolId: USDC_POOL_ID,
+        chain: "ETH" as const,
+        asset: "USDC",
+        amount: 999_999n,
+        minimumAmount: 1_000_000n,
+      },
+      {
+        poolId: USDT_POOL_ID,
+        chain: "ICP" as const,
+        asset: "USDT",
+        amount: 999_999n,
+        minimumAmount: 1_000_000n,
+      },
+    ];
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi
+        .fn()
+        .mockResolvedValue([
+          createBtcPoolRecord(),
+          createIcpPoolRecord(),
+          createUsdcPoolRecord(),
+          createUsdtPoolRecord(),
+        ]),
+    } as never);
+    const sendBtcTransaction = vi.fn();
+    const sendEthTransaction = vi.fn();
+    const sendIcrcTransfer = vi.fn();
+    const client = new LiquidiumClient({});
+
+    // when
+    const results = depositCases.map((depositCase) =>
+      client.lending.supply({
+        profileId: "aaaaa-aa",
+        poolId: depositCase.poolId,
+        action: "deposit",
+        chain: depositCase.chain,
+        account: "sender-account",
+        amount: depositCase.amount,
+        walletAdapter: {
+          sendBtcTransaction,
+          sendEthTransaction,
+          sendIcrcTransfer,
+        },
+      })
+    );
+
+    // then
+    for (const [index, result] of results.entries()) {
+      const depositCase = depositCases[index];
+      await expect(result).rejects.toMatchObject({
+        code: LiquidiumErrorCode.VALIDATION_ERROR,
+        message: `Deposit amount must be at least ${depositCase?.minimumAmount} base units for ${depositCase?.asset}`,
+      });
+    }
+    expect(sendBtcTransaction).not.toHaveBeenCalled();
+    expect(sendEthTransaction).not.toHaveBeenCalled();
+    expect(sendIcrcTransfer).not.toHaveBeenCalled();
   });
 
   test("rejects native ETH supply from an invalid EVM sender account", async () => {

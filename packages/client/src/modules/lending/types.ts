@@ -206,7 +206,7 @@ export interface WalletTransferSupplyFlowRequest extends BaseSupplyFlowRequest {
   >;
   /** Sender wallet account. */
   account: string;
-  /** Transfer amount in the target asset's base units. ETH deposits require at least 0.005 ETH. */
+  /** Transfer amount in base units. Deposits enforce the asset product minimum. */
   amount: bigint;
 }
 
@@ -226,7 +226,7 @@ export interface ContractInteractionSupplyFlowRequest
   walletAdapter: Pick<WalletAdapter, "sendEthTransaction">;
   /** Sender EVM wallet address. */
   account: string;
-  /** Deposit or repayment amount in token base units. ETH deposits require at least 0.005 ETH. */
+  /** Amount in token base units. Deposits enforce the asset product minimum. */
   amount: bigint;
 }
 
