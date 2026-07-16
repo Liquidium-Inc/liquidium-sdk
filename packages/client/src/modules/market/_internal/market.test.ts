@@ -4,6 +4,7 @@ import {
   LiquidiumClient,
   LiquidiumErrorCode,
   RATE_DECIMALS,
+  RATE_SCALE,
 } from "../../../index";
 
 afterEach(() => {
@@ -148,9 +149,9 @@ describe("MarketModule", () => {
           rate_slope_after: 2n,
           reserve_factor: 100n,
           last_updated: [],
-          lending_index: 300n,
+          lending_index: RATE_SCALE,
           protocol_liquidation_fee: 50n,
-          borrow_index: 400n,
+          borrow_index: RATE_SCALE,
           base_rate: 5n,
           frozen: false,
           liquidation_bonus: 200n,
