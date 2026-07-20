@@ -567,7 +567,7 @@ function ContractInteractionPage() {
               }
             >
               <option value="contractInteraction">
-                ETH contract interaction
+                Contract interaction
               </option>
               <option value="ck">Direct ck / ICRC ledger account</option>
             </select>
@@ -630,7 +630,7 @@ function ContractInteractionPage() {
               }
             >
               <option value="contractInteraction">
-                ETH contract interaction
+                Contract interaction
               </option>
               <option value="ck">Direct ck / ICRC ledger account</option>
             </select>
@@ -832,7 +832,7 @@ function ContractInteractionPage() {
 function formatInflowMode(mode: InflowMode): string {
   return mode === "ck"
     ? "Direct ck / ICRC ledger account"
-    : "ETH contract interaction";
+    : "Contract interaction";
 }
 
 function setSelectedInflowPool(params: {

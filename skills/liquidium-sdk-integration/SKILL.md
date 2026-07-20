@@ -194,7 +194,8 @@ Status-returning methods use the shared `LiquidiumStatus` shape:
 of `deposit`, `borrow`, `repayment`, `withdrawal`, or `liquidation`. `state` is
 one of `action_required`, `confirming`, `processing`, `active`, `completed`,
 `failed`, or `expired`. `confirmations` and `requiredConfirmations` are always
-present and are `null` when unavailable or not applicable.
+present. They contain bounded confirmation progress only while `state` is
+`confirming` and are `null` for `processing` and every other state.
 
 When showing deposit progress, use `loan.status` from `simpleLoans.get({ ref })`
 for the canonical current lifecycle state. Use
