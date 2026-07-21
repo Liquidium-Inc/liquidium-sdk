@@ -566,9 +566,7 @@ function ContractInteractionPage() {
                 setSupplyInflowMode(event.target.value as InflowMode)
               }
             >
-              <option value="contractInteraction">
-                Contract interaction
-              </option>
+              <option value="contractInteraction">Contract interaction</option>
               <option value="ck">Direct ck / ICRC ledger account</option>
             </select>
             <p>
@@ -629,9 +627,7 @@ function ContractInteractionPage() {
                 setRepaymentInflowMode(event.target.value as InflowMode)
               }
             >
-              <option value="contractInteraction">
-                Contract interaction
-              </option>
+              <option value="contractInteraction">Contract interaction</option>
               <option value="ck">Direct ck / ICRC ledger account</option>
             </select>
             <p>

@@ -12,6 +12,12 @@
 
 - e53daf1: Add native ETH and ckETH support across market, lending, positions, quotes, and Simple Loans. Profile inflows support explicit transfer and payable contract-interaction mechanisms and enforce asset deposit minimums.
 
+## 0.5.2
+
+### Patch Changes
+
+- 32d391f: Hide supplied balances below each pool's dust threshold while preserving positions with active debt.
+
 ## 0.5.1
 
 ### Patch Changes

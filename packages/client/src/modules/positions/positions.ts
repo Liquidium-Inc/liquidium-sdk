@@ -71,17 +71,27 @@ export class PositionsModule {
   }
 
   /**
-   * Lists all positions for a profile.
+   * Lists visible positions for a profile. Supply balances below their pool's
+   * same-asset dust threshold are hidden without removing active debt.
    *
    * @param profileId - The Liquidium profile principal text.
-   * @returns All positions currently associated with the requested profile.
+   * @returns Visible positions currently associated with the requested profile.
    */
   async listPositions(profileId: string): Promise<Position[]> {
     try {
       const actor = createFlexibleLendingActor(this.canisterContext);
       const profilePrincipal = Principal.fromText(profileId);
-      const stats = await actor.get_profile_stats(profilePrincipal);
+      const [stats, pools] = await Promise.all([
+        actor.get_profile_stats(profilePrincipal),
+        actor.list_pools(),
+      ]);
       const decodedStats = decodeFlexibleUserStats(stats);
+      const dustThresholdsByPoolId = new Map(
+        pools.map((pool) => [
+          pool.principal.toText(),
+          pool.same_asset_borrowing_dust_threshold,
+        ])
+      );
 
       const positionViews = await Promise.all(
         decodedStats.positions.map((position) =>
@@ -94,7 +104,14 @@ export class PositionsModule {
         .filter((view): view is NonNullable<typeof view> => view !== undefined)
         .map(decodeFlexiblePositionView)
         .filter((view): view is NonNullable<typeof view> => view !== null)
-        .map(mapDecodedPositionViewToPosition);
+        .map(mapDecodedPositionViewToPosition)
+        .map((position) =>
+          getPositionWithSuppliedDustHidden(
+            position,
+            dustThresholdsByPoolId.get(position.poolId)
+          )
+        )
+        .filter((position): position is Position => position !== null);
     } catch (error) {
       if (error instanceof LiquidiumError) {
         throw error;
@@ -195,6 +212,10 @@ export class PositionsModule {
    * Returns the per-reserve breakdown of a profile's supplies and borrows,
    * joined with pool metadata, rates, and current USD prices.
    *
+   * Supplied-only reserves below their pool's same-asset dust threshold are
+   * omitted. Reserves with active debt remain, with their supplied amount and
+   * earned interest set to zero when the supplied balance is below the threshold.
+   *
    * USD values are scaled to 27 decimals.
    *
    * @param profileId - The Liquidium profile principal text.
@@ -291,6 +312,23 @@ export class PositionsModule {
 
     return { amount: position.deposited, decimals: position.depositedDecimals };
   }
+}
+
+/** Drops dust-only positions and clears the supply side when debt remains. */
+function getPositionWithSuppliedDustHidden(
+  position: Position,
+  dustThreshold: bigint | undefined
+): Position | null {
+  if (dustThreshold === undefined || position.deposited >= dustThreshold) {
+    return position;
+  }
+
+  const hasDebt = position.borrowed > 0n || position.debtInterest > 0n;
+  if (!hasDebt) {
+    return null;
+  }
+
+  return { ...position, deposited: 0n, earnedInterest: 0n };
 }
 
 function nativeAmountToUsdScaled(
