@@ -44,13 +44,16 @@ Activities narrow the operation by direction. Inflow activities use `deposit` or
 | --- | --- | --- |
 | `action_required` | The app needs the user to send funds, sign, or complete the next step | Show the transfer target or wallet action |
 | `confirming` | Liquidium has a transaction id or detected chain activity and waits for confirmations | Show pending confirmations when present |
-| `processing` | Liquidium is processing the operation after detection or submission | Keep polling and block duplicate submissions |
+| `processing` | Liquidium is processing the operation outside the chain-confirmation phase | Keep polling and block duplicate submissions |
 | `active` | The operation has opened a live position or debt remains | Show the active position and next repayment or withdrawal action |
 | `completed` | The operation finished | Stop prompting for the operation |
 | `failed` | The operation failed | Show recovery copy and let the user retry when the flow supports it |
 | `expired` | The user missed the allowed time window | Stop showing the expired transfer target |
 
-`confirmations` and `requiredConfirmations` are `null` when the SDK cannot report chain confirmation progress or the state does not need confirmations.
+`confirmations` and `requiredConfirmations` are populated only while `state` is
+`confirming`. Confirmation progress never exceeds the required count. Both
+fields are `null` after the operation moves to `processing` because any remaining
+work belongs to Liquidium's internal settlement lifecycle.
 
 ## Where Status Appears
 

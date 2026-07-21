@@ -1,6 +1,6 @@
 import { DynamicWidget, useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import type { ActivityFilter, Pool } from "@liquidium/client";
-import { Chain } from "@liquidium/client";
+import { Asset, Chain } from "@liquidium/client";
 import { useEffect, useState } from "react";
 import { formatConfig } from "./client";
 import {
@@ -28,18 +28,20 @@ import {
   listProfileActivities,
   submitContractInteractionRepayment,
   submitContractInteractionSupply,
+  validateDepositAmount,
   withdrawWithWallet,
 } from "./sdk-example";
 
-const CONTRACT_INTERACTION_ASSETS = new Set(["USDC", "USDT"]);
+const CONTRACT_INTERACTION_ASSETS = new Set(["ETH", "USDC", "USDT"]);
 const DEFAULT_CONTRACT_INTERACTION_ASSET = "USDC";
 const DEFAULT_BORROW_ASSET = "USDC";
+const DEFAULT_ETH_INFLOW_AMOUNT = "0.005";
+const DEFAULT_TOKEN_INFLOW_AMOUNT = "10";
 
 type ContractInteractionTab = "supply" | "repay" | "borrow" | "withdraw";
-type StablecoinInflowMode = "contractInteraction" | "ck";
+type InflowMode = "contractInteraction" | "ck";
 
-const DEFAULT_STABLECOIN_INFLOW_MODE: StablecoinInflowMode =
-  "contractInteraction";
+const DEFAULT_INFLOW_MODE: InflowMode = "contractInteraction";
 
 export function App() {
   const isStatusPage = window.location.pathname.endsWith("/status.html");
@@ -60,14 +62,16 @@ function ContractInteractionPage() {
   const [selectedBorrowPoolId, setSelectedBorrowPoolId] = useState("");
   const [selectedWithdrawPoolId, setSelectedWithdrawPoolId] = useState("");
   const [supplyInflowMode, setSupplyInflowMode] =
-    useState<StablecoinInflowMode>(DEFAULT_STABLECOIN_INFLOW_MODE);
+    useState<InflowMode>(DEFAULT_INFLOW_MODE);
   const [repaymentInflowMode, setRepaymentInflowMode] =
-    useState<StablecoinInflowMode>(DEFAULT_STABLECOIN_INFLOW_MODE);
-  const [supplyAmount, setSupplyAmount] = useState("10");
+    useState<InflowMode>(DEFAULT_INFLOW_MODE);
+  const [supplyAmount, setSupplyAmount] = useState(DEFAULT_TOKEN_INFLOW_AMOUNT);
   const [supplyResult, setSupplyResult] = useState(
     "No contract interaction submitted yet."
   );
-  const [repaymentAmount, setRepaymentAmount] = useState("10");
+  const [repaymentAmount, setRepaymentAmount] = useState(
+    DEFAULT_TOKEN_INFLOW_AMOUNT
+  );
   const [repaymentResult, setRepaymentResult] = useState(
     "No contract interaction repayment submitted yet."
   );
@@ -112,6 +116,10 @@ function ContractInteractionPage() {
       setPools(loadedPools);
       setSelectedSupplyPoolId(defaultContractInteractionPool?.id ?? "");
       setSelectedRepaymentPoolId(defaultContractInteractionPool?.id ?? "");
+      setSupplyAmount(getDefaultInflowAmount(defaultContractInteractionPool));
+      setRepaymentAmount(
+        getDefaultInflowAmount(defaultContractInteractionPool)
+      );
       setSelectedBorrowPoolId(defaultBorrowPool?.id ?? "");
       setSelectedWithdrawPoolId(defaultBorrowPool?.id ?? "");
       setBorrowChainSelection(getDefaultChain(defaultBorrowPool));
@@ -180,6 +188,8 @@ function ContractInteractionPage() {
     setPools(loadedPools);
     setSelectedSupplyPoolId(defaultContractInteractionPool?.id ?? "");
     setSelectedRepaymentPoolId(defaultContractInteractionPool?.id ?? "");
+    setSupplyAmount(getDefaultInflowAmount(defaultContractInteractionPool));
+    setRepaymentAmount(getDefaultInflowAmount(defaultContractInteractionPool));
     setSelectedBorrowPoolId(defaultBorrowPool?.id ?? "");
     setSelectedWithdrawPoolId(defaultBorrowPool?.id ?? "");
     setBorrowChainSelection(getDefaultChain(defaultBorrowPool));
@@ -208,38 +218,47 @@ function ContractInteractionPage() {
       contractInteractionPools,
       selectedSupplyPoolId
     );
-    const amount = parseAmountToBaseUnits(supplyAmount, selectedPool.decimals);
     const trimmedProfileId = profileId.trim();
 
     if (!trimmedProfileId) {
       throw new Error("Enter a profile id.");
     }
 
-    const isCkInflowMode = supplyInflowMode === "ck";
-    setStatus(
-      isCkInflowMode
-        ? "Generating direct ck supply target..."
-        : "Submitting contract interaction supply..."
-    );
-    setSupplyResult(
-      isCkInflowMode
-        ? "Generating direct ck supply target..."
-        : "Submitting contract interaction supply..."
-    );
+    const amount = parseAmountToBaseUnits(supplyAmount, selectedPool.decimals);
+    validateDepositAmount({ amount, asset: selectedPool.asset });
 
-    const supplyFlow = isCkInflowMode
-      ? await createCkTransferTarget({
-          profileId: trimmedProfileId,
-          poolId: selectedPool.id,
-          action: "deposit",
-        })
-      : await submitContractInteractionSupply({
-          profileId: trimmedProfileId,
-          poolId: selectedPool.id,
-          account: getConnectedWalletAddress(primaryWallet),
-          amount,
-          walletAdapter: createDynamicWalletAdapter(primaryWallet),
-        });
+    const isCkInflowMode = supplyInflowMode === "ck";
+    if (isCkInflowMode) {
+      setStatus("Generating direct ck supply target...");
+      setSupplyResult("Generating direct ck supply target...");
+      const supplyFlow = await createCkTransferTarget({
+        profileId: trimmedProfileId,
+        poolId: selectedPool.id,
+        action: "deposit",
+      });
+      setSupplyResult(
+        [
+          `Supply amount: ${formatAmount(amount, selectedPool.decimals)} ${selectedPool.asset}`,
+          `Inflow mode: ${formatInflowMode(supplyInflowMode)}`,
+          "",
+          formatSupplyFlow(supplyFlow),
+          "",
+          "Send ck tokens manually to the ICRC account above.",
+        ].join("\n")
+      );
+      setStatus("Generated direct ck supply target.");
+      return;
+    }
+
+    setStatus("Submitting contract interaction supply...");
+    setSupplyResult("Submitting contract interaction supply...");
+    const supplyFlow = await submitContractInteractionSupply({
+      profileId: trimmedProfileId,
+      poolId: selectedPool.id,
+      account: getConnectedWalletAddress(primaryWallet),
+      amount,
+      walletAdapter: createDynamicWalletAdapter(primaryWallet),
+    });
 
     if (supplyFlow.txid) {
       saveRecentActivityId(supplyFlow.txid);
@@ -248,20 +267,14 @@ function ContractInteractionPage() {
     setSupplyResult(
       [
         `Supplied amount: ${formatAmount(amount, selectedPool.decimals)} ${selectedPool.asset}`,
-        `Inflow mode: ${formatStablecoinInflowMode(supplyInflowMode)}`,
+        `Inflow mode: ${formatInflowMode(supplyInflowMode)}`,
         "",
         formatSupplyFlow(supplyFlow),
         "",
-        supplyFlow.txid
-          ? "Use the txid on the Activity tracker page to follow status."
-          : "Send ck tokens manually to the ICRC account above.",
+        "Use the txid on the Activity tracker page to follow status.",
       ].join("\n")
     );
-    setStatus(
-      supplyFlow.txid
-        ? `Submitted contract supply ${supplyFlow.txid}.`
-        : "Generated direct ck supply target."
-    );
+    setStatus(`Submitted contract supply ${supplyFlow.txid}.`);
   }
 
   async function submitContractRepayment(): Promise<void> {
@@ -269,41 +282,48 @@ function ContractInteractionPage() {
       contractInteractionPools,
       selectedRepaymentPoolId
     );
-    const amount = parseAmountToBaseUnits(
-      repaymentAmount,
-      selectedPool.decimals
-    );
     const trimmedProfileId = profileId.trim();
 
     if (!trimmedProfileId) {
       throw new Error("Enter a profile id.");
     }
 
+    const amount = parseAmountToBaseUnits(
+      repaymentAmount,
+      selectedPool.decimals
+    );
     const isCkInflowMode = repaymentInflowMode === "ck";
-    setStatus(
-      isCkInflowMode
-        ? "Generating direct ck repayment target..."
-        : "Submitting contract interaction repayment..."
-    );
-    setRepaymentResult(
-      isCkInflowMode
-        ? "Generating direct ck repayment target..."
-        : "Submitting contract interaction repayment..."
-    );
+    if (isCkInflowMode) {
+      setStatus("Generating direct ck repayment target...");
+      setRepaymentResult("Generating direct ck repayment target...");
+      const repaymentFlow = await createCkTransferTarget({
+        profileId: trimmedProfileId,
+        poolId: selectedPool.id,
+        action: "repayment",
+      });
+      setRepaymentResult(
+        [
+          `Repayment amount: ${formatAmount(amount, selectedPool.decimals)} ${selectedPool.asset}`,
+          `Inflow mode: ${formatInflowMode(repaymentInflowMode)}`,
+          "",
+          formatSupplyFlow(repaymentFlow),
+          "",
+          "Send ck tokens manually to the ICRC account above.",
+        ].join("\n")
+      );
+      setStatus("Generated direct ck repayment target.");
+      return;
+    }
 
-    const repaymentFlow = isCkInflowMode
-      ? await createCkTransferTarget({
-          profileId: trimmedProfileId,
-          poolId: selectedPool.id,
-          action: "repayment",
-        })
-      : await submitContractInteractionRepayment({
-          profileId: trimmedProfileId,
-          poolId: selectedPool.id,
-          account: getConnectedWalletAddress(primaryWallet),
-          amount,
-          walletAdapter: createDynamicWalletAdapter(primaryWallet),
-        });
+    setStatus("Submitting contract interaction repayment...");
+    setRepaymentResult("Submitting contract interaction repayment...");
+    const repaymentFlow = await submitContractInteractionRepayment({
+      profileId: trimmedProfileId,
+      poolId: selectedPool.id,
+      account: getConnectedWalletAddress(primaryWallet),
+      amount,
+      walletAdapter: createDynamicWalletAdapter(primaryWallet),
+    });
 
     if (repaymentFlow.txid) {
       saveRecentActivityId(repaymentFlow.txid);
@@ -312,20 +332,14 @@ function ContractInteractionPage() {
     setRepaymentResult(
       [
         `Repaid amount: ${formatAmount(amount, selectedPool.decimals)} ${selectedPool.asset}`,
-        `Inflow mode: ${formatStablecoinInflowMode(repaymentInflowMode)}`,
+        `Inflow mode: ${formatInflowMode(repaymentInflowMode)}`,
         "",
         formatSupplyFlow(repaymentFlow),
         "",
-        repaymentFlow.txid
-          ? "Use the txid on the Activity tracker page to follow status."
-          : "Send ck tokens manually to the ICRC account above.",
+        "Use the txid on the Activity tracker page to follow status.",
       ].join("\n")
     );
-    setStatus(
-      repaymentFlow.txid
-        ? `Submitted contract repayment ${repaymentFlow.txid}.`
-        : "Generated direct ck repayment target."
-    );
+    setStatus(`Submitted contract repayment ${repaymentFlow.txid}.`);
   }
 
   async function borrow(): Promise<void> {
@@ -431,8 +445,8 @@ function ContractInteractionPage() {
 
       <h1>Liquidium Contract Interaction Flow</h1>
       <p>
-        Supply and repay USDC or USDT through the ETH contract interaction path,
-        then borrow or withdraw from a Liquidium profile.
+        Supply and repay ETH, USDC, or USDT through the Ethereum contract
+        interaction path, then borrow or withdraw from a Liquidium profile.
       </p>
 
       <section>
@@ -527,13 +541,20 @@ function ContractInteractionPage() {
 
         {activeTab === "supply" ? (
           <div className="tab-panel">
-            <h3>Supply Stablecoin</h3>
+            <h3>Supply Ethereum Asset</h3>
 
             <label htmlFor="supply-pool-select">Supply pool</label>
             <select
               id="supply-pool-select"
               value={selectedSupplyPoolId}
-              onChange={(event) => setSelectedSupplyPoolId(event.target.value)}
+              onChange={(event) =>
+                setSelectedInflowPool({
+                  poolId: event.target.value,
+                  pools: contractInteractionPools,
+                  setSelectedPoolId: setSelectedSupplyPoolId,
+                  setAmount: setSupplyAmount,
+                })
+              }
             >
               {contractInteractionPools.map((pool) => (
                 <option key={pool.id} value={pool.id}>
@@ -547,18 +568,16 @@ function ContractInteractionPage() {
               id="supply-inflow-mode-select"
               value={supplyInflowMode}
               onChange={(event) =>
-                setSupplyInflowMode(event.target.value as StablecoinInflowMode)
+                setSupplyInflowMode(event.target.value as InflowMode)
               }
             >
-              <option value="contractInteraction">
-                ETH contract interaction
-              </option>
+              <option value="contractInteraction">Contract interaction</option>
               <option value="ck">Direct ck / ICRC ledger account</option>
             </select>
             <p>
-              Contract mode sends ERC-20 tokens through Ethereum. ck mode
-              returns the pool-owned ICRC account for a manual ckUSDC or ckUSDT
-              transfer.
+              Contract mode sends native ETH or ERC-20 tokens through the
+              deposit helper. ck mode returns the pool-owned ICRC account for a
+              manual ckETH, ckUSDC, or ckUSDT transfer.
             </p>
 
             <label htmlFor="supply-amount-input">Supply amount</label>
@@ -583,14 +602,19 @@ function ContractInteractionPage() {
 
         {activeTab === "repay" ? (
           <div className="tab-panel">
-            <h3>Repay Stablecoin</h3>
+            <h3>Repay Ethereum Asset</h3>
 
             <label htmlFor="repayment-pool-select">Repayment pool</label>
             <select
               id="repayment-pool-select"
               value={selectedRepaymentPoolId}
               onChange={(event) =>
-                setSelectedRepaymentPoolId(event.target.value)
+                setSelectedInflowPool({
+                  poolId: event.target.value,
+                  pools: contractInteractionPools,
+                  setSelectedPoolId: setSelectedRepaymentPoolId,
+                  setAmount: setRepaymentAmount,
+                })
               }
             >
               {contractInteractionPools.map((pool) => (
@@ -605,20 +629,16 @@ function ContractInteractionPage() {
               id="repayment-inflow-mode-select"
               value={repaymentInflowMode}
               onChange={(event) =>
-                setRepaymentInflowMode(
-                  event.target.value as StablecoinInflowMode
-                )
+                setRepaymentInflowMode(event.target.value as InflowMode)
               }
             >
-              <option value="contractInteraction">
-                ETH contract interaction
-              </option>
+              <option value="contractInteraction">Contract interaction</option>
               <option value="ck">Direct ck / ICRC ledger account</option>
             </select>
             <p>
-              Contract mode sends ERC-20 tokens through Ethereum. ck mode
-              returns the pool-owned ICRC account for a manual ckUSDC or ckUSDT
-              transfer.
+              Contract mode sends native ETH or ERC-20 tokens through the
+              deposit helper. ck mode returns the pool-owned ICRC account for a
+              manual ckETH, ckUSDC, or ckUSDT transfer.
             </p>
 
             <label htmlFor="repayment-amount-input">Repayment amount</label>
@@ -810,10 +830,28 @@ function ContractInteractionPage() {
   );
 }
 
-function formatStablecoinInflowMode(mode: StablecoinInflowMode): string {
+function formatInflowMode(mode: InflowMode): string {
   return mode === "ck"
     ? "Direct ck / ICRC ledger account"
-    : "ETH contract interaction";
+    : "Contract interaction";
+}
+
+function setSelectedInflowPool(params: {
+  poolId: string;
+  pools: Pool[];
+  setSelectedPoolId(poolId: string): void;
+  setAmount(amount: string): void;
+}): void {
+  const selectedPool = params.pools.find((pool) => pool.id === params.poolId);
+
+  params.setSelectedPoolId(params.poolId);
+  params.setAmount(getDefaultInflowAmount(selectedPool));
+}
+
+function getDefaultInflowAmount(pool: Pool | undefined): string {
+  return pool?.asset === Asset.ETH
+    ? DEFAULT_ETH_INFLOW_AMOUNT
+    : DEFAULT_TOKEN_INFLOW_AMOUNT;
 }
 
 function setSelectedOutflowPool(params: {

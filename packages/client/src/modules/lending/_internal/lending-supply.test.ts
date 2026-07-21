@@ -3,14 +3,17 @@ import { Actor } from "@icp-sdk/core/agent";
 import { Principal } from "@icp-sdk/core/principal";
 import { decodeFunctionData } from "viem";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { CK_DEPOSIT_ABI, ERC20_ABI } from "../../../core/evm";
+import { CK_DEPOSIT_ABI, ERC20_ABI, MAX_UINT256 } from "../../../core/evm";
 import { encodeInflowSubaccount } from "../../../core/utils/inflow-subaccount";
 import { LiquidiumClient, LiquidiumErrorCode } from "../../../index";
 import {
   BTC_POOL_ID,
   createBtcPoolRecord,
+  createEthPoolRecord,
   createIcpPoolRecord,
   createUsdcPoolRecord,
+  createUsdtPoolRecord,
+  ETH_POOL_ID,
   encodeBytes32Hex,
   encodePrincipalToBytes32,
   ICP_POOL_ID,
@@ -26,6 +29,70 @@ afterEach(() => {
 });
 
 describe("LendingModule supply", () => {
+  test("returns a native ETH deposit address target without a token contract", async () => {
+    // given
+    const profileId = "aaaaa-aa";
+    const depositAddress = "0x1111111111111111111111111111111111111111";
+    const getDepositAddress = vi.fn().mockResolvedValue({ Ok: depositAddress });
+    vi.spyOn(Actor, "createActor")
+      .mockReturnValueOnce({
+        list_pools: vi.fn().mockResolvedValue([createEthPoolRecord()]),
+      } as never)
+      .mockReturnValueOnce({ get_deposit_address: getDepositAddress } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const supplyFlow = await client.lending.supply({
+      profileId,
+      poolId: ETH_POOL_ID,
+      action: "deposit",
+      chain: "ETH",
+    });
+
+    // then
+    expect(supplyFlow.target).toEqual({
+      poolId: ETH_POOL_ID,
+      asset: "ETH",
+      chain: "ETH",
+      action: "deposit",
+      address: depositAddress,
+    });
+    expect(getDepositAddress.mock.calls[0]?.[1]).toEqual([]);
+  });
+
+  test("returns a ckETH ICRC account target for an ICP transfer", async () => {
+    // given
+    const profileId = "aaaaa-aa";
+    const expectedSubaccount = encodeInflowSubaccount({
+      action: "repayment",
+      principal: Principal.fromText(profileId),
+    });
+    vi.spyOn(Actor, "createActor").mockReturnValueOnce({
+      list_pools: vi.fn().mockResolvedValue([createEthPoolRecord()]),
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const supplyFlow = await client.lending.supply({
+      profileId,
+      poolId: ETH_POOL_ID,
+      action: "repayment",
+      chain: "ICP",
+    });
+
+    // then
+    expect(supplyFlow.target).toEqual({
+      poolId: ETH_POOL_ID,
+      asset: "ETH",
+      chain: "ICP",
+      action: "repayment",
+      address: encodeIcrcAccount({
+        owner: Principal.fromText(ETH_POOL_ID),
+        subaccount: expectedSubaccount,
+      }),
+    });
+  });
+
   test("returns a native supply target for the btc pool", async () => {
     // given
     const profileId = "aaaaa-aa";
@@ -227,6 +294,7 @@ describe("LendingModule supply", () => {
       poolId: USDC_POOL_ID,
       action: "deposit",
       chain: "ETH",
+      mechanism: "transfer",
     });
 
     // then
@@ -635,6 +703,203 @@ describe("LendingModule supply", () => {
     });
   });
 
+  test("executes native ETH contract-interaction supply without an EVM read client", async () => {
+    // given
+    const profileId = "aaaaa-aa";
+    const walletAddress = "0x1234567890123456789012345678901234567890";
+    const depositTxid = "0xcontractdeposit";
+    const amountWei = 5_000_000_000_000_000n;
+    vi.spyOn(Actor, "createActor").mockReturnValueOnce({
+      list_pools: vi.fn().mockResolvedValue([createEthPoolRecord()]),
+    } as never);
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      new Response(JSON.stringify({ txid: depositTxid }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      })
+    );
+    const sendEthTransaction = vi.fn().mockResolvedValueOnce(depositTxid);
+    const client = new LiquidiumClient({
+      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
+    });
+
+    // when
+    const flow = await client.lending.supply({
+      profileId,
+      poolId: ETH_POOL_ID,
+      action: "deposit",
+      chain: "ETH",
+      mechanism: "contractInteraction",
+      walletAdapter: { sendEthTransaction },
+      account: walletAddress,
+      amount: amountWei,
+    });
+
+    // then
+    expect(flow).toMatchObject({
+      type: "contractInteraction",
+      txid: depositTxid,
+      target: {
+        poolId: ETH_POOL_ID,
+        asset: "ETH",
+        chain: "ETH",
+        action: "deposit",
+      },
+    });
+    expect(sendEthTransaction).toHaveBeenCalledTimes(1);
+    const sentEthTransaction = sendEthTransaction.mock.calls[0]?.[0];
+    expect(sentEthTransaction).toMatchObject({
+      chain: "ETH",
+      account: walletAddress,
+      actionType: "supply-deposit-deposit-eth",
+      transaction: {
+        to: "0x18901044688D3756C35Ed2b36D93e6a5B8e00E68",
+        value: amountWei.toString(),
+      },
+    });
+    const decodedDeposit = decodeFunctionData({
+      abi: CK_DEPOSIT_ABI,
+      data: sentEthTransaction?.transaction.data as `0x${string}`,
+    });
+    expect(decodedDeposit.functionName).toBe("depositEth");
+    expect(decodedDeposit.args[0]).toBe(
+      encodePrincipalToBytes32(Principal.fromText(ETH_POOL_ID))
+    );
+    expect(decodedDeposit.args[1]).toBe(
+      encodeBytes32Hex(
+        encodeInflowSubaccount({
+          action: "deposit",
+          principal: Principal.fromText(profileId),
+        })
+      )
+    );
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "https://app.liquidium.fi/api/sdk/v2/inflow",
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({
+          txid: depositTxid,
+          chain: "ETH",
+          operation: "deposit",
+        }),
+      })
+    );
+  });
+
+  test("rejects a native ETH contract-interaction deposit below the minimum", async () => {
+    // given
+    const amountBelowMinimumWei = 4_999_999_999_999_999n;
+    vi.spyOn(Actor, "createActor").mockReturnValueOnce({
+      list_pools: vi.fn().mockResolvedValue([createEthPoolRecord()]),
+    } as never);
+    const sendEthTransaction = vi.fn();
+    const client = new LiquidiumClient({});
+
+    // when
+    const result = client.lending.supply({
+      profileId: "aaaaa-aa",
+      poolId: ETH_POOL_ID,
+      action: "deposit",
+      chain: "ETH",
+      mechanism: "contractInteraction",
+      walletAdapter: { sendEthTransaction },
+      account: "0x1234567890123456789012345678901234567890",
+      amount: amountBelowMinimumWei,
+    });
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message:
+        "Deposit amount must be at least 5000000000000000 base units for ETH",
+    });
+    expect(sendEthTransaction).not.toHaveBeenCalled();
+  });
+
+  test("encodes the repayment subaccount for native ETH contract interaction", async () => {
+    // given
+    const profileId = "aaaaa-aa";
+    const repaymentTxid = "0xcontractrepayment";
+    vi.spyOn(Actor, "createActor").mockReturnValueOnce({
+      list_pools: vi.fn().mockResolvedValue([createEthPoolRecord()]),
+    } as never);
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      new Response(JSON.stringify({ txid: repaymentTxid }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      })
+    );
+    const sendEthTransaction = vi.fn().mockResolvedValueOnce(repaymentTxid);
+    const client = new LiquidiumClient({
+      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
+    });
+
+    // when
+    await client.lending.supply({
+      profileId,
+      poolId: ETH_POOL_ID,
+      action: "repayment",
+      chain: "ETH",
+      mechanism: "contractInteraction",
+      walletAdapter: { sendEthTransaction },
+      account: "0x1234567890123456789012345678901234567890",
+      amount: 1n,
+    });
+
+    // then
+    const sentEthTransaction = sendEthTransaction.mock.calls[0]?.[0];
+    const decodedDeposit = decodeFunctionData({
+      abi: CK_DEPOSIT_ABI,
+      data: sentEthTransaction?.transaction.data as `0x${string}`,
+    });
+    expect(decodedDeposit.args[1]).toBe(
+      encodeBytes32Hex(
+        encodeInflowSubaccount({
+          action: "repayment",
+          principal: Principal.fromText(profileId),
+        })
+      )
+    );
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "https://app.liquidium.fi/api/sdk/v2/inflow",
+      expect.objectContaining({
+        body: JSON.stringify({
+          txid: repaymentTxid,
+          chain: "ETH",
+          operation: "repayment",
+        }),
+      })
+    );
+  });
+
+  test("rejects native ETH contract amounts above the uint256 maximum", async () => {
+    // given
+    vi.spyOn(Actor, "createActor").mockReturnValueOnce({
+      list_pools: vi.fn().mockResolvedValue([createEthPoolRecord()]),
+    } as never);
+    const sendEthTransaction = vi.fn();
+    const client = new LiquidiumClient({});
+
+    // when
+    const result = client.lending.supply({
+      profileId: "aaaaa-aa",
+      poolId: ETH_POOL_ID,
+      action: "deposit",
+      chain: "ETH",
+      mechanism: "contractInteraction",
+      walletAdapter: { sendEthTransaction },
+      account: "0x1234567890123456789012345678901234567890",
+      amount: MAX_UINT256 + 1n,
+    });
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message: "Contract-interaction supply amount exceeds uint256 maximum",
+    });
+    expect(sendEthTransaction).not.toHaveBeenCalled();
+  });
+
   test("computes evm supply context with the configured EVM read client", async () => {
     // given
     mockUsdtPoolList();
@@ -690,6 +955,32 @@ describe("LendingModule supply", () => {
         args: ["0x1234567890123456789012345678901234567890"],
       })
     );
+  });
+
+  test("rejects EVM deposit planning below the stablecoin minimum", async () => {
+    // given
+    const amountBelowMinimum = 999_999n;
+    mockUsdtPoolList();
+    const readContract = vi.fn();
+    const client = new LiquidiumClient({
+      evmPublicClient: { readContract } as never,
+    });
+
+    // when
+    const result = client.lending.getEvmSupplyContext({
+      profileId: "aaaaa-aa",
+      poolId: USDT_POOL_ID,
+      walletAddress: "0x1234567890123456789012345678901234567890",
+      amount: amountBelowMinimum,
+      action: "deposit",
+    });
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message: "Deposit amount must be at least 1000000 base units for USDT",
+    });
+    expect(readContract).not.toHaveBeenCalled();
   });
 
   test("should return reset approval strategy for partial EVM allowance", async () => {
@@ -803,6 +1094,226 @@ describe("LendingModule supply", () => {
       1_000_000n,
     ]);
     expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  test("auto-executes native ETH supply at the uint256 maximum", async () => {
+    // given
+    const depositAddress = "0x1111111111111111111111111111111111111111";
+    const amountWei = MAX_UINT256;
+    vi.spyOn(Actor, "createActor")
+      .mockReturnValueOnce({
+        list_pools: vi.fn().mockResolvedValue([createEthPoolRecord()]),
+      } as never)
+      .mockReturnValueOnce({
+        get_deposit_address: vi.fn().mockResolvedValue({ Ok: depositAddress }),
+      } as never);
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      new Response(JSON.stringify({ txid: "0xdeposit" }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      })
+    );
+    const sendEthTransaction = vi.fn().mockResolvedValueOnce("0xdeposit");
+    const client = new LiquidiumClient({});
+
+    // when
+    const flow = await client.lending.supply({
+      profileId: "aaaaa-aa",
+      poolId: ETH_POOL_ID,
+      action: "deposit",
+      chain: "ETH",
+      account: "0x1234567890123456789012345678901234567890",
+      amount: amountWei,
+      walletAdapter: { sendEthTransaction },
+    });
+
+    // then
+    expect(flow.txid).toBe("0xdeposit");
+    expect(sendEthTransaction).toHaveBeenCalledWith(
+      expect.objectContaining({
+        chain: "ETH",
+        actionType: "supply-deposit",
+        transaction: {
+          to: depositAddress,
+          value: amountWei.toString(),
+        },
+      })
+    );
+  });
+
+  test("rejects a native ETH transfer amount above the uint256 maximum", async () => {
+    // given
+    const DEPOSIT_ADDRESS = "0x1111111111111111111111111111111111111111";
+    const PROFILE_ID = "aaaaa-aa";
+    const WALLET_ADDRESS = "0x1234567890123456789012345678901234567890";
+    const AMOUNT_ABOVE_UINT256_MAXIMUM_WEI = MAX_UINT256 + 1n;
+    vi.spyOn(Actor, "createActor")
+      .mockReturnValueOnce({
+        list_pools: vi.fn().mockResolvedValue([createEthPoolRecord()]),
+      } as never)
+      .mockReturnValueOnce({
+        get_deposit_address: vi.fn().mockResolvedValue({ Ok: DEPOSIT_ADDRESS }),
+      } as never);
+    const sendEthTransaction = vi.fn();
+    const client = new LiquidiumClient({});
+
+    // when
+    const result = client.lending.supply({
+      profileId: PROFILE_ID,
+      poolId: ETH_POOL_ID,
+      action: "deposit",
+      chain: "ETH",
+      account: WALLET_ADDRESS,
+      amount: AMOUNT_ABOVE_UINT256_MAXIMUM_WEI,
+      walletAdapter: { sendEthTransaction },
+    });
+
+    // then
+    const EXPECTED_ERROR_MESSAGE =
+      "ETH transfer amount exceeds uint256 maximum";
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message: EXPECTED_ERROR_MESSAGE,
+    });
+    expect(sendEthTransaction).not.toHaveBeenCalled();
+  });
+
+  test("rejects a native ETH transfer deposit below the minimum", async () => {
+    // given
+    const amountBelowMinimumWei = 4_999_999_999_999_999n;
+    vi.spyOn(Actor, "createActor").mockReturnValueOnce({
+      list_pools: vi.fn().mockResolvedValue([createEthPoolRecord()]),
+    } as never);
+    const sendEthTransaction = vi.fn();
+    const client = new LiquidiumClient({});
+
+    // when
+    const result = client.lending.supply({
+      profileId: "aaaaa-aa",
+      poolId: ETH_POOL_ID,
+      action: "deposit",
+      chain: "ETH",
+      account: "0x1234567890123456789012345678901234567890",
+      amount: amountBelowMinimumWei,
+      walletAdapter: { sendEthTransaction },
+    });
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message:
+        "Deposit amount must be at least 5000000000000000 base units for ETH",
+    });
+    expect(sendEthTransaction).not.toHaveBeenCalled();
+  });
+
+  test("rejects wallet deposits below every configured asset minimum", async () => {
+    // given
+    const depositCases = [
+      {
+        poolId: BTC_POOL_ID,
+        chain: "BTC" as const,
+        asset: "BTC",
+        amount: 5_099n,
+        minimumAmount: 5_100n,
+      },
+      {
+        poolId: ICP_POOL_ID,
+        chain: "ICP" as const,
+        asset: "ICP",
+        amount: 9_999n,
+        minimumAmount: 10_000n,
+      },
+      {
+        poolId: USDC_POOL_ID,
+        chain: "ETH" as const,
+        asset: "USDC",
+        amount: 999_999n,
+        minimumAmount: 1_000_000n,
+      },
+      {
+        poolId: USDT_POOL_ID,
+        chain: "ICP" as const,
+        asset: "USDT",
+        amount: 999_999n,
+        minimumAmount: 1_000_000n,
+      },
+    ];
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi
+        .fn()
+        .mockResolvedValue([
+          createBtcPoolRecord(),
+          createIcpPoolRecord(),
+          createUsdcPoolRecord(),
+          createUsdtPoolRecord(),
+        ]),
+    } as never);
+    const sendBtcTransaction = vi.fn();
+    const sendEthTransaction = vi.fn();
+    const sendIcrcTransfer = vi.fn();
+    const client = new LiquidiumClient({});
+
+    // when
+    const results = depositCases.map((depositCase) =>
+      client.lending.supply({
+        profileId: "aaaaa-aa",
+        poolId: depositCase.poolId,
+        action: "deposit",
+        chain: depositCase.chain,
+        account: "sender-account",
+        amount: depositCase.amount,
+        walletAdapter: {
+          sendBtcTransaction,
+          sendEthTransaction,
+          sendIcrcTransfer,
+        },
+      })
+    );
+
+    // then
+    for (const [index, result] of results.entries()) {
+      const depositCase = depositCases[index];
+      await expect(result).rejects.toMatchObject({
+        code: LiquidiumErrorCode.VALIDATION_ERROR,
+        message: `Deposit amount must be at least ${depositCase?.minimumAmount} base units for ${depositCase?.asset}`,
+      });
+    }
+    expect(sendBtcTransaction).not.toHaveBeenCalled();
+    expect(sendEthTransaction).not.toHaveBeenCalled();
+    expect(sendIcrcTransfer).not.toHaveBeenCalled();
+  });
+
+  test("rejects native ETH supply from an invalid EVM sender account", async () => {
+    // given
+    const depositAddress = "0x1111111111111111111111111111111111111111";
+    vi.spyOn(Actor, "createActor")
+      .mockReturnValueOnce({
+        list_pools: vi.fn().mockResolvedValue([createEthPoolRecord()]),
+      } as never)
+      .mockReturnValueOnce({
+        get_deposit_address: vi.fn().mockResolvedValue({ Ok: depositAddress }),
+      } as never);
+    const sendEthTransaction = vi.fn();
+    const client = new LiquidiumClient({});
+
+    // when
+    const result = client.lending.supply({
+      profileId: "aaaaa-aa",
+      poolId: ETH_POOL_ID,
+      action: "deposit",
+      chain: "ETH",
+      account: "invalid-evm-account",
+      amount: 5_000_000_000_000_000n,
+      walletAdapter: { sendEthTransaction },
+    });
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.INVALID_ADDRESS,
+      message: "Invalid EVM wallet address",
+    });
+    expect(sendEthTransaction).not.toHaveBeenCalled();
   });
 
   test("auto-executes eth usdt supply with contract interaction when requested", async () => {
@@ -1564,6 +2075,7 @@ describe("LendingModule supply", () => {
       poolId: BTC_POOL_ID,
       action: "deposit",
       chain: "BTC",
+      mechanism: "transfer",
       amount: 100_000n,
       account: "bc1qsender",
     } as never;
@@ -1576,6 +2088,29 @@ describe("LendingModule supply", () => {
       code: LiquidiumErrorCode.VALIDATION_ERROR,
       message:
         "Wallet-executed supply requires walletAdapter, account, and amount",
+    });
+    expect(createActor).not.toHaveBeenCalled();
+  });
+
+  test("rejects an unsupported supply mechanism before resolving the pool", async () => {
+    // given
+    const createActor = vi.spyOn(Actor, "createActor");
+    const client = new LiquidiumClient({});
+    const invalidMechanismRequest = {
+      profileId: "aaaaa-aa",
+      poolId: ETH_POOL_ID,
+      action: "deposit",
+      chain: "ETH",
+      mechanism: "contractInteractions",
+    } as never;
+
+    // when
+    const result = client.lending.supply(invalidMechanismRequest);
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message: "Unsupported supply mechanism: contractInteractions",
     });
     expect(createActor).not.toHaveBeenCalled();
   });

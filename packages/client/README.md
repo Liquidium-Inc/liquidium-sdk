@@ -17,8 +17,6 @@ TypeScript client for Liquidium lending and accountless Simple Loans.
 npm install @liquidium/client
 ```
 
-Use `npm install @liquidium/client@rc` when integrating against the current 0.5 release candidate. Untagged installs resolve to the latest stable release.
-
 ## Usage
 
 ```ts
@@ -61,6 +59,8 @@ console.log("Send collateral to:", deposit?.target.address);
 Use `client.simpleLoans` for accountless borrowing. Use `client.accounts`, `client.lending`, and `client.positions` for profile-based lending.
 
 Amounts use `bigint` values in each asset's smallest unit. Read pool decimals before converting user input.
+
+`Asset.ETH` supports native ETH on `Chain.ETH` and ckETH ICRC transfers on `Chain.ICP`. Both routes use 18 decimals, so amounts are expressed in wei (`0.005 ETH` is `5_000_000_000_000_000n`). For native ETH deposits and repayments, select `mechanism: "transfer"` to send ETH to a generated deposit address or `mechanism: "contractInteraction"` to send ETH through the payable deposit helper. Transfer is the default when `mechanism` is omitted. ckETH routes use the generated ICRC target.
 
 See the [quick start](https://liquidium-inc.github.io/liquidium-sdk/getting-started/quick-start/) for LTV validation, repayment, and recovery.
 

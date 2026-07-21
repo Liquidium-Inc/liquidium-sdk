@@ -41,9 +41,6 @@ pnpm add @liquidium/client
 bun add @liquidium/client
 ```
 
-Use the `@rc` tag when integrating against the current 0.5 release candidate.
-Untagged installs resolve to the latest stable release.
-
 Use the SDK in browser apps and modern TypeScript runtimes. Browser integrations
 need `fetch`, `BigInt`, and standard ESM support. Follow the host app's package
 manager and build tooling.
@@ -72,14 +69,14 @@ const client = new LiquidiumClient({
 - `apiBaseUrl`: defaults to `https://app.liquidium.fi/api/sdk`. Override it for another Liquidium SDK API deployment. It is used by history, activities, inflow reporting, `simpleLoans.create(...)`, `simpleLoans.get(...)`, and `simpleLoans.find(...)`, but not by `borrow(...)`, `withdraw(...)`, or default ETH stablecoin deposit-address supply/repay target resolution
 - `headers`: adds headers to Liquidium SDK HTTP API requests, for example app attribution or auth from a backend proxy
 - `fetch`: supplies a custom fetch implementation when the runtime needs one
-- `evmRpcUrl` / `evmPublicClient`: required for lower-level ETH contract-interaction supply planning and allowance polling. Use `evmRpcHeaders` when the RPC provider authenticates with HTTP headers
+- `evmRpcUrl` / `evmPublicClient`: required for lower-level USDC/USDT contract-interaction supply planning and allowance polling. Native ETH contract interaction does not perform ERC-20 reads. Use `evmRpcHeaders` when the RPC provider authenticates with HTTP headers
 - `identity` / `icHost`: custom ICP agent configuration
-- `canisterIds`: accepts partial overrides for `lending`, `ethDeposit`, `simpleLoans`, and `pools.{btc,usdt,usdc,icp}`
+- `canisterIds`: accepts partial overrides for `lending`, `ethDeposit`, `simpleLoans`, and `pools.{btc,eth,usdt,usdc,icp}`
 - `canisterIds.simpleLoans`: defaults to mainnet `u5rm3-niaaa-aaaar-qb7eq-cai`; override it for custom deployments
 
 Partial `canisterIds` overrides merge with mainnet defaults. For a fully custom
 deployment, provide every deployment-specific Liquidium canister ID. The public
-config does not override the ckBTC minter/ledger or the ckUSDC, ckUSDT, and ICP
+config does not override the ckBTC minter/ledger or the ckETH, ckUSDC, ckUSDT, and ICP
 ledger IDs; those routes currently use fixed mainnet canisters.
 
 For Vite example apps, expose the RPC URL through a `VITE_` variable. If using
@@ -96,14 +93,16 @@ or route RPC calls through a server if the key must remain private.
 
 ## Assets and Transfer Routes
 
-The public asset symbols are only `"BTC"`, `"USDC"`, `"USDT"`, and `"ICP"`.
+The public asset symbols are `"BTC"`, `"ETH"`, `"USDC"`, `"USDT"`, and `"ICP"`.
 Chain-key assets use the underlying asset plus `chain: "ICP"`; do not pass
-`"ckBTC"`, `"ckUSDC"`, or `"ckUSDT"` as `asset` values.
+`"ckBTC"`, `"ckETH"`, `"ckUSDC"`, or `"ckUSDT"` as `asset` values.
 
 | Asset | Chain | Transfer representation |
 | --- | --- | --- |
 | `"BTC"` | `"BTC"` | Native BTC |
 | `"BTC"` | `"ICP"` | ckBTC |
+| `"ETH"` | `"ETH"` | Native ETH |
+| `"ETH"` | `"ICP"` | ckETH |
 | `"USDC"` | `"ETH"` | ERC-20 USDC |
 | `"USDC"` | `"ICP"` | ckUSDC |
 | `"USDT"` | `"ETH"` | ERC-20 USDT |
@@ -159,14 +158,17 @@ message signing. Read a quote from `initialDeposit.targets[chain]` or
 `repayment.targets[chain]`. Each quote contains the full amount to send, its fee
 estimate, and a flat target with a primary `address`.
 
-Target maps are partial. BTC-backed targets can offer `"BTC"` and `"ICP"`, ETH
-USDC/USDT-backed targets can offer `"ETH"` and `"ICP"`, and ICP-backed targets
-offer only `"ICP"`. Check that the selected entry exists before showing or
-executing it.
+Target maps are partial. BTC-backed targets can offer `"BTC"` and `"ICP"`.
+ETH, USDC, and USDT targets can offer `"ETH"` and `"ICP"`, while ICP-backed
+targets offer only `"ICP"`. Check that the selected entry exists before showing
+or executing it.
 
 Initial-deposit quotes expose `amount` and `inflowFeeAmount`. Repayment quotes
 also expose `inflowFeeEstimateAvailable`; use that flag when labeling the fee
 rather than presenting every repayment fee as a live estimate.
+For native ETH, Simple Loan quotes use a `0.00025 ETH` fallback when the live
+deposit-canister estimate fails or returns a non-positive amount. Repayment
+quotes mark that fallback with `inflowFeeEstimateAvailable: false`.
 
 Deposit and repayment targets are distinct generated inflow targets. Select the
 quote for the chain the user will transfer on. Do not assume the addresses
@@ -192,7 +194,8 @@ Status-returning methods use the shared `LiquidiumStatus` shape:
 of `deposit`, `borrow`, `repayment`, `withdrawal`, or `liquidation`. `state` is
 one of `action_required`, `confirming`, `processing`, `active`, `completed`,
 `failed`, or `expired`. `confirmations` and `requiredConfirmations` are always
-present and are `null` when unavailable or not applicable.
+present. They contain bounded confirmation progress only while `state` is
+`confirming` and are `null` for `processing` and every other state.
 
 When showing deposit progress, use `loan.status` from `simpleLoans.get({ ref })`
 for the canonical current lifecycle state. Use
@@ -219,9 +222,11 @@ client.market.getPoolRate(poolId);
 `Pool` includes `decimals`, `availableLiquidity`, caps, rates, and index data.
 `Pool.chain` describes the backing lending pool, not every transfer rail users
 can choose. Native and ck representations share a pool: for example,
+`findPool({ asset: "ETH", chain: "ETH" })` and
+`findPool({ asset: "ETH", chain: "ICP" })` resolve to the same ETH pool. Likewise,
 `findPool({ asset: "USDT", chain: "ETH" })` and
 `findPool({ asset: "USDT", chain: "ICP" })` resolve to the same ETH-backed USDT
-pool. There are no separate ckBTC, ckUSDC, or ckUSDT pools.
+pool. There are no separate ckBTC, ckETH, ckUSDC, or ckUSDT pools.
 
 ### quote
 
@@ -276,15 +281,16 @@ client.lending.submitInflow({ txid, chain: "BTC", operation: "deposit" });
 ```
 
 Every `supply(...)` request requires `chain`. Valid transfer routes are BTC
-pools via `"BTC"` or `"ICP"`, ETH USDC/USDT pools via `"ETH"` or `"ICP"`, and
-the ICP pool via `"ICP"` only. Omit `mechanism` for transfer mode;
-`mechanism: "contractInteraction"` is only valid for ETH USDC/USDT.
+pools via `"BTC"` or `"ICP"`, ETH/USDC/USDT pools via `"ETH"` or `"ICP"`, and
+the ICP pool via `"ICP"` only. Use `mechanism: "transfer"` explicitly or omit
+it for the same default. `mechanism: "contractInteraction"` is valid for native
+ETH, USDC, and USDT on Ethereum.
 
 `estimateInflowFee({ asset, chain })` accepts any supported `AssetIdentifier`
 and returns `{ totalFee: bigint }`. It does not take a pool ID, profile ID, or
-supply action. BTC L1 estimates include ckBTC minter and ledger fees, ETH
-stablecoins use the deposit-address canister, and ICP routes use the relevant
-ledger fee.
+supply action. BTC L1 estimates include ckBTC minter and ledger fees. Native ETH
+and ETH stablecoins use the deposit-address canister, while ICP routes use the
+relevant ledger fee.
 
 ### positions
 
@@ -343,8 +349,14 @@ do not use removed `type`, `status`, or `kind` filters.
 
 Amount fields are `bigint` base units. Format them with the asset or pool
 `decimals`; do not display raw base-unit values as user amounts.
-BTC uses satoshis, ICP uses e8s, and USDC/USDT use token base units according to
-the selected pool's `decimals`.
+BTC uses satoshis, ETH and ckETH use wei with 18 decimals, ICP uses e8s, and
+USDC/USDT use token base units according to the selected pool's `decimals`.
+Deposit minimums are `5_100n` sats for BTC/ckBTC,
+`5_000_000_000_000_000n` wei for ETH/ckETH, `10_000n` e8s for ICP, and
+`1_000_000n` base units for USDC/ckUSDC and USDT/ckUSDT. Wallet-executed
+deposits enforce these values. Manual flows must apply
+`getMinimumDepositAmount(asset)` before broadcasting and account for inflow
+fees separately. Repayments do not use deposit minimums.
 
 Rate and risk-ratio fields such as `lendingRate`, `borrowingRate`,
 `utilizationRate`, `maxLtv`, and `liquidationThreshold` are fixed-point values scaled by `rateDecimals`, usually
@@ -455,7 +467,7 @@ const walletAdapter: WalletAdapter = {
 - `sendEthTransaction`: transfer-path automation for ETH targets and contract-interaction supply automation
 - `sendIcrcTransfer`: transfer-path supply automation for ICP-ledger targets
 
-For ckBTC, ckUSDC, ckUSDT, or native ICP wallet-executed supply and repayment,
+For ckBTC, ckETH, ckUSDC, ckUSDT, or native ICP wallet-executed supply and repayment,
 forward the SDK-provided ledger transfer and return its transaction reference:
 
 ```ts
@@ -486,8 +498,9 @@ Default app sequence:
 5. Select and show the quote in `loan.initialDeposit.targets[chain]`; later reload the loan and select `loan.repayment.targets[chain]`.
 
 Expose collateral deposit, borrow delivery, and refund/withdrawal as separate
-route controls. For a backing BTC, USDC, or USDT pool, label the `"ICP"` option
-as ckBTC, ckUSDC, or ckUSDT so users understand which asset they will transfer.
+route controls. For a backing BTC, ETH, USDC, or USDT pool, label the `"ICP"`
+option as ckBTC, ckETH, ckUSDC, or ckUSDT so users understand which asset they
+will transfer.
 
 The default Simple Loans flow does not need a wallet adapter. The user signs or
 broadcasts only the external wallet transfer to the generated deposit or repay
@@ -536,17 +549,18 @@ const repayment = loan.repayment.targets.ETH;
 ```
 
 Create destinations are validated against the requested chain before the SDK
-creates a loan. Use `"BTC"` for L1 BTC, `"ETH"` for L1 ETH stablecoins, and
-`"ICP"` for ICP-native or ck-ledger destinations.
+creates a loan. Use `"BTC"` for L1 BTC, `"ETH"` for native ETH or L1 ETH
+stablecoins, and `"ICP"` for ICP-native or ck-ledger destinations.
 
 Destination families:
 
 | Asset path | Chain | Valid destination family |
 | --- | --- | --- |
 | BTC L1 | `"BTC"` | BTC mainnet chain address |
+| Native ETH | `"ETH"` | EVM chain address |
 | ETH L1 USDC/USDT | `"ETH"` | EVM chain address |
 | ICP native | `"ICP"` | IC principal, ICRC account, or ICP account identifier |
-| ckBTC, ckUSDC, ckUSDT | `"ICP"` | IC principal |
+| ckBTC, ckETH, ckUSDC, ckUSDT | `"ICP"` | IC principal |
 
 Use typed destination objects when preventing fund-loss mistakes matters:
 `{ type: "ChainAddress", address: "..." }`,
@@ -755,9 +769,9 @@ const autoBroadcastFlow = await client.lending.supply({
 });
 ```
 
-ETH stablecoin pools default to the deposit-address transfer path. With an ETH
-wallet adapter, the SDK sends an ERC-20 transfer directly to the generated
-deposit address:
+ETH, USDC, and USDT pools default to the deposit-address transfer path. With an
+ETH wallet adapter, the SDK sends native ETH value or an ERC-20 transfer
+directly to the generated deposit address:
 
 ```ts
 const supplyFlow = await client.lending.supply({
@@ -778,12 +792,20 @@ This default flow does not require `apiBaseUrl` or an EVM RPC. Use lower-level
 `getEvmSupplyContext(...)` only if you are intentionally building the
 contract-interaction flow.
 
-#### ETH Stablecoin Deposit Addresses
+#### ETH Deposit Addresses
 
-ETH USDT/USDC deposit-address supply uses the ETH deposit-address canister
-directly. It does not require `apiBaseUrl` for target resolution.
+Native ETH and ETH USDT/USDC deposit-address supply use the ETH deposit-address
+canister directly. They do not require `apiBaseUrl` for target resolution.
 
-For the default transfer mechanism (omit `mechanism`), the SDK resolves the deposit address by calling:
+For `Asset.ETH` with `chain: "ETH"`, transfer mode returns a generated EVM
+deposit address and sends a normal ETH value transfer to it. Contract-interaction
+mode calls the payable ckETH deposit helper with the amount as transaction value.
+For `Asset.ETH` with `chain: "ICP"`, the asset is ckETH and the target is an ICRC
+account. Use `sendIcrcTransfer`, just as for other ck-ledger routes. Native ETH
+and ckETH both use 18 decimals and wei base units.
+
+For transfer mode (`mechanism: "transfer"`, or omit it for the default), the SDK
+resolves the deposit address by calling:
 
 ```ts
 get_deposit_address(
@@ -838,19 +860,24 @@ const contractInteractionFlow = await client.lending.supply({
 });
 ```
 
-Omitting `mechanism` selects the transfer path. `mechanism: "contractInteraction"` requires `apiBaseUrl`, `evmRpcUrl` or `evmPublicClient`, `account`, `amount`, and `sendEthTransaction`.
+`mechanism: "transfer"` explicitly selects the transfer path; omitting it selects
+the same default. `mechanism: "contractInteraction"` requires `apiBaseUrl`,
+`account`, `amount`, and `sendEthTransaction`. USDC and USDT additionally require
+`evmRpcUrl` or `evmPublicClient` for allowance and balance reads. Native ETH skips
+ERC-20 reads and calls the payable deposit helper. Contract interaction is not
+valid for ckETH because that route uses an ICRC transfer on `chain: "ICP"`.
 
 ## Common Mistakes
 
 1. Treating profile lending as the default borrow flow. Use `client.simpleLoans.create(...)` for the accountless product flow unless the user explicitly asks for profiles.
 2. Adding profile creation, signed borrow, or wallet adapter requirements to Simple Loans. `simpleLoans.create(...)` and `simpleLoans.get(...)` do not need them.
 3. Confusing `quote.targetLtvBps` with Simple Loan `ltvMaxBps`. The quote target helps plan amounts; `ltvMaxBps` is validated by the Simple Loan LTV guards.
-4. `new LiquidiumClient({})` uses the default Liquidium service configuration. Override `apiBaseUrl` for custom service deployments. Lower-level contract-interaction planning also needs `evmRpcUrl` or `evmPublicClient`. Default ETH stablecoin deposit-address supply, `borrow(...)`, and `withdraw(...)` do not use the service configuration.
+4. `new LiquidiumClient({})` uses the default Liquidium service configuration. Override `apiBaseUrl` for custom service deployments. USDC/USDT contract-interaction planning also needs `evmRpcUrl` or `evmPublicClient`; native ETH contract interaction does not. Default Ethereum deposit-address supply, `borrow(...)`, and `withdraw(...)` do not use the service configuration.
 5. Prepare methods return signable actions, not completed actions. `prepareCreateProfile`, `prepareBorrow`, and `prepareWithdraw` still need signing and submission.
 6. Build a wallet adapter with only the methods the selected flow needs. Avoid adding `signMessage`, `sendBtcTransaction`, `sendEthTransaction`, or `sendIcrcTransfer` unless the flow uses them.
 7. Do not `await client.quote.getQuote(...)`; it is synchronous once pools and prices are available.
 8. Check `quote.validationErrors` before enabling borrow execution. Quote validation failures are returned in-band rather than thrown.
-9. `client.lending.supply(...)` routes from both the selected pool and required `chain`. BTC supports `"BTC"`/`"ICP"`, ETH USDC/USDT supports `"ETH"`/`"ICP"`, and ICP supports only `"ICP"`; use `mechanism` only to request ETH stablecoin contract interaction.
+9. `client.lending.supply(...)` routes from the selected pool, required `chain`, and optional `mechanism`. BTC supports `"BTC"`/`"ICP"`, ETH/USDC/USDT supports `"ETH"`/`"ICP"`, and ICP supports only `"ICP"`; contract interaction is available for native ETH, USDC, and USDT on `chain: "ETH"`.
 10. Handle existing profiles explicitly when account creation can race with existing state. Do not rely on `prepareCreateProfile(...)` to reject an existing profile before signing.
 11. Work from the public modules and names exported by `@liquidium/client`. Do not invent SDK methods.
 12. After `borrow(...)`, treat `outflow.id` as the user-visible reference immediately. Do not assume `outflow.txid` is set on the first response; resolve it later via activities or history if you need the chain transaction id.
@@ -861,8 +888,9 @@ Omitting `mechanism` selects the transfer path. `mechanism: "contractInteraction
 17. Do not confuse deposit/supply targets with repayment targets. They are generated for different inflow actions and may be different addresses/accounts.
 18. Do not render raw `rateDecimals = 27` fixed-point values as percentages. Format scaled rates first or the UI can show scientific notation such as `3.7e+24%`.
 19. Do not model `loan.repayment` as nullable. Select the desired chain quote and check its `amount > 0n` before prompting repayment.
-20. Do not use `"ckBTC"`, `"ckUSDC"`, or `"ckUSDT"` as asset symbols. Pair `"BTC"`, `"USDC"`, or `"USDT"` with `chain: "ICP"`.
+20. Do not use `"ckBTC"`, `"ckETH"`, `"ckUSDC"`, or `"ckUSDT"` as asset symbols. Pair the underlying asset with `chain: "ICP"`.
 21. Do not assume `Pool.chain` is the user's transfer chain or derive deposit, borrow, and refund rails from one shared selection.
+22. Do not use `mechanism: "contractInteraction"` for ckETH on `chain: "ICP"`. Use it only for native ETH, USDC, or USDT on `chain: "ETH"`.
 
 ## Preferred Style
 

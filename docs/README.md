@@ -10,7 +10,7 @@ These docs use a Diataxis-inspired structure:
 | `examples/` | Pages that point readers to runnable example apps |
 | `api-reference/` | Manual and generated API reference |
 
-When changing public SDK behavior, exported types, method names, request fields, response fields, errors, or examples, update the relevant docs in this directory. If exported APIs changed, run `pnpm docs:api` to regenerate `api-reference/generated/`.
+When changing public SDK behavior, exported types, method names, request fields, response fields, errors, or examples, update the relevant hand-written docs in this directory. Do not run TypeDoc through `pnpm docs:api` or modify `api-reference/generated/` in feature or fix PRs. Regenerate and commit TypeDoc output in a separate documentation PR unless it is explicitly requested in the implementation PR.
 
 ## Structure References
 

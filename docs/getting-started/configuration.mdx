@@ -35,7 +35,7 @@ const client = new LiquidiumClient({
 | `identity` | Send signed canister calls with a caller identity. |
 | `apiBaseUrl` | Override the Liquidium SDK HTTP API root. Defaults to `https://app.liquidium.fi/api/sdk`. |
 | `headers` | Add headers to SDK HTTP API requests. |
-| `canisterIds` | Partially override `lending`, `ethDeposit`, `simpleLoans`, or `pools.{btc,usdt,usdc,icp}` for custom deployments. |
+| `canisterIds` | Partially override `lending`, `ethDeposit`, `simpleLoans`, or `pools.{btc,eth,usdt,usdc,icp}` for custom deployments. |
 | `fetch` | Provide a custom fetch implementation. |
 | `timeoutMs` | Set the SDK API request timeout in milliseconds. Defaults to `30_000`. |
 | `evmRpcUrl` | Create a viem public client for EVM reads. |
@@ -51,6 +51,7 @@ const client = new LiquidiumClient({
     simpleLoans: "u5rm3-niaaa-aaaar-qb7eq-cai",
     pools: {
       btc: "bbbbb-bb",
+      eth: "ccccc-cc",
     },
   },
 });

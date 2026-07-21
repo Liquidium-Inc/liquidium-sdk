@@ -3,6 +3,7 @@ import {
   createIcrcAccount,
   encodeIcpAccountIdentifier,
 } from "../../../core/accounts";
+import { normalizeAndValidateEvmAddress } from "../../../core/address-validation";
 import { createCkBtcMinterActor } from "../../../core/canisters/ckbtc/minter";
 import {
   createDepositAccountsActor,
@@ -92,7 +93,8 @@ function resolveSupplyMechanism(
 
   if (
     params.identifier.chain === Chain.ETH &&
-    (params.identifier.asset === Asset.USDC ||
+    (params.identifier.asset === Asset.ETH ||
+      params.identifier.asset === Asset.USDC ||
       params.identifier.asset === Asset.USDT)
   ) {
     return SupplyPlanType.contractInteraction;
@@ -121,6 +123,14 @@ export function getEthStablecoinContractAddress(asset: string): string {
     LiquidiumErrorCode.VALIDATION_ERROR,
     `ETH stablecoin contract address is not configured for ${asset}`
   );
+}
+
+export function getEthDepositTokenAddress(asset: string): [] | [string] {
+  if (asset === Asset.ETH) {
+    return [];
+  }
+
+  return [getEthStablecoinContractAddress(asset)];
 }
 
 export function mapDepositAccountErrorToLiquidiumError(
@@ -212,7 +222,9 @@ function resolveSupplyAssetIdentifier(
   }
 
   if (
-    (params.asset === Asset.USDC || params.asset === Asset.USDT) &&
+    (params.asset === Asset.ETH ||
+      params.asset === Asset.USDC ||
+      params.asset === Asset.USDT) &&
     params.poolChain === Chain.ETH
   ) {
     if (params.transferChain === Chain.ETH) {
@@ -244,7 +256,6 @@ async function getChainAddressSupplyTarget(
   request: SupplyTargetRequest
 ): Promise<SupplyTarget> {
   if (request.chain === Chain.ETH) {
-    const tokenAddress = getEthStablecoinContractAddress(request.asset);
     const subaccount = encodeInflowSubaccount({
       action: request.action,
       principal: Principal.fromText(profileId),
@@ -256,19 +267,24 @@ async function getChainAddressSupplyTarget(
         owner: Principal.fromText(request.poolId),
         subaccount: [subaccount],
       },
-      [tokenAddress]
+      getEthDepositTokenAddress(request.asset)
     );
 
     if ("Err" in result) {
       throw mapDepositAccountErrorToLiquidiumError(result.Err);
     }
 
+    const address = normalizeAndValidateEvmAddress(
+      result.Ok,
+      "Deposit address canister returned an invalid EVM address"
+    );
+
     return {
       poolId: request.poolId,
       asset: request.asset,
       chain: request.chain,
       action: request.action,
-      address: result.Ok,
+      address,
     };
   }
 

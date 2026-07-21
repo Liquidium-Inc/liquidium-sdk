@@ -22,6 +22,7 @@ import type { AssetPrices, FindPoolQuery, Pool, PoolRate } from "./types";
 const ZERO_POOL_RATE: PoolRateTuple = [0n, 0n, 0n];
 const BACKING_POOL_CHAIN_BY_ASSET = {
   [Asset.BTC]: Chain.BTC,
+  [Asset.ETH]: Chain.ETH,
   [Asset.ICP]: Chain.ICP,
   [Asset.USDC]: Chain.ETH,
   [Asset.USDT]: Chain.ETH,

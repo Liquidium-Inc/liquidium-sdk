@@ -22,9 +22,9 @@ export interface LiquidiumStatus {
   operation: LiquidiumOperation;
   /** Current lifecycle state for the operation. */
   state: LiquidiumState;
-  /** Observed chain confirmations, or null when unavailable or not applicable. */
+  /** Confirmation progress while confirming, capped at the required count. */
   confirmations: number | null;
-  /** Required confirmations, or null when unavailable or not applicable. */
+  /** Required confirmations while confirming, otherwise null. */
   requiredConfirmations: number | null;
 }
 

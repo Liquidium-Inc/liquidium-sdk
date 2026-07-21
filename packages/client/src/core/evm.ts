@@ -55,8 +55,18 @@ export const ERC20_ABI = [
   },
 ] as const;
 
-/** ckETH minter deposit helper ABI used for ERC-20 deposits into ICRC accounts. */
+/** ckETH minter deposit helper ABI used for native ETH and ERC-20 deposits into ICRC accounts. */
 export const CK_DEPOSIT_ABI = [
+  {
+    inputs: [
+      { internalType: "bytes32", name: "principal", type: "bytes32" },
+      { internalType: "bytes32", name: "subaccount", type: "bytes32" },
+    ],
+    name: "depositEth",
+    outputs: [],
+    stateMutability: "payable",
+    type: "function",
+  },
   {
     inputs: [
       { internalType: "address", name: "erc20Address", type: "address" },

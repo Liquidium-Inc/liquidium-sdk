@@ -13,6 +13,7 @@ const MAINNET_CANISTER_IDS: CanisterIds = {
   lending: "hyk4r-jqaaa-aaaar-qb4ca-cai",
   pools: {
     btc: "hkmli-faaaa-aaaar-qb4ba-cai",
+    eth: "qcg7y-syaaa-aaaar-qb75q-cai",
     usdt: "hnnn4-iyaaa-aaaar-qb4bq-cai",
     usdc: "6sna2-oiaaa-aaaar-qb66q-cai",
     icp: "r2pk3-4yaaa-aaaar-qb7zq-cai",
@@ -33,6 +34,7 @@ const SUPPORTED_CANISTER_ID_OVERRIDE_KEYS = new Set([
 ]);
 const SUPPORTED_POOL_CANISTER_ID_OVERRIDE_KEYS = new Set([
   "btc",
+  "eth",
   "usdt",
   "usdc",
   "icp",
@@ -100,6 +102,11 @@ export const CK_CANISTER_IDS = {
     ledger: "mxzaz-hqaaa-aaaar-qaada-cai",
     index: "n5wcd-faaaa-aaaar-qaaea-cai",
     archive: "nbsys-saaaa-aaaar-qaaga-cai",
+  },
+  ETH: {
+    minter: "sv3dd-oaaaa-aaaar-qacoa-cai",
+    ledger: "ss2fx-dyaaa-aaaar-qacoq-cai",
+    archive: "yhujl-liaaa-aaaar-qaiha-cai",
   },
   USDT: {
     ledger: "cngnf-vqaaa-aaaar-qag4q-cai",

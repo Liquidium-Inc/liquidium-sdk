@@ -29,6 +29,20 @@ Use Simple Loans for a checkout-style borrow flow. The SDK creates a generated L
 | `depositWindowSeconds` | How long the user has to send collateral |
 `borrow.destination` and `refund.destination` can be strings or typed account objects such as `{ type: "ChainAddress", address: "bc1q..." }`, `{ type: "IcPrincipal", address: "aaaaa-aa" }`, or `{ type: "IcrcAccount", address: "aaaaa-aa" }`. The SDK validates that each destination family matches its selected asset and chain before creation.
 
+## Collateral Minimums
+
+The SDK rejects Simple Loan collateral below the configured deposit minimum before creating the loan:
+
+| Asset | Minimum collateral amount |
+| --- | --- |
+| BTC | `5_100n` sats |
+| ETH | `5_000_000_000_000_000n` wei (`0.005 ETH`) |
+| ICP | `10_000n` e8s |
+| USDC | `1_000_000n` base units |
+| USDT | `1_000_000n` base units |
+
+Use `getMinimumDepositAmount(asset)` when your UI needs to display or pre-check the same minimum.
+
 ## Borrow Minimums
 
 The SDK enforces these minimum borrow amounts before creation:
@@ -36,10 +50,17 @@ The SDK enforces these minimum borrow amounts before creation:
 | Asset | Minimum borrow amount |
 | --- | --- |
 | BTC | `5_100n` sats |
+| ETH | `5_000_000_000_000_000n` wei (`0.005 ETH`) |
 | USDC | `1_000_000n` base units |
 | USDT | `1_000_000n` base units |
 
 Use `getMinimumBorrowAmount(asset)` when your UI needs to display or pre-check the same minimum.
+
+## ETH Transfer Rails
+
+ETH pools expose native ETH targets under `targets[Chain.ETH]` and ckETH ICRC targets under `targets[Chain.ICP]`. Both routes use 18 decimals and amounts in wei. Native ETH transfers send value directly to the generated EVM address; ckETH transfers use the returned ICRC account.
+
+Native ETH quotes use a `0.00025 ETH` inflow-fee fallback when the live estimate fails or is non-positive. Repayment quotes expose `inflowFeeEstimateAvailable: false` when this fallback is used.
 
 ## Restore State
 

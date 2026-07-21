@@ -14,7 +14,11 @@ describeLive("live market e2e", () => {
     // then
     expect(pools.length).toBeGreaterThan(0);
     expect(assetPrices.BTC).toBeGreaterThan(0);
+    expect(assetPrices.ETH).toBeGreaterThan(0);
     expect(hasLiveStablecoinPrice(assetPrices)).toBe(true);
+    expect(pools).toContainEqual(
+      expect.objectContaining({ asset: "ETH", chain: "ETH", decimals: 18n })
+    );
 
     for (const pool of pools) {
       expectPoolFieldsToBePopulated(pool);

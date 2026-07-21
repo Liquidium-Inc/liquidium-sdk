@@ -29,10 +29,11 @@ export interface CreateSimpleLoanCollateral {
    * Intended credited collateral amount, in base units.
    *
    * This is used to validate LTV and initialize the loan record before
-   * deposit/inflow fees are deducted. For BTC, pass satoshis. For token assets,
-   * convert the UI amount using the selected pool's `decimals` value. After
-   * creation, use one of `loan.initialDeposit.targets` as the fee-inclusive
-   * transfer quote and destination.
+   * deposit/inflow fees are deducted. For BTC, pass satoshis. ETH and ckETH use
+   * 18-decimal wei base units; do not pass human-readable ETH values directly.
+   * For token assets, convert the UI amount using the selected pool's `decimals`
+   * value. After creation, use one of `loan.initialDeposit.targets` as the
+   * fee-inclusive transfer quote and destination.
    */
   amount: bigint;
 }
@@ -54,8 +55,9 @@ export type CreateSimpleLoanBorrow = AssetIdentifier & {
   /**
    * Amount to borrow, in the borrow asset's base units.
    *
-   * For USDC/USDT, convert the UI amount using the selected borrow pool's
-   * `decimals` value before passing it here.
+   * ETH and ckETH use 18-decimal wei base units; do not pass human-readable ETH
+   * values directly. For USDC/USDT, convert the UI amount using the selected
+   * borrow pool's `decimals` value before passing it here.
    */
   amount: bigint;
   /**
@@ -335,7 +337,7 @@ export type SimpleLoanEventType =
 export interface SimpleLoanInitialDepositTargetQuote {
   /** Full amount to send to the collateral deposit target, including fee. */
   amount: bigint;
-  /** Inflow fee amount in base units added to the transfer amount. */
+  /** Inflow fee amount in base units added to the transfer amount. Native ETH falls back to 0.00025 ETH when the live estimate fails or is non-positive. */
   inflowFeeAmount: bigint;
   /** Address or ICRC account where the collateral should be sent. */
   target: SupplyTarget;
@@ -345,7 +347,7 @@ export interface SimpleLoanInitialDepositTargetQuote {
 export interface SimpleLoanRepaymentTargetQuote {
   /** Full amount to send to the repayment target, including fee and interest buffer. */
   amount: bigint;
-  /** Inflow fee amount in base units added to the repayment transfer. Falls back to the protocol minimum when live estimation is unavailable. */
+  /** Inflow fee amount in base units added to the repayment transfer. Native ETH falls back to 0.00025 ETH when the live estimate fails or is non-positive. */
   inflowFeeAmount: bigint;
   /** Whether `inflowFeeAmount` came from a live fee estimate. */
   inflowFeeEstimateAvailable: boolean;

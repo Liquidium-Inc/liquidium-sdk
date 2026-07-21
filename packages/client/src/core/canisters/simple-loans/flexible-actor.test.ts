@@ -1,6 +1,6 @@
 import { idlLabelToId } from "@icp-sdk/core/candid";
 import type { Principal } from "@icp-sdk/core/principal";
-import { describe, expect, test } from "vitest";
+import { assert, describe, expect, test } from "vitest";
 import {
   decodeFlexibleHeadlessLoanEvent,
   decodeFlexibleSimpleLoanRecord,
@@ -89,6 +89,23 @@ describe("decodeFlexibleSimpleLoanRecord", () => {
     expect(decoded?.borrow_asset).toBe("USDC");
   });
 
+  test("should decode native ETH from known and hashed asset tags", () => {
+    // given
+    const ethHash = idlLabelToId("ETH");
+    const record = createFlexibleSimpleLoanRecord({
+      lend_asset: { ETH: null },
+      borrow_asset: { [`_${ethHash}_`]: null },
+    });
+
+    // when
+    const decoded = decodeFlexibleSimpleLoanRecord(record);
+
+    // then
+    expect(decoded).not.toBeNull();
+    expect(decoded?.lend_asset).toBe("ETH");
+    expect(decoded?.borrow_asset).toBe("ETH");
+  });
+
   test("should decode a loan with hashed variant keys from IDL.Unknown", () => {
     // given
     const lendHash = idlLabelToId("USDT");
@@ -174,6 +191,38 @@ describe("decodeFlexibleHeadlessLoanEvent", () => {
       expect(eventType.LoanCreated.lend_asset).toBe("BTC");
       expect(eventType.LoanCreated.borrow_asset).toBe("USDC");
     }
+  });
+
+  test("should decode native ETH in a LoanCreated event", () => {
+    // given
+    const ethHash = idlLabelToId("ETH");
+    const event = createFlexibleHeadlessLoanEvent({
+      event_type: {
+        LoanCreated: {
+          loan_id: 1n,
+          borrow_destination: { External: "0xborrow" },
+          lend_asset: { [`_${ethHash}_`]: null },
+          borrow_amount: 10_000n,
+          lend_pool_id: POOL_PRINCIPAL,
+          refund_destination: { External: "0xrefund" },
+          ltv_max_bps: 7_000n,
+          ltv_timer_s: 3_600n,
+          lending_profile: PROFILE_PRINCIPAL,
+          borrow_pool_id: POOL_PRINCIPAL,
+          borrow_asset: { ETH: null },
+        },
+      },
+    });
+
+    // when
+    const decoded = decodeFlexibleHeadlessLoanEvent(event);
+
+    // then
+    expect(decoded).not.toBeNull();
+    const eventType = decoded?.event_type;
+    assert(eventType && "LoanCreated" in eventType);
+    expect(eventType.LoanCreated.lend_asset).toBe("ETH");
+    expect(eventType.LoanCreated.borrow_asset).toBe("ETH");
   });
 
   test("should decode a LoanCreated event with hashed variant keys", () => {

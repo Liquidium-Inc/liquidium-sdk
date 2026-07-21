@@ -19,6 +19,7 @@ import {
   decodeFlexibleHeadlessLoanEvent,
   decodeFlexibleSimpleLoanRecord,
 } from "../../core/canisters/simple-loans/flexible-actor";
+import { getDepositAmountMinimumValidationError } from "../../core/deposit-minimums";
 import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
 import {
   buildSimpleLoanCollateralHintPath,
@@ -51,7 +52,11 @@ import {
   resolveSupplyTargetForPool,
 } from "../lending/_internal/supply-targets";
 import type { LendingModule } from "../lending/lending";
-import { SupplyPlanType, type SupplyTarget } from "../lending/types";
+import {
+  type InflowFeeEstimate,
+  SupplyPlanType,
+  type SupplyTarget,
+} from "../lending/types";
 import type { PositionsModule } from "../positions";
 import type { Position } from "../positions/types";
 import { QuoteModule } from "../quote";
@@ -87,12 +92,14 @@ const REPAYMENT_BUFFER_SECONDS = 86_400n;
 const RATE_SCALE = 10n ** 27n;
 const SECONDS_PER_YEAR = 31_536_000n;
 const MILLISECONDS_PER_SECOND = 1_000;
+const ETH_NATIVE_INFLOW_FEE_FALLBACK_WEI = 250_000_000_000_000n;
 const ETH_STABLECOIN_INFLOW_FEE_FALLBACK = 1_500_000n;
 const SIMPLE_LOAN_MIN_SLIPPAGE_BUFFER_BPS = 200n;
 const SIMPLE_LOAN_FIND_QUERY_MAX_LENGTH = 256;
 const SIMPLE_LOAN_WIRE_CONTEXT = "simple loan";
 const SIMPLE_LOAN_ASSETS = [
   CoreAsset.BTC,
+  CoreAsset.ETH,
   CoreAsset.ICP,
   CoreAsset.USDC,
   CoreAsset.USDT,
@@ -791,7 +798,7 @@ export class SimpleLoansModule {
       if (!target) continue;
       assertTargetAsset(target, input.asset);
 
-      const inflowFee = await this.lending.estimateInflowFee(target);
+      const inflowFee = await this.estimateInitialDepositInflowFee(target);
       targets[chain] = {
         amount: input.collateralAmount + inflowFee.totalFee,
         inflowFeeAmount: inflowFee.totalFee,
@@ -807,6 +814,29 @@ export class SimpleLoansModule {
       detectedTimestamp: input.detectedTimestamp,
       expiryTimestamp: input.expiryTimestamp,
     };
+  }
+
+  private async estimateInitialDepositInflowFee(
+    target: SupplyTarget
+  ): Promise<InflowFeeEstimate> {
+    try {
+      const fee = await this.lending.estimateInflowFee(target);
+      if (shouldUseNativeEthInflowFeeFallback(target, fee.totalFee)) {
+        return {
+          totalFee: getRepaymentInflowFeeFallback(target.asset, target.chain),
+        };
+      }
+
+      return fee;
+    } catch (error) {
+      if (target.asset !== CoreAsset.ETH || target.chain !== CoreChain.ETH) {
+        throw error;
+      }
+
+      return {
+        totalFee: getRepaymentInflowFeeFallback(target.asset, target.chain),
+      };
+    }
   }
 
   private async resolveSimpleLoanInflowTargets(
@@ -879,6 +909,13 @@ export class SimpleLoansModule {
   ): Promise<RepaymentInflowFeeEstimate> {
     try {
       const fee = await this.lending.estimateInflowFee(target);
+      if (shouldUseNativeEthInflowFeeFallback(target, fee.totalFee)) {
+        return {
+          totalFee: getRepaymentInflowFeeFallback(target.asset, target.chain),
+          estimateAvailable: false,
+        };
+      }
+
       return { totalFee: fee.totalFee, estimateAvailable: true };
     } catch {
       return {
@@ -975,11 +1012,26 @@ function getRepaymentInflowFeeFallback(
   asset: SimpleLoanAsset,
   chain: Chain
 ): bigint {
+  if (chain === CoreChain.ETH && asset === CoreAsset.ETH) {
+    return ETH_NATIVE_INFLOW_FEE_FALLBACK_WEI;
+  }
+
   if (chain === "ETH" && (asset === "USDT" || asset === "USDC")) {
     return ETH_STABLECOIN_INFLOW_FEE_FALLBACK;
   }
 
   return 0n;
+}
+
+function shouldUseNativeEthInflowFeeFallback(
+  target: SupplyTarget,
+  totalFee: bigint
+): boolean {
+  return (
+    totalFee <= 0n &&
+    target.asset === CoreAsset.ETH &&
+    target.chain === CoreChain.ETH
+  );
 }
 
 function assertTargetAsset(
@@ -1145,6 +1197,17 @@ function validateCreateRequest(request: CreateSimpleLoanRequest): void {
       "Simple loan collateral amount must be greater than zero"
     );
   }
+  const collateralMinimumError = getDepositAmountMinimumValidationError({
+    amount: request.collateral.amount,
+    asset: request.collateral.asset,
+  });
+  if (collateralMinimumError) {
+    throw new LiquidiumError(
+      LiquidiumErrorCode.VALIDATION_ERROR,
+      collateralMinimumError.message
+    );
+  }
+
   if (request.borrow.amount <= 0n) {
     throw new LiquidiumError(
       LiquidiumErrorCode.VALIDATION_ERROR,
@@ -1188,7 +1251,11 @@ function inferSimpleLoanDeliveryChain(
     return CoreChain.BTC;
   }
 
-  if (asset === CoreAsset.USDC || asset === CoreAsset.USDT) {
+  if (
+    asset === CoreAsset.ETH ||
+    asset === CoreAsset.USDC ||
+    asset === CoreAsset.USDT
+  ) {
     return CoreChain.ETH;
   }
 

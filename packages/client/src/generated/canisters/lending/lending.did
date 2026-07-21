@@ -12,7 +12,7 @@ type AddAccountRequest = record {
   expiry_timestamp : nat64;
 };
 type AssetType = variant { CkAsset : principal; Unknown };
-type Assets = variant { BTC; ICP; SOL; USDC; USDT };
+type Assets = variant { BTC; ETH; ICP; SOL; USDC; USDT };
 type BorrowAssetRequest = record {
   expiry_timestamp : nat64;
   account : AccountType;

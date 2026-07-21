@@ -28,9 +28,22 @@ const supplyFlow = await client.lending.supply({
   poolId,
   action: "deposit",
   chain: Chain.BTC,
+  mechanism: "transfer",
 });
 
 console.log("Send funds to", supplyFlow.target.address);
 ```
 
-When the flow needs a transaction ID, call `supplyFlow.submit(...)` after the user broadcasts the transfer.
+`mechanism: "transfer"` is optional because transfer is the default. Set it when your app exposes an explicit deposit-address versus contract-interaction choice. When the flow needs a transaction ID, call `supplyFlow.submit(...)` after the user broadcasts the transfer.
+
+Manual transfer requests do not include an amount, so the SDK cannot validate the eventual transaction value. Validate deposits with `getMinimumDepositAmount(asset)` before showing the target:
+
+| Asset | Minimum deposit |
+| --- | --- |
+| BTC / ckBTC | `5_100n` sats (`0.000051 BTC`) |
+| ETH / ckETH | `5_000_000_000_000_000n` wei (`0.005 ETH`) |
+| ICP | `10_000n` e8s (`0.0001 ICP`) |
+| USDC / ckUSDC | `1_000_000n` base units (`1 USDC`) |
+| USDT / ckUSDT | `1_000_000n` base units (`1 USDT`) |
+
+For manual deposits, account for the current inflow fee returned by `client.lending.estimateInflowFee(...)`; the Liquidium app displays the product floor plus that fee. It uses a separate `1.5 USDT` floor before adding fees for external USDT deposit addresses. This route-specific guidance does not change the SDK's `1 USDT` product minimum.

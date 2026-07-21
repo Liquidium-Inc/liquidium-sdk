@@ -1,20 +1,30 @@
 ---
 title: Contract Interaction Flow
-description: Use wallet-executed ETH contract interactions for token deposits and repayments.
+description: Use wallet-executed Ethereum contract interactions for deposits and repayments.
 order: 120
 ---
 
 # Contract Interaction Flow
 
-Use contract-interaction flows when an EVM wallet should approve and deposit ERC-20 funds through the SDK.
+Use contract-interaction flows when an EVM wallet should deposit native ETH or approve and deposit ERC-20 funds through the SDK. The supported pool assets are ETH, USDC, and USDT on Ethereum.
 
 ## Requirements
 
 | Requirement | Why |
 | --- | --- |
-| `evmRpcUrl` or `evmPublicClient` | The SDK needs public ERC-20 reads |
+| `evmRpcUrl` or `evmPublicClient` | Required for USDC and USDT allowance and balance reads; native ETH does not require an EVM read client |
 | Wallet adapter with `sendEthTransaction` | The SDK asks the wallet to broadcast approval and deposit transactions |
 | Token base-unit amount | The SDK sends protocol amounts as integers |
+
+The SDK rejects deposits below the asset product minimum before reading ERC-20 state or asking the wallet to broadcast:
+
+| Asset | Minimum deposit |
+| --- | --- |
+| ETH | `5_000_000_000_000_000n` wei (`0.005 ETH`) |
+| USDC | `1_000_000n` base units (`1 USDC`) |
+| USDT | `1_000_000n` base units (`1 USDT`) |
+
+Use `getMinimumDepositAmount(asset)` to read the same minimum. Repayments are not subject to deposit minimums.
 
 ## Shape
 
@@ -35,4 +45,4 @@ const supplyFlow = await client.lending.supply({
 console.log("Deposit txid", supplyFlow.txid);
 ```
 
-Use this for account-based ETH stablecoin flows. Simple Loans return their own deposit and repayment targets.
+For native ETH, the SDK calls the payable deposit helper with `amount` as transaction value. For USDC and USDT, it handles the required allowance before calling the helper. Simple Loans return transfer targets instead and do not use this mechanism.
