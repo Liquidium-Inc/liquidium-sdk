@@ -1,5 +1,11 @@
 # @liquidium/client
 
+## 0.6.0-rc.3
+
+### Patch Changes
+
+- Expose named asset identifier types for each supported asset and transfer-chain pair.
+
 ## 0.6.0-rc.2
 
 ### Patch Changes
