@@ -11,6 +11,20 @@ Released changes for `@liquidium/client`. This page is generated from [`packages
 
 ## @liquidium/client
 
+### 0.6.0
+
+#### Minor Changes
+
+- e53daf1: Add native ETH and ckETH support across market, lending, positions, quotes, and Simple Loans. Profile inflows support explicit transfer and payable contract-interaction mechanisms and enforce asset deposit minimums.
+
+#### Patch Changes
+
+- 8205a68: Expose named asset identifier types for each supported asset and transfer-chain pair.
+
+- Validate Simple Loans collateral deposit minimums and reject native ETH transfer amounts above the uint256 maximum.
+
+- Hide supplied balances below each pool's dust threshold while preserving active debt, and cap confirmation progress to the confirming state.
+
 ### 0.6.0-rc.3
 
 #### Patch Changes
