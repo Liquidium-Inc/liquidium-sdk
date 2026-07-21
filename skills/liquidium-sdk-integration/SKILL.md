@@ -301,6 +301,11 @@ client.positions.getMaxRepayAmount(profileId, poolId, bufferBps?); // full-repay
 client.positions.getFullWithdrawAmount(profileId, poolId);         // current supplied balance for full withdraw
 ```
 
+`listPositions(...)` and `getUserReserves(...)` omit supplied-only balances
+below each pool's `sameAssetBorrowingDustThreshold`. Positions containing debt
+are always returned, even when their supplied balance is dust. Use
+`getPosition(...)` when the raw position for a specific pool is required.
+
 `getFullWithdrawAmount(...)` returns `{ amount, decimals }`. Pass `amount` to
 `client.lending.withdraw(...)` or `prepareWithdraw(...)`; use `decimals` only
 for UI formatting. Do not add `earnedInterest` to the returned amount.

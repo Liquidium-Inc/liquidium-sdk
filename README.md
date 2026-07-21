@@ -82,6 +82,16 @@ pnpm typecheck
 pnpm test
 ```
 
+Run the live supplied-position dust test with a profile and pool that contain a
+supplied-only balance below the pool's same-asset dust threshold:
+
+```bash
+LIQUIDIUM_E2E_DUST_PROFILE_ID=<profile-id> \
+LIQUIDIUM_E2E_DUST_POOL_ID=<pool-id> \
+LIQUIDIUM_LIVE_E2E=1 \
+pnpm exec vitest run --project client-e2e e2e/positions.e2e.test.ts
+```
+
 ## License
 
 MIT

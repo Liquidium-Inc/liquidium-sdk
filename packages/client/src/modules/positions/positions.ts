@@ -71,17 +71,28 @@ export class PositionsModule {
   }
 
   /**
-   * Lists all positions for a profile.
+   * Lists visible positions for a profile. Supplied-only positions below their
+   * pool's same-asset dust threshold are omitted, while positions with debt are
+   * retained.
    *
    * @param profileId - The Liquidium profile principal text.
-   * @returns All positions currently associated with the requested profile.
+   * @returns Visible positions currently associated with the requested profile.
    */
   async listPositions(profileId: string): Promise<Position[]> {
     try {
       const actor = createFlexibleLendingActor(this.canisterContext);
       const profilePrincipal = Principal.fromText(profileId);
-      const stats = await actor.get_profile_stats(profilePrincipal);
+      const [stats, pools] = await Promise.all([
+        actor.get_profile_stats(profilePrincipal),
+        actor.list_pools(),
+      ]);
       const decodedStats = decodeFlexibleUserStats(stats);
+      const dustThresholdsByPoolId = new Map(
+        pools.map((pool) => [
+          pool.principal.toText(),
+          pool.same_asset_borrowing_dust_threshold,
+        ])
+      );
 
       const positionViews = await Promise.all(
         decodedStats.positions.map((position) =>
@@ -94,7 +105,14 @@ export class PositionsModule {
         .filter((view): view is NonNullable<typeof view> => view !== undefined)
         .map(decodeFlexiblePositionView)
         .filter((view): view is NonNullable<typeof view> => view !== null)
-        .map(mapDecodedPositionViewToPosition);
+        .map(mapDecodedPositionViewToPosition)
+        .filter(
+          (position) =>
+            !isSuppliedPositionDust(
+              position,
+              dustThresholdsByPoolId.get(position.poolId)
+            )
+        );
     } catch (error) {
       if (error instanceof LiquidiumError) {
         throw error;
@@ -291,6 +309,18 @@ export class PositionsModule {
 
     return { amount: position.deposited, decimals: position.depositedDecimals };
   }
+}
+
+function isSuppliedPositionDust(
+  position: Position,
+  dustThreshold: bigint | undefined
+): boolean {
+  const hasDebt = position.borrowed > 0n || position.debtInterest > 0n;
+  if (hasDebt || dustThreshold === undefined) {
+    return false;
+  }
+
+  return position.deposited < dustThreshold;
 }
 
 function nativeAmountToUsdScaled(

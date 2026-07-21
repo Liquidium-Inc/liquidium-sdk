@@ -11,6 +11,7 @@ afterEach(() => {
 describe("PositionsModule", () => {
   const PROFILE_ID = "aaaaa-aa";
   const POOL_ID = "rrkah-fqaaa-aaaaa-aaaaq-cai";
+  const BTC_DUST_THRESHOLD_SATS = 150n;
 
   function makePositionView(overrides: Record<string, unknown> = {}) {
     return {
@@ -56,6 +57,16 @@ describe("PositionsModule", () => {
         toText: () => PROFILE_ID,
       },
       ...overrides,
+    };
+  }
+
+  function makePoolRecord(
+    poolId = POOL_ID,
+    dustThreshold = BTC_DUST_THRESHOLD_SATS
+  ) {
+    return {
+      principal: { toText: () => poolId },
+      same_asset_borrowing_dust_threshold: dustThreshold,
     };
   }
 
@@ -164,7 +175,7 @@ describe("PositionsModule", () => {
       .fn()
       .mockResolvedValueOnce([
         makePositionView({
-          deposited_native_now: 100n,
+          deposited_native_now: BTC_DUST_THRESHOLD_SATS,
           pool_id: { toText: () => POOL_ID },
         }),
       ])
@@ -179,6 +190,12 @@ describe("PositionsModule", () => {
     vi.spyOn(Actor, "createActor").mockReturnValue({
       get_profile_stats: getProfileStats,
       get_position: getPosition,
+      list_pools: vi
+        .fn()
+        .mockResolvedValue([
+          makePoolRecord(),
+          makePoolRecord(SECOND_POOL_ID, 10_000n),
+        ]),
     } as never);
     const client = new LiquidiumClient({});
 
@@ -190,7 +207,7 @@ describe("PositionsModule", () => {
       {
         poolId: POOL_ID,
         asset: "BTC",
-        deposited: 100n,
+        deposited: BTC_DUST_THRESHOLD_SATS,
         depositedDecimals: 8n,
         borrowed: 0n,
         borrowedDecimals: 8n,
@@ -213,6 +230,67 @@ describe("PositionsModule", () => {
     expect(getPosition).toHaveBeenCalledTimes(2);
   });
 
+  test("filters a supplied-only position below its asset dust threshold", async () => {
+    // given
+    const getProfileStats = vi.fn().mockResolvedValue({
+      debt: 0n,
+      collateral: 0n,
+      acumulated_interest: 0n,
+      borrowing_power: { max_borrowable_usd: 0n, weighted_max_ltv: 0n },
+      positions: [makePositionRecord()],
+      weighted_liquidation_threshold: 0n,
+    });
+    const getPosition = vi.fn().mockResolvedValue([
+      makePositionView({
+        deposited_native_now: BTC_DUST_THRESHOLD_SATS - 1n,
+      }),
+    ]);
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      get_profile_stats: getProfileStats,
+      get_position: getPosition,
+      list_pools: vi.fn().mockResolvedValue([makePoolRecord()]),
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const positions = await client.positions.listPositions(PROFILE_ID);
+
+    // then
+    expect(positions).toEqual([]);
+  });
+
+  test("retains a debt position when its supplied balance is dust", async () => {
+    // given
+    const BORROWED_AMOUNT_SATS = 1n;
+    const getProfileStats = vi.fn().mockResolvedValue({
+      debt: BORROWED_AMOUNT_SATS,
+      collateral: 0n,
+      acumulated_interest: 0n,
+      borrowing_power: { max_borrowable_usd: 0n, weighted_max_ltv: 0n },
+      positions: [makePositionRecord()],
+      weighted_liquidation_threshold: 0n,
+    });
+    const getPosition = vi.fn().mockResolvedValue([
+      makePositionView({
+        deposited_native_now: BTC_DUST_THRESHOLD_SATS - 1n,
+        debt_native_now: BORROWED_AMOUNT_SATS,
+      }),
+    ]);
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      get_profile_stats: getProfileStats,
+      get_position: getPosition,
+      list_pools: vi.fn().mockResolvedValue([makePoolRecord()]),
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const positions = await client.positions.listPositions(PROFILE_ID);
+
+    // then
+    expect(positions).toHaveLength(1);
+    expect(positions[0]?.borrowed).toBe(BORROWED_AMOUNT_SATS);
+  });
+
   test("skips positions that the canister no longer returns in list", async () => {
     // given
     const getProfileStats = vi.fn().mockResolvedValue({
@@ -226,6 +304,7 @@ describe("PositionsModule", () => {
     vi.spyOn(Actor, "createActor").mockReturnValue({
       get_profile_stats: getProfileStats,
       get_position: vi.fn().mockResolvedValue([]),
+      list_pools: vi.fn().mockResolvedValue([makePoolRecord()]),
     } as never);
     const client = new LiquidiumClient({});
 
@@ -679,12 +758,15 @@ describe("PositionsModule", () => {
       ],
       weighted_liquidation_threshold: 0n,
     });
-    const getPosition = vi
-      .fn()
-      .mockResolvedValue([makePositionView({ deposited_native_now: 100n })]);
+    const getPosition = vi.fn().mockResolvedValue([
+      makePositionView({
+        deposited_native_now: BTC_DUST_THRESHOLD_SATS,
+      }),
+    ]);
     vi.spyOn(Actor, "createActor").mockReturnValue({
       get_profile_stats: getProfileStats,
       get_position: getPosition,
+      list_pools: vi.fn().mockResolvedValue([makePoolRecord()]),
     } as never);
     const client = new LiquidiumClient({});
 
