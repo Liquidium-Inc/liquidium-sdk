@@ -212,6 +212,10 @@ export class PositionsModule {
    * Returns the per-reserve breakdown of a profile's supplies and borrows,
    * joined with pool metadata, rates, and current USD prices.
    *
+   * Supplied-only reserves below their pool's same-asset dust threshold are
+   * omitted. Reserves with active debt remain, with their supplied amount and
+   * earned interest set to zero when the supplied balance is below the threshold.
+   *
    * USD values are scaled to 27 decimals.
    *
    * @param profileId - The Liquidium profile principal text.

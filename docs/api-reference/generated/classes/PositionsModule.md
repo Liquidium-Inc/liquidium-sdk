@@ -46,7 +46,7 @@ Defined in: [packages/client/src/modules/positions/positions.ts:34](https://gith
 
 > **getFullWithdrawAmount**(`profileId`, `poolId`): `Promise`\<[`FullWithdrawAmount`](../interfaces/FullWithdrawAmount.md)\>
 
-Defined in: [packages/client/src/modules/positions/positions.ts:299](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/positions.ts#L299)
+Defined in: [packages/client/src/modules/positions/positions.ts:304](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/positions.ts#L304)
 
 Returns the current full withdraw amount for a position.
 
@@ -80,7 +80,7 @@ Full withdraw amount in the supplied asset's base units.
 
 > **getHealthFactor**(`profileId`): `Promise`\<[`HealthFactor`](../interfaces/HealthFactor.md)\>
 
-Defined in: [packages/client/src/modules/positions/positions.ts:129](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/positions.ts#L129)
+Defined in: [packages/client/src/modules/positions/positions.ts:130](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/positions.ts#L130)
 
 Returns the current health factor for a profile.
 
@@ -104,7 +104,7 @@ The current health factor for the requested profile.
 
 > **getMaxRepayAmount**(`profileId`, `poolId`, `bufferBps?`): `Promise`\<[`MaxRepayAmount`](../interfaces/MaxRepayAmount.md)\>
 
-Defined in: [packages/client/src/modules/positions/positions.ts:268](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/positions.ts#L268)
+Defined in: [packages/client/src/modules/positions/positions.ts:273](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/positions.ts#L273)
 
 Returns the full repayment amount for a position, with a small buffer to
 account for interest that accrues between quote and submit.
@@ -171,7 +171,7 @@ The position for the requested profile and pool, or `null` when no position exis
 
 > **getUserPositionSummary**(`profileId`): `Promise`\<[`UserPositionSummary`](../interfaces/UserPositionSummary.md)\>
 
-Defined in: [packages/client/src/modules/positions/positions.ts:183](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/positions.ts#L183)
+Defined in: [packages/client/src/modules/positions/positions.ts:184](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/positions.ts#L184)
 
 Returns an aggregate summary of a profile's position.
 
@@ -200,10 +200,14 @@ Derived position summary for the requested profile.
 
 > **getUserReserves**(`profileId`): `Promise`\<[`UserReserve`](../interfaces/UserReserve.md)[]\>
 
-Defined in: [packages/client/src/modules/positions/positions.ts:219](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/positions.ts#L219)
+Defined in: [packages/client/src/modules/positions/positions.ts:224](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/positions.ts#L224)
 
 Returns the per-reserve breakdown of a profile's supplies and borrows,
 joined with pool metadata, rates, and current USD prices.
+
+Supplied-only reserves below their pool's same-asset dust threshold are
+omitted. Reserves with active debt remain, with their supplied amount and
+earned interest set to zero when the supplied balance is below the threshold.
 
 USD values are scaled to 27 decimals.
 
@@ -227,7 +231,7 @@ Per-reserve position rows joined with pool metadata and USD values.
 
 > **getUserStats**(`profileId`): `Promise`\<[`UserStats`](../interfaces/UserStats.md)\>
 
-Defined in: [packages/client/src/modules/positions/positions.ts:156](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/positions.ts#L156)
+Defined in: [packages/client/src/modules/positions/positions.ts:157](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/positions.ts#L157)
 
 Returns aggregate borrowing and collateral stats for a profile.
 
