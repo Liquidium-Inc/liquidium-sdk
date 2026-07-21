@@ -17,6 +17,22 @@ Released changes for `@liquidium/client`. This page is generated from [`packages
 
 - e53daf1: Add native ETH and ckETH support across market, lending, positions, quotes, and Simple Loans. Profile inflows support explicit transfer and payable contract-interaction mechanisms and enforce asset deposit minimums.
 
+  ##### Mechanism changes
+
+  - Native ETH supplies support direct transfers to generated EVM deposit addresses and payable contract interactions through the ckETH deposit helper.
+  - ckETH transfers use `Chain.ICP` and the ckETH ICRC ledger.
+  - USDC and USDT contract interactions continue to approve the deposit helper before calling `depositErc20`.
+  - Simple Loans expose native ETH and ckETH transfer targets but do not execute contract interactions.
+
+  ##### Breaking changes
+
+  - `Asset`, `AssetIdentifier`, and `SimpleLoanAsset` now include ETH. Add ETH handling to exhaustive asset mappings and switches.
+  - Complete `PoolCanisterIds` configurations must include `pools.eth`.
+  - Wallet-executed deposits and Simple Loan collateral now enforce asset-specific minimum amounts. Use `getMinimumDepositAmount(asset)` to validate input before submission.
+  - EVM wallet and deposit addresses are validated and returned in checksummed form. Normalize addresses or compare them case-insensitively.
+  - `getDepositAddress(...)` now validates that the requested asset matches the selected Ethereum pool.
+  - Ethereum transaction amounts above the `uint256` maximum are rejected.
+
 #### Patch Changes
 
 - 8205a68: Expose named asset identifier types for each supported asset and transfer-chain pair.
