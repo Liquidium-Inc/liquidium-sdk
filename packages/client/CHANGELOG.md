@@ -1,5 +1,11 @@
 # @liquidium/client
 
+## 0.6.0-rc.2
+
+### Patch Changes
+
+- Hide supplied balances below each pool's dust threshold while preserving active debt, and cap confirmation progress to the confirming state.
+
 ## 0.6.0-rc.1
 
 ### Patch Changes
