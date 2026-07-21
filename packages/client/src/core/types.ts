@@ -101,17 +101,71 @@ export type Chain = (typeof Chain)[keyof typeof Chain];
 /** Chains whose wallets can authorize Liquidium protocol actions. */
 export type SigningChain = typeof Chain.BTC | typeof Chain.ETH;
 
+/** BTC transferred on the Bitcoin chain. */
+export interface BtcOnBtcAssetIdentifier {
+  chain: typeof Chain.BTC;
+  asset: typeof Asset.BTC;
+}
+
+/** ETH transferred on the Ethereum chain. */
+export interface EthOnEthAssetIdentifier {
+  chain: typeof Chain.ETH;
+  asset: typeof Asset.ETH;
+}
+
+/** USDC transferred on the Ethereum chain. */
+export interface UsdcOnEthAssetIdentifier {
+  chain: typeof Chain.ETH;
+  asset: typeof Asset.USDC;
+}
+
+/** USDT transferred on the Ethereum chain. */
+export interface UsdtOnEthAssetIdentifier {
+  chain: typeof Chain.ETH;
+  asset: typeof Asset.USDT;
+}
+
+/** BTC transferred on the Internet Computer chain. */
+export interface BtcOnIcpAssetIdentifier {
+  chain: typeof Chain.ICP;
+  asset: typeof Asset.BTC;
+}
+
+/** ETH transferred on the Internet Computer chain. */
+export interface EthOnIcpAssetIdentifier {
+  chain: typeof Chain.ICP;
+  asset: typeof Asset.ETH;
+}
+
+/** ICP transferred on the Internet Computer chain. */
+export interface IcpOnIcpAssetIdentifier {
+  chain: typeof Chain.ICP;
+  asset: typeof Asset.ICP;
+}
+
+/** USDC transferred on the Internet Computer chain. */
+export interface UsdcOnIcpAssetIdentifier {
+  chain: typeof Chain.ICP;
+  asset: typeof Asset.USDC;
+}
+
+/** USDT transferred on the Internet Computer chain. */
+export interface UsdtOnIcpAssetIdentifier {
+  chain: typeof Chain.ICP;
+  asset: typeof Asset.USDT;
+}
+
 /** Supported asset and transfer-chain combinations. */
 export type AssetIdentifier =
-  | { chain: typeof Chain.BTC; asset: typeof Asset.BTC }
-  | { chain: typeof Chain.ETH; asset: typeof Asset.ETH }
-  | { chain: typeof Chain.ETH; asset: typeof Asset.USDC }
-  | { chain: typeof Chain.ETH; asset: typeof Asset.USDT }
-  | { chain: typeof Chain.ICP; asset: typeof Asset.BTC }
-  | { chain: typeof Chain.ICP; asset: typeof Asset.ETH }
-  | { chain: typeof Chain.ICP; asset: typeof Asset.ICP }
-  | { chain: typeof Chain.ICP; asset: typeof Asset.USDC }
-  | { chain: typeof Chain.ICP; asset: typeof Asset.USDT };
+  | BtcOnBtcAssetIdentifier
+  | EthOnEthAssetIdentifier
+  | UsdcOnEthAssetIdentifier
+  | UsdtOnEthAssetIdentifier
+  | BtcOnIcpAssetIdentifier
+  | EthOnIcpAssetIdentifier
+  | IcpOnIcpAssetIdentifier
+  | UsdcOnIcpAssetIdentifier
+  | UsdtOnIcpAssetIdentifier;
 
 /** Returns whether an asset and chain form a supported SDK identifier. */
 export function isAssetIdentifier(identifier: {

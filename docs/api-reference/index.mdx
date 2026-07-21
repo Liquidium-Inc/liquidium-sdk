@@ -35,6 +35,23 @@ Use [`LiquidiumStatus`](./generated/interfaces/LiquidiumStatus.md) for flow stat
 
 See [Status System](../concepts/status-system.mdx) for UI guidance.
 
+## Asset Identifiers
+
+`AssetIdentifier` is a union of named types for each supported asset and
+transfer-chain pair.
+
+| Type | Asset | Chain |
+| --- | --- | --- |
+| `BtcOnBtcAssetIdentifier` | `BTC` | `BTC` |
+| `EthOnEthAssetIdentifier` | `ETH` | `ETH` |
+| `UsdcOnEthAssetIdentifier` | `USDC` | `ETH` |
+| `UsdtOnEthAssetIdentifier` | `USDT` | `ETH` |
+| `BtcOnIcpAssetIdentifier` | `BTC` | `ICP` |
+| `EthOnIcpAssetIdentifier` | `ETH` | `ICP` |
+| `IcpOnIcpAssetIdentifier` | `ICP` | `ICP` |
+| `UsdcOnIcpAssetIdentifier` | `USDC` | `ICP` |
+| `UsdtOnIcpAssetIdentifier` | `USDT` | `ICP` |
+
 ## Generated Reference
 
 The [generated API reference](./generated/README.md) is built from the current `@liquidium/client` exports.

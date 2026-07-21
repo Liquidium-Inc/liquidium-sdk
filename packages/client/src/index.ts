@@ -34,12 +34,21 @@ export type {
 } from "./core/status";
 export type {
   AssetIdentifier,
+  BtcOnBtcAssetIdentifier,
+  BtcOnIcpAssetIdentifier,
   CanisterIdOverrides,
   CanisterIds,
+  EthOnEthAssetIdentifier,
+  EthOnIcpAssetIdentifier,
   EvmReadClient,
+  IcpOnIcpAssetIdentifier,
   LiquidiumClientConfig,
   PoolCanisterIds,
   SigningChain,
+  UsdcOnEthAssetIdentifier,
+  UsdcOnIcpAssetIdentifier,
+  UsdtOnEthAssetIdentifier,
+  UsdtOnIcpAssetIdentifier,
   Wallet,
 } from "./core/types";
 export {

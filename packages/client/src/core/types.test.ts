@@ -5,6 +5,8 @@ import {
   Chain,
   isAssetIdentifier,
   type SigningChain,
+  type UsdcOnEthAssetIdentifier,
+  type UsdcOnIcpAssetIdentifier,
 } from "./types";
 
 describe("AssetIdentifier", () => {
@@ -72,5 +74,18 @@ describe("AssetIdentifier", () => {
     expectTypeOf<ValidEthIdentifier>().toMatchTypeOf<SupportedIdentifier>();
     expectTypeOf<ValidUsdtIdentifier>().toMatchTypeOf<SupportedIdentifier>();
     expectTypeOf<InvalidBtcIdentifier>().not.toMatchTypeOf<SupportedIdentifier>();
+  });
+
+  test("should preserve named variants when extracting identifiers by asset", () => {
+    // given
+    type ExpectedUsdcIdentifiers =
+      | UsdcOnEthAssetIdentifier
+      | UsdcOnIcpAssetIdentifier;
+
+    // when
+    type ActualUsdcIdentifiers = Extract<AssetIdentifier, { asset: "USDC" }>;
+
+    // then
+    expectTypeOf<ActualUsdcIdentifiers>().toEqualTypeOf<ExpectedUsdcIdentifiers>();
   });
 });
