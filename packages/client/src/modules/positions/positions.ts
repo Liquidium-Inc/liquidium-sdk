@@ -105,12 +105,13 @@ export class PositionsModule {
         .map(decodeFlexiblePositionView)
         .filter((view): view is NonNullable<typeof view> => view !== null)
         .map(mapDecodedPositionViewToPosition)
-        .flatMap((position) =>
-          hideSuppliedPositionDust(
+        .map((position) =>
+          getPositionWithSuppliedDustHidden(
             position,
             dustThresholdsByPoolId.get(position.poolId)
           )
-        );
+        )
+        .filter((position): position is Position => position !== null);
     } catch (error) {
       if (error instanceof LiquidiumError) {
         throw error;
@@ -309,20 +310,21 @@ export class PositionsModule {
   }
 }
 
-function hideSuppliedPositionDust(
+/** Drops dust-only positions and clears the supply side when debt remains. */
+function getPositionWithSuppliedDustHidden(
   position: Position,
   dustThreshold: bigint | undefined
-): Position[] {
+): Position | null {
   if (dustThreshold === undefined || position.deposited >= dustThreshold) {
-    return [position];
+    return position;
   }
 
   const hasDebt = position.borrowed > 0n || position.debtInterest > 0n;
   if (!hasDebt) {
-    return [];
+    return null;
   }
 
-  return [{ ...position, deposited: 0n, earnedInterest: 0n }];
+  return { ...position, deposited: 0n, earnedInterest: 0n };
 }
 
 function nativeAmountToUsdScaled(
