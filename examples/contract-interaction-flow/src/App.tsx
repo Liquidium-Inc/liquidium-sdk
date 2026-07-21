@@ -288,6 +288,10 @@ function ContractInteractionPage() {
       throw new Error("Enter a profile id.");
     }
 
+    const amount = parseAmountToBaseUnits(
+      repaymentAmount,
+      selectedPool.decimals
+    );
     const isCkInflowMode = repaymentInflowMode === "ck";
     if (isCkInflowMode) {
       setStatus("Generating direct ck repayment target...");
@@ -299,6 +303,7 @@ function ContractInteractionPage() {
       });
       setRepaymentResult(
         [
+          `Repayment amount: ${formatAmount(amount, selectedPool.decimals)} ${selectedPool.asset}`,
           `Inflow mode: ${formatInflowMode(repaymentInflowMode)}`,
           "",
           formatSupplyFlow(repaymentFlow),
@@ -310,10 +315,6 @@ function ContractInteractionPage() {
       return;
     }
 
-    const amount = parseAmountToBaseUnits(
-      repaymentAmount,
-      selectedPool.decimals
-    );
     setStatus("Submitting contract interaction repayment...");
     setRepaymentResult("Submitting contract interaction repayment...");
     const repaymentFlow = await submitContractInteractionRepayment({

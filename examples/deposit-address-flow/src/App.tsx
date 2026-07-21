@@ -209,11 +209,6 @@ function SupplyBorrowPage() {
       throw new Error("Enter a txid.");
     }
 
-    if (currentSupplyFlow.target.chain === Chain.ETH) {
-      await trackEthSupplyTxid(txid);
-      return;
-    }
-
     const actionLabel = formatSupplyAction(currentSupplyFlow.target.action);
 
     setStatus(`Registering ${actionLabel.toLowerCase()} txid...`);
@@ -223,6 +218,12 @@ function SupplyBorrowPage() {
       txid,
     });
     saveRecentActivityId(response.txid);
+
+    if (currentSupplyFlow.target.chain === Chain.ETH) {
+      await trackEthSupplyTxid(response.txid);
+      return;
+    }
+
     setSubmitSupplyResult(
       [`${actionLabel} txid registered.`, `Txid: ${response.txid}`].join("\n")
     );
