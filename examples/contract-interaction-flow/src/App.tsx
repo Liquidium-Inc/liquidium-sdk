@@ -28,6 +28,7 @@ import {
   listProfileActivities,
   submitContractInteractionRepayment,
   submitContractInteractionSupply,
+  validateDepositAmount,
   withdrawWithWallet,
 } from "./sdk-example";
 
@@ -223,6 +224,9 @@ function ContractInteractionPage() {
       throw new Error("Enter a profile id.");
     }
 
+    const amount = parseAmountToBaseUnits(supplyAmount, selectedPool.decimals);
+    validateDepositAmount({ amount, asset: selectedPool.asset });
+
     const isCkInflowMode = supplyInflowMode === "ck";
     if (isCkInflowMode) {
       setStatus("Generating direct ck supply target...");
@@ -234,6 +238,7 @@ function ContractInteractionPage() {
       });
       setSupplyResult(
         [
+          `Supply amount: ${formatAmount(amount, selectedPool.decimals)} ${selectedPool.asset}`,
           `Inflow mode: ${formatInflowMode(supplyInflowMode)}`,
           "",
           formatSupplyFlow(supplyFlow),
@@ -245,7 +250,6 @@ function ContractInteractionPage() {
       return;
     }
 
-    const amount = parseAmountToBaseUnits(supplyAmount, selectedPool.decimals);
     setStatus("Submitting contract interaction supply...");
     setSupplyResult("Submitting contract interaction supply...");
     const supplyFlow = await submitContractInteractionSupply({
