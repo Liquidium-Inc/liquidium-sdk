@@ -1,3 +1,8 @@
+// Run this live test with a profile containing a supplied balance below the
+// pool's same-asset dust threshold and outstanding debt in the same pool:
+// LIQUIDIUM_E2E_DUST_PROFILE_ID=<profile-id> LIQUIDIUM_LIVE_E2E=1 \
+//   pnpm exec vitest run --project client-e2e e2e/positions.e2e.test.ts
+
 import { expect, test } from "vitest";
 import { LiquidiumClient } from "../packages/client/src";
 import { describeLive } from "./_internal/live";
