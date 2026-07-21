@@ -288,6 +288,8 @@ describe("PositionsModule", () => {
 
     // then
     expect(positions).toHaveLength(1);
+    expect(positions[0]?.deposited).toBe(0n);
+    expect(positions[0]?.earnedInterest).toBe(0n);
     expect(positions[0]?.borrowed).toBe(BORROWED_AMOUNT_SATS);
   });
 

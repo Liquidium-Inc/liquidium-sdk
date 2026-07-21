@@ -71,9 +71,8 @@ export class PositionsModule {
   }
 
   /**
-   * Lists visible positions for a profile. Supplied-only positions below their
-   * pool's same-asset dust threshold are omitted, while positions with debt are
-   * retained.
+   * Lists visible positions for a profile. Supply balances below their pool's
+   * same-asset dust threshold are hidden without removing active debt.
    *
    * @param profileId - The Liquidium profile principal text.
    * @returns Visible positions currently associated with the requested profile.
@@ -106,12 +105,11 @@ export class PositionsModule {
         .map(decodeFlexiblePositionView)
         .filter((view): view is NonNullable<typeof view> => view !== null)
         .map(mapDecodedPositionViewToPosition)
-        .filter(
-          (position) =>
-            !isSuppliedPositionDust(
-              position,
-              dustThresholdsByPoolId.get(position.poolId)
-            )
+        .flatMap((position) =>
+          hideSuppliedPositionDust(
+            position,
+            dustThresholdsByPoolId.get(position.poolId)
+          )
         );
     } catch (error) {
       if (error instanceof LiquidiumError) {
@@ -311,16 +309,20 @@ export class PositionsModule {
   }
 }
 
-function isSuppliedPositionDust(
+function hideSuppliedPositionDust(
   position: Position,
   dustThreshold: bigint | undefined
-): boolean {
-  const hasDebt = position.borrowed > 0n || position.debtInterest > 0n;
-  if (hasDebt || dustThreshold === undefined) {
-    return false;
+): Position[] {
+  if (dustThreshold === undefined || position.deposited >= dustThreshold) {
+    return [position];
   }
 
-  return position.deposited < dustThreshold;
+  const hasDebt = position.borrowed > 0n || position.debtInterest > 0n;
+  if (!hasDebt) {
+    return [];
+  }
+
+  return [{ ...position, deposited: 0n, earnedInterest: 0n }];
 }
 
 function nativeAmountToUsdScaled(

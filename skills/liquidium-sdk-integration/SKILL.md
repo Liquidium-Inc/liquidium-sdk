@@ -302,9 +302,9 @@ client.positions.getFullWithdrawAmount(profileId, poolId);         // current su
 ```
 
 `listPositions(...)` and `getUserReserves(...)` omit supplied-only balances
-below each pool's `sameAssetBorrowingDustThreshold`. Positions containing debt
-are always returned, even when their supplied balance is dust. Use
-`getPosition(...)` when the raw position for a specific pool is required.
+below each pool's `sameAssetBorrowingDustThreshold`. When the same position has
+debt, it remains in the result with its supplied balance and earned interest set
+to zero. Use `getPosition(...)` when the raw position is required.
 
 `getFullWithdrawAmount(...)` returns `{ amount, decimals }`. Pass `amount` to
 `client.lending.withdraw(...)` or `prepareWithdraw(...)`; use `decimals` only
