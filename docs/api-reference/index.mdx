@@ -14,7 +14,7 @@ The SDK exports `LiquidiumClient`, error types, constants, module request types,
 | --- | --- |
 | `client.accounts` | Profile lifecycle, account lookup, and linked wallets |
 | `client.activities` | Activity lists and receipt-oriented status |
-| `client.history` | Pool and user history through the Liquidium SDK API |
+| `client.history` | User history and confirmed protocol-wide activity through the Liquidium SDK API |
 | `client.simpleLoans` | Accountless Simple Loans with generated deposit and repayment targets |
 | `client.lending` | Supply, borrow, withdraw, and inflow reporting |
 | `client.market` | Pools, prices, and pool rate lookups |
@@ -34,6 +34,19 @@ Use [`LiquidiumStatus`](./generated/interfaces/LiquidiumStatus.md) for flow stat
 | [`GetActivityStatusResponse`](./generated/type-aliases/GetActivityStatusResponse.md) | Found or missing result from `client.activities.getStatus(...)` |
 
 See [Status System](../concepts/status-system.mdx) for UI guidance.
+
+## History
+
+Use `client.history.getUserTransactionHistory(profileId, filters?)` and
+`client.history.getLiquidationHistory(profileId, filters?)` for paginated
+profile history. Use canonical `operations` and `states` filters and continue
+pagination with the opaque `nextCursor` value.
+
+Use `client.history.getProtocolActivity(filters?)` for recent confirmed activity
+across the protocol. It calls `GET /v2/history/activities`, accepts `poolId`,
+`operations`, and `limit`, and returns an unpaginated array with each pool's
+`asset`, `decimals`, and base-unit `amount`. History and protocol activity
+entries expose `txids?: string[]`.
 
 ## Asset Identifiers
 

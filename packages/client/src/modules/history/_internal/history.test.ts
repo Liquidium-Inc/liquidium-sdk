@@ -293,4 +293,22 @@ describe("HistoryModule", () => {
       }
     );
   });
+
+  test("rejects transaction history limits above the API maximum", async () => {
+    // given
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    const client = new LiquidiumClient({});
+    const LIMIT_ABOVE_MAXIMUM = 201;
+
+    // when
+    const result = client.history.getUserTransactionHistory("profile-1", {
+      limit: LIMIT_ABOVE_MAXIMUM,
+    });
+
+    // then
+    await expect(result).rejects.toThrow(
+      "History limit must be an integer between 1 and 200"
+    );
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
 });
