@@ -29,3 +29,16 @@ import { estimateBorrowApy, estimateSupplyApy } from "@liquidium/client";
 const estimatedBorrowApy = estimateBorrowApy(pool.borrowingRate);
 const estimatedSupplyApy = estimateSupplyApy(pool.lendingRate);
 ```
+
+## Position collateral
+
+Liquidium does not have a per-position collateral toggle. Every credited supply
+balance participates in profile collateral automatically. `Position.isCollateral`
+is therefore `true` whenever the protocol reports a supplied balance for that
+position.
+
+`client.positions.listPositions(...)` hides supplied dust below the pool's
+same-asset threshold while preserving active debt. In that case, a returned
+position can have `isCollateral: true` while its displayed `deposited` amount is
+zero. The protocol still includes the credited dust balance in aggregate
+collateral.

@@ -9,6 +9,8 @@ export interface Position {
   asset: Asset;
   /** Current supplied amount in base units. */
   deposited: bigint;
+  /** Whether this position has a credited supply balance used as collateral. */
+  isCollateral: boolean;
   /** Decimal scale for supplied amounts. */
   depositedDecimals: bigint;
   /** Borrowed principal in base units. */
@@ -87,7 +89,7 @@ export interface UserReserve {
   pool: Pool;
   /** Current USD price for the reserve asset. */
   priceUsd: number;
-  /** Supplied value in USD-scaled units. */
+  /** Supplied collateral value in USD-scaled units. */
   suppliedUsd: bigint;
   /** Borrowed value in USD-scaled units. */
   borrowedUsd: bigint;

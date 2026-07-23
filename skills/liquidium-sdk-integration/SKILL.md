@@ -318,6 +318,11 @@ below each pool's `sameAssetBorrowingDustThreshold`. When the same position has
 debt, it remains in the result with its supplied balance and earned interest set
 to zero. Use `getPosition(...)` when the raw position is required.
 
+Every credited supply balance participates in collateral automatically; the
+protocol has no per-position collateral toggle. `Position.isCollateral` reports
+whether the position has a credited supplied balance. A debt position whose
+supplied dust is hidden can still report `isCollateral: true`.
+
 `getFullWithdrawAmount(...)` returns `{ amount, decimals }`. Pass `amount` to
 `client.lending.withdraw(...)` or `prepareWithdraw(...)`; use `decimals` only
 for UI formatting. Do not add `earnedInterest` to the returned amount.

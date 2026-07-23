@@ -24,6 +24,7 @@ export function mapDecodedPositionViewToPosition(
     poolId: view.pool_id.toText(),
     asset: view.asset,
     deposited: view.deposited_native_now,
+    isCollateral: view.deposited_native_now > 0n,
     depositedDecimals: nativeDecimals,
     borrowed: view.debt_native_now,
     borrowedDecimals: nativeDecimals,
