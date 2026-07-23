@@ -6,7 +6,7 @@
 
 # Interface: SimpleLoanFullLendWithdrawalRequestedEventType
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:267](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L267)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:269](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L269)
 
 Full collateral withdrawal request event payload.
 
@@ -16,7 +16,7 @@ Full collateral withdrawal request event payload.
 
 > **account**: [`LiquidiumAccount`](../type-aliases/LiquidiumAccount.md)
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:270](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L270)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:272](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L272)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [packages/client/src/modules/simple-loans/types.ts:270](https://gith
 
 > **loanId**: `bigint`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:269](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L269)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:271](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L271)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [packages/client/src/modules/simple-loans/types.ts:269](https://gith
 
 > **poolId**: `string`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:271](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L271)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:273](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L273)
 
 ***
 
@@ -40,4 +40,4 @@ Defined in: [packages/client/src/modules/simple-loans/types.ts:271](https://gith
 
 > **type**: `"FullLendWithdrawalRequested"`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:268](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L268)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:270](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L270)

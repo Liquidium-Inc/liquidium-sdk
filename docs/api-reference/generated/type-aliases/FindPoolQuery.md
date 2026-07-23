@@ -8,6 +8,6 @@
 
 > **FindPoolQuery** = [`AssetIdentifier`](AssetIdentifier.md)
 
-Defined in: [packages/client/src/modules/market/types.ts:67](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/types.ts#L67)
+Defined in: [packages/client/src/modules/market/types.ts:81](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/types.ts#L81)
 
 Supported Chain + Asset identifier used to find its backing lending pool.

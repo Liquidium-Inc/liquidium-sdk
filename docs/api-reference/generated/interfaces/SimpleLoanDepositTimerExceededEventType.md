@@ -6,7 +6,7 @@
 
 # Interface: SimpleLoanDepositTimerExceededEventType
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:284](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L284)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:286](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L286)
 
 Deposit timer exceeded event payload.
 
@@ -16,7 +16,7 @@ Deposit timer exceeded event payload.
 
 > **loanId**: `bigint`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:286](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L286)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:288](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L288)
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: [packages/client/src/modules/simple-loans/types.ts:286](https://gith
 
 > **type**: `"DepositTimerExceeded"`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:285](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L285)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:287](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L287)

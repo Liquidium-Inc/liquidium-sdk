@@ -6,7 +6,7 @@
 
 # Interface: SimpleLoanInitialDeposit
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:373](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L373)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:375](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L375)
 
 Initial collateral deposit quote returned when a simple loan is created.
 
@@ -14,9 +14,9 @@ Initial collateral deposit quote returned when a simple loan is created.
 
 ### asset
 
-> **asset**: `"BTC"` \| `"ICP"` \| `"USDC"` \| `"USDT"`
+> **asset**: `"BTC"` \| `"ETH"` \| `"ICP"` \| `"USDC"` \| `"USDT"`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:379](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L379)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:381](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L381)
 
 Collateral asset to deposit.
 
@@ -26,7 +26,7 @@ Collateral asset to deposit.
 
 > **collateralAmount**: `bigint`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:377](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L377)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:379](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L379)
 
 Intended credited collateral amount in base units, before inflow fees.
 
@@ -36,7 +36,7 @@ Intended credited collateral amount in base units, before inflow fees.
 
 > **decimals**: `bigint`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:375](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L375)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:377](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L377)
 
 Decimal scale for `amount`, `collateralAmount`, and `inflowFeeAmount`.
 
@@ -46,7 +46,7 @@ Decimal scale for `amount`, `collateralAmount`, and `inflowFeeAmount`.
 
 > **detectedTimestamp**: `bigint` \| `null`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:383](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L383)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:385](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L385)
 
 Unix timestamp in seconds when the collateral deposit was detected, or null before detection.
 
@@ -56,7 +56,7 @@ Unix timestamp in seconds when the collateral deposit was detected, or null befo
 
 > **expiryTimestamp**: `bigint` \| `null`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:385](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L385)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:387](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L387)
 
 Unix timestamp in seconds when the collateral deposit window expires, or null before detection when unavailable.
 
@@ -66,6 +66,6 @@ Unix timestamp in seconds when the collateral deposit window expires, or null be
 
 > **targets**: `Partial`\<`Record`\<[`Chain`](../type-aliases/Chain.md), [`SimpleLoanInitialDepositTargetQuote`](SimpleLoanInitialDepositTargetQuote.md)\>\>
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:381](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L381)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:383](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L383)
 
 Available collateral deposit targets keyed by the actual transfer chain.

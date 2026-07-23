@@ -6,7 +6,7 @@
 
 # Interface: SimpleLoanDepositTimerStartedEventType
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:316](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L316)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:318](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L318)
 
 Deposit timer started event payload.
 
@@ -16,7 +16,7 @@ Deposit timer started event payload.
 
 > **loanId**: `bigint`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:318](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L318)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:320](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L320)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [packages/client/src/modules/simple-loans/types.ts:318](https://gith
 
 > **timestamp**: `bigint`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:320](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L320)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:322](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L322)
 
 Unix timestamp in seconds when the deposit timer started.
 
@@ -34,4 +34,4 @@ Unix timestamp in seconds when the deposit timer started.
 
 > **type**: `"DepositTimerStarted"`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:317](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L317)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:319](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L319)

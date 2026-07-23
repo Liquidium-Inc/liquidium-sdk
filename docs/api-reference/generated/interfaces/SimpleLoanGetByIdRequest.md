@@ -6,7 +6,7 @@
 
 # Interface: SimpleLoanGetByIdRequest
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:157](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L157)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:159](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L159)
 
 Lookup request for loading a simple loan by numeric canister id.
 
@@ -16,6 +16,6 @@ Lookup request for loading a simple loan by numeric canister id.
 
 > **loanId**: `bigint`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:159](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L159)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:161](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L161)
 
 Canister-assigned loan id.

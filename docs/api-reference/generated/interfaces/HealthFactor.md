@@ -14,11 +14,21 @@ Health factor and supporting aggregate stats for a profile.
 
 ### healthFactor
 
-> **healthFactor**: `bigint`
+> **healthFactor**: `bigint` \| `null`
 
 Defined in: [packages/client/src/modules/positions/types.ts:55](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/types.ts#L55)
 
-Current health factor, scaled by protocol rate decimals.
+Health factor scaled by `healthFactorDecimals`, or `null` with no debt.
+
+***
+
+### healthFactorDecimals
+
+> **healthFactorDecimals**: `bigint`
+
+Defined in: [packages/client/src/modules/positions/types.ts:57](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/types.ts#L57)
+
+Decimal scale for a finite `healthFactor`.
 
 ***
 
@@ -26,6 +36,6 @@ Current health factor, scaled by protocol rate decimals.
 
 > **userStats**: [`UserStats`](UserStats.md)
 
-Defined in: [packages/client/src/modules/positions/types.ts:57](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/types.ts#L57)
+Defined in: [packages/client/src/modules/positions/types.ts:59](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/types.ts#L59)
 
 Aggregate stats used to derive the health factor.

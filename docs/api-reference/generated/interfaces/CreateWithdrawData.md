@@ -6,7 +6,7 @@
 
 # Interface: CreateWithdrawData
 
-Defined in: [packages/client/src/modules/lending/types.ts:138](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L138)
+Defined in: [packages/client/src/modules/lending/types.ts:141](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L141)
 
 Prepared withdraw request data embedded in the signable action.
 
@@ -20,10 +20,11 @@ Prepared withdraw request data embedded in the signable action.
 
 > **amount**: `bigint`
 
-Defined in: [packages/client/src/modules/lending/types.ts:128](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L128)
+Defined in: [packages/client/src/modules/lending/types.ts:131](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L131)
 
 Amount to withdraw in the pool asset's base units. BTC withdrawals require
-at least 5,000 sats. USDC and USDT withdrawals require at least 1 token.
+at least 5,000 sats, ETH requires at least 0.005 ETH, and USDC and USDT
+require at least 1 token.
 
 #### Inherited from
 
@@ -35,7 +36,7 @@ at least 5,000 sats. USDC and USDT withdrawals require at least 1 token.
 
 > **chain**: [`Chain`](../type-aliases/Chain.md)
 
-Defined in: [packages/client/src/modules/lending/types.ts:130](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L130)
+Defined in: [packages/client/src/modules/lending/types.ts:133](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L133)
 
 Chain where withdrawn funds should arrive.
 
@@ -49,7 +50,7 @@ Chain where withdrawn funds should arrive.
 
 > **expiryTimestamp**: `bigint`
 
-Defined in: [packages/client/src/modules/lending/types.ts:140](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L140)
+Defined in: [packages/client/src/modules/lending/types.ts:143](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L143)
 
 Unix expiry timestamp in seconds, included in the signed message.
 
@@ -59,7 +60,7 @@ Unix expiry timestamp in seconds, included in the signed message.
 
 > **poolId**: `string`
 
-Defined in: [packages/client/src/modules/lending/types.ts:123](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L123)
+Defined in: [packages/client/src/modules/lending/types.ts:125](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L125)
 
 Pool principal text to withdraw from.
 
@@ -73,7 +74,7 @@ Pool principal text to withdraw from.
 
 > **profileId**: `string`
 
-Defined in: [packages/client/src/modules/lending/types.ts:121](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L121)
+Defined in: [packages/client/src/modules/lending/types.ts:123](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L123)
 
 Liquidium profile principal text.
 
@@ -87,7 +88,7 @@ Liquidium profile principal text.
 
 > **receiver**: [`LiquidiumAccountInput`](../type-aliases/LiquidiumAccountInput.md)
 
-Defined in: [packages/client/src/modules/lending/types.ts:132](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L132)
+Defined in: [packages/client/src/modules/lending/types.ts:135](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L135)
 
 Destination that receives the withdrawn asset.
 
@@ -101,7 +102,7 @@ Destination that receives the withdrawn asset.
 
 > **signerWalletAddress**: `string`
 
-Defined in: [packages/client/src/modules/lending/types.ts:134](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L134)
+Defined in: [packages/client/src/modules/lending/types.ts:137](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L137)
 
 Wallet address that signs the withdraw authorization.
 

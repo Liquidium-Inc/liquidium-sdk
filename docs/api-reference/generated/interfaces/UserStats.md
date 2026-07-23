@@ -68,4 +68,4 @@ Decimal scale for `debt`.
 
 Defined in: [packages/client/src/modules/positions/types.ts:47](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/types.ts#L47)
 
-Weighted liquidation threshold, scaled by protocol rate decimals.
+Weighted liquidation threshold in basis points.

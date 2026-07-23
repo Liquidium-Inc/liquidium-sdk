@@ -6,8 +6,8 @@
 
 # Type Alias: AssetIdentifier
 
-> **AssetIdentifier** = \{ `asset`: *typeof* [`BTC`](../variables/Asset.md#btc); `chain`: *typeof* [`BTC`](../variables/Chain.md#btc); \} \| \{ `asset`: *typeof* [`USDC`](../variables/Asset.md#usdc); `chain`: *typeof* [`ETH`](../variables/Chain.md#eth); \} \| \{ `asset`: *typeof* [`USDT`](../variables/Asset.md#usdt); `chain`: *typeof* [`ETH`](../variables/Chain.md#eth); \} \| \{ `asset`: *typeof* [`BTC`](../variables/Asset.md#btc); `chain`: *typeof* [`ICP`](../variables/Chain.md#icp); \} \| \{ `asset`: *typeof* [`ICP`](../variables/Asset.md#icp); `chain`: *typeof* [`ICP`](../variables/Chain.md#icp); \} \| \{ `asset`: *typeof* [`USDC`](../variables/Asset.md#usdc); `chain`: *typeof* [`ICP`](../variables/Chain.md#icp); \} \| \{ `asset`: *typeof* [`USDT`](../variables/Asset.md#usdt); `chain`: *typeof* [`ICP`](../variables/Chain.md#icp); \}
+> **AssetIdentifier** = [`BtcOnBtcAssetIdentifier`](../interfaces/BtcOnBtcAssetIdentifier.md) \| [`EthOnEthAssetIdentifier`](../interfaces/EthOnEthAssetIdentifier.md) \| [`UsdcOnEthAssetIdentifier`](../interfaces/UsdcOnEthAssetIdentifier.md) \| [`UsdtOnEthAssetIdentifier`](../interfaces/UsdtOnEthAssetIdentifier.md) \| [`BtcOnIcpAssetIdentifier`](../interfaces/BtcOnIcpAssetIdentifier.md) \| [`EthOnIcpAssetIdentifier`](../interfaces/EthOnIcpAssetIdentifier.md) \| [`IcpOnIcpAssetIdentifier`](../interfaces/IcpOnIcpAssetIdentifier.md) \| [`UsdcOnIcpAssetIdentifier`](../interfaces/UsdcOnIcpAssetIdentifier.md) \| [`UsdtOnIcpAssetIdentifier`](../interfaces/UsdtOnIcpAssetIdentifier.md)
 
-Defined in: [packages/client/src/core/types.ts:102](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L102)
+Defined in: [packages/client/src/core/types.ts:159](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L159)
 
 Supported asset and transfer-chain combinations.

@@ -6,7 +6,7 @@
 
 # Interface: SimpleLoanAuthorization
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:222](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L222)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:224](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L224)
 
 Authentication metadata for warmed Simple Loans profiles.
 
@@ -16,7 +16,7 @@ Authentication metadata for warmed Simple Loans profiles.
 
 > **address**: `string`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:226](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L226)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:228](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L228)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [packages/client/src/modules/simple-loans/types.ts:226](https://gith
 
 > **derivationIndex**: `Uint8Array`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:224](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L224)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:226](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L226)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [packages/client/src/modules/simple-loans/types.ts:224](https://gith
 
 > **publicKey**: `Uint8Array`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:225](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L225)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:227](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L227)
 
 ***
 
@@ -40,4 +40,4 @@ Defined in: [packages/client/src/modules/simple-loans/types.ts:225](https://gith
 
 > **type**: `"EthSignature"`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:223](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L223)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:225](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L225)

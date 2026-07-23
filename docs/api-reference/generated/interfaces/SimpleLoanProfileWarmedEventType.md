@@ -6,7 +6,7 @@
 
 # Interface: SimpleLoanProfileWarmedEventType
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:300](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L300)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:302](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L302)
 
 Profile-warmed event payload.
 
@@ -16,7 +16,7 @@ Profile-warmed event payload.
 
 > **derivationIndex**: `Uint8Array`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:302](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L302)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:304](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L304)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [packages/client/src/modules/simple-loans/types.ts:302](https://gith
 
 > **ethAddress**: `string`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:304](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L304)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:306](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L306)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [packages/client/src/modules/simple-loans/types.ts:304](https://gith
 
 > **profileId**: `string`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:305](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L305)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:307](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L307)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [packages/client/src/modules/simple-loans/types.ts:305](https://gith
 
 > **type**: `"ProfileWarmed"`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:301](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L301)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:303](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L303)
 
 ***
 
@@ -48,4 +48,4 @@ Defined in: [packages/client/src/modules/simple-loans/types.ts:301](https://gith
 
 > **warmedProfileId**: `bigint`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:303](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L303)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:305](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L305)

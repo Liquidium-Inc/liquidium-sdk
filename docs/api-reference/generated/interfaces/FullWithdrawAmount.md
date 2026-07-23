@@ -6,7 +6,7 @@
 
 # Interface: FullWithdrawAmount
 
-Defined in: [packages/client/src/modules/positions/types.ts:107](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/types.ts#L107)
+Defined in: [packages/client/src/modules/positions/types.ts:111](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/types.ts#L111)
 
 Full withdraw amount for a position.
 
@@ -16,7 +16,7 @@ Full withdraw amount for a position.
 
 > **amount**: `bigint`
 
-Defined in: [packages/client/src/modules/positions/types.ts:109](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/types.ts#L109)
+Defined in: [packages/client/src/modules/positions/types.ts:113](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/types.ts#L113)
 
 Amount to withdraw in the supplied asset's base units.
 
@@ -26,6 +26,6 @@ Amount to withdraw in the supplied asset's base units.
 
 > **decimals**: `bigint`
 
-Defined in: [packages/client/src/modules/positions/types.ts:111](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/types.ts#L111)
+Defined in: [packages/client/src/modules/positions/types.ts:115](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/types.ts#L115)
 
 Decimal scale for `amount`.

@@ -8,7 +8,7 @@
 
 > **CanisterIdOverrides** = `Omit`\<`Partial`\<[`CanisterIds`](../interfaces/CanisterIds.md)\>, `"pools"`\> & `object`
 
-Defined in: [packages/client/src/core/types.ts:67](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L67)
+Defined in: [packages/client/src/core/types.ts:69](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L69)
 
 Custom canister principal overrides accepted by client configuration.
 

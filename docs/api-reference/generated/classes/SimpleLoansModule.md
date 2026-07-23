@@ -6,7 +6,7 @@
 
 # Class: SimpleLoansModule
 
-Defined in: [packages/client/src/modules/simple-loans/simple-loans.ts:312](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/simple-loans.ts#L312)
+Defined in: [packages/client/src/modules/simple-loans/simple-loans.ts:319](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/simple-loans.ts#L319)
 
 Accountless Simple Loans creation, lookup, recovery, and canister query helpers.
 
@@ -16,7 +16,7 @@ Accountless Simple Loans creation, lookup, recovery, and canister query helpers.
 
 > **new SimpleLoansModule**(`canisterContext`, `apiClient`, `activities`, `lending`, `positions`): `SimpleLoansModule`
 
-Defined in: [packages/client/src/modules/simple-loans/simple-loans.ts:313](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/simple-loans.ts#L313)
+Defined in: [packages/client/src/modules/simple-loans/simple-loans.ts:320](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/simple-loans.ts#L320)
 
 #### Parameters
 
@@ -50,7 +50,7 @@ Defined in: [packages/client/src/modules/simple-loans/simple-loans.ts:313](https
 
 > **countWarmedProfiles**(): `Promise`\<`bigint`\>
 
-Defined in: [packages/client/src/modules/simple-loans/simple-loans.ts:526](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/simple-loans.ts#L526)
+Defined in: [packages/client/src/modules/simple-loans/simple-loans.ts:533](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/simple-loans.ts#L533)
 
 Returns the current size of the warmed-profile pool via direct query.
 
@@ -66,7 +66,7 @@ Number of warmed profiles available on the canister.
 
 > **create**(`request`): `Promise`\<[`SimpleLoan`](../interfaces/SimpleLoan.md)\>
 
-Defined in: [packages/client/src/modules/simple-loans/simple-loans.ts:339](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/simple-loans.ts#L339)
+Defined in: [packages/client/src/modules/simple-loans/simple-loans.ts:346](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/simple-loans.ts#L346)
 
 Creates a profileless simple loan and returns canonical canister state plus
 generated initial-deposit and repayment quote targets.
@@ -102,7 +102,7 @@ Hydrated loan state plus generated initial-deposit and repayment quote targets.
 
 > **find**(`query`): `Promise`\<[`SimpleLoanFindResult`](../interfaces/SimpleLoanFindResult.md)[]\>
 
-Defined in: [packages/client/src/modules/simple-loans/simple-loans.ts:426](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/simple-loans.ts#L426)
+Defined in: [packages/client/src/modules/simple-loans/simple-loans.ts:433](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/simple-loans.ts#L433)
 
 Finds simple loans by short reference, numeric loan id string, address, or transaction id.
 
@@ -129,7 +129,7 @@ Matching loan ids and references from the search index.
 
 > **get**(`request`): `Promise`\<[`SimpleLoan`](../interfaces/SimpleLoan.md)\>
 
-Defined in: [packages/client/src/modules/simple-loans/simple-loans.ts:407](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/simple-loans.ts#L407)
+Defined in: [packages/client/src/modules/simple-loans/simple-loans.ts:414](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/simple-loans.ts#L414)
 
 Resolves canonical canister state by loan id or short reference.
 
@@ -156,7 +156,7 @@ Hydrated loan state plus generated initial-deposit and repayment quote targets.
 
 > **getConfig**(): `Promise`\<[`SimpleLoanConfig`](../interfaces/SimpleLoanConfig.md)\>
 
-Defined in: [packages/client/src/modules/simple-loans/simple-loans.ts:445](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/simple-loans.ts#L445)
+Defined in: [packages/client/src/modules/simple-loans/simple-loans.ts:452](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/simple-loans.ts#L452)
 
 Returns the active Simple Loans canister config via direct query.
 
@@ -172,7 +172,7 @@ Active canister configuration.
 
 > **getEvent**(`eventId`): `Promise`\<[`SimpleLoanEvent`](../interfaces/SimpleLoanEvent.md) \| `null`\>
 
-Defined in: [packages/client/src/modules/simple-loans/simple-loans.ts:465](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/simple-loans.ts#L465)
+Defined in: [packages/client/src/modules/simple-loans/simple-loans.ts:472](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/simple-loans.ts#L472)
 
 Returns a single canister event by id via direct query.
 
@@ -196,7 +196,7 @@ The event when found, otherwise `null`.
 
 > **listAccessList**(): `Promise`\<`string`[]\>
 
-Defined in: [packages/client/src/modules/simple-loans/simple-loans.ts:509](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/simple-loans.ts#L509)
+Defined in: [packages/client/src/modules/simple-loans/simple-loans.ts:516](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/simple-loans.ts#L516)
 
 Returns principals authorized for protected update callbacks.
 
@@ -212,7 +212,7 @@ Principal text values on the canister access list.
 
 > **listEvents**(`request`): `Promise`\<[`SimpleLoanEvent`](../interfaces/SimpleLoanEvent.md)[]\>
 
-Defined in: [packages/client/src/modules/simple-loans/simple-loans.ts:487](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/simple-loans.ts#L487)
+Defined in: [packages/client/src/modules/simple-loans/simple-loans.ts:494](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/simple-loans.ts#L494)
 
 Returns a page of canister events via direct query.
 
@@ -236,7 +236,7 @@ Canister events in ascending id order.
 
 > **listWarmedProfiles**(): `Promise`\<[`SimpleLoanWarmedProfile`](../interfaces/SimpleLoanWarmedProfile.md)[]\>
 
-Defined in: [packages/client/src/modules/simple-loans/simple-loans.ts:544](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/simple-loans.ts#L544)
+Defined in: [packages/client/src/modules/simple-loans/simple-loans.ts:551](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/simple-loans.ts#L551)
 
 Returns warmed profiles currently available for future simple loans.
 

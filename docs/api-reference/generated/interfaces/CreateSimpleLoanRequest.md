@@ -6,7 +6,7 @@
 
 # Interface: CreateSimpleLoanRequest
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:130](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L130)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:132](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L132)
 
 Parameters for creating an accountless simple loan.
 
@@ -24,7 +24,7 @@ pool decimals.
 
 > **borrow**: [`CreateSimpleLoanBorrow`](../type-aliases/CreateSimpleLoanBorrow.md)
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:134](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L134)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:136](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L136)
 
 Borrow leg: pool, asset, amount, delivery chain, and destination.
 
@@ -34,7 +34,7 @@ Borrow leg: pool, asset, amount, delivery chain, and destination.
 
 > **collateral**: [`CreateSimpleLoanCollateral`](CreateSimpleLoanCollateral.md)
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:132](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L132)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:134](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L134)
 
 Collateral leg: pool, asset, and amount the user deposits.
 
@@ -44,7 +44,7 @@ Collateral leg: pool, asset, and amount the user deposits.
 
 > **depositWindowSeconds**: `bigint`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:153](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L153)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:155](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L155)
 
 Seconds allowed for the user to send collateral after loan creation.
 
@@ -58,7 +58,7 @@ simple loan flow can time out. Internally this is sent to the canister as
 
 > **ltvMaxBps**: `bigint`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:145](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L145)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:147](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L147)
 
 Maximum allowed loan-to-value ratio in basis points.
 
@@ -73,6 +73,6 @@ this limit.
 
 > **refund**: [`CreateSimpleLoanRefund`](CreateSimpleLoanRefund.md)
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:136](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L136)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:138](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L138)
 
 Refund leg: chain and destination for returned collateral.

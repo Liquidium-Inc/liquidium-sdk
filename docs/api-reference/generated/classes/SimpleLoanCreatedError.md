@@ -6,7 +6,7 @@
 
 # Class: SimpleLoanCreatedError
 
-Defined in: [packages/client/src/modules/simple-loans/simple-loans.ts:293](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/simple-loans.ts#L293)
+Defined in: [packages/client/src/modules/simple-loans/simple-loans.ts:300](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/simple-loans.ts#L300)
 
 A loan was created remotely, but the SDK could not load its enriched state.
 Retry with `simpleLoans.get({ loanId })`; do not create the loan again.
@@ -21,7 +21,7 @@ Retry with `simpleLoans.get({ loanId })`; do not create the loan again.
 
 > **new SimpleLoanCreatedError**(`loanId`, `cause`): `SimpleLoanCreatedError`
 
-Defined in: [packages/client/src/modules/simple-loans/simple-loans.ts:299](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/simple-loans.ts#L299)
+Defined in: [packages/client/src/modules/simple-loans/simple-loans.ts:306](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/simple-loans.ts#L306)
 
 #### Parameters
 
@@ -47,7 +47,7 @@ Defined in: [packages/client/src/modules/simple-loans/simple-loans.ts:299](https
 
 > `readonly` **cause**: `unknown`
 
-Defined in: [packages/client/src/modules/simple-loans/simple-loans.ts:297](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/simple-loans.ts#L297)
+Defined in: [packages/client/src/modules/simple-loans/simple-loans.ts:304](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/simple-loans.ts#L304)
 
 #### Overrides
 
@@ -59,7 +59,7 @@ Defined in: [packages/client/src/modules/simple-loans/simple-loans.ts:297](https
 
 > `readonly` **code**: `"SIMPLE_LOAN_HYDRATION_FAILED"`
 
-Defined in: [packages/client/src/modules/simple-loans/simple-loans.ts:294](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/simple-loans.ts#L294)
+Defined in: [packages/client/src/modules/simple-loans/simple-loans.ts:301](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/simple-loans.ts#L301)
 
 ***
 
@@ -67,7 +67,7 @@ Defined in: [packages/client/src/modules/simple-loans/simple-loans.ts:294](https
 
 > `readonly` **loanId**: `bigint`
 
-Defined in: [packages/client/src/modules/simple-loans/simple-loans.ts:295](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/simple-loans.ts#L295)
+Defined in: [packages/client/src/modules/simple-loans/simple-loans.ts:302](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/simple-loans.ts#L302)
 
 ***
 
@@ -99,7 +99,7 @@ Defined in: node\_modules/.pnpm/typescript@5.9.3/node\_modules/typescript/lib/li
 
 > `readonly` **ref**: `string`
 
-Defined in: [packages/client/src/modules/simple-loans/simple-loans.ts:296](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/simple-loans.ts#L296)
+Defined in: [packages/client/src/modules/simple-loans/simple-loans.ts:303](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/simple-loans.ts#L303)
 
 ***
 

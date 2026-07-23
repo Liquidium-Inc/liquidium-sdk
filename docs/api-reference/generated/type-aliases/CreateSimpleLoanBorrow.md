@@ -8,7 +8,7 @@
 
 > **CreateSimpleLoanBorrow** = [`AssetIdentifier`](AssetIdentifier.md) & `object`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:46](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L46)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:47](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L47)
 
 Borrow leg used when creating a simple loan.
 
@@ -23,8 +23,9 @@ Borrow leg used when creating a simple loan.
 
 Amount to borrow, in the borrow asset's base units.
 
-For USDC/USDT, convert the UI amount using the selected borrow pool's
-`decimals` value before passing it here.
+ETH and ckETH use 18-decimal wei base units; do not pass human-readable ETH
+values directly. For USDC/USDT, convert the UI amount using the selected
+borrow pool's `decimals` value before passing it here.
 
 ### destination
 

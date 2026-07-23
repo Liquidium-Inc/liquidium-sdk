@@ -8,7 +8,7 @@
 
 > **SimpleLoanAccount** = [`LiquidiumAccount`](LiquidiumAccount.md)
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:114](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L114)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:116](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L116)
 
 Borrow destination or refund account associated with a simple loan.
 
