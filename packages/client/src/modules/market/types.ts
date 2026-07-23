@@ -26,17 +26,17 @@ export interface Pool {
   supplyCap?: bigint;
   /** Optional borrow cap in base units. */
   borrowCap?: bigint;
-  /** Maximum loan-to-value ratio, scaled by `rateDecimals`. */
+  /** Maximum loan-to-value ratio in basis points. */
   maxLtv: bigint;
-  /** Liquidation threshold, scaled by `rateDecimals`. */
+  /** Liquidation threshold in basis points. */
   liquidationThreshold: bigint;
-  /** Liquidation bonus, scaled by `rateDecimals`. */
+  /** Liquidation bonus in basis points. */
   liquidationBonus: bigint;
-  /** Protocol liquidation fee, scaled by `rateDecimals`. */
+  /** Protocol liquidation fee in basis points. */
   protocolLiquidationFee: bigint;
-  /** Reserve factor, scaled by `rateDecimals`. */
+  /** Reserve factor in basis points. */
   reserveFactor: bigint;
-  /** Decimal scale used by rate and risk-ratio fields. */
+  /** Decimal scale used by APR and utilization fields. */
   rateDecimals: bigint;
   /** Current supply APR, scaled by `rateDecimals`. */
   lendingRate: bigint;

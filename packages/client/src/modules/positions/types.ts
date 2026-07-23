@@ -27,7 +27,7 @@ export interface Position {
 
 /** Aggregate borrowing capacity for a profile. */
 export interface BorrowingPower {
-  /** Weighted maximum LTV, scaled by protocol rate decimals. */
+  /** Weighted maximum LTV in basis points. */
   weightedMaxLtv: bigint;
   /** Maximum borrowable USD value, scaled by `maxBorrowableUsdDecimals`. */
   maxBorrowableUsd: bigint;
@@ -45,7 +45,7 @@ export interface UserStats {
   collateral: bigint;
   /** Decimal scale for `collateral`. */
   collateralDecimals: bigint;
-  /** Weighted liquidation threshold, scaled by protocol rate decimals. */
+  /** Weighted liquidation threshold in basis points. */
   weightedLiquidationThreshold: bigint;
   /** Current borrowing capacity. */
   borrowingPower: BorrowingPower;
@@ -53,8 +53,12 @@ export interface UserStats {
 
 /** Health factor and supporting aggregate stats for a profile. */
 export interface HealthFactor {
-  /** Current health factor, scaled by protocol rate decimals. */
+  /** Raw health factor, scaled by `healthFactorDecimals` when finite. */
   healthFactor: bigint;
+  /** Decimal scale for a finite `healthFactor`. */
+  healthFactorDecimals: bigint;
+  /** Whether the health factor is unbounded because the profile has no debt. */
+  isHealthFactorInfinite: boolean;
   /** Aggregate stats used to derive the health factor. */
   userStats: UserStats;
 }
@@ -77,8 +81,12 @@ export interface UserPositionSummary {
   weightedMaxLtvBps: bigint;
   /** Weighted liquidation threshold in basis points. */
   weightedLiquidationThresholdBps: bigint;
-  /** Current health factor. */
+  /** Raw health factor, scaled by `healthFactorDecimals` when finite. */
   healthFactor: bigint;
+  /** Decimal scale for a finite `healthFactor`. */
+  healthFactorDecimals: bigint;
+  /** Whether the health factor is unbounded because the profile has no debt. */
+  isHealthFactorInfinite: boolean;
 }
 
 /** Position joined with pool metadata and current USD valuation. */

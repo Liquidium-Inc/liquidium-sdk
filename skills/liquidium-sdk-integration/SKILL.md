@@ -386,9 +386,16 @@ deposits enforce these values. Manual flows must apply
 `getMinimumDepositAmount(asset)` before broadcasting and account for inflow
 fees separately. Repayments do not use deposit minimums.
 
-Rate and risk-ratio fields such as `lendingRate`, `borrowingRate`,
-`utilizationRate`, `maxLtv`, and `liquidationThreshold` are fixed-point values scaled by `rateDecimals`, usually
-`27`. Do not render raw scaled values as percentages.
+Rate fields such as `lendingRate`, `borrowingRate`, and `utilizationRate` are
+fixed-point values scaled by `rateDecimals`, usually `27`. Do not render raw
+scaled values as percentages. `maxLtv`, `liquidationThreshold`,
+`liquidationBonus`, `protocolLiquidationFee`, and `reserveFactor` use basis
+points instead.
+
+Health factors use three decimal places: `1000n` means `1.0`. Read
+`healthFactorDecimals` when formatting and check `isHealthFactorInfinite`
+before displaying the raw value. A profile with no debt has an infinite health
+factor and the canister's raw max-integer sentinel is not displayable.
 
 Never convert a raw scaled rate directly to display text or append `%` to it.
 That can produce impossible UI values such as `3.7e+24%`. Divide by

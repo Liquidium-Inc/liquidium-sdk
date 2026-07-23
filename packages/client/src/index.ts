@@ -193,7 +193,11 @@ export type {
   UserReserve,
   UserStats,
 } from "./modules/positions";
-export { PositionsModule } from "./modules/positions";
+export {
+  HEALTH_FACTOR_DECIMALS,
+  HEALTH_FACTOR_SCALE,
+  PositionsModule,
+} from "./modules/positions";
 export type {
   CalculateLtvRequest,
   LtvCalculation,

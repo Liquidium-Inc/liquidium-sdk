@@ -1,7 +1,12 @@
 import { Actor } from "@icp-sdk/core/agent";
 import { Principal } from "@icp-sdk/core/principal";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { LiquidiumClient, LiquidiumErrorCode } from "../../../index";
+import {
+  HEALTH_FACTOR_DECIMALS,
+  HEALTH_FACTOR_SCALE,
+  LiquidiumClient,
+  LiquidiumErrorCode,
+} from "../../../index";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -452,6 +457,8 @@ describe("PositionsModule", () => {
     // then
     expect(health).toEqual({
       healthFactor: 1_500n,
+      healthFactorDecimals: HEALTH_FACTOR_DECIMALS,
+      isHealthFactorInfinite: false,
       userStats: {
         debt: 10n,
         debtDecimals: 27n,
@@ -531,14 +538,18 @@ describe("PositionsModule", () => {
       weightedMaxLtvBps: WEIGHTED_MAX_LTV_BPS,
       weightedLiquidationThresholdBps: LIQUIDATION_THRESHOLD_BPS,
       healthFactor: HEALTH_FACTOR,
+      healthFactorDecimals: HEALTH_FACTOR_DECIMALS,
+      isHealthFactorInfinite: false,
     });
   });
 
   test("zeroes derived summary fields when the profile has no collateral", async () => {
     // given
+    const NO_DEBT_HEALTH_FACTOR =
+      340_282_366_920_938_463_463_374_607_431_768_211_455n;
     vi.spyOn(Actor, "createActor").mockReturnValue({
       get_health_factor: vi.fn().mockResolvedValue([
-        0n,
+        NO_DEBT_HEALTH_FACTOR,
         {
           debt: 0n,
           collateral: 0n,
@@ -561,6 +572,21 @@ describe("PositionsModule", () => {
     expect(summary.currentLtvBps).toBe(0n);
     expect(summary.availableBorrowsUsd).toBe(0n);
     expect(summary.netWorthUsd).toBe(0n);
+    expect(summary.healthFactor).toBe(NO_DEBT_HEALTH_FACTOR);
+    expect(summary.healthFactorDecimals).toBe(HEALTH_FACTOR_DECIMALS);
+    expect(summary.isHealthFactorInfinite).toBe(true);
+  });
+
+  test("exports the protocol health factor scale", () => {
+    // given
+    const EXPECTED_HEALTH_FACTOR_DECIMALS = 3n;
+    const EXPECTED_HEALTH_FACTOR_SCALE = 1_000n;
+
+    // when
+
+    // then
+    expect(HEALTH_FACTOR_DECIMALS).toBe(EXPECTED_HEALTH_FACTOR_DECIMALS);
+    expect(HEALTH_FACTOR_SCALE).toBe(EXPECTED_HEALTH_FACTOR_SCALE);
   });
 
   test("reports negative net worth and clamps available borrows when underwater", async () => {
