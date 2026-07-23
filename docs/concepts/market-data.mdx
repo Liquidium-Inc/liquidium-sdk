@@ -1,0 +1,87 @@
+---
+title: Market Data
+description: Interpret Liquidium pool rates and market data correctly.
+order: 250
+---
+
+# Market Data
+
+## APR and estimated APY
+
+`client.market.listPools()` and `client.market.getPoolRate(...)` return current
+borrow and supply APRs as 27-decimal fixed-point integers. Divide a rate by
+`RATE_SCALE` to get its decimal value.
+
+Pools and pool-rate responses also include estimated APYs. Borrow APY mirrors
+the protocol's per-second compounding. Supply APY uses the scheduled 15-second
+pool synchronization interval. Both estimates assume that the current APR stays
+constant for a 365-day year.
+
+Rates change with pool utilization, and protocol activity can synchronize a
+pool between scheduled timer ticks. Treat these values as current-rate
+estimates, not guaranteed or historical yield.
+
+You can calculate the same values directly:
+
+```ts
+import { estimateBorrowApy, estimateSupplyApy } from "@liquidium/client";
+
+const estimatedBorrowApy = estimateBorrowApy(pool.borrowingRate);
+const estimatedSupplyApy = estimateSupplyApy(pool.lendingRate);
+```
+
+## Price timestamps
+
+Use `client.market.getAssetPriceSnapshot()` when the UI needs to show when it
+last refreshed market prices:
+
+```ts
+const { prices, fetchedAt } = await client.market.getAssetPriceSnapshot();
+```
+
+`fetchedAt` is the Unix timestamp when the SDK received the canister response.
+It is not the oracle observation timestamp because the lending canister does not
+include that timestamp in its public price response.
+
+## Asset names
+
+Every `Pool` includes a stable `displayName`. The same metadata is available
+without fetching pools through `getAssetMetadata(asset)` or the exported
+`ASSET_METADATA` record.
+
+```ts
+import { getAssetMetadata } from "@liquidium/client";
+
+const { displayName } = getAssetMetadata("BTC");
+```
+
+Use the canonical `asset` symbol for protocol logic. Display names are
+presentation metadata only. Applications own their icon assets so the SDK does
+not introduce framework, network, or content-security-policy requirements.
+
+## Health factor and risk scales
+
+Health factors use three decimal places: `1000n` means `1.0`. Use
+`healthFactorDecimals` or the exported `HEALTH_FACTOR_SCALE` when formatting a
+finite value. `healthFactor` is `null` when the profile has no debt because its
+health factor is unbounded.
+
+Pool rate fields such as `lendingRate`, `borrowingRate`, and `utilizationRate`
+use the 27-decimal `rateDecimals` scale. Pool risk fields such as `maxLtv`,
+`liquidationThreshold`, `liquidationBonus`, `protocolLiquidationFee`, and
+`reserveFactor` use basis points instead.
+
+## Profile existence
+
+Position queries return empty values for both registered profiles with no
+positions and unknown principal IDs. Call `client.accounts.profileExists(...)`
+when the distinction matters:
+
+```ts
+const isRegistered = await client.accounts.profileExists(profileId);
+```
+
+The current canister has no direct profile-existence query. The SDK uses the
+production invariant that every registered profile has at least one linked
+wallet and the final wallet cannot be removed. Profiles inserted through
+development-only state seeding without wallets are not detectable this way.

@@ -325,6 +325,56 @@ describe("AccountsModule", () => {
     ]);
   });
 
+  test("returns true when a profile has a linked wallet", async () => {
+    // given
+    const getProfileWallets = vi.fn().mockResolvedValue([
+      {
+        address: "0xabc",
+        chain: { Wallet: { ETH: null } },
+      },
+    ]);
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      get_profile_wallets: getProfileWallets,
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const exists = await client.accounts.profileExists("aaaaa-aa");
+
+    // then
+    expect(exists).toBe(true);
+  });
+
+  test("returns false when a profile has no linked wallets", async () => {
+    // given
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      get_profile_wallets: vi.fn().mockResolvedValue([]),
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const exists = await client.accounts.profileExists("aaaaa-aa");
+
+    // then
+    expect(exists).toBe(false);
+  });
+
+  test("rejects a malformed profile id before querying the canister", async () => {
+    // given
+    const createActor = vi.spyOn(Actor, "createActor");
+    const client = new LiquidiumClient({});
+
+    // when
+    const result = client.accounts.profileExists("not-a-principal");
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message: "Invalid profile id: not-a-principal",
+    });
+    expect(createActor).not.toHaveBeenCalled();
+  });
+
   test("throws when a profile contains an unsupported wallet chain", async () => {
     // given
     vi.spyOn(Actor, "createActor").mockReturnValue({

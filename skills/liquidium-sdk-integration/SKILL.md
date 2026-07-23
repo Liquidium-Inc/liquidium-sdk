@@ -216,6 +216,7 @@ client.market.listPools();
 client.market.findPool({ asset, chain });
 client.market.getReserveData({ asset, chain });
 client.market.getAssetPrices();
+client.market.getAssetPriceSnapshot();
 client.market.getPoolRate(poolId);
 ```
 
@@ -227,6 +228,20 @@ can choose. Native and ck representations share a pool: for example,
 `findPool({ asset: "USDT", chain: "ETH" })` and
 `findPool({ asset: "USDT", chain: "ICP" })` resolve to the same ETH-backed USDT
 pool. There are no separate ckBTC, ckETH, ckUSDC, or ckUSDT pools.
+
+Each pool includes `displayName`. Use `getAssetMetadata(asset)` or
+`ASSET_METADATA` when names are needed without a pool response. Asset icons are
+owned by the integrating application and are not shipped by the SDK.
+
+Pools expose current APR fields plus `estimatedLendingApy` and
+`estimatedBorrowingApy`. Estimated APYs use the current APR for a full 365-day
+year. They are estimates, not guaranteed or historical yield, because rates
+change with utilization and supply synchronization can occur between scheduled
+timer ticks.
+
+Use `getAssetPriceSnapshot()` when a UI needs price refresh time. Its `fetchedAt`
+field is the SDK retrieval timestamp in Unix seconds, not the underlying oracle
+observation time, which the lending canister does not expose.
 
 ### quote
 
@@ -263,8 +278,14 @@ Profile creation and resolution.
 client.accounts.prepareCreateProfile(...);  // returns a signable action
 client.accounts.createProfile(...);         // signs and submits through a wallet adapter
 client.accounts.getProfileId(walletAddress);
+client.accounts.profileExists(profileId);
 client.accounts.listLinkedWallets(profileId);
 ```
+
+Position reads return the same empty values for an unknown profile and a
+registered profile with no positions. Use `profileExists(profileId)` when the
+UI must distinguish those cases. It relies on the production invariant that
+every registered profile retains at least one linked wallet.
 
 ### lending
 
@@ -366,9 +387,15 @@ deposits enforce these values. Manual flows must apply
 `getMinimumDepositAmount(asset)` before broadcasting and account for inflow
 fees separately. Repayments do not use deposit minimums.
 
-Rate and risk-ratio fields such as `lendingRate`, `borrowingRate`,
-`utilizationRate`, `maxLtv`, and `liquidationThreshold` are fixed-point values scaled by `rateDecimals`, usually
-`27`. Do not render raw scaled values as percentages.
+Rate fields such as `lendingRate`, `borrowingRate`, and `utilizationRate` are
+fixed-point values scaled by `rateDecimals`, usually `27`. Do not render raw
+scaled values as percentages. `maxLtv`, `liquidationThreshold`,
+`liquidationBonus`, `protocolLiquidationFee`, and `reserveFactor` use basis
+points instead.
+
+Health factors use three decimal places: `1000n` means `1.0`. Read
+`healthFactorDecimals` when formatting. `healthFactor` is `null` when a profile
+has no debt because its health factor is unbounded.
 
 Never convert a raw scaled rate directly to display text or append `%` to it.
 That can produce impossible UI values such as `3.7e+24%`. Divide by

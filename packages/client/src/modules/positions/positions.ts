@@ -9,6 +9,7 @@ import { LiquidiumError } from "../../core/errors";
 import type { CanisterContext } from "../../core/transports/canister-context";
 import type { MarketModule } from "../market/market";
 import type { Pool } from "../market/types";
+import { HEALTH_FACTOR_DECIMALS } from "./health-factor";
 import {
   mapDecodedPositionViewToPosition,
   mapDecodedUserStatsToUserStats,
@@ -133,11 +134,14 @@ export class PositionsModule {
         this.canisterContext
       ).get_health_factor(Principal.fromText(profileId));
 
+      const userStats = mapDecodedUserStatsToUserStats(
+        decodeFlexibleUserStats(userStatsRecord)
+      );
+
       return {
-        healthFactor,
-        userStats: mapDecodedUserStatsToUserStats(
-          decodeFlexibleUserStats(userStatsRecord)
-        ),
+        healthFactor: userStats.debt === 0n ? null : healthFactor,
+        healthFactorDecimals: HEALTH_FACTOR_DECIMALS,
+        userStats,
       };
     } catch (error) {
       if (error instanceof LiquidiumError) {
@@ -184,7 +188,8 @@ export class PositionsModule {
   async getUserPositionSummary(
     profileId: string
   ): Promise<UserPositionSummary> {
-    const { healthFactor, userStats } = await this.getHealthFactor(profileId);
+    const { healthFactor, healthFactorDecimals, userStats } =
+      await this.getHealthFactor(profileId);
 
     const collateral = userStats.collateral;
     const debt = userStats.debt;
@@ -205,6 +210,7 @@ export class PositionsModule {
       weightedMaxLtvBps: userStats.borrowingPower.weightedMaxLtv,
       weightedLiquidationThresholdBps: userStats.weightedLiquidationThreshold,
       healthFactor,
+      healthFactorDecimals,
     };
   }
 

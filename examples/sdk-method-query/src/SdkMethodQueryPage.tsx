@@ -95,6 +95,17 @@ const SDK_METHODS: MethodDefinition[] = [
     },
   },
   {
+    id: "accounts.profileExists",
+    label: "accounts.profileExists",
+    defaultArgs: '{\n  "profileId": "aaaaa-aa"\n}',
+    execute: async (client, input) => {
+      const args = expectObject(input);
+      return await client.accounts.profileExists(
+        expectNonEmptyString(args.profileId, "profileId")
+      );
+    },
+  },
+  {
     id: "accounts.getWalletNonce",
     label: "accounts.getWalletNonce",
     defaultArgs: '{\n  "walletAddress": "0xYourWalletAddress"\n}',
@@ -130,6 +141,14 @@ const SDK_METHODS: MethodDefinition[] = [
     defaultArgs: "{}",
     execute: async (client) => {
       return await client.market.getAssetPrices();
+    },
+  },
+  {
+    id: "market.getAssetPriceSnapshot",
+    label: "market.getAssetPriceSnapshot",
+    defaultArgs: "{}",
+    execute: async (client) => {
+      return await client.market.getAssetPriceSnapshot();
     },
   },
   {

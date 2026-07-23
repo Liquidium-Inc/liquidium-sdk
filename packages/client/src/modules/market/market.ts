@@ -12,12 +12,19 @@ import {
 import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
 import type { CanisterContext } from "../../core/transports/canister-context";
 import { Asset, Chain, isAssetIdentifier } from "../../core/types";
+import { getCurrentUnixTimestampSeconds } from "../../core/utils/time";
 import {
   mapDecodedPoolToPool,
   mapGetPoolRateResponseToPoolRate,
   mapGetPricesResponseToAssetPrices,
 } from "./mappers";
-import type { AssetPrices, FindPoolQuery, Pool, PoolRate } from "./types";
+import type {
+  AssetPriceSnapshot,
+  AssetPrices,
+  FindPoolQuery,
+  Pool,
+  PoolRate,
+} from "./types";
 
 const ZERO_POOL_RATE: PoolRateTuple = [0n, 0n, 0n];
 const BACKING_POOL_CHAIN_BY_ASSET = {
@@ -68,15 +75,34 @@ export class MarketModule {
   }
 
   /**
-   * Returns the latest asset prices reported by the protocol.
+   * Returns the current cached asset prices reported by the protocol.
    *
-   * @returns The latest protocol price map keyed by market asset symbol.
+   * @returns The current protocol price map keyed by market asset symbol.
    */
   async getAssetPrices(): Promise<AssetPrices> {
+    return (await this.getAssetPriceSnapshot()).prices;
+  }
+
+  /**
+   * Returns protocol prices with the time at which the SDK completed the fetch.
+   *
+   * `fetchedAt` is an SDK retrieval time, not an oracle observation timestamp.
+   * The current lending canister price response does not expose the underlying
+   * oracle timestamp.
+   *
+   * @returns Protocol prices and their SDK fetch timestamp.
+   */
+  async getAssetPriceSnapshot(): Promise<AssetPriceSnapshot> {
     try {
-      return mapGetPricesResponseToAssetPrices(
+      const prices = mapGetPricesResponseToAssetPrices(
         await createLendingActor(this.canisterContext).get_prices()
       );
+      const fetchedAtUnixSeconds = getCurrentUnixTimestampSeconds();
+
+      return {
+        prices,
+        fetchedAt: fetchedAtUnixSeconds,
+      };
     } catch (error) {
       if (error instanceof LiquidiumError) {
         throw error;

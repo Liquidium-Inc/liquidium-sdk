@@ -9,6 +9,8 @@ export type {
   LiquidiumAccountReference,
 } from "./core/accounts";
 export { LiquidiumAccountType } from "./core/accounts";
+export type { AssetMetadata } from "./core/asset-metadata";
+export { ASSET_METADATA, getAssetMetadata } from "./core/asset-metadata";
 export {
   getMinimumBorrowAmount,
   MIN_BORROW_AMOUNTS_BY_ASSET,
@@ -26,7 +28,14 @@ export {
   USDC_CONTRACT_ADDRESS,
   USDT_CONTRACT_ADDRESS,
 } from "./core/evm";
-export { RATE_DECIMALS, RATE_SCALE } from "./core/rates";
+export {
+  estimateBorrowApy,
+  estimateSupplyApy,
+  INTEREST_YEAR_365_DAYS_SECONDS,
+  RATE_DECIMALS,
+  RATE_SCALE,
+  SUPPLY_COMPOUNDING_INTERVAL_15_SECONDS,
+} from "./core/rates";
 export type {
   LiquidiumOperation,
   LiquidiumState,
@@ -167,6 +176,7 @@ export {
   SupplyPlanType,
 } from "./modules/lending";
 export type {
+  AssetPriceSnapshot,
   AssetPrices,
   FindPoolQuery,
   Pool,
@@ -183,7 +193,11 @@ export type {
   UserReserve,
   UserStats,
 } from "./modules/positions";
-export { PositionsModule } from "./modules/positions";
+export {
+  HEALTH_FACTOR_DECIMALS,
+  HEALTH_FACTOR_SCALE,
+  PositionsModule,
+} from "./modules/positions";
 export type {
   CalculateLtvRequest,
   LtvCalculation,
