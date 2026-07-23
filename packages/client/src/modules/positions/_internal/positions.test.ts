@@ -101,7 +101,6 @@ describe("PositionsModule", () => {
       poolId: POOL_ID,
       asset: "BTC",
       deposited: 150_000n,
-      isCollateral: true,
       depositedDecimals: 8n,
       borrowed: 25_000n,
       borrowedDecimals: 8n,
@@ -242,7 +241,6 @@ describe("PositionsModule", () => {
         poolId: POOL_ID,
         asset: "BTC",
         deposited: BTC_DUST_THRESHOLD_SATS,
-        isCollateral: true,
         depositedDecimals: 8n,
         borrowed: 0n,
         borrowedDecimals: 8n,
@@ -254,7 +252,6 @@ describe("PositionsModule", () => {
         poolId: SECOND_POOL_ID,
         asset: "USDT",
         deposited: 5_000_000n,
-        isCollateral: true,
         depositedDecimals: 6n,
         borrowed: 1_000_000n,
         borrowedDecimals: 6n,
@@ -327,7 +324,6 @@ describe("PositionsModule", () => {
     // then
     expect(positions).toHaveLength(1);
     expect(positions[0]?.deposited).toBe(0n);
-    expect(positions[0]?.isCollateral).toBe(true);
     expect(positions[0]?.earnedInterest).toBe(0n);
     expect(positions[0]?.borrowed).toBe(BORROWED_AMOUNT_SATS);
   });
