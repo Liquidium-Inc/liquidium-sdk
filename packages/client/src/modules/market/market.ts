@@ -12,6 +12,7 @@ import {
 import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
 import type { CanisterContext } from "../../core/transports/canister-context";
 import { Asset, Chain, isAssetIdentifier } from "../../core/types";
+import { getCurrentUnixTimestampSeconds } from "../../core/utils/time";
 import {
   mapDecodedPoolToPool,
   mapGetPoolRateResponseToPoolRate,
@@ -96,10 +97,11 @@ export class MarketModule {
       const prices = mapGetPricesResponseToAssetPrices(
         await createLendingActor(this.canisterContext).get_prices()
       );
+      const fetchedAtUnixSeconds = getCurrentUnixTimestampSeconds();
 
       return {
         prices,
-        fetchedAt: BigInt(Math.floor(Date.now() / 1_000)),
+        fetchedAt: fetchedAtUnixSeconds,
       };
     } catch (error) {
       if (error instanceof LiquidiumError) {
