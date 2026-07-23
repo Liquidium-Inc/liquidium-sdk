@@ -6,7 +6,7 @@
 
 # Interface: CreateSimpleLoanRefund
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:73](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L73)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:75](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L75)
 
 Refund leg used when creating a simple loan.
 
@@ -16,7 +16,7 @@ Refund leg used when creating a simple loan.
 
 > **chain**: [`Chain`](../type-aliases/Chain.md)
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:75](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L75)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:77](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L77)
 
 Delivery chain used for collateral refunds and withdrawals. Use ICP for ck-ledger delivery.
 
@@ -26,7 +26,7 @@ Delivery chain used for collateral refunds and withdrawals. Use ICP for ck-ledge
 
 > **destination**: [`LiquidiumAccountInput`](../type-aliases/LiquidiumAccountInput.md)
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:84](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L84)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:86](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L86)
 
 Destination that receives collateral refunds or withdrawals.
 

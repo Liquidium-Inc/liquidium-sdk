@@ -84,7 +84,7 @@ Profile principal text, or `null` if none exists.
 
 > **getWalletNonce**(`walletAddress`): `Promise`\<`bigint`\>
 
-Defined in: [packages/client/src/modules/accounts/accounts.ts:99](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/accounts/accounts.ts#L99)
+Defined in: [packages/client/src/modules/accounts/accounts.ts:127](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/accounts/accounts.ts#L127)
 
 Returns the current nonce for a wallet address.
 
@@ -110,7 +110,7 @@ The next signing nonce as a bigint.
 
 > **listLinkedWallets**(`profileId`): `Promise`\<[`Wallet`](../interfaces/Wallet.md)[]\>
 
-Defined in: [packages/client/src/modules/accounts/accounts.ts:118](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/accounts/accounts.ts#L118)
+Defined in: [packages/client/src/modules/accounts/accounts.ts:146](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/accounts/accounts.ts#L146)
 
 Lists the wallets currently linked to a profile.
 
@@ -153,3 +153,32 @@ Use this when you need direct control over the signing flow.
 `Promise`\<[`CreateAccountAction`](../interfaces/CreateAccountAction.md)\>
 
 A signable [CreateAccountAction](../interfaces/CreateAccountAction.md) with `submit` wired to the canister.
+
+***
+
+### profileExists()
+
+> **profileExists**(`profileId`): `Promise`\<`boolean`\>
+
+Defined in: [packages/client/src/modules/accounts/accounts.ts:102](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/accounts/accounts.ts#L102)
+
+Checks whether a profile is registered with the protocol.
+
+Production profile registration always links an initial wallet, and the
+protocol prevents removal of a profile's final wallet. This method uses
+that invariant because the current canister API has no direct existence
+query.
+
+#### Parameters
+
+##### profileId
+
+`string`
+
+The Liquidium profile principal text.
+
+#### Returns
+
+`Promise`\<`boolean`\>
+
+`true` when the profile has at least one linked wallet.

@@ -6,7 +6,7 @@
 
 # Interface: SimpleLoanWarmedProfile
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:230](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L230)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:232](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L232)
 
 Warmed profile available for a future simple loan.
 
@@ -16,7 +16,7 @@ Warmed profile available for a future simple loan.
 
 > **authorization**: [`SimpleLoanAuthorization`](SimpleLoanAuthorization.md)
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:232](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L232)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:234](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L234)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [packages/client/src/modules/simple-loans/types.ts:232](https://gith
 
 > **createdAt**: `bigint`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:234](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L234)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:236](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L236)
 
 Unix creation timestamp in seconds.
 
@@ -34,7 +34,7 @@ Unix creation timestamp in seconds.
 
 > **id**: `bigint`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:231](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L231)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:233](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L233)
 
 ***
 
@@ -42,4 +42,4 @@ Defined in: [packages/client/src/modules/simple-loans/types.ts:231](https://gith
 
 > **profileId**: `string`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:235](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L235)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:237](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L237)

@@ -54,11 +54,11 @@ Defined in: [packages/client/src/modules/history/types.ts:21](https://github.com
 
 ### status
 
-> **status**: [`LiquidiumStatus`](LiquidiumStatus.md)
+> **status**: [`UserLiquidationHistoryStatus`](UserLiquidationHistoryStatus.md)
 
 Defined in: [packages/client/src/modules/history/types.ts:35](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L35)
 
-Current lifecycle status.
+Completed liquidation status.
 
 ***
 

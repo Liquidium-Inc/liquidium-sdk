@@ -8,7 +8,7 @@
 
 > **WithdrawOutflowDetails** = [`OutflowDetails`](../interfaces/OutflowDetails.md) & `object`
 
-Defined in: [packages/client/src/modules/lending/types.ts:76](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L76)
+Defined in: [packages/client/src/modules/lending/types.ts:78](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L78)
 
 Withdraw receipt.
 

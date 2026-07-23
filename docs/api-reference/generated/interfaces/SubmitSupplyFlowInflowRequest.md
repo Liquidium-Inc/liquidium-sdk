@@ -6,7 +6,7 @@
 
 # Interface: SubmitSupplyFlowInflowRequest
 
-Defined in: [packages/client/src/modules/lending/types.ts:271](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L271)
+Defined in: [packages/client/src/modules/lending/types.ts:274](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L274)
 
 Body for `SupplyFlow.submit`. The supply flow supplies the inflow operation.
 
@@ -20,7 +20,7 @@ Body for `SupplyFlow.submit`. The supply flow supplies the inflow operation.
 
 > `optional` **chain?**: `"BTC"` \| `"ETH"`
 
-Defined in: [packages/client/src/modules/lending/types.ts:275](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L275)
+Defined in: [packages/client/src/modules/lending/types.ts:278](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L278)
 
 Chain where the transaction was broadcast, when not implied by the flow.
 
@@ -30,6 +30,6 @@ Chain where the transaction was broadcast, when not implied by the flow.
 
 > **txid**: `string`
 
-Defined in: [packages/client/src/modules/lending/types.ts:273](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L273)
+Defined in: [packages/client/src/modules/lending/types.ts:276](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L276)
 
 Broadcast transaction id or hash.

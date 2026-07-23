@@ -6,7 +6,7 @@
 
 # Interface: Wallet
 
-Defined in: [packages/client/src/core/types.ts:151](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L151)
+Defined in: [packages/client/src/core/types.ts:215](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L215)
 
 Wallet address and chain pair linked to a Liquidium profile.
 
@@ -16,7 +16,7 @@ Wallet address and chain pair linked to a Liquidium profile.
 
 > **address**: `string`
 
-Defined in: [packages/client/src/core/types.ts:155](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L155)
+Defined in: [packages/client/src/core/types.ts:219](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L219)
 
 Wallet address as stored by the protocol.
 
@@ -26,6 +26,6 @@ Wallet address as stored by the protocol.
 
 > **chain**: [`SigningChain`](../type-aliases/SigningChain.md)
 
-Defined in: [packages/client/src/core/types.ts:153](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L153)
+Defined in: [packages/client/src/core/types.ts:217](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L217)
 
 Chain where the wallet address is valid.

@@ -6,7 +6,7 @@
 
 # Class: PositionsModule
 
-Defined in: [packages/client/src/modules/positions/positions.ts:31](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/positions.ts#L31)
+Defined in: [packages/client/src/modules/positions/positions.ts:32](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/positions.ts#L32)
 
 Profile position, health factor, and reserve valuation helpers.
 
@@ -16,7 +16,7 @@ Profile position, health factor, and reserve valuation helpers.
 
 > **new PositionsModule**(`canisterContext`, `market`): `PositionsModule`
 
-Defined in: [packages/client/src/modules/positions/positions.ts:32](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/positions.ts#L32)
+Defined in: [packages/client/src/modules/positions/positions.ts:33](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/positions.ts#L33)
 
 #### Parameters
 
@@ -38,7 +38,7 @@ Defined in: [packages/client/src/modules/positions/positions.ts:32](https://gith
 
 > `readonly` **market**: [`MarketModule`](MarketModule.md)
 
-Defined in: [packages/client/src/modules/positions/positions.ts:34](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/positions.ts#L34)
+Defined in: [packages/client/src/modules/positions/positions.ts:35](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/positions.ts#L35)
 
 ## Methods
 
@@ -46,7 +46,7 @@ Defined in: [packages/client/src/modules/positions/positions.ts:34](https://gith
 
 > **getFullWithdrawAmount**(`profileId`, `poolId`): `Promise`\<[`FullWithdrawAmount`](../interfaces/FullWithdrawAmount.md)\>
 
-Defined in: [packages/client/src/modules/positions/positions.ts:304](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/positions.ts#L304)
+Defined in: [packages/client/src/modules/positions/positions.ts:310](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/positions.ts#L310)
 
 Returns the current full withdraw amount for a position.
 
@@ -80,7 +80,7 @@ Full withdraw amount in the supplied asset's base units.
 
 > **getHealthFactor**(`profileId`): `Promise`\<[`HealthFactor`](../interfaces/HealthFactor.md)\>
 
-Defined in: [packages/client/src/modules/positions/positions.ts:130](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/positions.ts#L130)
+Defined in: [packages/client/src/modules/positions/positions.ts:131](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/positions.ts#L131)
 
 Returns the current health factor for a profile.
 
@@ -104,7 +104,7 @@ The current health factor for the requested profile.
 
 > **getMaxRepayAmount**(`profileId`, `poolId`, `bufferBps?`): `Promise`\<[`MaxRepayAmount`](../interfaces/MaxRepayAmount.md)\>
 
-Defined in: [packages/client/src/modules/positions/positions.ts:273](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/positions.ts#L273)
+Defined in: [packages/client/src/modules/positions/positions.ts:279](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/positions.ts#L279)
 
 Returns the full repayment amount for a position, with a small buffer to
 account for interest that accrues between quote and submit.
@@ -141,7 +141,7 @@ Buffered repayment amount in the borrowed asset's base units.
 
 > **getPosition**(`profileId`, `poolId`): `Promise`\<[`Position`](../interfaces/Position.md) \| `null`\>
 
-Defined in: [packages/client/src/modules/positions/positions.ts:44](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/positions.ts#L44)
+Defined in: [packages/client/src/modules/positions/positions.ts:45](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/positions.ts#L45)
 
 Returns a single position for a profile and pool.
 
@@ -171,7 +171,7 @@ The position for the requested profile and pool, or `null` when no position exis
 
 > **getUserPositionSummary**(`profileId`): `Promise`\<[`UserPositionSummary`](../interfaces/UserPositionSummary.md)\>
 
-Defined in: [packages/client/src/modules/positions/positions.ts:184](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/positions.ts#L184)
+Defined in: [packages/client/src/modules/positions/positions.ts:188](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/positions.ts#L188)
 
 Returns an aggregate summary of a profile's position.
 
@@ -200,7 +200,7 @@ Derived position summary for the requested profile.
 
 > **getUserReserves**(`profileId`): `Promise`\<[`UserReserve`](../interfaces/UserReserve.md)[]\>
 
-Defined in: [packages/client/src/modules/positions/positions.ts:224](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/positions.ts#L224)
+Defined in: [packages/client/src/modules/positions/positions.ts:230](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/positions.ts#L230)
 
 Returns the per-reserve breakdown of a profile's supplies and borrows,
 joined with pool metadata, rates, and current USD prices.
@@ -231,7 +231,7 @@ Per-reserve position rows joined with pool metadata and USD values.
 
 > **getUserStats**(`profileId`): `Promise`\<[`UserStats`](../interfaces/UserStats.md)\>
 
-Defined in: [packages/client/src/modules/positions/positions.ts:157](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/positions.ts#L157)
+Defined in: [packages/client/src/modules/positions/positions.ts:161](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/positions.ts#L161)
 
 Returns aggregate borrowing and collateral stats for a profile.
 
@@ -255,7 +255,7 @@ Aggregate debt, collateral, and borrowing power metrics for the requested profil
 
 > **listPositions**(`profileId`): `Promise`\<[`Position`](../interfaces/Position.md)[]\>
 
-Defined in: [packages/client/src/modules/positions/positions.ts:80](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/positions.ts#L80)
+Defined in: [packages/client/src/modules/positions/positions.ts:81](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/positions.ts#L81)
 
 Lists visible positions for a profile. Supply balances below their pool's
 same-asset dust threshold are hidden without removing active debt.

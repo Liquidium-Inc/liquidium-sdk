@@ -8,7 +8,7 @@
 
 > **isAssetIdentifier**(`identifier`): `identifier is AssetIdentifier`
 
-Defined in: [packages/client/src/core/types.ts:112](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L112)
+Defined in: [packages/client/src/core/types.ts:171](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L171)
 
 Returns whether an asset and chain form a supported SDK identifier.
 

@@ -38,4 +38,4 @@ Decimal scale for `maxBorrowableUsd`.
 
 Defined in: [packages/client/src/modules/positions/types.ts:29](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/types.ts#L29)
 
-Weighted maximum LTV, scaled by protocol rate decimals.
+Weighted maximum LTV in basis points.

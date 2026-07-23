@@ -6,7 +6,7 @@
 
 # Interface: SimpleLoanRepaymentTargetQuote
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:345](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L345)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:347](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L347)
 
 Fee-inclusive repayment quote for one transfer target.
 
@@ -16,7 +16,7 @@ Fee-inclusive repayment quote for one transfer target.
 
 > **amount**: `bigint`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:347](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L347)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:349](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L349)
 
 Full amount to send to the repayment target, including fee and interest buffer.
 
@@ -26,9 +26,9 @@ Full amount to send to the repayment target, including fee and interest buffer.
 
 > **inflowFeeAmount**: `bigint`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:349](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L349)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:351](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L351)
 
-Inflow fee amount in base units added to the repayment transfer. Falls back to the protocol minimum when live estimation is unavailable.
+Inflow fee amount in base units added to the repayment transfer. Native ETH falls back to 0.00025 ETH when the live estimate fails or is non-positive.
 
 ***
 
@@ -36,7 +36,7 @@ Inflow fee amount in base units added to the repayment transfer. Falls back to t
 
 > **inflowFeeEstimateAvailable**: `boolean`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:351](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L351)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:353](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L353)
 
 Whether `inflowFeeAmount` came from a live fee estimate.
 
@@ -46,6 +46,6 @@ Whether `inflowFeeAmount` came from a live fee estimate.
 
 > **target**: [`SupplyTarget`](../type-aliases/SupplyTarget.md)
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:353](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L353)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:355](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L355)
 
 Address or ICRC account where the repayment should be sent.

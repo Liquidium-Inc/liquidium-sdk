@@ -6,7 +6,7 @@
 
 # Interface: SubmitInflowRequest
 
-Defined in: [packages/client/src/modules/lending/types.ts:279](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L279)
+Defined in: [packages/client/src/modules/lending/types.ts:282](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L282)
 
 Body for direct `lending.submitInflow`.
 
@@ -20,7 +20,7 @@ Body for direct `lending.submitInflow`.
 
 > `optional` **chain?**: `"BTC"` \| `"ETH"`
 
-Defined in: [packages/client/src/modules/lending/types.ts:275](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L275)
+Defined in: [packages/client/src/modules/lending/types.ts:278](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L278)
 
 Chain where the transaction was broadcast, when not implied by the flow.
 
@@ -34,7 +34,7 @@ Chain where the transaction was broadcast, when not implied by the flow.
 
 > **operation**: [`InflowOperation`](../type-aliases/InflowOperation.md)
 
-Defined in: [packages/client/src/modules/lending/types.ts:281](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L281)
+Defined in: [packages/client/src/modules/lending/types.ts:284](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L284)
 
 Deposit or repayment operation represented by the transaction.
 
@@ -44,7 +44,7 @@ Deposit or repayment operation represented by the transaction.
 
 > **txid**: `string`
 
-Defined in: [packages/client/src/modules/lending/types.ts:273](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L273)
+Defined in: [packages/client/src/modules/lending/types.ts:276](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L276)
 
 Broadcast transaction id or hash.
 

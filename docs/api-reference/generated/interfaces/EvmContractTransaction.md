@@ -29,3 +29,13 @@ Hex-encoded calldata.
 Defined in: [packages/client/src/modules/lending/types.ts:32](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L32)
 
 Contract address to call.
+
+***
+
+### value?
+
+> `optional` **value?**: `string`
+
+Defined in: [packages/client/src/modules/lending/types.ts:36](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L36)
+
+Native ETH value in wei, serialized as a decimal string.

@@ -8,7 +8,7 @@
 
 > **SupplyTarget** = [`AssetIdentifier`](AssetIdentifier.md) & `object`
 
-Defined in: [packages/client/src/modules/lending/types.ts:164](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L164)
+Defined in: [packages/client/src/modules/lending/types.ts:167](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L167)
 
 Supply destination returned by `lending.supply(...)`.
 

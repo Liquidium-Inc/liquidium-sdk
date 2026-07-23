@@ -18,7 +18,7 @@ Shared lifecycle status returned by SDK methods that expose flow state.
 
 Defined in: [packages/client/src/core/status.ts:26](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/status.ts#L26)
 
-Observed chain confirmations, or null when unavailable or not applicable.
+Confirmation progress while confirming, capped at the required count.
 
 ***
 
@@ -38,7 +38,7 @@ Operation currently represented by the status.
 
 Defined in: [packages/client/src/core/status.ts:28](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/status.ts#L28)
 
-Required confirmations, or null when unavailable or not applicable.
+Required confirmations while confirming, otherwise null.
 
 ***
 

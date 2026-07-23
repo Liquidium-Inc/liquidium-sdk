@@ -6,7 +6,7 @@
 
 # Interface: SimpleLoanRepayment
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:357](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L357)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:359](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L359)
 
 Current amount to send to a repayment target to close the debt.
 
@@ -14,9 +14,9 @@ Current amount to send to a repayment target to close the debt.
 
 ### asset
 
-> **asset**: `"BTC"` \| `"ICP"` \| `"USDC"` \| `"USDT"`
+> **asset**: `"BTC"` \| `"ETH"` \| `"ICP"` \| `"USDC"` \| `"USDT"`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:367](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L367)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:369](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L369)
 
 Asset to repay.
 
@@ -26,7 +26,7 @@ Asset to repay.
 
 > **debtAmount**: `bigint`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:361](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L361)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:363](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L363)
 
 Current debt in base units, before fee and interest buffer.
 
@@ -36,7 +36,7 @@ Current debt in base units, before fee and interest buffer.
 
 > **decimals**: `bigint`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:359](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L359)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:361](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L361)
 
 Decimal scale for `amount`.
 
@@ -46,7 +46,7 @@ Decimal scale for `amount`.
 
 > **interestBufferAmount**: `bigint`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:363](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L363)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:365](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L365)
 
 Additional interest buffer in base units.
 
@@ -56,7 +56,7 @@ Additional interest buffer in base units.
 
 > **interestBufferSeconds**: `bigint`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:365](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L365)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:367](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L367)
 
 Seconds of interest accrual included in `interestBufferAmount`.
 
@@ -66,6 +66,6 @@ Seconds of interest accrual included in `interestBufferAmount`.
 
 > **targets**: `Partial`\<`Record`\<[`Chain`](../type-aliases/Chain.md), [`SimpleLoanRepaymentTargetQuote`](SimpleLoanRepaymentTargetQuote.md)\>\>
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:369](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L369)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:371](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L371)
 
 Available repayment targets keyed by the actual transfer chain.

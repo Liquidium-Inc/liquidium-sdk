@@ -8,7 +8,7 @@
 
 > `const` **MIN\_BORROW\_AMOUNTS\_BY\_ASSET**: `object`
 
-Defined in: [packages/client/src/core/borrow-minimums.ts:7](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/borrow-minimums.ts#L7)
+Defined in: [packages/client/src/core/borrow-minimums.ts:8](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/borrow-minimums.ts#L8)
 
 Minimum borrow amounts in each asset's base units.
 
@@ -17,6 +17,10 @@ Minimum borrow amounts in each asset's base units.
 ### BTC
 
 > `readonly` **BTC**: `5100n` = `MINIMUM_BTC_BORROW_AMOUNT_SATS`
+
+### ETH
+
+> `readonly` **ETH**: `5000000000000000n` = `MINIMUM_ETH_BORROW_AMOUNT_WEI`
 
 ### USDC
 

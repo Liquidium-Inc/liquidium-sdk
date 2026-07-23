@@ -6,7 +6,7 @@
 
 # Interface: SimpleLoanEvent
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:239](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L239)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:241](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L241)
 
 Direct canister event returned by the Simple Loans query API.
 
@@ -16,7 +16,7 @@ Direct canister event returned by the Simple Loans query API.
 
 > **eventType**: [`SimpleLoanEventType`](../type-aliases/SimpleLoanEventType.md)
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:244](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L244)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:246](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L246)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [packages/client/src/modules/simple-loans/types.ts:244](https://gith
 
 > **id**: `bigint`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:240](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L240)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:242](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L242)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [packages/client/src/modules/simple-loans/types.ts:240](https://gith
 
 > **schemaVersion**: `number`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:241](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L241)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:243](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L243)
 
 ***
 
@@ -40,6 +40,6 @@ Defined in: [packages/client/src/modules/simple-loans/types.ts:241](https://gith
 
 > **timestamp**: `bigint`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:243](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L243)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:245](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L245)
 
 Unix event timestamp in seconds.
