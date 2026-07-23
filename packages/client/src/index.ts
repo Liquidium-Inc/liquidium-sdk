@@ -26,7 +26,14 @@ export {
   USDC_CONTRACT_ADDRESS,
   USDT_CONTRACT_ADDRESS,
 } from "./core/evm";
-export { RATE_DECIMALS, RATE_SCALE } from "./core/rates";
+export {
+  estimateBorrowApy,
+  estimateSupplyApy,
+  INTEREST_YEAR_365_DAYS_SECONDS,
+  RATE_DECIMALS,
+  RATE_SCALE,
+  SUPPLY_COMPOUNDING_INTERVAL_15_SECONDS,
+} from "./core/rates";
 export type {
   LiquidiumOperation,
   LiquidiumState,

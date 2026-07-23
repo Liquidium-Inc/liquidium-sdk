@@ -36,8 +36,12 @@ export interface Pool {
   rateDecimals: bigint;
   /** Current supply APR, scaled by `rateDecimals`. */
   lendingRate: bigint;
+  /** Estimated supply APY, scaled by `rateDecimals`. */
+  estimatedLendingApy: bigint;
   /** Current borrow APR, scaled by `rateDecimals`. */
   borrowingRate: bigint;
+  /** Estimated borrow APY, scaled by `rateDecimals`. */
+  estimatedBorrowingApy: bigint;
   /** Current pool utilization, scaled by `rateDecimals`. */
   utilizationRate: bigint;
   /** Base borrow rate, scaled by `rateDecimals`. */
@@ -72,8 +76,12 @@ export interface PoolRate {
   rateDecimals: bigint;
   /** Borrow APR scaled by `rateDecimals`. */
   borrowRate: bigint;
+  /** Estimated borrow APY scaled by `rateDecimals`. */
+  estimatedBorrowApy: bigint;
   /** Lend APR scaled by `rateDecimals`. */
   lendRate: bigint;
+  /** Estimated lend APY scaled by `rateDecimals`. */
+  estimatedLendApy: bigint;
   /** Utilization rate scaled by `rateDecimals`. */
   utilizationRate: bigint;
 }

@@ -1,0 +1,31 @@
+---
+title: Market Data
+description: Interpret Liquidium pool rates and market data correctly.
+order: 250
+---
+
+# Market Data
+
+## APR and estimated APY
+
+`client.market.listPools()` and `client.market.getPoolRate(...)` return current
+borrow and supply APRs as 27-decimal fixed-point integers. Divide a rate by
+`RATE_SCALE` to get its decimal value.
+
+Pools and pool-rate responses also include estimated APYs. Borrow APY mirrors
+the protocol's per-second compounding. Supply APY uses the scheduled 15-second
+pool synchronization interval. Both estimates assume that the current APR stays
+constant for a 365-day year.
+
+Rates change with pool utilization, and protocol activity can synchronize a
+pool between scheduled timer ticks. Treat these values as current-rate
+estimates, not guaranteed or historical yield.
+
+You can calculate the same values directly:
+
+```ts
+import { estimateBorrowApy, estimateSupplyApy } from "@liquidium/client";
+
+const estimatedBorrowApy = estimateBorrowApy(pool.borrowingRate);
+const estimatedSupplyApy = estimateSupplyApy(pool.lendingRate);
+```

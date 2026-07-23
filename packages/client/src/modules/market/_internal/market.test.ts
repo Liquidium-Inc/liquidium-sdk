@@ -77,7 +77,9 @@ describe("MarketModule", () => {
         reserveFactor: 100n,
         rateDecimals: RATE_DECIMALS,
         lendingRate: 20n,
+        estimatedLendingApy: 0n,
         borrowingRate: 10n,
+        estimatedBorrowingApy: 0n,
         utilizationRate: 30n,
         baseRate: 5n,
         optimalUtilizationRate: 80n,
@@ -229,7 +231,9 @@ describe("MarketModule", () => {
       chain: "ETH",
       rateDecimals: RATE_DECIMALS,
       borrowingRate: 0n,
+      estimatedBorrowingApy: 0n,
       lendingRate: 0n,
+      estimatedLendingApy: 0n,
       utilizationRate: 0n,
       maxLtv: 0n,
       sameAssetBorrowing: false,
@@ -625,7 +629,9 @@ describe("MarketModule", () => {
     expect(rate).toEqual({
       rateDecimals: RATE_DECIMALS,
       borrowRate: 10n,
+      estimatedBorrowApy: 0n,
       lendRate: 20n,
+      estimatedLendApy: 0n,
       utilizationRate: 30n,
     });
   });

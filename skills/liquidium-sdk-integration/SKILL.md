@@ -228,6 +228,12 @@ can choose. Native and ck representations share a pool: for example,
 `findPool({ asset: "USDT", chain: "ICP" })` resolve to the same ETH-backed USDT
 pool. There are no separate ckBTC, ckETH, ckUSDC, or ckUSDT pools.
 
+Pools expose current APR fields plus `estimatedLendingApy` and
+`estimatedBorrowingApy`. Estimated APYs use the current APR for a full 365-day
+year. They are estimates, not guaranteed or historical yield, because rates
+change with utilization and supply synchronization can occur between scheduled
+timer ticks.
+
 ### quote
 
 Quote-first planning. Use this to calculate borrow USD value, required
