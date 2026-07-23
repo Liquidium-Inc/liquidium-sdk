@@ -37,26 +37,32 @@ interface BuildSimpleLoanCollateralHintPathRequest {
 }
 
 const ACTIVITIES = `${SDK_API_V2_PATH}/activities`;
+const HISTORY_ACTIVITIES = `${SDK_API_V2_PATH}/history/activities`;
 const HISTORY_USERS = `${SDK_API_V2_PATH}/history/users`;
 const INFLOW = `${SDK_API_V2_PATH}/inflow`;
 const SIMPLE_LOANS = `${SDK_API_V1_PATH}/instant-loans`;
 
 export function buildHistoryUserTransactionsPath(
-  user: string,
+  profileId: string,
   query: URLSearchParams
 ): string {
-  const base = `${HISTORY_USERS}/${encodeURIComponent(user)}/transactions`;
+  const base = `${HISTORY_USERS}/${encodeURIComponent(profileId)}/transactions`;
   const qs = query.toString();
   return qs ? `${base}?${qs}` : base;
 }
 
 export function buildHistoryUserLiquidationsPath(
-  user: string,
+  profileId: string,
   query: URLSearchParams
 ): string {
-  const base = `${HISTORY_USERS}/${encodeURIComponent(user)}/liquidations`;
+  const base = `${HISTORY_USERS}/${encodeURIComponent(profileId)}/liquidations`;
   const qs = query.toString();
   return qs ? `${base}?${qs}` : base;
+}
+
+export function buildProtocolActivityPath(query: URLSearchParams): string {
+  const qs = query.toString();
+  return qs ? `${HISTORY_ACTIVITIES}?${qs}` : HISTORY_ACTIVITIES;
 }
 
 export function buildActivitiesPath(

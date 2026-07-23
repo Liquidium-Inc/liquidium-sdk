@@ -41,6 +41,7 @@ history, quote, lending, and Simple Loans methods:
 
 - `history.getUserTransactionHistory`
 - `history.getLiquidationHistory`
+- `history.getProtocolActivity`
 - `positions.getFullWithdrawAmount`
 - `simpleLoans.create`
 - `simpleLoans.get({ ref })`

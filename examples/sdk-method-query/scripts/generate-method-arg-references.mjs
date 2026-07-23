@@ -64,6 +64,7 @@ const METHOD_REFERENCE_TARGETS = {
   "activities.getStatus": "activities.getStatus",
   "history.getUserTransactionHistory": "history.getUserTransactionHistory",
   "history.getLiquidationHistory": "history.getLiquidationHistory",
+  "history.getProtocolActivity": "history.getProtocolActivity",
   "quote.getQuote": "quote.getQuote",
   "lending.prepareWithdraw": "lending.prepareWithdraw",
   "lending.withdraw": "lending.withdraw",

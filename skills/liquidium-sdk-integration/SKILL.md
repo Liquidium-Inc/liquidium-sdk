@@ -330,12 +330,14 @@ client.activities.getStatus({ profileId, id });
 
 ### history
 
-User transaction and liquidation history. Uses the configured SDK API base URL,
-which has a production default.
+User transaction history, liquidation history, and recent confirmed
+protocol-wide activity. Uses the configured SDK API base URL, which has a
+production default.
 
 ```ts
 client.history.getUserTransactionHistory(profileId, filters?);
 client.history.getLiquidationHistory(profileId, filters?);
+client.history.getProtocolActivity({ poolId, operations, limit });
 ```
 
 Activities and user history entries expose `txids?: string[]`; do not expect
@@ -344,6 +346,12 @@ canonical operation names:
 `deposit`, `borrow`, `repayment`, `withdrawal`, and `liquidation`.
 Use `operations` for operation filters and `states` for lifecycle-state filters;
 do not use removed `type`, `status`, or `kind` filters.
+
+User history methods return paginated `{ items, nextCursor? }` responses.
+`getProtocolActivity(...)` calls `GET /v2/history/activities`, returns an
+unpaginated array, and includes each pool's `asset`, `decimals`, and base-unit
+`amount`. Its limit range is 1 to 100; user history limit ranges are 1 to 200.
+All three methods default to 50 entries.
 
 ## Rate and Amount Formatting
 

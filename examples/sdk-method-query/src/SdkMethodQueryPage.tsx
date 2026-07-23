@@ -11,8 +11,11 @@ import type {
   LiquidiumAccountType,
   LiquidiumClient,
   Pool,
+  ProtocolActivityOperation,
   QuoteRequest,
   SigningChain,
+  UserTransactionHistoryOperation,
+  UserTransactionHistoryState,
   WalletAdapter,
 } from "@liquidium/client";
 import { isAssetIdentifier } from "@liquidium/client";
@@ -23,8 +26,24 @@ import { createLiquidiumClient } from "./lib/client";
 
 const MIN_LIST_LIMIT = 1;
 const MAX_LIST_LIMIT = 1000;
+const MAX_HISTORY_LIMIT = 200;
+const MAX_PROTOCOL_ACTIVITY_LIMIT = 100;
 const DEFAULT_MOCK_SIGNATURE = "replace-with-real-signature";
 const DEFAULT_MOCK_TX_HASH = "0xmockedtxhash";
+const HISTORY_OPERATIONS = [
+  "deposit",
+  "borrow",
+  "repayment",
+  "withdrawal",
+  "liquidation",
+] as const satisfies readonly UserTransactionHistoryOperation[];
+const HISTORY_STATES = [
+  "action_required",
+  "confirming",
+  "processing",
+  "completed",
+  "failed",
+] as const satisfies readonly UserTransactionHistoryState[];
 
 type MethodDefinition = {
   id: string;
@@ -353,20 +372,35 @@ const SDK_METHODS: MethodDefinition[] = [
     id: "history.getUserTransactionHistory",
     label: "history.getUserTransactionHistory",
     defaultArgs:
-      '{\n  "user": "aaaaa-aa",\n  "filters": {\n    "market": "",\n    "limit": 20\n  }\n}',
+      '{\n  "profileId": "aaaaa-aa",\n  "filters": {\n    "poolId": "",\n    "operations": ["deposit", "borrow"],\n    "states": ["completed"],\n    "limit": 20\n  }\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
       const filters = expectOptionalObject(args.filters, "filters");
 
       return await client.history.getUserTransactionHistory(
-        expectNonEmptyString(args.user, "user"),
+        expectNonEmptyString(args.profileId, "profileId"),
         filters
           ? {
               market: expectOptionalString(filters.market, "filters.market"),
+              poolId: expectOptionalString(filters.poolId, "filters.poolId"),
+              operations: expectOptionalStringValues(
+                filters.operations,
+                "filters.operations",
+                HISTORY_OPERATIONS
+              ),
+              states: expectOptionalStringValues(
+                filters.states,
+                "filters.states",
+                HISTORY_STATES
+              ),
               cursor: expectOptionalString(filters.cursor, "filters.cursor"),
               from: expectOptionalString(filters.from, "filters.from"),
               to: expectOptionalString(filters.to, "filters.to"),
-              limit: expectOptionalLimit(filters.limit, "filters.limit"),
+              limit: expectOptionalLimit(
+                filters.limit,
+                "filters.limit",
+                MAX_HISTORY_LIMIT
+              ),
             }
           : {}
       );
@@ -376,16 +410,53 @@ const SDK_METHODS: MethodDefinition[] = [
     id: "history.getLiquidationHistory",
     label: "history.getLiquidationHistory",
     defaultArgs:
-      '{\n  "user": "aaaaa-aa",\n  "filters": {\n    "market": ""\n  }\n}',
+      '{\n  "profileId": "aaaaa-aa",\n  "filters": {\n    "poolId": "",\n    "limit": 20\n  }\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
       const filters = expectOptionalObject(args.filters, "filters");
 
       return await client.history.getLiquidationHistory(
-        expectNonEmptyString(args.user, "user"),
+        expectNonEmptyString(args.profileId, "profileId"),
         filters
           ? {
               market: expectOptionalString(filters.market, "filters.market"),
+              poolId: expectOptionalString(filters.poolId, "filters.poolId"),
+              cursor: expectOptionalString(filters.cursor, "filters.cursor"),
+              from: expectOptionalString(filters.from, "filters.from"),
+              to: expectOptionalString(filters.to, "filters.to"),
+              limit: expectOptionalLimit(
+                filters.limit,
+                "filters.limit",
+                MAX_HISTORY_LIMIT
+              ),
+            }
+          : {}
+      );
+    },
+  },
+  {
+    id: "history.getProtocolActivity",
+    label: "history.getProtocolActivity",
+    defaultArgs:
+      '{\n  "filters": {\n    "poolId": "",\n    "operations": ["deposit", "borrow"],\n    "limit": 20\n  }\n}',
+    execute: async (client, input) => {
+      const args = expectObject(input);
+      const filters = expectOptionalObject(args.filters, "filters");
+
+      return await client.history.getProtocolActivity(
+        filters
+          ? {
+              poolId: expectOptionalString(filters.poolId, "filters.poolId"),
+              operations: expectOptionalStringValues<ProtocolActivityOperation>(
+                filters.operations,
+                "filters.operations",
+                HISTORY_OPERATIONS
+              ),
+              limit: expectOptionalLimit(
+                filters.limit,
+                "filters.limit",
+                MAX_PROTOCOL_ACTIVITY_LIMIT
+              ),
             }
           : {}
       );
@@ -1081,7 +1152,8 @@ function expectBigInt(value: unknown, fieldName: string): bigint {
 
 function expectOptionalLimit(
   value: unknown,
-  fieldName: string
+  fieldName: string,
+  maximumLimit = MAX_LIST_LIMIT
 ): number | undefined {
   if (value === undefined || value === null) {
     return undefined;
@@ -1091,13 +1163,37 @@ function expectOptionalLimit(
     throw new Error(`${fieldName} must be an integer.`);
   }
 
-  if (value < MIN_LIST_LIMIT || value > MAX_LIST_LIMIT) {
+  if (value < MIN_LIST_LIMIT || value > maximumLimit) {
     throw new Error(
-      `${fieldName} must be between ${MIN_LIST_LIMIT} and ${MAX_LIST_LIMIT}.`
+      `${fieldName} must be between ${MIN_LIST_LIMIT} and ${maximumLimit}.`
     );
   }
 
   return value;
+}
+
+function expectOptionalStringValues<T extends string>(
+  value: unknown,
+  fieldName: string,
+  allowedValues: readonly T[]
+): T[] | undefined {
+  if (value === undefined || value === null) {
+    return undefined;
+  }
+
+  const values = expectArray(value, fieldName).map((item, index) =>
+    expectNonEmptyString(item, `${fieldName}[${index}]`)
+  );
+
+  for (const value of values) {
+    if (!allowedValues.includes(value as T)) {
+      throw new Error(
+        `${fieldName} must contain only: ${allowedValues.join(", ")}.`
+      );
+    }
+  }
+
+  return values as T[];
 }
 
 function expectChain(value: unknown, fieldName: string): Chain {

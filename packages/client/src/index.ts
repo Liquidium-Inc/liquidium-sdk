@@ -114,12 +114,16 @@ export type {
 export { ActivitiesModule, ActivityFilter } from "./modules/activities";
 export type {
   PaginatedResponse,
+  ProtocolActivityEntry,
+  ProtocolActivityFeedFilters,
+  ProtocolActivityOperation,
   UserHistoryEntry,
   UserHistoryEntryApiItem,
   UserHistoryOperation,
   UserHistoryResponse,
   UserLiquidationHistoryEntry,
   UserLiquidationHistoryFilters,
+  UserLiquidationHistoryStatus,
   UserTransactionHistoryEntry,
   UserTransactionHistoryFilters,
   UserTransactionHistoryOperation,
