@@ -394,9 +394,8 @@ scaled values as percentages. `maxLtv`, `liquidationThreshold`,
 points instead.
 
 Health factors use three decimal places: `1000n` means `1.0`. Read
-`healthFactorDecimals` when formatting and check `isHealthFactorInfinite`
-before displaying the raw value. A profile with no debt has an infinite health
-factor and the canister's raw max-integer sentinel is not displayable.
+`healthFactorDecimals` when formatting. `healthFactor` is `null` when a profile
+has no debt because its health factor is unbounded.
 
 Never convert a raw scaled rate directly to display text or append `%` to it.
 That can produce impossible UI values such as `3.7e+24%`. Divide by

@@ -139,9 +139,8 @@ export class PositionsModule {
       );
 
       return {
-        healthFactor,
+        healthFactor: userStats.debt === 0n ? null : healthFactor,
         healthFactorDecimals: HEALTH_FACTOR_DECIMALS,
-        isHealthFactorInfinite: userStats.debt === 0n,
         userStats,
       };
     } catch (error) {
@@ -189,12 +188,8 @@ export class PositionsModule {
   async getUserPositionSummary(
     profileId: string
   ): Promise<UserPositionSummary> {
-    const {
-      healthFactor,
-      healthFactorDecimals,
-      isHealthFactorInfinite,
-      userStats,
-    } = await this.getHealthFactor(profileId);
+    const { healthFactor, healthFactorDecimals, userStats } =
+      await this.getHealthFactor(profileId);
 
     const collateral = userStats.collateral;
     const debt = userStats.debt;
@@ -216,7 +211,6 @@ export class PositionsModule {
       weightedLiquidationThresholdBps: userStats.weightedLiquidationThreshold,
       healthFactor,
       healthFactorDecimals,
-      isHealthFactorInfinite,
     };
   }
 

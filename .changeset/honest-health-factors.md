@@ -2,4 +2,4 @@
 "@liquidium/client": minor
 ---
 
-Expose the health-factor scale and identify infinite no-debt health factors.
+Expose the health-factor scale and return null for no-debt health factors.

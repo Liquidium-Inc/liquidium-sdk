@@ -454,7 +454,6 @@ describe("PositionsModule", () => {
     expect(health).toEqual({
       healthFactor: 1_500n,
       healthFactorDecimals: HEALTH_FACTOR_DECIMALS,
-      isHealthFactorInfinite: false,
       userStats: {
         debt: 10n,
         debtDecimals: 27n,
@@ -535,7 +534,6 @@ describe("PositionsModule", () => {
       weightedLiquidationThresholdBps: LIQUIDATION_THRESHOLD_BPS,
       healthFactor: HEALTH_FACTOR,
       healthFactorDecimals: HEALTH_FACTOR_DECIMALS,
-      isHealthFactorInfinite: false,
     });
   });
 
@@ -568,9 +566,8 @@ describe("PositionsModule", () => {
     expect(summary.currentLtvBps).toBe(0n);
     expect(summary.availableBorrowsUsd).toBe(0n);
     expect(summary.netWorthUsd).toBe(0n);
-    expect(summary.healthFactor).toBe(NO_DEBT_HEALTH_FACTOR);
+    expect(summary.healthFactor).toBeNull();
     expect(summary.healthFactorDecimals).toBe(HEALTH_FACTOR_DECIMALS);
-    expect(summary.isHealthFactorInfinite).toBe(true);
   });
 
   test("exports the protocol health factor scale", () => {

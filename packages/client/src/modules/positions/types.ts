@@ -51,12 +51,10 @@ export interface UserStats {
 
 /** Health factor and supporting aggregate stats for a profile. */
 export interface HealthFactor {
-  /** Raw health factor, scaled by `healthFactorDecimals` when finite. */
-  healthFactor: bigint;
+  /** Health factor scaled by `healthFactorDecimals`, or `null` with no debt. */
+  healthFactor: bigint | null;
   /** Decimal scale for a finite `healthFactor`. */
   healthFactorDecimals: bigint;
-  /** Whether the health factor is unbounded because the profile has no debt. */
-  isHealthFactorInfinite: boolean;
   /** Aggregate stats used to derive the health factor. */
   userStats: UserStats;
 }
@@ -79,12 +77,10 @@ export interface UserPositionSummary {
   weightedMaxLtvBps: bigint;
   /** Weighted liquidation threshold in basis points. */
   weightedLiquidationThresholdBps: bigint;
-  /** Raw health factor, scaled by `healthFactorDecimals` when finite. */
-  healthFactor: bigint;
+  /** Health factor scaled by `healthFactorDecimals`, or `null` with no debt. */
+  healthFactor: bigint | null;
   /** Decimal scale for a finite `healthFactor`. */
   healthFactorDecimals: bigint;
-  /** Whether the health factor is unbounded because the profile has no debt. */
-  isHealthFactorInfinite: boolean;
 }
 
 /** Position joined with pool metadata and current USD valuation. */

@@ -63,8 +63,8 @@ not introduce framework, network, or content-security-policy requirements.
 
 Health factors use three decimal places: `1000n` means `1.0`. Use
 `healthFactorDecimals` or the exported `HEALTH_FACTOR_SCALE` when formatting a
-finite value. When `isHealthFactorInfinite` is `true`, the profile has no debt
-and the raw health-factor sentinel must not be displayed.
+finite value. `healthFactor` is `null` when the profile has no debt because its
+health factor is unbounded.
 
 Pool rate fields such as `lendingRate`, `borrowingRate`, and `utilizationRate`
 use the 27-decimal `rateDecimals` scale. Pool risk fields such as `maxLtv`,
