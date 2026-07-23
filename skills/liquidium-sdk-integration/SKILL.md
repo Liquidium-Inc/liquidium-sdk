@@ -229,9 +229,9 @@ can choose. Native and ck representations share a pool: for example,
 `findPool({ asset: "USDT", chain: "ICP" })` resolve to the same ETH-backed USDT
 pool. There are no separate ckBTC, ckETH, ckUSDC, or ckUSDT pools.
 
-Each pool includes `displayName` and a Liquidium-hosted SVG `iconUrl`. Use
-`getAssetMetadata(asset)` or `ASSET_METADATA` when presentation metadata is
-needed without a pool response.
+Each pool includes `displayName`. Use `getAssetMetadata(asset)` or
+`ASSET_METADATA` when names are needed without a pool response. Asset icons are
+owned by the integrating application and are not shipped by the SDK.
 
 Pools expose current APR fields plus `estimatedLendingApy` and
 `estimatedBorrowingApy`. Estimated APYs use the current APR for a full 365-day

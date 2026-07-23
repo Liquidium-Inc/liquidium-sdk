@@ -63,7 +63,6 @@ describe("MarketModule", () => {
         id: "pool-1",
         asset: "BTC",
         displayName: "Bitcoin",
-        iconUrl: "https://app.liquidium.fi/img/logos/crypto/btc.svg",
         chain: "BTC",
         decimals: 8n,
         frozen: false,

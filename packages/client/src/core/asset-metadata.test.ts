@@ -4,12 +4,12 @@ import { Asset } from "./types";
 
 describe("asset metadata", () => {
   test.each([
-    [Asset.BTC, "Bitcoin", "btc.svg"],
-    [Asset.ETH, "Ethereum", "eth.svg"],
-    [Asset.ICP, "Internet Computer", "icp.svg"],
-    [Asset.USDC, "USD Coin", "usdc.svg"],
-    [Asset.USDT, "Tether USD", "usdt.svg"],
-  ])("should return presentation metadata for %s", (asset, displayName, iconFileName) => {
+    [Asset.BTC, "Bitcoin"],
+    [Asset.ETH, "Ethereum"],
+    [Asset.ICP, "Internet Computer"],
+    [Asset.USDC, "USD Coin"],
+    [Asset.USDT, "Tether USD"],
+  ])("should return presentation metadata for %s", (asset, displayName) => {
     // given
 
     // when
@@ -19,8 +19,5 @@ describe("asset metadata", () => {
     expect(metadata).toEqual(ASSET_METADATA[asset]);
     expect(metadata.symbol).toBe(asset);
     expect(metadata.displayName).toBe(displayName);
-    expect(metadata.iconUrl).toBe(
-      `https://app.liquidium.fi/img/logos/crypto/${iconFileName}`
-    );
   });
 });

@@ -33,7 +33,6 @@ export function mapDecodedPoolToPool(
     id: pool.principal.toString(),
     asset: pool.asset,
     displayName: assetMetadata.displayName,
-    iconUrl: assetMetadata.iconUrl,
     chain: pool.chain,
     decimals: getAssetNativeDecimals(pool.asset),
     frozen: pool.frozen,

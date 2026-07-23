@@ -43,20 +43,21 @@ const { prices, fetchedAt } = await client.market.getAssetPriceSnapshot();
 It is not the oracle observation timestamp because the lending canister does not
 include that timestamp in its public price response.
 
-## Asset names and icons
+## Asset names
 
-Every `Pool` includes a stable `displayName` and `iconUrl`. The same metadata is
-available without fetching pools through `getAssetMetadata(asset)` or the
-exported `ASSET_METADATA` record.
+Every `Pool` includes a stable `displayName`. The same metadata is available
+without fetching pools through `getAssetMetadata(asset)` or the exported
+`ASSET_METADATA` record.
 
 ```ts
 import { getAssetMetadata } from "@liquidium/client";
 
-const { displayName, iconUrl } = getAssetMetadata("BTC");
+const { displayName } = getAssetMetadata("BTC");
 ```
 
-Use the canonical `asset` symbol for protocol logic. Names and icon URLs are
-presentation metadata only.
+Use the canonical `asset` symbol for protocol logic. Display names are
+presentation metadata only. Applications own their icon assets so the SDK does
+not introduce framework, network, or content-security-policy requirements.
 
 ## Health factor and risk scales
 
