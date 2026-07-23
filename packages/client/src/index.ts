@@ -9,6 +9,8 @@ export type {
   LiquidiumAccountReference,
 } from "./core/accounts";
 export { LiquidiumAccountType } from "./core/accounts";
+export type { AssetMetadata } from "./core/asset-metadata";
+export { ASSET_METADATA, getAssetMetadata } from "./core/asset-metadata";
 export {
   getMinimumBorrowAmount,
   MIN_BORROW_AMOUNTS_BY_ASSET,

@@ -6,6 +6,10 @@ export interface Pool {
   id: string;
   /** Asset supplied to and borrowed from the pool. */
   asset: Asset;
+  /** Human-readable name of the pool asset. */
+  displayName: string;
+  /** Public Liquidium-hosted SVG icon URL for the pool asset. */
+  iconUrl: string;
   /** Chain associated with the pool asset. */
   chain: Chain;
   /** Number of base-unit decimals for pool amounts. */

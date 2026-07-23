@@ -11,6 +11,8 @@ describe("QuoteModule", () => {
   const btcPool: Pool = {
     id: "aaaaa-btc-pool",
     asset: "BTC",
+    displayName: "Bitcoin",
+    iconUrl: "https://app.liquidium.fi/img/logos/crypto/btc.svg",
     chain: "BTC",
     decimals: 8n,
     frozen: false,
@@ -41,6 +43,8 @@ describe("QuoteModule", () => {
   const usdtPool: Pool = {
     id: "xxxxx-usdt-pool",
     asset: "USDT",
+    displayName: "Tether USD",
+    iconUrl: "https://app.liquidium.fi/img/logos/crypto/usdt.svg",
     chain: "ETH",
     decimals: 6n,
     frozen: false,

@@ -1,3 +1,4 @@
+import { getAssetMetadata } from "../../core/asset-metadata";
 import type {
   PoolRateTuple,
   PriceRecord,
@@ -20,6 +21,7 @@ export function mapDecodedPoolToPool(
   pool: DecodedPool,
   rate: PoolRateTuple
 ): Pool {
+  const assetMetadata = getAssetMetadata(pool.asset);
   const totalSupply =
     (pool.total_supply_at_last_sync * pool.lending_index) / RATE_SCALE;
   const totalDebt =
@@ -30,6 +32,8 @@ export function mapDecodedPoolToPool(
   return {
     id: pool.principal.toString(),
     asset: pool.asset,
+    displayName: assetMetadata.displayName,
+    iconUrl: assetMetadata.iconUrl,
     chain: pool.chain,
     decimals: getAssetNativeDecimals(pool.asset),
     frozen: pool.frozen,
