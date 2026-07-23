@@ -615,6 +615,26 @@ describe("MarketModule", () => {
     expect(prices).toEqual({});
   });
 
+  test("returns prices with the SDK fetch timestamp", async () => {
+    // given
+    const FETCHED_AT_SECONDS = 1_750_000_000n;
+    vi.useFakeTimers();
+    vi.setSystemTime(Number(FETCHED_AT_SECONDS * 1_000n));
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      get_prices: vi.fn().mockResolvedValue([["BTC_USDT", 68_500_000_000n, 6]]),
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const snapshot = await client.market.getAssetPriceSnapshot();
+
+    // then
+    expect(snapshot).toEqual({
+      prices: { BTC: 68_500 },
+      fetchedAt: FETCHED_AT_SECONDS,
+    });
+  });
+
   test("gets a pool rate from the lending canister", async () => {
     // given
     vi.spyOn(Actor, "createActor").mockReturnValue({

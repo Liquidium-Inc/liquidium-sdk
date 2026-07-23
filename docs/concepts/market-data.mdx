@@ -42,3 +42,16 @@ same-asset threshold while preserving active debt. In that case, a returned
 position can have `isCollateral: true` while its displayed `deposited` amount is
 zero. The protocol still includes the credited dust balance in aggregate
 collateral.
+
+## Price timestamps
+
+Use `client.market.getAssetPriceSnapshot()` when the UI needs to show when it
+last refreshed market prices:
+
+```ts
+const { prices, fetchedAt } = await client.market.getAssetPriceSnapshot();
+```
+
+`fetchedAt` is the Unix timestamp when the SDK received the canister response.
+It is not the oracle observation timestamp because the lending canister does not
+include that timestamp in its public price response.

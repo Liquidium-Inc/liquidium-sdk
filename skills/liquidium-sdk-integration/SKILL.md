@@ -216,6 +216,7 @@ client.market.listPools();
 client.market.findPool({ asset, chain });
 client.market.getReserveData({ asset, chain });
 client.market.getAssetPrices();
+client.market.getAssetPriceSnapshot();
 client.market.getPoolRate(poolId);
 ```
 
@@ -233,6 +234,10 @@ Pools expose current APR fields plus `estimatedLendingApy` and
 year. They are estimates, not guaranteed or historical yield, because rates
 change with utilization and supply synchronization can occur between scheduled
 timer ticks.
+
+Use `getAssetPriceSnapshot()` when a UI needs price refresh time. Its `fetchedAt`
+field is the SDK retrieval timestamp in Unix seconds, not the underlying oracle
+observation time, which the lending canister does not expose.
 
 ### quote
 

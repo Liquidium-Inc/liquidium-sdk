@@ -15,6 +15,8 @@ export const METHOD_ARG_REFERENCES: Record<string, string> = {
     "client.market.listPools(): Promise<Pool[]>\n\nNo request object type.",
   "market.getAssetPrices":
     "client.market.getAssetPrices(): Promise<AssetPrices>\n\nNo request object type.",
+  "market.getAssetPriceSnapshot":
+    "client.market.getAssetPriceSnapshot(): Promise<AssetPriceSnapshot>\n\nNo request object type.",
   "market.findPool":
     'client.market.findPool(query: AssetIdentifier): Promise<Pool>\n\ntype FindPoolQuery = AssetIdentifier;\n\ntype AssetIdentifier =\n  | BtcOnBtcAssetIdentifier\n  | EthOnEthAssetIdentifier\n  | UsdcOnEthAssetIdentifier\n  | UsdtOnEthAssetIdentifier\n  | BtcOnIcpAssetIdentifier\n  | EthOnIcpAssetIdentifier\n  | IcpOnIcpAssetIdentifier\n  | UsdcOnIcpAssetIdentifier\n  | UsdtOnIcpAssetIdentifier;\n\ninterface BtcOnBtcAssetIdentifier {\n  chain: "BTC";\n  asset: "BTC";\n}\n\ninterface EthOnEthAssetIdentifier {\n  chain: "ETH";\n  asset: "ETH";\n}\n\ninterface UsdcOnEthAssetIdentifier {\n  chain: "ETH";\n  asset: "USDC";\n}\n\ninterface UsdtOnEthAssetIdentifier {\n  chain: "ETH";\n  asset: "USDT";\n}\n\ninterface BtcOnIcpAssetIdentifier {\n  chain: "ICP";\n  asset: "BTC";\n}\n\ninterface EthOnIcpAssetIdentifier {\n  chain: "ICP";\n  asset: "ETH";\n}\n\ninterface IcpOnIcpAssetIdentifier {\n  chain: "ICP";\n  asset: "ICP";\n}\n\ninterface UsdcOnIcpAssetIdentifier {\n  chain: "ICP";\n  asset: "USDC";\n}\n\ninterface UsdtOnIcpAssetIdentifier {\n  chain: "ICP";\n  asset: "USDT";\n}',
   "market.getPoolRate":

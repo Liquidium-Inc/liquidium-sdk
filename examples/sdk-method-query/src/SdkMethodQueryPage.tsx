@@ -133,6 +133,14 @@ const SDK_METHODS: MethodDefinition[] = [
     },
   },
   {
+    id: "market.getAssetPriceSnapshot",
+    label: "market.getAssetPriceSnapshot",
+    defaultArgs: "{}",
+    execute: async (client) => {
+      return await client.market.getAssetPriceSnapshot();
+    },
+  },
+  {
     id: "market.findPool",
     label: "market.findPool",
     defaultArgs: '{\n  "asset": "BTC",\n  "chain": "BTC"\n}',

@@ -45,6 +45,7 @@ const METHOD_REFERENCE_TARGETS = {
   "accounts.listLinkedWallets": "accounts.listLinkedWallets",
   "market.listPools": "market.listPools",
   "market.getAssetPrices": "market.getAssetPrices",
+  "market.getAssetPriceSnapshot": "market.getAssetPriceSnapshot",
   "market.findPool": "market.findPool",
   "market.getPoolRate": "market.getPoolRate",
   "market.getReserveData": "market.getReserveData",

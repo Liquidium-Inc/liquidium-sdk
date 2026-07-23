@@ -174,6 +174,7 @@ export {
   SupplyPlanType,
 } from "./modules/lending";
 export type {
+  AssetPriceSnapshot,
   AssetPrices,
   FindPoolQuery,
   Pool,

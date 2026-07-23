@@ -67,6 +67,14 @@ export interface Pool {
 /** USD price map keyed by market asset symbol. */
 export type AssetPrices = Record<string, number>;
 
+/** Protocol prices with the time at which the SDK completed the fetch. */
+export interface AssetPriceSnapshot {
+  /** USD price map keyed by market asset symbol. */
+  prices: AssetPrices;
+  /** Unix timestamp in seconds when the SDK received the price response. */
+  fetchedAt: bigint;
+}
+
 /** Supported Chain + Asset identifier used to find its backing lending pool. */
 export type FindPoolQuery = AssetIdentifier;
 
