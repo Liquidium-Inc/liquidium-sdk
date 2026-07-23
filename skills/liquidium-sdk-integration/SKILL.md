@@ -278,8 +278,14 @@ Profile creation and resolution.
 client.accounts.prepareCreateProfile(...);  // returns a signable action
 client.accounts.createProfile(...);         // signs and submits through a wallet adapter
 client.accounts.getProfileId(walletAddress);
+client.accounts.profileExists(profileId);
 client.accounts.listLinkedWallets(profileId);
 ```
+
+Position reads return the same empty values for an unknown profile and a
+registered profile with no positions. Use `profileExists(profileId)` when the
+UI must distinguish those cases. It relies on the production invariant that
+every registered profile retains at least one linked wallet.
 
 ### lending
 

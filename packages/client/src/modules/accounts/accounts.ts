@@ -89,6 +89,34 @@ export class AccountsModule {
   }
 
   /**
+   * Checks whether a profile is registered with the protocol.
+   *
+   * Production profile registration always links an initial wallet, and the
+   * protocol prevents removal of a profile's final wallet. This method uses
+   * that invariant because the current canister API has no direct existence
+   * query.
+   *
+   * @param profileId - The Liquidium profile principal text.
+   * @returns `true` when the profile has at least one linked wallet.
+   */
+  async profileExists(profileId: string): Promise<boolean> {
+    try {
+      const profilePrincipal = parseProfilePrincipal(profileId);
+      const wallets = await createLendingActor(
+        this.canisterContext
+      ).get_profile_wallets(profilePrincipal);
+
+      return wallets.length > 0;
+    } catch (error) {
+      if (error instanceof LiquidiumError) {
+        throw error;
+      }
+
+      throw mapCanisterCallErrorToLiquidiumError("get_profile_wallets", error);
+    }
+  }
+
+  /**
    * Returns the current nonce for a wallet address.
    *
    * This is mainly useful for custom signing flows built on prepared actions.
@@ -211,6 +239,18 @@ export class AccountsModule {
 
 function normalizeProfileAccount(account: string): string {
   return normalizeEvmAddress(account);
+}
+
+function parseProfilePrincipal(profileId: string): Principal {
+  try {
+    return Principal.fromText(profileId);
+  } catch (error) {
+    throw new LiquidiumError(
+      LiquidiumErrorCode.VALIDATION_ERROR,
+      `Invalid profile id: ${profileId}`,
+      error
+    );
+  }
 }
 
 function createInitializeAccountMessage(

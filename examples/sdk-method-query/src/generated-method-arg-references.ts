@@ -7,6 +7,8 @@ export const METHOD_ARG_REFERENCES: Record<string, string> = {
     'client.accounts.createProfile(params: CreateProfileParams): Promise<string>\n\ninterface CreateProfileParams {\n  /** Wallet address that will own the new profile. */\n  account: string;\n  /** Chain used to sign the profile-creation message. */\n  chain: SigningChain;\n  /** Wallet adapter used to sign the profile-creation message. */\n  walletAdapter: WalletAdapter;\n}\n\ntype SigningChain = "BTC" | "ETH";',
   "accounts.getProfileId":
     "client.accounts.getProfileId(walletAddress: string): Promise<string | null>\n\nNo request object type.",
+  "accounts.profileExists":
+    "client.accounts.profileExists(profileId: string): Promise<boolean>\n\nNo request object type.",
   "accounts.getWalletNonce":
     "client.accounts.getWalletNonce(walletAddress: string): Promise<bigint>\n\nNo request object type.",
   "accounts.listLinkedWallets":

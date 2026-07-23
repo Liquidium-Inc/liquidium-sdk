@@ -82,3 +82,18 @@ Pool rate fields such as `lendingRate`, `borrowingRate`, and `utilizationRate`
 use the 27-decimal `rateDecimals` scale. Pool risk fields such as `maxLtv`,
 `liquidationThreshold`, `liquidationBonus`, `protocolLiquidationFee`, and
 `reserveFactor` use basis points instead.
+
+## Profile existence
+
+Position queries return empty values for both registered profiles with no
+positions and unknown principal IDs. Call `client.accounts.profileExists(...)`
+when the distinction matters:
+
+```ts
+const isRegistered = await client.accounts.profileExists(profileId);
+```
+
+The current canister has no direct profile-existence query. The SDK uses the
+production invariant that every registered profile has at least one linked
+wallet and the final wallet cannot be removed. Profiles inserted through
+development-only state seeding without wallets are not detectable this way.

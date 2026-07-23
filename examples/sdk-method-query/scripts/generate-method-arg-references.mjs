@@ -41,6 +41,7 @@ const METHOD_REFERENCE_TARGETS = {
   "accounts.prepareCreateProfile": "accounts.prepareCreateProfile",
   "accounts.createProfile": "accounts.createProfile",
   "accounts.getProfileId": "accounts.getProfileId",
+  "accounts.profileExists": "accounts.profileExists",
   "accounts.getWalletNonce": "accounts.getWalletNonce",
   "accounts.listLinkedWallets": "accounts.listLinkedWallets",
   "market.listPools": "market.listPools",
