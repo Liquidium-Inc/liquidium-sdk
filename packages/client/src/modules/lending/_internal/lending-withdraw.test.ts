@@ -5,6 +5,7 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 import { Chain, LiquidiumClient, LiquidiumErrorCode } from "../../../index";
 import {
   BTC_POOL_ID,
+  CHECKSUM_EVM_OUTFLOW_ADDRESS,
   createBtcPoolRecord,
   createEthPoolRecord,
   createIcpPoolRecord,
@@ -23,6 +24,16 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
+function createNoDeployedBytecodeFetch(): typeof fetch {
+  return vi.fn().mockImplementation(
+    async () =>
+      new Response(JSON.stringify({ hasDeployedBytecode: false }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      })
+  ) as typeof fetch;
+}
+
 describe("LendingModule withdraw", () => {
   test("allows a native ETH withdraw at the 0.005 ETH minimum", async () => {
     // given
@@ -32,7 +43,13 @@ describe("LendingModule withdraw", () => {
       list_pools: vi.fn().mockResolvedValue([createEthPoolRecord()]),
       get_nonce: getNonce,
     } as never);
-    const client = new LiquidiumClient({});
+    const client = new LiquidiumClient({
+      evmPublicClient: {
+        getCode: vi.fn().mockResolvedValue(undefined),
+        readContract: vi.fn(),
+      } as never,
+      fetch: createNoDeployedBytecodeFetch(),
+    });
 
     // when
     const withdrawAction = await client.lending.prepareWithdraw({
@@ -53,6 +70,103 @@ describe("LendingModule withdraw", () => {
       },
     });
     expect(getNonce).toHaveBeenCalledWith("0xsigner");
+  });
+
+  test("rejects a contract destination that deploys after withdraw preparation", async () => {
+    // given
+    const MINIMUM_ETH_AMOUNT_WEI = 5_000_000_000_000_000n;
+    const withdraw = vi.fn();
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi.fn().mockResolvedValue([createEthPoolRecord()]),
+      get_nonce: vi.fn().mockResolvedValue(23n),
+      withdraw,
+    } as never);
+    const fetch = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ hasDeployedBytecode: false }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        })
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ hasDeployedBytecode: true }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        })
+      ) as typeof globalThis.fetch;
+    const client = new LiquidiumClient({ fetch });
+    const withdrawAction = await client.lending.prepareWithdraw({
+      profileId: "aaaaa-aa",
+      poolId: ETH_POOL_ID,
+      amount: MINIMUM_ETH_AMOUNT_WEI,
+      chain: Chain.ETH,
+      receiver: LOWERCASE_EVM_OUTFLOW_ADDRESS,
+      signerWalletAddress: "0xsigner",
+    });
+
+    // when
+    const result = withdrawAction.submit({
+      signature: "0xsigned",
+      chain: "ETH",
+    });
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.CONTRACT_DESTINATION_UNSUPPORTED,
+    });
+    expect(withdraw).not.toHaveBeenCalled();
+  });
+
+  test("revalidates the prepared withdraw destination after public action data is mutated", async () => {
+    // given
+    const MINIMUM_ETH_AMOUNT_WEI = 5_000_000_000_000_000n;
+    const MUTATED_EVM_ADDRESS = "0xde709f2102306220921060314715629080e2fb77";
+    const withdraw = vi.fn().mockResolvedValue({
+      Ok: {
+        id: "outflow-eth",
+        txid: [],
+        outflow_type: { Withdraw: null },
+        outflow_ref: [],
+        amount: MINIMUM_ETH_AMOUNT_WEI,
+        receiver: { External: CHECKSUM_EVM_OUTFLOW_ADDRESS },
+      },
+    });
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi.fn().mockResolvedValue([createEthPoolRecord()]),
+      get_nonce: vi.fn().mockResolvedValue(23n),
+      withdraw,
+    } as never);
+    const getCode = vi.fn().mockResolvedValue(undefined);
+    const client = new LiquidiumClient({
+      evmPublicClient: { getCode, readContract: vi.fn() } as never,
+    });
+    const withdrawAction = await client.lending.prepareWithdraw({
+      profileId: "aaaaa-aa",
+      poolId: ETH_POOL_ID,
+      amount: MINIMUM_ETH_AMOUNT_WEI,
+      chain: Chain.ETH,
+      receiver: LOWERCASE_EVM_OUTFLOW_ADDRESS,
+      signerWalletAddress: "0xsigner",
+    });
+    const publicReceiver = withdrawAction.data.receiver;
+    if (typeof publicReceiver === "string" || !("address" in publicReceiver)) {
+      throw new Error("Expected a typed withdraw receiver");
+    }
+    publicReceiver.address = MUTATED_EVM_ADDRESS;
+
+    // when
+    await withdrawAction.submit({ signature: "0xsigned", chain: "ETH" });
+
+    // then
+    expect(getCode).toHaveBeenLastCalledWith({
+      address: CHECKSUM_EVM_OUTFLOW_ADDRESS,
+    });
+    expect(withdraw.mock.calls[0]?.[1]).toMatchObject({
+      data: {
+        account: { External: CHECKSUM_EVM_OUTFLOW_ADDRESS },
+      },
+    });
   });
 
   test("rejects a native ETH withdraw below 0.005 ETH before signing", async () => {
@@ -536,7 +650,13 @@ Nonce: 23`);
       list_pools: vi.fn().mockResolvedValue([createUsdtPoolRecord()]),
       get_nonce: getNonce,
     } as never);
-    const client = new LiquidiumClient({});
+    const client = new LiquidiumClient({
+      evmPublicClient: {
+        getCode: vi.fn().mockResolvedValue(undefined),
+        readContract: vi.fn(),
+      } as never,
+      fetch: createNoDeployedBytecodeFetch(),
+    });
 
     // when
     const withdrawAction = await client.lending.prepareWithdraw({

@@ -38,9 +38,9 @@ const client = new LiquidiumClient({
 | `canisterIds` | Partially override `lending`, `ethDeposit`, `simpleLoans`, or `pools.{btc,eth,usdt,usdc,icp}` for custom deployments. |
 | `fetch` | Provide a custom fetch implementation. |
 | `timeoutMs` | Set the SDK API request timeout in milliseconds. Defaults to `30_000`. |
-| `evmRpcUrl` | Create a viem public client for EVM reads. |
+| `evmRpcUrl` | Create a viem public client for public ERC-20 reads and Ethereum outflow checks. |
 | `evmRpcHeaders` | Add headers to EVM RPC requests. |
-| `evmPublicClient` | Use an existing viem-compatible read client. When supplied, it takes precedence over `evmRpcUrl` and `evmRpcHeaders`. |
+| `evmPublicClient` | Use an existing viem-compatible read client with `readContract`. An optional `getCode` method enables Ethereum outflow checks through that client. When supplied, it takes precedence over `evmRpcUrl` and `evmRpcHeaders`. |
 
 Use nested canister overrides:
 
@@ -60,3 +60,9 @@ const client = new LiquidiumClient({
 Removed flat keys such as `instantLoans`, `btcPool`, and `ercPool` are rejected with `LiquidiumErrorCode.VALIDATION_ERROR`.
 
 Set `VITE_INFURA_API_KEY` or `VITE_EVM_RPC_URL` when you run an example that needs Ethereum reads.
+
+Ethereum lending borrow and withdrawal flows validate destination bytecode through a configured EVM client with `getCode`. When no bytecode-capable EVM client is configured, validation uses the Liquidium SDK API instead. Destinations with deployed bytecode are rejected with `LiquidiumErrorCode.CONTRACT_DESTINATION_UNSUPPORTED`. Prepared lending actions check before signing and again on submission. The zero address and Ethereum mainnet precompile addresses are rejected with `LiquidiumErrorCode.INVALID_ADDRESS`.
+
+Custom `apiBaseUrl` deployments must implement `GET /v2/ethereum/addresses/:address/bytecode` when callers do not configure an EVM client with `getCode`. Validation errors from the selected EVM client or SDK API are propagated and block submission.
+
+Bytecode validation proves only that no code was deployed at the block queried by the RPC provider. It cannot identify counterfactual ERC-4337 or CREATE2 accounts before deployment, and state can change after any off-chain check. Enforce the same policy again at the final backend or protocol execution boundary when integrating asynchronous outflow processing.
