@@ -2,4 +2,4 @@
 "@liquidium/client": patch
 ---
 
-Reject reserved Ethereum outflow destinations and addresses with deployed code.
+Reject reserved Ethereum destinations and best-effort block native ETH addresses with deployed code.

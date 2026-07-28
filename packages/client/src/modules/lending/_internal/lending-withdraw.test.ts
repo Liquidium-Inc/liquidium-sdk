@@ -2,7 +2,13 @@ import { encodeIcrcAccount } from "@icp-sdk/canisters/ledger/icrc";
 import { Actor } from "@icp-sdk/core/agent";
 import { Principal } from "@icp-sdk/core/principal";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { Chain, LiquidiumClient, LiquidiumErrorCode } from "../../../index";
+import { mockDeep } from "vitest-mock-extended";
+import {
+  Chain,
+  type EvmReadClient,
+  LiquidiumClient,
+  LiquidiumErrorCode,
+} from "../../../index";
 import {
   BTC_POOL_ID,
   CHECKSUM_EVM_OUTFLOW_ADDRESS,
@@ -137,9 +143,10 @@ describe("LendingModule withdraw", () => {
       get_nonce: vi.fn().mockResolvedValue(23n),
       withdraw,
     } as never);
-    const getCode = vi.fn().mockResolvedValue(undefined);
+    const evmPublicClient = mockDeep<Required<EvmReadClient>>();
+    evmPublicClient.getCode.mockResolvedValue(undefined);
     const client = new LiquidiumClient({
-      evmPublicClient: { getCode, readContract: vi.fn() } as never,
+      evmPublicClient,
     });
     const withdrawAction = await client.lending.prepareWithdraw({
       profileId: "aaaaa-aa",
@@ -159,7 +166,7 @@ describe("LendingModule withdraw", () => {
     await withdrawAction.submit({ signature: "0xsigned", chain: "ETH" });
 
     // then
-    expect(getCode).toHaveBeenLastCalledWith({
+    expect(evmPublicClient.getCode).toHaveBeenLastCalledWith({
       address: CHECKSUM_EVM_OUTFLOW_ADDRESS,
     });
     expect(withdraw.mock.calls[0]?.[1]).toMatchObject({

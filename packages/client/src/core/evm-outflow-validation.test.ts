@@ -1,9 +1,9 @@
-import { describe, expect, test, vi } from "vitest";
+import { describe, expect, test } from "vitest";
 import { mockDeep } from "vitest-mock-extended";
-import { LiquidiumError, LiquidiumErrorCode } from "./errors";
+import { LiquidiumErrorCode } from "./errors";
 import { guardEthereumOutflowDestination } from "./evm-outflow-validation";
 import type { ApiClient } from "./transports/api-client";
-import { Chain, type EvmReadClient } from "./types";
+import { Asset, Chain, type EvmReadClient } from "./types";
 
 const EVM_ADDRESS = "0x52908400098527886E0F7030069857D2E4169EE7";
 const EXPECTED_API_PATH =
@@ -19,6 +19,7 @@ describe("guardEthereumOutflowDestination", () => {
     const result = guardEthereumOutflowDestination({
       address: EVM_ADDRESS,
       apiClient,
+      asset: Asset.ETH,
       chain: Chain.ETH,
       evmReadClient: undefined,
     });
@@ -37,6 +38,7 @@ describe("guardEthereumOutflowDestination", () => {
     const result = guardEthereumOutflowDestination({
       address: EVM_ADDRESS,
       apiClient,
+      asset: Asset.ETH,
       chain: Chain.ETH,
       evmReadClient: undefined,
     });
@@ -45,7 +47,7 @@ describe("guardEthereumOutflowDestination", () => {
     await expect(result).rejects.toMatchObject({
       code: LiquidiumErrorCode.CONTRACT_DESTINATION_UNSUPPORTED,
       message:
-        "Contract addresses are not supported for Ethereum withdrawals or borrowing",
+        "Contract addresses are not supported for native ETH withdrawals or borrowing",
     });
   });
 
@@ -53,15 +55,14 @@ describe("guardEthereumOutflowDestination", () => {
     // given
     const DEPLOYED_BYTECODE = "0x1234";
     const apiClient = mockDeep<ApiClient>();
-    const evmReadClient = {
-      getCode: vi.fn().mockResolvedValue(DEPLOYED_BYTECODE),
-      readContract: vi.fn(),
-    } as EvmReadClient;
+    const evmReadClient = mockDeep<Required<EvmReadClient>>();
+    evmReadClient.getCode.mockResolvedValue(DEPLOYED_BYTECODE);
 
     // when
     const result = guardEthereumOutflowDestination({
       address: EVM_ADDRESS,
       apiClient,
+      asset: Asset.ETH,
       chain: Chain.ETH,
       evmReadClient,
     });
@@ -77,15 +78,14 @@ describe("guardEthereumOutflowDestination", () => {
     // given
     const apiClient = mockDeep<ApiClient>();
     apiClient.get.mockResolvedValue({ hasDeployedBytecode: false });
-    const evmReadClient = {
-      getCode: vi.fn().mockResolvedValue(undefined),
-      readContract: vi.fn(),
-    } as EvmReadClient;
+    const evmReadClient = mockDeep<Required<EvmReadClient>>();
+    evmReadClient.getCode.mockResolvedValue(undefined);
 
     // when
     const result = guardEthereumOutflowDestination({
       address: EVM_ADDRESS,
       apiClient,
+      asset: Asset.ETH,
       chain: Chain.ETH,
       evmReadClient,
     });
@@ -95,25 +95,24 @@ describe("guardEthereumOutflowDestination", () => {
     expect(apiClient.get).not.toHaveBeenCalled();
   });
 
-  test("should propagate EVM client failures without using the SDK API", async () => {
+  test("should fail open after an EVM client failure", async () => {
     // given
     const RPC_ERROR = new Error("RPC unavailable");
     const apiClient = mockDeep<ApiClient>();
-    const evmReadClient = {
-      getCode: vi.fn().mockRejectedValue(RPC_ERROR),
-      readContract: vi.fn(),
-    } as EvmReadClient;
+    const evmReadClient = mockDeep<Required<EvmReadClient>>();
+    evmReadClient.getCode.mockRejectedValue(RPC_ERROR);
 
     // when
     const result = guardEthereumOutflowDestination({
       address: EVM_ADDRESS,
       apiClient,
+      asset: Asset.ETH,
       chain: Chain.ETH,
       evmReadClient,
     });
 
     // then
-    await expect(result).rejects.toBe(RPC_ERROR);
+    await expect(result).resolves.toBeUndefined();
     expect(apiClient.get).not.toHaveBeenCalled();
   });
 
@@ -121,14 +120,16 @@ describe("guardEthereumOutflowDestination", () => {
     // given
     const apiClient = mockDeep<ApiClient>();
     apiClient.get.mockResolvedValue({ hasDeployedBytecode: false });
-    const evmReadClient = {
-      readContract: vi.fn(),
-    } as EvmReadClient;
+    const mockedEvmReadClient = mockDeep<Required<EvmReadClient>>();
+    const evmReadClient: Pick<EvmReadClient, "readContract"> = {
+      readContract: mockedEvmReadClient.readContract,
+    };
 
     // when
     const result = guardEthereumOutflowDestination({
       address: EVM_ADDRESS,
       apiClient,
+      asset: Asset.ETH,
       chain: Chain.ETH,
       evmReadClient,
     });
@@ -138,7 +139,7 @@ describe("guardEthereumOutflowDestination", () => {
     expect(apiClient.get).toHaveBeenCalledWith(EXPECTED_API_PATH);
   });
 
-  test("should fail closed for a malformed SDK API response", async () => {
+  test("should fail open for a malformed SDK API response", async () => {
     // given
     const apiClient = mockDeep<ApiClient>();
     apiClient.get.mockResolvedValue({ hasDeployedBytecode: "false" });
@@ -147,23 +148,56 @@ describe("guardEthereumOutflowDestination", () => {
     const result = guardEthereumOutflowDestination({
       address: EVM_ADDRESS,
       apiClient,
+      asset: Asset.ETH,
       chain: Chain.ETH,
       evmReadClient: undefined,
     });
 
     // then
-    await expect(result).rejects.toMatchObject({
-      code: LiquidiumErrorCode.INTERNAL,
-      message: "Ethereum outflow validation returned an invalid response",
-    });
+    await expect(result).resolves.toBeUndefined();
   });
 
-  test("should propagate SDK API failures", async () => {
+  test("should fail open for a null SDK API response", async () => {
     // given
-    const API_ERROR = new LiquidiumError(
-      LiquidiumErrorCode.SERVICE_UNAVAILABLE,
-      "Address validation unavailable"
-    );
+    const apiClient = mockDeep<ApiClient>();
+    apiClient.get.mockResolvedValue(null);
+
+    // when
+    const result = guardEthereumOutflowDestination({
+      address: EVM_ADDRESS,
+      apiClient,
+      asset: Asset.ETH,
+      chain: Chain.ETH,
+      evmReadClient: undefined,
+    });
+
+    // then
+    await expect(result).resolves.toBeUndefined();
+  });
+
+  test("should fail open for malformed bytecode from an EVM client", async () => {
+    // given
+    const apiClient = mockDeep<ApiClient>();
+    const evmReadClient = mockDeep<Required<EvmReadClient>>();
+    evmReadClient.getCode.mockResolvedValue("not-bytecode" as never);
+
+    // when
+    const result = guardEthereumOutflowDestination({
+      address: EVM_ADDRESS,
+      apiClient,
+      asset: Asset.ETH,
+      chain: Chain.ETH,
+      evmReadClient,
+    });
+
+    // then
+    await expect(result).resolves.toBeUndefined();
+    expect(apiClient.get).not.toHaveBeenCalled();
+  });
+
+  test("should fail open for SDK API failures", async () => {
+    // given
+    const API_ERROR = new Error("Address validation unavailable");
     const apiClient = mockDeep<ApiClient>();
     apiClient.get.mockRejectedValue(API_ERROR);
 
@@ -171,12 +205,31 @@ describe("guardEthereumOutflowDestination", () => {
     const result = guardEthereumOutflowDestination({
       address: EVM_ADDRESS,
       apiClient,
+      asset: Asset.ETH,
       chain: Chain.ETH,
       evmReadClient: undefined,
     });
 
     // then
-    await expect(result).rejects.toBe(API_ERROR);
+    await expect(result).resolves.toBeUndefined();
+  });
+
+  test("should fail open without an SDK API client", async () => {
+    // given
+    const apiClient = undefined;
+    const evmReadClient = undefined;
+
+    // when
+    const result = guardEthereumOutflowDestination({
+      address: EVM_ADDRESS,
+      apiClient,
+      asset: Asset.ETH,
+      chain: Chain.ETH,
+      evmReadClient,
+    });
+
+    // then
+    await expect(result).resolves.toBeUndefined();
   });
 
   test.each([
@@ -185,16 +238,13 @@ describe("guardEthereumOutflowDestination", () => {
   ])("should reject the Ethereum %s", async (_name, address) => {
     // given
     const apiClient = mockDeep<ApiClient>();
-    const getCode = vi.fn();
-    const evmReadClient = {
-      getCode,
-      readContract: vi.fn(),
-    } as EvmReadClient;
+    const evmReadClient = mockDeep<Required<EvmReadClient>>();
 
     // when
     const result = guardEthereumOutflowDestination({
       address,
       apiClient,
+      asset: Asset.ETH,
       chain: Chain.ETH,
       evmReadClient,
     });
@@ -205,7 +255,7 @@ describe("guardEthereumOutflowDestination", () => {
       message:
         "Ethereum outflow destination must not be the zero address or a precompile",
     });
-    expect(getCode).not.toHaveBeenCalled();
+    expect(evmReadClient.getCode).not.toHaveBeenCalled();
     expect(apiClient.get).not.toHaveBeenCalled();
   });
 
@@ -216,11 +266,32 @@ describe("guardEthereumOutflowDestination", () => {
     const result = guardEthereumOutflowDestination({
       address: "1BoatSLRHtKNngkdXEeobR76b53LETtpyT",
       apiClient: undefined,
+      asset: Asset.BTC,
       chain: Chain.BTC,
       evmReadClient: undefined,
     });
 
     // then
     await expect(result).resolves.toBeUndefined();
+  });
+
+  test("should skip contract validation for an ERC-20 outflow", async () => {
+    // given
+    const apiClient = mockDeep<ApiClient>();
+    const evmReadClient = mockDeep<Required<EvmReadClient>>();
+
+    // when
+    const result = guardEthereumOutflowDestination({
+      address: EVM_ADDRESS,
+      apiClient,
+      asset: Asset.USDT,
+      chain: Chain.ETH,
+      evmReadClient,
+    });
+
+    // then
+    await expect(result).resolves.toBeUndefined();
+    expect(evmReadClient.getCode).not.toHaveBeenCalled();
+    expect(apiClient.get).not.toHaveBeenCalled();
   });
 });

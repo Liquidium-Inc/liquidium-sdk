@@ -99,6 +99,7 @@ interface OutflowActionData {
 }
 
 interface OutflowSubmissionData extends OutflowActionData {
+  asset: Asset;
   receiverAccount: CanisterLiquidiumAccount;
   receiverAddress: string;
 }
@@ -174,6 +175,7 @@ export class LendingModule {
     await guardEthereumOutflowDestination({
       address: receiver.address,
       apiClient: this.apiClient,
+      asset: selectedAsset,
       chain: request.chain,
       evmReadClient: this.evmReadClient,
     });
@@ -197,6 +199,7 @@ export class LendingModule {
       };
       const withdrawSubmissionData: OutflowSubmissionData = {
         ...withdrawActionData,
+        asset: selectedAsset,
         receiverAccount: receiver.canisterAccount,
         receiverAddress: receiver.address,
       };
@@ -239,6 +242,7 @@ export class LendingModule {
     await guardEthereumOutflowDestination({
       address: request.receiverAddress,
       apiClient: this.apiClient,
+      asset: request.asset,
       chain: request.chain,
       evmReadClient: this.evmReadClient,
     });
@@ -358,6 +362,7 @@ export class LendingModule {
     await guardEthereumOutflowDestination({
       address: receiver.address,
       apiClient: this.apiClient,
+      asset: selectedAsset,
       chain: request.chain,
       evmReadClient: this.evmReadClient,
     });
@@ -385,6 +390,7 @@ export class LendingModule {
       };
       const borrowSubmissionData: OutflowSubmissionData = {
         ...borrowActionData,
+        asset: selectedAsset,
         receiverAccount: receiver.canisterAccount,
         receiverAddress: receiver.address,
       };
@@ -424,6 +430,7 @@ export class LendingModule {
     await guardEthereumOutflowDestination({
       address: request.receiverAddress,
       apiClient: this.apiClient,
+      asset: request.asset,
       chain: request.chain,
       evmReadClient: this.evmReadClient,
     });

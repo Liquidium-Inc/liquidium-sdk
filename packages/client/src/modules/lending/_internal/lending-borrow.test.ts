@@ -2,7 +2,13 @@ import { encodeIcrcAccount } from "@icp-sdk/canisters/ledger/icrc";
 import { Actor } from "@icp-sdk/core/agent";
 import { Principal } from "@icp-sdk/core/principal";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { Chain, LiquidiumClient, LiquidiumErrorCode } from "../../../index";
+import { mockDeep } from "vitest-mock-extended";
+import {
+  Chain,
+  type EvmReadClient,
+  LiquidiumClient,
+  LiquidiumErrorCode,
+} from "../../../index";
 import {
   BTC_POOL_ID,
   CHECKSUM_EVM_OUTFLOW_ADDRESS,
@@ -55,9 +61,10 @@ describe("LendingModule borrow", () => {
       get_nonce: getNonce,
       borrow_assets: borrowAssets,
     } as never);
-    const getCode = vi.fn().mockResolvedValue(undefined);
+    const evmPublicClient = mockDeep<Required<EvmReadClient>>();
+    evmPublicClient.getCode.mockResolvedValue(undefined);
     const client = new LiquidiumClient({
-      evmPublicClient: { getCode, readContract: vi.fn() } as never,
+      evmPublicClient,
       fetch: createNoDeployedBytecodeFetch(),
     });
 
@@ -77,10 +84,10 @@ describe("LendingModule borrow", () => {
       type: "ChainAddress",
       address: CHECKSUM_EVM_OUTFLOW_ADDRESS,
     });
-    expect(getCode).toHaveBeenCalledWith({
+    expect(evmPublicClient.getCode).toHaveBeenCalledWith({
       address: CHECKSUM_EVM_OUTFLOW_ADDRESS,
     });
-    expect(getCode).toHaveBeenCalledTimes(2);
+    expect(evmPublicClient.getCode).toHaveBeenCalledTimes(2);
     expect(borrowAssets.mock.calls[0]?.[1]).toMatchObject({
       data: {
         amount: MINIMUM_ETH_AMOUNT_WEI,
@@ -154,9 +161,10 @@ describe("LendingModule borrow", () => {
       get_nonce: vi.fn().mockResolvedValue(17n),
       borrow_assets: borrowAssets,
     } as never);
-    const getCode = vi.fn().mockResolvedValue(undefined);
+    const evmPublicClient = mockDeep<Required<EvmReadClient>>();
+    evmPublicClient.getCode.mockResolvedValue(undefined);
     const client = new LiquidiumClient({
-      evmPublicClient: { getCode, readContract: vi.fn() } as never,
+      evmPublicClient,
     });
     const borrowAction = await client.lending.prepareBorrow({
       profileId: "aaaaa-aa",
@@ -176,7 +184,7 @@ describe("LendingModule borrow", () => {
     await borrowAction.submit({ signature: "0xsigned", chain: "ETH" });
 
     // then
-    expect(getCode).toHaveBeenLastCalledWith({
+    expect(evmPublicClient.getCode).toHaveBeenLastCalledWith({
       address: CHECKSUM_EVM_OUTFLOW_ADDRESS,
     });
     expect(borrowAssets.mock.calls[0]?.[1]).toMatchObject({

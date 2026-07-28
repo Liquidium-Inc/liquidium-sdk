@@ -1,7 +1,13 @@
 import type { Identity } from "@icp-sdk/core/agent";
 import type { PublicClient } from "viem";
 
-/** Minimal viem-compatible client shape required for SDK EVM read calls. */
+/**
+ * Minimal viem-compatible client shape required for SDK EVM read calls.
+ *
+ * When `getCode` is present, the SDK uses it for a best-effort native ETH
+ * contract-destination check. Provider failures fail open and do not block the
+ * outflow.
+ */
 export type EvmReadClient = Pick<PublicClient, "readContract"> &
   Partial<Pick<PublicClient, "getCode">>;
 
@@ -32,11 +38,11 @@ export interface LiquidiumClientConfig {
   fetch?: typeof fetch;
   /** Per-request timeout for SDK API calls in milliseconds. */
   timeoutMs?: number;
-  /** Ethereum RPC URL used for optional outflow prechecks and public ERC-20 reads. */
+  /** Ethereum RPC URL used for best-effort native ETH outflow checks and public ERC-20 reads. */
   evmRpcUrl?: string;
   /** Optional headers for RPC providers that authenticate via HTTP headers. */
   evmRpcHeaders?: Record<string, string>;
-  /** Existing viem public client or compatible read client for EVM reads. */
+  /** Existing viem client; optional `getCode` enables best-effort native ETH outflow checks. */
   evmPublicClient?: EvmReadClient;
 }
 
