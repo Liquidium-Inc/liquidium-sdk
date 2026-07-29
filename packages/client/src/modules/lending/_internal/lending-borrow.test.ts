@@ -1,6 +1,7 @@
 import { encodeIcrcAccount } from "@icp-sdk/canisters/ledger/icrc";
 import { Actor } from "@icp-sdk/core/agent";
 import { Principal } from "@icp-sdk/core/principal";
+import { mainnet } from "viem/chains";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { mockDeep } from "vitest-mock-extended";
 import {
@@ -62,6 +63,7 @@ describe("LendingModule borrow", () => {
       borrow_assets: borrowAssets,
     } as never);
     const evmPublicClient = mockDeep<Required<EvmReadClient>>();
+    evmPublicClient.chain.id = mainnet.id;
     evmPublicClient.getCode.mockResolvedValue(undefined);
     const client = new LiquidiumClient({
       evmPublicClient,
@@ -162,6 +164,7 @@ describe("LendingModule borrow", () => {
       borrow_assets: borrowAssets,
     } as never);
     const evmPublicClient = mockDeep<Required<EvmReadClient>>();
+    evmPublicClient.chain.id = mainnet.id;
     evmPublicClient.getCode.mockResolvedValue(undefined);
     const client = new LiquidiumClient({
       evmPublicClient,

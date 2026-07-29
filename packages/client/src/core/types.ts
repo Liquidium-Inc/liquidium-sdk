@@ -4,12 +4,12 @@ import type { PublicClient } from "viem";
 /**
  * Minimal viem-compatible client shape required for SDK EVM read calls.
  *
- * When `getCode` is present, the SDK uses it for a best-effort native ETH
- * contract-destination check. Provider failures fail open and do not block the
- * outflow.
+ * When `getCode` is present and `chain` identifies Ethereum mainnet, the SDK
+ * uses it for a best-effort native ETH contract-destination check. Provider
+ * failures fail open and do not block the outflow.
  */
 export type EvmReadClient = Pick<PublicClient, "readContract"> &
-  Partial<Pick<PublicClient, "getCode">>;
+  Partial<Pick<PublicClient, "chain" | "getCode">>;
 
 /**
  * Runtime options for `new LiquidiumClient(config)`.
@@ -42,7 +42,7 @@ export interface LiquidiumClientConfig {
   evmRpcUrl?: string;
   /** Optional headers for RPC providers that authenticate via HTTP headers. */
   evmRpcHeaders?: Record<string, string>;
-  /** Existing viem client; optional `getCode` enables best-effort native ETH outflow checks. */
+  /** Existing viem client; mainnet `chain` and `getCode` enable native ETH outflow checks. */
   evmPublicClient?: EvmReadClient;
 }
 

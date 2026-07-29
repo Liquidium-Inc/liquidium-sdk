@@ -1,3 +1,4 @@
+import { mainnet, sepolia } from "viem/chains";
 import { describe, expect, test } from "vitest";
 import { mockDeep } from "vitest-mock-extended";
 import { LiquidiumErrorCode } from "./errors";
@@ -56,6 +57,7 @@ describe("guardEthereumOutflowDestination", () => {
     const DEPLOYED_BYTECODE = "0x1234";
     const apiClient = mockDeep<ApiClient>();
     const evmReadClient = mockDeep<Required<EvmReadClient>>();
+    evmReadClient.chain.id = mainnet.id;
     evmReadClient.getCode.mockResolvedValue(DEPLOYED_BYTECODE);
 
     // when
@@ -79,6 +81,7 @@ describe("guardEthereumOutflowDestination", () => {
     const apiClient = mockDeep<ApiClient>();
     apiClient.get.mockResolvedValue({ hasDeployedBytecode: false });
     const evmReadClient = mockDeep<Required<EvmReadClient>>();
+    evmReadClient.chain.id = mainnet.id;
     evmReadClient.getCode.mockResolvedValue(undefined);
 
     // when
@@ -100,6 +103,7 @@ describe("guardEthereumOutflowDestination", () => {
     const RPC_ERROR = new Error("RPC unavailable");
     const apiClient = mockDeep<ApiClient>();
     const evmReadClient = mockDeep<Required<EvmReadClient>>();
+    evmReadClient.chain.id = mainnet.id;
     evmReadClient.getCode.mockRejectedValue(RPC_ERROR);
 
     // when
@@ -114,6 +118,31 @@ describe("guardEthereumOutflowDestination", () => {
     // then
     await expect(result).resolves.toBeUndefined();
     expect(apiClient.get).not.toHaveBeenCalled();
+  });
+
+  test("should use the SDK API when the EVM client is not on Ethereum mainnet", async () => {
+    // given
+    const apiClient = mockDeep<ApiClient>();
+    apiClient.get.mockResolvedValue({ hasDeployedBytecode: true });
+    const evmReadClient = mockDeep<Required<EvmReadClient>>();
+    evmReadClient.chain.id = sepolia.id;
+    evmReadClient.getCode.mockResolvedValue(undefined);
+
+    // when
+    const result = guardEthereumOutflowDestination({
+      address: EVM_ADDRESS,
+      apiClient,
+      asset: Asset.ETH,
+      chain: Chain.ETH,
+      evmReadClient,
+    });
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.CONTRACT_DESTINATION_UNSUPPORTED,
+    });
+    expect(evmReadClient.getCode).not.toHaveBeenCalled();
+    expect(apiClient.get).toHaveBeenCalledWith(EXPECTED_API_PATH);
   });
 
   test("should support a readContract-only EVM adapter", async () => {
@@ -179,6 +208,7 @@ describe("guardEthereumOutflowDestination", () => {
     // given
     const apiClient = mockDeep<ApiClient>();
     const evmReadClient = mockDeep<Required<EvmReadClient>>();
+    evmReadClient.chain.id = mainnet.id;
     evmReadClient.getCode.mockResolvedValue("not-bytecode" as never);
 
     // when

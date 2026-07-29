@@ -1,4 +1,5 @@
 import { getAddress } from "viem";
+import { mainnet } from "viem/chains";
 import { LiquidiumError, LiquidiumErrorCode } from "./errors";
 import { buildEthereumAddressBytecodePath } from "./sdk-api-paths";
 import type { ApiClient } from "./transports/api-client";
@@ -60,7 +61,7 @@ export async function guardEthereumOutflowDestination({
     return;
   }
 
-  if (evmReadClient?.getCode) {
+  if (evmReadClient?.chain?.id === mainnet.id && evmReadClient.getCode) {
     let bytecode: unknown;
     try {
       bytecode = await evmReadClient.getCode({

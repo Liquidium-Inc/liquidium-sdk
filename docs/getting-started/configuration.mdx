@@ -40,7 +40,7 @@ const client = new LiquidiumClient({
 | `timeoutMs` | Set the SDK API request timeout in milliseconds. Defaults to `30_000`. |
 | `evmRpcUrl` | Create a viem public client for public ERC-20 reads and best-effort native ETH outflow checks. |
 | `evmRpcHeaders` | Add headers to EVM RPC requests. |
-| `evmPublicClient` | Use an existing viem-compatible read client with `readContract`. An optional `getCode` method enables best-effort native ETH outflow checks through that client. When supplied, it takes precedence over `evmRpcUrl` and `evmRpcHeaders`. |
+| `evmPublicClient` | Use an existing viem-compatible read client with `readContract`. A client whose `chain.id` identifies Ethereum mainnet and that provides `getCode` enables best-effort native ETH outflow checks through that client. When supplied, it takes precedence over `evmRpcUrl` and `evmRpcHeaders`. |
 
 Use nested canister overrides:
 
@@ -61,7 +61,7 @@ Removed flat keys such as `instantLoans`, `btcPool`, and `ercPool` are rejected 
 
 Set `VITE_INFURA_API_KEY` or `VITE_EVM_RPC_URL` when you run an example that needs Ethereum reads.
 
-Native ETH lending borrow and withdrawal flows check destination bytecode through a configured EVM client with `getCode`. When no bytecode-capable EVM client is configured, the SDK uses the Liquidium SDK API instead. A confirmed deployed contract is rejected with `LiquidiumErrorCode.CONTRACT_DESTINATION_UNSUPPORTED`. Prepared lending actions check before signing and again on submission. The zero address and Ethereum mainnet precompile addresses are rejected with `LiquidiumErrorCode.INVALID_ADDRESS`.
+Native ETH lending borrow and withdrawal flows check destination bytecode through a configured Ethereum mainnet EVM client with `getCode`. When the client is not confirmed as Ethereum mainnet or does not provide `getCode`, the SDK uses the Liquidium SDK API instead. A confirmed deployed contract is rejected with `LiquidiumErrorCode.CONTRACT_DESTINATION_UNSUPPORTED`. Prepared lending actions check before signing and again on submission. The zero address and Ethereum mainnet precompile addresses are rejected with `LiquidiumErrorCode.INVALID_ADDRESS`.
 
 This check prevents a known native ckETH withdrawal failure mode. The ckETH minter [fixes native ETH withdrawals at 21,000 gas and warns that smart-contract destinations will likely fail](https://github.com/dfinity/ic/blob/0f3c60f6a7ba51e3306c2305072a2959b00718ef/rs/ethereum/cketh/minter/cketh_minter.did#L751-L762). The minter uses a separate 65,000-gas ERC-20 transfer path for ckERC20 withdrawals, so the SDK does not apply this destination check to USDC or USDT outflows.
 
