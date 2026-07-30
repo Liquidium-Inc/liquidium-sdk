@@ -2,15 +2,19 @@ import { expect, test } from "vitest";
 import {
   Asset,
   Chain,
+  getMinimumBorrowAmount,
+  getMinimumWithdrawAmount,
   LiquidiumClient,
   LiquidiumErrorCode,
   type SendIcrcTransferRequest,
   SupplyAction,
+  USDC_CONTRACT_ADDRESS,
 } from "../packages/client/src";
 import { CK_CANISTER_IDS } from "../packages/client/src/core/config";
 import { describeLive } from "./_internal/live";
 import {
   selectBtcCollateralPool,
+  selectEthPool,
   selectEthStablecoinPoolByAsset,
   selectIcpPool,
 } from "./_internal/pools";
@@ -24,6 +28,9 @@ const CK_STABLECOIN_TRANSFER_AMOUNT_BASE_UNITS = 1_000_000n;
 const VALID_ETH_L1_ADDRESS = "0x52908400098527886E0F7030069857D2E4169EE7";
 const VALID_BTC_L1_ADDRESS = "1BoatSLRHtKNngkdXEeobR76b53LETtpyT";
 const TEST_PROFILE_ID = "aaaaa-aa";
+const ETHEREUM_MAINNET_RPC_URL =
+  process.env.LIQUIDIUM_E2E_EVM_RPC_URL ??
+  "https://ethereum-rpc.publicnode.com";
 
 describeLive("live lending e2e", () => {
   test("should resolve a manual BTC supply target without broadcasting transactions", async () => {
@@ -254,6 +261,58 @@ describeLive("live lending e2e", () => {
     await expect(result).rejects.toMatchObject({
       code: LiquidiumErrorCode.VALIDATION_ERROR,
       message: "Target pool does not support this address type",
+    });
+  });
+
+  test("should reject a deployed contract as a native ETH borrow destination", async () => {
+    // given
+    const client = new LiquidiumClient({
+      evmRpcUrl: ETHEREUM_MAINNET_RPC_URL,
+    });
+    const pools = await client.market.listPools();
+    const ethPool = selectEthPool(pools);
+
+    // when
+    const result = client.lending.prepareBorrow({
+      profileId: TEST_PROFILE_ID,
+      poolId: ethPool.id,
+      amount: getMinimumBorrowAmount(Asset.ETH),
+      chain: Chain.ETH,
+      receiver: USDC_CONTRACT_ADDRESS,
+      signerWalletAddress: VALID_ETH_L1_ADDRESS,
+    });
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.CONTRACT_DESTINATION_UNSUPPORTED,
+      message:
+        "Contract addresses are not supported for native ETH withdrawals or borrowing",
+    });
+  });
+
+  test("should reject a deployed contract as a native ETH withdraw destination", async () => {
+    // given
+    const client = new LiquidiumClient({
+      evmRpcUrl: ETHEREUM_MAINNET_RPC_URL,
+    });
+    const pools = await client.market.listPools();
+    const ethPool = selectEthPool(pools);
+
+    // when
+    const result = client.lending.prepareWithdraw({
+      profileId: TEST_PROFILE_ID,
+      poolId: ethPool.id,
+      amount: getMinimumWithdrawAmount(Asset.ETH),
+      chain: Chain.ETH,
+      receiver: USDC_CONTRACT_ADDRESS,
+      signerWalletAddress: VALID_ETH_L1_ADDRESS,
+    });
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.CONTRACT_DESTINATION_UNSUPPORTED,
+      message:
+        "Contract addresses are not supported for native ETH withdrawals or borrowing",
     });
   });
 
