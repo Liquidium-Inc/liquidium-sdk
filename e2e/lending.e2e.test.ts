@@ -316,6 +316,54 @@ describeLive("live lending e2e", () => {
     });
   });
 
+  test("should reject a deployed contract as a native ETH borrow destination through the SDK API fallback", async () => {
+    // given
+    const client = new LiquidiumClient();
+    const pools = await client.market.listPools();
+    const ethPool = selectEthPool(pools);
+
+    // when
+    const result = client.lending.prepareBorrow({
+      profileId: TEST_PROFILE_ID,
+      poolId: ethPool.id,
+      amount: getMinimumBorrowAmount(Asset.ETH),
+      chain: Chain.ETH,
+      receiver: USDC_CONTRACT_ADDRESS,
+      signerWalletAddress: VALID_ETH_L1_ADDRESS,
+    });
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.CONTRACT_DESTINATION_UNSUPPORTED,
+      message:
+        "Contract addresses are not supported for native ETH withdrawals or borrowing",
+    });
+  });
+
+  test("should reject a deployed contract as a native ETH withdraw destination through the SDK API fallback", async () => {
+    // given
+    const client = new LiquidiumClient();
+    const pools = await client.market.listPools();
+    const ethPool = selectEthPool(pools);
+
+    // when
+    const result = client.lending.prepareWithdraw({
+      profileId: TEST_PROFILE_ID,
+      poolId: ethPool.id,
+      amount: getMinimumWithdrawAmount(Asset.ETH),
+      chain: Chain.ETH,
+      receiver: USDC_CONTRACT_ADDRESS,
+      signerWalletAddress: VALID_ETH_L1_ADDRESS,
+    });
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.CONTRACT_DESTINATION_UNSUPPORTED,
+      message:
+        "Contract addresses are not supported for native ETH withdrawals or borrowing",
+    });
+  });
+
   test("should expose the live borrowing-disabled flag", async () => {
     // given
     const client = new LiquidiumClient();
