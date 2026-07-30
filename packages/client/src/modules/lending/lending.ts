@@ -2,6 +2,7 @@ import { Principal } from "@icp-sdk/core/principal";
 import type {
   CanisterLiquidiumAccount,
   LiquidiumAccountInput,
+  LiquidiumAccountReference,
 } from "../../core/accounts";
 import { normalizeAndValidateEvmAddress } from "../../core/address-validation";
 import { getBorrowAmountMinimumValidationError } from "../../core/borrow-minimums";
@@ -25,6 +26,7 @@ import {
 } from "../../core/canisters/lending/messages";
 import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
 import { normalizeEvmAddress } from "../../core/evm";
+import { guardEthereumOutflowDestination } from "../../core/evm-outflow-validation";
 import {
   getPoolLedgerAssetRoute,
   type PoolLedgerAssetRoute,
@@ -91,13 +93,15 @@ interface OutflowActionData {
   poolId: string;
   amount: bigint;
   chain: Chain;
-  receiver: LiquidiumAccountInput;
+  receiver: LiquidiumAccountReference;
   signerWalletAddress: string;
   expiryTimestamp: bigint;
 }
 
 interface OutflowSubmissionData extends OutflowActionData {
+  asset: Asset;
   receiverAccount: CanisterLiquidiumAccount;
+  receiverAddress: string;
 }
 
 interface ResolveOutflowDestinationInputParams {
@@ -168,6 +172,13 @@ export class LendingModule {
       poolChain: selectedPool.chain,
       destinationChain: request.chain,
     });
+    await guardEthereumOutflowDestination({
+      address: receiver.address,
+      apiClient: this.apiClient,
+      asset: selectedAsset,
+      chain: request.chain,
+      evmReadClient: this.evmReadClient,
+    });
 
     const lendingActor = createLendingActor(this.canisterContext);
 
@@ -188,7 +199,9 @@ export class LendingModule {
       };
       const withdrawSubmissionData: OutflowSubmissionData = {
         ...withdrawActionData,
+        asset: selectedAsset,
         receiverAccount: receiver.canisterAccount,
+        receiverAddress: receiver.address,
       };
 
       return {
@@ -226,6 +239,14 @@ export class LendingModule {
     request: OutflowSubmissionData,
     signatureInfo: SignatureInfo
   ): Promise<WithdrawOutflowDetails> {
+    await guardEthereumOutflowDestination({
+      address: request.receiverAddress,
+      apiClient: this.apiClient,
+      asset: request.asset,
+      chain: request.chain,
+      evmReadClient: this.evmReadClient,
+    });
+
     try {
       const result = await createLendingActor(this.canisterContext).withdraw(
         Principal.fromText(request.profileId),
@@ -338,6 +359,13 @@ export class LendingModule {
       poolChain: selectedPool.chain,
       destinationChain: request.chain,
     });
+    await guardEthereumOutflowDestination({
+      address: receiver.address,
+      apiClient: this.apiClient,
+      asset: selectedAsset,
+      chain: request.chain,
+      evmReadClient: this.evmReadClient,
+    });
     await this.guardBorrowSameAssetPolicy({
       profileId: request.profileId,
       pool: selectedPool,
@@ -362,7 +390,9 @@ export class LendingModule {
       };
       const borrowSubmissionData: OutflowSubmissionData = {
         ...borrowActionData,
+        asset: selectedAsset,
         receiverAccount: receiver.canisterAccount,
+        receiverAddress: receiver.address,
       };
 
       return {
@@ -397,6 +427,14 @@ export class LendingModule {
     request: OutflowSubmissionData,
     signatureInfo: SignatureInfo
   ): Promise<BorrowOutflowDetails> {
+    await guardEthereumOutflowDestination({
+      address: request.receiverAddress,
+      apiClient: this.apiClient,
+      asset: request.asset,
+      chain: request.chain,
+      evmReadClient: this.evmReadClient,
+    });
+
     try {
       const result = await createLendingActor(
         this.canisterContext

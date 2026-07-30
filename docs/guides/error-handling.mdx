@@ -70,6 +70,8 @@ Lending outflow and Simple Loan destinations are validated against the selected 
 
 Lending uses `chain` and `receiver`. Simple Loans use `borrow.chain`, `borrow.destination`, `refund.chain`, and `refund.destination`. Prefer typed destination objects when the account family matters.
 
-Malformed addresses throw `LiquidiumError` with `LiquidiumErrorCode.INVALID_ADDRESS`. Asset, chain, or destination-family mismatches throw `LiquidiumErrorCode.VALIDATION_ERROR`. Catch both at the form boundary before retrying the flow.
+The SDK throws `LiquidiumError` with code `LiquidiumErrorCode.INVALID_ADDRESS` for malformed or reserved Ethereum addresses. It uses `LiquidiumErrorCode.CONTRACT_DESTINATION_UNSUPPORTED` for native ETH lending destinations with deployed bytecode. The Simple Loans API reports deployed-contract destination rejections as SDK API errors. Asset, chain, or destination-family mismatches use `LiquidiumErrorCode.VALIDATION_ERROR`. Catch these errors at the form boundary before retrying the flow.
+
+Lending queries the configured EVM client's `getCode` method when `chain.id` identifies Ethereum mainnet. Without both fields, the SDK queries the Liquidium SDK API. RPC and API failures do not block the outflow.
 
 Wallet-executed native ETH and ERC-20 supply also validates the sender account as an EVM address. Deposit-address queries validate that the requested asset matches the selected ETH pool and reject malformed addresses returned by the deposit canister.

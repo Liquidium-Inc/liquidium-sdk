@@ -1,8 +1,15 @@
 import { encodeIcrcAccount } from "@icp-sdk/canisters/ledger/icrc";
 import { Actor } from "@icp-sdk/core/agent";
 import { Principal } from "@icp-sdk/core/principal";
+import { mainnet } from "viem/chains";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { Chain, LiquidiumClient, LiquidiumErrorCode } from "../../../index";
+import { mockDeep } from "vitest-mock-extended";
+import {
+  Chain,
+  type EvmReadClient,
+  LiquidiumClient,
+  LiquidiumErrorCode,
+} from "../../../index";
 import {
   BTC_POOL_ID,
   CHECKSUM_EVM_OUTFLOW_ADDRESS,
@@ -25,6 +32,16 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
+function createNoDeployedBytecodeFetch(): typeof fetch {
+  return vi.fn().mockImplementation(
+    async () =>
+      new Response(JSON.stringify({ hasDeployedBytecode: false }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      })
+  ) as typeof fetch;
+}
+
 describe("LendingModule borrow", () => {
   test("creates a native ETH borrow at the 0.005 ETH minimum", async () => {
     // given
@@ -45,7 +62,13 @@ describe("LendingModule borrow", () => {
       get_nonce: getNonce,
       borrow_assets: borrowAssets,
     } as never);
-    const client = new LiquidiumClient({});
+    const evmPublicClient = mockDeep<Required<EvmReadClient>>();
+    evmPublicClient.chain.id = mainnet.id;
+    evmPublicClient.getCode.mockResolvedValue(undefined);
+    const client = new LiquidiumClient({
+      evmPublicClient,
+      fetch: createNoDeployedBytecodeFetch(),
+    });
 
     // when
     const borrowAction = await client.lending.prepareBorrow({
@@ -63,9 +86,112 @@ describe("LendingModule borrow", () => {
       type: "ChainAddress",
       address: CHECKSUM_EVM_OUTFLOW_ADDRESS,
     });
+    expect(evmPublicClient.getCode).toHaveBeenCalledWith({
+      address: CHECKSUM_EVM_OUTFLOW_ADDRESS,
+    });
+    expect(evmPublicClient.getCode).toHaveBeenCalledTimes(2);
     expect(borrowAssets.mock.calls[0]?.[1]).toMatchObject({
       data: {
         amount: MINIMUM_ETH_AMOUNT_WEI,
+        account: { External: CHECKSUM_EVM_OUTFLOW_ADDRESS },
+      },
+    });
+  });
+
+  test("rejects a contract destination that deploys after borrow preparation", async () => {
+    // given
+    const MINIMUM_ETH_AMOUNT_WEI = 5_000_000_000_000_000n;
+    const borrowAssets = vi.fn();
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi.fn().mockResolvedValue([createEthPoolRecord()]),
+      get_nonce: vi.fn().mockResolvedValue(17n),
+      borrow_assets: borrowAssets,
+    } as never);
+    const fetch = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ hasDeployedBytecode: false }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        })
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ hasDeployedBytecode: true }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        })
+      ) as typeof globalThis.fetch;
+    const client = new LiquidiumClient({ fetch });
+    const borrowAction = await client.lending.prepareBorrow({
+      profileId: "aaaaa-aa",
+      poolId: ETH_POOL_ID,
+      amount: MINIMUM_ETH_AMOUNT_WEI,
+      chain: Chain.ETH,
+      receiver: LOWERCASE_EVM_OUTFLOW_ADDRESS,
+      signerWalletAddress: "0xsigner",
+    });
+
+    // when
+    const result = borrowAction.submit({
+      signature: "0xsigned",
+      chain: "ETH",
+    });
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.CONTRACT_DESTINATION_UNSUPPORTED,
+    });
+    expect(borrowAssets).not.toHaveBeenCalled();
+  });
+
+  test("revalidates the prepared borrow destination after public action data is mutated", async () => {
+    // given
+    const MINIMUM_ETH_AMOUNT_WEI = 5_000_000_000_000_000n;
+    const MUTATED_EVM_ADDRESS = "0xde709f2102306220921060314715629080e2fb77";
+    const borrowAssets = vi.fn().mockResolvedValue({
+      Ok: {
+        id: "outflow-eth",
+        txid: [],
+        outflow_type: { Borrow: null },
+        outflow_ref: [],
+        amount: MINIMUM_ETH_AMOUNT_WEI,
+        receiver: { External: CHECKSUM_EVM_OUTFLOW_ADDRESS },
+      },
+    });
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi.fn().mockResolvedValue([createEthPoolRecord()]),
+      get_nonce: vi.fn().mockResolvedValue(17n),
+      borrow_assets: borrowAssets,
+    } as never);
+    const evmPublicClient = mockDeep<Required<EvmReadClient>>();
+    evmPublicClient.chain.id = mainnet.id;
+    evmPublicClient.getCode.mockResolvedValue(undefined);
+    const client = new LiquidiumClient({
+      evmPublicClient,
+    });
+    const borrowAction = await client.lending.prepareBorrow({
+      profileId: "aaaaa-aa",
+      poolId: ETH_POOL_ID,
+      amount: MINIMUM_ETH_AMOUNT_WEI,
+      chain: Chain.ETH,
+      receiver: LOWERCASE_EVM_OUTFLOW_ADDRESS,
+      signerWalletAddress: "0xsigner",
+    });
+    const publicReceiver = borrowAction.data.receiver;
+    if (typeof publicReceiver === "string" || !("address" in publicReceiver)) {
+      throw new Error("Expected a typed borrow receiver");
+    }
+    publicReceiver.address = MUTATED_EVM_ADDRESS;
+
+    // when
+    await borrowAction.submit({ signature: "0xsigned", chain: "ETH" });
+
+    // then
+    expect(evmPublicClient.getCode).toHaveBeenLastCalledWith({
+      address: CHECKSUM_EVM_OUTFLOW_ADDRESS,
+    });
+    expect(borrowAssets.mock.calls[0]?.[1]).toMatchObject({
+      data: {
         account: { External: CHECKSUM_EVM_OUTFLOW_ADDRESS },
       },
     });
@@ -1140,7 +1266,13 @@ Nonce: 17`);
       get_nonce: getNonce,
       borrow_assets: borrowAssets,
     } as never);
-    const client = new LiquidiumClient({});
+    const client = new LiquidiumClient({
+      evmPublicClient: {
+        getCode: vi.fn().mockResolvedValue(undefined),
+        readContract: vi.fn(),
+      } as never,
+      fetch: createNoDeployedBytecodeFetch(),
+    });
 
     // when
     const borrowAction = await client.lending.prepareBorrow({

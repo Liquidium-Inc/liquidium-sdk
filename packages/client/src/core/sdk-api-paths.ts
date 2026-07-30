@@ -36,11 +36,23 @@ interface BuildSimpleLoanCollateralHintPathRequest {
   loanId: bigint;
 }
 
+interface BuildEthereumAddressBytecodePathRequest {
+  address: string;
+}
+
 const ACTIVITIES = `${SDK_API_V2_PATH}/activities`;
 const HISTORY_ACTIVITIES = `${SDK_API_V2_PATH}/history/activities`;
 const HISTORY_USERS = `${SDK_API_V2_PATH}/history/users`;
 const INFLOW = `${SDK_API_V2_PATH}/inflow`;
 const SIMPLE_LOANS = `${SDK_API_V1_PATH}/instant-loans`;
+
+export function buildEthereumAddressBytecodePath(
+  request: BuildEthereumAddressBytecodePathRequest
+): string {
+  return `${SDK_API_V2_PATH}/ethereum/addresses/${encodeURIComponent(
+    request.address
+  )}/bytecode`;
+}
 
 export function buildHistoryUserTransactionsPath(
   profileId: string,

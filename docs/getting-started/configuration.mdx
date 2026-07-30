@@ -38,9 +38,9 @@ const client = new LiquidiumClient({
 | `canisterIds` | Partially override `lending`, `ethDeposit`, `simpleLoans`, or `pools.{btc,eth,usdt,usdc,icp}` for custom deployments. |
 | `fetch` | Provide a custom fetch implementation. |
 | `timeoutMs` | Set the SDK API request timeout in milliseconds. Defaults to `30_000`. |
-| `evmRpcUrl` | Create a viem public client for EVM reads. |
+| `evmRpcUrl` | Create a viem public client for ERC-20 reads and native ETH destination checks. |
 | `evmRpcHeaders` | Add headers to EVM RPC requests. |
-| `evmPublicClient` | Use an existing viem-compatible read client. When supplied, it takes precedence over `evmRpcUrl` and `evmRpcHeaders`. |
+| `evmPublicClient` | Use an existing viem-compatible client. `readContract` is required; mainnet `chain` and `getCode` enable native ETH destination checks. The SDK uses this client instead of `evmRpcUrl` and `evmRpcHeaders`. |
 
 Use nested canister overrides:
 
