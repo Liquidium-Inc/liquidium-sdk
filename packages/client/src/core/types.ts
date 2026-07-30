@@ -8,8 +8,11 @@ import type { PublicClient } from "viem";
  * uses it for a best-effort native ETH contract-destination check. Provider
  * failures fail open and do not block the outflow.
  */
-export type EvmReadClient = Pick<PublicClient, "readContract"> &
-  Partial<Pick<PublicClient, "chain" | "getCode">>;
+export interface EvmReadClient {
+  readContract: PublicClient["readContract"];
+  chain?: PublicClient["chain"];
+  getCode?: PublicClient["getCode"];
+}
 
 /**
  * Runtime options for `new LiquidiumClient(config)`.
