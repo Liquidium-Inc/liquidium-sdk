@@ -305,7 +305,10 @@ describe("guardEthereumOutflowDestination", () => {
     await expect(result).resolves.toBeUndefined();
   });
 
-  test("should skip contract validation for an ERC-20 outflow", async () => {
+  test.each([
+    Asset.USDC,
+    Asset.USDT,
+  ])("should skip contract validation for an %s outflow on Ethereum", async (asset) => {
     // given
     const apiClient = mockDeep<ApiClient>();
     const evmReadClient = mockDeep<Required<EvmReadClient>>();
@@ -314,7 +317,7 @@ describe("guardEthereumOutflowDestination", () => {
     const result = guardEthereumOutflowDestination({
       address: EVM_ADDRESS,
       apiClient,
-      asset: Asset.USDT,
+      asset,
       chain: Chain.ETH,
       evmReadClient,
     });
