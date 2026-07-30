@@ -27,7 +27,9 @@ Use Simple Loans for a checkout-style borrow flow. The SDK creates a generated L
 | `refund` | Refund `chain` and `destination` for returned collateral |
 | `ltvMaxBps` | Maximum LTV in basis points, where `6_000n` is 60% |
 | `depositWindowSeconds` | How long the user has to send collateral |
-`borrow.destination` and `refund.destination` can be strings or typed account objects such as `{ type: "ChainAddress", address: "bc1q..." }`, `{ type: "IcPrincipal", address: "aaaaa-aa" }`, or `{ type: "IcrcAccount", address: "aaaaa-aa" }`. The SDK validates that each destination family matches its selected asset and chain before creation. The Liquidium SDK API validates Ethereum borrow destinations against deployed bytecode before creating the loan, so Simple Loan callers do not need an Ethereum RPC client for this check. Counterfactual smart accounts cannot be identified from an address before their contract is deployed.
+`borrow.destination` and `refund.destination` can be strings or typed account objects such as `{ type: "ChainAddress", address: "bc1q..." }`, `{ type: "IcPrincipal", address: "aaaaa-aa" }`, or `{ type: "IcrcAccount", address: "aaaaa-aa" }`. The SDK validates that each destination family matches its selected asset and chain before creation.
+
+The Liquidium SDK API rejects native ETH borrow destinations with deployed bytecode before creating a loan. Simple Loan callers do not need an EVM client for this check.
 
 ## Collateral Minimums
 
