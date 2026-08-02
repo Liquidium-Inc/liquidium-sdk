@@ -1,5 +1,11 @@
 # @liquidium/client
 
+## 0.7.1
+
+### Patch Changes
+
+- 033f016: Reject reserved Ethereum destinations and best-effort block native ETH addresses with deployed code.
+
 ## 0.7.0
 
 ### Minor Changes
