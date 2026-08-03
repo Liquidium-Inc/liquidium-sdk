@@ -1,4 +1,4 @@
-import type { Identity } from "@icp-sdk/core/agent";
+import type { Agent, Identity } from "@icp-sdk/core/agent";
 import type { PublicClient } from "viem";
 
 /**
@@ -23,6 +23,8 @@ export interface EvmReadClient {
 export interface LiquidiumClientConfig {
   /** Preset canister IDs. Only `mainnet` is bundled. */
   environment?: Environment;
+  /** Preconfigured ICP agent. Takes precedence over `icHost` and `identity`. */
+  agent?: Agent;
   /** ICP replica host override (defaults follow `@icp-sdk/core/agent`). */
   icHost?: string;
   /** Agent identity for signed canister calls. */

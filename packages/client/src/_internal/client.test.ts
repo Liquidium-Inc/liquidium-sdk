@@ -1,7 +1,13 @@
-import { describe, expect, test, vi } from "vitest";
+import { type Agent, HttpAgent } from "@icp-sdk/core/agent";
+import { afterEach, describe, expect, test, vi } from "vitest";
+import { mockDeep } from "vitest-mock-extended";
 import { LiquidiumClient, LiquidiumError, LiquidiumErrorCode } from "../index";
 
 describe("LiquidiumClient", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   test("creates a client with default mainnet config", () => {
     // given
     const config = {};
@@ -30,6 +36,22 @@ describe("LiquidiumClient", () => {
 
     // then
     expect(client).toBeDefined();
+  });
+
+  test("uses a configured ICP agent without creating an HttpAgent", () => {
+    // given
+    const agent = mockDeep<Agent>();
+    const createSyncSpy = vi.spyOn(HttpAgent, "createSync");
+
+    // when
+    const client = new LiquidiumClient({
+      agent,
+      icHost: "https://replica.example.com",
+    });
+
+    // then
+    expect(client).toBeDefined();
+    expect(createSyncSpy).not.toHaveBeenCalled();
   });
 
   test("uses the configured API base URL for SDK API modules", async () => {
