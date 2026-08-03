@@ -8,7 +8,7 @@
 
 > `const` **Environment**: `object`
 
-Defined in: [packages/client/src/core/types.ts:75](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L75)
+Defined in: [packages/client/src/core/types.ts:85](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L85)
 
 Supported deployment environments with bundled canister ids.
 

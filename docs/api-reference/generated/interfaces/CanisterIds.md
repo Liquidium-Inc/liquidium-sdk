@@ -6,7 +6,7 @@
 
 # Interface: CanisterIds
 
-Defined in: [packages/client/src/core/types.ts:57](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L57)
+Defined in: [packages/client/src/core/types.ts:67](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L67)
 
 Principal text values for canisters used by the client.
 
@@ -16,7 +16,7 @@ Principal text values for canisters used by the client.
 
 > **ethDeposit**: `string`
 
-Defined in: [packages/client/src/core/types.ts:63](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L63)
+Defined in: [packages/client/src/core/types.ts:73](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L73)
 
 ckETH minter deposit helper canister principal.
 
@@ -26,7 +26,7 @@ ckETH minter deposit helper canister principal.
 
 > **lending**: `string`
 
-Defined in: [packages/client/src/core/types.ts:59](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L59)
+Defined in: [packages/client/src/core/types.ts:69](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L69)
 
 Liquidium lending canister principal.
 
@@ -36,7 +36,7 @@ Liquidium lending canister principal.
 
 > **pools**: [`PoolCanisterIds`](PoolCanisterIds.md)
 
-Defined in: [packages/client/src/core/types.ts:61](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L61)
+Defined in: [packages/client/src/core/types.ts:71](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L71)
 
 Pool canister principals grouped by pool asset.
 
@@ -46,6 +46,6 @@ Pool canister principals grouped by pool asset.
 
 > **simpleLoans**: `string`
 
-Defined in: [packages/client/src/core/types.ts:65](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L65)
+Defined in: [packages/client/src/core/types.ts:75](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L75)
 
 Accountless Simple Loans canister principal.

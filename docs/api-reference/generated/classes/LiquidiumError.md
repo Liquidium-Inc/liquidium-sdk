@@ -6,7 +6,7 @@
 
 # Class: LiquidiumError
 
-Defined in: [packages/client/src/core/errors.ts:69](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/errors.ts#L69)
+Defined in: [packages/client/src/core/errors.ts:70](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/errors.ts#L70)
 
 Typed error from the SDK or mapped protocol failures.
 
@@ -22,7 +22,7 @@ Prefer checking `code` over parsing `message`.
 
 > **new LiquidiumError**(`code`, `message?`, `cause?`, `context?`): `LiquidiumError`
 
-Defined in: [packages/client/src/core/errors.ts:85](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/errors.ts#L85)
+Defined in: [packages/client/src/core/errors.ts:86](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/errors.ts#L86)
 
 #### Parameters
 
@@ -64,7 +64,7 @@ Optional backend debug identifiers.
 
 > `readonly` `optional` **cause?**: `unknown`
 
-Defined in: [packages/client/src/core/errors.ts:73](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/errors.ts#L73)
+Defined in: [packages/client/src/core/errors.ts:74](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/errors.ts#L74)
 
 Original error when the SDK wraps an underlying failure.
 
@@ -78,7 +78,7 @@ Original error when the SDK wraps an underlying failure.
 
 > `readonly` **code**: [`LiquidiumErrorCode`](../type-aliases/LiquidiumErrorCode.md)
 
-Defined in: [packages/client/src/core/errors.ts:71](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/errors.ts#L71)
+Defined in: [packages/client/src/core/errors.ts:72](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/errors.ts#L72)
 
 Machine-readable reason; compare to [LiquidiumErrorCode](../variables/LiquidiumErrorCode.md) values.
 
@@ -112,7 +112,7 @@ Defined in: node\_modules/.pnpm/typescript@5.9.3/node\_modules/typescript/lib/li
 
 > `readonly` `optional` **requestId?**: `string`
 
-Defined in: [packages/client/src/core/errors.ts:77](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/errors.ts#L77)
+Defined in: [packages/client/src/core/errors.ts:78](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/errors.ts#L78)
 
 SDK API request id for support/debugging when available.
 
@@ -134,7 +134,7 @@ Defined in: node\_modules/.pnpm/typescript@5.9.3/node\_modules/typescript/lib/li
 
 > `readonly` `optional` **traceId?**: `string`
 
-Defined in: [packages/client/src/core/errors.ts:75](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/errors.ts#L75)
+Defined in: [packages/client/src/core/errors.ts:76](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/errors.ts#L76)
 
 Backend trace id for support/debugging when available.
 

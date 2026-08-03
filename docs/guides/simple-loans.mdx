@@ -29,7 +29,7 @@ Use Simple Loans for a checkout-style borrow flow. The SDK creates a generated L
 | `depositWindowSeconds` | How long the user has to send collateral |
 `borrow.destination` and `refund.destination` can be strings or typed account objects such as `{ type: "ChainAddress", address: "bc1q..." }`, `{ type: "IcPrincipal", address: "aaaaa-aa" }`, or `{ type: "IcrcAccount", address: "aaaaa-aa" }`. The SDK validates that each destination family matches its selected asset and chain before creation.
 
-The Liquidium SDK API rejects native ETH borrow destinations with deployed bytecode before creating a loan. Simple Loan callers do not need an EVM client for this check.
+Native ETH Simple Loans do not support borrow destinations with deployed contract bytecode. The same restriction applies to the refund destination when the collateral is native ETH. You do not need an EVM client for these checks.
 
 ## Collateral Minimums
 
