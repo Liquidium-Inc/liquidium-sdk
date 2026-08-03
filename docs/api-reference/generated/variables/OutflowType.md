@@ -8,7 +8,7 @@
 
 > `const` **OutflowType**: `object`
 
-Defined in: [packages/client/src/core/types.ts:206](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L206)
+Defined in: [packages/client/src/core/types.ts:216](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L216)
 
 Outflow operation reported by the lending canister.
 

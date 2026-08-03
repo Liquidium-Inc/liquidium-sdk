@@ -6,7 +6,7 @@
 
 # Interface: IcpOnIcpAssetIdentifier
 
-Defined in: [packages/client/src/core/types.ts:141](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L141)
+Defined in: [packages/client/src/core/types.ts:151](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L151)
 
 ICP transferred on the Internet Computer chain.
 
@@ -16,7 +16,7 @@ ICP transferred on the Internet Computer chain.
 
 > **asset**: `"ICP"`
 
-Defined in: [packages/client/src/core/types.ts:143](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L143)
+Defined in: [packages/client/src/core/types.ts:153](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L153)
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: [packages/client/src/core/types.ts:143](https://github.com/Liquidium
 
 > **chain**: `"ICP"`
 
-Defined in: [packages/client/src/core/types.ts:142](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L142)
+Defined in: [packages/client/src/core/types.ts:152](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L152)
