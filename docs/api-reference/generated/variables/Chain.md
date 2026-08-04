@@ -8,7 +8,7 @@
 
 > `const` **Chain**: `object`
 
-Defined in: [packages/client/src/core/types.ts:103](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L103)
+Defined in: [packages/client/src/core/types.ts:105](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L105)
 
 Canonical chain identifiers used by wallet and protocol actions.
 

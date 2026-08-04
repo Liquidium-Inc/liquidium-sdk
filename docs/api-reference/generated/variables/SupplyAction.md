@@ -8,7 +8,7 @@
 
 > `const` **SupplyAction**: `object`
 
-Defined in: [packages/client/src/core/types.ts:208](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L208)
+Defined in: [packages/client/src/core/types.ts:210](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L210)
 
 Inflow operation performed by a supply target.
 

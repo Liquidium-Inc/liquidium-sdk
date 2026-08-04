@@ -8,6 +8,6 @@
 
 > **Environment** = *typeof* [`Environment`](../variables/Environment.md)\[keyof *typeof* [`Environment`](../variables/Environment.md)\]
 
-Defined in: [packages/client/src/core/types.ts:85](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L85)
+Defined in: [packages/client/src/core/types.ts:87](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L87)
 
 Supported deployment environment name.
