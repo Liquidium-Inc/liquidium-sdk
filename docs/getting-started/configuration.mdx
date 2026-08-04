@@ -47,7 +47,10 @@ Pass a custom agent when your app already owns ICP transport and identity setup:
 
 ```ts
 import { HttpAgent } from "@icp-sdk/core/agent";
+import { Ed25519KeyIdentity } from "@icp-sdk/core/identity";
 import { LiquidiumClient } from "@liquidium/client";
+
+const identity = Ed25519KeyIdentity.generate();
 
 const agent = await HttpAgent.create({
   host: "https://icp-api.io",
