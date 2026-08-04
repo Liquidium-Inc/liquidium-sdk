@@ -1,5 +1,11 @@
 # @liquidium/client
 
+## 0.8.0
+
+### Minor Changes
+
+- 3a06781: Allow callers to provide a preconfigured ICP agent through `LiquidiumClientConfig.agent`.
+
 ## 0.7.1
 
 ### Patch Changes

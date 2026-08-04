@@ -6,7 +6,7 @@
 
 # Interface: UsdcOnIcpAssetIdentifier
 
-Defined in: [packages/client/src/core/types.ts:157](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L157)
+Defined in: [packages/client/src/core/types.ts:159](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L159)
 
 USDC transferred on the Internet Computer chain.
 
@@ -16,7 +16,7 @@ USDC transferred on the Internet Computer chain.
 
 > **asset**: `"USDC"`
 
-Defined in: [packages/client/src/core/types.ts:159](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L159)
+Defined in: [packages/client/src/core/types.ts:161](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L161)
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: [packages/client/src/core/types.ts:159](https://github.com/Liquidium
 
 > **chain**: `"ICP"`
 
-Defined in: [packages/client/src/core/types.ts:158](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L158)
+Defined in: [packages/client/src/core/types.ts:160](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L160)

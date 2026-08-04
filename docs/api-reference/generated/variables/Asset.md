@@ -8,7 +8,7 @@
 
 > `const` **Asset**: `object`
 
-Defined in: [packages/client/src/core/types.ts:92](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L92)
+Defined in: [packages/client/src/core/types.ts:94](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L94)
 
 Canonical asset symbols supported by state-mutating protocol flows.
 

@@ -6,7 +6,7 @@
 
 # Interface: EthOnEthAssetIdentifier
 
-Defined in: [packages/client/src/core/types.ts:121](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L121)
+Defined in: [packages/client/src/core/types.ts:123](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L123)
 
 ETH transferred on the Ethereum chain.
 
@@ -16,7 +16,7 @@ ETH transferred on the Ethereum chain.
 
 > **asset**: `"ETH"`
 
-Defined in: [packages/client/src/core/types.ts:123](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L123)
+Defined in: [packages/client/src/core/types.ts:125](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L125)
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: [packages/client/src/core/types.ts:123](https://github.com/Liquidium
 
 > **chain**: `"ETH"`
 
-Defined in: [packages/client/src/core/types.ts:122](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L122)
+Defined in: [packages/client/src/core/types.ts:124](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L124)
