@@ -4,48 +4,53 @@
 
 [@liquidium/client](../README.md) / SimpleLoanProfileWarmedEventType
 
-# Interface: SimpleLoanProfileWarmedEventType
+# ~~Interface: SimpleLoanProfileWarmedEventType~~
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:302](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L302)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:323](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L323)
 
-Profile-warmed event payload.
+Legacy Ethereum-signature profile-warmed event payload.
+
+## Deprecated
+
+New profile warmups emit `SimpleLoanIcpProfileWarmedEventType`.
+This type remains supported for historical events.
 
 ## Properties
 
-### derivationIndex
+### ~~derivationIndex~~
 
 > **derivationIndex**: `Uint8Array`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:304](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L304)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:325](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L325)
 
 ***
 
-### ethAddress
+### ~~ethAddress~~
 
 > **ethAddress**: `string`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:306](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L306)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:327](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L327)
 
 ***
 
-### profileId
+### ~~profileId~~
 
 > **profileId**: `string`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:307](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L307)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:328](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L328)
 
 ***
 
-### type
+### ~~type~~
 
 > **type**: `"ProfileWarmed"`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:303](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L303)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:324](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L324)
 
 ***
 
-### warmedProfileId
+### ~~warmedProfileId~~
 
 > **warmedProfileId**: `bigint`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:305](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L305)
+Defined in: [packages/client/src/modules/simple-loans/types.ts:326](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L326)
