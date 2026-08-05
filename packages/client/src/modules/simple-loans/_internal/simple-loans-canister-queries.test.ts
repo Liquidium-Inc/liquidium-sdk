@@ -94,4 +94,62 @@ describe("SimpleLoansModule canister queries", () => {
       },
     ]);
   });
+
+  test("maps ICP-authorized warmed profiles and events", async () => {
+    // given
+    const subaccount = new Uint8Array(32).fill(7);
+    const lendingProfile = Principal.fromText(PROFILE_ID);
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      get_event: vi.fn().mockResolvedValue([
+        {
+          id: 9n,
+          schema_version: 1,
+          timestamp: 123n,
+          event_type: {
+            IcpProfileWarmed: {
+              subaccount,
+              warmed_profile_id: 7n,
+              lending_profile: lendingProfile,
+            },
+          },
+        },
+      ]),
+      list_warmed_profiles: vi.fn().mockResolvedValue([
+        {
+          id: 7n,
+          authorisation: { IcpCaller: { subaccount } },
+          created_at: 123n,
+          lending_profile: lendingProfile,
+        },
+      ]),
+    } as never);
+    const client = new LiquidiumClient({
+      canisterIds: { simpleLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
+    });
+
+    // when
+    const event = await client.simpleLoans.getEvent(9n);
+    const warmedProfiles = await client.simpleLoans.listWarmedProfiles();
+
+    // then
+    expect(event).toEqual({
+      id: 9n,
+      schemaVersion: 1,
+      timestamp: 123n,
+      eventType: {
+        type: "IcpProfileWarmed",
+        subaccount,
+        warmedProfileId: 7n,
+        profileId: PROFILE_ID,
+      },
+    });
+    expect(warmedProfiles).toEqual([
+      {
+        id: 7n,
+        authorization: { type: "IcpCaller", subaccount },
+        createdAt: 123n,
+        profileId: PROFILE_ID,
+      },
+    ]);
+  });
 });

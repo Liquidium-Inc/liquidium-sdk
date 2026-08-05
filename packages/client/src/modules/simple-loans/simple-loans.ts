@@ -1595,6 +1595,16 @@ function mapSimpleLoanEventType(
     };
   }
 
+  if ("IcpProfileWarmed" in eventType) {
+    const event = eventType.IcpProfileWarmed;
+    return {
+      type: "IcpProfileWarmed",
+      subaccount: event.subaccount,
+      warmedProfileId: event.warmed_profile_id,
+      profileId: event.lending_profile.toText(),
+    };
+  }
+
   if ("RepayComplete" in eventType) {
     return {
       type: "RepayComplete",
@@ -1622,6 +1632,13 @@ function mapWarmedProfile(profile: WarmedProfile): SimpleLoanWarmedProfile {
 function authorizationFromCanister(
   authorization: SimpleLoanAuthorisation
 ): SimpleLoanAuthorization {
+  if ("IcpCaller" in authorization) {
+    return {
+      type: "IcpCaller",
+      subaccount: authorization.IcpCaller.subaccount,
+    };
+  }
+
   return {
     type: "EthSignature",
     derivationIndex: authorization.EthSignature.derivation_index,

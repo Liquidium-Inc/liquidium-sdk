@@ -220,13 +220,24 @@ export interface SimpleLoanConfig {
   lendingCanisterId: string;
 }
 
-/** Authentication metadata for warmed Simple Loans profiles. */
-export interface SimpleLoanAuthorization {
+/** Legacy Ethereum-signature authentication metadata for a warmed Simple Loans profile. */
+export interface SimpleLoanEthSignatureAuthorization {
   type: "EthSignature";
   derivationIndex: Uint8Array;
   publicKey: Uint8Array;
   address: string;
 }
+
+/** Native IC caller authentication metadata for a warmed Simple Loans profile. */
+export interface SimpleLoanIcpCallerAuthorization {
+  type: "IcpCaller";
+  subaccount: Uint8Array;
+}
+
+/** Authentication metadata for warmed Simple Loans profiles. */
+export type SimpleLoanAuthorization =
+  | SimpleLoanEthSignatureAuthorization
+  | SimpleLoanIcpCallerAuthorization;
 
 /** Warmed profile available for a future simple loan. */
 export interface SimpleLoanWarmedProfile {
@@ -307,6 +318,14 @@ export interface SimpleLoanProfileWarmedEventType {
   profileId: string;
 }
 
+/** ICP-authorized profile-warmed event payload. */
+export interface SimpleLoanIcpProfileWarmedEventType {
+  type: "IcpProfileWarmed";
+  subaccount: Uint8Array;
+  warmedProfileId: bigint;
+  profileId: string;
+}
+
 /** Repay-complete event payload. */
 export interface SimpleLoanRepayCompleteEventType {
   type: "RepayComplete";
@@ -330,6 +349,7 @@ export type SimpleLoanEventType =
   | SimpleLoanDepositTimerExceededEventType
   | SimpleLoanStuckFundsWithdrawalRequestedEventType
   | SimpleLoanProfileWarmedEventType
+  | SimpleLoanIcpProfileWarmedEventType
   | SimpleLoanRepayCompleteEventType
   | SimpleLoanDepositTimerStartedEventType;
 
