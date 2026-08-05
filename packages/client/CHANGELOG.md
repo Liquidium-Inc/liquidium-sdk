@@ -1,5 +1,11 @@
 # @liquidium/client
 
+## 0.8.1
+
+### Patch Changes
+
+- 9f6c8a2: Decode legacy Ethereum and native IC authorization metadata for Simple Loans.
+
 ## 0.8.0
 
 ### Minor Changes
