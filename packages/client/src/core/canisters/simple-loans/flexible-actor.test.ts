@@ -89,6 +89,20 @@ describe("decodeFlexibleSimpleLoanRecord", () => {
     expect(decoded?.borrow_asset).toBe("USDC");
   });
 
+  test("should preserve ICP caller authorization", () => {
+    // given
+    const subaccount = new Uint8Array(32).fill(7);
+    const record = createFlexibleSimpleLoanRecord({
+      authorisation: { IcpCaller: { subaccount } },
+    });
+
+    // when
+    const decoded = decodeFlexibleSimpleLoanRecord(record);
+
+    // then
+    expect(decoded?.authorisation).toEqual({ IcpCaller: { subaccount } });
+  });
+
   test("should decode native ETH from known and hashed asset tags", () => {
     // given
     const ethHash = idlLabelToId("ETH");
@@ -302,6 +316,32 @@ describe("decodeFlexibleHeadlessLoanEvent", () => {
     expect(decoded).not.toBeNull();
     expect(decoded?.event_type).toEqual({
       DepositTimerExceeded: { loan_id: 42n },
+    });
+  });
+
+  test("should pass through ICP profile warmed events", () => {
+    // given
+    const subaccount = new Uint8Array(32).fill(7);
+    const event = createFlexibleHeadlessLoanEvent({
+      event_type: {
+        IcpProfileWarmed: {
+          subaccount,
+          warmed_profile_id: 42n,
+          lending_profile: PROFILE_PRINCIPAL,
+        },
+      },
+    });
+
+    // when
+    const decoded = decodeFlexibleHeadlessLoanEvent(event);
+
+    // then
+    expect(decoded?.event_type).toEqual({
+      IcpProfileWarmed: {
+        subaccount,
+        warmed_profile_id: 42n,
+        lending_profile: PROFILE_PRINCIPAL,
+      },
     });
   });
 });

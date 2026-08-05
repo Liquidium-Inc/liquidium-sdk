@@ -108,4 +108,6 @@ Target maps are partial. A missing chain entry means that transfer rail is unava
 
 `client.simpleLoans.find(...)` returns lightweight indexed fields, including `loanId`, `ref`, `profileId`, `createdAt`, `collateral`, and `borrow`. Use `client.simpleLoans.get(...)` to load full loan fields for a selected match. Use `client.activities.list(...)` separately when you need active or completed flow activity.
 
+Diagnostic warmed-profile queries support both authorization generations. `client.simpleLoans.listWarmedProfiles()` returns `authorization.type` as `"EthSignature"` for legacy profiles or `"IcpCaller"` for native IC caller profiles. `"EthSignature"` is deprecated for new profiles but remains supported for old canisters and existing profiles. Event queries similarly return deprecated legacy `"ProfileWarmed"` events and native `"IcpProfileWarmed"` events.
+
 See [Status System](../concepts/status-system.mdx) for `loan.status`, activity status, confirmation fields, and top-up handling.

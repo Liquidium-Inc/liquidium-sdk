@@ -63,9 +63,13 @@ export interface SimpleLoanEthSignatureAuthorisation {
   address: string;
 }
 
-export interface SimpleLoanAuthorisation {
-  EthSignature: SimpleLoanEthSignatureAuthorisation;
+export interface SimpleLoanIcpCallerAuthorisation {
+  subaccount: Uint8Array;
 }
+
+export type SimpleLoanAuthorisation =
+  | { EthSignature: SimpleLoanEthSignatureAuthorisation }
+  | { IcpCaller: SimpleLoanIcpCallerAuthorisation };
 
 export interface CreateSimpleLoanCanisterRequest {
   borrow_destination: SimpleLoanAccountType;
@@ -158,6 +162,16 @@ export interface HeadlessLoanProfileWarmedEventType {
   ProfileWarmed: HeadlessLoanProfileWarmedEventPayload;
 }
 
+export interface HeadlessLoanIcpProfileWarmedEventPayload {
+  subaccount: Uint8Array;
+  warmed_profile_id: bigint;
+  lending_profile: Principal;
+}
+
+export interface HeadlessLoanIcpProfileWarmedEventType {
+  IcpProfileWarmed: HeadlessLoanIcpProfileWarmedEventPayload;
+}
+
 export interface HeadlessLoanRepayCompleteEventType {
   RepayComplete: CreateSimpleLoanCanisterResponse;
 }
@@ -178,6 +192,7 @@ export type HeadlessLoanEventType =
   | HeadlessLoanDepositTimerExceededEventType
   | HeadlessLoanStuckFundsWithdrawalRequestedEventType
   | HeadlessLoanProfileWarmedEventType
+  | HeadlessLoanIcpProfileWarmedEventType
   | HeadlessLoanRepayCompleteEventType
   | HeadlessLoanDepositTimerStartedEventType;
 
