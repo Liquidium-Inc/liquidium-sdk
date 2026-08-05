@@ -41,6 +41,10 @@ pnpm add @liquidium/client
 bun add @liquidium/client
 ```
 
+Install without a dist-tag for the current stable release. Use `@rc` only when
+npm publishes a release candidate and the user explicitly wants prerelease
+behavior.
+
 Use the SDK in browser apps and modern TypeScript runtimes. Browser integrations
 need `fetch`, `BigInt`, and standard ESM support. Follow the host app's package
 manager and build tooling.
@@ -66,11 +70,12 @@ const client = new LiquidiumClient({
 **Config requirements:**
 
 - `environment`: sets the canister preset. Only `mainnet` is bundled; use `canisterIds` to override Liquidium canisters for custom deployments
-- `apiBaseUrl`: defaults to `https://app.liquidium.fi/api/sdk`. Override it for another Liquidium SDK API deployment. It is used by history, activities, inflow reporting, `simpleLoans.create(...)`, `simpleLoans.get(...)`, and `simpleLoans.find(...)`, but not by `borrow(...)`, `withdraw(...)`, or default ETH stablecoin deposit-address supply/repay target resolution
+- `apiBaseUrl`: defaults to `https://app.liquidium.fi/api/sdk`. Override it for another Liquidium SDK API deployment. It is used by history, activities, inflow reporting, `simpleLoans.create(...)`, `simpleLoans.get(...)`, and `simpleLoans.find(...)`. Default Ethereum deposit-address target resolution does not use it. Native ETH borrow and withdrawal validation can use it for a best-effort contract-bytecode check when no suitable EVM client is configured
 - `headers`: adds headers to Liquidium SDK HTTP API requests, for example app attribution or auth from a backend proxy
 - `fetch`: supplies a custom fetch implementation when the runtime needs one
 - `evmRpcUrl` / `evmPublicClient`: required for lower-level USDC/USDT contract-interaction supply planning and allowance polling. Native ETH contract interaction does not perform ERC-20 reads. Use `evmRpcHeaders` when the RPC provider authenticates with HTTP headers
-- `identity` / `icHost`: custom ICP agent configuration
+- `agent`: accepts a preconfigured ICP `Agent` and takes precedence over `identity` and `icHost`
+- `identity` / `icHost`: custom ICP agent configuration when `agent` is not supplied
 - `canisterIds`: accepts partial overrides for `lending`, `ethDeposit`, `simpleLoans`, and `pools.{btc,eth,usdt,usdc,icp}`
 - `canisterIds.simpleLoans`: defaults to mainnet `u5rm3-niaaa-aaaar-qb7eq-cai`; override it for custom deployments
 
@@ -127,6 +132,12 @@ client.simpleLoans.create(...);
 client.simpleLoans.get({ ref });
 client.simpleLoans.get({ loanId });
 client.simpleLoans.find(query);
+client.simpleLoans.getConfig();
+client.simpleLoans.getEvent(eventId);
+client.simpleLoans.listEvents({ start, limit });
+client.simpleLoans.listAccessList();
+client.simpleLoans.countWarmedProfiles();
+client.simpleLoans.listWarmedProfiles();
 client.quote.calculateLtv(...); // pure helper for current LTV previews
 ```
 
@@ -207,6 +218,13 @@ numeric loan id string, address, or transaction id. It returns lightweight loan
 matches with indexed loan fields; call `get({ loanId })` after the user selects
 one.
 
+The config, event, access-list, and warmed-profile methods are diagnostic direct
+canister queries. `listWarmedProfiles()` can return legacy
+`authorization.type: "EthSignature"` or current `"IcpCaller"` authorization.
+Event queries can likewise return legacy `"ProfileWarmed"` and current
+`"IcpProfileWarmed"` events. This compatibility does not change the default
+`create(...)` and `get(...)` flow.
+
 ### market
 
 Pool discovery, asset prices, and per-reserve data.
@@ -235,9 +253,11 @@ owned by the integrating application and are not shipped by the SDK.
 
 Pools expose current APR fields plus `estimatedLendingApy` and
 `estimatedBorrowingApy`. Estimated APYs use the current APR for a full 365-day
-year. They are estimates, not guaranteed or historical yield, because rates
-change with utilization and supply synchronization can occur between scheduled
-timer ticks.
+year. Borrow APY models per-second compounding. Supply APY models the scheduled
+15-second pool synchronization interval. They are estimates, not guaranteed or
+historical yield, because rates change with utilization and protocol activity
+can synchronize a pool between timer ticks. `totalSupply` and `totalDebt` are
+current amounts after applying the pool lending and borrow indexes.
 
 Use `getAssetPriceSnapshot()` when a UI needs price refresh time. Its `fetchedAt`
 field is the SDK retrieval timestamp in Unix seconds, not the underlying oracle
@@ -279,6 +299,7 @@ client.accounts.prepareCreateProfile(...);  // returns a signable action
 client.accounts.createProfile(...);         // signs and submits through a wallet adapter
 client.accounts.getProfileId(walletAddress);
 client.accounts.profileExists(profileId);
+client.accounts.getWalletNonce(walletAddress);
 client.accounts.listLinkedWallets(profileId);
 ```
 
@@ -297,8 +318,11 @@ client.lending.prepareWithdraw(...);
 client.lending.borrow(...);
 client.lending.withdraw(...);
 client.lending.supply(...);
+client.lending.getEvmSupplyContext(...);
+client.lending.getDepositAddress(...);
 client.lending.estimateInflowFee({ asset: "USDT", chain: "ETH" });
 client.lending.submitInflow({ txid, chain: "BTC", operation: "deposit" });
+client.lending.isBorrowingDisabled();
 ```
 
 Every `supply(...)` request requires `chain`. Valid transfer routes are BTC
@@ -312,6 +336,10 @@ and returns `{ totalFee: bigint }`. It does not take a pool ID, profile ID, or
 supply action. BTC L1 estimates include ckBTC minter and ledger fees. Native ETH
 and ETH stablecoins use the deposit-address canister, while ICP routes use the
 relevant ledger fee.
+
+Borrow, withdraw, and supply receipts include a required `status` using the
+shared `LiquidiumStatus` shape. A `SupplyFlow` also exposes this status before
+or after optional SDK broadcasting; the SDK does not poll it to completion.
 
 ### positions
 
@@ -386,6 +414,13 @@ Deposit minimums are `5_100n` sats for BTC/ckBTC,
 deposits enforce these values. Manual flows must apply
 `getMinimumDepositAmount(asset)` before broadcasting and account for inflow
 fees separately. Repayments do not use deposit minimums.
+
+Use `getMinimumBorrowAmount(asset)` and `getMinimumWithdrawAmount(asset)` before
+borrow and withdrawal calls. Borrow minimums are `5_100n` sats for BTC,
+`5_000_000_000_000_000n` wei for ETH, and `1_000_000n` base units for USDC or
+USDT. Withdrawal minimums are `5_000n` sats for BTC, the same ETH minimum, and
+`1_000_000n` base units for USDC or USDT. Assets without a configured product
+minimum return `0n`.
 
 Rate fields such as `lendingRate`, `borrowingRate`, and `utilizationRate` are
 fixed-point values scaled by `rateDecimals`, usually `27`. Do not render raw
@@ -476,6 +511,20 @@ invalidity.
 `SimpleLoanCreatedError` means creation succeeded remotely but hydration failed.
 Recover through `simpleLoans.get(...)` with its `loanId` or `ref`; never retry
 `create(...)`, because that can create a duplicate loan.
+
+Native ETH borrows and withdrawals do not support destinations with deployed
+contract bytecode, including smart contract wallets. The same restriction
+applies to Simple Loan native ETH borrow destinations and native ETH collateral
+refund destinations. Malformed or reserved EVM addresses use
+`LiquidiumErrorCode.INVALID_ADDRESS`. Profile-based contract destinations use
+`LiquidiumErrorCode.CONTRACT_DESTINATION_UNSUPPORTED`; Simple Loan API
+rejections surface as SDK API errors.
+
+When a mainnet EVM client provides `chain` and `getCode`, the SDK uses it for a
+best-effort bytecode check. Otherwise it uses the Liquidium SDK API. RPC and API
+check failures fail open and do not block the outflow. EVM wallet and deposit
+addresses are normalized to checksum form; compare them case-insensitively or
+normalize both values. Ethereum transaction amounts above `uint256` are rejected.
 
 ## Wallet Adapter
 
@@ -907,7 +956,7 @@ valid for ckETH because that route uses an ICRC transfer on `chain: "ICP"`.
 1. Treating profile lending as the default borrow flow. Use `client.simpleLoans.create(...)` for the accountless product flow unless the user explicitly asks for profiles.
 2. Adding profile creation, signed borrow, or wallet adapter requirements to Simple Loans. `simpleLoans.create(...)` and `simpleLoans.get(...)` do not need them.
 3. Confusing `quote.targetLtvBps` with Simple Loan `ltvMaxBps`. The quote target helps plan amounts; `ltvMaxBps` is validated by the Simple Loan LTV guards.
-4. `new LiquidiumClient({})` uses the default Liquidium service configuration. Override `apiBaseUrl` for custom service deployments. USDC/USDT contract-interaction planning also needs `evmRpcUrl` or `evmPublicClient`; native ETH contract interaction does not. Default Ethereum deposit-address supply, `borrow(...)`, and `withdraw(...)` do not use the service configuration.
+4. `new LiquidiumClient({})` uses the default Liquidium service configuration. Override `apiBaseUrl` for custom service deployments. USDC/USDT contract-interaction planning also needs `evmRpcUrl` or `evmPublicClient`; native ETH contract interaction does not. Default Ethereum deposit-address supply does not use the service configuration, but native ETH borrow and withdrawal destination checks can use it as a best-effort fallback.
 5. Prepare methods return signable actions, not completed actions. `prepareCreateProfile`, `prepareBorrow`, and `prepareWithdraw` still need signing and submission.
 6. Build a wallet adapter with only the methods the selected flow needs. Avoid adding `signMessage`, `sendBtcTransaction`, `sendEthTransaction`, or `sendIcrcTransfer` unless the flow uses them.
 7. Do not `await client.quote.getQuote(...)`; it is synchronous once pools and prices are available.
@@ -950,13 +999,23 @@ valid for ckETH because that route uses an ICRC transfer on `chain: "ICP"`.
 When unsure, check these first:
 
 - `packages/client/README.md`
+- `packages/client/CHANGELOG.md`
 - `README.md`
+- `docs/concepts/market-data.mdx`
+- `docs/guides/error-handling.mdx`
+- `docs/guides/simple-loans.mdx`
 - `packages/client/src/modules/simple-loans/simple-loans.ts`
 - `packages/client/src/core/types.ts`
 - `packages/client/src/core/accounts.ts`
+- `packages/client/src/core/asset-metadata.ts`
+- `packages/client/src/core/borrow-minimums.ts`
 - `packages/client/src/core/config.ts`
+- `packages/client/src/core/deposit-minimums.ts`
+- `packages/client/src/core/evm-outflow-validation.ts`
 - `packages/client/src/core/wallet-actions.ts`
 - `packages/client/src/core/pool-ledger-assets.ts`
+- `packages/client/src/core/rates.ts`
+- `packages/client/src/core/withdraw-minimums.ts`
 - `packages/client/src/modules/history/types.ts`
 - `packages/client/src/modules/simple-loans/types.ts`
 - `packages/client/src/modules/lending/types.ts`
@@ -968,6 +1027,7 @@ When unsure, check these first:
 - `examples/deposit-address-flow/src/sdk-example.ts`
 - `examples/contract-interaction-flow/src/dynamic-wallet.ts`
 - `examples/contract-interaction-flow/src/sdk-example.ts`
+- `examples/btc-interactions-flow/src/sdk-example.ts`
 - `examples/sdk-method-query/README.md`
 - `examples/sdk-method-query/src/lib/client.ts`
 - `examples/sdk-method-query/src/SdkMethodQueryPage.tsx`
