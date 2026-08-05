@@ -220,7 +220,12 @@ export interface SimpleLoanConfig {
   lendingCanisterId: string;
 }
 
-/** Legacy Ethereum-signature authentication metadata for a warmed Simple Loans profile. */
+/**
+ * Legacy Ethereum-signature authentication metadata for a warmed Simple Loans profile.
+ *
+ * @deprecated New warmed profiles use `SimpleLoanIcpCallerAuthorization`. This
+ * type remains supported for old canisters and existing profiles.
+ */
 export interface SimpleLoanEthSignatureAuthorization {
   type: "EthSignature";
   derivationIndex: Uint8Array;
@@ -309,7 +314,12 @@ export interface SimpleLoanStuckFundsWithdrawalRequestedEventType {
   amount: bigint;
 }
 
-/** Profile-warmed event payload. */
+/**
+ * Legacy Ethereum-signature profile-warmed event payload.
+ *
+ * @deprecated New profile warmups emit `SimpleLoanIcpProfileWarmedEventType`.
+ * This type remains supported for historical events.
+ */
 export interface SimpleLoanProfileWarmedEventType {
   type: "ProfileWarmed";
   derivationIndex: Uint8Array;
