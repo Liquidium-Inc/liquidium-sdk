@@ -6,7 +6,7 @@
 
 # Interface: SimpleLoanWarmedProfile
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:248](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L248)
+Defined in: packages/client/src/modules/simple-loans/types.ts:248
 
 Warmed profile available for a future simple loan.
 
@@ -16,7 +16,7 @@ Warmed profile available for a future simple loan.
 
 > **authorization**: [`SimpleLoanAuthorization`](../type-aliases/SimpleLoanAuthorization.md)
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:250](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L250)
+Defined in: packages/client/src/modules/simple-loans/types.ts:250
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [packages/client/src/modules/simple-loans/types.ts:250](https://gith
 
 > **createdAt**: `bigint`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:252](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L252)
+Defined in: packages/client/src/modules/simple-loans/types.ts:252
 
 Unix creation timestamp in seconds.
 
@@ -34,7 +34,7 @@ Unix creation timestamp in seconds.
 
 > **id**: `bigint`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:249](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L249)
+Defined in: packages/client/src/modules/simple-loans/types.ts:249
 
 ***
 
@@ -42,4 +42,4 @@ Defined in: [packages/client/src/modules/simple-loans/types.ts:249](https://gith
 
 > **profileId**: `string`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:253](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L253)
+Defined in: packages/client/src/modules/simple-loans/types.ts:253

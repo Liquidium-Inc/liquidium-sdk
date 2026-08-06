@@ -6,7 +6,7 @@
 
 # Interface: EthOnIcpAssetIdentifier
 
-Defined in: [packages/client/src/core/types.ts:147](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L147)
+Defined in: packages/client/src/core/types.ts:147
 
 ETH transferred on the Internet Computer chain.
 
@@ -16,7 +16,7 @@ ETH transferred on the Internet Computer chain.
 
 > **asset**: `"ETH"`
 
-Defined in: [packages/client/src/core/types.ts:149](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L149)
+Defined in: packages/client/src/core/types.ts:149
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: [packages/client/src/core/types.ts:149](https://github.com/Liquidium
 
 > **chain**: `"ICP"`
 
-Defined in: [packages/client/src/core/types.ts:148](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L148)
+Defined in: packages/client/src/core/types.ts:148

@@ -6,7 +6,7 @@
 
 # Class: AccountsModule
 
-Defined in: [packages/client/src/modules/accounts/accounts.ts:30](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/accounts/accounts.ts#L30)
+Defined in: packages/client/src/modules/accounts/accounts.ts:30
 
 Profile lifecycle and linked-wallet helpers.
 
@@ -16,7 +16,7 @@ Profile lifecycle and linked-wallet helpers.
 
 > **new AccountsModule**(`canisterContext`): `AccountsModule`
 
-Defined in: [packages/client/src/modules/accounts/accounts.ts:31](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/accounts/accounts.ts#L31)
+Defined in: packages/client/src/modules/accounts/accounts.ts:31
 
 #### Parameters
 
@@ -34,7 +34,7 @@ Defined in: [packages/client/src/modules/accounts/accounts.ts:31](https://github
 
 > **createProfile**(`params`): `Promise`\<`string`\>
 
-Defined in: [packages/client/src/modules/accounts/accounts.ts:55](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/accounts/accounts.ts#L55)
+Defined in: packages/client/src/modules/accounts/accounts.ts:55
 
 Creates a Liquidium profile using the provided wallet adapter.
 
@@ -60,7 +60,7 @@ The new profile principal as text.
 
 > **getProfileId**(`walletAddress`): `Promise`\<`string` \| `null`\>
 
-Defined in: [packages/client/src/modules/accounts/accounts.ts:74](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/accounts/accounts.ts#L74)
+Defined in: packages/client/src/modules/accounts/accounts.ts:74
 
 Resolves the Liquidium profile id linked to a wallet address.
 
@@ -84,7 +84,7 @@ Profile principal text, or `null` if none exists.
 
 > **getWalletNonce**(`walletAddress`): `Promise`\<`bigint`\>
 
-Defined in: [packages/client/src/modules/accounts/accounts.ts:127](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/accounts/accounts.ts#L127)
+Defined in: packages/client/src/modules/accounts/accounts.ts:127
 
 Returns the current nonce for a wallet address.
 
@@ -110,7 +110,7 @@ The next signing nonce as a bigint.
 
 > **listLinkedWallets**(`profileId`): `Promise`\<[`Wallet`](../interfaces/Wallet.md)[]\>
 
-Defined in: [packages/client/src/modules/accounts/accounts.ts:146](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/accounts/accounts.ts#L146)
+Defined in: packages/client/src/modules/accounts/accounts.ts:146
 
 Lists the wallets currently linked to a profile.
 
@@ -134,7 +134,7 @@ The wallets currently linked to the requested profile.
 
 > **prepareCreateProfile**(`options`): `Promise`\<[`CreateAccountAction`](../interfaces/CreateAccountAction.md)\>
 
-Defined in: [packages/client/src/modules/accounts/accounts.ts:41](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/accounts/accounts.ts#L41)
+Defined in: packages/client/src/modules/accounts/accounts.ts:41
 
 Prepares a profile-creation action that can be signed and submitted later.
 
@@ -160,7 +160,7 @@ A signable [CreateAccountAction](../interfaces/CreateAccountAction.md) with `sub
 
 > **profileExists**(`profileId`): `Promise`\<`boolean`\>
 
-Defined in: [packages/client/src/modules/accounts/accounts.ts:102](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/accounts/accounts.ts#L102)
+Defined in: packages/client/src/modules/accounts/accounts.ts:102
 
 Checks whether a profile is registered with the protocol.
 

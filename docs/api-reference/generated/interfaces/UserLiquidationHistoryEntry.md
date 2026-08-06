@@ -6,7 +6,7 @@
 
 # Interface: UserLiquidationHistoryEntry
 
-Defined in: [packages/client/src/modules/history/types.ts:33](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L33)
+Defined in: packages/client/src/modules/history/types.ts:33
 
 Liquidation entry in user history.
 
@@ -20,7 +20,7 @@ Liquidation entry in user history.
 
 > **amount**: `bigint`
 
-Defined in: [packages/client/src/modules/history/types.ts:20](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L20)
+Defined in: packages/client/src/modules/history/types.ts:20
 
 #### Inherited from
 
@@ -32,7 +32,7 @@ Defined in: [packages/client/src/modules/history/types.ts:20](https://github.com
 
 > **id**: `string`
 
-Defined in: [packages/client/src/modules/history/types.ts:19](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L19)
+Defined in: packages/client/src/modules/history/types.ts:19
 
 #### Inherited from
 
@@ -44,7 +44,7 @@ Defined in: [packages/client/src/modules/history/types.ts:19](https://github.com
 
 > **poolId**: `string`
 
-Defined in: [packages/client/src/modules/history/types.ts:21](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L21)
+Defined in: packages/client/src/modules/history/types.ts:21
 
 #### Inherited from
 
@@ -56,7 +56,7 @@ Defined in: [packages/client/src/modules/history/types.ts:21](https://github.com
 
 > **status**: [`UserLiquidationHistoryStatus`](UserLiquidationHistoryStatus.md)
 
-Defined in: [packages/client/src/modules/history/types.ts:35](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L35)
+Defined in: packages/client/src/modules/history/types.ts:35
 
 Completed liquidation status.
 
@@ -66,7 +66,7 @@ Completed liquidation status.
 
 > **timestamp**: `string`
 
-Defined in: [packages/client/src/modules/history/types.ts:22](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L22)
+Defined in: packages/client/src/modules/history/types.ts:22
 
 #### Inherited from
 
@@ -78,7 +78,7 @@ Defined in: [packages/client/src/modules/history/types.ts:22](https://github.com
 
 > `optional` **txids?**: `string`[]
 
-Defined in: [packages/client/src/modules/history/types.ts:23](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L23)
+Defined in: packages/client/src/modules/history/types.ts:23
 
 #### Inherited from
 

@@ -6,7 +6,7 @@
 
 # Interface: SimpleLoanRepayCompleteEventType
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:340](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L340)
+Defined in: packages/client/src/modules/simple-loans/types.ts:340
 
 Repay-complete event payload.
 
@@ -16,7 +16,7 @@ Repay-complete event payload.
 
 > **loanId**: `bigint`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:342](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L342)
+Defined in: packages/client/src/modules/simple-loans/types.ts:342
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [packages/client/src/modules/simple-loans/types.ts:342](https://gith
 
 > **profileId**: `string`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:343](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L343)
+Defined in: packages/client/src/modules/simple-loans/types.ts:343
 
 ***
 
@@ -32,4 +32,4 @@ Defined in: [packages/client/src/modules/simple-loans/types.ts:343](https://gith
 
 > **type**: `"RepayComplete"`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:341](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L341)
+Defined in: packages/client/src/modules/simple-loans/types.ts:341

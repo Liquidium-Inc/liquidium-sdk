@@ -6,7 +6,7 @@
 
 # Interface: SendIcrcTransferRequest
 
-Defined in: [packages/client/src/core/wallet-actions.ts:87](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L87)
+Defined in: packages/client/src/core/wallet-actions.ts:87
 
 ICRC transaction-sending request passed to wallet adapters.
 
@@ -16,7 +16,7 @@ ICRC transaction-sending request passed to wallet adapters.
 
 > `optional` **account?**: `string`
 
-Defined in: [packages/client/src/core/wallet-actions.ts:95](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L95)
+Defined in: packages/client/src/core/wallet-actions.ts:95
 
 Optional account override for the sending wallet.
 
@@ -26,7 +26,7 @@ Optional account override for the sending wallet.
 
 > **actionType**: `string`
 
-Defined in: [packages/client/src/core/wallet-actions.ts:97](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L97)
+Defined in: packages/client/src/core/wallet-actions.ts:97
 
 SDK action type that produced this request.
 
@@ -36,7 +36,7 @@ SDK action type that produced this request.
 
 > **asset**: [`Asset`](../type-aliases/Asset.md)
 
-Defined in: [packages/client/src/core/wallet-actions.ts:91](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L91)
+Defined in: packages/client/src/core/wallet-actions.ts:91
 
 Asset represented by the target ledger transfer.
 
@@ -46,7 +46,7 @@ Asset represented by the target ledger transfer.
 
 > **chain**: `"ICP"`
 
-Defined in: [packages/client/src/core/wallet-actions.ts:89](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L89)
+Defined in: packages/client/src/core/wallet-actions.ts:89
 
 ICRC transfers are submitted on the Internet Computer.
 
@@ -56,6 +56,6 @@ ICRC transfers are submitted on the Internet Computer.
 
 > **transfer**: [`IcrcTransferDetails`](IcrcTransferDetails.md)
 
-Defined in: [packages/client/src/core/wallet-actions.ts:93](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L93)
+Defined in: packages/client/src/core/wallet-actions.ts:93
 
 Transfer details for the ledger call.

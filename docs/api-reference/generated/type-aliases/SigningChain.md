@@ -8,6 +8,6 @@
 
 > **SigningChain** = *typeof* [`BTC`](../variables/Chain.md#btc) \| *typeof* [`ETH`](../variables/Chain.md#eth)
 
-Defined in: [packages/client/src/core/types.ts:114](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L114)
+Defined in: packages/client/src/core/types.ts:114
 
 Chains whose wallets can authorize Liquidium protocol actions.

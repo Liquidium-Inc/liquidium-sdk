@@ -6,7 +6,7 @@
 
 # Interface: HealthFactor
 
-Defined in: [packages/client/src/modules/positions/types.ts:53](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/types.ts#L53)
+Defined in: packages/client/src/modules/positions/types.ts:53
 
 Health factor and supporting aggregate stats for a profile.
 
@@ -16,7 +16,7 @@ Health factor and supporting aggregate stats for a profile.
 
 > **healthFactor**: `bigint` \| `null`
 
-Defined in: [packages/client/src/modules/positions/types.ts:55](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/types.ts#L55)
+Defined in: packages/client/src/modules/positions/types.ts:55
 
 Health factor scaled by `healthFactorDecimals`, or `null` with no debt.
 
@@ -26,7 +26,7 @@ Health factor scaled by `healthFactorDecimals`, or `null` with no debt.
 
 > **healthFactorDecimals**: `bigint`
 
-Defined in: [packages/client/src/modules/positions/types.ts:57](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/types.ts#L57)
+Defined in: packages/client/src/modules/positions/types.ts:57
 
 Decimal scale for a finite `healthFactor`.
 
@@ -36,6 +36,6 @@ Decimal scale for a finite `healthFactor`.
 
 > **userStats**: [`UserStats`](UserStats.md)
 
-Defined in: [packages/client/src/modules/positions/types.ts:59](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/types.ts#L59)
+Defined in: packages/client/src/modules/positions/types.ts:59
 
 Aggregate stats used to derive the health factor.

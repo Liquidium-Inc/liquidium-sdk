@@ -8,7 +8,7 @@
 
 > **getMinimumWithdrawAmount**(`asset`): `bigint`
 
-Defined in: [packages/client/src/core/withdraw-minimums.ts:33](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/withdraw-minimums.ts#L33)
+Defined in: packages/client/src/core/withdraw-minimums.ts:33
 
 Returns the minimum withdraw amount for an asset in base units.
 

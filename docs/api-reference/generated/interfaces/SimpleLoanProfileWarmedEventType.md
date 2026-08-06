@@ -6,7 +6,7 @@
 
 # ~~Interface: SimpleLoanProfileWarmedEventType~~
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:323](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L323)
+Defined in: packages/client/src/modules/simple-loans/types.ts:323
 
 Legacy Ethereum-signature profile-warmed event payload.
 
@@ -21,7 +21,7 @@ This type remains supported for historical events.
 
 > **derivationIndex**: `Uint8Array`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:325](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L325)
+Defined in: packages/client/src/modules/simple-loans/types.ts:325
 
 ***
 
@@ -29,7 +29,7 @@ Defined in: [packages/client/src/modules/simple-loans/types.ts:325](https://gith
 
 > **ethAddress**: `string`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:327](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L327)
+Defined in: packages/client/src/modules/simple-loans/types.ts:327
 
 ***
 
@@ -37,7 +37,7 @@ Defined in: [packages/client/src/modules/simple-loans/types.ts:327](https://gith
 
 > **profileId**: `string`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:328](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L328)
+Defined in: packages/client/src/modules/simple-loans/types.ts:328
 
 ***
 
@@ -45,7 +45,7 @@ Defined in: [packages/client/src/modules/simple-loans/types.ts:328](https://gith
 
 > **type**: `"ProfileWarmed"`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:324](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L324)
+Defined in: packages/client/src/modules/simple-loans/types.ts:324
 
 ***
 
@@ -53,4 +53,4 @@ Defined in: [packages/client/src/modules/simple-loans/types.ts:324](https://gith
 
 > **warmedProfileId**: `bigint`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:326](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L326)
+Defined in: packages/client/src/modules/simple-loans/types.ts:326

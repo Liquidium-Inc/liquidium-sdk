@@ -6,7 +6,7 @@
 
 # Interface: WalletAdapter
 
-Defined in: [packages/client/src/core/wallet-actions.ts:108](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L108)
+Defined in: packages/client/src/core/wallet-actions.ts:108
 
 Optional wallet capabilities. Implement only what your flow uses:
 
@@ -21,7 +21,7 @@ Optional wallet capabilities. Implement only what your flow uses:
 
 > `optional` **sendBtcTransaction?**: (`request`) => `Promise`\<`string`\>
 
-Defined in: [packages/client/src/core/wallet-actions.ts:114](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L114)
+Defined in: packages/client/src/core/wallet-actions.ts:114
 
 Sends a BTC transaction and returns its transaction id.
 
@@ -41,7 +41,7 @@ Sends a BTC transaction and returns its transaction id.
 
 > `optional` **sendEthTransaction?**: (`request`) => `Promise`\<`string`\>
 
-Defined in: [packages/client/src/core/wallet-actions.ts:112](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L112)
+Defined in: packages/client/src/core/wallet-actions.ts:112
 
 Sends an EVM transaction and returns its transaction hash.
 
@@ -61,7 +61,7 @@ Sends an EVM transaction and returns its transaction hash.
 
 > `optional` **sendIcrcTransfer?**: (`request`) => `Promise`\<`string`\>
 
-Defined in: [packages/client/src/core/wallet-actions.ts:116](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L116)
+Defined in: packages/client/src/core/wallet-actions.ts:116
 
 Sends an ICRC ledger transfer and returns the ledger transaction reference.
 
@@ -81,7 +81,7 @@ Sends an ICRC ledger transfer and returns the ledger transaction reference.
 
 > `optional` **signMessage?**: (`request`) => `Promise`\<`string`\>
 
-Defined in: [packages/client/src/core/wallet-actions.ts:110](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L110)
+Defined in: packages/client/src/core/wallet-actions.ts:110
 
 Signs an SDK plaintext message and returns the wallet signature. BTC adapters may return base64 BIP-322 or hex-encoded signature bytes.
 

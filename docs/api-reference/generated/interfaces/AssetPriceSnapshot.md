@@ -6,7 +6,7 @@
 
 # Interface: AssetPriceSnapshot
 
-Defined in: [packages/client/src/modules/market/types.ts:73](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/types.ts#L73)
+Defined in: packages/client/src/modules/market/types.ts:73
 
 Protocol prices with the time at which the SDK completed the fetch.
 
@@ -16,7 +16,7 @@ Protocol prices with the time at which the SDK completed the fetch.
 
 > **fetchedAt**: `bigint`
 
-Defined in: [packages/client/src/modules/market/types.ts:77](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/types.ts#L77)
+Defined in: packages/client/src/modules/market/types.ts:77
 
 Unix timestamp in seconds when the SDK received the price response.
 
@@ -26,6 +26,6 @@ Unix timestamp in seconds when the SDK received the price response.
 
 > **prices**: [`AssetPrices`](../type-aliases/AssetPrices.md)
 
-Defined in: [packages/client/src/modules/market/types.ts:75](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/types.ts#L75)
+Defined in: packages/client/src/modules/market/types.ts:75
 
 USD price map keyed by market asset symbol.

@@ -8,6 +8,6 @@
 
 > **SimpleLoanLeg** = `"Lend"` \| `"Borrow"`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:266](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L266)
+Defined in: packages/client/src/modules/simple-loans/types.ts:266
 
 Simple loan leg used when stuck funds are withdrawn.

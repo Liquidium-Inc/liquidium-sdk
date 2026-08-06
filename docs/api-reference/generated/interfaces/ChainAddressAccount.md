@@ -6,7 +6,7 @@
 
 # Interface: ChainAddressAccount
 
-Defined in: [packages/client/src/core/accounts.ts:20](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/accounts.ts#L20)
+Defined in: packages/client/src/core/accounts.ts:20
 
 Chain-native destination account, such as a BTC or EVM address.
 
@@ -16,7 +16,7 @@ Chain-native destination account, such as a BTC or EVM address.
 
 > **address**: `string`
 
-Defined in: [packages/client/src/core/accounts.ts:24](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/accounts.ts#L24)
+Defined in: packages/client/src/core/accounts.ts:24
 
 Chain-native address.
 
@@ -26,6 +26,6 @@ Chain-native address.
 
 > **type**: `"ChainAddress"`
 
-Defined in: [packages/client/src/core/accounts.ts:22](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/accounts.ts#L22)
+Defined in: packages/client/src/core/accounts.ts:22
 
 Account type.

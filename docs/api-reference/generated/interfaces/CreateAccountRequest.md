@@ -6,7 +6,7 @@
 
 # Interface: CreateAccountRequest
 
-Defined in: [packages/client/src/modules/accounts/types.ts:44](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/accounts/types.ts#L44)
+Defined in: packages/client/src/modules/accounts/types.ts:44
 
 Signed canister request used to register a new profile.
 
@@ -16,7 +16,7 @@ Signed canister request used to register a new profile.
 
 > **data**: [`CreateAccountData`](CreateAccountData.md)
 
-Defined in: [packages/client/src/modules/accounts/types.ts:46](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/accounts/types.ts#L46)
+Defined in: packages/client/src/modules/accounts/types.ts:46
 
 Profile-creation data that was signed.
 
@@ -26,6 +26,6 @@ Profile-creation data that was signed.
 
 > **signatureInfo**: [`SignatureInfo`](SignatureInfo.md)
 
-Defined in: [packages/client/src/modules/accounts/types.ts:48](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/accounts/types.ts#L48)
+Defined in: packages/client/src/modules/accounts/types.ts:48
 
 Wallet signature and signer metadata.

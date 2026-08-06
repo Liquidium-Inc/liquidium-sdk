@@ -6,7 +6,7 @@
 
 # Interface: ManualTransferSupplyFlowRequest
 
-Defined in: [packages/client/src/modules/lending/types.ts:187](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L187)
+Defined in: packages/client/src/modules/lending/types.ts:187
 
 Manual transfer-based `lending.supply` request.
 
@@ -20,7 +20,7 @@ Manual transfer-based `lending.supply` request.
 
 > `optional` **account?**: `undefined`
 
-Defined in: [packages/client/src/modules/lending/types.ts:193](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L193)
+Defined in: packages/client/src/modules/lending/types.ts:193
 
 Manual supply does not accept a sender account.
 
@@ -30,7 +30,7 @@ Manual supply does not accept a sender account.
 
 > **action**: [`SupplyAction`](../type-aliases/SupplyAction.md)
 
-Defined in: [packages/client/src/modules/lending/types.ts:181](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L181)
+Defined in: packages/client/src/modules/lending/types.ts:181
 
 #### Inherited from
 
@@ -42,7 +42,7 @@ Defined in: [packages/client/src/modules/lending/types.ts:181](https://github.co
 
 > `optional` **amount?**: `undefined`
 
-Defined in: [packages/client/src/modules/lending/types.ts:195](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L195)
+Defined in: packages/client/src/modules/lending/types.ts:195
 
 Manual supply does not accept an execution amount.
 
@@ -52,7 +52,7 @@ Manual supply does not accept an execution amount.
 
 > **chain**: [`Chain`](../type-aliases/Chain.md)
 
-Defined in: [packages/client/src/modules/lending/types.ts:183](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L183)
+Defined in: packages/client/src/modules/lending/types.ts:183
 
 Transfer chain to use. Pass ICP for ck-ledger transfers.
 
@@ -66,7 +66,7 @@ Transfer chain to use. Pass ICP for ck-ledger transfers.
 
 > `optional` **mechanism?**: `"transfer"`
 
-Defined in: [packages/client/src/modules/lending/types.ts:189](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L189)
+Defined in: packages/client/src/modules/lending/types.ts:189
 
 Explicit transfer mechanism. Omit this field to use the same default.
 
@@ -76,7 +76,7 @@ Explicit transfer mechanism. Omit this field to use the same default.
 
 > **poolId**: `string`
 
-Defined in: [packages/client/src/modules/lending/types.ts:180](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L180)
+Defined in: packages/client/src/modules/lending/types.ts:180
 
 #### Inherited from
 
@@ -88,7 +88,7 @@ Defined in: [packages/client/src/modules/lending/types.ts:180](https://github.co
 
 > **profileId**: `string`
 
-Defined in: [packages/client/src/modules/lending/types.ts:179](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L179)
+Defined in: packages/client/src/modules/lending/types.ts:179
 
 #### Inherited from
 
@@ -100,6 +100,6 @@ Defined in: [packages/client/src/modules/lending/types.ts:179](https://github.co
 
 > `optional` **walletAdapter?**: `undefined`
 
-Defined in: [packages/client/src/modules/lending/types.ts:191](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L191)
+Defined in: packages/client/src/modules/lending/types.ts:191
 
 Manual supply does not broadcast through a wallet adapter.

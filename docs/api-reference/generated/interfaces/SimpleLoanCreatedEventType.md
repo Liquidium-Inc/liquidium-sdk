@@ -6,7 +6,7 @@
 
 # Interface: SimpleLoanCreatedEventType
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:269](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L269)
+Defined in: packages/client/src/modules/simple-loans/types.ts:269
 
 Simple-loan-created event payload.
 
@@ -16,7 +16,7 @@ Simple-loan-created event payload.
 
 > **borrowAmount**: `bigint`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:274](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L274)
+Defined in: packages/client/src/modules/simple-loans/types.ts:274
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [packages/client/src/modules/simple-loans/types.ts:274](https://gith
 
 > **borrowAsset**: `"BTC"` \| `"ETH"` \| `"ICP"` \| `"USDC"` \| `"USDT"`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:281](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L281)
+Defined in: packages/client/src/modules/simple-loans/types.ts:281
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [packages/client/src/modules/simple-loans/types.ts:281](https://gith
 
 > **borrowDestination**: [`LiquidiumAccount`](../type-aliases/LiquidiumAccount.md)
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:272](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L272)
+Defined in: packages/client/src/modules/simple-loans/types.ts:272
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [packages/client/src/modules/simple-loans/types.ts:272](https://gith
 
 > **borrowPoolId**: `string`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:280](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L280)
+Defined in: packages/client/src/modules/simple-loans/types.ts:280
 
 ***
 
@@ -48,7 +48,7 @@ Defined in: [packages/client/src/modules/simple-loans/types.ts:280](https://gith
 
 > **collateralAsset**: `"BTC"` \| `"ETH"` \| `"ICP"` \| `"USDC"` \| `"USDT"`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:273](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L273)
+Defined in: packages/client/src/modules/simple-loans/types.ts:273
 
 ***
 
@@ -56,7 +56,7 @@ Defined in: [packages/client/src/modules/simple-loans/types.ts:273](https://gith
 
 > **collateralPoolId**: `string`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:275](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L275)
+Defined in: packages/client/src/modules/simple-loans/types.ts:275
 
 ***
 
@@ -64,7 +64,7 @@ Defined in: [packages/client/src/modules/simple-loans/types.ts:275](https://gith
 
 > **depositWindowSeconds**: `bigint`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:278](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L278)
+Defined in: packages/client/src/modules/simple-loans/types.ts:278
 
 ***
 
@@ -72,7 +72,7 @@ Defined in: [packages/client/src/modules/simple-loans/types.ts:278](https://gith
 
 > **loanId**: `bigint`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:271](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L271)
+Defined in: packages/client/src/modules/simple-loans/types.ts:271
 
 ***
 
@@ -80,7 +80,7 @@ Defined in: [packages/client/src/modules/simple-loans/types.ts:271](https://gith
 
 > **ltvMaxBps**: `bigint`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:277](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L277)
+Defined in: packages/client/src/modules/simple-loans/types.ts:277
 
 ***
 
@@ -88,7 +88,7 @@ Defined in: [packages/client/src/modules/simple-loans/types.ts:277](https://gith
 
 > **profileId**: `string`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:279](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L279)
+Defined in: packages/client/src/modules/simple-loans/types.ts:279
 
 ***
 
@@ -96,7 +96,7 @@ Defined in: [packages/client/src/modules/simple-loans/types.ts:279](https://gith
 
 > **refundDestination**: [`LiquidiumAccount`](../type-aliases/LiquidiumAccount.md)
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:276](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L276)
+Defined in: packages/client/src/modules/simple-loans/types.ts:276
 
 ***
 
@@ -104,4 +104,4 @@ Defined in: [packages/client/src/modules/simple-loans/types.ts:276](https://gith
 
 > **type**: `"LoanCreated"`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:270](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L270)
+Defined in: packages/client/src/modules/simple-loans/types.ts:270

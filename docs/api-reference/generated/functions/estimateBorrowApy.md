@@ -8,7 +8,7 @@
 
 > **estimateBorrowApy**(`borrowApr`): `bigint`
 
-Defined in: [packages/client/src/core/rates.ts:16](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/rates.ts#L16)
+Defined in: packages/client/src/core/rates.ts:16
 
 Estimates borrow APY from a current RAY-scaled APR.
 

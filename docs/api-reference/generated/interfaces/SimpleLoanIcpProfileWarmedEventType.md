@@ -6,7 +6,7 @@
 
 # Interface: SimpleLoanIcpProfileWarmedEventType
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:332](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L332)
+Defined in: packages/client/src/modules/simple-loans/types.ts:332
 
 ICP-authorized profile-warmed event payload.
 
@@ -16,7 +16,7 @@ ICP-authorized profile-warmed event payload.
 
 > **profileId**: `string`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:336](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L336)
+Defined in: packages/client/src/modules/simple-loans/types.ts:336
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [packages/client/src/modules/simple-loans/types.ts:336](https://gith
 
 > **subaccount**: `Uint8Array`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:334](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L334)
+Defined in: packages/client/src/modules/simple-loans/types.ts:334
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [packages/client/src/modules/simple-loans/types.ts:334](https://gith
 
 > **type**: `"IcpProfileWarmed"`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:333](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L333)
+Defined in: packages/client/src/modules/simple-loans/types.ts:333
 
 ***
 
@@ -40,4 +40,4 @@ Defined in: [packages/client/src/modules/simple-loans/types.ts:333](https://gith
 
 > **warmedProfileId**: `bigint`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:335](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L335)
+Defined in: packages/client/src/modules/simple-loans/types.ts:335

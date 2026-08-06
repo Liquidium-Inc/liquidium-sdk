@@ -8,7 +8,7 @@
 
 > `const` **MIN\_WITHDRAW\_AMOUNTS\_BY\_ASSET**: `object`
 
-Defined in: [packages/client/src/core/withdraw-minimums.ts:8](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/withdraw-minimums.ts#L8)
+Defined in: packages/client/src/core/withdraw-minimums.ts:8
 
 Minimum withdraw amounts in each asset's base units.
 

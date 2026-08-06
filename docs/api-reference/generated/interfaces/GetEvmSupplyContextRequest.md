@@ -6,7 +6,7 @@
 
 # Interface: GetEvmSupplyContextRequest
 
-Defined in: [packages/client/src/modules/lending/types.ts:315](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L315)
+Defined in: packages/client/src/modules/lending/types.ts:315
 
 Request for ERC-20 approval and deposit planning.
 
@@ -16,7 +16,7 @@ Request for ERC-20 approval and deposit planning.
 
 > **action**: [`SupplyAction`](../type-aliases/SupplyAction.md)
 
-Defined in: [packages/client/src/modules/lending/types.ts:325](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L325)
+Defined in: packages/client/src/modules/lending/types.ts:325
 
 Deposit or repayment action for the inflow.
 
@@ -26,7 +26,7 @@ Deposit or repayment action for the inflow.
 
 > **amount**: `bigint`
 
-Defined in: [packages/client/src/modules/lending/types.ts:323](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L323)
+Defined in: packages/client/src/modules/lending/types.ts:323
 
 Supply amount in token base units.
 
@@ -36,7 +36,7 @@ Supply amount in token base units.
 
 > **poolId**: `string`
 
-Defined in: [packages/client/src/modules/lending/types.ts:319](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L319)
+Defined in: packages/client/src/modules/lending/types.ts:319
 
 Pool principal text receiving the inflow.
 
@@ -46,7 +46,7 @@ Pool principal text receiving the inflow.
 
 > **profileId**: `string`
 
-Defined in: [packages/client/src/modules/lending/types.ts:317](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L317)
+Defined in: packages/client/src/modules/lending/types.ts:317
 
 Liquidium profile principal text.
 
@@ -56,6 +56,6 @@ Liquidium profile principal text.
 
 > **walletAddress**: `string`
 
-Defined in: [packages/client/src/modules/lending/types.ts:321](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L321)
+Defined in: packages/client/src/modules/lending/types.ts:321
 
 EVM wallet address that will send funds.

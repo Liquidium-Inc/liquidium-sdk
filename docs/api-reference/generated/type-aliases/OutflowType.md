@@ -8,6 +8,6 @@
 
 > **OutflowType** = *typeof* [`OutflowType`](../variables/OutflowType.md)\[keyof *typeof* [`OutflowType`](../variables/OutflowType.md)\]
 
-Defined in: [packages/client/src/core/types.ts:218](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L218)
+Defined in: packages/client/src/core/types.ts:218
 
 Outflow operation reported by the lending canister.

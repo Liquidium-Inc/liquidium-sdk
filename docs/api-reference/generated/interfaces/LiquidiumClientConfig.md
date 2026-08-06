@@ -6,7 +6,7 @@
 
 # Interface: LiquidiumClientConfig
 
-Defined in: [packages/client/src/core/types.ts:23](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L23)
+Defined in: packages/client/src/core/types.ts:23
 
 Runtime options for `new LiquidiumClient(config)`.
 
@@ -19,7 +19,7 @@ Canister-backed reads and SDK HTTP features work with `{}` defaults. Set
 
 > `optional` **agent?**: `Agent`
 
-Defined in: [packages/client/src/core/types.ts:27](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L27)
+Defined in: packages/client/src/core/types.ts:27
 
 Preconfigured ICP agent. Takes precedence over `icHost` and `identity`.
 
@@ -29,7 +29,7 @@ Preconfigured ICP agent. Takes precedence over `icHost` and `identity`.
 
 > `optional` **apiBaseUrl?**: `string`
 
-Defined in: [packages/client/src/core/types.ts:37](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L37)
+Defined in: packages/client/src/core/types.ts:37
 
 Base URL for the Liquidium SDK HTTP API root (e.g. `https://app.example.com/api/sdk`).
 Defaults to the Liquidium production API root. Endpoint versions are owned
@@ -41,7 +41,7 @@ by this SDK package version.
 
 > `optional` **canisterIds?**: [`CanisterIdOverrides`](../type-aliases/CanisterIdOverrides.md)
 
-Defined in: [packages/client/src/core/types.ts:41](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L41)
+Defined in: packages/client/src/core/types.ts:41
 
 Override individual canister principals for custom deployments.
 
@@ -51,7 +51,7 @@ Override individual canister principals for custom deployments.
 
 > `optional` **environment?**: `"mainnet"`
 
-Defined in: [packages/client/src/core/types.ts:25](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L25)
+Defined in: packages/client/src/core/types.ts:25
 
 Preset canister IDs. Only `mainnet` is bundled.
 
@@ -61,7 +61,7 @@ Preset canister IDs. Only `mainnet` is bundled.
 
 > `optional` **evmPublicClient?**: [`EvmReadClient`](EvmReadClient.md)
 
-Defined in: [packages/client/src/core/types.ts:51](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L51)
+Defined in: packages/client/src/core/types.ts:51
 
 Existing viem client; mainnet `chain` and `getCode` enable native ETH outflow checks.
 
@@ -71,7 +71,7 @@ Existing viem client; mainnet `chain` and `getCode` enable native ETH outflow ch
 
 > `optional` **evmRpcHeaders?**: `Record`\<`string`, `string`\>
 
-Defined in: [packages/client/src/core/types.ts:49](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L49)
+Defined in: packages/client/src/core/types.ts:49
 
 Optional headers for RPC providers that authenticate via HTTP headers.
 
@@ -81,7 +81,7 @@ Optional headers for RPC providers that authenticate via HTTP headers.
 
 > `optional` **evmRpcUrl?**: `string`
 
-Defined in: [packages/client/src/core/types.ts:47](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L47)
+Defined in: packages/client/src/core/types.ts:47
 
 Ethereum RPC URL used for best-effort native ETH outflow checks and public ERC-20 reads.
 
@@ -91,7 +91,7 @@ Ethereum RPC URL used for best-effort native ETH outflow checks and public ERC-2
 
 > `optional` **fetch?**: \{(`input`, `init?`): `Promise`\<`Response`\>; (`input`, `init?`): `Promise`\<`Response`\>; \}
 
-Defined in: [packages/client/src/core/types.ts:43](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L43)
+Defined in: packages/client/src/core/types.ts:43
 
 Custom `fetch` implementation for SDK API requests.
 
@@ -141,7 +141,7 @@ Custom `fetch` implementation for SDK API requests.
 
 > `optional` **headers?**: `Record`\<`string`, `string`\>
 
-Defined in: [packages/client/src/core/types.ts:39](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L39)
+Defined in: packages/client/src/core/types.ts:39
 
 Extra headers sent with every SDK API request.
 
@@ -151,7 +151,7 @@ Extra headers sent with every SDK API request.
 
 > `optional` **icHost?**: `string`
 
-Defined in: [packages/client/src/core/types.ts:29](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L29)
+Defined in: packages/client/src/core/types.ts:29
 
 ICP replica host override (defaults follow `@icp-sdk/core/agent`).
 
@@ -161,7 +161,7 @@ ICP replica host override (defaults follow `@icp-sdk/core/agent`).
 
 > `optional` **identity?**: `Identity`
 
-Defined in: [packages/client/src/core/types.ts:31](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L31)
+Defined in: packages/client/src/core/types.ts:31
 
 Agent identity for signed canister calls.
 
@@ -171,6 +171,6 @@ Agent identity for signed canister calls.
 
 > `optional` **timeoutMs?**: `number`
 
-Defined in: [packages/client/src/core/types.ts:45](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L45)
+Defined in: packages/client/src/core/types.ts:45
 
 Per-request timeout for SDK API calls in milliseconds.

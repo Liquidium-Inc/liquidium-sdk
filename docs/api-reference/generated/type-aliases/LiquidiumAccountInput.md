@@ -8,6 +8,6 @@
 
 > **LiquidiumAccountInput** = `string` \| [`LiquidiumAccountReference`](../interfaces/LiquidiumAccountReference.md)
 
-Defined in: [packages/client/src/core/accounts.ts:71](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/accounts.ts#L71)
+Defined in: packages/client/src/core/accounts.ts:71
 
 Account input accepted by SDK flows that can auto-detect string addresses.

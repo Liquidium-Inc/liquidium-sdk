@@ -8,7 +8,7 @@
 
 > **SimpleLoanBorrow** = [`AssetIdentifier`](AssetIdentifier.md) & `object`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:459](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L459)
+Defined in: packages/client/src/modules/simple-loans/types.ts:459
 
 Borrow leg selected for a simple loan.
 

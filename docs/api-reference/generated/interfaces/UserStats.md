@@ -6,7 +6,7 @@
 
 # Interface: UserStats
 
-Defined in: [packages/client/src/modules/positions/types.ts:37](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/types.ts#L37)
+Defined in: packages/client/src/modules/positions/types.ts:37
 
 Aggregate debt, collateral, and liquidation stats for a profile.
 
@@ -16,7 +16,7 @@ Aggregate debt, collateral, and liquidation stats for a profile.
 
 > **borrowingPower**: [`BorrowingPower`](BorrowingPower.md)
 
-Defined in: [packages/client/src/modules/positions/types.ts:49](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/types.ts#L49)
+Defined in: packages/client/src/modules/positions/types.ts:49
 
 Current borrowing capacity.
 
@@ -26,7 +26,7 @@ Current borrowing capacity.
 
 > **collateral**: `bigint`
 
-Defined in: [packages/client/src/modules/positions/types.ts:43](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/types.ts#L43)
+Defined in: packages/client/src/modules/positions/types.ts:43
 
 Total collateral value in USD-scaled units.
 
@@ -36,7 +36,7 @@ Total collateral value in USD-scaled units.
 
 > **collateralDecimals**: `bigint`
 
-Defined in: [packages/client/src/modules/positions/types.ts:45](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/types.ts#L45)
+Defined in: packages/client/src/modules/positions/types.ts:45
 
 Decimal scale for `collateral`.
 
@@ -46,7 +46,7 @@ Decimal scale for `collateral`.
 
 > **debt**: `bigint`
 
-Defined in: [packages/client/src/modules/positions/types.ts:39](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/types.ts#L39)
+Defined in: packages/client/src/modules/positions/types.ts:39
 
 Total debt value in USD-scaled units.
 
@@ -56,7 +56,7 @@ Total debt value in USD-scaled units.
 
 > **debtDecimals**: `bigint`
 
-Defined in: [packages/client/src/modules/positions/types.ts:41](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/types.ts#L41)
+Defined in: packages/client/src/modules/positions/types.ts:41
 
 Decimal scale for `debt`.
 
@@ -66,6 +66,6 @@ Decimal scale for `debt`.
 
 > **weightedLiquidationThreshold**: `bigint`
 
-Defined in: [packages/client/src/modules/positions/types.ts:47](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/types.ts#L47)
+Defined in: packages/client/src/modules/positions/types.ts:47
 
 Weighted liquidation threshold in basis points.

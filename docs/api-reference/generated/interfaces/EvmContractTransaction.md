@@ -6,7 +6,7 @@
 
 # Interface: EvmContractTransaction
 
-Defined in: [packages/client/src/modules/lending/types.ts:30](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L30)
+Defined in: packages/client/src/modules/lending/types.ts:30
 
 EVM transaction payload returned by lending transaction builders.
 
@@ -16,7 +16,7 @@ EVM transaction payload returned by lending transaction builders.
 
 > **data**: `string`
 
-Defined in: [packages/client/src/modules/lending/types.ts:34](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L34)
+Defined in: packages/client/src/modules/lending/types.ts:34
 
 Hex-encoded calldata.
 
@@ -26,7 +26,7 @@ Hex-encoded calldata.
 
 > **to**: `string`
 
-Defined in: [packages/client/src/modules/lending/types.ts:32](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L32)
+Defined in: packages/client/src/modules/lending/types.ts:32
 
 Contract address to call.
 
@@ -36,6 +36,6 @@ Contract address to call.
 
 > `optional` **value?**: `string`
 
-Defined in: [packages/client/src/modules/lending/types.ts:36](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L36)
+Defined in: packages/client/src/modules/lending/types.ts:36
 
 Native ETH value in wei, serialized as a decimal string.

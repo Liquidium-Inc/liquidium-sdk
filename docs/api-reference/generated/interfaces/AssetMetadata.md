@@ -6,7 +6,7 @@
 
 # Interface: AssetMetadata
 
-Defined in: [packages/client/src/core/asset-metadata.ts:4](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/asset-metadata.ts#L4)
+Defined in: packages/client/src/core/asset-metadata.ts:4
 
 Stable presentation metadata for an SDK-supported asset.
 
@@ -16,7 +16,7 @@ Stable presentation metadata for an SDK-supported asset.
 
 > **displayName**: `string`
 
-Defined in: [packages/client/src/core/asset-metadata.ts:8](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/asset-metadata.ts#L8)
+Defined in: packages/client/src/core/asset-metadata.ts:8
 
 Human-readable asset name.
 
@@ -26,6 +26,6 @@ Human-readable asset name.
 
 > **symbol**: [`Asset`](../type-aliases/Asset.md)
 
-Defined in: [packages/client/src/core/asset-metadata.ts:6](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/asset-metadata.ts#L6)
+Defined in: packages/client/src/core/asset-metadata.ts:6
 
 Canonical asset symbol used by SDK requests and responses.

@@ -6,7 +6,7 @@
 
 # Interface: UsdtOnIcpAssetIdentifier
 
-Defined in: [packages/client/src/core/types.ts:165](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L165)
+Defined in: packages/client/src/core/types.ts:165
 
 USDT transferred on the Internet Computer chain.
 
@@ -16,7 +16,7 @@ USDT transferred on the Internet Computer chain.
 
 > **asset**: `"USDT"`
 
-Defined in: [packages/client/src/core/types.ts:167](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L167)
+Defined in: packages/client/src/core/types.ts:167
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: [packages/client/src/core/types.ts:167](https://github.com/Liquidium
 
 > **chain**: `"ICP"`
 
-Defined in: [packages/client/src/core/types.ts:166](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L166)
+Defined in: packages/client/src/core/types.ts:166

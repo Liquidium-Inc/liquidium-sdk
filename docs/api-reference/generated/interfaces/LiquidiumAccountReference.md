@@ -6,7 +6,7 @@
 
 # Interface: LiquidiumAccountReference
 
-Defined in: [packages/client/src/core/accounts.ts:63](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/accounts.ts#L63)
+Defined in: packages/client/src/core/accounts.ts:63
 
 Address input with an optional account type hint.
 
@@ -16,7 +16,7 @@ Address input with an optional account type hint.
 
 > **address**: `string`
 
-Defined in: [packages/client/src/core/accounts.ts:65](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/accounts.ts#L65)
+Defined in: packages/client/src/core/accounts.ts:65
 
 Address, principal, ICRC account, or ICP account identifier.
 
@@ -26,6 +26,6 @@ Address, principal, ICRC account, or ICP account identifier.
 
 > **type**: [`LiquidiumAccountType`](../type-aliases/LiquidiumAccountType.md)
 
-Defined in: [packages/client/src/core/accounts.ts:67](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/accounts.ts#L67)
+Defined in: packages/client/src/core/accounts.ts:67
 
 Account type hint. Use string shorthand when the SDK should auto-detect.

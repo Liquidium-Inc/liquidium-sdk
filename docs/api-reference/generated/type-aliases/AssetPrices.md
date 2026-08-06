@@ -8,6 +8,6 @@
 
 > **AssetPrices** = `Record`\<`string`, `number`\>
 
-Defined in: [packages/client/src/modules/market/types.ts:70](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/market/types.ts#L70)
+Defined in: packages/client/src/modules/market/types.ts:70
 
 USD price map keyed by market asset symbol.

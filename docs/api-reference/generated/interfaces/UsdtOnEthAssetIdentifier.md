@@ -6,7 +6,7 @@
 
 # Interface: UsdtOnEthAssetIdentifier
 
-Defined in: [packages/client/src/core/types.ts:135](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L135)
+Defined in: packages/client/src/core/types.ts:135
 
 USDT transferred on the Ethereum chain.
 
@@ -16,7 +16,7 @@ USDT transferred on the Ethereum chain.
 
 > **asset**: `"USDT"`
 
-Defined in: [packages/client/src/core/types.ts:137](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L137)
+Defined in: packages/client/src/core/types.ts:137
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: [packages/client/src/core/types.ts:137](https://github.com/Liquidium
 
 > **chain**: `"ETH"`
 
-Defined in: [packages/client/src/core/types.ts:136](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L136)
+Defined in: packages/client/src/core/types.ts:136

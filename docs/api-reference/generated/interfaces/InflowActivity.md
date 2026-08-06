@@ -6,7 +6,7 @@
 
 # Interface: InflowActivity
 
-Defined in: [packages/client/src/modules/activities/types.ts:56](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L56)
+Defined in: packages/client/src/modules/activities/types.ts:56
 
 Deposit or repayment activity returned by the activity API.
 
@@ -20,7 +20,7 @@ Deposit or repayment activity returned by the activity API.
 
 > **amount**: `bigint`
 
-Defined in: [packages/client/src/modules/activities/types.ts:49](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L49)
+Defined in: packages/client/src/modules/activities/types.ts:49
 
 #### Inherited from
 
@@ -32,7 +32,7 @@ Defined in: [packages/client/src/modules/activities/types.ts:49](https://github.
 
 > **asset**: `string` \| `null`
 
-Defined in: [packages/client/src/modules/activities/types.ts:47](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L47)
+Defined in: packages/client/src/modules/activities/types.ts:47
 
 #### Inherited from
 
@@ -44,7 +44,7 @@ Defined in: [packages/client/src/modules/activities/types.ts:47](https://github.
 
 > **chain**: [`Chain`](../type-aliases/Chain.md) \| `null`
 
-Defined in: [packages/client/src/modules/activities/types.ts:48](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L48)
+Defined in: packages/client/src/modules/activities/types.ts:48
 
 #### Inherited from
 
@@ -56,7 +56,7 @@ Defined in: [packages/client/src/modules/activities/types.ts:48](https://github.
 
 > **id**: `string`
 
-Defined in: [packages/client/src/modules/activities/types.ts:45](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L45)
+Defined in: packages/client/src/modules/activities/types.ts:45
 
 #### Inherited from
 
@@ -68,7 +68,7 @@ Defined in: [packages/client/src/modules/activities/types.ts:45](https://github.
 
 > **poolId**: `string`
 
-Defined in: [packages/client/src/modules/activities/types.ts:46](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L46)
+Defined in: packages/client/src/modules/activities/types.ts:46
 
 #### Inherited from
 
@@ -80,7 +80,7 @@ Defined in: [packages/client/src/modules/activities/types.ts:46](https://github.
 
 > **status**: [`InflowActivityStatus`](../type-aliases/InflowActivityStatus.md)
 
-Defined in: [packages/client/src/modules/activities/types.ts:58](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L58)
+Defined in: packages/client/src/modules/activities/types.ts:58
 
 Shared consumer-facing lifecycle status.
 
@@ -90,7 +90,7 @@ Shared consumer-facing lifecycle status.
 
 > **timestampMs**: `number`
 
-Defined in: [packages/client/src/modules/activities/types.ts:50](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L50)
+Defined in: packages/client/src/modules/activities/types.ts:50
 
 #### Inherited from
 
@@ -102,7 +102,7 @@ Defined in: [packages/client/src/modules/activities/types.ts:50](https://github.
 
 > `optional` **topUp?**: [`ActivityTopUp`](ActivityTopUp.md)
 
-Defined in: [packages/client/src/modules/activities/types.ts:60](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L60)
+Defined in: packages/client/src/modules/activities/types.ts:60
 
 Fee top-up state when the inflow is below the current processing fee.
 
@@ -112,7 +112,7 @@ Fee top-up state when the inflow is below the current processing fee.
 
 > `optional` **txids?**: `string`[]
 
-Defined in: [packages/client/src/modules/activities/types.ts:52](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/activities/types.ts#L52)
+Defined in: packages/client/src/modules/activities/types.ts:52
 
 Chain transaction ids associated with the activity when available.
 
