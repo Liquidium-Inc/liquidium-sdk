@@ -166,51 +166,51 @@ describeLive("live lending e2e", () => {
     );
   });
 
-  test.each([
-    Asset.USDC,
-    Asset.USDT,
-  ] as const)("should build a ck%s ledger wallet transfer without broadcasting funds", async (asset) => {
-    // given
-    const client = new LiquidiumClient();
-    const pools = await client.market.listPools();
-    const stablecoinPool = selectEthStablecoinPoolByAsset(pools, asset);
-    let capturedTransferRequest: SendIcrcTransferRequest | undefined;
+  test.each([Asset.USDC, Asset.USDT] as const)(
+    "should build a ck%s ledger wallet transfer without broadcasting funds",
+    async (asset) => {
+      // given
+      const client = new LiquidiumClient();
+      const pools = await client.market.listPools();
+      const stablecoinPool = selectEthStablecoinPoolByAsset(pools, asset);
+      let capturedTransferRequest: SendIcrcTransferRequest | undefined;
 
-    // when
-    const ckStablecoinSupplyFlow = await client.lending.supply({
-      profileId: TEST_PROFILE_ID,
-      poolId: stablecoinPool.id,
-      action: SupplyAction.repayment,
-      chain: Chain.ICP,
-      amount: CK_STABLECOIN_TRANSFER_AMOUNT_BASE_UNITS,
-      account: "ck-stablecoin-sender",
-      walletAdapter: {
-        sendIcrcTransfer: async (request) => {
-          capturedTransferRequest = request;
-          return FAKE_CK_STABLECOIN_TXID;
-        },
-      },
-    });
-
-    // then
-    expect(ckStablecoinSupplyFlow.txid).toBe(FAKE_CK_STABLECOIN_TXID);
-    expect(capturedTransferRequest).toMatchObject({
-      chain: Chain.ICP,
-      asset: stablecoinPool.asset,
-      account: "ck-stablecoin-sender",
-      actionType: "supply-repayment",
-      transfer: {
-        ledgerCanisterId: getExpectedStablecoinLedgerCanisterId(
-          stablecoinPool.asset
-        ),
+      // when
+      const ckStablecoinSupplyFlow = await client.lending.supply({
+        profileId: TEST_PROFILE_ID,
+        poolId: stablecoinPool.id,
+        action: SupplyAction.repayment,
+        chain: Chain.ICP,
         amount: CK_STABLECOIN_TRANSFER_AMOUNT_BASE_UNITS,
-      },
-    });
+        account: "ck-stablecoin-sender",
+        walletAdapter: {
+          sendIcrcTransfer: async (request) => {
+            capturedTransferRequest = request;
+            return FAKE_CK_STABLECOIN_TXID;
+          },
+        },
+      });
 
-    expect(capturedTransferRequest?.transfer.to.address).toBe(
-      ckStablecoinSupplyFlow.target.address
-    );
-  });
+      // then
+      expect(ckStablecoinSupplyFlow.txid).toBe(FAKE_CK_STABLECOIN_TXID);
+      expect(capturedTransferRequest).toMatchObject({
+        chain: Chain.ICP,
+        asset: stablecoinPool.asset,
+        account: "ck-stablecoin-sender",
+        actionType: "supply-repayment",
+        transfer: {
+          ledgerCanisterId: getExpectedStablecoinLedgerCanisterId(
+            stablecoinPool.asset
+          ),
+          amount: CK_STABLECOIN_TRANSFER_AMOUNT_BASE_UNITS,
+        },
+      });
+
+      expect(capturedTransferRequest?.transfer.to.address).toBe(
+        ckStablecoinSupplyFlow.target.address
+      );
+    }
+  );
 
   test("should reject an ETH L1 borrow receiver for an ICP pool", async () => {
     // given
