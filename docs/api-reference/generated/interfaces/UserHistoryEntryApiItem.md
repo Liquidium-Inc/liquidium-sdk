@@ -6,7 +6,7 @@
 
 # Interface: UserHistoryEntryApiItem
 
-Defined in: [packages/client/src/modules/history/types.ts:88](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L88)
+Defined in: packages/client/src/modules/history/types.ts:88
 
 Wire-format user history item returned by the SDK API.
 
@@ -16,7 +16,7 @@ Wire-format user history item returned by the SDK API.
 
 > **amount**: `string`
 
-Defined in: [packages/client/src/modules/history/types.ts:90](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L90)
+Defined in: packages/client/src/modules/history/types.ts:90
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [packages/client/src/modules/history/types.ts:90](https://github.com
 
 > **id**: `string`
 
-Defined in: [packages/client/src/modules/history/types.ts:89](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L89)
+Defined in: packages/client/src/modules/history/types.ts:89
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [packages/client/src/modules/history/types.ts:89](https://github.com
 
 > **poolId**: `string`
 
-Defined in: [packages/client/src/modules/history/types.ts:91](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L91)
+Defined in: packages/client/src/modules/history/types.ts:91
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [packages/client/src/modules/history/types.ts:91](https://github.com
 
 > **status**: [`LiquidiumStatus`](LiquidiumStatus.md)
 
-Defined in: [packages/client/src/modules/history/types.ts:93](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L93)
+Defined in: packages/client/src/modules/history/types.ts:93
 
 ***
 
@@ -48,7 +48,7 @@ Defined in: [packages/client/src/modules/history/types.ts:93](https://github.com
 
 > **timestamp**: `string`
 
-Defined in: [packages/client/src/modules/history/types.ts:92](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L92)
+Defined in: packages/client/src/modules/history/types.ts:92
 
 ***
 
@@ -56,4 +56,4 @@ Defined in: [packages/client/src/modules/history/types.ts:92](https://github.com
 
 > `optional` **txids?**: `string`[]
 
-Defined in: [packages/client/src/modules/history/types.ts:94](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L94)
+Defined in: packages/client/src/modules/history/types.ts:94

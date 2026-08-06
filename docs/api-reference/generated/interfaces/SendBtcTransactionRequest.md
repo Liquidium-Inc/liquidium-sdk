@@ -6,7 +6,7 @@
 
 # Interface: SendBtcTransactionRequest
 
-Defined in: [packages/client/src/core/wallet-actions.ts:59](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L59)
+Defined in: packages/client/src/core/wallet-actions.ts:59
 
 BTC transaction-sending request passed to wallet adapters.
 
@@ -16,7 +16,7 @@ BTC transaction-sending request passed to wallet adapters.
 
 > `optional` **account?**: `string`
 
-Defined in: [packages/client/src/core/wallet-actions.ts:67](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L67)
+Defined in: packages/client/src/core/wallet-actions.ts:67
 
 Optional account override for the sending wallet.
 
@@ -26,7 +26,7 @@ Optional account override for the sending wallet.
 
 > **actionType**: `string`
 
-Defined in: [packages/client/src/core/wallet-actions.ts:69](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L69)
+Defined in: packages/client/src/core/wallet-actions.ts:69
 
 SDK action type that produced this request.
 
@@ -36,7 +36,7 @@ SDK action type that produced this request.
 
 > `optional` **amountSats?**: `bigint`
 
-Defined in: [packages/client/src/core/wallet-actions.ts:65](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L65)
+Defined in: packages/client/src/core/wallet-actions.ts:65
 
 Amount in satoshis when the SDK knows the transfer amount.
 
@@ -46,7 +46,7 @@ Amount in satoshis when the SDK knows the transfer amount.
 
 > **chain**: `"BTC"`
 
-Defined in: [packages/client/src/core/wallet-actions.ts:61](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L61)
+Defined in: packages/client/src/core/wallet-actions.ts:61
 
 BTC chain discriminator.
 
@@ -56,6 +56,6 @@ BTC chain discriminator.
 
 > **toAddress**: `string`
 
-Defined in: [packages/client/src/core/wallet-actions.ts:63](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L63)
+Defined in: packages/client/src/core/wallet-actions.ts:63
 
 Recipient BTC address.

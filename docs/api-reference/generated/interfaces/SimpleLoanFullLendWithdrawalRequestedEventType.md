@@ -6,7 +6,7 @@
 
 # Interface: SimpleLoanFullLendWithdrawalRequestedEventType
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:285](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L285)
+Defined in: packages/client/src/modules/simple-loans/types.ts:285
 
 Full collateral withdrawal request event payload.
 
@@ -16,7 +16,7 @@ Full collateral withdrawal request event payload.
 
 > **account**: [`LiquidiumAccount`](../type-aliases/LiquidiumAccount.md)
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:288](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L288)
+Defined in: packages/client/src/modules/simple-loans/types.ts:288
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [packages/client/src/modules/simple-loans/types.ts:288](https://gith
 
 > **loanId**: `bigint`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:287](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L287)
+Defined in: packages/client/src/modules/simple-loans/types.ts:287
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [packages/client/src/modules/simple-loans/types.ts:287](https://gith
 
 > **poolId**: `string`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:289](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L289)
+Defined in: packages/client/src/modules/simple-loans/types.ts:289
 
 ***
 
@@ -40,4 +40,4 @@ Defined in: [packages/client/src/modules/simple-loans/types.ts:289](https://gith
 
 > **type**: `"FullLendWithdrawalRequested"`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:286](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L286)
+Defined in: packages/client/src/modules/simple-loans/types.ts:286

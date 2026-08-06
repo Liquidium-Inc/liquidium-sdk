@@ -6,7 +6,7 @@
 
 # Interface: ContractInteractionSupplyFlowRequest
 
-Defined in: [packages/client/src/modules/lending/types.ts:219](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L219)
+Defined in: packages/client/src/modules/lending/types.ts:219
 
 Input for contract-interaction `lending.supply`, which always executes now.
 
@@ -20,7 +20,7 @@ Input for contract-interaction `lending.supply`, which always executes now.
 
 > **account**: `string`
 
-Defined in: [packages/client/src/modules/lending/types.ts:228](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L228)
+Defined in: packages/client/src/modules/lending/types.ts:228
 
 Sender EVM wallet address.
 
@@ -30,7 +30,7 @@ Sender EVM wallet address.
 
 > **action**: [`SupplyAction`](../type-aliases/SupplyAction.md)
 
-Defined in: [packages/client/src/modules/lending/types.ts:181](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L181)
+Defined in: packages/client/src/modules/lending/types.ts:181
 
 #### Inherited from
 
@@ -42,7 +42,7 @@ Defined in: [packages/client/src/modules/lending/types.ts:181](https://github.co
 
 > **amount**: `bigint`
 
-Defined in: [packages/client/src/modules/lending/types.ts:230](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L230)
+Defined in: packages/client/src/modules/lending/types.ts:230
 
 Amount in token base units. Deposits enforce the asset product minimum.
 
@@ -52,7 +52,7 @@ Amount in token base units. Deposits enforce the asset product minimum.
 
 > **chain**: `"ETH"`
 
-Defined in: [packages/client/src/modules/lending/types.ts:224](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L224)
+Defined in: packages/client/src/modules/lending/types.ts:224
 
 Contract interaction is supported for native ETH, USDC, and USDT pools on Ethereum.
 
@@ -66,7 +66,7 @@ Contract interaction is supported for native ETH, USDC, and USDT pools on Ethere
 
 > **mechanism**: `"contractInteraction"`
 
-Defined in: [packages/client/src/modules/lending/types.ts:222](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L222)
+Defined in: packages/client/src/modules/lending/types.ts:222
 
 Contract-interaction mechanism discriminator.
 
@@ -76,7 +76,7 @@ Contract-interaction mechanism discriminator.
 
 > **poolId**: `string`
 
-Defined in: [packages/client/src/modules/lending/types.ts:180](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L180)
+Defined in: packages/client/src/modules/lending/types.ts:180
 
 #### Inherited from
 
@@ -88,7 +88,7 @@ Defined in: [packages/client/src/modules/lending/types.ts:180](https://github.co
 
 > **profileId**: `string`
 
-Defined in: [packages/client/src/modules/lending/types.ts:179](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L179)
+Defined in: packages/client/src/modules/lending/types.ts:179
 
 #### Inherited from
 
@@ -100,6 +100,6 @@ Defined in: [packages/client/src/modules/lending/types.ts:179](https://github.co
 
 > **walletAdapter**: `Pick`\<[`WalletAdapter`](WalletAdapter.md), `"sendEthTransaction"`\>
 
-Defined in: [packages/client/src/modules/lending/types.ts:226](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L226)
+Defined in: packages/client/src/modules/lending/types.ts:226
 
 ETH wallet adapter used to deposit native ETH or approve and deposit ERC-20 assets.

@@ -6,7 +6,7 @@
 
 # Interface: BtcOnIcpAssetIdentifier
 
-Defined in: [packages/client/src/core/types.ts:141](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L141)
+Defined in: packages/client/src/core/types.ts:141
 
 BTC transferred on the Internet Computer chain.
 
@@ -16,7 +16,7 @@ BTC transferred on the Internet Computer chain.
 
 > **asset**: `"BTC"`
 
-Defined in: [packages/client/src/core/types.ts:143](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L143)
+Defined in: packages/client/src/core/types.ts:143
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: [packages/client/src/core/types.ts:143](https://github.com/Liquidium
 
 > **chain**: `"ICP"`
 
-Defined in: [packages/client/src/core/types.ts:142](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L142)
+Defined in: packages/client/src/core/types.ts:142

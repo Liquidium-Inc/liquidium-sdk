@@ -6,7 +6,7 @@
 
 # Enumeration: QuoteWarningCode
 
-Defined in: [packages/client/src/modules/quote/types.ts:53](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/quote/types.ts#L53)
+Defined in: packages/client/src/modules/quote/types.ts:53
 
 Stable warning codes produced by quote helpers.
 
@@ -16,7 +16,7 @@ Stable warning codes produced by quote helpers.
 
 > **HIGH\_LTV**: `"HIGH_LTV"`
 
-Defined in: [packages/client/src/modules/quote/types.ts:54](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/quote/types.ts#L54)
+Defined in: packages/client/src/modules/quote/types.ts:54
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: [packages/client/src/modules/quote/types.ts:54](https://github.com/L
 
 > **SAME\_ASSET\_BORROWING**: `"SAME_ASSET_BORROWING"`
 
-Defined in: [packages/client/src/modules/quote/types.ts:55](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/quote/types.ts#L55)
+Defined in: packages/client/src/modules/quote/types.ts:55

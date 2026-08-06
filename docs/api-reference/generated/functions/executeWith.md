@@ -8,7 +8,7 @@
 
 > **executeWith**(`options`): \<`TResult`\>(`action`) => `Promise`\<`TResult`\>
 
-Defined in: [packages/client/src/execute.ts:36](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/execute.ts#L36)
+Defined in: packages/client/src/execute.ts:36
 
 Returns an async function that runs a [WalletAction](../type-aliases/WalletAction.md) end-to-end.
 

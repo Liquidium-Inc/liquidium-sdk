@@ -6,7 +6,7 @@
 
 # Interface: ProtocolActivityEntry
 
-Defined in: [packages/client/src/modules/history/types.ts:115](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L115)
+Defined in: packages/client/src/modules/history/types.ts:115
 
 Completed protocol-wide lending activity entry.
 
@@ -16,7 +16,7 @@ Completed protocol-wide lending activity entry.
 
 > **amount**: `bigint`
 
-Defined in: [packages/client/src/modules/history/types.ts:126](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L126)
+Defined in: packages/client/src/modules/history/types.ts:126
 
 Raw amount in base units.
 
@@ -26,7 +26,7 @@ Raw amount in base units.
 
 > **asset**: `string`
 
-Defined in: [packages/client/src/modules/history/types.ts:122](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L122)
+Defined in: packages/client/src/modules/history/types.ts:122
 
 Asset ticker of the pool.
 
@@ -36,7 +36,7 @@ Asset ticker of the pool.
 
 > **decimals**: `number`
 
-Defined in: [packages/client/src/modules/history/types.ts:124](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L124)
+Defined in: packages/client/src/modules/history/types.ts:124
 
 Decimal places of the raw amount.
 
@@ -46,7 +46,7 @@ Decimal places of the raw amount.
 
 > **id**: `string`
 
-Defined in: [packages/client/src/modules/history/types.ts:116](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L116)
+Defined in: packages/client/src/modules/history/types.ts:116
 
 ***
 
@@ -54,7 +54,7 @@ Defined in: [packages/client/src/modules/history/types.ts:116](https://github.co
 
 > **operation**: [`LiquidiumOperation`](../type-aliases/LiquidiumOperation.md)
 
-Defined in: [packages/client/src/modules/history/types.ts:118](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L118)
+Defined in: packages/client/src/modules/history/types.ts:118
 
 Lending operation that produced this activity.
 
@@ -64,7 +64,7 @@ Lending operation that produced this activity.
 
 > **poolId**: `string`
 
-Defined in: [packages/client/src/modules/history/types.ts:120](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L120)
+Defined in: packages/client/src/modules/history/types.ts:120
 
 Pool principal text the activity belongs to.
 
@@ -74,7 +74,7 @@ Pool principal text the activity belongs to.
 
 > **timestamp**: `string`
 
-Defined in: [packages/client/src/modules/history/types.ts:128](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L128)
+Defined in: packages/client/src/modules/history/types.ts:128
 
 ISO-8601 timestamp of the confirmed activity.
 
@@ -84,6 +84,6 @@ ISO-8601 timestamp of the confirmed activity.
 
 > `optional` **txids?**: `string`[]
 
-Defined in: [packages/client/src/modules/history/types.ts:130](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L130)
+Defined in: packages/client/src/modules/history/types.ts:130
 
 Chain transaction identifiers, when available.

@@ -8,7 +8,7 @@
 
 > **estimateSupplyApy**(`supplyApr`): `bigint`
 
-Defined in: [packages/client/src/core/rates.ts:28](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/rates.ts#L28)
+Defined in: packages/client/src/core/rates.ts:28
 
 Estimates supply APY from a current RAY-scaled APR.
 

@@ -8,7 +8,7 @@
 
 > `const` **MIN\_DEPOSIT\_AMOUNTS\_BY\_ASSET**: `object`
 
-Defined in: [packages/client/src/core/deposit-minimums.ts:9](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/deposit-minimums.ts#L9)
+Defined in: packages/client/src/core/deposit-minimums.ts:9
 
 Minimum deposit amounts in each asset's base units.
 

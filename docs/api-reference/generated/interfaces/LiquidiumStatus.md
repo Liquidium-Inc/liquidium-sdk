@@ -6,7 +6,7 @@
 
 # Interface: LiquidiumStatus
 
-Defined in: [packages/client/src/core/status.ts:20](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/status.ts#L20)
+Defined in: packages/client/src/core/status.ts:20
 
 Shared lifecycle status returned by SDK methods that expose flow state.
 
@@ -16,7 +16,7 @@ Shared lifecycle status returned by SDK methods that expose flow state.
 
 > **confirmations**: `number` \| `null`
 
-Defined in: [packages/client/src/core/status.ts:26](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/status.ts#L26)
+Defined in: packages/client/src/core/status.ts:26
 
 Confirmation progress while confirming, capped at the required count.
 
@@ -26,7 +26,7 @@ Confirmation progress while confirming, capped at the required count.
 
 > **operation**: [`LiquidiumOperation`](../type-aliases/LiquidiumOperation.md)
 
-Defined in: [packages/client/src/core/status.ts:22](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/status.ts#L22)
+Defined in: packages/client/src/core/status.ts:22
 
 Operation currently represented by the status.
 
@@ -36,7 +36,7 @@ Operation currently represented by the status.
 
 > **requiredConfirmations**: `number` \| `null`
 
-Defined in: [packages/client/src/core/status.ts:28](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/status.ts#L28)
+Defined in: packages/client/src/core/status.ts:28
 
 Required confirmations while confirming, otherwise null.
 
@@ -46,6 +46,6 @@ Required confirmations while confirming, otherwise null.
 
 > **state**: [`LiquidiumState`](../type-aliases/LiquidiumState.md)
 
-Defined in: [packages/client/src/core/status.ts:24](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/status.ts#L24)
+Defined in: packages/client/src/core/status.ts:24
 
 Current lifecycle state for the operation.

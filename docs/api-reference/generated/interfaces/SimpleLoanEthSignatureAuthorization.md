@@ -6,7 +6,7 @@
 
 # ~~Interface: SimpleLoanEthSignatureAuthorization~~
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:229](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L229)
+Defined in: packages/client/src/modules/simple-loans/types.ts:229
 
 Legacy Ethereum-signature authentication metadata for a warmed Simple Loans profile.
 
@@ -21,7 +21,7 @@ type remains supported for old canisters and existing profiles.
 
 > **address**: `string`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:233](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L233)
+Defined in: packages/client/src/modules/simple-loans/types.ts:233
 
 ***
 
@@ -29,7 +29,7 @@ Defined in: [packages/client/src/modules/simple-loans/types.ts:233](https://gith
 
 > **derivationIndex**: `Uint8Array`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:231](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L231)
+Defined in: packages/client/src/modules/simple-loans/types.ts:231
 
 ***
 
@@ -37,7 +37,7 @@ Defined in: [packages/client/src/modules/simple-loans/types.ts:231](https://gith
 
 > **publicKey**: `Uint8Array`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:232](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L232)
+Defined in: packages/client/src/modules/simple-loans/types.ts:232
 
 ***
 
@@ -45,4 +45,4 @@ Defined in: [packages/client/src/modules/simple-loans/types.ts:232](https://gith
 
 > **type**: `"EthSignature"`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:230](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L230)
+Defined in: packages/client/src/modules/simple-loans/types.ts:230

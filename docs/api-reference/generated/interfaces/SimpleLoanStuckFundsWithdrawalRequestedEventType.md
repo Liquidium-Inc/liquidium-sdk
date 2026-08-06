@@ -6,7 +6,7 @@
 
 # Interface: SimpleLoanStuckFundsWithdrawalRequestedEventType
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:308](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L308)
+Defined in: packages/client/src/modules/simple-loans/types.ts:308
 
 Stuck funds withdrawal request event payload.
 
@@ -16,7 +16,7 @@ Stuck funds withdrawal request event payload.
 
 > **account**: [`LiquidiumAccount`](../type-aliases/LiquidiumAccount.md)
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:312](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L312)
+Defined in: packages/client/src/modules/simple-loans/types.ts:312
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [packages/client/src/modules/simple-loans/types.ts:312](https://gith
 
 > **amount**: `bigint`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:314](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L314)
+Defined in: packages/client/src/modules/simple-loans/types.ts:314
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [packages/client/src/modules/simple-loans/types.ts:314](https://gith
 
 > **leg**: [`SimpleLoanLeg`](../type-aliases/SimpleLoanLeg.md)
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:310](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L310)
+Defined in: packages/client/src/modules/simple-loans/types.ts:310
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [packages/client/src/modules/simple-loans/types.ts:310](https://gith
 
 > **loanId**: `bigint`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:311](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L311)
+Defined in: packages/client/src/modules/simple-loans/types.ts:311
 
 ***
 
@@ -48,7 +48,7 @@ Defined in: [packages/client/src/modules/simple-loans/types.ts:311](https://gith
 
 > **poolId**: `string`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:313](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L313)
+Defined in: packages/client/src/modules/simple-loans/types.ts:313
 
 ***
 
@@ -56,4 +56,4 @@ Defined in: [packages/client/src/modules/simple-loans/types.ts:313](https://gith
 
 > **type**: `"StuckFundsWithdrawalRequested"`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:309](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L309)
+Defined in: packages/client/src/modules/simple-loans/types.ts:309

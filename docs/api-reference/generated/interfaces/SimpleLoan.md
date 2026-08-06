@@ -6,7 +6,7 @@
 
 # Interface: SimpleLoan
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:471](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L471)
+Defined in: packages/client/src/modules/simple-loans/types.ts:471
 
 Hydrated simple loan state plus generated quote targets.
 
@@ -16,7 +16,7 @@ Hydrated simple loan state plus generated quote targets.
 
 > **borrow**: [`SimpleLoanBorrow`](../type-aliases/SimpleLoanBorrow.md)
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:485](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L485)
+Defined in: packages/client/src/modules/simple-loans/types.ts:485
 
 Borrow-side pool, asset, chain, decimals, requested amount, and destination.
 
@@ -26,7 +26,7 @@ Borrow-side pool, asset, chain, decimals, requested amount, and destination.
 
 > **collateral**: [`SimpleLoanCollateral`](SimpleLoanCollateral.md)
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:483](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L483)
+Defined in: packages/client/src/modules/simple-loans/types.ts:483
 
 Collateral-side pool, asset, decimals, and requested credited amount.
 
@@ -36,7 +36,7 @@ Collateral-side pool, asset, decimals, and requested credited amount.
 
 > **initialDeposit**: [`SimpleLoanInitialDeposit`](SimpleLoanInitialDeposit.md)
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:489](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L489)
+Defined in: packages/client/src/modules/simple-loans/types.ts:489
 
 Current actionable initial collateral deposit quote.
 
@@ -46,7 +46,7 @@ Current actionable initial collateral deposit quote.
 
 > **loanId**: `bigint`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:473](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L473)
+Defined in: packages/client/src/modules/simple-loans/types.ts:473
 
 Canister-assigned loan id.
 
@@ -56,7 +56,7 @@ Canister-assigned loan id.
 
 > **position**: [`SimpleLoanPositionSummary`](SimpleLoanPositionSummary.md)
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:493](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L493)
+Defined in: packages/client/src/modules/simple-loans/types.ts:493
 
 Current lending position state for the generated profile.
 
@@ -66,7 +66,7 @@ Current lending position state for the generated profile.
 
 > **profileId**: `string`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:479](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L479)
+Defined in: packages/client/src/modules/simple-loans/types.ts:479
 
 Generated profile principal used by the simple loan.
 
@@ -76,7 +76,7 @@ Generated profile principal used by the simple loan.
 
 > **ref**: `string`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:475](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L475)
+Defined in: packages/client/src/modules/simple-loans/types.ts:475
 
 Short user-facing reference derived from `loanId`.
 
@@ -86,7 +86,7 @@ Short user-facing reference derived from `loanId`.
 
 > **refundDestination**: [`LiquidiumAccount`](../type-aliases/LiquidiumAccount.md)
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:487](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L487)
+Defined in: packages/client/src/modules/simple-loans/types.ts:487
 
 Destination used for collateral refunds or withdrawals.
 
@@ -96,7 +96,7 @@ Destination used for collateral refunds or withdrawals.
 
 > **repayment**: [`SimpleLoanRepayment`](SimpleLoanRepayment.md)
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:491](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L491)
+Defined in: packages/client/src/modules/simple-loans/types.ts:491
 
 Current repayment quote. Amount fields are zero when the loan has no debt.
 
@@ -106,7 +106,7 @@ Current repayment quote. Amount fields are zero when the loan has no debt.
 
 > **status**: [`LiquidiumStatus`](LiquidiumStatus.md)
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:477](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L477)
+Defined in: packages/client/src/modules/simple-loans/types.ts:477
 
 Shared lifecycle status for display and flow control.
 
@@ -116,6 +116,6 @@ Shared lifecycle status for display and flow control.
 
 > **terms**: [`SimpleLoanTerms`](SimpleLoanTerms.md)
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:481](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L481)
+Defined in: packages/client/src/modules/simple-loans/types.ts:481
 
 Immutable loan terms.

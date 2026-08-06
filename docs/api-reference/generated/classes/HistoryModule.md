@@ -6,7 +6,7 @@
 
 # Class: HistoryModule
 
-Defined in: [packages/client/src/modules/history/history.ts:42](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/history.ts#L42)
+Defined in: packages/client/src/modules/history/history.ts:42
 
 User and protocol history data helpers.
 
@@ -16,7 +16,7 @@ User and protocol history data helpers.
 
 > **new HistoryModule**(`apiClient`): `HistoryModule`
 
-Defined in: [packages/client/src/modules/history/history.ts:43](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/history.ts#L43)
+Defined in: packages/client/src/modules/history/history.ts:43
 
 #### Parameters
 
@@ -34,7 +34,7 @@ Defined in: [packages/client/src/modules/history/history.ts:43](https://github.c
 
 > **getLiquidationHistory**(`profileId`, `filters?`): `Promise`\<[`PaginatedResponse`](../interfaces/PaginatedResponse.md)\<[`UserLiquidationHistoryEntry`](../interfaces/UserLiquidationHistoryEntry.md)\>\>
 
-Defined in: [packages/client/src/modules/history/history.ts:115](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/history.ts#L115)
+Defined in: packages/client/src/modules/history/history.ts:115
 
 Returns liquidation history for a user.
 
@@ -64,7 +64,7 @@ Paginated liquidation history entries.
 
 > **getProtocolActivity**(`filters?`): `Promise`\<[`ProtocolActivityEntry`](../interfaces/ProtocolActivityEntry.md)[]\>
 
-Defined in: [packages/client/src/modules/history/history.ts:156](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/history.ts#L156)
+Defined in: packages/client/src/modules/history/history.ts:156
 
 Returns recent protocol-wide lending activity across all users.
 
@@ -88,7 +88,7 @@ Recent confirmed lending activity entries.
 
 > **getUserTransactionHistory**(`profileId`, `filters?`): `Promise`\<[`PaginatedResponse`](../interfaces/PaginatedResponse.md)\<[`UserTransactionHistoryEntry`](../interfaces/UserTransactionHistoryEntry.md)\>\>
 
-Defined in: [packages/client/src/modules/history/history.ts:63](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/history.ts#L63)
+Defined in: packages/client/src/modules/history/history.ts:63
 
 Returns transaction history for a user.
 

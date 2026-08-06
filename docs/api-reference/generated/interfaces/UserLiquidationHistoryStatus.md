@@ -6,7 +6,7 @@
 
 # Interface: UserLiquidationHistoryStatus
 
-Defined in: [packages/client/src/modules/history/types.ts:39](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L39)
+Defined in: packages/client/src/modules/history/types.ts:39
 
 Status returned by profile liquidation history.
 
@@ -16,7 +16,7 @@ Status returned by profile liquidation history.
 
 > **confirmations**: `null`
 
-Defined in: [packages/client/src/modules/history/types.ts:42](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L42)
+Defined in: packages/client/src/modules/history/types.ts:42
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [packages/client/src/modules/history/types.ts:42](https://github.com
 
 > **operation**: `"liquidation"`
 
-Defined in: [packages/client/src/modules/history/types.ts:40](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L40)
+Defined in: packages/client/src/modules/history/types.ts:40
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [packages/client/src/modules/history/types.ts:40](https://github.com
 
 > **requiredConfirmations**: `null`
 
-Defined in: [packages/client/src/modules/history/types.ts:43](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L43)
+Defined in: packages/client/src/modules/history/types.ts:43
 
 ***
 
@@ -40,4 +40,4 @@ Defined in: [packages/client/src/modules/history/types.ts:43](https://github.com
 
 > **state**: `"completed"`
 
-Defined in: [packages/client/src/modules/history/types.ts:41](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L41)
+Defined in: packages/client/src/modules/history/types.ts:41

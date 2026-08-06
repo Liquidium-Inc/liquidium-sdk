@@ -6,7 +6,7 @@
 
 # Class: LendingModule
 
-Defined in: [packages/client/src/modules/lending/lending.ts:118](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/lending.ts#L118)
+Defined in: packages/client/src/modules/lending/lending.ts:118
 
 Borrow, withdraw, supply, inflow reporting, and fee-estimation helpers.
 
@@ -16,7 +16,7 @@ Borrow, withdraw, supply, inflow reporting, and fee-estimation helpers.
 
 > **new LendingModule**(`canisterContext`, `apiClient`, `evmReadClient`): `LendingModule`
 
-Defined in: [packages/client/src/modules/lending/lending.ts:119](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/lending.ts#L119)
+Defined in: packages/client/src/modules/lending/lending.ts:119
 
 #### Parameters
 
@@ -42,7 +42,7 @@ Defined in: [packages/client/src/modules/lending/lending.ts:119](https://github.
 
 > **borrow**(`params`): `Promise`\<[`BorrowOutflowDetails`](../type-aliases/BorrowOutflowDetails.md)\>
 
-Defined in: [packages/client/src/modules/lending/lending.ts:491](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/lending.ts#L491)
+Defined in: packages/client/src/modules/lending/lending.ts:491
 
 Creates a borrow outflow using the provided wallet adapter.
 
@@ -74,7 +74,7 @@ poll for it. Use history or app-level polling if you need the chain transaction 
 
 > **estimateInflowFee**(`request`): `Promise`\<[`InflowFeeEstimate`](../interfaces/InflowFeeEstimate.md)\>
 
-Defined in: [packages/client/src/modules/lending/lending.ts:604](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/lending.ts#L604)
+Defined in: packages/client/src/modules/lending/lending.ts:604
 
 Estimates the network/deposit fee for an inflow target.
 
@@ -102,7 +102,7 @@ Total fee estimate rounded up in the asset's base units.
 
 > **getDepositAddress**(`request`): `Promise`\<`string`\>
 
-Defined in: [packages/client/src/modules/lending/lending.ts:544](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/lending.ts#L544)
+Defined in: packages/client/src/modules/lending/lending.ts:544
 
 Returns the read-only deposit address for an ETH-chain inflow target.
 
@@ -129,7 +129,7 @@ The EVM deposit address for the derived account.
 
 > **getEvmSupplyContext**(`request`): `Promise`\<[`EvmSupplyContext`](../interfaces/EvmSupplyContext.md)\>
 
-Defined in: [packages/client/src/modules/lending/lending.ts:529](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/lending.ts#L529)
+Defined in: packages/client/src/modules/lending/lending.ts:529
 
 Fetches ERC-20 supply planning data with the configured EVM read client.
 
@@ -156,7 +156,7 @@ Locally computed [EvmSupplyContext](../interfaces/EvmSupplyContext.md) for appro
 
 > **isBorrowingDisabled**(): `Promise`\<`boolean`\>
 
-Defined in: [packages/client/src/modules/lending/lending.ts:705](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/lending.ts#L705)
+Defined in: packages/client/src/modules/lending/lending.ts:705
 
 Returns whether borrowing is currently disabled by the protocol.
 
@@ -172,7 +172,7 @@ Returns whether borrowing is currently disabled by the protocol.
 
 > **prepareBorrow**(`request`): `Promise`\<[`BorrowAction`](../interfaces/BorrowAction.md)\>
 
-Defined in: [packages/client/src/modules/lending/lending.ts:321](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/lending.ts#L321)
+Defined in: packages/client/src/modules/lending/lending.ts:321
 
 Prepares a borrow action that can be signed and submitted later.
 
@@ -200,7 +200,7 @@ A signable [BorrowAction](../interfaces/BorrowAction.md) with `submit` wired to 
 
 > **prepareWithdraw**(`request`): `Promise`\<[`WithdrawAction`](../interfaces/WithdrawAction.md)\>
 
-Defined in: [packages/client/src/modules/lending/lending.ts:132](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/lending.ts#L132)
+Defined in: packages/client/src/modules/lending/lending.ts:132
 
 Prepares a withdraw action that can be signed and submitted later.
 
@@ -226,7 +226,7 @@ A signable [WithdrawAction](../interfaces/WithdrawAction.md) with `submit` wired
 
 > **submitInflow**(`request`): `Promise`\<[`SubmitInflowResponse`](../interfaces/SubmitInflowResponse.md)\>
 
-Defined in: [packages/client/src/modules/lending/lending.ts:674](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/lending.ts#L674)
+Defined in: packages/client/src/modules/lending/lending.ts:674
 
 Submits an inflow transaction id for faster indexing.
 
@@ -252,7 +252,7 @@ Acknowledgement including the submitted `txid`.
 
 > **supply**(`request`): `Promise`\<[`SupplyFlow`](../interfaces/SupplyFlow.md)\>
 
-Defined in: [packages/client/src/modules/lending/lending.ts:516](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/lending.ts#L516)
+Defined in: packages/client/src/modules/lending/lending.ts:516
 
 Resolves a supply target for a deposit or repayment and optionally broadcasts it.
 
@@ -282,7 +282,7 @@ A [SupplyFlow](../interfaces/SupplyFlow.md) receipt with `type`, `target`, `subm
 
 > **withdraw**(`params`): `Promise`\<[`WithdrawOutflowDetails`](../type-aliases/WithdrawOutflowDetails.md)\>
 
-Defined in: [packages/client/src/modules/lending/lending.ts:299](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/lending.ts#L299)
+Defined in: packages/client/src/modules/lending/lending.ts:299
 
 Creates a withdraw outflow using the provided wallet adapter.
 

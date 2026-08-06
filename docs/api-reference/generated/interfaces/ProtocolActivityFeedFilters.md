@@ -6,7 +6,7 @@
 
 # Interface: ProtocolActivityFeedFilters
 
-Defined in: [packages/client/src/modules/history/types.ts:134](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L134)
+Defined in: packages/client/src/modules/history/types.ts:134
 
 Filters for protocol-wide activity feed requests.
 
@@ -16,7 +16,7 @@ Filters for protocol-wide activity feed requests.
 
 > `optional` **limit?**: `number`
 
-Defined in: [packages/client/src/modules/history/types.ts:136](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L136)
+Defined in: packages/client/src/modules/history/types.ts:136
 
 Number of entries to return, from 1 to 100. Defaults to 50.
 
@@ -26,7 +26,7 @@ Number of entries to return, from 1 to 100. Defaults to 50.
 
 > `optional` **operations?**: [`LiquidiumOperation`](../type-aliases/LiquidiumOperation.md)[]
 
-Defined in: [packages/client/src/modules/history/types.ts:140](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L140)
+Defined in: packages/client/src/modules/history/types.ts:140
 
 Operation filters.
 
@@ -36,6 +36,6 @@ Operation filters.
 
 > `optional` **poolId?**: `string`
 
-Defined in: [packages/client/src/modules/history/types.ts:138](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/history/types.ts#L138)
+Defined in: packages/client/src/modules/history/types.ts:138
 
 Pool principal text filter.

@@ -6,7 +6,7 @@
 
 # Interface: UserPositionSummary
 
-Defined in: [packages/client/src/modules/positions/types.ts:63](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/types.ts#L63)
+Defined in: packages/client/src/modules/positions/types.ts:63
 
 Derived profile-level position summary for dashboards.
 
@@ -16,7 +16,7 @@ Derived profile-level position summary for dashboards.
 
 > **availableBorrowsUsd**: `bigint`
 
-Defined in: [packages/client/src/modules/positions/types.ts:69](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/types.ts#L69)
+Defined in: packages/client/src/modules/positions/types.ts:69
 
 Available borrow capacity in USD-scaled units.
 
@@ -26,7 +26,7 @@ Available borrow capacity in USD-scaled units.
 
 > **currentLtvBps**: `bigint`
 
-Defined in: [packages/client/src/modules/positions/types.ts:75](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/types.ts#L75)
+Defined in: packages/client/src/modules/positions/types.ts:75
 
 Current LTV in basis points.
 
@@ -36,7 +36,7 @@ Current LTV in basis points.
 
 > **healthFactor**: `bigint` \| `null`
 
-Defined in: [packages/client/src/modules/positions/types.ts:81](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/types.ts#L81)
+Defined in: packages/client/src/modules/positions/types.ts:81
 
 Health factor scaled by `healthFactorDecimals`, or `null` with no debt.
 
@@ -46,7 +46,7 @@ Health factor scaled by `healthFactorDecimals`, or `null` with no debt.
 
 > **healthFactorDecimals**: `bigint`
 
-Defined in: [packages/client/src/modules/positions/types.ts:83](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/types.ts#L83)
+Defined in: packages/client/src/modules/positions/types.ts:83
 
 Decimal scale for a finite `healthFactor`.
 
@@ -56,7 +56,7 @@ Decimal scale for a finite `healthFactor`.
 
 > **netWorthUsd**: `bigint`
 
-Defined in: [packages/client/src/modules/positions/types.ts:71](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/types.ts#L71)
+Defined in: packages/client/src/modules/positions/types.ts:71
 
 Collateral minus debt in USD-scaled units.
 
@@ -66,7 +66,7 @@ Collateral minus debt in USD-scaled units.
 
 > **totalCollateralUsd**: `bigint`
 
-Defined in: [packages/client/src/modules/positions/types.ts:65](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/types.ts#L65)
+Defined in: packages/client/src/modules/positions/types.ts:65
 
 Total collateral USD value.
 
@@ -76,7 +76,7 @@ Total collateral USD value.
 
 > **totalDebtUsd**: `bigint`
 
-Defined in: [packages/client/src/modules/positions/types.ts:67](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/types.ts#L67)
+Defined in: packages/client/src/modules/positions/types.ts:67
 
 Total debt USD value.
 
@@ -86,7 +86,7 @@ Total debt USD value.
 
 > **usdDecimals**: `bigint`
 
-Defined in: [packages/client/src/modules/positions/types.ts:73](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/types.ts#L73)
+Defined in: packages/client/src/modules/positions/types.ts:73
 
 Decimal scale for USD fields.
 
@@ -96,7 +96,7 @@ Decimal scale for USD fields.
 
 > **weightedLiquidationThresholdBps**: `bigint`
 
-Defined in: [packages/client/src/modules/positions/types.ts:79](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/types.ts#L79)
+Defined in: packages/client/src/modules/positions/types.ts:79
 
 Weighted liquidation threshold in basis points.
 
@@ -106,6 +106,6 @@ Weighted liquidation threshold in basis points.
 
 > **weightedMaxLtvBps**: `bigint`
 
-Defined in: [packages/client/src/modules/positions/types.ts:77](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/positions/types.ts#L77)
+Defined in: packages/client/src/modules/positions/types.ts:77
 
 Weighted maximum LTV in basis points.

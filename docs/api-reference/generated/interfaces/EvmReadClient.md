@@ -6,7 +6,7 @@
 
 # Interface: EvmReadClient
 
-Defined in: [packages/client/src/core/types.ts:11](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L11)
+Defined in: packages/client/src/core/types.ts:11
 
 Minimal viem-compatible client shape required for SDK EVM read calls.
 
@@ -20,7 +20,7 @@ failures fail open and do not block the outflow.
 
 > `optional` **chain?**: `Chain`
 
-Defined in: [packages/client/src/core/types.ts:13](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L13)
+Defined in: packages/client/src/core/types.ts:13
 
 ***
 
@@ -28,7 +28,7 @@ Defined in: [packages/client/src/core/types.ts:13](https://github.com/Liquidium-
 
 > `optional` **getCode?**: (`args`) => `Promise`\<`GetCodeReturnType`\>
 
-Defined in: [packages/client/src/core/types.ts:14](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L14)
+Defined in: packages/client/src/core/types.ts:14
 
 #### Parameters
 
@@ -46,7 +46,7 @@ Defined in: [packages/client/src/core/types.ts:14](https://github.com/Liquidium-
 
 > **readContract**: \<`abi`, `functionName`, `args`\>(`args`) => `Promise`\<`ReadContractReturnType`\<`abi`, `functionName`, `args`\>\>
 
-Defined in: [packages/client/src/core/types.ts:12](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L12)
+Defined in: packages/client/src/core/types.ts:12
 
 #### Type Parameters
 
