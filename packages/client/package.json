@@ -55,12 +55,12 @@
     "@icp-sdk/core": "^5.4.0",
     "@scure/base": "^2.2.0",
     "bitcoin-address-validation": "^3.0.0",
-    "viem": "^2.50.4"
+    "viem": "^2.55.10"
   },
   "devDependencies": {
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",
-    "vitest-mock-extended": "^5.1.0"
+    "vitest-mock-extended": "^5.1.1"
   },
   "license": "MIT"
 }

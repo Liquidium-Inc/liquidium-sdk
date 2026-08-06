@@ -568,83 +568,82 @@ describe("SimpleLoansModule create", () => {
         },
       },
     },
-  ])("creates a native ICP loan with a $name destination", async ({
-    destination,
-    wireDestination,
-    canisterDestination,
-  }) => {
-    // given
-    const fetchSpy = vi
-      .spyOn(globalThis, "fetch")
-      .mockImplementation(async (input, init) => {
-        if (init?.method === "POST") {
-          return new Response(
-            JSON.stringify({
-              success: true,
-              loan: {
-                loanId: LOAN_ID.toString(),
-                collateral: { amountHint: "10000000" },
-              },
-            }),
-            { status: 200, headers: { "content-type": "application/json" } }
-          );
-        }
+  ])(
+    "creates a native ICP loan with a $name destination",
+    async ({ destination, wireDestination, canisterDestination }) => {
+      // given
+      const fetchSpy = vi
+        .spyOn(globalThis, "fetch")
+        .mockImplementation(async (input, init) => {
+          if (init?.method === "POST") {
+            return new Response(
+              JSON.stringify({
+                success: true,
+                loan: {
+                  loanId: LOAN_ID.toString(),
+                  collateral: { amountHint: "10000000" },
+                },
+              }),
+              { status: 200, headers: { "content-type": "application/json" } }
+            );
+          }
 
-        if (input.toString().includes("/activities?")) {
-          return new Response(JSON.stringify({ activities: [] }), {
-            status: 200,
+          if (input.toString().includes("/activities?")) {
+            return new Response(JSON.stringify({ activities: [] }), {
+              status: 200,
+              headers: { "content-type": "application/json" },
+            });
+          }
+
+          return new Response(JSON.stringify({ error: "not found" }), {
+            status: 404,
             headers: { "content-type": "application/json" },
           });
-        }
-
-        return new Response(JSON.stringify({ error: "not found" }), {
-          status: 404,
-          headers: { "content-type": "application/json" },
         });
-      });
-    mockSimpleLoanCreateHydrationActors({
-      getLoan: vi.fn().mockResolvedValue({
-        Ok: createSimpleLoan({
-          borrow_destination: canisterDestination as never,
-          borrow_amount: DEFAULT_ICP_AMOUNT_E8S,
-          borrow_pool_id: Principal.fromText(ICP_POOL_ID),
-          borrow_asset: { ICP: null },
+      mockSimpleLoanCreateHydrationActors({
+        getLoan: vi.fn().mockResolvedValue({
+          Ok: createSimpleLoan({
+            borrow_destination: canisterDestination as never,
+            borrow_amount: DEFAULT_ICP_AMOUNT_E8S,
+            borrow_pool_id: Principal.fromText(ICP_POOL_ID),
+            borrow_asset: { ICP: null },
+          }),
         }),
-      }),
-      btcMinterDepositFee: 2_000n,
-      icrc1Fee: 10n,
-    });
-    const client = new LiquidiumClient({
-      canisterIds: { simpleLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
-    });
+        btcMinterDepositFee: 2_000n,
+        icrc1Fee: 10n,
+      });
+      const client = new LiquidiumClient({
+        canisterIds: { simpleLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
+      });
 
-    // when
-    const loan = await client.simpleLoans.create(
-      createSimpleLoanRequest({
-        borrow: {
-          poolId: ICP_POOL_ID,
-          asset: "ICP",
-          amount: DEFAULT_ICP_AMOUNT_E8S,
-          chain: "ICP",
-          destination,
-        },
-      })
-    );
+      // when
+      const loan = await client.simpleLoans.create(
+        createSimpleLoanRequest({
+          borrow: {
+            poolId: ICP_POOL_ID,
+            asset: "ICP",
+            amount: DEFAULT_ICP_AMOUNT_E8S,
+            chain: "ICP",
+            destination,
+          },
+        })
+      );
 
-    // then
-    const post = fetchSpy.mock.calls.find(
-      ([, init]) => init?.method === "POST"
-    );
-    expect(post).toBeDefined();
-    expect(JSON.parse(post?.[1]?.body as string).borrowDestination).toEqual(
-      wireDestination
-    );
-    expect(loan.borrow).toMatchObject({
-      asset: "ICP",
-      chain: "ICP",
-      destination: { address: expect.any(String) },
-    });
-  });
+      // then
+      const post = fetchSpy.mock.calls.find(
+        ([, init]) => init?.method === "POST"
+      );
+      expect(post).toBeDefined();
+      expect(JSON.parse(post?.[1]?.body as string).borrowDestination).toEqual(
+        wireDestination
+      );
+      expect(loan.borrow).toMatchObject({
+        asset: "ICP",
+        chain: "ICP",
+        destination: { address: expect.any(String) },
+      });
+    }
+  );
 
   test("returns the created loan id when a second hydration fee lookup fails", async () => {
     // given
@@ -1153,29 +1152,28 @@ describe("SimpleLoansModule create", () => {
       expectedMessage:
         "ICP simple loan destination must be an IC principal, ICP account identifier, or ICRC account",
     },
-  ] satisfies SimpleLoanDestinationValidationCase[])("rejects unsafe simple loan destination combo: $name", async ({
-    requestOverrides,
-    expectedCode,
-    expectedMessage,
-  }) => {
-    // given
-    const fetchSpy = vi.spyOn(globalThis, "fetch");
-    const actorCreateSpy = vi.spyOn(Actor, "createActor");
-    const client = new LiquidiumClient({});
+  ] satisfies SimpleLoanDestinationValidationCase[])(
+    "rejects unsafe simple loan destination combo: $name",
+    async ({ requestOverrides, expectedCode, expectedMessage }) => {
+      // given
+      const fetchSpy = vi.spyOn(globalThis, "fetch");
+      const actorCreateSpy = vi.spyOn(Actor, "createActor");
+      const client = new LiquidiumClient({});
 
-    // when
-    const result = client.simpleLoans.create(
-      createSimpleLoanRequest(requestOverrides)
-    );
+      // when
+      const result = client.simpleLoans.create(
+        createSimpleLoanRequest(requestOverrides)
+      );
 
-    // then
-    await expect(result).rejects.toMatchObject({
-      code: expectedCode,
-      message: expectedMessage,
-    });
-    expect(fetchSpy).not.toHaveBeenCalled();
-    expect(actorCreateSpy).not.toHaveBeenCalled();
-  });
+      // then
+      await expect(result).rejects.toMatchObject({
+        code: expectedCode,
+        message: expectedMessage,
+      });
+      expect(fetchSpy).not.toHaveBeenCalled();
+      expect(actorCreateSpy).not.toHaveBeenCalled();
+    }
+  );
 
   test("rejects a simple loan with a borrow amount below the asset minimum", async () => {
     // given

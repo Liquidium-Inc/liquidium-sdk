@@ -305,26 +305,26 @@ describe("guardEthereumOutflowDestination", () => {
     await expect(result).resolves.toBeUndefined();
   });
 
-  test.each([
-    Asset.USDC,
-    Asset.USDT,
-  ])("should skip contract validation for an %s outflow on Ethereum", async (asset) => {
-    // given
-    const apiClient = mockDeep<ApiClient>();
-    const evmReadClient = mockDeep<Required<EvmReadClient>>();
+  test.each([Asset.USDC, Asset.USDT])(
+    "should skip contract validation for an %s outflow on Ethereum",
+    async (asset) => {
+      // given
+      const apiClient = mockDeep<ApiClient>();
+      const evmReadClient = mockDeep<Required<EvmReadClient>>();
 
-    // when
-    const result = guardEthereumOutflowDestination({
-      address: EVM_ADDRESS,
-      apiClient,
-      asset,
-      chain: Chain.ETH,
-      evmReadClient,
-    });
+      // when
+      const result = guardEthereumOutflowDestination({
+        address: EVM_ADDRESS,
+        apiClient,
+        asset,
+        chain: Chain.ETH,
+        evmReadClient,
+      });
 
-    // then
-    await expect(result).resolves.toBeUndefined();
-    expect(evmReadClient.getCode).not.toHaveBeenCalled();
-    expect(apiClient.get).not.toHaveBeenCalled();
-  });
+      // then
+      await expect(result).resolves.toBeUndefined();
+      expect(evmReadClient.getCode).not.toHaveBeenCalled();
+      expect(apiClient.get).not.toHaveBeenCalled();
+    }
+  );
 });

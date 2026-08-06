@@ -154,31 +154,34 @@ describe("QuoteModule", () => {
     ["below", SAME_ASSET_DUST_THRESHOLD_SATS - 1n, false],
     ["at", SAME_ASSET_DUST_THRESHOLD_SATS, false],
     ["above", SAME_ASSET_DUST_THRESHOLD_SATS + 1n, false],
-  ])("applies the same-asset dust policy %s the threshold", (_position, collateralAmount, shouldReject) => {
-    // given
-    const sameAssetPool: Pool = {
-      ...btcPool,
-      sameAssetBorrowing: true,
-      sameAssetBorrowingDustThreshold: SAME_ASSET_DUST_THRESHOLD_SATS,
-    };
-    const request = {
-      borrowAmount: 10_000n,
-      borrowPoolId: sameAssetPool.id,
-      collateralAmount,
-      collateralPoolId: sameAssetPool.id,
-    };
+  ])(
+    "applies the same-asset dust policy %s the threshold",
+    (_position, collateralAmount, shouldReject) => {
+      // given
+      const sameAssetPool: Pool = {
+        ...btcPool,
+        sameAssetBorrowing: true,
+        sameAssetBorrowingDustThreshold: SAME_ASSET_DUST_THRESHOLD_SATS,
+      };
+      const request = {
+        borrowAmount: 10_000n,
+        borrowPoolId: sameAssetPool.id,
+        collateralAmount,
+        collateralPoolId: sameAssetPool.id,
+      };
 
-    // when
-    const result = quoteModule.calculateLtv(request, [sameAssetPool], prices);
+      // when
+      const result = quoteModule.calculateLtv(request, [sameAssetPool], prices);
 
-    // then
-    expect(
-      result.validationErrors.some(
-        (error) =>
-          error.code === QuoteValidationErrorCode.SAME_ASSET_NOT_ALLOWED
-      )
-    ).toBe(shouldReject);
-  });
+      // then
+      expect(
+        result.validationErrors.some(
+          (error) =>
+            error.code === QuoteValidationErrorCode.SAME_ASSET_NOT_ALLOWED
+        )
+      ).toBe(shouldReject);
+    }
+  );
 
   test("calculates required collateral for valid cross-asset quote", () => {
     // given
