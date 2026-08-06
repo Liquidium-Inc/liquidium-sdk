@@ -181,6 +181,7 @@ const flexibleSimpleLoansIdlFactory: IDL.InterfaceFactory = ({ IDL }) => {
     InvalidBtcSignature: IDL.Null,
     AnonymousIcpCaller: IDL.Null,
     InvalidIcpSubaccount: IDL.Null,
+    IcpCallerMismatch: IDL.Null,
   });
   const ProtocolError = IDL.Variant({
     PositionNotFound: IDL.Null,
