@@ -100,4 +100,20 @@ describe("mapLendingSignatureVerificationErrorToLiquidiumError", () => {
     expect(error.code).toBe(LiquidiumErrorCode.SIGNATURE_ERROR);
     expect(error.message).toBe(EXPECTED_MESSAGE);
   });
+
+  test("should map an ICP caller mismatch to signature error", () => {
+    // given
+    const signatureError = {
+      IcpCallerMismatch: null,
+    } satisfies SignatureVerificationError;
+
+    // when
+    const error =
+      mapLendingSignatureVerificationErrorToLiquidiumError(signatureError);
+
+    // then
+    const EXPECTED_MESSAGE = "ICP caller mismatch";
+    expect(error.code).toBe(LiquidiumErrorCode.SIGNATURE_ERROR);
+    expect(error.message).toBe(EXPECTED_MESSAGE);
+  });
 });

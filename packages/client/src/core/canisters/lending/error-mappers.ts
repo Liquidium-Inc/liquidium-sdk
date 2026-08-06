@@ -75,6 +75,18 @@ const LENDING_CANISTER_SIGNATURE_VERIFICATION_ERROR_MAP = {
   InvalidBtcSignature: { code: LiquidiumErrorCode.INVALID_BTC_SIGNATURE },
   InvalidEthAddress: { code: LiquidiumErrorCode.INVALID_ETH_ADDRESS },
   UnsupportedChain: { code: LiquidiumErrorCode.UNSUPPORTED_CHAIN },
+  AnonymousIcpCaller: {
+    code: LiquidiumErrorCode.SIGNATURE_ERROR,
+    fallbackMessage: "Anonymous ICP caller",
+  },
+  InvalidIcpSubaccount: {
+    code: LiquidiumErrorCode.SIGNATURE_ERROR,
+    fallbackMessage: "Invalid ICP subaccount",
+  },
+  IcpCallerMismatch: {
+    code: LiquidiumErrorCode.SIGNATURE_ERROR,
+    fallbackMessage: "ICP caller mismatch",
+  },
   ProfileNotFound: { code: LiquidiumErrorCode.PROFILE_NOT_FOUND },
   CouldNotDecode: {
     code: LiquidiumErrorCode.SIGNATURE_ERROR,

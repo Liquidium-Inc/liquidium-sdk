@@ -49,6 +49,10 @@ export interface InflowDetails {
 }
 export type InflowType = { 'Repayment' : null } |
   { 'Deposit' : null };
+export interface IcpCallerAuth {
+  'principal' : Principal,
+  'subaccount' : [] | [Uint8Array | number[]],
+}
 export interface InitializeAccountRequest { 'expiry_timestamp' : bigint }
 export type LiqTxTarget = { 'Collateral' : null } |
   { 'Change' : null };
@@ -303,14 +307,18 @@ export interface SignatureInfo {
   'chain' : Chains,
   'account' : string,
 }
-export type SignatureScheme = { 'Wallet' : SignatureInfo };
+export type SignatureScheme = { 'Wallet' : SignatureInfo } |
+  { 'IcpCaller' : IcpCallerAuth };
 export type SignatureVerificationError = { 'InvalidEthSignature' : null } |
+  { 'IcpCallerMismatch' : null } |
   { 'UnsupportedChain' : null } |
   { 'InvalidSolSignature' : null } |
   { 'InvalidEthAddress' : null } |
   { 'CouldNotDecode' : string } |
   { 'ProfileNotFound' : null } |
-  { 'InvalidBtcSignature' : null };
+  { 'InvalidBtcSignature' : null } |
+  { 'AnonymousIcpCaller' : null } |
+  { 'InvalidIcpSubaccount' : null };
 export interface SignedRequest {
   'data' : AddAccountRequest,
   'signature_info' : SignatureScheme,

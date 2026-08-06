@@ -11,7 +11,14 @@ export const idlFactory = ({ IDL }) => {
     'chain' : Chains,
     'account' : IDL.Text,
   });
-  const SignatureScheme = IDL.Variant({ 'Wallet' : SignatureInfo });
+  const IcpCallerAuth = IDL.Record({
+    'principal' : IDL.Principal,
+    'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+  });
+  const SignatureScheme = IDL.Variant({
+    'Wallet' : SignatureInfo,
+    'IcpCaller' : IcpCallerAuth,
+  });
   const AddAccountRequest = IDL.Record({
     'target_principal' : IDL.Principal,
     'chain' : WalletType,
@@ -24,12 +31,15 @@ export const idlFactory = ({ IDL }) => {
   });
   const SignatureVerificationError = IDL.Variant({
     'InvalidEthSignature' : IDL.Null,
+    'IcpCallerMismatch' : IDL.Null,
     'UnsupportedChain' : IDL.Null,
     'InvalidSolSignature' : IDL.Null,
     'InvalidEthAddress' : IDL.Null,
     'CouldNotDecode' : IDL.Text,
     'ProfileNotFound' : IDL.Null,
     'InvalidBtcSignature' : IDL.Null,
+    'AnonymousIcpCaller' : IDL.Null,
+    'InvalidIcpSubaccount' : IDL.Null,
   });
   const ProtocolError = IDL.Variant({
     'PositionNotFound' : IDL.Null,
