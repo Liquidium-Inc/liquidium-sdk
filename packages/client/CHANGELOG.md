@@ -1,5 +1,11 @@
 # @liquidium/client
 
+## 0.8.2
+
+### Patch Changes
+
+- Support the current ICP wallet adoption schema and related canister errors.
+
 ## 0.8.1
 
 ### Patch Changes
