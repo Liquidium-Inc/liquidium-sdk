@@ -1,3 +1,62 @@
+import type { Asset } from "../../core/types";
+
+/** Fields used to scan for liquidation candidates. */
+export interface ScanLiquidationsRequest {
+  /** Resume after this borrower profile principal. Omit for the first page. */
+  cursor?: string;
+  /** Maximum number of borrower accounts to examine. */
+  scanLimit: bigint;
+  /** Maximum number of liquidatable borrowers to return. */
+  maxResults: bigint;
+}
+
+/** Asset symbol returned for a liquidation candidate position. */
+export type LiquidationCandidateAsset = Asset | "SOL";
+
+/** One pool position returned for a liquidatable borrower. */
+export interface LiquidationCandidatePosition {
+  /** Pool principal text. */
+  poolId: string;
+  /** Pool asset symbol. SOL can appear in legacy canister data. */
+  asset: LiquidationCandidateAsset;
+  /** Chain-key ledger route or unknown asset type. */
+  assetType: LiquidationAsset;
+  /** Current collateral in pool-asset base units. */
+  collateralAmount: bigint;
+  /** Current debt in pool-asset base units. */
+  debtAmount: bigint;
+  /** Liquidation bonus in basis points. */
+  liquidationBonusBps: bigint;
+  /** Liquidation threshold in basis points. */
+  liquidationThresholdBps: bigint;
+  /** Protocol fee on the liquidation bonus in basis points. */
+  protocolFeeBps: bigint;
+}
+
+/** Borrower whose health factor is below the liquidation threshold. */
+export interface LiquidationCandidate {
+  /** Borrower profile principal used by `liquidate(...)`. */
+  borrowerProfileId: string;
+  /** Health factor scaled to three decimals. `1000n` means `1.0`. */
+  healthFactor: bigint;
+  /** Total debt USD value scaled to 27 decimals. */
+  totalDebtUsd: bigint;
+  /** Weighted liquidation threshold in basis points. */
+  weightedLiquidationThresholdBps: bigint;
+  /** Pool positions that can supply debt or collateral for liquidation. */
+  positions: LiquidationCandidatePosition[];
+}
+
+/** One cursor page of liquidation candidates. */
+export interface LiquidationScanResult {
+  /** Liquidatable borrowers found in this scan. */
+  candidates: LiquidationCandidate[];
+  /** Borrower accounts examined in this scan. */
+  scanned: bigint;
+  /** Cursor for the next scan page, or undefined at the end. */
+  nextCursor?: string;
+}
+
 /** Fields required to execute a slippage-protected liquidation. */
 export interface ExecuteLiquidationRequest {
   /** Liquidium profile principal that owns the position. */

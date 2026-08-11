@@ -2,4 +2,4 @@
 "@liquidium/client": minor
 ---
 
-Add a dedicated module for slippage-protected liquidation execution and status lookup.
+Add a dedicated module for liquidation candidate scanning, slippage-protected execution, and status lookup.
