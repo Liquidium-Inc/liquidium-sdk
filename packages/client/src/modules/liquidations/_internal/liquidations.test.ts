@@ -232,7 +232,7 @@ describe("LiquidationsModule", () => {
     // given
     const getLiquidation = vi.fn().mockResolvedValue({
       Ok: createCanisterLiquidationResult({
-        status: { CoreExecuted: null },
+        status: { Pending: null },
       }),
     });
     vi.spyOn(Actor, "createActor").mockReturnValue({
@@ -245,7 +245,28 @@ describe("LiquidationsModule", () => {
 
     // then
     expect(getLiquidation).toHaveBeenCalledWith(LIQUIDATION_ID);
-    expect(result.status).toEqual({ state: "core_executed" });
+    expect(result.status).toEqual({ state: "pending" });
+  });
+
+  test("rejects an unrecognized liquidation status", async () => {
+    // given
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      get_liquidation: vi.fn().mockResolvedValue({
+        Ok: createCanisterLiquidationResult({
+          status: { FutureStatus: null } as never,
+        }),
+      }),
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const result = client.liquidations.getLiquidation(LIQUIDATION_ID);
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.INTERNAL,
+      message: "Unexpected liquidation status: FutureStatus",
+    });
   });
 
   test.each([
