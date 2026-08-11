@@ -18,6 +18,8 @@ umask 077
 dfx identity export liquidation-example > /absolute/private/path/liquidator.pem
 ```
 
+Before funding the identity, give its principal to a lending-canister administrator. The administrator must register it with `add_liquidator`; verify that `get_liquidators` includes it before you continue.
+
 Copy `examples/liquidation-flow/.env.example` to `.env`, then configure:
 
 | Variable | Value |
@@ -25,10 +27,10 @@ Copy `examples/liquidation-flow/.env.example` to `.env`, then configure:
 | `LIQUIDATOR_IDENTITY_PEM_PATH` | Absolute path to the dedicated identity PEM file |
 | `LIQUIDIUM_LENDING_CANISTER_ID` | Lending canister that receives the ICRC-2 approval and executes the liquidation |
 | `LIQUIDATION_DEBT_ASSET` | Debt asset to find: `BTC`, `ETH`, `USDC`, `USDT`, or `ICP` |
-| `LIQUIDATION_DEBT_AMOUNT_BASE_UNITS` | Amount to approve and repay in debt-asset base units |
+| `LIQUIDATION_DEBT_AMOUNT_BASE_UNITS` | Amount to repay in debt-asset base units |
 | `LIQUIDATION_MIN_COLLATERAL_AMOUNT_BASE_UNITS` | Minimum gross collateral in collateral-asset base units |
 
-The identity's default ICRC account must hold the debt amount plus ledger fees. The example reads the debt ledger canister ID from the selected scan position. It does not treat the lending pool as the ledger.
+The identity's default ICRC account must hold the debt amount plus ledger fees. The example reads the debt ledger canister ID from the selected scan position, queries that ledger's transfer fee, then approves the debt amount plus that fee. It does not treat the lending pool as the ledger.
 
 Run it from the SDK root:
 

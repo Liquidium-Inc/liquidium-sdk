@@ -58,8 +58,9 @@ export class LiquidationsModule {
   /**
    * Executes a liquidation with minimum gross collateral slippage protection.
    *
-   * The configured IC identity or agent is the liquidator. The caller must
-   * pre-approve the lending canister to spend the debt asset.
+   * The configured IC identity or agent is the liquidator. The lending
+   * canister must allow the caller, and the caller must pre-approve the lending
+   * canister to spend the debt amount plus the ledger transfer fee.
    *
    * @param request - Borrower, pools, debt amount, collateral receiver, and minimum collateral.
    * @returns The current liquidation result. Failed lifecycle states remain results.

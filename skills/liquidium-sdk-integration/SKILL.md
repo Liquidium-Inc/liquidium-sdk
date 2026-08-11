@@ -358,14 +358,16 @@ position with debt and a position with collateral before calling `liquidate`.
 Scan results can become stale, so execution always revalidates the position.
 
 `liquidate(...)` executes through the configured IC identity or agent. Before
-the call, that principal's default ICRC account must allow the lending canister
-to spend at least `debtAmount` and must cover ledger fees. The SDK does not
-create the allowance. `minCollateralAmount` is required and measures gross
-collateral before transfer fees; `0n` disables the slippage guard. Seized
-collateral goes to `receiverPrincipal`, while change and refunds go to the
-calling principal. Save the returned `id` and call `getLiquidation(id)` when a
-fresh result is needed. A `failed_liquidation` lifecycle state remains a
-`LiquidationResult` because its refund can still be pending.
+the call, a lending-canister administrator must register that principal with
+`add_liquidator`. Verify membership with `get_liquidators` before funding it.
+The principal's default ICRC account must allow the lending canister to spend
+at least `debtAmount + ledgerTransferFee` and must cover ledger fees. The SDK
+does not create the allowance. `minCollateralAmount` is required and measures
+gross collateral before transfer fees; `0n` disables the slippage guard.
+Seized collateral goes to `receiverPrincipal`, while change and refunds go to
+the calling principal. Save the returned `id` and call `getLiquidation(id)`
+when a fresh result is needed. A `failed_liquidation` lifecycle state remains
+a `LiquidationResult` because its refund can still be pending.
 
 ### positions
 

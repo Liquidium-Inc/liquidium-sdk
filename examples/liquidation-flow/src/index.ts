@@ -66,8 +66,10 @@ async function main(): Promise<void> {
     agent,
     canisterId: Principal.fromText(debtLedgerCanisterId),
   });
+  const debtLedgerFee = await debtLedger.transactionFee({});
+  const approvedAllowanceAmount = debtAmount + debtLedgerFee;
   const approvalBlockIndex = await debtLedger.approve({
-    amount: debtAmount,
+    amount: approvedAllowanceAmount,
     spender: { owner: lendingCanisterId, subaccount: [] },
   });
   const liquidation = await client.liquidations.liquidate({
@@ -85,6 +87,8 @@ async function main(): Promise<void> {
     debtAsset: debtPosition.asset,
     collateralAsset: collateralPosition.asset,
     debtLedgerCanisterId,
+    debtLedgerFee,
+    approvedAllowanceAmount,
     approvalBlockIndex,
     liquidationId: liquidation.id,
     liquidationStatus: liquidation.status,

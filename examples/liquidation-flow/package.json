@@ -4,7 +4,7 @@
   "version": "0.0.1",
   "type": "module",
   "scripts": {
-    "build": "tsc",
+    "build": "pnpm --filter @liquidium/client build && tsc",
     "start": "node --env-file=.env dist/index.js",
     "typecheck": "tsc --noEmit"
   },

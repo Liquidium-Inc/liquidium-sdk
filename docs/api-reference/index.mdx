@@ -56,7 +56,10 @@ Use `client.liquidations.scan(request)` for cursor-based candidate discovery, `c
 | `LiquidationAsset` | Chain-key ledger principal or unknown asset type |
 | `CkLiquidationAsset` | Chain-key ledger route with its required ledger canister principal |
 | `UnknownLiquidationAsset` | Asset route the lending canister cannot identify |
-| `LiquidationStatus` | Lifecycle state and protocol error message when present |
+| `LiquidationStatus` | Progress, success, or failed lifecycle status |
+| `LiquidationProgressStatus` | Pending or processing lifecycle state without an error |
+| `LiquidationSuccessStatus` | Successful lifecycle state without an error |
+| `LiquidationFailedStatus` | Failed lifecycle state with its required protocol error |
 | `LiquidationTransfer` | Collateral or change transfer state, transaction id, and error when present |
 
 See [Liquidations](../guides/liquidations.mdx) for allowance, slippage, receiver, and refund requirements.
