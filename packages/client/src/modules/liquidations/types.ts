@@ -98,20 +98,32 @@ export interface UnknownLiquidationAsset {
 /** Asset route used by a liquidation. */
 export type LiquidationAsset = CkLiquidationAsset | UnknownLiquidationAsset;
 
-/** Liquidation lifecycle state returned by the lending canister. */
-export interface LiquidationStatus {
-  /** Current liquidation lifecycle state. */
+/** Liquidation lifecycle state before final success. */
+export interface LiquidationProgressStatus {
+  state: "pending" | "inflow_processed" | "core_executed";
+  error?: never;
+}
+
+/** Successful liquidation lifecycle state. */
+export interface LiquidationSuccessStatus {
+  state: "success";
+  error?: never;
+}
+
+/** Failed liquidation lifecycle state with its protocol error. */
+export interface LiquidationFailedStatus {
   state:
-    | "pending"
-    | "inflow_processed"
-    | "core_executed"
-    | "success"
     | "failed_liquidation"
     | "collateral_transfer_failed"
     | "change_transfer_failed";
-  /** Protocol error message for a failed state. */
-  error?: string;
+  error: string;
 }
+
+/** Liquidation lifecycle state returned by the lending canister. */
+export type LiquidationStatus =
+  | LiquidationProgressStatus
+  | LiquidationSuccessStatus
+  | LiquidationFailedStatus;
 
 /** Collateral or change transfer state for a liquidation. */
 export interface LiquidationTransfer {

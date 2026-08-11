@@ -11,7 +11,8 @@ Use `client.liquidations.scan(...)` to find undercollateralized profiles, then u
 ## Requirements
 
 - Configure `LiquidiumClient` with the IC identity or agent that will act as the liquidator.
-- From that principal's default ICRC account, approve the lending canister to spend at least `debtAmount`.
+- Before funding or approving that identity, ask a lending-canister administrator to register its principal with `add_liquidator`. Verify membership with `get_liquidators`.
+- From that principal's default ICRC account, approve the lending canister to spend at least `debtAmount + ledgerTransferFee`.
 - Keep enough debt asset in the account to cover `debtAmount` and ledger fees.
 
 The SDK does not create the allowance, poll liquidation status, or execute scan results automatically.
