@@ -459,6 +459,11 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'liquidate' : IDL.Func([LiquidationRequest], [Result_2], []),
+    'liquidate_with_slippage' : IDL.Func(
+        [LiquidationRequest, IDL.Nat],
+        [Result_2],
+        [],
+      ),
     'list_events' : IDL.Func(
         [IDL.Nat, IDL.Nat64],
         [IDL.Vec(IDL.Tuple(IDL.Nat, ProtocolEvent))],
