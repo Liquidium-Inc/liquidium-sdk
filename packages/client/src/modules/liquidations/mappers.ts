@@ -1,3 +1,4 @@
+import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
 import { getVariantKey } from "../../core/utils/variant";
 import type {
   AssetType as CanisterLiquidationAsset,
@@ -121,8 +122,14 @@ function mapCanisterLiquidationStatus(
   if ("Success" in status) {
     return { state: "success" };
   }
+  if ("Pending" in status) {
+    return { state: "pending" };
+  }
 
-  return { state: "pending" };
+  throw new LiquidiumError(
+    LiquidiumErrorCode.INTERNAL,
+    `Unexpected liquidation status: ${getVariantKey(status)}`
+  );
 }
 
 function mapCanisterLiquidationTransfer(
