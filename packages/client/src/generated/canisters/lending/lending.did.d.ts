@@ -440,6 +440,13 @@ export interface _SERVICE {
    */
   'liquidate' : ActorMethod<[LiquidationRequest], Result_2>,
   /**
+   * Execute a liquidation with minimum gross collateral slippage protection
+   */
+  'liquidate_with_slippage' : ActorMethod<
+    [LiquidationRequest, bigint],
+    Result_2
+  >,
+  /**
    * Fetch all canister events with offset-based pagination
    */
   'list_events' : ActorMethod<[bigint, bigint], Array<[bigint, ProtocolEvent]>>,

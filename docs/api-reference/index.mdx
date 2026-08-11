@@ -17,6 +17,7 @@ The SDK exports `LiquidiumClient`, error types, constants, module request types,
 | `client.history` | User history and confirmed protocol-wide activity through the Liquidium SDK API |
 | `client.simpleLoans` | Accountless Simple Loans with generated deposit and repayment targets |
 | `client.lending` | Supply, borrow, withdraw, and inflow reporting |
+| `client.liquidations` | Slippage-protected liquidation execution and status lookup |
 | `client.market` | Pools, prices, and pool rate lookups |
 | `client.positions` | Per-pool positions, health, and aggregate stats |
 | `client.quote` | Pure quote helpers from market inputs |
@@ -37,6 +38,21 @@ See [Status System](../concepts/status-system.mdx) for UI guidance.
 
 See [Market Data](../concepts/market-data.mdx) for APR and estimated APY
 semantics.
+
+## Liquidations
+
+Use `client.liquidations.liquidate(request)` for slippage-protected liquidation execution and `client.liquidations.getLiquidation(liquidationId)` for status lookup. The SDK exports these public types:
+
+| Type | Purpose |
+| --- | --- |
+| `ExecuteLiquidationRequest` | Borrower, pools, debt amount, receiver, required minimum collateral, and optional bad-debt choice |
+| `LiquidationResult` | Liquidation id, timestamp, amounts, assets, lifecycle state, and transfer states |
+| `LiquidationAmounts` | Debt repaid and net collateral received in base units |
+| `LiquidationAsset` | Chain-key ledger principal or unknown asset type |
+| `LiquidationStatus` | Lifecycle state and protocol error message when present |
+| `LiquidationTransfer` | Collateral or change transfer state, transaction id, and error when present |
+
+See [Liquidations](../guides/liquidations.mdx) for allowance, slippage, receiver, and refund requirements.
 
 ## History
 
