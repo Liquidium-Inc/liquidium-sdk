@@ -31,7 +31,7 @@ export class LiquidiumClient {
   readonly accounts: AccountsModule;
   /** Borrow, withdraw, supply, inflow reporting and tracking. */
   readonly lending: LendingModule;
-  /** Slippage-protected liquidation execution and status lookup. */
+  /** Liquidation candidate scanning, slippage-protected execution, and status lookup. */
   readonly liquidations: LiquidationsModule;
   /** Per-pool positions, health, aggregate stats. */
   readonly positions: PositionsModule;
