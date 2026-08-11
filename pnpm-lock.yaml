@@ -206,6 +206,25 @@ importers:
         specifier: ^0.28.0
         version: 0.28.0(rollup@4.62.4)(vite@7.3.6(@types/node@26.1.2)(jiti@2.6.1)(lightningcss@1.33.0)(terser@5.49.0)(tsx@4.21.0)(yaml@2.9.0))
 
+  examples/liquidation-flow:
+    dependencies:
+      '@icp-sdk/canisters':
+        specifier: ^3.6.0
+        version: 3.6.0(@dfinity/utils@4.2.1(@icp-sdk/core@5.4.0))(@icp-sdk/core@5.4.0)
+      '@icp-sdk/core':
+        specifier: ^5.4.0
+        version: 5.4.0
+      '@liquidium/client':
+        specifier: workspace:*
+        version: link:../../packages/client
+    devDependencies:
+      '@types/node':
+        specifier: ^26.1.2
+        version: 26.1.2
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+
   examples/sdk-method-query:
     dependencies:
       '@dynamic-labs/ethereum':
