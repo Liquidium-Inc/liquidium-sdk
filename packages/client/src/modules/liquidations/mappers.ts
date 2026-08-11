@@ -1,15 +1,67 @@
+import { getVariantKey } from "../../core/utils/variant";
 import type {
   AssetType as CanisterLiquidationAsset,
+  LiquidatableUser as CanisterLiquidationCandidate,
+  Assets as CanisterLiquidationCandidateAsset,
+  LiquidatablePosition as CanisterLiquidationCandidatePosition,
   LiquidationResult as CanisterLiquidationResult,
+  ScanResult as CanisterLiquidationScanResult,
   LiquidationStatus as CanisterLiquidationStatus,
   TxStatus as CanisterLiquidationTransfer,
 } from "../../generated/canisters/lending/lending.did";
 import type {
   LiquidationAsset,
+  LiquidationCandidate,
+  LiquidationCandidateAsset,
+  LiquidationCandidatePosition,
   LiquidationResult,
+  LiquidationScanResult,
   LiquidationStatus,
   LiquidationTransfer,
 } from "./types";
+
+export function mapCanisterLiquidationScanResult(
+  result: CanisterLiquidationScanResult
+): LiquidationScanResult {
+  return {
+    candidates: result.users.map(mapCanisterLiquidationCandidate),
+    scanned: result.scanned,
+    nextCursor: result.next_cursor[0]?.toText(),
+  };
+}
+
+function mapCanisterLiquidationCandidate(
+  candidate: CanisterLiquidationCandidate
+): LiquidationCandidate {
+  return {
+    borrowerProfileId: candidate.account.toText(),
+    healthFactor: candidate.health_factor,
+    totalDebtUsd: candidate.total_debt,
+    weightedLiquidationThresholdBps: candidate.weighted_liquidation_threshold,
+    positions: candidate.positions.map(mapCanisterLiquidationCandidatePosition),
+  };
+}
+
+function mapCanisterLiquidationCandidatePosition(
+  position: CanisterLiquidationCandidatePosition
+): LiquidationCandidatePosition {
+  return {
+    poolId: position.pool_id.toText(),
+    asset: mapCanisterLiquidationCandidateAsset(position.asset),
+    assetType: mapCanisterLiquidationAsset(position.asset_type),
+    collateralAmount: position.collateral_amount,
+    debtAmount: position.debt_amount,
+    liquidationBonusBps: position.liquidation_bonus,
+    liquidationThresholdBps: position.liquidation_threshold,
+    protocolFeeBps: position.protocol_fee,
+  };
+}
+
+function mapCanisterLiquidationCandidateAsset(
+  asset: CanisterLiquidationCandidateAsset
+): LiquidationCandidateAsset {
+  return getVariantKey(asset) as LiquidationCandidateAsset;
+}
 
 export function mapCanisterLiquidationResult(
   liquidation: CanisterLiquidationResult

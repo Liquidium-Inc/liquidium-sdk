@@ -1,7 +1,10 @@
 import { Actor } from "@icp-sdk/core/agent";
 import { Principal } from "@icp-sdk/core/principal";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import type { LiquidationResult as CanisterLiquidationResult } from "../../../generated/canisters/lending/lending.did";
+import type {
+  LiquidationResult as CanisterLiquidationResult,
+  ScanResult as CanisterLiquidationScanResult,
+} from "../../../generated/canisters/lending/lending.did";
 import {
   type ExecuteLiquidationRequest,
   LiquidiumClient,
@@ -31,6 +34,115 @@ afterEach(() => {
 });
 
 describe("LiquidationsModule", () => {
+  test("scans and maps liquidation candidates", async () => {
+    // given
+    const scanAtRiskPositions = vi
+      .fn()
+      .mockResolvedValue(createCanisterLiquidationScanResult());
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      scan_at_risk_positions: scanAtRiskPositions,
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const result = await client.liquidations.scan({
+      cursor: ICP_POOL_ID,
+      scanLimit: 100n,
+      maxResults: 20n,
+    });
+
+    // then
+    expect(scanAtRiskPositions).toHaveBeenCalledWith(
+      [Principal.fromText(ICP_POOL_ID)],
+      100n,
+      20n
+    );
+    expect(result).toEqual({
+      candidates: [
+        {
+          borrowerProfileId: VALID_IC_PRINCIPAL,
+          healthFactor: 900n,
+          totalDebtUsd: 10n ** 27n,
+          weightedLiquidationThresholdBps: 7_500n,
+          positions: [
+            {
+              poolId: USDT_POOL_ID,
+              asset: "USDT",
+              assetType: {
+                type: "ck_asset",
+                ledgerCanisterId: USDT_POOL_ID,
+              },
+              collateralAmount: 2_000_000n,
+              debtAmount: 1_000_000n,
+              liquidationBonusBps: 500n,
+              liquidationThresholdBps: 7_500n,
+              protocolFeeBps: 100n,
+            },
+          ],
+        },
+      ],
+      scanned: 25n,
+      nextCursor: BTC_POOL_ID,
+    });
+  });
+
+  test.each([
+    [
+      "zero scan limit",
+      { scanLimit: 0n },
+      "Liquidation scan limit must be greater than 0",
+    ],
+    [
+      "zero maximum results",
+      { maxResults: 0n },
+      "Liquidation maximum results must be greater than 0",
+    ],
+    ["invalid cursor", { cursor: "not-a-principal" }, undefined],
+  ] as const)(
+    "rejects %s before the canister call",
+    async (_, change, message) => {
+      // given
+      const createActor = vi.spyOn(Actor, "createActor");
+      const client = new LiquidiumClient({});
+
+      // when
+      const result = client.liquidations.scan({
+        scanLimit: 100n,
+        maxResults: 20n,
+        ...change,
+      });
+
+      // then
+      await expect(result).rejects.toMatchObject({
+        code: LiquidiumErrorCode.VALIDATION_ERROR,
+        ...(message ? { message } : {}),
+      });
+      expect(createActor).not.toHaveBeenCalled();
+    }
+  );
+
+  test("maps scan transport errors", async () => {
+    // given
+    const cause = new Error("replica unavailable");
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      scan_at_risk_positions: vi.fn().mockRejectedValue(cause),
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const result = client.liquidations.scan({
+      scanLimit: 100n,
+      maxResults: 20n,
+    });
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.CANISTER_REJECTED,
+      message: "Canister call failed: scan_at_risk_positions",
+      cause,
+    });
+  });
+
   test("calls the slippage method, defaults buyBadDebt, and maps the result", async () => {
     // given
     const liquidateWithSlippage = vi.fn().mockResolvedValue({
@@ -262,6 +374,34 @@ describe("LiquidationsModule", () => {
     });
   });
 });
+
+function createCanisterLiquidationScanResult(): CanisterLiquidationScanResult {
+  return {
+    users: [
+      {
+        account: Principal.fromText(VALID_IC_PRINCIPAL),
+        health_factor: 900n,
+        total_debt: 10n ** 27n,
+        weighted_liquidation_threshold: 7_500n,
+        positions: [
+          {
+            pool_id: Principal.fromText(USDT_POOL_ID),
+            asset: { USDT: null },
+            asset_type: { CkAsset: Principal.fromText(USDT_POOL_ID) },
+            account: Principal.fromText(VALID_IC_PRINCIPAL),
+            collateral_amount: 2_000_000n,
+            debt_amount: 1_000_000n,
+            liquidation_bonus: 500n,
+            liquidation_threshold: 7_500n,
+            protocol_fee: 100n,
+          },
+        ],
+      },
+    ],
+    scanned: 25n,
+    next_cursor: [Principal.fromText(BTC_POOL_ID)],
+  };
+}
 
 function createCanisterLiquidationResult(
   overrides: Partial<CanisterLiquidationResult> = {}

@@ -6,12 +6,63 @@ import {
 } from "../../core/canisters/lending/error-mappers";
 import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
 import type { CanisterContext } from "../../core/transports/canister-context";
-import { mapCanisterLiquidationResult } from "./mappers";
-import type { ExecuteLiquidationRequest, LiquidationResult } from "./types";
+import {
+  mapCanisterLiquidationResult,
+  mapCanisterLiquidationScanResult,
+} from "./mappers";
+import type {
+  ExecuteLiquidationRequest,
+  LiquidationResult,
+  LiquidationScanResult,
+  ScanLiquidationsRequest,
+} from "./types";
 
-/** Slippage-protected liquidation execution and status lookup. */
+/** Liquidation candidate scanning, slippage-protected execution, and status lookup. */
 export class LiquidationsModule {
   constructor(private readonly canisterContext: CanisterContext) {}
+
+  /**
+   * Scans borrower accounts for positions below the liquidation threshold.
+   *
+   * @param request - Optional cursor, accounts to scan, and candidates to return.
+   * @returns Liquidation candidates and the cursor for the next scan page.
+   */
+  async scan(request: ScanLiquidationsRequest): Promise<LiquidationScanResult> {
+    if (request.scanLimit <= 0n) {
+      throw new LiquidiumError(
+        LiquidiumErrorCode.VALIDATION_ERROR,
+        "Liquidation scan limit must be greater than 0"
+      );
+    }
+    if (request.maxResults <= 0n) {
+      throw new LiquidiumError(
+        LiquidiumErrorCode.VALIDATION_ERROR,
+        "Liquidation maximum results must be greater than 0"
+      );
+    }
+
+    const cursor: [] | [Principal] =
+      request.cursor === undefined
+        ? []
+        : [parsePrincipal(request.cursor, "cursor")];
+
+    try {
+      const result = await createLendingActor(
+        this.canisterContext
+      ).scan_at_risk_positions(cursor, request.scanLimit, request.maxResults);
+
+      return mapCanisterLiquidationScanResult(result);
+    } catch (error) {
+      if (error instanceof LiquidiumError) {
+        throw error;
+      }
+
+      throw mapCanisterCallErrorToLiquidiumError(
+        "scan_at_risk_positions",
+        error
+      );
+    }
+  }
 
   /**
    * Executes a liquidation with minimum gross collateral slippage protection.

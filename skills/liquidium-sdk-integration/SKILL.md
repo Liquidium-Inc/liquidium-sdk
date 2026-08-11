@@ -343,12 +343,19 @@ or after optional SDK broadcasting; the SDK does not poll it to completion.
 
 ### liquidations
 
-Slippage-protected liquidation execution and status lookup.
+Cursor-based candidate scanning, slippage-protected execution, and status lookup.
 
 ```ts
+client.liquidations.scan({ scanLimit, maxResults, cursor });
 client.liquidations.liquidate(...);
 client.liquidations.getLiquidation(liquidationId);
 ```
+
+`scan(...)` examines up to `scanLimit` borrower accounts and returns at most
+`maxResults` liquidatable candidates. Continue with `nextCursor` when present.
+Each candidate contains its `borrowerProfileId` and pool positions. Select a
+position with debt and a position with collateral before calling `liquidate`.
+Scan results can become stale, so execution always revalidates the position.
 
 `liquidate(...)` executes through the configured IC identity or agent. Before
 the call, that principal's default ICRC account must allow the lending canister
@@ -994,7 +1001,7 @@ valid for ckETH because that route uses an ICRC transfer on `chain: "ICP"`.
 20. Do not use `"ckBTC"`, `"ckETH"`, `"ckUSDC"`, or `"ckUSDT"` as asset symbols. Pair the underlying asset with `chain: "ICP"`.
 21. Do not assume `Pool.chain` is the user's transfer chain or derive deposit, borrow, and refund rails from one shared selection.
 22. Do not use `mechanism: "contractInteraction"` for ckETH on `chain: "ICP"`. Use it only for native ETH, USDC, or USDT on `chain: "ETH"`.
-23. Do not add automatic approval, at-risk scanning, or polling around `client.liquidations.liquidate(...)`. The caller manages its ICRC-2 allowance and requests status by liquidation id.
+23. Use `client.liquidations.scan(...)` explicitly for candidate discovery. Do not add automatic approval, automatic execution, or status polling around `liquidate(...)`.
 
 ## Preferred Style
 

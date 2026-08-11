@@ -41,10 +41,15 @@ semantics.
 
 ## Liquidations
 
-Use `client.liquidations.liquidate(request)` for slippage-protected liquidation execution and `client.liquidations.getLiquidation(liquidationId)` for status lookup. The SDK exports these public types:
+Use `client.liquidations.scan(request)` for cursor-based candidate discovery, `client.liquidations.liquidate(request)` for slippage-protected execution, and `client.liquidations.getLiquidation(liquidationId)` for status lookup. The SDK exports these public types:
 
 | Type | Purpose |
 | --- | --- |
+| `ScanLiquidationsRequest` | Optional cursor, accounts to scan, and maximum candidates to return |
+| `LiquidationScanResult` | Candidates, scanned account count, and next cursor |
+| `LiquidationCandidate` | Liquidatable borrower, health factor, total debt, and pool positions |
+| `LiquidationCandidatePosition` | Pool, asset, debt, collateral, threshold, bonus, and protocol fee |
+| `LiquidationCandidateAsset` | Supported asset symbol or legacy SOL candidate symbol |
 | `ExecuteLiquidationRequest` | Borrower, pools, debt amount, receiver, required minimum collateral, and optional bad-debt choice |
 | `LiquidationResult` | Liquidation id, timestamp, amounts, assets, lifecycle state, and transfer states |
 | `LiquidationAmounts` | Debt repaid and net collateral received in base units |
