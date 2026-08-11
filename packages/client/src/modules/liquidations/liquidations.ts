@@ -46,22 +46,13 @@ export class LiquidationsModule {
         ? []
         : [parsePrincipal(request.cursor, "cursor")];
 
-    try {
+    return callLendingCanister("scan_at_risk_positions", async () => {
       const result = await createLendingActor(
         this.canisterContext
       ).scan_at_risk_positions(cursor, request.scanLimit, request.maxResults);
 
       return mapCanisterLiquidationScanResult(result);
-    } catch (error) {
-      if (error instanceof LiquidiumError) {
-        throw error;
-      }
-
-      throw mapCanisterCallErrorToLiquidiumError(
-        "scan_at_risk_positions",
-        error
-      );
-    }
+    });
   }
 
   /**
@@ -103,7 +94,7 @@ export class LiquidationsModule {
       "receiverPrincipal"
     );
 
-    try {
+    return callLendingCanister("liquidate_with_slippage", async () => {
       const result = await createLendingActor(
         this.canisterContext
       ).liquidate_with_slippage(
@@ -123,16 +114,7 @@ export class LiquidationsModule {
       }
 
       return mapCanisterLiquidationResult(result.Ok);
-    } catch (error) {
-      if (error instanceof LiquidiumError) {
-        throw error;
-      }
-
-      throw mapCanisterCallErrorToLiquidiumError(
-        "liquidate_with_slippage",
-        error
-      );
-    }
+    });
   }
 
   /**
@@ -149,7 +131,7 @@ export class LiquidationsModule {
       );
     }
 
-    try {
+    return callLendingCanister("get_liquidation", async () => {
       const result = await createLendingActor(
         this.canisterContext
       ).get_liquidation(liquidationId);
@@ -159,13 +141,22 @@ export class LiquidationsModule {
       }
 
       return mapCanisterLiquidationResult(result.Ok);
-    } catch (error) {
-      if (error instanceof LiquidiumError) {
-        throw error;
-      }
+    });
+  }
+}
 
-      throw mapCanisterCallErrorToLiquidiumError("get_liquidation", error);
+async function callLendingCanister<T>(
+  canisterMethodName: string,
+  call: () => Promise<T>
+): Promise<T> {
+  try {
+    return await call();
+  } catch (error) {
+    if (error instanceof LiquidiumError) {
+      throw error;
     }
+
+    throw mapCanisterCallErrorToLiquidiumError(canisterMethodName, error);
   }
 }
 
