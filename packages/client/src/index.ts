@@ -176,6 +176,7 @@ export {
   SupplyPlanType,
 } from "./modules/lending";
 export type {
+  CkLiquidationAsset,
   ExecuteLiquidationRequest,
   LiquidationAmounts,
   LiquidationAsset,
@@ -187,6 +188,7 @@ export type {
   LiquidationStatus,
   LiquidationTransfer,
   ScanLiquidationsRequest,
+  UnknownLiquidationAsset,
 } from "./modules/liquidations";
 export { LiquidationsModule } from "./modules/liquidations";
 export type {

@@ -83,13 +83,20 @@ export interface LiquidationAmounts {
   collateralReceived: bigint;
 }
 
-/** Asset route used by a liquidation. */
-export interface LiquidationAsset {
-  /** Chain-key ledger asset or an asset type the canister cannot identify. */
-  type: "ck_asset" | "unknown";
-  /** Chain-key ledger canister principal when `type` is `ck_asset`. */
-  ledgerCanisterId?: string;
+/** Chain-key ledger asset route used by a liquidation. */
+export interface CkLiquidationAsset {
+  type: "ck_asset";
+  /** Chain-key ledger canister principal. */
+  ledgerCanisterId: string;
 }
+
+/** Asset route the canister cannot identify. */
+export interface UnknownLiquidationAsset {
+  type: "unknown";
+}
+
+/** Asset route used by a liquidation. */
+export type LiquidationAsset = CkLiquidationAsset | UnknownLiquidationAsset;
 
 /** Liquidation lifecycle state returned by the lending canister. */
 export interface LiquidationStatus {

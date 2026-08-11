@@ -1,5 +1,6 @@
 export { LiquidationsModule } from "./liquidations";
 export type {
+  CkLiquidationAsset,
   ExecuteLiquidationRequest,
   LiquidationAmounts,
   LiquidationAsset,
@@ -11,4 +12,5 @@ export type {
   LiquidationStatus,
   LiquidationTransfer,
   ScanLiquidationsRequest,
+  UnknownLiquidationAsset,
 } from "./types";
