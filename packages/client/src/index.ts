@@ -179,9 +179,14 @@ export type {
   ExecuteLiquidationRequest,
   LiquidationAmounts,
   LiquidationAsset,
+  LiquidationCandidate,
+  LiquidationCandidateAsset,
+  LiquidationCandidatePosition,
   LiquidationResult,
+  LiquidationScanResult,
   LiquidationStatus,
   LiquidationTransfer,
+  ScanLiquidationsRequest,
 } from "./modules/liquidations";
 export { LiquidationsModule } from "./modules/liquidations";
 export type {

@@ -6,7 +6,7 @@ order: 125
 
 # Liquidations
 
-Use `client.liquidations.liquidate(...)` to repay debt for an undercollateralized profile and receive its seized collateral.
+Use `client.liquidations.scan(...)` to find undercollateralized profiles, then use `liquidate(...)` to repay debt and receive seized collateral.
 
 ## Requirements
 
@@ -14,7 +14,20 @@ Use `client.liquidations.liquidate(...)` to repay debt for an undercollateralize
 - From that principal's default ICRC account, approve the lending canister to spend at least `debtAmount`.
 - Keep enough debt asset in the account to cover `debtAmount` and ledger fees.
 
-The SDK does not create the allowance, scan for positions, or poll liquidation status.
+The SDK does not create the allowance, poll liquidation status, or execute scan results automatically.
+
+## Scan
+
+```ts
+const page = await client.liquidations.scan({
+  scanLimit: 100n,
+  maxResults: 20n,
+});
+```
+
+`scanLimit` is the maximum number of borrower accounts to examine. `maxResults` is the maximum number of liquidatable borrowers to return. Pass `page.nextCursor` as `cursor` to continue after the last scanned account.
+
+Each candidate contains `borrowerProfileId`, its health factor, and its pool positions. Choose a position with debt and a position with collateral, then pass their pool IDs and the borrower profile ID to `liquidate(...)`. Scan results can become stale, so liquidation execution revalidates the position.
 
 ## Execute
 
