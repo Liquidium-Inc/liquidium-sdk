@@ -350,9 +350,16 @@ describe("LiquidationsModule", () => {
   });
 
   test.each([
-    ["liquidate_with_slippage", "liquidate", [BASE_REQUEST]],
-    ["get_liquidation", "getLiquidation", [LIQUIDATION_ID]],
-  ] as const)("maps %s transport errors", async (method, sdkMethod, args) => {
+    [
+      "liquidate_with_slippage",
+      (client: LiquidiumClient) => client.liquidations.liquidate(BASE_REQUEST),
+    ],
+    [
+      "get_liquidation",
+      (client: LiquidiumClient) =>
+        client.liquidations.getLiquidation(LIQUIDATION_ID),
+    ],
+  ] as const)("maps %s transport errors", async (method, invoke) => {
     // given
     const cause = new Error("replica unavailable");
     vi.spyOn(Actor, "createActor").mockReturnValue({
@@ -361,10 +368,7 @@ describe("LiquidationsModule", () => {
     const client = new LiquidiumClient({});
 
     // when
-    const result =
-      sdkMethod === "liquidate"
-        ? client.liquidations.liquidate(args[0] as ExecuteLiquidationRequest)
-        : client.liquidations.getLiquidation(args[0] as bigint);
+    const result = invoke(client);
 
     // then
     await expect(result).rejects.toMatchObject({
