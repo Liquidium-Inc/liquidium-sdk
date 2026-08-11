@@ -1,27 +1,19 @@
 import { readFile } from "node:fs/promises";
-import { IcrcLedgerCanister } from "@icp-sdk/canisters/ledger/icrc";
 import { HttpAgent } from "@icp-sdk/core/agent";
 import { Secp256k1KeyIdentity } from "@icp-sdk/core/identity/secp256k1";
 import { Principal } from "@icp-sdk/core/principal";
+import { Asset } from "@liquidium/client";
+import { createClient } from "./client";
 import {
-  Asset,
-  type LiquidationCandidate,
-  type LiquidationCandidatePosition,
-  LiquidiumClient,
-} from "@liquidium/client";
+  approveLiquidationAllowance,
+  executeLiquidation,
+  findLiquidationCandidate,
+} from "./sdk-example";
 
 const ICP_HOST = "https://icp-api.io";
-const SCAN_LIMIT = 100n;
-const MAX_RESULTS = 20n;
 const MINIMUM_DEBT_AMOUNT = 1n;
 const MINIMUM_COLLATERAL_AMOUNT = 0n;
 const SUPPORTED_DEBT_ASSETS = new Set<string>(Object.values(Asset));
-
-interface SelectedLiquidationCandidate {
-  candidate: LiquidationCandidate;
-  debtPosition: LiquidationCandidatePosition;
-  collateralPosition: LiquidationCandidatePosition;
-}
 
 async function main(): Promise<void> {
   const identityPemPath = getRequiredEnvironmentVariable(
@@ -49,30 +41,27 @@ async function main(): Promise<void> {
   const identityPem = await readFile(identityPemPath, "utf8");
   const identity = Secp256k1KeyIdentity.fromPem(identityPem);
   const agent = await HttpAgent.create({ host: ICP_HOST, identity });
-  const client = new LiquidiumClient({
+  const client = createClient({
     agent,
-    canisterIds: { lending: lendingCanisterId.toText() },
+    lendingCanisterId: lendingCanisterId.toText(),
   });
   const { candidate, debtPosition, collateralPosition } =
-    await findLiquidationCandidate(client, debtAsset, debtAmount);
+    await findLiquidationCandidate({ client, debtAsset, debtAmount });
 
   if (debtPosition.assetType.type !== "ck_asset") {
     throw new Error("Selected debt position has no ICRC ledger canister id");
   }
 
   const debtLedgerCanisterId = debtPosition.assetType.ledgerCanisterId;
-
-  const debtLedger = IcrcLedgerCanister.create({
-    agent,
-    canisterId: Principal.fromText(debtLedgerCanisterId),
-  });
-  const debtLedgerFee = await debtLedger.transactionFee({});
-  const approvedAllowanceAmount = debtAmount + debtLedgerFee;
-  const approvalBlockIndex = await debtLedger.approve({
-    amount: approvedAllowanceAmount,
-    spender: { owner: lendingCanisterId, subaccount: [] },
-  });
-  const liquidation = await client.liquidations.liquidate({
+  const { debtLedgerFee, approvedAllowanceAmount, approvalBlockIndex } =
+    await approveLiquidationAllowance({
+      agent,
+      debtLedgerCanisterId,
+      lendingCanisterId,
+      debtAmount,
+    });
+  const liquidation = await executeLiquidation({
+    client,
     borrowerProfileId: candidate.borrowerProfileId,
     debtPoolId: debtPosition.poolId,
     collateralPoolId: collateralPosition.poolId,
@@ -93,49 +82,6 @@ async function main(): Promise<void> {
     liquidationId: liquidation.id,
     liquidationStatus: liquidation.status,
   });
-}
-
-async function findLiquidationCandidate(
-  client: LiquidiumClient,
-  debtAsset: string,
-  debtAmount: bigint
-): Promise<SelectedLiquidationCandidate> {
-  let cursor: string | undefined;
-
-  do {
-    const page = await client.liquidations.scan({
-      cursor,
-      scanLimit: SCAN_LIMIT,
-      maxResults: MAX_RESULTS,
-    });
-
-    for (const candidate of page.candidates) {
-      const debtPosition = candidate.positions.find(
-        (position) =>
-          position.asset === debtAsset &&
-          position.debtAmount >= debtAmount &&
-          position.assetType.type === "ck_asset"
-      );
-
-      if (!debtPosition) {
-        continue;
-      }
-
-      const collateralPosition = candidate.positions.find(
-        (position) =>
-          position.poolId !== debtPosition.poolId &&
-          position.collateralAmount > 0n
-      );
-
-      if (collateralPosition) {
-        return { candidate, debtPosition, collateralPosition };
-      }
-    }
-
-    cursor = page.nextCursor;
-  } while (cursor !== undefined);
-
-  throw new Error(`No liquidation candidate found for ${debtAsset}`);
 }
 
 function getRequiredEnvironmentVariable(name: string): string {
