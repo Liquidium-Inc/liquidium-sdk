@@ -54,6 +54,8 @@ Use `client.liquidations.scan(request)` for cursor-based candidate discovery, `c
 | `LiquidationResult` | Liquidation id, timestamp, amounts, assets, lifecycle state, and transfer states |
 | `LiquidationAmounts` | Debt repaid and net collateral received in base units |
 | `LiquidationAsset` | Chain-key ledger principal or unknown asset type |
+| `CkLiquidationAsset` | Chain-key ledger route with its required ledger canister principal |
+| `UnknownLiquidationAsset` | Asset route the lending canister cannot identify |
 | `LiquidationStatus` | Lifecycle state and protocol error message when present |
 | `LiquidationTransfer` | Collateral or change transfer state, transaction id, and error when present |
 

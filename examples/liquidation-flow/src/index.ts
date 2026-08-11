@@ -55,11 +55,12 @@ async function main(): Promise<void> {
   });
   const { candidate, debtPosition, collateralPosition } =
     await findLiquidationCandidate(client, debtAsset, debtAmount);
-  const debtLedgerCanisterId = debtPosition.assetType.ledgerCanisterId;
 
-  if (!debtLedgerCanisterId) {
+  if (debtPosition.assetType.type !== "ck_asset") {
     throw new Error("Selected debt position has no ICRC ledger canister id");
   }
+
+  const debtLedgerCanisterId = debtPosition.assetType.ledgerCanisterId;
 
   const debtLedger = IcrcLedgerCanister.create({
     agent,
@@ -109,8 +110,7 @@ async function findLiquidationCandidate(
         (position) =>
           position.asset === debtAsset &&
           position.debtAmount >= debtAmount &&
-          position.assetType.type === "ck_asset" &&
-          position.assetType.ledgerCanisterId !== undefined
+          position.assetType.type === "ck_asset"
       );
 
       if (!debtPosition) {
