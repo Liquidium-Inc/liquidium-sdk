@@ -1,0 +1,41 @@
+---
+title: Liquidation Flow Example
+description: Run candidate discovery, ICRC approval, and liquidation submission.
+order: 340
+---
+
+# Liquidation Flow Example
+
+Use `examples/liquidation-flow` to run the complete liquidation flow from a Node CLI. It scans for a candidate, approves the candidate's debt ledger, and submits the liquidation with the same IC identity.
+
+This example sends mainnet transactions and spends ledger fees. Use a dedicated funded identity. Do not use a primary or high-value identity.
+
+Create an exportable identity and protect its PEM file:
+
+```bash
+dfx identity new liquidation-example
+umask 077
+dfx identity export liquidation-example > /absolute/private/path/liquidator.pem
+```
+
+Copy `examples/liquidation-flow/.env.example` to `.env`, then configure:
+
+| Variable | Value |
+| --- | --- |
+| `LIQUIDATOR_IDENTITY_PEM_PATH` | Absolute path to the dedicated identity PEM file |
+| `LIQUIDIUM_LENDING_CANISTER_ID` | Lending canister that receives the ICRC-2 approval and executes the liquidation |
+| `LIQUIDATION_DEBT_ASSET` | Debt asset to find: `BTC`, `ETH`, `USDC`, `USDT`, or `ICP` |
+| `LIQUIDATION_DEBT_AMOUNT_BASE_UNITS` | Amount to approve and repay in debt-asset base units |
+| `LIQUIDATION_MIN_COLLATERAL_AMOUNT_BASE_UNITS` | Minimum gross collateral in collateral-asset base units |
+
+The identity's default ICRC account must hold the debt amount plus ledger fees. The example reads the debt ledger canister ID from the selected scan position. It does not treat the lending pool as the ledger.
+
+Run it from the SDK root:
+
+```bash
+pnpm install
+pnpm --filter @liquidium/example-liquidation-flow build
+pnpm --filter @liquidium/example-liquidation-flow start
+```
+
+`LIQUIDATION_MIN_COLLATERAL_AMOUNT_BASE_UNITS=0` disables slippage protection. Set a nonzero minimum for production use. Candidate state can change after the scan, so execution can reject a stale candidate.
