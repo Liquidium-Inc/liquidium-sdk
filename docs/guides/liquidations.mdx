@@ -1,0 +1,46 @@
+---
+title: Liquidations
+description: Execute and track profile-based liquidations.
+order: 125
+---
+
+# Liquidations
+
+Use `client.liquidations.liquidate(...)` to repay debt for an undercollateralized profile and receive its seized collateral.
+
+## Requirements
+
+- Configure `LiquidiumClient` with the IC identity or agent that will act as the liquidator.
+- From that principal's default ICRC account, approve the lending canister to spend at least `debtAmount`.
+- Keep enough debt asset in the account to cover `debtAmount` and ledger fees.
+
+The SDK does not create the allowance, scan for positions, or poll liquidation status.
+
+## Execute
+
+```ts
+const liquidation = await client.liquidations.liquidate({
+  borrowerProfileId,
+  debtPoolId,
+  collateralPoolId,
+  debtAmount,
+  receiverPrincipal,
+  minCollateralAmount,
+});
+```
+
+`minCollateralAmount` is required. It is the minimum gross collateral before transfer fees. Set it to `0n` only when you want to disable slippage protection. `buyBadDebt` is optional and defaults to `false`.
+
+Seized collateral goes to `receiverPrincipal`. Change and refunds go to the calling principal.
+
+## Track
+
+Save `liquidation.id` and query it when your app needs a fresh result:
+
+```ts
+const current = await client.liquidations.getLiquidation(liquidation.id);
+```
+
+Read `current.status` for the liquidation lifecycle. Read `current.collateralTx` and `current.changeTx` for transfer state, transaction IDs, and transfer errors.
+
+A canister `Err` throws `LiquidiumError`. A result with `status.state === "failed_liquidation"` is not thrown because refund processing can continue. Keep checking its transfer fields when your app needs the final refund state.

@@ -176,6 +176,15 @@ export {
   SupplyPlanType,
 } from "./modules/lending";
 export type {
+  ExecuteLiquidationRequest,
+  LiquidationAmounts,
+  LiquidationAsset,
+  LiquidationResult,
+  LiquidationStatus,
+  LiquidationTransfer,
+} from "./modules/liquidations";
+export { LiquidationsModule } from "./modules/liquidations";
+export type {
   AssetPriceSnapshot,
   AssetPrices,
   FindPoolQuery,
