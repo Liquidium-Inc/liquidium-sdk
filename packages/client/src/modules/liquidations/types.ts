@@ -4,9 +4,9 @@ import type { Asset } from "../../core/types";
 export interface ScanLiquidationsRequest {
   /** Resume after this borrower profile principal. Omit for the first page. */
   cursor?: string;
-  /** Maximum number of borrower accounts to examine. */
+  /** Maximum number of borrower accounts to examine. Must fit a positive nat64. */
   scanLimit: bigint;
-  /** Maximum number of liquidatable borrowers to return. */
+  /** Maximum number of liquidatable borrowers to return. Must fit a positive nat64. */
   maxResults: bigint;
 }
 
@@ -125,15 +125,36 @@ export type LiquidationStatus =
   | LiquidationSuccessStatus
   | LiquidationFailedStatus;
 
-/** Collateral or change transfer state for a liquidation. */
-export interface LiquidationTransfer {
-  /** Current transfer state. */
-  state: "pending" | "success" | "failed";
+/** Pending collateral or change transfer. */
+export interface LiquidationPendingTransfer {
+  state: "pending";
   /** Chain transaction id when assigned. */
   txid?: string;
-  /** Transfer error message when the transfer failed. */
-  error?: string;
+  error?: never;
 }
+
+/** Successful collateral or change transfer. */
+export interface LiquidationSuccessTransfer {
+  state: "success";
+  /** Chain transaction id when assigned. */
+  txid?: string;
+  error?: never;
+}
+
+/** Failed collateral or change transfer with its error. */
+export interface LiquidationFailedTransfer {
+  state: "failed";
+  /** Chain transaction id when assigned. */
+  txid?: string;
+  /** Transfer error message. */
+  error: string;
+}
+
+/** Collateral or change transfer state for a liquidation. */
+export type LiquidationTransfer =
+  | LiquidationPendingTransfer
+  | LiquidationSuccessTransfer
+  | LiquidationFailedTransfer;
 
 /** Result returned by liquidation execution and status lookup. */
 export interface LiquidationResult {
