@@ -20,6 +20,7 @@ import {
 const LIQUIDATION_ID = 42n;
 const DEBT_AMOUNT = 1_000_000n;
 const MIN_COLLATERAL_AMOUNT = 0n;
+const MAX_NAT64_VALUE = 2n ** 64n - 1n;
 const BASE_REQUEST: ExecuteLiquidationRequest = {
   borrowerProfileId: VALID_IC_PRINCIPAL,
   debtPoolId: USDT_POOL_ID,
@@ -97,6 +98,16 @@ describe("LiquidationsModule", () => {
       { maxResults: 0n },
       "Liquidation maximum results must be greater than 0",
     ],
+    [
+      "scan limit above nat64",
+      { scanLimit: MAX_NAT64_VALUE + 1n },
+      `Liquidation scan limit must not exceed ${MAX_NAT64_VALUE}`,
+    ],
+    [
+      "maximum results above nat64",
+      { maxResults: MAX_NAT64_VALUE + 1n },
+      `Liquidation maximum results must not exceed ${MAX_NAT64_VALUE}`,
+    ],
     ["invalid cursor", { cursor: "not-a-principal" }, undefined],
   ] as const)(
     "rejects %s before the canister call",
@@ -120,6 +131,30 @@ describe("LiquidationsModule", () => {
       expect(createActor).not.toHaveBeenCalled();
     }
   );
+
+  test("accepts maximum nat64 scan values", async () => {
+    // given
+    const scanAtRiskPositions = vi
+      .fn()
+      .mockResolvedValue(createCanisterLiquidationScanResult());
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      scan_at_risk_positions: scanAtRiskPositions,
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    await client.liquidations.scan({
+      scanLimit: MAX_NAT64_VALUE,
+      maxResults: MAX_NAT64_VALUE,
+    });
+
+    // then
+    expect(scanAtRiskPositions).toHaveBeenCalledWith(
+      [],
+      MAX_NAT64_VALUE,
+      MAX_NAT64_VALUE
+    );
+  });
 
   test("maps scan transport errors", async () => {
     // given

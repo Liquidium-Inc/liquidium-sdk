@@ -10,6 +10,8 @@ import type {
 
 const SCAN_LIMIT = 100n;
 const MAX_RESULTS = 20n;
+const NANOSECONDS_PER_MILLISECOND = 1_000_000n;
+const APPROVAL_DURATION_5_MINUTES_NS = 5n * 60n * 1_000_000_000n;
 
 interface FindLiquidationCandidateParams {
   client: LiquidiumClient;
@@ -101,8 +103,12 @@ export async function approveLiquidationAllowance({
   });
   const debtLedgerFee = await debtLedger.transactionFee({});
   const approvedAllowanceAmount = debtAmount + debtLedgerFee;
+  const approvalExpiresAtNanoseconds =
+    BigInt(Date.now()) * NANOSECONDS_PER_MILLISECOND +
+    APPROVAL_DURATION_5_MINUTES_NS;
   const approvalBlockIndex = await debtLedger.approve({
     amount: approvedAllowanceAmount,
+    expires_at: approvalExpiresAtNanoseconds,
     spender: { owner: lendingCanisterId, subaccount: [] },
   });
 

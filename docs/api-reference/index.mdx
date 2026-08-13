@@ -60,7 +60,10 @@ Use `client.liquidations.scan(request)` for cursor-based candidate discovery, `c
 | `LiquidationProgressStatus` | Pending or processing lifecycle state without an error |
 | `LiquidationSuccessStatus` | Successful lifecycle state without an error |
 | `LiquidationFailedStatus` | Failed lifecycle state with its required protocol error |
-| `LiquidationTransfer` | Collateral or change transfer state, transaction id, and error when present |
+| `LiquidationTransfer` | Pending, successful, or failed collateral or change transfer |
+| `LiquidationPendingTransfer` | Pending transfer without an error |
+| `LiquidationSuccessTransfer` | Successful transfer without an error |
+| `LiquidationFailedTransfer` | Failed transfer with its required error |
 
 See [Liquidations](../guides/liquidations.mdx) for allowance, slippage, receiver, and refund requirements.
 

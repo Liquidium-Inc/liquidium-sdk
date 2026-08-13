@@ -17,6 +17,8 @@ import type {
   ScanLiquidationsRequest,
 } from "./types";
 
+const MAX_NAT64_VALUE = 2n ** 64n - 1n;
+
 /** Liquidation candidate scanning, slippage-protected execution, and status lookup. */
 export class LiquidationsModule {
   constructor(private readonly canisterContext: CanisterContext) {}
@@ -34,10 +36,22 @@ export class LiquidationsModule {
         "Liquidation scan limit must be greater than 0"
       );
     }
+    if (request.scanLimit > MAX_NAT64_VALUE) {
+      throw new LiquidiumError(
+        LiquidiumErrorCode.VALIDATION_ERROR,
+        `Liquidation scan limit must not exceed ${MAX_NAT64_VALUE}`
+      );
+    }
     if (request.maxResults <= 0n) {
       throw new LiquidiumError(
         LiquidiumErrorCode.VALIDATION_ERROR,
         "Liquidation maximum results must be greater than 0"
+      );
+    }
+    if (request.maxResults > MAX_NAT64_VALUE) {
+      throw new LiquidiumError(
+        LiquidiumErrorCode.VALIDATION_ERROR,
+        `Liquidation maximum results must not exceed ${MAX_NAT64_VALUE}`
       );
     }
 
