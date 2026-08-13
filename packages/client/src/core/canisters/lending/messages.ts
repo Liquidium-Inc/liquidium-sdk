@@ -8,6 +8,7 @@ interface OutflowMessageRequest {
   amount: string;
   account: MessageAccount;
   expiry_timestamp: bigint;
+  origin?: string;
 }
 
 export function createBorrowAssetMessage(
@@ -20,7 +21,7 @@ Action: Borrow from pool
 Pool ID: ${request.pool_id}
 Amount: ${request.amount}
 ${accountTypeToString(request.account)}
-Expires: ${request.expiry_timestamp}
+${request.origin ? `Origin: ${request.origin}\n` : ""}Expires: ${request.expiry_timestamp}
 Nonce: ${nonce}`;
 }
 

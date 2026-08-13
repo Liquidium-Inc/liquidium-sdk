@@ -98,6 +98,8 @@ export interface CreateBorrowRequest {
   receiver: LiquidiumAccountInput;
   /** Wallet address that signs the borrow authorization. */
   signerWalletAddress: string;
+  /** Optional 1-64 character ASCII integration identifier recorded with the loan event. */
+  origin?: string;
 }
 
 /** Prepared borrow request data embedded in the signable action. */

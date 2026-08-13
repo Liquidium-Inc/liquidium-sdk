@@ -15,6 +15,7 @@ type AddAccountRequest = record {
 type AssetType = variant { CkAsset : principal; Unknown };
 type Assets = variant { BTC; ETH; ICP; SOL; USDC; USDT };
 type BorrowAssetRequest = record {
+  origin : opt text;
   expiry_timestamp : nat64;
   account : AccountType;
   pool_id : principal;
@@ -235,7 +236,11 @@ type ProtocolEventType = variant {
     request : LiquidationRequest;
   };
   WithdrawalConfirmed : record { pool : principal; details : OutflowDetails };
-  BorrowConfirmed : record { pool : principal; details : OutflowDetails };
+  BorrowConfirmed : record {
+    pool : principal;
+    origin : opt text;
+    details : OutflowDetails;
+  };
   PoolRegistered : Pool;
   AccountRemoved : Wallet;
   PoolRemoved : principal;

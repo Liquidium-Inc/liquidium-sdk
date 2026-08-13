@@ -81,6 +81,7 @@ export const idlFactory = ({ IDL }) => {
     'External' : IDL.Text,
   });
   const BorrowAssetRequest = IDL.Record({
+    'origin' : IDL.Opt(IDL.Text),
     'expiry_timestamp' : IDL.Nat64,
     'account' : AccountType,
     'pool_id' : IDL.Principal,
@@ -277,6 +278,7 @@ export const idlFactory = ({ IDL }) => {
     }),
     'BorrowConfirmed' : IDL.Record({
       'pool' : IDL.Principal,
+      'origin' : IDL.Opt(IDL.Text),
       'details' : OutflowDetails,
     }),
     'PoolRegistered' : Pool,

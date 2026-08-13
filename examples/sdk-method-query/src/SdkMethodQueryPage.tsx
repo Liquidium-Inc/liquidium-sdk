@@ -563,7 +563,7 @@ const SDK_METHODS: MethodDefinition[] = [
     id: "lending.prepareBorrow",
     label: "lending.prepareBorrow",
     defaultArgs:
-      '{\n  "profileId": "aaaaa-aa",\n  "poolId": "bbbbb-bb",\n  "amount": "10000",\n  "chain": "BTC",\n  "receiver": {\n    "address": "bc1..."\n  },\n  "signerWalletAddress": "bc1..."\n}',
+      '{\n  "profileId": "aaaaa-aa",\n  "poolId": "bbbbb-bb",\n  "amount": "10000",\n  "chain": "BTC",\n  "receiver": {\n    "address": "bc1..."\n  },\n  "signerWalletAddress": "bc1...",\n  "origin": "my-wallet"\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
       return await client.lending.prepareBorrow({
@@ -576,6 +576,7 @@ const SDK_METHODS: MethodDefinition[] = [
           args.signerWalletAddress,
           "signerWalletAddress"
         ),
+        origin: expectOptionalString(args.origin, "origin"),
       });
     },
   },
@@ -583,7 +584,7 @@ const SDK_METHODS: MethodDefinition[] = [
     id: "lending.borrow",
     label: "lending.borrow",
     defaultArgs:
-      '{\n  "profileId": "aaaaa-aa",\n  "poolId": "bbbbb-bb",\n  "amount": "10000",\n  "chain": "BTC",\n  "receiver": {\n    "address": "bc1..."\n  },\n  "signerWalletAddress": "bc1...",\n  "signerChain": "BTC",\n  "mockSignature": "replace-with-real-signature"\n}',
+      '{\n  "profileId": "aaaaa-aa",\n  "poolId": "bbbbb-bb",\n  "amount": "10000",\n  "chain": "BTC",\n  "receiver": {\n    "address": "bc1..."\n  },\n  "signerWalletAddress": "bc1...",\n  "origin": "my-wallet",\n  "signerChain": "BTC",\n  "mockSignature": "replace-with-real-signature"\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
       return await client.lending.borrow({
@@ -596,6 +597,7 @@ const SDK_METHODS: MethodDefinition[] = [
           args.signerWalletAddress,
           "signerWalletAddress"
         ),
+        origin: expectOptionalString(args.origin, "origin"),
         signerChain: expectSigningChain(args.signerChain, "signerChain"),
         signerWalletAdapter: createMockWalletAdapter(
           expectNonEmptyString(args.mockSignature, "mockSignature")

@@ -96,6 +96,7 @@ interface OutflowActionData {
   receiver: LiquidiumAccountReference;
   signerWalletAddress: string;
   expiryTimestamp: bigint;
+  origin?: string;
 }
 
 interface OutflowSubmissionData extends OutflowActionData {
@@ -112,6 +113,22 @@ interface ResolveOutflowDestinationInputParams {
 interface GuardBorrowSameAssetPolicyParams {
   profileId: string;
   pool: DecodedPool;
+}
+
+function validateBorrowOrigin(origin: string | undefined): string | undefined {
+  if (origin === undefined) {
+    return undefined;
+  }
+
+  const normalizedOrigin = origin.trim();
+  if (!/^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/.test(normalizedOrigin)) {
+    throw new LiquidiumError(
+      LiquidiumErrorCode.VALIDATION_ERROR,
+      "Borrow origin must be 1-64 ASCII letters, numbers, dots, dashes, or underscores"
+    );
+  }
+
+  return normalizedOrigin;
 }
 
 /** Borrow, withdraw, supply, inflow reporting, and fee-estimation helpers. */
@@ -338,6 +355,7 @@ export class LendingModule {
         "Borrow amount must be greater than 0"
       );
     }
+    const origin = validateBorrowOrigin(request.origin);
     const selectedPool = await getPoolById(
       this.canisterContext,
       request.poolId
@@ -387,6 +405,7 @@ export class LendingModule {
         },
         signerWalletAddress: signerAccount,
         expiryTimestamp,
+        origin,
       };
       const borrowSubmissionData: OutflowSubmissionData = {
         ...borrowActionData,
@@ -406,6 +425,7 @@ export class LendingModule {
             amount: request.amount.toString(),
             account: receiver.messageAccount,
             expiry_timestamp: expiryTimestamp,
+            origin,
           },
           nonce
         ),
@@ -444,6 +464,7 @@ export class LendingModule {
           account: request.receiverAccount,
           pool_id: Principal.fromText(request.poolId),
           amount: request.amount,
+          origin: request.origin ? [request.origin] : [],
         },
         signature_info: {
           Wallet: {

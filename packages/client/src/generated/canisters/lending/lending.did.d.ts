@@ -21,6 +21,7 @@ export type Assets = { 'BTC' : null } |
   { 'USDC' : null } |
   { 'USDT' : null };
 export interface BorrowAssetRequest {
+  'origin' : [] | [string],
   'expiry_timestamp' : bigint,
   'account' : AccountType,
   'pool_id' : Principal,
@@ -264,7 +265,13 @@ export type ProtocolEventType = {
   {
     'WithdrawalConfirmed' : { 'pool' : Principal, 'details' : OutflowDetails }
   } |
-  { 'BorrowConfirmed' : { 'pool' : Principal, 'details' : OutflowDetails } } |
+  {
+    'BorrowConfirmed' : {
+      'pool' : Principal,
+      'origin' : [] | [string],
+      'details' : OutflowDetails,
+    }
+  } |
   { 'PoolRegistered' : Pool } |
   { 'AccountRemoved' : Wallet } |
   { 'PoolRemoved' : Principal };

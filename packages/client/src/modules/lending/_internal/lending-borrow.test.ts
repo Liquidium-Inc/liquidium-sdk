@@ -288,6 +288,7 @@ describe("LendingModule borrow", () => {
         type: "ChainAddress",
       },
       signerWalletAddress: "0xsigner",
+      origin: "oisy",
     });
     const outflow = await borrowAction.submit({
       signature: "0xsigned",
@@ -309,6 +310,7 @@ describe("LendingModule borrow", () => {
         type: "ChainAddress",
       },
       signerWalletAddress: "0xsigner",
+      origin: "oisy",
     });
     expect(borrowAction.data).not.toHaveProperty("receiverAccount");
     expect(borrowAction.message).toBe(`Liquidium: Borrow Assets
@@ -317,6 +319,7 @@ Action: Borrow from pool
 Pool ID: rrkah-fqaaa-aaaaa-aaaaq-cai
 Amount: 50000
 Address:${VALID_BTC_OUTFLOW_ADDRESS}
+Origin: oisy
 Expires: 1775001900
 Nonce: 17`);
     expect(borrowAssets).toHaveBeenCalledTimes(1);
@@ -329,6 +332,7 @@ Nonce: 17`);
         account: { External: VALID_BTC_OUTFLOW_ADDRESS },
         pool_id: Principal.fromText(poolId),
         amount: 50_000n,
+        origin: ["oisy"],
       },
       signature_info: {
         Wallet: {
@@ -1050,6 +1054,21 @@ Nonce: 17`);
     ).rejects.toMatchObject({
       code: LiquidiumErrorCode.VALIDATION_ERROR,
       message: "Borrow requires a signer account",
+    });
+    await expect(
+      client.lending.prepareBorrow({
+        profileId: "p1",
+        poolId: "aaaaa-aa",
+        amount: 50_000n,
+        chain: Chain.BTC,
+        receiver: VALID_BTC_OUTFLOW_ADDRESS,
+        signerWalletAddress: "0xsigner",
+        origin: "oisy\nother",
+      })
+    ).rejects.toMatchObject({
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message:
+        "Borrow origin must be 1-64 ASCII letters, numbers, dots, dashes, or underscores",
     });
   });
 
