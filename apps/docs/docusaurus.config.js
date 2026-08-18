@@ -74,18 +74,18 @@ const config = {
         style: "dark",
         links: [
           {
-            title: "Docs",
+            title: "Documentation",
             items: [
               {
-                label: "Quick Start",
+                label: "Create and restore a Simple Loan",
                 to: "/getting-started/quick-start",
               },
               {
-                label: "Simple Loans",
+                label: "Create and track Simple Loans",
                 to: "/guides/simple-loans",
               },
               {
-                label: "API Reference",
+                label: "API reference",
                 to: "/api-reference",
               },
             ],

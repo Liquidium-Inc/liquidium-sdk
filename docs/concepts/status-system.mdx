@@ -1,10 +1,10 @@
 ---
-title: Status System
+title: Status system
 description: Read Liquidium operation states across loans, activities, and history.
 order: 205
 ---
 
-# Status System
+# Status system
 
 SDK responses that expose flow state use `LiquidiumStatus`:
 
@@ -28,6 +28,8 @@ Use `status.operation` to decide which user action or receipt type you are showi
 
 ## Operations
 
+The following table describes each operation:
+
 | Operation | Meaning |
 | --- | --- |
 | `deposit` | The user sends funds into Liquidium for supply or initial Simple Loan collateral |
@@ -36,26 +38,27 @@ Use `status.operation` to decide which user action or receipt type you are showi
 | `withdrawal` | Liquidium sends supplied funds or collateral out |
 | `liquidation` | A liquidation entry from profile history |
 
-Activities narrow the operation by direction. Inflow activities use `deposit` or `repayment`; outflow activities use `borrow` or `withdrawal`.
+Activities narrow the operation by direction. Inflow activities use `deposit` or `repayment`. Outflow activities use `borrow` or `withdrawal`.
 
 ## States
+
+The following table describes each state and its UI treatment:
 
 | State | Meaning | UI treatment |
 | --- | --- | --- |
 | `action_required` | The app needs the user to send funds, sign, or complete the next step | Show the transfer target or wallet action |
-| `confirming` | Liquidium has a transaction id or detected chain activity and waits for confirmations | Show pending confirmations when present |
+| `confirming` | Liquidium has a transaction ID or detected chain activity and waits for confirmations | Show pending confirmations when present |
 | `processing` | Liquidium is processing the operation outside the chain-confirmation phase | Keep polling and block duplicate submissions |
 | `active` | The operation has opened a live position or debt remains | Show the active position and next repayment or withdrawal action |
 | `completed` | The operation finished | Stop prompting for the operation |
 | `failed` | The operation failed | Show recovery copy and let the user retry when the flow supports it |
 | `expired` | The user missed the allowed time window | Stop showing the expired transfer target |
 
-`confirmations` and `requiredConfirmations` are populated only while `state` is
-`confirming`. Confirmation progress never exceeds the required count. Both
-fields are `null` after the operation moves to `processing` because any remaining
-work belongs to Liquidium's internal settlement lifecycle.
+`confirmations` and `requiredConfirmations` are populated only while `state` is `confirming`. Confirmation progress never exceeds the required count. Both fields are `null` after the operation moves to `processing` because any remaining work belongs to Liquidium's internal settlement lifecycle.
 
-## Where Status Appears
+## Status fields
+
+The following table shows where each status appears:
 
 | Surface | Field |
 | --- | --- |
@@ -67,9 +70,9 @@ work belongs to Liquidium's internal settlement lifecycle.
 | `client.lending.supply(...)` | `flow.status` |
 | `client.lending.borrow(...)` and `client.lending.withdraw(...)` | `details.status` |
 
-## Poll A Single Activity
+## Poll a single activity
 
-Use `client.activities.getStatus(...)` when your app has a receipt or activity id and needs one latest state.
+If your app has a receipt or activity ID and needs its most recent state, use `client.activities.getStatus(...)`:
 
 ```ts
 const result = await client.activities.getStatus({
@@ -87,9 +90,9 @@ if (result.found) {
 
 Pass `profileId` instead of `shortRef` for account-based profile flows.
 
-## List Active Work
+## List active work
 
-`client.activities.list(...)` defaults to active activities. Pass `filter: "completed"` for finished work or `filter: "all"` for both.
+To list active work by short reference:
 
 ```ts
 const activities = await client.activities.list({
@@ -97,5 +100,7 @@ const activities = await client.activities.list({
   filter: "active",
 });
 ```
+
+`client.activities.list(...)` defaults to active activities. Pass `filter: "completed"` for finished work or `filter: "all"` for both.
 
 For inflow activities, check `activity.topUp`. When `topUp.required` is `true`, the user must send `topUp.shortfallAmount` more before processing can continue.

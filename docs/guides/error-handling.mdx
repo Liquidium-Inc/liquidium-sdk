@@ -1,14 +1,16 @@
 ---
-title: Error Handling
+title: Handle errors
 description: Handle SDK errors and validation failures.
 order: 130
 ---
 
-# Error Handling
+# Handle errors
 
-Handle validation before you call state-changing methods. Handle SDK errors at the boundary where your app can show a user-facing message or retry.
+Validate input before you call a state-changing method. Catch SDK errors at the boundary where your app can show a user-facing message or retry.
 
-## LTV Validation
+## Validate the LTV result
+
+Check the loan-to-value (LTV) result before you create a loan:
 
 ```ts
 const ltv = client.quote.calculateLtv(request, pools, prices);
@@ -21,7 +23,9 @@ if (ltv.validationErrors.length > 0) {
 }
 ```
 
-## SDK Errors
+## Handle SDK errors
+
+Catch exported SDK errors before you handle unknown errors:
 
 ```ts
 import {
@@ -50,21 +54,21 @@ try {
 }
 ```
 
-Use the exported `LiquidiumErrorCode` values when your UI needs different copy for timeout, transport, validation, or protocol failures.
+If your UI needs different messages for timeout, transport, validation, or protocol failures, use the exported `LiquidiumErrorCode` values.
 
 `SimpleLoanCreatedError` means the remote loan was created but response hydration failed. Recover with the error's `loanId` or `ref` through `client.simpleLoans.get(...)`. Do not call `create(...)` again because that can create a duplicate loan.
 
-Wallet-executed deposit, borrow, and withdraw amounts below SDK minimums throw or return validation errors before state-changing calls. Use `getMinimumDepositAmount(asset)`, `getMinimumBorrowAmount(asset)`, and `getMinimumWithdrawAmount(asset)` to show the minimum next to amount inputs. Manual deposit-address flows do not accept an amount, so callers must apply the deposit minimum before broadcasting.
+Wallet-executed deposit, borrow, and withdraw amounts below SDK minimums throw or return validation errors before state-changing calls. To show the minimum next to an amount input, use `getMinimumDepositAmount(asset)`, `getMinimumBorrowAmount(asset)`, or `getMinimumWithdrawAmount(asset)`. Manual deposit-address flows do not accept an amount, so callers must apply the deposit minimum before broadcasting.
 
-## Destination Validation
+## Validate destinations
 
 Lending outflow and Simple Loan destinations are validated against the selected asset and delivery chain:
 
 | Asset path | Chain | Accepted destination family |
 | --- | --- | --- |
 | BTC L1 | `"BTC"` | Bitcoin mainnet chain address |
-| Native ETH | `"ETH"` | EVM chain address |
-| ETH L1 USDC/USDT | `"ETH"` | EVM chain address |
+| Native ETH | `"ETH"` | Ethereum address |
+| ETH L1 USDC/USDT | `"ETH"` | Ethereum address |
 | ICP native | `"ICP"` | IC principal, ICRC account, or ICP account identifier |
 | ckBTC, ckETH, ckUSDC, ckUSDT | `"ICP"` | IC principal |
 
@@ -74,6 +78,6 @@ Native ETH borrows and withdrawals do not support addresses with deployed contra
 
 The SDK throws `LiquidiumError` with code `LiquidiumErrorCode.INVALID_ADDRESS` for malformed or reserved Ethereum addresses. It uses `LiquidiumErrorCode.CONTRACT_DESTINATION_UNSUPPORTED` for native ETH lending destinations with deployed bytecode. The Simple Loans API reports deployed-contract destination rejections as SDK API errors. Asset, chain, or destination-family mismatches use `LiquidiumErrorCode.VALIDATION_ERROR`. Catch these errors at the form boundary before retrying the flow.
 
-Lending queries the configured EVM client's `getCode` method when `chain.id` identifies Ethereum mainnet. Without both fields, the SDK queries the Liquidium SDK API. RPC and API failures do not block the outflow.
+When `chain.id` identifies Ethereum mainnet, lending queries the configured Ethereum Virtual Machine (EVM) client's `getCode` method. If the configured EVM client does not provide both `chain.id` and `getCode`, the SDK queries the Liquidium SDK API. RPC and API failures do not block the outflow.
 
-Wallet-executed native ETH and ERC-20 supply also validates the sender account as an EVM address. Deposit-address queries validate that the requested asset matches the selected ETH pool and reject malformed addresses returned by the deposit canister.
+The SDK also validates the sender account for wallet-executed native ETH and ERC-20 supply as an EVM address. Deposit-address queries validate that the requested asset matches the selected ETH pool and reject malformed addresses returned by the deposit canister.

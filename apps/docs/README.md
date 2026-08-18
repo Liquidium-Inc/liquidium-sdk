@@ -1,17 +1,17 @@
-# Liquidium SDK Docs App
+# Liquidium SDK documentation app
 
-This app renders the SDK docs from `docs/` with Docusaurus.
+This app uses Docusaurus to render the SDK documentation from `docs/`.
 
-Run from the SDK root:
+From the SDK root, start the development server:
 
 ```bash
 pnpm --filter docs dev
 ```
 
-Build from the SDK root:
+From the SDK root, build the documentation site:
 
 ```bash
 pnpm --filter docs build
 ```
 
-The docs source stays in this repo so code, generated API reference, and docs can change in the same pull request.
+The `docs/` directory contains the source, so code, the generated API reference, and documentation can change in the same pull request.

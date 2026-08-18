@@ -1,16 +1,16 @@
 ---
-title: Deposit Address Flow
+title: Use deposit-address flows
 description: Use account-based manual deposit targets.
 order: 110
 ---
 
-# Deposit Address Flow
+# Use deposit-address flows
 
 Use this path when your app manages a Liquidium profile and asks the user to send funds to a deposit target.
 
-## When To Use It
+## Supported use cases
 
-Use deposit-address flows when your app needs:
+Use a deposit-address flow for the following app needs:
 
 | Need | Use |
 | --- | --- |
@@ -18,7 +18,9 @@ Use deposit-address flows when your app needs:
 | Manual transfers | Your app shows an address or ICRC account and lets the user send funds outside the SDK |
 | Dashboard flows | The user supplies, borrows, withdraws, and repays from one account |
 
-## Shape
+## Request a deposit target
+
+Call `client.lending.supply(...)` with the transfer mechanism:
 
 ```ts
 import { Chain } from "@liquidium/client";
@@ -46,4 +48,4 @@ Manual transfer requests do not include an amount, so the SDK cannot validate th
 | USDC / ckUSDC | `1_000_000n` base units (`1 USDC`) |
 | USDT / ckUSDT | `1_000_000n` base units (`1 USDT`) |
 
-For manual deposits, account for the current inflow fee returned by `client.lending.estimateInflowFee(...)`; the Liquidium app displays the product floor plus that fee. It uses a separate `1.5 USDT` floor before adding fees for external USDT deposit addresses. This route-specific guidance does not change the SDK's `1 USDT` product minimum.
+For manual deposits, account for the inflow fee returned by `client.lending.estimateInflowFee(...)`. The Liquidium app displays the product floor plus that fee. For external USDT deposit addresses, it uses a separate `1.5 USDT` floor before it adds fees. This route-specific guidance does not change the SDK's `1 USDT` product minimum.

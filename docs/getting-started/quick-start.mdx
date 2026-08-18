@@ -1,14 +1,16 @@
 ---
-title: Quick Start
+title: Create and restore a Simple Loan
 description: Create and restore an accountless Simple Loan.
 order: 20
 ---
 
-# Quick Start
+# Create and restore a Simple Loan
 
 Create a Simple Loan, show the deposit target, and restore the loan by reference.
 
-Borrow amounts must meet the SDK minimum for the selected asset. Use `getMinimumBorrowAmount(borrowPool.asset)` when your UI needs to show that minimum.
+Before you create the loan, make sure that the borrow amount meets the SDK minimum for the selected asset. If your UI shows the minimum, use `getMinimumBorrowAmount(borrowPool.asset)`.
+
+Create and restore the loan:
 
 ```ts
 import { Asset, Chain, LiquidiumClient, type Pool } from "@liquidium/client";

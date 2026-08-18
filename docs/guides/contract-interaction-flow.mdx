@@ -1,18 +1,20 @@
 ---
-title: Contract Interaction Flow
+title: Use contract-interaction flows
 description: Use wallet-executed Ethereum contract interactions for deposits and repayments.
 order: 120
 ---
 
-# Contract Interaction Flow
+# Use contract-interaction flows
 
-Use contract-interaction flows when an EVM wallet should deposit native ETH or approve and deposit ERC-20 funds through the SDK. The supported pool assets are ETH, USDC, and USDT on Ethereum.
+Use contract-interaction flows when an Ethereum Virtual Machine (EVM) wallet should deposit native ETH or approve and deposit ERC-20 funds through the SDK. The supported pool assets are ETH, USDC, and USDT on Ethereum.
 
 ## Requirements
 
+Contract-interaction flows have the following requirements:
+
 | Requirement | Why |
 | --- | --- |
-| `evmRpcUrl` or `evmPublicClient` | Required for USDC and USDT allowance and balance reads; native ETH does not require an EVM read client |
+| `evmRpcUrl` or `evmPublicClient` | Required for USDC and USDT allowance and balance reads, but native ETH does not require an EVM read client |
 | Wallet adapter with `sendEthTransaction` | The SDK asks the wallet to broadcast approval and deposit transactions |
 | Token base-unit amount | The SDK sends protocol amounts as integers |
 
@@ -26,7 +28,9 @@ The SDK rejects deposits below the asset product minimum before reading ERC-20 s
 
 Use `getMinimumDepositAmount(asset)` to read the same minimum. Repayments are not subject to deposit minimums.
 
-## Shape
+## Supply funds
+
+Call `client.lending.supply(...)` with the contract-interaction mechanism:
 
 ```ts
 import { Chain } from "@liquidium/client";

@@ -1,10 +1,10 @@
 ---
-title: Configuration
-description: Configure transports, canister IDs, API requests, and EVM reads.
+title: Configure the client
+description: Configure transports, canister IDs, API requests, and Ethereum reads.
 order: 30
 ---
 
-# Configuration
+# Configure the client
 
 Create the client with defaults for Liquidium mainnet:
 
@@ -14,7 +14,7 @@ import { LiquidiumClient } from "@liquidium/client";
 const client = new LiquidiumClient();
 ```
 
-Pass config when your app needs custom transports, headers, canister IDs, or EVM read support:
+If your app needs custom transports, headers, canister IDs, or Ethereum read support, pass a configuration object:
 
 ```ts
 const client = new LiquidiumClient({
@@ -26,24 +26,26 @@ const client = new LiquidiumClient({
 });
 ```
 
-## Config Fields
+## Configuration fields
+
+The client accepts the following configuration fields:
 
 | Field | Use |
 | --- | --- |
-| `environment` | Select bundled canister IDs. The SDK currently bundles only `"mainnet"`. |
-| `agent` | Use a preconfigured ICP `Agent`. When provided, the SDK ignores `icHost` and `identity`. |
-| `icHost` | Override the ICP replica host. |
-| `identity` | Send signed canister calls with a caller identity. |
-| `apiBaseUrl` | Override the Liquidium SDK HTTP API root. Defaults to `https://app.liquidium.fi/api/sdk`. |
-| `headers` | Add headers to SDK HTTP API requests. |
-| `canisterIds` | Partially override `lending`, `ethDeposit`, `simpleLoans`, or `pools.{btc,eth,usdt,usdc,icp}` for custom deployments. |
-| `fetch` | Provide a custom fetch implementation. |
-| `timeoutMs` | Set the SDK API request timeout in milliseconds. Defaults to `30_000`. |
-| `evmRpcUrl` | Create a viem public client for ERC-20 reads and native ETH destination checks. |
-| `evmRpcHeaders` | Add headers to EVM RPC requests. |
-| `evmPublicClient` | Use an existing viem-compatible client. `readContract` is required; mainnet `chain` and `getCode` enable native ETH destination checks. The SDK uses this client instead of `evmRpcUrl` and `evmRpcHeaders`. |
+| `environment` | Selects bundled canister IDs. The SDK bundles only `"mainnet"`. |
+| `agent` | Uses a preconfigured ICP `Agent`. If you provide an agent, the SDK ignores `icHost` and `identity`. |
+| `icHost` | Overrides the ICP replica host. |
+| `identity` | Sends signed canister calls with a caller identity. |
+| `apiBaseUrl` | Overrides the Liquidium SDK HTTP API root. The default is `https://app.liquidium.fi/api/sdk`. |
+| `headers` | Adds headers to SDK HTTP API requests. |
+| `canisterIds` | Partially overrides `lending`, `ethDeposit`, `simpleLoans`, or `pools.{btc,eth,usdt,usdc,icp}` for custom deployments. |
+| `fetch` | Provides a custom fetch implementation. |
+| `timeoutMs` | Sets the SDK API request timeout in milliseconds. The default is `30_000`. |
+| `evmRpcUrl` | Creates a viem public client for ERC-20 reads and native ETH destination checks. |
+| `evmRpcHeaders` | Adds headers to EVM RPC requests. |
+| `evmPublicClient` | Uses an existing viem-compatible client. `readContract` is required. Mainnet `chain` and `getCode` enable native ETH destination checks. The SDK uses this client instead of `evmRpcUrl` and `evmRpcHeaders`. |
 
-Pass a custom agent when your app already owns ICP transport and identity setup:
+If your app already manages ICP transport and identity setup, pass a custom agent:
 
 ```ts
 import { HttpAgent } from "@icp-sdk/core/agent";
@@ -60,7 +62,7 @@ const agent = await HttpAgent.create({
 const client = new LiquidiumClient({ agent });
 ```
 
-Use nested canister overrides:
+To override canister IDs for a custom deployment, use nested fields:
 
 ```ts
 const client = new LiquidiumClient({
@@ -75,6 +77,6 @@ const client = new LiquidiumClient({
 });
 ```
 
-Removed flat keys such as `instantLoans`, `btcPool`, and `ercPool` are rejected with `LiquidiumErrorCode.VALIDATION_ERROR`.
+The client rejects removed flat keys such as `instantLoans`, `btcPool`, and `ercPool` with `LiquidiumErrorCode.VALIDATION_ERROR`.
 
-Set `VITE_INFURA_API_KEY` or `VITE_EVM_RPC_URL` when you run an example that needs Ethereum reads.
+If an example needs Ethereum reads, set `VITE_INFURA_API_KEY` or `VITE_EVM_RPC_URL`.

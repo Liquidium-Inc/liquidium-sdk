@@ -1,12 +1,14 @@
 ---
-title: Simple Loan Lifecycle
+title: Simple Loan lifecycle
 description: Understand Simple Loan states and what your UI should do.
 order: 210
 ---
 
-# Simple Loan Lifecycle
+# Simple Loan lifecycle
 
-A Simple Loan reports `loan.status` as a `LiquidiumStatus`. Read `status.operation` for the current phase and `status.state` for the UI state.
+A Simple Loan reports `loan.status` as a `LiquidiumStatus`. Read `status.operation` for the phase and `status.state` for the UI state.
+
+The following table maps each status to its meaning and UI action:
 
 | Status | Meaning | UI action |
 | --- | --- | --- |
@@ -19,7 +21,7 @@ A Simple Loan reports `loan.status` as a `LiquidiumStatus`. Read `status.operati
 | `{ operation: "repayment", state: "completed" }` | The loan closed | Show final state and stop prompting for repayment |
 | `{ operation: "deposit", state: "expired" }` | The deposit window passed before collateral arrived | Show timeout copy and stop prompting for collateral deposit |
 
-Reload state with:
+To reload the state, call `client.simpleLoans.get(...)`:
 
 ```ts
 const loan = await client.simpleLoans.get({ ref });
@@ -27,4 +29,4 @@ const loan = await client.simpleLoans.get({ ref });
 
 Use activities when your UI needs more detail about deposits, borrow outflows, repayment deposits, confirmations, or fee top-ups.
 
-See [Status System](./status-system.mdx) for the shared operation and state model.
+For the shared operation and state model, see the [status system](./status-system.mdx).

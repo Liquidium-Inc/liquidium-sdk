@@ -1,24 +1,28 @@
 ---
-title: Simple Loans
+title: Create and track Simple Loans
 description: Create, restore, and track accountless Simple Loans.
 order: 100
 ---
 
-# Simple Loans
+# Create and track Simple Loans
 
 Use Simple Loans for a checkout-style borrow flow. The SDK creates a generated Liquidium profile, returns transfer targets, and lets your app restore the loan from a short reference.
 
-## Flow
+## Simple Loan flow
+
+The following table shows the flow and your app's responsibility at each step:
 
 | Step | SDK call | Your app does |
 | --- | --- | --- |
 | Load market data | `client.market.listPools()` and `client.market.getAssetPrices()` | Show supported collateral and borrow assets |
-| Validate amounts | `client.quote.calculateLtv(...)` | Block too-small borrow amounts, invalid LTV, or frozen-pool input before creation |
+| Validate amounts | `client.quote.calculateLtv(...)` | Block too-small borrow amounts, an invalid loan-to-value (LTV) ratio, or frozen-pool input before creation |
 | Create loan | `client.simpleLoans.create(...)` | Store `loan.ref` and show the selected quote from `loan.initialDeposit.targets[chain]` |
 | Track loan | `client.simpleLoans.get({ ref })`, `client.simpleLoans.find(...)`, and `client.activities.list({ shortRef: ref })` | Reload state and monitor deposits, borrows, and repayments |
 | Repay loan | Read `loan.repayment.targets[chain]` | If the selected quote exists and its `amount > 0n`, ask the user to send it to `quote.target.address` |
 
-## Create Request
+## Create a loan
+
+Use the following fields in a `client.simpleLoans.create(...)` request:
 
 | Field | Description |
 | --- | --- |
@@ -27,11 +31,12 @@ Use Simple Loans for a checkout-style borrow flow. The SDK creates a generated L
 | `refund` | Refund `chain` and `destination` for returned collateral |
 | `ltvMaxBps` | Maximum LTV in basis points, where `6_000n` is 60% |
 | `depositWindowSeconds` | How long the user has to send collateral |
+
 `borrow.destination` and `refund.destination` can be strings or typed account objects such as `{ type: "ChainAddress", address: "bc1q..." }`, `{ type: "IcPrincipal", address: "aaaaa-aa" }`, or `{ type: "IcrcAccount", address: "aaaaa-aa" }`. The SDK validates that each destination family matches its selected asset and chain before creation.
 
-Native ETH Simple Loans do not support borrow destinations with deployed contract bytecode. The same restriction applies to the refund destination when the collateral is native ETH. You do not need an EVM client for these checks.
+Native ETH Simple Loans do not support borrow destinations with deployed contract bytecode. The same restriction applies to the refund destination when the collateral is native ETH. You do not need an Ethereum client for these checks.
 
-## Collateral Minimums
+## Collateral minimums
 
 The SDK rejects Simple Loan collateral below the configured deposit minimum before creating the loan:
 
@@ -43,9 +48,9 @@ The SDK rejects Simple Loan collateral below the configured deposit minimum befo
 | USDC | `1_000_000n` base units |
 | USDT | `1_000_000n` base units |
 
-Use `getMinimumDepositAmount(asset)` when your UI needs to display or pre-check the same minimum.
+If your UI displays or pre-checks the same minimum, use `getMinimumDepositAmount(asset)`.
 
-## Borrow Minimums
+## Borrow minimums
 
 The SDK enforces these minimum borrow amounts before creation:
 
@@ -56,15 +61,15 @@ The SDK enforces these minimum borrow amounts before creation:
 | USDC | `1_000_000n` base units |
 | USDT | `1_000_000n` base units |
 
-Use `getMinimumBorrowAmount(asset)` when your UI needs to display or pre-check the same minimum.
+If your UI displays or pre-checks the same minimum, use `getMinimumBorrowAmount(asset)`.
 
-## ETH Transfer Rails
+## ETH transfer rails
 
-ETH pools expose native ETH targets under `targets[Chain.ETH]` and ckETH ICRC targets under `targets[Chain.ICP]`. Both routes use 18 decimals and amounts in wei. Native ETH transfers send value directly to the generated EVM address; ckETH transfers use the returned ICRC account.
+ETH pools expose native ETH targets under `targets[Chain.ETH]` and ckETH ICRC targets under `targets[Chain.ICP]`. Both routes use 18 decimals and amounts in wei. Native ETH transfers send value directly to the generated Ethereum address. ckETH transfers use the returned ICRC account.
 
 Native ETH quotes use a `0.00025 ETH` inflow-fee fallback when the live estimate fails or is non-positive. Repayment quotes expose `inflowFeeEstimateAvailable: false` when this fallback is used.
 
-## Restore State
+## Restore a loan
 
 Use the user-facing reference for refreshes, status pages, and support links:
 
@@ -78,15 +83,15 @@ Use the numeric loan ID when your backend stores it:
 const loan = await client.simpleLoans.get({ loanId });
 ```
 
-Use `find(...)` when the user may paste a short reference, numeric loan id string, address, or transaction id:
+Use `find(...)` when the user might paste a short reference, numeric loan ID string, address, or transaction ID:
 
 ```ts
 const results = await client.simpleLoans.find(addressOrTxidOrRef);
 ```
 
-String `find(...)` calls the SDK API search index and returns lightweight matches without hydrating every loan. It supports short references, numeric canister loan id strings, generated deposit or repayment addresses, borrow or refund destination addresses, and indexed transaction ids. Use `get({ ref })` or `get({ loanId })` after the user selects a match.
+When its argument is a string, `find(...)` queries the SDK API search index and returns lightweight matches without hydrating every loan. It supports short references, numeric canister loan ID strings, generated deposit or repayment addresses, borrow or refund destination addresses, and indexed transaction IDs. After the user selects a match, use `get({ ref })` or `get({ loanId })`.
 
-## Response Fields
+## Response fields
 
 Most UIs need these fields after `create(...)` or `get(...)`:
 
@@ -106,8 +111,10 @@ Most UIs need these fields after `create(...)` or `get(...)`:
 
 Target maps are partial. A missing chain entry means that transfer rail is unavailable, not that no debt exists. Check `loan.repayment.debtAmount > 0n` or the selected quote's `amount > 0n` before prompting for repayment.
 
-`client.simpleLoans.find(...)` returns lightweight indexed fields, including `loanId`, `ref`, `profileId`, `createdAt`, `collateral`, and `borrow`. Use `client.simpleLoans.get(...)` to load full loan fields for a selected match. Use `client.activities.list(...)` separately when you need active or completed flow activity.
+`client.simpleLoans.find(...)` returns lightweight indexed fields, including `loanId`, `ref`, `profileId`, `createdAt`, `collateral`, and `borrow`. To load the full loan fields for a selected match, use `client.simpleLoans.get(...)`. If you need active or completed flow activity, use `client.activities.list(...)` separately.
 
-Diagnostic warmed-profile queries support both authorization generations. `client.simpleLoans.listWarmedProfiles()` returns `authorization.type` as `"EthSignature"` for legacy profiles or `"IcpCaller"` for native IC caller profiles. `"EthSignature"` is deprecated for new profiles but remains supported for old canisters and existing profiles. Event queries similarly return deprecated legacy `"ProfileWarmed"` events and native `"IcpProfileWarmed"` events.
+## Diagnostic data
 
-See [Status System](../concepts/status-system.mdx) for `loan.status`, activity status, confirmation fields, and top-up handling.
+Diagnostic warmed-profile queries support both authorization types. `client.simpleLoans.listWarmedProfiles()` returns `authorization.type` as `"EthSignature"` for legacy profiles or `"IcpCaller"` for native IC caller profiles. `"EthSignature"` is deprecated for profile creation but remains supported for compatibility. Event queries can also return deprecated `"ProfileWarmed"` events or native `"IcpProfileWarmed"` events.
+
+For `loan.status`, activity status, confirmation fields, and top-up handling, see the [status system](../concepts/status-system.mdx).
