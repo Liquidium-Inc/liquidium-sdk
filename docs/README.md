@@ -14,6 +14,19 @@ When you change public SDK behavior, exported types, method names, request field
 
 Do not run TypeDoc through `pnpm docs:api` or modify `api-reference/generated/` in a feature or fix pull request. Regenerate and commit TypeDoc output in a separate documentation pull request unless the implementation pull request explicitly requires it.
 
+## Writing checklist
+
+Before you submit documentation changes, check the following items:
+
+- Identify the reader and the task or question that the page answers.
+- Put prerequisites and warnings before the action that they control.
+- Use numbered steps for procedures and bullets for unordered information.
+- Introduce each code block, list, and table with a complete sentence.
+- Use descriptive uppercase placeholders and explain each placeholder.
+- State when an example uses mainnet or can transfer real assets.
+- Document public parameters, return values, and thrown errors in source comments.
+- Use sentence case for headings and descriptive text for links.
+
 ## Documentation references
 
 Use the following references for documentation structure and style:

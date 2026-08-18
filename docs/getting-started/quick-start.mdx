@@ -8,7 +8,31 @@ order: 20
 
 Create a Simple Loan, show the deposit target, and restore the loan by reference.
 
-Before you create the loan, make sure that the borrow amount meets the SDK minimum for the selected asset. If your UI shows the minimum, use `getMinimumBorrowAmount(borrowPool.asset)`.
+## Before you start
+
+Complete the following preparation:
+
+- Install `@liquidium/client`.
+- Prepare an Ethereum address to receive the borrowed USDC.
+- Prepare a Bitcoin address to receive a collateral refund.
+- Confirm that your runtime provides `fetch` and `BigInt`.
+
+:::warning Mainnet operation
+
+`new LiquidiumClient()` uses Liquidium mainnet defaults. This example creates
+a real Simple Loan. Review every amount and destination before you send funds.
+
+:::
+
+The example uses `50_000n` satoshis (`0.0005 BTC`) as collateral and
+`9_000_000n` base units (`9 USDC`) as the borrow amount. Replace
+`ETHEREUM_BORROW_ADDRESS` with the Ethereum address that receives the USDC.
+Replace `BITCOIN_REFUND_ADDRESS` with the Bitcoin address that receives a
+collateral refund.
+
+Before you create the loan, make sure that the borrow amount meets the SDK
+minimum for the selected asset. If your UI shows the minimum, use
+`getMinimumBorrowAmount(borrowPool.asset)`.
 
 Create and restore the loan:
 
@@ -54,11 +78,11 @@ const loan = await client.simpleLoans.create({
     asset: Asset.USDC,
     amount: borrowAmount,
     chain: Chain.ETH,
-    destination: "0x2222222222222222222222222222222222222222",
+    destination: "ETHEREUM_BORROW_ADDRESS",
   },
   refund: {
     chain: Chain.BTC,
-    destination: "1BoatSLRHtKNngkdXEeobR76b53LETtpyT",
+    destination: "BITCOIN_REFUND_ADDRESS",
   },
   ltvMaxBps: ltv.maxAllowedLtvBps,
   depositWindowSeconds: 3_600n,
@@ -107,3 +131,7 @@ function requirePool(
 ```
 
 Save `loan.ref`. Use it for refreshes, status pages, and support links.
+
+If `create(...)` throws `SimpleLoanCreatedError`, recover the loan with the
+error's `loanId` or `ref`. Do not call `create(...)` again. For recovery code,
+see [Handle SDK errors](../guides/error-handling.mdx#handle-sdk-errors).

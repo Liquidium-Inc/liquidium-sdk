@@ -41,6 +41,20 @@ For UI guidance, see the [status system](../concepts/status-system.mdx).
 
 For APR and estimated APY semantics, see [market data](../concepts/market-data.mdx).
 
+## Error behavior
+
+Public SDK methods can reject with
+[`LiquidiumError`](./generated/classes/LiquidiumError.md). Branch on its stable
+[`LiquidiumErrorCode`](./generated/variables/LiquidiumErrorCode.md) value
+instead of parsing `message`.
+
+`client.simpleLoans.create(...)` can also reject with
+[`SimpleLoanCreatedError`](./generated/classes/SimpleLoanCreatedError.md) after
+the remote loan is created but before the SDK loads its hydrated state. Recover
+the loan with the error's `loanId` or `ref`. Do not call `create(...)` again.
+
+For retry decisions and recovery code, see [Handle errors](../guides/error-handling.mdx).
+
 ## History
 
 Use `client.history.getUserTransactionHistory(profileId, filters?)` and `client.history.getLiquidationHistory(profileId, filters?)` for paginated profile history. Use canonical `operations` and `states` filters. Continue pagination with the opaque `nextCursor` value.

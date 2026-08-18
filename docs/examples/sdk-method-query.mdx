@@ -8,6 +8,15 @@ order: 330
 
 Use `examples/sdk-method-query` to call SDK methods from a Vite React app that loads Dynamic.
 
+:::warning Mainnet operations
+
+This example uses bundled mainnet canister and production service defaults.
+It exposes state-changing SDK methods that can create protocol state or submit
+wallet transactions. Review the selected method and all arguments before you
+select **Run method**.
+
+:::
+
 The method query screen provides the following capabilities:
 
 | Capability | Use |
@@ -17,12 +26,38 @@ The method query screen provides the following capabilities:
 | Wallet defaults | Apply connected-wallet values where relevant |
 | Raw result view | Inspect return payloads |
 
-From the SDK root, install dependencies and start the example:
+## Start the example
 
-```bash
-pnpm install
-cp examples/sdk-method-query/.env.example examples/sdk-method-query/.env
-pnpm --filter @liquidium/example-sdk-method-query dev
-```
+Use Node.js 20.19 or later in the 20.x line, or Node.js 22.12 or later. Use
+`pnpm` 11 or later.
+
+To start the example, follow these steps:
+
+1. From the SDK root, install the workspace dependencies:
+
+   ```bash
+   pnpm install
+   ```
+
+2. Optional: To enable Ethereum reads, copy the environment template:
+
+   ```bash
+   cp examples/sdk-method-query/.env.example examples/sdk-method-query/.env
+   ```
+
+   Set `VITE_EVM_RPC_URL` to a complete Ethereum mainnet Remote Procedure Call
+   (RPC) URL, or set `VITE_INFURA_API_KEY` to an Infura API key. Values with the
+   `VITE_` prefix are included in the browser bundle. Use only browser-safe,
+   restricted credentials.
+
+3. Start the example:
+
+   ```bash
+   pnpm --filter @liquidium/example-sdk-method-query dev
+   ```
+
+4. Open the local URL that Vite prints.
+
+The page shows **SDK Method Query** when the example starts.
 
 Included method templates cover account, market, position, activity, history, quote, lending, and Simple Loans methods.

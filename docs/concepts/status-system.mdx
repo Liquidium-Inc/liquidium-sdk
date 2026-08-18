@@ -51,7 +51,7 @@ The following table describes each state and its UI treatment:
 | `processing` | Liquidium is processing the operation outside the chain-confirmation phase | Keep polling and block duplicate submissions |
 | `active` | The operation has opened a live position or debt remains | Show the active position and next repayment or withdrawal action |
 | `completed` | The operation finished | Stop prompting for the operation |
-| `failed` | The operation failed | Show recovery copy and let the user retry when the flow supports it |
+| `failed` | The operation failed | Show the failure, reload source data, and retry only when the method documentation says that the call is safe to repeat |
 | `expired` | The user missed the allowed time window | Stop showing the expired transfer target |
 
 `confirmations` and `requiredConfirmations` are populated only while `state` is `confirming`. Confirmation progress never exceeds the required count. Both fields are `null` after the operation moves to `processing` because any remaining work belongs to Liquidium's internal settlement lifecycle.
@@ -104,3 +104,17 @@ const activities = await client.activities.list({
 `client.activities.list(...)` defaults to active activities. Pass `filter: "completed"` for finished work or `filter: "all"` for both.
 
 For inflow activities, check `activity.topUp`. When `topUp.required` is `true`, the user must send `topUp.shortfallAmount` more before processing can continue.
+
+## Poll for status changes
+
+The SDK returns status snapshots. It does not start background polling or set a
+polling interval for your app.
+
+Poll while your app waits for an external state change, such as transaction
+detection, confirmation, or protocol processing. Stop polling when the state is
+`completed`, `failed`, or `expired`. When the state is `active`, wait for the
+next user action unless the page needs live position updates.
+
+Use your app's bounded polling and backoff policy. Do not repeat a
+state-changing SDK call only because its status has not changed. Reload the
+loan, activity, position, or history entry instead.

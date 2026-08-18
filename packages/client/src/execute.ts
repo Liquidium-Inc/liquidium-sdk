@@ -32,6 +32,9 @@ export interface ExecuteWithOptions {
  *
  * @param options - Adapter and optional chain/account overrides.
  * @returns A function that accepts a `WalletAction` and resolves with its submit result.
+ * @throws {@link LiquidiumError} If a required wallet capability or signing
+ * chain is missing.
+ * @throws `Error` If the wallet adapter or action submission fails.
  */
 export function executeWith(options: ExecuteWithOptions) {
   return async function execute<TResult>(

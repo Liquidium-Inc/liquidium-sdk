@@ -8,7 +8,7 @@
 
 > **executeWith**(`options`): \<`TResult`\>(`action`) => `Promise`\<`TResult`\>
 
-Defined in: packages/client/src/execute.ts:36
+Defined in: packages/client/src/execute.ts:39
 
 Returns an async function that runs a [WalletAction](../type-aliases/WalletAction.md) end-to-end.
 
@@ -27,3 +27,12 @@ Adapter and optional chain/account overrides.
 A function that accepts a `WalletAction` and resolves with its submit result.
 
 \<`TResult`\>(`action`) => `Promise`\<`TResult`\>
+
+## Throws
+
+[LiquidiumError](../classes/LiquidiumError.md) If a required wallet capability or signing
+chain is missing.
+
+## Throws
+
+`Error` If the wallet adapter or action submission fails.

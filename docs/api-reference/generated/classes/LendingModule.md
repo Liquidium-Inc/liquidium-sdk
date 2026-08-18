@@ -42,7 +42,7 @@ Defined in: packages/client/src/modules/lending/lending.ts:119
 
 > **borrow**(`params`): `Promise`\<[`BorrowOutflowDetails`](../type-aliases/BorrowOutflowDetails.md)\>
 
-Defined in: packages/client/src/modules/lending/lending.ts:491
+Defined in: packages/client/src/modules/lending/lending.ts:501
 
 Creates a borrow outflow using the provided wallet adapter.
 
@@ -63,6 +63,15 @@ Borrow request fields plus `signerChain` and `signerWalletAdapter`.
 
 The lending canister receipt as [OutflowDetails](../interfaces/OutflowDetails.md).
 
+#### Throws
+
+[LiquidiumError](LiquidiumError.md) If SDK validation or protocol submission
+fails.
+
+#### Throws
+
+`Error` If the wallet adapter rejects message signing.
+
 #### Remarks
 
 `id` is always present. `txid` may be missing on the first response; the SDK does not
@@ -74,7 +83,7 @@ poll for it. Use history or app-level polling if you need the chain transaction 
 
 > **estimateInflowFee**(`request`): `Promise`\<[`InflowFeeEstimate`](../interfaces/InflowFeeEstimate.md)\>
 
-Defined in: packages/client/src/modules/lending/lending.ts:604
+Defined in: packages/client/src/modules/lending/lending.ts:618
 
 Estimates the network/deposit fee for an inflow target.
 
@@ -102,7 +111,7 @@ Total fee estimate rounded up in the asset's base units.
 
 > **getDepositAddress**(`request`): `Promise`\<`string`\>
 
-Defined in: packages/client/src/modules/lending/lending.ts:544
+Defined in: packages/client/src/modules/lending/lending.ts:558
 
 Returns the read-only deposit address for an ETH-chain inflow target.
 
@@ -129,7 +138,7 @@ The EVM deposit address for the derived account.
 
 > **getEvmSupplyContext**(`request`): `Promise`\<[`EvmSupplyContext`](../interfaces/EvmSupplyContext.md)\>
 
-Defined in: packages/client/src/modules/lending/lending.ts:529
+Defined in: packages/client/src/modules/lending/lending.ts:543
 
 Fetches ERC-20 supply planning data with the configured EVM read client.
 
@@ -156,7 +165,7 @@ Locally computed [EvmSupplyContext](../interfaces/EvmSupplyContext.md) for appro
 
 > **isBorrowingDisabled**(): `Promise`\<`boolean`\>
 
-Defined in: packages/client/src/modules/lending/lending.ts:705
+Defined in: packages/client/src/modules/lending/lending.ts:721
 
 Returns whether borrowing is currently disabled by the protocol.
 
@@ -172,7 +181,7 @@ Returns whether borrowing is currently disabled by the protocol.
 
 > **prepareBorrow**(`request`): `Promise`\<[`BorrowAction`](../interfaces/BorrowAction.md)\>
 
-Defined in: packages/client/src/modules/lending/lending.ts:321
+Defined in: packages/client/src/modules/lending/lending.ts:328
 
 Prepares a borrow action that can be signed and submitted later.
 
@@ -194,13 +203,18 @@ Profile, pool, amount (borrow asset base units), outflow address, and signer wal
 
 A signable [BorrowAction](../interfaces/BorrowAction.md) with `submit` wired to the canister.
 
+#### Throws
+
+[LiquidiumError](LiquidiumError.md) If request validation, destination
+validation, or protocol preparation fails.
+
 ***
 
 ### prepareWithdraw()
 
 > **prepareWithdraw**(`request`): `Promise`\<[`WithdrawAction`](../interfaces/WithdrawAction.md)\>
 
-Defined in: packages/client/src/modules/lending/lending.ts:132
+Defined in: packages/client/src/modules/lending/lending.ts:134
 
 Prepares a withdraw action that can be signed and submitted later.
 
@@ -220,13 +234,18 @@ Profile, pool, amount (pool asset base units), outflow address, and signer walle
 
 A signable [WithdrawAction](../interfaces/WithdrawAction.md) with `submit` wired to the canister.
 
+#### Throws
+
+[LiquidiumError](LiquidiumError.md) If request validation, destination
+validation, or protocol preparation fails.
+
 ***
 
 ### submitInflow()
 
 > **submitInflow**(`request`): `Promise`\<[`SubmitInflowResponse`](../interfaces/SubmitInflowResponse.md)\>
 
-Defined in: packages/client/src/modules/lending/lending.ts:674
+Defined in: packages/client/src/modules/lending/lending.ts:690
 
 Submits an inflow transaction id for faster indexing.
 
@@ -246,13 +265,18 @@ Broadcast `txid` plus inflow `operation` and optional `chain`.
 
 Acknowledgement including the submitted `txid`.
 
+#### Throws
+
+[LiquidiumError](LiquidiumError.md) If the chain is unsupported or the API
+request fails.
+
 ***
 
 ### supply()
 
 > **supply**(`request`): `Promise`\<[`SupplyFlow`](../interfaces/SupplyFlow.md)\>
 
-Defined in: packages/client/src/modules/lending/lending.ts:516
+Defined in: packages/client/src/modules/lending/lending.ts:530
 
 Resolves a supply target for a deposit or repayment and optionally broadcasts it.
 
@@ -276,13 +300,23 @@ caller's responsibility to track confirmation state using their own polling.
 A [SupplyFlow](../interfaces/SupplyFlow.md) receipt with `type`, `target`, `submit`, and
   an optional `txid` present when the SDK broadcast for you.
 
+#### Throws
+
+[LiquidiumError](LiquidiumError.md) If validation, transfer planning, or
+protocol submission fails.
+
+#### Throws
+
+`Error` If the wallet adapter rejects or fails to broadcast a
+transaction.
+
 ***
 
 ### withdraw()
 
 > **withdraw**(`params`): `Promise`\<[`WithdrawOutflowDetails`](../type-aliases/WithdrawOutflowDetails.md)\>
 
-Defined in: packages/client/src/modules/lending/lending.ts:299
+Defined in: packages/client/src/modules/lending/lending.ts:304
 
 Creates a withdraw outflow using the provided wallet adapter.
 
@@ -301,3 +335,12 @@ Withdraw request fields plus `signerChain` and `signerWalletAdapter`.
 `Promise`\<[`WithdrawOutflowDetails`](../type-aliases/WithdrawOutflowDetails.md)\>
 
 The canister [OutflowDetails](../interfaces/OutflowDetails.md) for the completed withdraw.
+
+#### Throws
+
+[LiquidiumError](LiquidiumError.md) If SDK validation or protocol submission
+fails.
+
+#### Throws
+
+`Error` If the wallet adapter rejects message signing.

@@ -60,6 +60,21 @@ If your UI needs different messages for timeout, transport, validation, or proto
 
 Wallet-executed deposit, borrow, and withdraw amounts below SDK minimums throw or return validation errors before state-changing calls. To show the minimum next to an amount input, use `getMinimumDepositAmount(asset)`, `getMinimumBorrowAmount(asset)`, or `getMinimumWithdrawAmount(asset)`. Manual deposit-address flows do not accept an amount, so callers must apply the deposit minimum before broadcasting.
 
+## Decide when to retry
+
+Use the error type and the operation type before you retry:
+
+| Condition | Action |
+| --- | --- |
+| Read-only request fails with `NETWORK_ERROR`, `SERVICE_UNAVAILABLE`, or `REQUEST_TIMEOUT` | Retry with your app's bounded backoff policy |
+| State-changing request times out | Reload the related loan, activity, position, or history before you decide whether to submit another request |
+| Request fails with `VALIDATION_ERROR` or a protocol error | Correct the input or wait for the protocol state to change before you retry |
+| `SimpleLoanCreatedError` is thrown | Recover with `client.simpleLoans.get(...)`; do not create another loan |
+
+The SDK does not define an application retry interval. Do not automatically
+repeat a state-changing method because an error might have occurred after the
+remote operation succeeded.
+
 ## Validate destinations
 
 Lending outflow and Simple Loan destinations are validated against the selected asset and delivery chain:

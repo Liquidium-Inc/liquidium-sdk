@@ -31,13 +31,20 @@ Use the following pages to find the information that you need:
 | [Examples](./examples/simple-loans-flow.mdx) | Run and inspect working apps |
 | [API reference](./api-reference/index.mdx) | Look up exported SDK modules, types, and methods |
 
-## Runtime requirements
+## Environment requirements
 
-The SDK and this repository have the following runtime requirements:
+The published package has the following runtime requirements:
 
 | Requirement | Notes |
 | --- | --- |
-| Node.js | 20.19 or later in the 20.x line, or 22.12 or later |
-| Package manager | pnpm 11 or later for this repository |
-| Browser APIs | `fetch`, `BigInt`, and standard ECMAScript module (ESM) support |
+| Runtime APIs | Global `fetch` and `BigInt` support |
+| Module format | ECMAScript module (ESM) or CommonJS support |
 | Wallet provider | Provide a wallet integration. The examples use Dynamic. |
+
+The `@liquidium/client` package does not declare a Node.js engine range. The
+repository development tools have separate requirements:
+
+| Requirement | Version |
+| --- | --- |
+| Node.js | 20.19 or later in the 20.x line, or 22.12 or later |
+| pnpm | 11 or later |

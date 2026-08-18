@@ -50,7 +50,7 @@ Defined in: packages/client/src/modules/simple-loans/simple-loans.ts:320
 
 > **countWarmedProfiles**(): `Promise`\<`bigint`\>
 
-Defined in: packages/client/src/modules/simple-loans/simple-loans.ts:533
+Defined in: packages/client/src/modules/simple-loans/simple-loans.ts:537
 
 Returns the current size of the warmed-profile pool via direct query.
 
@@ -66,7 +66,7 @@ Number of warmed profiles available on the canister.
 
 > **create**(`request`): `Promise`\<[`SimpleLoan`](../interfaces/SimpleLoan.md)\>
 
-Defined in: packages/client/src/modules/simple-loans/simple-loans.ts:346
+Defined in: packages/client/src/modules/simple-loans/simple-loans.ts:350
 
 Creates a profileless simple loan and returns canonical canister state plus
 generated initial-deposit and repayment quote targets.
@@ -96,13 +96,23 @@ Collateral, borrow, refund, LTV limit, timeout, and inflow options.
 
 Hydrated loan state plus generated initial-deposit and repayment quote targets.
 
+#### Throws
+
+[LiquidiumError](LiquidiumError.md) If request validation, API transport, or
+protocol validation fails before creation.
+
+#### Throws
+
+[SimpleLoanCreatedError](SimpleLoanCreatedError.md) If the remote loan is created but
+the SDK cannot load its hydrated state.
+
 ***
 
 ### find()
 
 > **find**(`query`): `Promise`\<[`SimpleLoanFindResult`](../interfaces/SimpleLoanFindResult.md)[]\>
 
-Defined in: packages/client/src/modules/simple-loans/simple-loans.ts:433
+Defined in: packages/client/src/modules/simple-loans/simple-loans.ts:437
 
 Finds simple loans by short reference, numeric loan id string, address, or transaction id.
 
@@ -129,7 +139,7 @@ Matching loan ids and references from the search index.
 
 > **get**(`request`): `Promise`\<[`SimpleLoan`](../interfaces/SimpleLoan.md)\>
 
-Defined in: packages/client/src/modules/simple-loans/simple-loans.ts:414
+Defined in: packages/client/src/modules/simple-loans/simple-loans.ts:418
 
 Resolves canonical canister state by loan id or short reference.
 
@@ -156,7 +166,7 @@ Hydrated loan state plus generated initial-deposit and repayment quote targets.
 
 > **getConfig**(): `Promise`\<[`SimpleLoanConfig`](../interfaces/SimpleLoanConfig.md)\>
 
-Defined in: packages/client/src/modules/simple-loans/simple-loans.ts:452
+Defined in: packages/client/src/modules/simple-loans/simple-loans.ts:456
 
 Returns the active Simple Loans canister config via direct query.
 
@@ -172,7 +182,7 @@ Active canister configuration.
 
 > **getEvent**(`eventId`): `Promise`\<[`SimpleLoanEvent`](../interfaces/SimpleLoanEvent.md) \| `null`\>
 
-Defined in: packages/client/src/modules/simple-loans/simple-loans.ts:472
+Defined in: packages/client/src/modules/simple-loans/simple-loans.ts:476
 
 Returns a single canister event by id via direct query.
 
@@ -196,7 +206,7 @@ The event when found, otherwise `null`.
 
 > **listAccessList**(): `Promise`\<`string`[]\>
 
-Defined in: packages/client/src/modules/simple-loans/simple-loans.ts:516
+Defined in: packages/client/src/modules/simple-loans/simple-loans.ts:520
 
 Returns principals authorized for protected update callbacks.
 
@@ -212,7 +222,7 @@ Principal text values on the canister access list.
 
 > **listEvents**(`request`): `Promise`\<[`SimpleLoanEvent`](../interfaces/SimpleLoanEvent.md)[]\>
 
-Defined in: packages/client/src/modules/simple-loans/simple-loans.ts:494
+Defined in: packages/client/src/modules/simple-loans/simple-loans.ts:498
 
 Returns a page of canister events via direct query.
 
@@ -236,7 +246,7 @@ Canister events in ascending id order.
 
 > **listWarmedProfiles**(): `Promise`\<[`SimpleLoanWarmedProfile`](../interfaces/SimpleLoanWarmedProfile.md)[]\>
 
-Defined in: packages/client/src/modules/simple-loans/simple-loans.ts:551
+Defined in: packages/client/src/modules/simple-loans/simple-loans.ts:555
 
 Returns warmed profiles currently available for future simple loans.
 

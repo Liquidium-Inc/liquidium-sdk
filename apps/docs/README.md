@@ -14,4 +14,7 @@ From the SDK root, build the documentation site:
 pnpm --filter docs build
 ```
 
-The `docs/` directory contains the source, so code, the generated API reference, and documentation can change in the same pull request.
+The `docs/` directory contains the documentation source. Update hand-written
+documentation with related code changes. Regenerate the TypeDoc API reference
+in a documentation pull request unless an implementation pull request
+explicitly includes it.

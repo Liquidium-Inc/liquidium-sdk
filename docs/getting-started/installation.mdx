@@ -12,25 +12,40 @@ Install the client package in your app:
 npm install @liquidium/client
 ```
 
-To build and test a local checkout:
+## Package runtime support
 
-```bash
-git clone https://github.com/Liquidium-Inc/liquidium-sdk.git
-cd liquidium-sdk
-pnpm install
-pnpm run build
-pnpm run typecheck
-pnpm run test
-```
+The published package provides ECMAScript module (ESM) and CommonJS entry
+points. Your runtime must provide global `fetch` and `BigInt` support. The
+package does not declare a Node.js engine range.
 
-## Runtime support
+## Build the repository
 
-Use the SDK in browser apps and modern TypeScript runtimes.
+To build and test a local checkout, follow these steps:
 
-This repository has the following requirements:
+1. Clone the repository and enter its directory:
+
+   ```bash
+   git clone https://github.com/Liquidium-Inc/liquidium-sdk.git
+   cd liquidium-sdk
+   ```
+
+2. Install the workspace dependencies:
+
+   ```bash
+   pnpm install
+   ```
+
+3. Build, type-check, and test the workspace:
+
+   ```bash
+   pnpm run build
+   pnpm run typecheck
+   pnpm run test
+   ```
+
+The repository development tools have the following requirements:
 
 | Requirement | Notes |
 | --- | --- |
 | Node.js | 20.19 or later in the 20.x line, or 22.12 or later |
 | pnpm | 11 or later for local development |
-| Browser | A browser that supports `fetch`, `BigInt`, and ECMAScript modules (ESM) |

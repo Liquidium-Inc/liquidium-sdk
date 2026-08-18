@@ -14,10 +14,10 @@ The following table maps each status to its meaning and UI action:
 | --- | --- | --- |
 | `{ operation: "deposit", state: "action_required" }` | The loan exists and waits for collateral | Show the selected `loan.initialDeposit.targets[chain]` quote and, when non-null, `loan.initialDeposit.expiryTimestamp` |
 | `{ operation: "deposit", state: "confirming" }` | Liquidium detected a deposit and waits for confirmations | Show pending confirmation copy |
-| `{ operation: "deposit", state: "processing" }` | Liquidium is processing collateral after detection | Keep polling and block duplicate deposits |
+| `{ operation: "deposit", state: "processing" }` | Liquidium is processing collateral after detection | Poll for status changes and block duplicate deposits |
 | `{ operation: "borrow", state: "confirming" }` or `{ operation: "borrow", state: "processing" }` | Liquidium is sending borrowed funds | Show borrow payout progress |
 | `{ operation: "repayment", state: "active" }` | Debt exists and the user can repay | Show the selected `loan.repayment.targets[chain]` quote |
-| `{ operation: "repayment", state: "confirming" }` or `{ operation: "repayment", state: "processing" }` | Liquidium is confirming or processing repayment | Keep polling and avoid duplicate repayment prompts |
+| `{ operation: "repayment", state: "confirming" }` or `{ operation: "repayment", state: "processing" }` | Liquidium is confirming or processing repayment | Poll for status changes and avoid duplicate repayment prompts |
 | `{ operation: "repayment", state: "completed" }` | The loan closed | Show final state and stop prompting for repayment |
 | `{ operation: "deposit", state: "expired" }` | The deposit window passed before collateral arrived | Show timeout copy and stop prompting for collateral deposit |
 
@@ -29,4 +29,5 @@ const loan = await client.simpleLoans.get({ ref });
 
 Use activities when your UI needs more detail about deposits, borrow outflows, repayment deposits, confirmations, or fee top-ups.
 
-For the shared operation and state model, see the [status system](./status-system.mdx).
+For the shared operation and state model, including polling stop conditions,
+see the [status system](./status-system.mdx#poll-for-status-changes).
