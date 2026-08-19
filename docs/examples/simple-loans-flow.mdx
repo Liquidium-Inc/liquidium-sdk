@@ -1,14 +1,22 @@
 ---
-title: Simple Loans Flow Example
+title: Run the Simple Loans example
 description: Run the Simple Loans browser example.
-order: 300
+sidebar_position: 300
 ---
 
-# Simple Loans Flow Example
+# Run the Simple Loans example
 
-Use `examples/simple-loans-flow` as the starting point for accountless borrow UX.
+Use `examples/simple-loans-flow` as the starting point for an accountless borrow user experience.
 
-It covers:
+:::warning Mainnet operation
+
+This example uses bundled mainnet canister and production service defaults.
+Creating a Simple Loan creates real protocol state. Review every amount and
+destination before you send collateral.
+
+:::
+
+The example covers the following areas:
 
 | Area | What to inspect |
 | --- | --- |
@@ -20,9 +28,25 @@ It covers:
 | Activity status | `client.activities.list(...)`, `client.activities.getStatus(...)`, and top-up state |
 | Recovery | `client.simpleLoans.find(...)` |
 
-Run it from the SDK root:
+## Start the example
 
-```bash
-pnpm install
-pnpm --filter @liquidium/example-simple-loans-flow dev
-```
+Use Node.js 20.19 or later in the 20.x line, or Node.js 22.12 or later. Use
+`pnpm` 11 or later.
+
+To start the example, follow these steps:
+
+1. From the SDK root, install the workspace dependencies:
+
+   ```bash
+   pnpm install
+   ```
+
+2. Start the example:
+
+   ```bash
+   pnpm --filter @liquidium/example-simple-loans-flow dev
+   ```
+
+3. Open the local URL that Vite prints.
+
+The page shows **Liquidium Simple Loans Flow** when the example starts.

@@ -37,6 +37,8 @@ export class AccountsModule {
    *
    * @param options - `account` is the wallet address that will own the new profile.
    * @returns A signable {@link CreateAccountAction} with `submit` wired to the canister.
+   * @throws {@link LiquidiumError} If account validation or protocol
+   * preparation fails.
    */
   async prepareCreateProfile(
     options: PrepareCreateProfileOptions
@@ -51,6 +53,9 @@ export class AccountsModule {
    *
    * @param params - Wallet `account`, signing `chain`, and `walletAdapter` with `signMessage`.
    * @returns The new profile principal as text.
+   * @throws {@link LiquidiumError} If SDK validation or protocol submission
+   * fails.
+   * @throws `Error` If the wallet adapter rejects message signing.
    */
   async createProfile(params: CreateProfileParams): Promise<string> {
     const account = normalizeProfileAccount(params.account);

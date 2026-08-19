@@ -1,18 +1,56 @@
 ---
-title: Contract Interaction Flow Example
-description: Run the EVM contract-interaction example.
-order: 320
+title: Run the contract-interaction example
+description: Run the Ethereum contract-interaction example.
+sidebar_position: 320
 ---
 
-# Contract Interaction Flow Example
+# Run the contract-interaction example
 
 Use `examples/contract-interaction-flow` to inspect wallet-executed native ETH and ERC-20 supply and repayment flows.
 
-Run it from the SDK root:
+:::warning Mainnet transactions
 
-```bash
-pnpm install
-pnpm --filter @liquidium/example-contract-interaction-flow dev
-```
+This example uses Ethereum mainnet and Liquidium production defaults. A wallet
+action can transfer real ETH, USDC, or USDT. Review the network, destination,
+and amount before you confirm a transaction.
 
-Set `VITE_EVM_RPC_URL` or `VITE_INFURA_API_KEY` to override the example's public mainnet RPC fallback used for USDC and USDT reads. Native ETH contract interaction does not require allowance or token-balance reads.
+:::
+
+## Start the example
+
+Use Node.js 20.19 or later in the 20.x line, or Node.js 22.12 or later. Use
+`pnpm` 11 or later and an Ethereum mainnet wallet.
+
+To start the example, follow these steps:
+
+1. From the SDK root, install the workspace dependencies:
+
+   ```bash
+   pnpm install
+   ```
+
+2. Optional: To configure your own Ethereum Remote Procedure Call (RPC)
+   provider, copy the environment template:
+
+   ```bash
+   cp examples/contract-interaction-flow/.env.example \
+     examples/contract-interaction-flow/.env
+   ```
+
+   Set `VITE_EVM_RPC_URL` to a complete Ethereum mainnet RPC URL, or set
+   `VITE_INFURA_API_KEY` to an Infura API key. Values with the `VITE_` prefix
+   are included in the browser bundle. Use only browser-safe, restricted
+   credentials.
+
+3. Start the example:
+
+   ```bash
+   pnpm --filter @liquidium/example-contract-interaction-flow dev
+   ```
+
+4. Open the local URL that Vite prints.
+
+The page shows **Liquidium Contract Interaction Flow** when the example starts.
+If you do not configure an RPC provider, the example uses its public mainnet
+fallback for USDC and USDT reads. Native ETH contract interaction does not
+require allowance or token-balance reads.

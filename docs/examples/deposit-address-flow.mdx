@@ -1,18 +1,42 @@
 ---
-title: Deposit Address Flow Example
+title: Run the deposit-address example
 description: Run the account-based deposit target example.
-order: 310
+sidebar_position: 310
 ---
 
-# Deposit Address Flow Example
+# Run the deposit-address example
 
 Use `examples/deposit-address-flow` to inspect account-based supply targets.
 
-Run it from the SDK root:
+:::warning Mainnet transactions
 
-```bash
-pnpm install
-pnpm --filter @liquidium/example-deposit-address-flow dev
-```
+This example uses bundled mainnet canister and production service defaults.
+It can create a profile and show targets for transfers of real assets. Review
+every network, destination, and amount before you send funds.
+
+:::
+
+## Start the example
+
+Use Node.js 20.19 or later in the 20.x line, or Node.js 22.12 or later. Use
+`pnpm` 11 or later and an Ethereum mainnet wallet.
+
+To start the example, follow these steps:
+
+1. From the SDK root, install the workspace dependencies:
+
+   ```bash
+   pnpm install
+   ```
+
+2. Start the example:
+
+   ```bash
+   pnpm --filter @liquidium/example-deposit-address-flow dev
+   ```
+
+3. Open the local URL that Vite prints.
+
+The page shows **Liquidium Deposit Address Flow** when the example starts.
 
 Use this example when your app needs a Liquidium profile and manual deposit instructions instead of an accountless Simple Loan flow.

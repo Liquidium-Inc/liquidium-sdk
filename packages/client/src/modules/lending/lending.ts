@@ -128,6 +128,8 @@ export class LendingModule {
    * Use this when you need explicit control over signing and submission.
    * @param request - Profile, pool, amount (pool asset base units), outflow address, and signer wallet.
    * @returns A signable {@link WithdrawAction} with `submit` wired to the canister.
+   * @throws {@link LiquidiumError} If request validation, destination
+   * validation, or protocol preparation fails.
    */
   async prepareWithdraw(
     request: CreateWithdrawRequest
@@ -295,6 +297,9 @@ export class LendingModule {
    *
    * @param params - Withdraw request fields plus `signerChain` and `signerWalletAdapter`.
    * @returns The canister {@link OutflowDetails} for the completed withdraw.
+   * @throws {@link LiquidiumError} If SDK validation or protocol submission
+   * fails.
+   * @throws `Error` If the wallet adapter rejects message signing.
    */
   async withdraw(
     params: CreateWithdrawRequest & WalletExecutionParams
@@ -317,6 +322,8 @@ export class LendingModule {
    *
    * @param request - Profile, pool, amount (borrow asset base units), outflow address, and signer wallet.
    * @returns A signable {@link BorrowAction} with `submit` wired to the canister.
+   * @throws {@link LiquidiumError} If request validation, destination
+   * validation, or protocol preparation fails.
    */
   async prepareBorrow(request: CreateBorrowRequest): Promise<BorrowAction> {
     const destination = resolveOutflowDestinationInput({
@@ -483,6 +490,9 @@ export class LendingModule {
    *
    * @param params - Borrow request fields plus `signerChain` and `signerWalletAdapter`.
    * @returns The lending canister receipt as {@link OutflowDetails}.
+   * @throws {@link LiquidiumError} If SDK validation or protocol submission
+   * fails.
+   * @throws `Error` If the wallet adapter rejects message signing.
    *
    * @remarks
    * `id` is always present. `txid` may be missing on the first response; the SDK does not
@@ -512,6 +522,10 @@ export class LendingModule {
    *
    * @returns A {@link SupplyFlow} receipt with `type`, `target`, `submit`, and
    *   an optional `txid` present when the SDK broadcast for you.
+   * @throws {@link LiquidiumError} If validation, transfer planning, or
+   * protocol submission fails.
+   * @throws `Error` If the wallet adapter rejects or fails to broadcast a
+   * transaction.
    */
   async supply(request: SupplyFlowRequest): Promise<SupplyFlow> {
     return await this.createSupplyFlowExecutor().create(request);
@@ -670,6 +684,8 @@ export class LendingModule {
    *
    * @param request - Broadcast `txid` plus inflow `operation` and optional `chain`.
    * @returns Acknowledgement including the submitted `txid`.
+   * @throws {@link LiquidiumError} If the chain is unsupported or the API
+   * request fails.
    */
   async submitInflow(
     request: SubmitInflowRequest

@@ -34,7 +34,7 @@ Defined in: packages/client/src/modules/accounts/accounts.ts:31
 
 > **createProfile**(`params`): `Promise`\<`string`\>
 
-Defined in: packages/client/src/modules/accounts/accounts.ts:55
+Defined in: packages/client/src/modules/accounts/accounts.ts:60
 
 Creates a Liquidium profile using the provided wallet adapter.
 
@@ -54,13 +54,22 @@ Wallet `account`, signing `chain`, and `walletAdapter` with `signMessage`.
 
 The new profile principal as text.
 
+#### Throws
+
+[LiquidiumError](LiquidiumError.md) If SDK validation or protocol submission
+fails.
+
+#### Throws
+
+`Error` If the wallet adapter rejects message signing.
+
 ***
 
 ### getProfileId()
 
 > **getProfileId**(`walletAddress`): `Promise`\<`string` \| `null`\>
 
-Defined in: packages/client/src/modules/accounts/accounts.ts:74
+Defined in: packages/client/src/modules/accounts/accounts.ts:79
 
 Resolves the Liquidium profile id linked to a wallet address.
 
@@ -84,7 +93,7 @@ Profile principal text, or `null` if none exists.
 
 > **getWalletNonce**(`walletAddress`): `Promise`\<`bigint`\>
 
-Defined in: packages/client/src/modules/accounts/accounts.ts:127
+Defined in: packages/client/src/modules/accounts/accounts.ts:132
 
 Returns the current nonce for a wallet address.
 
@@ -110,7 +119,7 @@ The next signing nonce as a bigint.
 
 > **listLinkedWallets**(`profileId`): `Promise`\<[`Wallet`](../interfaces/Wallet.md)[]\>
 
-Defined in: packages/client/src/modules/accounts/accounts.ts:146
+Defined in: packages/client/src/modules/accounts/accounts.ts:151
 
 Lists the wallets currently linked to a profile.
 
@@ -134,7 +143,7 @@ The wallets currently linked to the requested profile.
 
 > **prepareCreateProfile**(`options`): `Promise`\<[`CreateAccountAction`](../interfaces/CreateAccountAction.md)\>
 
-Defined in: packages/client/src/modules/accounts/accounts.ts:41
+Defined in: packages/client/src/modules/accounts/accounts.ts:43
 
 Prepares a profile-creation action that can be signed and submitted later.
 
@@ -154,13 +163,18 @@ Use this when you need direct control over the signing flow.
 
 A signable [CreateAccountAction](../interfaces/CreateAccountAction.md) with `submit` wired to the canister.
 
+#### Throws
+
+[LiquidiumError](LiquidiumError.md) If account validation or protocol
+preparation fails.
+
 ***
 
 ### profileExists()
 
 > **profileExists**(`profileId`): `Promise`\<`boolean`\>
 
-Defined in: packages/client/src/modules/accounts/accounts.ts:102
+Defined in: packages/client/src/modules/accounts/accounts.ts:107
 
 Checks whether a profile is registered with the protocol.
 

@@ -342,6 +342,10 @@ export class SimpleLoansModule {
    *
    * @param request - Collateral, borrow, refund, LTV limit, timeout, and inflow options.
    * @returns Hydrated loan state plus generated initial-deposit and repayment quote targets.
+   * @throws {@link LiquidiumError} If request validation, API transport, or
+   * protocol validation fails before creation.
+   * @throws {@link SimpleLoanCreatedError} If the remote loan is created but
+   * the SDK cannot load its hydrated state.
    */
   async create(request: CreateSimpleLoanRequest): Promise<SimpleLoan> {
     validateCreateRequest(request);
