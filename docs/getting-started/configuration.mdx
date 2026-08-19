@@ -14,7 +14,7 @@ import { LiquidiumClient } from "@liquidium/client";
 const client = new LiquidiumClient();
 ```
 
-If your app needs custom transports, headers, canister IDs, or Ethereum read support, pass a configuration object:
+In a Vite app, pass a configuration object to add custom transports, headers, canister IDs, or Ethereum read support:
 
 ```ts
 const client = new LiquidiumClient({

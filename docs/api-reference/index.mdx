@@ -57,7 +57,11 @@ For retry decisions and recovery code, see [Handle errors](../guides/error-handl
 
 ## History
 
-Use `client.history.getUserTransactionHistory(profileId, filters?)` and `client.history.getLiquidationHistory(profileId, filters?)` for paginated profile history. Use canonical `operations` and `states` filters. Continue pagination with the opaque `nextCursor` value.
+Use `client.history.getUserTransactionHistory(profileId, filters?)` for paginated profile transaction history. It accepts `cursor`, `limit`, `market`, `poolId`, `operations`, `states`, `from`, and `to`.
+
+Use `client.history.getLiquidationHistory(profileId, filters?)` for paginated liquidation history. It accepts `cursor`, `limit`, `market`, `poolId`, `from`, and `to`.
+
+Continue pagination with the opaque `nextCursor` value.
 
 Use `client.history.getProtocolActivity(filters?)` for recent confirmed activity across the protocol. It calls `GET /v2/history/activities`, accepts `poolId`, `operations`, and `limit`, and returns an unpaginated array with each pool's `asset`, `decimals`, and base-unit `amount`. History and protocol activity entries expose `txids?: string[]`.
 

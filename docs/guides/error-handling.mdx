@@ -47,7 +47,7 @@ try {
       // Show retry copy or use the app's retry path.
     }
 
-    throw new Error(error.message);
+    throw error;
   }
 
   throw error;
@@ -89,10 +89,10 @@ Lending outflow and Simple Loan destinations are validated against the selected 
 
 Lending uses `chain` and `receiver`. Simple Loans use `borrow.chain`, `borrow.destination`, `refund.chain`, and `refund.destination`. Prefer typed destination objects when the account family matters.
 
-Native ETH borrows and withdrawals do not support addresses with deployed contract bytecode, including smart contract wallets.
+For lending, native ETH borrow and withdrawal destinations use a best-effort deployed-bytecode check. The SDK rejects a destination only when the check succeeds and confirms deployed bytecode. This includes smart contract wallets.
 
-The SDK throws `LiquidiumError` with code `LiquidiumErrorCode.INVALID_ADDRESS` for malformed or reserved Ethereum addresses. It uses `LiquidiumErrorCode.CONTRACT_DESTINATION_UNSUPPORTED` for native ETH lending destinations with deployed bytecode. The Simple Loans API reports deployed-contract destination rejections as SDK API errors. Asset, chain, or destination-family mismatches use `LiquidiumErrorCode.VALIDATION_ERROR`. Catch these errors at the form boundary before retrying the flow.
+The SDK throws `LiquidiumError` with code `LiquidiumErrorCode.INVALID_ADDRESS` for malformed or reserved Ethereum addresses. It uses `LiquidiumErrorCode.CONTRACT_DESTINATION_UNSUPPORTED` when the best-effort check confirms that a native ETH lending destination has deployed bytecode. The Simple Loans API reports deployed-contract destination rejections as SDK API errors. Asset, chain, or destination-family mismatches use `LiquidiumErrorCode.VALIDATION_ERROR`. Catch these errors at the form boundary before retrying the flow.
 
-When `chain.id` identifies Ethereum mainnet, lending queries the configured Ethereum Virtual Machine (EVM) client's `getCode` method. If the configured EVM client does not provide both `chain.id` and `getCode`, the SDK queries the Liquidium SDK API. RPC and API failures do not block the outflow.
+When `chain.id` identifies Ethereum mainnet, lending queries the configured Ethereum Virtual Machine (EVM) client's `getCode` method. If the configured EVM client does not provide both `chain.id` and `getCode`, the SDK queries the Liquidium SDK API. RPC failures, API failures, and malformed responses do not block the outflow.
 
 The SDK also validates the sender account for wallet-executed native ETH and ERC-20 supply as an EVM address. Deposit-address queries validate that the requested asset matches the selected ETH pool and reject malformed addresses returned by the deposit canister.
