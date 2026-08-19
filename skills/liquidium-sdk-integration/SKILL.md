@@ -1,6 +1,6 @@
 ---
 name: liquidium-sdk-integration
-description: "Use this skill first for the Liquidium TypeScript SDK accountless Simple Loans flow, `@liquidium/client`, `LiquidiumClient`, `client.simpleLoans`, wallet adapters, Liquidium profile creation, market data, quotes, borrowing, supply flows, positions, activities, or history. Use it whenever the user wants to integrate Liquidium into a TypeScript, React, or Vite app, or asks how to call Liquidium SDK methods correctly."
+description: "Use this skill first for the Liquidium TypeScript SDK accountless Simple Loans flow, `@liquidium/client`, `LiquidiumClient`, `client.simpleLoans`, wallet adapters, Liquidium profile creation, market data, quotes, borrowing, liquidations, supply flows, positions, activities, or history. Use it whenever the user wants to integrate Liquidium into a TypeScript, React, or Vite app, or asks how to call Liquidium SDK methods correctly."
 license: MIT
 metadata:
   title: Liquidium SDK Integration
@@ -29,7 +29,7 @@ import { LiquidiumClient } from "@liquidium/client";
 const client = new LiquidiumClient({});
 ```
 
-The client exposes: `simpleLoans`, `accounts`, `lending`, `positions`, `market`, `activities`, `history`, `quote`.
+The client exposes: `simpleLoans`, `accounts`, `lending`, `liquidations`, `positions`, `market`, `activities`, `history`, `quote`.
 
 ## Setup
 
@@ -340,6 +340,34 @@ relevant ledger fee.
 Borrow, withdraw, and supply receipts include a required `status` using the
 shared `LiquidiumStatus` shape. A `SupplyFlow` also exposes this status before
 or after optional SDK broadcasting; the SDK does not poll it to completion.
+
+### liquidations
+
+Cursor-based candidate scanning, slippage-protected execution, and status lookup.
+
+```ts
+client.liquidations.scan({ scanLimit, maxResults, cursor });
+client.liquidations.liquidate(...);
+client.liquidations.getLiquidation(liquidationId);
+```
+
+`scan(...)` examines up to `scanLimit` borrower accounts and returns at most
+`maxResults` liquidatable candidates. Continue with `nextCursor` when present.
+Each candidate contains its `borrowerProfileId` and pool positions. Select a
+position with debt and a position with collateral before calling `liquidate`.
+Scan results can become stale, so execution always revalidates the position.
+
+`liquidate(...)` executes through the configured IC identity or agent. Before
+the call, a lending-canister administrator must register that principal with
+`add_liquidator`. Verify membership with `get_liquidators` before funding it.
+The principal's default ICRC account must allow the lending canister to spend
+at least `debtAmount + ledgerTransferFee` and must cover ledger fees. The SDK
+does not create the allowance. `minCollateralAmount` is required and measures
+gross collateral before transfer fees; `0n` disables the slippage guard.
+Seized collateral goes to `receiverPrincipal`, while change and refunds go to
+the calling principal. Save the returned `id` and call `getLiquidation(id)`
+when a fresh result is needed. A `failed_liquidation` lifecycle state remains
+a `LiquidationResult` because its refund can still be pending.
 
 ### positions
 
@@ -975,6 +1003,7 @@ valid for ckETH because that route uses an ICRC transfer on `chain: "ICP"`.
 20. Do not use `"ckBTC"`, `"ckETH"`, `"ckUSDC"`, or `"ckUSDT"` as asset symbols. Pair the underlying asset with `chain: "ICP"`.
 21. Do not assume `Pool.chain` is the user's transfer chain or derive deposit, borrow, and refund rails from one shared selection.
 22. Do not use `mechanism: "contractInteraction"` for ckETH on `chain: "ICP"`. Use it only for native ETH, USDC, or USDT on `chain: "ETH"`.
+23. Use `client.liquidations.scan(...)` explicitly for candidate discovery. Do not add automatic approval, automatic execution, or status polling around `liquidate(...)`.
 
 ## Preferred Style
 
@@ -1003,6 +1032,7 @@ When unsure, check these first:
 - `README.md`
 - `docs/concepts/market-data.mdx`
 - `docs/guides/error-handling.mdx`
+- `docs/guides/liquidations.mdx`
 - `docs/guides/simple-loans.mdx`
 - `packages/client/src/modules/simple-loans/simple-loans.ts`
 - `packages/client/src/core/types.ts`
@@ -1020,6 +1050,8 @@ When unsure, check these first:
 - `packages/client/src/modules/simple-loans/types.ts`
 - `packages/client/src/modules/lending/types.ts`
 - `packages/client/src/modules/lending/_internal/supply-targets.ts`
+- `packages/client/src/modules/liquidations/liquidations.ts`
+- `packages/client/src/modules/liquidations/types.ts`
 - `packages/client/src/modules/quote/types.ts`
 - `examples/simple-loans-flow/src/App.tsx`
 - `examples/simple-loans-flow/src/sdk-example.ts`
