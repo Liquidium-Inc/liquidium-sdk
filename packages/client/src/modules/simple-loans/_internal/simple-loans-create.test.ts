@@ -1293,6 +1293,46 @@ describe("SimpleLoansModule create", () => {
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
+  test.each([
+    {
+      name: "collateral",
+      pools: [createBtcPoolRecord({ frozen: true }), createUsdtPoolRecord()],
+      expectedPoolId: BTC_POOL_ID,
+    },
+    {
+      name: "borrow",
+      pools: [createBtcPoolRecord(), createUsdtPoolRecord({ frozen: true })],
+      expectedPoolId: USDT_POOL_ID,
+    },
+  ])(
+    "rejects a frozen $name pool before sending the API request",
+    async ({ pools, expectedPoolId }) => {
+      // given
+      const fetchSpy = vi.spyOn(globalThis, "fetch");
+      vi.spyOn(Actor, "createActor")
+        .mockReturnValueOnce({
+          list_pools: vi.fn().mockResolvedValue(pools),
+          get_pool_rate: vi
+            .fn()
+            .mockResolvedValue([[10_000_000_000_000_000_000_000_000n, 0n, 0n]]),
+        } as never)
+        .mockReturnValueOnce({
+          get_prices: vi.fn().mockResolvedValue(prices()),
+        } as never);
+      const client = new LiquidiumClient({});
+
+      // when
+      const result = client.simpleLoans.create(createSimpleLoanRequest());
+
+      // then
+      await expect(result).rejects.toMatchObject({
+        code: LiquidiumErrorCode.POOL_FROZEN,
+        message: `Pool is frozen: ${expectedPoolId}`,
+      });
+      expect(fetchSpy).not.toHaveBeenCalled();
+    }
+  );
+
   test("rejects a simple loan asset that does not match its pool", async () => {
     // given
     const fetchSpy = vi.spyOn(globalThis, "fetch");

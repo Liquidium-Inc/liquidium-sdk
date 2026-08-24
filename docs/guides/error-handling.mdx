@@ -47,6 +47,10 @@ try {
       // Show retry copy or use the app's retry path.
     }
 
+    if (error.code === LiquidiumErrorCode.POOL_FROZEN) {
+      // Ask the user to select pools that currently allow lending.
+    }
+
     throw error;
   }
 
