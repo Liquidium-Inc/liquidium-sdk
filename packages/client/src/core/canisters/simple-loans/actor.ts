@@ -339,11 +339,13 @@ interface PoolNotFoundError {
   PoolNotFound: PoolErrorPayload;
 }
 
+interface LendingCanisterImmutablePayload {
+  configured: Principal;
+  requested: Principal;
+}
+
 interface LendingCanisterImmutableError {
-  LendingCanisterImmutable: {
-    configured: Principal;
-    requested: Principal;
-  };
+  LendingCanisterImmutable: LendingCanisterImmutablePayload;
 }
 
 interface LtvMaxOutOfRangeError {
@@ -407,12 +409,14 @@ interface EmptyCollateralPositionError {
   EmptyCollateralPosition: null;
 }
 
+interface PoolAssetMismatchPayload {
+  configured_asset: SimpleLoanAsset;
+  requested_asset: SimpleLoanAsset;
+  pool_id: Principal;
+}
+
 interface PoolAssetMismatchError {
-  PoolAssetMismatch: {
-    configured_asset: SimpleLoanAsset;
-    requested_asset: SimpleLoanAsset;
-    pool_id: Principal;
-  };
+  PoolAssetMismatch: PoolAssetMismatchPayload;
 }
 
 interface SigningFailedError {
