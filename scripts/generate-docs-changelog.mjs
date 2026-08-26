@@ -21,7 +21,7 @@ const docsChangelog = `---
 title: Changelog
 slug: changelog
 description: Track released SDK package changes.
-order: 500
+sidebar_position: 500
 ---
 
 # Changelog

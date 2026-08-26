@@ -1,5 +1,11 @@
 # @liquidium/client
 
+## 0.8.3
+
+### Patch Changes
+
+- aae3663: Support decoding the latest headless-loans pool validation errors.
+
 ## 0.8.2
 
 ### Patch Changes
