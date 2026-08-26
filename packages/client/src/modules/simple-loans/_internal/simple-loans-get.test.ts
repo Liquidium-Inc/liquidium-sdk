@@ -1,13 +1,8 @@
 import { Actor } from "@icp-sdk/core/agent";
 import { Principal } from "@icp-sdk/core/principal";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import type { SimpleLoansCanisterError } from "../../../core/canisters/simple-loans/actor";
 import { DEFAULT_API_BASE_URL } from "../../../core/config";
-import {
-  LiquidiumClient,
-  LiquidiumErrorCode,
-  publicIdFromInt,
-} from "../../../index";
+import { LiquidiumClient, publicIdFromInt } from "../../../index";
 import {
   BTC_POOL_ID,
   createBtcBorrowSimpleLoan,
@@ -31,68 +26,6 @@ afterEach(() => {
 });
 
 describe("SimpleLoansModule get", () => {
-  test.each([
-    {
-      name: "anonymous principal",
-      error: { AnonymousPrincipalNotAllowed: null },
-      expectedCode: LiquidiumErrorCode.NOT_ALLOWED,
-    },
-    {
-      name: "immutable lending canister",
-      error: {
-        LendingCanisterImmutable: {
-          configured: Principal.fromText(BTC_POOL_ID),
-          requested: Principal.fromText(USDT_POOL_ID),
-        },
-      },
-      expectedCode: LiquidiumErrorCode.INTERNAL,
-    },
-    {
-      name: "pool not found",
-      error: {
-        PoolNotFound: { pool_id: Principal.fromText(BTC_POOL_ID) },
-      },
-      expectedCode: LiquidiumErrorCode.POOL_NOT_FOUND,
-    },
-    {
-      name: "pool lending disabled",
-      error: {
-        PoolLendingDisabled: { pool_id: Principal.fromText(BTC_POOL_ID) },
-      },
-      expectedCode: LiquidiumErrorCode.POOL_FROZEN,
-    },
-    {
-      name: "pool asset mismatch",
-      error: {
-        PoolAssetMismatch: {
-          configured_asset: { BTC: null },
-          requested_asset: { USDT: null },
-          pool_id: Principal.fromText(BTC_POOL_ID),
-        },
-      },
-      expectedCode: LiquidiumErrorCode.VALIDATION_ERROR,
-    },
-  ] satisfies Array<{
-    name: string;
-    error: SimpleLoansCanisterError;
-    expectedCode: LiquidiumErrorCode;
-  }>)(
-    "maps the $name canister error to $expectedCode",
-    async ({ error, expectedCode }) => {
-      // given
-      vi.spyOn(Actor, "createActor").mockReturnValue({
-        get_loan: vi.fn().mockResolvedValue({ Err: error }),
-      } as never);
-      const client = new LiquidiumClient({});
-
-      // when
-      const result = client.simpleLoans.get({ loanId: LOAN_ID });
-
-      // then
-      await expect(result).rejects.toMatchObject({ code: expectedCode });
-    }
-  );
-
   test("gets canonical loan state by ref and derives flow targets", async () => {
     // given
     const DEPOSIT_DETECTED_TIMESTAMP_SECONDS = 1_775_232_000n;

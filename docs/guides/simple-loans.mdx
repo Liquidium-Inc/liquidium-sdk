@@ -15,7 +15,7 @@ The following table shows the flow and your app's responsibility at each step:
 | Step | SDK call | Your app does |
 | --- | --- | --- |
 | Load market data | `client.market.listPools()` and `client.market.getAssetPrices()` | Show supported collateral and borrow assets |
-| Validate amounts | `client.quote.calculateLtv(...)` | Block too-small borrow amounts or an invalid loan-to-value (LTV) ratio before creation |
+| Validate amounts | `client.quote.calculateLtv(...)` | Block too-small borrow amounts, an invalid loan-to-value (LTV) ratio, or frozen-pool input before creation |
 | Create loan | `client.simpleLoans.create(...)` | Store `loan.ref` and show the selected quote from `loan.initialDeposit.targets[chain]` |
 | Track loan | `client.simpleLoans.get({ ref })`, `client.simpleLoans.find(...)`, and `client.activities.list({ shortRef: ref })` | Reload state and monitor deposits, borrows, and repayments |
 | Repay loan | Read `loan.repayment.targets[chain]` | If the selected quote exists and its `amount > 0n`, ask the user to send it to `quote.target.address` |
@@ -35,8 +35,6 @@ Use the following fields in a `client.simpleLoans.create(...)` request:
 `borrow.destination` and `refund.destination` can be strings or typed account objects such as `{ type: "ChainAddress", address: "bc1q..." }`, `{ type: "IcPrincipal", address: "aaaaa-aa" }`, or `{ type: "IcrcAccount", address: "aaaaa-aa" }`. The SDK validates that each destination family matches its selected asset and chain before creation.
 
 Native ETH Simple Loans do not support borrow destinations with deployed contract bytecode. The same restriction applies to the refund destination when the collateral is native ETH. You do not need an Ethereum client for these checks.
-
-`client.simpleLoans.create(...)` rejects a frozen collateral or borrow pool with `LiquidiumErrorCode.POOL_FROZEN` before it sends the API request.
 
 ## Collateral minimums
 
