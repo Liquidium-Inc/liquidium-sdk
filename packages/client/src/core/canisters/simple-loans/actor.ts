@@ -254,12 +254,15 @@ type LendingClientError =
 
 export type SimpleLoansCanisterError =
   | BorrowAmountRequiredError
+  | AnonymousPrincipalNotAllowedError
   | NoCollateralPositionError
   | LtvTimerOutOfRangeError
   | LtvMaxExceededError
   | MemoryLockFailedError
   | UnauthorizedAccessListCallerError
   | LendingClientCanisterError
+  | PoolNotFoundError
+  | LendingCanisterImmutableError
   | LtvMaxOutOfRangeError
   | AccountRequiredError
   | DepositTimerExceededError
@@ -269,12 +272,18 @@ export type SimpleLoansCanisterError =
   | DepositAlreadyProcessedError
   | MissingPriceError
   | InvalidLtvTimerSError
+  | PoolLendingDisabledError
   | DebtNotFullyRepaidError
   | EmptyCollateralPositionError
+  | PoolAssetMismatchError
   | SigningFailedError;
 
 interface BorrowAmountRequiredError {
   BorrowAmountRequired: null;
+}
+
+interface AnonymousPrincipalNotAllowedError {
+  AnonymousPrincipalNotAllowed: null;
 }
 
 interface LoanIdErrorPayload {
@@ -320,6 +329,23 @@ interface UnauthorizedAccessListCallerError {
 
 interface LendingClientCanisterError {
   LendingClient: LendingClientError;
+}
+
+interface PoolErrorPayload {
+  pool_id: Principal;
+}
+
+interface PoolNotFoundError {
+  PoolNotFound: PoolErrorPayload;
+}
+
+interface LendingCanisterImmutablePayload {
+  configured: Principal;
+  requested: Principal;
+}
+
+interface LendingCanisterImmutableError {
+  LendingCanisterImmutable: LendingCanisterImmutablePayload;
 }
 
 interface LtvMaxOutOfRangeError {
@@ -371,12 +397,26 @@ interface InvalidLtvTimerSError {
   InvalidLtvTimerS: null;
 }
 
+interface PoolLendingDisabledError {
+  PoolLendingDisabled: PoolErrorPayload;
+}
+
 interface DebtNotFullyRepaidError {
   DebtNotFullyRepaid: LoanIdErrorPayload;
 }
 
 interface EmptyCollateralPositionError {
   EmptyCollateralPosition: null;
+}
+
+interface PoolAssetMismatchPayload {
+  configured_asset: SimpleLoanAsset;
+  requested_asset: SimpleLoanAsset;
+  pool_id: Principal;
+}
+
+interface PoolAssetMismatchError {
+  PoolAssetMismatch: PoolAssetMismatchPayload;
 }
 
 interface SigningFailedError {
