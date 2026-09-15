@@ -75,7 +75,7 @@ See the [quick start](https://liquidium-inc.github.io/liquidium-sdk/getting-star
 
 ## Development
 
-Requires Node.js 20+ and pnpm 11+.
+Requires Node.js 22.12+ in the 22.x line, 24.x, or 26+, and pnpm 11+.
 
 ```bash
 pnpm install
