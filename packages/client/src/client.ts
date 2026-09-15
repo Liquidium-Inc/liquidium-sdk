@@ -15,6 +15,7 @@ import { AccountsModule } from "./modules/accounts";
 import { ActivitiesModule } from "./modules/activities";
 import { HistoryModule } from "./modules/history";
 import { LendingModule } from "./modules/lending";
+import { LiquidationsModule } from "./modules/liquidations";
 import { MarketModule } from "./modules/market";
 import { PositionsModule } from "./modules/positions";
 import { QuoteModule } from "./modules/quote";
@@ -30,6 +31,8 @@ export class LiquidiumClient {
   readonly accounts: AccountsModule;
   /** Borrow, withdraw, supply, inflow reporting and tracking. */
   readonly lending: LendingModule;
+  /** Liquidation candidate scanning, slippage-protected execution, and status lookup. */
+  readonly liquidations: LiquidationsModule;
   /** Per-pool positions, health, aggregate stats. */
   readonly positions: PositionsModule;
   /** Pool list, prices, pool rate lookups. */
@@ -79,6 +82,7 @@ export class LiquidiumClient {
       this.apiClient,
       this.evmReadClient
     );
+    this.liquidations = new LiquidationsModule(this.canisterContext);
     this.market = new MarketModule(this.canisterContext);
     this.positions = new PositionsModule(this.canisterContext, this.market);
     this.activities = new ActivitiesModule(
