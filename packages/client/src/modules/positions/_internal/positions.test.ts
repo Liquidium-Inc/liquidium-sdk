@@ -328,13 +328,13 @@ describe("PositionsModule", () => {
     expect(positions[0]?.borrowed).toBe(BORROWED_AMOUNT_SATS);
   });
 
-  test("retains interest-only debt when its supplied balance is dust", async () => {
+  test("filters a dust-only position with historical paid interest", async () => {
     // given
-    const DEBT_INTEREST_SATS = 1n;
+    const PAID_DEBT_INTEREST_SATS = 1n;
     const getProfileStats = vi.fn().mockResolvedValue({
-      debt: DEBT_INTEREST_SATS,
+      debt: 0n,
       collateral: 0n,
-      acumulated_interest: DEBT_INTEREST_SATS,
+      acumulated_interest: 0n,
       borrowing_power: { max_borrowable_usd: 0n, weighted_max_ltv: 0n },
       positions: [makePositionRecord()],
       weighted_liquidation_threshold: 0n,
@@ -342,7 +342,8 @@ describe("PositionsModule", () => {
     const getPosition = vi.fn().mockResolvedValue([
       makePositionView({
         deposited_native_now: BTC_DUST_THRESHOLD_SATS - 1n,
-        total_debt_interest: DEBT_INTEREST_SATS,
+        debt_native_now: 0n,
+        total_debt_interest: PAID_DEBT_INTEREST_SATS,
       }),
     ]);
     vi.spyOn(Actor, "createActor").mockReturnValue({
@@ -356,10 +357,7 @@ describe("PositionsModule", () => {
     const positions = await client.positions.listPositions(PROFILE_ID);
 
     // then
-    expect(positions).toHaveLength(1);
-    expect(positions[0]?.deposited).toBe(0n);
-    expect(positions[0]?.borrowed).toBe(0n);
-    expect(positions[0]?.debtInterest).toBe(DEBT_INTEREST_SATS);
+    expect(positions).toEqual([]);
   });
 
   test("preserves both supply and debt when supplied balance is not dust", async () => {
@@ -614,7 +612,7 @@ describe("PositionsModule", () => {
     expect(summary.currentLtvBps).toBe(16_000n);
   });
 
-  test("joins positions with pools and prices into per-reserve USD breakdowns", async () => {
+  test("values current reserve debt without adding reported interest", async () => {
     // given
     const BTC_POOL_ID = "pool-btc";
     const USDT_POOL_ID = "pool-usdt";
@@ -652,6 +650,8 @@ describe("PositionsModule", () => {
             asset: { USDT: null },
             deposited_native_now: 0n,
             debt_native_now: 1_000_000n,
+            total_debt_interest: 250_000n,
+            interest_since_snapshot: 50_000n,
             pool_id: { toText: () => USDT_POOL_ID },
           }),
         ]),
@@ -802,11 +802,13 @@ describe("PositionsModule", () => {
   test("returns zero max repay amount when position has no debt", async () => {
     // given
     vi.spyOn(Actor, "createActor").mockReturnValue({
-      get_position: vi
-        .fn()
-        .mockResolvedValue([
-          makePositionView({ deposited_native_now: 100n, debt_native_now: 0n }),
-        ]),
+      get_position: vi.fn().mockResolvedValue([
+        makePositionView({
+          deposited_native_now: 100n,
+          debt_native_now: 0n,
+          total_debt_interest: 200_000n,
+        }),
+      ]),
     } as never);
     const client = new LiquidiumClient({});
 
@@ -817,10 +819,10 @@ describe("PositionsModule", () => {
     expect(repay).toEqual({ amount: 0n, decimals: 8n });
   });
 
-  test("applies the default 0.1 percent accrual buffer to the repay amount", async () => {
+  test("buffers current indexed debt without adding reported interest", async () => {
     // given
     const DEBT_NATIVE = 1_000_000n;
-    const DEBT_INTEREST_NATIVE = 0n;
+    const DEBT_INTEREST_NATIVE = 200_000n;
     vi.spyOn(Actor, "createActor").mockReturnValue({
       get_position: vi.fn().mockResolvedValue([
         makePositionView({

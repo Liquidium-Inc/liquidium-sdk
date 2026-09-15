@@ -1074,7 +1074,7 @@ function calculateTotalDebtAmount(borrowPosition: Position | null): bigint {
     return 0n;
   }
 
-  return borrowPosition.borrowed + borrowPosition.debtInterest;
+  return borrowPosition.borrowed;
 }
 
 function deriveSimpleLoanStatus(
