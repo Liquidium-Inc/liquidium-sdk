@@ -6,7 +6,7 @@
 
 # Interface: CreateSimpleLoanCollateral
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:13](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L13)
+Defined in: packages/client/src/modules/simple-loans/types.ts:13
 
 Collateral leg used when creating a simple loan.
 
@@ -16,23 +16,24 @@ Collateral leg used when creating a simple loan.
 
 > **amount**: `bigint`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:37](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L37)
+Defined in: packages/client/src/modules/simple-loans/types.ts:38
 
 Intended credited collateral amount, in base units.
 
 This is used to validate LTV and initialize the loan record before
-deposit/inflow fees are deducted. For BTC, pass satoshis. For token assets,
-convert the UI amount using the selected pool's `decimals` value. After
-creation, use one of `loan.initialDeposit.targets` as the fee-inclusive
-transfer quote and destination.
+deposit/inflow fees are deducted. For BTC, pass satoshis. ETH and ckETH use
+18-decimal wei base units; do not pass human-readable ETH values directly.
+For token assets, convert the UI amount using the selected pool's `decimals`
+value. After creation, use one of `loan.initialDeposit.targets` as the
+fee-inclusive transfer quote and destination.
 
 ***
 
 ### asset
 
-> **asset**: `"BTC"` \| `"ICP"` \| `"USDC"` \| `"USDT"`
+> **asset**: `"BTC"` \| `"ETH"` \| `"ICP"` \| `"USDC"` \| `"USDT"`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:27](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L27)
+Defined in: packages/client/src/modules/simple-loans/types.ts:27
 
 Asset the user will deposit as collateral.
 
@@ -45,7 +46,7 @@ collateral pool.
 
 > **poolId**: `string`
 
-Defined in: [packages/client/src/modules/simple-loans/types.ts:20](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/simple-loans/types.ts#L20)
+Defined in: packages/client/src/modules/simple-loans/types.ts:20
 
 Principal text of the pool that receives the user's collateral deposit.
 

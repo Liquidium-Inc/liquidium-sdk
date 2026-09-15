@@ -6,7 +6,7 @@
 
 # Interface: SignMessageRequest
 
-Defined in: [packages/client/src/core/wallet-actions.ts:35](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L35)
+Defined in: packages/client/src/core/wallet-actions.ts:35
 
 Message-signing request passed to wallet adapters.
 
@@ -16,7 +16,7 @@ Message-signing request passed to wallet adapters.
 
 > `optional` **account?**: `string`
 
-Defined in: [packages/client/src/core/wallet-actions.ts:41](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L41)
+Defined in: packages/client/src/core/wallet-actions.ts:41
 
 Optional account override for the signing wallet.
 
@@ -26,7 +26,7 @@ Optional account override for the signing wallet.
 
 > **actionType**: `string`
 
-Defined in: [packages/client/src/core/wallet-actions.ts:43](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L43)
+Defined in: packages/client/src/core/wallet-actions.ts:43
 
 SDK action type that produced this request.
 
@@ -36,7 +36,7 @@ SDK action type that produced this request.
 
 > **chain**: [`SigningChain`](../type-aliases/SigningChain.md)
 
-Defined in: [packages/client/src/core/wallet-actions.ts:37](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L37)
+Defined in: packages/client/src/core/wallet-actions.ts:37
 
 Chain for the signing wallet.
 
@@ -46,6 +46,6 @@ Chain for the signing wallet.
 
 > **message**: `string`
 
-Defined in: [packages/client/src/core/wallet-actions.ts:39](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L39)
+Defined in: packages/client/src/core/wallet-actions.ts:39
 
 Plaintext message to sign.

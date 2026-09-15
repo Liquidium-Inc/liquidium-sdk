@@ -4,10 +4,12 @@ packages:
   - "examples/*"
 
 allowBuilds:
+  '@reown/appkit': false
   bigint-buffer: false
   bufferutil: false
   core-js: false
   esbuild: true
+  protobufjs: false
   sharp: true
   utf-8-validate: false
 

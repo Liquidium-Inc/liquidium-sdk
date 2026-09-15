@@ -25,6 +25,14 @@ export function selectIcpPool(pools: Pool[]): Pool {
   });
 }
 
+export function selectEthPool(pools: Pool[]): Pool {
+  return selectPool({
+    pools,
+    asset: "ETH",
+    chain: Chain.ETH,
+  });
+}
+
 export function selectBorrowPool(pools: Pool[]): Pool {
   for (const asset of ETH_STABLECOIN_BORROW_ASSETS) {
     const pool = findBorrowPoolByAsset(pools, asset);

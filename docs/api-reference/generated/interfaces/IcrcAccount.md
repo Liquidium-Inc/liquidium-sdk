@@ -6,7 +6,7 @@
 
 # Interface: IcrcAccount
 
-Defined in: [packages/client/src/core/accounts.ts:44](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/accounts.ts#L44)
+Defined in: packages/client/src/core/accounts.ts:44
 
 ICRC account display shape shared by lending and Simple Loans responses.
 
@@ -16,7 +16,7 @@ ICRC account display shape shared by lending and Simple Loans responses.
 
 > **address**: `string`
 
-Defined in: [packages/client/src/core/accounts.ts:52](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/accounts.ts#L52)
+Defined in: packages/client/src/core/accounts.ts:52
 
 Text-encoded ICRC account for display.
 
@@ -26,7 +26,7 @@ Text-encoded ICRC account for display.
 
 > **owner**: `string`
 
-Defined in: [packages/client/src/core/accounts.ts:48](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/accounts.ts#L48)
+Defined in: packages/client/src/core/accounts.ts:48
 
 ICRC account owner principal text.
 
@@ -36,7 +36,7 @@ ICRC account owner principal text.
 
 > `optional` **subaccount?**: `Uint8Array`\<`ArrayBufferLike`\>
 
-Defined in: [packages/client/src/core/accounts.ts:50](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/accounts.ts#L50)
+Defined in: packages/client/src/core/accounts.ts:50
 
 Optional ICRC subaccount bytes.
 
@@ -46,6 +46,6 @@ Optional ICRC subaccount bytes.
 
 > **type**: `"IcrcAccount"`
 
-Defined in: [packages/client/src/core/accounts.ts:46](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/accounts.ts#L46)
+Defined in: packages/client/src/core/accounts.ts:46
 
 Account type.

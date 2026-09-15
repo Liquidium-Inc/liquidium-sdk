@@ -6,7 +6,7 @@
 
 # Enumeration: QuoteValidationErrorCode
 
-Defined in: [packages/client/src/modules/quote/types.ts:34](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/quote/types.ts#L34)
+Defined in: packages/client/src/modules/quote/types.ts:34
 
 Stable validation codes produced by quote helpers.
 
@@ -16,7 +16,7 @@ Stable validation codes produced by quote helpers.
 
 > **BORROW\_AMOUNT\_TOO\_LOW**: `"BORROW_AMOUNT_TOO_LOW"`
 
-Defined in: [packages/client/src/modules/quote/types.ts:38](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/quote/types.ts#L38)
+Defined in: packages/client/src/modules/quote/types.ts:38
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [packages/client/src/modules/quote/types.ts:38](https://github.com/L
 
 > **INVALID\_LTV**: `"INVALID_LTV"`
 
-Defined in: [packages/client/src/modules/quote/types.ts:35](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/quote/types.ts#L35)
+Defined in: packages/client/src/modules/quote/types.ts:35
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [packages/client/src/modules/quote/types.ts:35](https://github.com/L
 
 > **LTV\_EXCEEDS\_MAX**: `"LTV_EXCEEDS_MAX"`
 
-Defined in: [packages/client/src/modules/quote/types.ts:36](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/quote/types.ts#L36)
+Defined in: packages/client/src/modules/quote/types.ts:36
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [packages/client/src/modules/quote/types.ts:36](https://github.com/L
 
 > **POOL\_NOT\_FOUND**: `"POOL_NOT_FOUND"`
 
-Defined in: [packages/client/src/modules/quote/types.ts:40](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/quote/types.ts#L40)
+Defined in: packages/client/src/modules/quote/types.ts:40
 
 ***
 
@@ -48,7 +48,7 @@ Defined in: [packages/client/src/modules/quote/types.ts:40](https://github.com/L
 
 > **PRICE\_NOT\_AVAILABLE**: `"PRICE_NOT_AVAILABLE"`
 
-Defined in: [packages/client/src/modules/quote/types.ts:39](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/quote/types.ts#L39)
+Defined in: packages/client/src/modules/quote/types.ts:39
 
 ***
 
@@ -56,7 +56,7 @@ Defined in: [packages/client/src/modules/quote/types.ts:39](https://github.com/L
 
 > **SAME\_ASSET\_NOT\_ALLOWED**: `"SAME_ASSET_NOT_ALLOWED"`
 
-Defined in: [packages/client/src/modules/quote/types.ts:37](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/quote/types.ts#L37)
+Defined in: packages/client/src/modules/quote/types.ts:37
 
 ***
 
@@ -64,4 +64,4 @@ Defined in: [packages/client/src/modules/quote/types.ts:37](https://github.com/L
 
 > **UNKNOWN**: `"UNKNOWN"`
 
-Defined in: [packages/client/src/modules/quote/types.ts:41](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/quote/types.ts#L41)
+Defined in: packages/client/src/modules/quote/types.ts:41

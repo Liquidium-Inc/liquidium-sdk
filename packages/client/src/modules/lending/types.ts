@@ -32,6 +32,8 @@ export interface EvmContractTransaction {
   to: string;
   /** Hex-encoded calldata. */
   data: string;
+  /** Native ETH value in wei, serialized as a decimal string. */
+  value?: string;
 }
 
 /** Parameters for an ERC-20 transfer transaction. */
@@ -123,7 +125,8 @@ export interface CreateWithdrawRequest {
   poolId: string;
   /**
    * Amount to withdraw in the pool asset's base units. BTC withdrawals require
-   * at least 5,000 sats. USDC and USDT withdrawals require at least 1 token.
+   * at least 5,000 sats, ETH requires at least 0.005 ETH, and USDC and USDT
+   * require at least 1 token.
    */
   amount: bigint;
   /** Chain where withdrawn funds should arrive. */
@@ -182,8 +185,8 @@ interface BaseSupplyFlowRequest {
 
 /** Manual transfer-based `lending.supply` request. */
 export interface ManualTransferSupplyFlowRequest extends BaseSupplyFlowRequest {
-  /** Transfer supply uses the default mechanism and does not accept this field. */
-  mechanism?: never;
+  /** Explicit transfer mechanism. Omit this field to use the same default. */
+  mechanism?: typeof SupplyPlanType.transfer;
   /** Manual supply does not broadcast through a wallet adapter. */
   walletAdapter?: never;
   /** Manual supply does not accept a sender account. */
@@ -194,8 +197,8 @@ export interface ManualTransferSupplyFlowRequest extends BaseSupplyFlowRequest {
 
 /** Wallet-executed transfer-based `lending.supply` request. */
 export interface WalletTransferSupplyFlowRequest extends BaseSupplyFlowRequest {
-  /** Transfer supply uses the default mechanism and does not accept this field. */
-  mechanism?: never;
+  /** Explicit transfer mechanism. Omit this field to use the same default. */
+  mechanism?: typeof SupplyPlanType.transfer;
   /** Wallet adapter used to broadcast the transfer. */
   walletAdapter: Pick<
     WalletAdapter,
@@ -203,7 +206,7 @@ export interface WalletTransferSupplyFlowRequest extends BaseSupplyFlowRequest {
   >;
   /** Sender wallet account. */
   account: string;
-  /** Transfer amount in the target asset's base units. */
+  /** Transfer amount in base units. Deposits enforce the asset product minimum. */
   amount: bigint;
 }
 
@@ -217,13 +220,13 @@ export interface ContractInteractionSupplyFlowRequest
   extends BaseSupplyFlowRequest {
   /** Contract-interaction mechanism discriminator. */
   mechanism: typeof SupplyPlanType.contractInteraction;
-  /** Contract interaction is only supported for ETH stablecoin pools. */
+  /** Contract interaction is supported for native ETH, USDC, and USDT pools on Ethereum. */
   chain: typeof Chain.ETH;
-  /** ETH wallet adapter used to approve and deposit ERC-20 assets. */
+  /** ETH wallet adapter used to deposit native ETH or approve and deposit ERC-20 assets. */
   walletAdapter: Pick<WalletAdapter, "sendEthTransaction">;
   /** Sender EVM wallet address. */
   account: string;
-  /** Deposit or repayment amount in token base units. */
+  /** Amount in token base units. Deposits enforce the asset product minimum. */
   amount: bigint;
 }
 
@@ -290,14 +293,14 @@ export interface SubmitInflowResponse {
 /** Chain and asset pair for estimating an inflow target fee. */
 export type EstimateInflowFeeRequest = AssetIdentifier;
 
-/** Request for an ETH stablecoin deposit address. */
+/** Request for a native ETH or ETH stablecoin deposit address. */
 export interface GetDepositAddressRequest {
   /** Liquidium profile principal text. */
   profileId: string;
   /** Pool principal text receiving the inflow. */
   poolId: string;
-  /** ETH stablecoin asset. */
-  asset: typeof Asset.USDC | typeof Asset.USDT;
+  /** Native ETH or ETH stablecoin asset. */
+  asset: typeof Asset.ETH | typeof Asset.USDC | typeof Asset.USDT;
   /** Deposit or repayment action for the inflow. */
   action: SupplyAction;
 }

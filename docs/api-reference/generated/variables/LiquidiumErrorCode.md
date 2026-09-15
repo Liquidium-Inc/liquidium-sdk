@@ -8,7 +8,7 @@
 
 > `const` **LiquidiumErrorCode**: `object`
 
-Defined in: [packages/client/src/core/errors.ts:4](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/errors.ts#L4)
+Defined in: packages/client/src/core/errors.ts:4
 
 Stable string codes for [LiquidiumError](../classes/LiquidiumError.md). Use for branching in application code.
 
@@ -37,6 +37,10 @@ Stable string codes for [LiquidiumError](../classes/LiquidiumError.md). Use for 
 ### CANNOT\_REMOVE\_SOLE\_ACCOUNT
 
 > `readonly` **CANNOT\_REMOVE\_SOLE\_ACCOUNT**: `"CANNOT_REMOVE_SOLE_ACCOUNT"` = `"CANNOT_REMOVE_SOLE_ACCOUNT"`
+
+### CONTRACT\_DESTINATION\_UNSUPPORTED
+
+> `readonly` **CONTRACT\_DESTINATION\_UNSUPPORTED**: `"CONTRACT_DESTINATION_UNSUPPORTED"` = `"CONTRACT_DESTINATION_UNSUPPORTED"`
 
 ### DEPOSIT\_ADDRESS\_ERROR
 

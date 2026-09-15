@@ -78,18 +78,21 @@ describe("getSameAssetBorrowingValidationError", () => {
   test.each([
     ["at", DUST_THRESHOLD],
     ["above", DUST_THRESHOLD + 1n],
-  ])("should reject disabled same-asset borrowing %s the dust threshold", (_position, collateralAmount) => {
-    // given
-    const params = createValidationParams({ collateralAmount });
+  ])(
+    "should reject disabled same-asset borrowing %s the dust threshold",
+    (_position, collateralAmount) => {
+      // given
+      const params = createValidationParams({ collateralAmount });
 
-    // when
-    const result = getSameAssetBorrowingValidationError(params);
+      // when
+      const result = getSameAssetBorrowingValidationError(params);
 
-    // then
-    expect(result).toEqual({
-      message: `Same asset borrowing not allowed for pool ${POOL_ID}`,
-    });
-  });
+      // then
+      expect(result).toEqual({
+        message: `Same asset borrowing not allowed for pool ${POOL_ID}`,
+      });
+    }
+  );
 });
 
 describe("guardSameAssetBorrowing", () => {

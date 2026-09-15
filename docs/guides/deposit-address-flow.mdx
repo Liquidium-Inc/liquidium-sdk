@@ -1,16 +1,16 @@
 ---
-title: Deposit Address Flow
+title: Use deposit-address flows
 description: Use account-based manual deposit targets.
-order: 110
+sidebar_position: 110
 ---
 
-# Deposit Address Flow
+# Use deposit-address flows
 
 Use this path when your app manages a Liquidium profile and asks the user to send funds to a deposit target.
 
-## When To Use It
+## Supported use cases
 
-Use deposit-address flows when your app needs:
+Use a deposit-address flow for the following app needs:
 
 | Need | Use |
 | --- | --- |
@@ -18,7 +18,9 @@ Use deposit-address flows when your app needs:
 | Manual transfers | Your app shows an address or ICRC account and lets the user send funds outside the SDK |
 | Dashboard flows | The user supplies, borrows, withdraws, and repays from one account |
 
-## Shape
+## Request a deposit target
+
+Call `client.lending.supply(...)` with the transfer mechanism:
 
 ```ts
 import { Chain } from "@liquidium/client";
@@ -28,9 +30,22 @@ const supplyFlow = await client.lending.supply({
   poolId,
   action: "deposit",
   chain: Chain.BTC,
+  mechanism: "transfer",
 });
 
 console.log("Send funds to", supplyFlow.target.address);
 ```
 
-When the flow needs a transaction ID, call `supplyFlow.submit(...)` after the user broadcasts the transfer.
+`mechanism: "transfer"` is optional because transfer is the default. Set it when your app exposes an explicit deposit-address versus contract-interaction choice. When the flow needs a transaction ID, call `supplyFlow.submit(...)` after the user broadcasts the transfer.
+
+Manual transfer requests do not include an amount, so the SDK cannot validate the eventual transaction value. Validate deposits with `getMinimumDepositAmount(asset)` before showing the target:
+
+| Asset | Minimum deposit |
+| --- | --- |
+| BTC / ckBTC | `5_100n` sats (`0.000051 BTC`) |
+| ETH / ckETH | `5_000_000_000_000_000n` wei (`0.005 ETH`) |
+| ICP | `10_000n` e8s (`0.0001 ICP`) |
+| USDC / ckUSDC | `1_000_000n` base units (`1 USDC`) |
+| USDT / ckUSDT | `1_000_000n` base units (`1 USDT`) |
+
+For manual deposits, account for the inflow fee returned by `client.lending.estimateInflowFee(...)`. The Liquidium app displays the product floor plus that fee. For external USDT deposit addresses, it uses a separate `1.5 USDT` floor before it adds fees. This route-specific guidance does not change the SDK's `1 USDT` product minimum.

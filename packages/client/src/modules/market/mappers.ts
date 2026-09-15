@@ -1,9 +1,15 @@
+import { getAssetMetadata } from "../../core/asset-metadata";
 import type {
   PoolRateTuple,
   PriceRecord,
 } from "../../core/canisters/lending/actor";
 import type { DecodedPool } from "../../core/canisters/lending/flexible-actor";
-import { RATE_DECIMALS, RATE_SCALE } from "../../core/rates";
+import {
+  estimateBorrowApy,
+  estimateSupplyApy,
+  RATE_DECIMALS,
+  RATE_SCALE,
+} from "../../core/rates";
 import { getAssetNativeDecimals } from "../../core/utils/asset-decimals";
 import type { AssetPrices, Pool, PoolRate } from "./types";
 
@@ -15,6 +21,7 @@ export function mapDecodedPoolToPool(
   pool: DecodedPool,
   rate: PoolRateTuple
 ): Pool {
+  const assetMetadata = getAssetMetadata(pool.asset);
   const totalSupply =
     (pool.total_supply_at_last_sync * pool.lending_index) / RATE_SCALE;
   const totalDebt =
@@ -25,6 +32,7 @@ export function mapDecodedPoolToPool(
   return {
     id: pool.principal.toString(),
     asset: pool.asset,
+    displayName: assetMetadata.displayName,
     chain: pool.chain,
     decimals: getAssetNativeDecimals(pool.asset),
     frozen: pool.frozen,
@@ -40,7 +48,9 @@ export function mapDecodedPoolToPool(
     reserveFactor: pool.reserve_factor,
     rateDecimals: RATE_DECIMALS,
     lendingRate: rate[1],
+    estimatedLendingApy: estimateSupplyApy(rate[1]),
     borrowingRate: rate[0],
+    estimatedBorrowingApy: estimateBorrowApy(rate[0]),
     utilizationRate: rate[2],
     baseRate: pool.base_rate,
     optimalUtilizationRate: pool.optimal_utilization_rate,
@@ -84,7 +94,9 @@ export function mapGetPoolRateResponseToPoolRate(
   return {
     rateDecimals: RATE_DECIMALS,
     borrowRate: rate[0],
+    estimatedBorrowApy: estimateBorrowApy(rate[0]),
     lendRate: rate[1],
+    estimatedLendApy: estimateSupplyApy(rate[1]),
     utilizationRate: rate[2],
   };
 }

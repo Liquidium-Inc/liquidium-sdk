@@ -1,10 +1,12 @@
 import { Actor } from "@icp-sdk/core/agent";
 import { Principal } from "@icp-sdk/core/principal";
 import { afterEach, describe, expect, test, vi } from "vitest";
+import { mockDeep } from "vitest-mock-extended";
 import { encodeIcpAccountIdentifier } from "../../../core/accounts";
 import { DEFAULT_API_BASE_URL } from "../../../core/config";
 import {
   type CreateSimpleLoanRequest,
+  type EvmReadClient,
   LiquidiumClient,
   LiquidiumErrorCode,
   publicIdFromInt,
@@ -16,9 +18,11 @@ import {
   CANISTER_EVM_BORROW_ADDRESS,
   CHECKSUM_EVM_BORROW_ADDRESS,
   createBtcPoolRecord,
+  createEthPoolRecord,
   createIcpPoolRecord,
   createSimpleLoan,
   createUsdtPoolRecord,
+  ETH_POOL_ID,
   encodeIcrcAccount,
   ICP_POOL_ID,
   ICRC_SUBACCOUNT,
@@ -77,6 +81,191 @@ afterEach(() => {
 });
 
 describe("SimpleLoansModule create", () => {
+  test("creates a loan with ETH collateral at the 0.005 ETH minimum", async () => {
+    // given
+    const MINIMUM_ETH_AMOUNT_WEI = 5_000_000_000_000_000n;
+    const MINIMUM_USDT_BORROW_AMOUNT_BASE_UNITS = 1_000_000n;
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation(async (input, init) => {
+        if (init?.method === "POST") {
+          return new Response(
+            JSON.stringify({
+              success: true,
+              loan: {
+                loanId: LOAN_ID.toString(),
+                collateral: { amountHint: MINIMUM_ETH_AMOUNT_WEI.toString() },
+              },
+            }),
+            { status: 200, headers: { "content-type": "application/json" } }
+          );
+        }
+        if (input.toString().includes("/activities?")) {
+          return new Response(JSON.stringify({ activities: [] }), {
+            status: 200,
+            headers: { "content-type": "application/json" },
+          });
+        }
+
+        return new Response(JSON.stringify({ error: "not found" }), {
+          status: 404,
+          headers: { "content-type": "application/json" },
+        });
+      });
+    mockSimpleLoanCreateHydrationActors({
+      getLoan: vi.fn().mockResolvedValue({
+        Ok: createSimpleLoan({
+          lend_asset: { ETH: null },
+          lend_pool_id: Principal.fromText(ETH_POOL_ID),
+          refund_destination: { External: CANISTER_EVM_BORROW_ADDRESS },
+        }),
+      }),
+      btcMinterDepositFee: 2_000n,
+      icrc1Fee: 2_000_000_000_000n,
+    });
+    const client = new LiquidiumClient({});
+
+    // when
+    const loan = await client.simpleLoans.create(
+      createSimpleLoanRequest({
+        collateral: {
+          poolId: ETH_POOL_ID,
+          asset: "ETH",
+          amount: MINIMUM_ETH_AMOUNT_WEI,
+        },
+        borrow: {
+          amount: MINIMUM_USDT_BORROW_AMOUNT_BASE_UNITS,
+        },
+        refund: {
+          chain: "ETH",
+          destination: LOWERCASE_EVM_BORROW_ADDRESS,
+        },
+      })
+    );
+
+    // then
+    const post = fetchSpy.mock.calls.find(
+      ([, init]) => init?.method === "POST"
+    );
+    expect(JSON.parse(post?.[1]?.body as string)).toMatchObject({
+      collateralPoolId: ETH_POOL_ID,
+      collateralAsset: "ETH",
+      collateralAmount: MINIMUM_ETH_AMOUNT_WEI.toString(),
+      refundDestination: { External: CHECKSUM_EVM_BORROW_ADDRESS },
+    });
+    expect(loan.collateral).toMatchObject({
+      asset: "ETH",
+      decimals: 18n,
+      amount: MINIMUM_ETH_AMOUNT_WEI,
+    });
+  });
+
+  test("rejects an invalid native ETH destination before creating the loan", async () => {
+    // given
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    const actorCreateSpy = vi.spyOn(Actor, "createActor");
+    const client = new LiquidiumClient({});
+
+    // when
+    const result = client.simpleLoans.create(
+      createSimpleLoanRequest({
+        borrow: {
+          poolId: ETH_POOL_ID,
+          asset: "ETH",
+          amount: 5_000_000_000_000_000n,
+          chain: "ETH",
+          destination: "not-an-evm-address",
+        },
+      })
+    );
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.INVALID_ADDRESS,
+      message: "Address must be a valid EVM address",
+    });
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(actorCreateSpy).not.toHaveBeenCalled();
+  });
+
+  test("creates a native ETH loan without running the SDK bytecode check", async () => {
+    // given
+    const MINIMUM_ETH_BORROW_AMOUNT_WEI = 5_000_000_000_000_000n;
+    const BTC_MINTER_DEPOSIT_FEE_SATS = 2_000n;
+    const ICRC_LEDGER_FEE_BASE_UNITS = 2_000_000_000_000n;
+    const HTTP_OK_STATUS = 200;
+    const HTTP_NOT_FOUND_STATUS = 404;
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation(async (input, init) => {
+        if (init?.method === "POST") {
+          return new Response(
+            JSON.stringify({
+              success: true,
+              loan: {
+                loanId: LOAN_ID.toString(),
+                collateral: {
+                  amountHint: DEFAULT_COLLATERAL_AMOUNT_BASE_UNITS.toString(),
+                },
+              },
+            }),
+            {
+              status: HTTP_OK_STATUS,
+              headers: { "content-type": "application/json" },
+            }
+          );
+        }
+        if (input.toString().includes("/activities?")) {
+          return new Response(JSON.stringify({ activities: [] }), {
+            status: HTTP_OK_STATUS,
+            headers: { "content-type": "application/json" },
+          });
+        }
+
+        return new Response(JSON.stringify({ error: "not found" }), {
+          status: HTTP_NOT_FOUND_STATUS,
+          headers: { "content-type": "application/json" },
+        });
+      });
+    mockSimpleLoanCreateHydrationActors({
+      getLoan: vi.fn().mockResolvedValue({
+        Ok: createSimpleLoan({
+          borrow_asset: { ETH: null },
+          borrow_amount: MINIMUM_ETH_BORROW_AMOUNT_WEI,
+          borrow_pool_id: Principal.fromText(ETH_POOL_ID),
+          borrow_destination: { External: CANISTER_EVM_BORROW_ADDRESS },
+        }),
+      }),
+      btcMinterDepositFee: BTC_MINTER_DEPOSIT_FEE_SATS,
+      icrc1Fee: ICRC_LEDGER_FEE_BASE_UNITS,
+    });
+    const evmPublicClient = mockDeep<Required<EvmReadClient>>();
+    const client = new LiquidiumClient({
+      evmPublicClient,
+    });
+
+    // when
+    await client.simpleLoans.create(
+      createSimpleLoanRequest({
+        borrow: {
+          poolId: ETH_POOL_ID,
+          asset: "ETH",
+          amount: MINIMUM_ETH_BORROW_AMOUNT_WEI,
+          chain: "ETH",
+          destination: CHECKSUM_EVM_BORROW_ADDRESS,
+        },
+      })
+    );
+
+    // then
+    expect(evmPublicClient.getCode).not.toHaveBeenCalled();
+    expect(
+      fetchSpy.mock.calls.some(([input]) =>
+        input.toString().includes("/v2/ethereum/addresses/")
+      )
+    ).toBe(false);
+  });
+
   test("creates a loan through the default SDK API and hydrates canonical canister state", async () => {
     // given
     const BTC_MINTER_DEPOSIT_FEE_SATS = 2_000n;
@@ -379,83 +568,82 @@ describe("SimpleLoansModule create", () => {
         },
       },
     },
-  ])("creates a native ICP loan with a $name destination", async ({
-    destination,
-    wireDestination,
-    canisterDestination,
-  }) => {
-    // given
-    const fetchSpy = vi
-      .spyOn(globalThis, "fetch")
-      .mockImplementation(async (input, init) => {
-        if (init?.method === "POST") {
-          return new Response(
-            JSON.stringify({
-              success: true,
-              loan: {
-                loanId: LOAN_ID.toString(),
-                collateral: { amountHint: "10000000" },
-              },
-            }),
-            { status: 200, headers: { "content-type": "application/json" } }
-          );
-        }
+  ])(
+    "creates a native ICP loan with a $name destination",
+    async ({ destination, wireDestination, canisterDestination }) => {
+      // given
+      const fetchSpy = vi
+        .spyOn(globalThis, "fetch")
+        .mockImplementation(async (input, init) => {
+          if (init?.method === "POST") {
+            return new Response(
+              JSON.stringify({
+                success: true,
+                loan: {
+                  loanId: LOAN_ID.toString(),
+                  collateral: { amountHint: "10000000" },
+                },
+              }),
+              { status: 200, headers: { "content-type": "application/json" } }
+            );
+          }
 
-        if (input.toString().includes("/activities?")) {
-          return new Response(JSON.stringify({ activities: [] }), {
-            status: 200,
+          if (input.toString().includes("/activities?")) {
+            return new Response(JSON.stringify({ activities: [] }), {
+              status: 200,
+              headers: { "content-type": "application/json" },
+            });
+          }
+
+          return new Response(JSON.stringify({ error: "not found" }), {
+            status: 404,
             headers: { "content-type": "application/json" },
           });
-        }
-
-        return new Response(JSON.stringify({ error: "not found" }), {
-          status: 404,
-          headers: { "content-type": "application/json" },
         });
-      });
-    mockSimpleLoanCreateHydrationActors({
-      getLoan: vi.fn().mockResolvedValue({
-        Ok: createSimpleLoan({
-          borrow_destination: canisterDestination as never,
-          borrow_amount: DEFAULT_ICP_AMOUNT_E8S,
-          borrow_pool_id: Principal.fromText(ICP_POOL_ID),
-          borrow_asset: { ICP: null },
+      mockSimpleLoanCreateHydrationActors({
+        getLoan: vi.fn().mockResolvedValue({
+          Ok: createSimpleLoan({
+            borrow_destination: canisterDestination as never,
+            borrow_amount: DEFAULT_ICP_AMOUNT_E8S,
+            borrow_pool_id: Principal.fromText(ICP_POOL_ID),
+            borrow_asset: { ICP: null },
+          }),
         }),
-      }),
-      btcMinterDepositFee: 2_000n,
-      icrc1Fee: 10n,
-    });
-    const client = new LiquidiumClient({
-      canisterIds: { simpleLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
-    });
+        btcMinterDepositFee: 2_000n,
+        icrc1Fee: 10n,
+      });
+      const client = new LiquidiumClient({
+        canisterIds: { simpleLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
+      });
 
-    // when
-    const loan = await client.simpleLoans.create(
-      createSimpleLoanRequest({
-        borrow: {
-          poolId: ICP_POOL_ID,
-          asset: "ICP",
-          amount: DEFAULT_ICP_AMOUNT_E8S,
-          chain: "ICP",
-          destination,
-        },
-      })
-    );
+      // when
+      const loan = await client.simpleLoans.create(
+        createSimpleLoanRequest({
+          borrow: {
+            poolId: ICP_POOL_ID,
+            asset: "ICP",
+            amount: DEFAULT_ICP_AMOUNT_E8S,
+            chain: "ICP",
+            destination,
+          },
+        })
+      );
 
-    // then
-    const post = fetchSpy.mock.calls.find(
-      ([, init]) => init?.method === "POST"
-    );
-    expect(post).toBeDefined();
-    expect(JSON.parse(post?.[1]?.body as string).borrowDestination).toEqual(
-      wireDestination
-    );
-    expect(loan.borrow).toMatchObject({
-      asset: "ICP",
-      chain: "ICP",
-      destination: { address: expect.any(String) },
-    });
-  });
+      // then
+      const post = fetchSpy.mock.calls.find(
+        ([, init]) => init?.method === "POST"
+      );
+      expect(post).toBeDefined();
+      expect(JSON.parse(post?.[1]?.body as string).borrowDestination).toEqual(
+        wireDestination
+      );
+      expect(loan.borrow).toMatchObject({
+        asset: "ICP",
+        chain: "ICP",
+        destination: { address: expect.any(String) },
+      });
+    }
+  );
 
   test("returns the created loan id when a second hydration fee lookup fails", async () => {
     // given
@@ -964,29 +1152,28 @@ describe("SimpleLoansModule create", () => {
       expectedMessage:
         "ICP simple loan destination must be an IC principal, ICP account identifier, or ICRC account",
     },
-  ] satisfies SimpleLoanDestinationValidationCase[])("rejects unsafe simple loan destination combo: $name", async ({
-    requestOverrides,
-    expectedCode,
-    expectedMessage,
-  }) => {
-    // given
-    const fetchSpy = vi.spyOn(globalThis, "fetch");
-    const actorCreateSpy = vi.spyOn(Actor, "createActor");
-    const client = new LiquidiumClient({});
+  ] satisfies SimpleLoanDestinationValidationCase[])(
+    "rejects unsafe simple loan destination combo: $name",
+    async ({ requestOverrides, expectedCode, expectedMessage }) => {
+      // given
+      const fetchSpy = vi.spyOn(globalThis, "fetch");
+      const actorCreateSpy = vi.spyOn(Actor, "createActor");
+      const client = new LiquidiumClient({});
 
-    // when
-    const result = client.simpleLoans.create(
-      createSimpleLoanRequest(requestOverrides)
-    );
+      // when
+      const result = client.simpleLoans.create(
+        createSimpleLoanRequest(requestOverrides)
+      );
 
-    // then
-    await expect(result).rejects.toMatchObject({
-      code: expectedCode,
-      message: expectedMessage,
-    });
-    expect(fetchSpy).not.toHaveBeenCalled();
-    expect(actorCreateSpy).not.toHaveBeenCalled();
-  });
+      // then
+      await expect(result).rejects.toMatchObject({
+        code: expectedCode,
+        message: expectedMessage,
+      });
+      expect(fetchSpy).not.toHaveBeenCalled();
+      expect(actorCreateSpy).not.toHaveBeenCalled();
+    }
+  );
 
   test("rejects a simple loan with a borrow amount below the asset minimum", async () => {
     // given
@@ -1020,6 +1207,41 @@ describe("SimpleLoansModule create", () => {
       message: "Borrow amount must be at least 1000000 base units for USDT",
     });
     expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  test("rejects ETH collateral below the deposit minimum before creation", async () => {
+    // given
+    const MINIMUM_ETH_COLLATERAL_AMOUNT_WEI = 5_000_000_000_000_000n;
+    const ETH_COLLATERAL_AMOUNT_BELOW_MINIMUM_WEI =
+      MINIMUM_ETH_COLLATERAL_AMOUNT_WEI - 1n;
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    const actorCreateSpy = vi.spyOn(Actor, "createActor");
+    const client = new LiquidiumClient({});
+
+    // when
+    const result = client.simpleLoans.create(
+      createSimpleLoanRequest({
+        collateral: {
+          poolId: ETH_POOL_ID,
+          asset: "ETH",
+          amount: ETH_COLLATERAL_AMOUNT_BELOW_MINIMUM_WEI,
+        },
+        refund: {
+          chain: "ETH",
+          destination: LOWERCASE_EVM_BORROW_ADDRESS,
+        },
+      })
+    );
+
+    // then
+    const EXPECTED_ERROR_MESSAGE =
+      "Deposit amount must be at least 5000000000000000 base units for ETH";
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message: EXPECTED_ERROR_MESSAGE,
+    });
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(actorCreateSpy).not.toHaveBeenCalled();
   });
 
   test("rejects disabled same-asset borrowing at the dust threshold before creation", async () => {
@@ -1448,6 +1670,7 @@ function mockSimpleLoanCreateHydrationActors(params: {
       .fn()
       .mockResolvedValue([
         createBtcPoolRecord({ max_ltv: 6_500n }),
+        createEthPoolRecord(),
         createUsdtPoolRecord(),
         createIcpPoolRecord(),
       ]),

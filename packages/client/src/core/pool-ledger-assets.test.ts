@@ -10,6 +10,8 @@ describe("pool ledger asset routes", () => {
     const SUPPORTED_ASSET_CHAIN_PAIRS = [
       { asset: "BTC", chain: "BTC" },
       { asset: "BTC", chain: "ICP" },
+      { asset: "ETH", chain: "ETH" },
+      { asset: "ETH", chain: "ICP" },
       { asset: "USDT", chain: "ETH" },
       { asset: "USDT", chain: "ICP" },
       { asset: "USDC", chain: "ETH" },
@@ -33,6 +35,16 @@ describe("pool ledger asset routes", () => {
         asset: "BTC",
         chain: "ICP",
         ledgerCanisterId: "mxzaz-hqaaa-aaaar-qaada-cai",
+      },
+      {
+        asset: "ETH",
+        chain: "ETH",
+        ledgerCanisterId: "ss2fx-dyaaa-aaaar-qacoq-cai",
+      },
+      {
+        asset: "ETH",
+        chain: "ICP",
+        ledgerCanisterId: "ss2fx-dyaaa-aaaar-qacoq-cai",
       },
       {
         asset: "USDT",

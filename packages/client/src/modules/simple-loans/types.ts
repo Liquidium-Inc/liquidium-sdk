@@ -29,10 +29,11 @@ export interface CreateSimpleLoanCollateral {
    * Intended credited collateral amount, in base units.
    *
    * This is used to validate LTV and initialize the loan record before
-   * deposit/inflow fees are deducted. For BTC, pass satoshis. For token assets,
-   * convert the UI amount using the selected pool's `decimals` value. After
-   * creation, use one of `loan.initialDeposit.targets` as the fee-inclusive
-   * transfer quote and destination.
+   * deposit/inflow fees are deducted. For BTC, pass satoshis. ETH and ckETH use
+   * 18-decimal wei base units; do not pass human-readable ETH values directly.
+   * For token assets, convert the UI amount using the selected pool's `decimals`
+   * value. After creation, use one of `loan.initialDeposit.targets` as the
+   * fee-inclusive transfer quote and destination.
    */
   amount: bigint;
 }
@@ -54,8 +55,9 @@ export type CreateSimpleLoanBorrow = AssetIdentifier & {
   /**
    * Amount to borrow, in the borrow asset's base units.
    *
-   * For USDC/USDT, convert the UI amount using the selected borrow pool's
-   * `decimals` value before passing it here.
+   * ETH and ckETH use 18-decimal wei base units; do not pass human-readable ETH
+   * values directly. For USDC/USDT, convert the UI amount using the selected
+   * borrow pool's `decimals` value before passing it here.
    */
   amount: bigint;
   /**
@@ -218,13 +220,29 @@ export interface SimpleLoanConfig {
   lendingCanisterId: string;
 }
 
-/** Authentication metadata for warmed Simple Loans profiles. */
-export interface SimpleLoanAuthorization {
+/**
+ * Legacy Ethereum-signature authentication metadata for a warmed Simple Loans profile.
+ *
+ * @deprecated New warmed profiles use `SimpleLoanIcpCallerAuthorization`. This
+ * type remains supported for old canisters and existing profiles.
+ */
+export interface SimpleLoanEthSignatureAuthorization {
   type: "EthSignature";
   derivationIndex: Uint8Array;
   publicKey: Uint8Array;
   address: string;
 }
+
+/** Native IC caller authentication metadata for a warmed Simple Loans profile. */
+export interface SimpleLoanIcpCallerAuthorization {
+  type: "IcpCaller";
+  subaccount: Uint8Array;
+}
+
+/** Authentication metadata for warmed Simple Loans profiles. */
+export type SimpleLoanAuthorization =
+  | SimpleLoanEthSignatureAuthorization
+  | SimpleLoanIcpCallerAuthorization;
 
 /** Warmed profile available for a future simple loan. */
 export interface SimpleLoanWarmedProfile {
@@ -296,12 +314,25 @@ export interface SimpleLoanStuckFundsWithdrawalRequestedEventType {
   amount: bigint;
 }
 
-/** Profile-warmed event payload. */
+/**
+ * Legacy Ethereum-signature profile-warmed event payload.
+ *
+ * @deprecated New profile warmups emit `SimpleLoanIcpProfileWarmedEventType`.
+ * This type remains supported for historical events.
+ */
 export interface SimpleLoanProfileWarmedEventType {
   type: "ProfileWarmed";
   derivationIndex: Uint8Array;
   warmedProfileId: bigint;
   ethAddress: string;
+  profileId: string;
+}
+
+/** ICP-authorized profile-warmed event payload. */
+export interface SimpleLoanIcpProfileWarmedEventType {
+  type: "IcpProfileWarmed";
+  subaccount: Uint8Array;
+  warmedProfileId: bigint;
   profileId: string;
 }
 
@@ -328,6 +359,7 @@ export type SimpleLoanEventType =
   | SimpleLoanDepositTimerExceededEventType
   | SimpleLoanStuckFundsWithdrawalRequestedEventType
   | SimpleLoanProfileWarmedEventType
+  | SimpleLoanIcpProfileWarmedEventType
   | SimpleLoanRepayCompleteEventType
   | SimpleLoanDepositTimerStartedEventType;
 
@@ -335,7 +367,7 @@ export type SimpleLoanEventType =
 export interface SimpleLoanInitialDepositTargetQuote {
   /** Full amount to send to the collateral deposit target, including fee. */
   amount: bigint;
-  /** Inflow fee amount in base units added to the transfer amount. */
+  /** Inflow fee amount in base units added to the transfer amount. Native ETH falls back to 0.00025 ETH when the live estimate fails or is non-positive. */
   inflowFeeAmount: bigint;
   /** Address or ICRC account where the collateral should be sent. */
   target: SupplyTarget;
@@ -345,7 +377,7 @@ export interface SimpleLoanInitialDepositTargetQuote {
 export interface SimpleLoanRepaymentTargetQuote {
   /** Full amount to send to the repayment target, including fee and interest buffer. */
   amount: bigint;
-  /** Inflow fee amount in base units added to the repayment transfer. Falls back to the protocol minimum when live estimation is unavailable. */
+  /** Inflow fee amount in base units added to the repayment transfer. Native ETH falls back to 0.00025 ETH when the live estimate fails or is non-positive. */
   inflowFeeAmount: bigint;
   /** Whether `inflowFeeAmount` came from a live fee estimate. */
   inflowFeeEstimateAvailable: boolean;

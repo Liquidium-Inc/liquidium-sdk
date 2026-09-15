@@ -2,7 +2,7 @@
 title: Changelog
 slug: changelog
 description: Track released SDK package changes.
-order: 500
+sidebar_position: 500
 ---
 
 # Changelog
@@ -10,6 +10,114 @@ order: 500
 Released changes for `@liquidium/client`. This page is generated from [`packages/client/CHANGELOG.md`](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/CHANGELOG.md).
 
 ## @liquidium/client
+
+### 0.8.3
+
+#### Patch Changes
+
+- aae3663: Support decoding the latest headless-loans pool validation errors.
+
+### 0.8.2
+
+#### Patch Changes
+
+- Support the current ICP wallet adoption schema and related canister errors.
+
+### 0.8.1
+
+#### Patch Changes
+
+- 9f6c8a2: Decode legacy Ethereum and native IC authorization metadata for Simple Loans.
+
+### 0.8.0
+
+#### Minor Changes
+
+- 3a06781: Allow callers to provide a preconfigured ICP agent through `LiquidiumClientConfig.agent`.
+
+### 0.7.1
+
+#### Patch Changes
+
+- 033f016: Reject reserved Ethereum destinations and best-effort block native ETH addresses with deployed code.
+
+### 0.7.0
+
+#### Minor Changes
+
+- 8ed003f: Expose estimated borrow and supply APYs for current pool rates.
+- 8ed003f: Add price snapshots with an explicit SDK fetch timestamp.
+- 8ed003f: Add stable display names for supported assets.
+- 8ed003f: Expose the health-factor scale and return null for no-debt health factors.
+- 8ed003f: Add an account helper for distinguishing registered profiles from unknown IDs.
+- d38dc31: Add the protocol-wide activity history feed backed by
+  `GET /v2/history/activities`.
+
+### 0.6.0
+
+#### Minor Changes
+
+- e53daf1: Add native ETH and ckETH support across market, lending, positions, quotes, and Simple Loans. Profile inflows support explicit transfer and payable contract-interaction mechanisms and enforce asset deposit minimums.
+
+  ## Mechanism changes
+
+  - Native ETH supplies support direct transfers to generated EVM deposit addresses and payable contract interactions through the ckETH deposit helper.
+  - ckETH transfers use `Chain.ICP` and the ckETH ICRC ledger.
+  - USDC and USDT contract interactions continue to approve the deposit helper before calling `depositErc20`.
+  - Simple Loans expose native ETH and ckETH transfer targets but do not execute contract interactions.
+
+  ## Breaking changes
+
+  - `Asset`, `AssetIdentifier`, and `SimpleLoanAsset` now include ETH. Add ETH handling to exhaustive asset mappings and switches.
+  - Complete `PoolCanisterIds` configurations must include `pools.eth`.
+  - Wallet-executed deposits and Simple Loan collateral now enforce asset-specific minimum amounts. Use `getMinimumDepositAmount(asset)` to validate input before submission.
+  - EVM wallet and deposit addresses are validated and returned in checksummed form. Normalize addresses or compare them case-insensitively.
+  - `getDepositAddress(...)` now validates that the requested asset matches the selected Ethereum pool.
+  - Ethereum transaction amounts above the `uint256` maximum are rejected.
+
+#### Patch Changes
+
+- 8205a68: Expose named asset identifier types for each supported asset and transfer-chain pair.
+
+- Validate Simple Loans collateral deposit minimums and reject native ETH transfer amounts above the uint256 maximum.
+
+- Hide supplied balances below each pool's dust threshold while preserving active debt, and cap confirmation progress to the confirming state.
+
+### 0.6.0-rc.3
+
+#### Patch Changes
+
+- Expose named asset identifier types for each supported asset and transfer-chain pair.
+
+### 0.6.0-rc.2
+
+#### Patch Changes
+
+- Hide supplied balances below each pool's dust threshold while preserving active debt, and cap confirmation progress to the confirming state.
+
+### 0.6.0-rc.1
+
+#### Patch Changes
+
+- Validate Simple Loans collateral deposit minimums and reject native ETH transfer amounts above the uint256 maximum.
+
+### 0.6.0-rc.0
+
+#### Minor Changes
+
+- e53daf1: Add native ETH and ckETH support across market, lending, positions, quotes, and Simple Loans. Profile inflows support explicit transfer and payable contract-interaction mechanisms and enforce asset deposit minimums.
+
+### 0.5.2
+
+#### Patch Changes
+
+- 32d391f: Hide supplied balances below each pool's dust threshold while preserving positions with active debt.
+
+### 0.5.1
+
+#### Patch Changes
+
+- 88cfd04: Apply lending and borrow indexes when mapping current pool totals.
 
 ### 0.5.0
 

@@ -41,7 +41,7 @@ export function normalizeExternalAddress(
     return params.address;
   }
 
-  if (isEthStablecoin(params.asset)) {
+  if (isEvmAsset(params.asset)) {
     if (params.chain !== Chain.ETH) {
       throw new LiquidiumError(
         LiquidiumErrorCode.INVALID_ADDRESS,
@@ -73,6 +73,6 @@ export function normalizeAndValidateEvmAddress(
   return getAddress(address) as EvmAddress;
 }
 
-function isEthStablecoin(asset: string): boolean {
-  return asset === Asset.USDC || asset === Asset.USDT;
+function isEvmAsset(asset: string): boolean {
+  return asset === Asset.ETH || asset === Asset.USDC || asset === Asset.USDT;
 }

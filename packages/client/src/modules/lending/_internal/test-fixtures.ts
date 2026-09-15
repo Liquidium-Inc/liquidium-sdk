@@ -6,6 +6,7 @@ export const LONG_RETRY_TEST_TIMEOUT_MS = 15_000;
 export const BTC_POOL_ID = "hkmli-faaaa-aaaar-qb4ba-cai";
 export const USDT_POOL_ID = "hnnn4-iyaaa-aaaar-qb4bq-cai";
 export const USDC_POOL_ID = "6sna2-oiaaa-aaaar-qb66q-cai";
+export const ETH_POOL_ID = "qcg7y-syaaa-aaaar-qb75q-cai";
 export const ICP_POOL_ID = "r2pk3-4yaaa-aaaar-qb7zq-cai";
 export const VALID_BTC_OUTFLOW_ADDRESS = "1BoatSLRHtKNngkdXEeobR76b53LETtpyT";
 export const VALID_IC_PRINCIPAL = "aaaaa-aa";
@@ -127,6 +128,13 @@ export function createUsdcPoolRecord(poolId = USDC_POOL_ID) {
     liquidation_threshold: 7_500n,
     max_ltv: 7_000n,
     total_supply_at_last_sync: 50_000n,
+  };
+}
+
+export function createEthPoolRecord(poolId = ETH_POOL_ID) {
+  return {
+    ...createUsdcPoolRecord(poolId),
+    asset: { ETH: null },
   };
 }
 

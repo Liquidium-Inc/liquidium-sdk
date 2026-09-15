@@ -1,5 +1,8 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { computeExpiryTimestampFromNow } from "./time";
+import {
+  computeExpiryTimestampFromNow,
+  getCurrentUnixTimestampSeconds,
+} from "./time";
 
 describe("computeExpiryTimestampFromNow", () => {
   afterEach(() => {
@@ -38,5 +41,25 @@ describe("computeExpiryTimestampFromNow", () => {
 
     // then
     expect(expiryTimestamp).toBe(EXPECTED_EXPIRY_TIMESTAMP);
+  });
+});
+
+describe("getCurrentUnixTimestampSeconds", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  test("should return the current Unix timestamp in whole seconds", () => {
+    // given
+    const NOW_WITH_PARTIAL_SECOND_MS = 1_700_000_000_999;
+    const EXPECTED_CURRENT_TIME_SECONDS = 1_700_000_000n;
+    vi.useFakeTimers();
+    vi.setSystemTime(NOW_WITH_PARTIAL_SECOND_MS);
+
+    // when
+    const currentTimeSeconds = getCurrentUnixTimestampSeconds();
+
+    // then
+    expect(currentTimeSeconds).toBe(EXPECTED_CURRENT_TIME_SECONDS);
   });
 });

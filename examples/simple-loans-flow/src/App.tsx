@@ -32,7 +32,7 @@ const PRICE_DISPLAY_DECIMALS = 8;
 const DEFAULT_COLLATERAL_ASSET = "BTC";
 const DEFAULT_BORROW_ASSET = "USDC";
 const DEFAULT_TRANSFER_CHAIN: Chain = Chain.ETH;
-const CK_TARGET_ASSETS = new Set(["BTC", "USDC", "USDT"]);
+const CK_TARGET_ASSETS = new Set(["BTC", "ETH", "USDC", "USDT"]);
 
 type LoanTargetOptions = {
   initialDeposit: LoanTargetOption[];

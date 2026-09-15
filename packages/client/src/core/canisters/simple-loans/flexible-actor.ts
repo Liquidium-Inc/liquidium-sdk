@@ -179,6 +179,9 @@ const flexibleSimpleLoansIdlFactory: IDL.InterfaceFactory = ({ IDL }) => {
     CouldNotDecode: IDL.Text,
     ProfileNotFound: IDL.Null,
     InvalidBtcSignature: IDL.Null,
+    AnonymousIcpCaller: IDL.Null,
+    InvalidIcpSubaccount: IDL.Null,
+    IcpCallerMismatch: IDL.Null,
   });
   const ProtocolError = IDL.Variant({
     PositionNotFound: IDL.Null,
@@ -210,6 +213,7 @@ const flexibleSimpleLoansIdlFactory: IDL.InterfaceFactory = ({ IDL }) => {
   });
   const SimpleLoansError = IDL.Variant({
     BorrowAmountRequired: IDL.Null,
+    AnonymousPrincipalNotAllowed: IDL.Null,
     NoCollateralPosition: IDL.Record({ loan_id: IDL.Nat }),
     LtvTimerOutOfRange: IDL.Record({ max: IDL.Nat64 }),
     LtvMaxExceeded: IDL.Record({
@@ -223,6 +227,11 @@ const flexibleSimpleLoansIdlFactory: IDL.InterfaceFactory = ({ IDL }) => {
       CallRejected: IDL.Record({ method: IDL.Text, reason: IDL.Text }),
       DecodeFailed: IDL.Record({ method: IDL.Text, reason: IDL.Text }),
     }),
+    PoolNotFound: IDL.Record({ pool_id: IDL.Principal }),
+    LendingCanisterImmutable: IDL.Record({
+      requested: IDL.Principal,
+      configured: IDL.Principal,
+    }),
     LtvMaxOutOfRange: IDL.Record({ max: IDL.Nat64 }),
     AccountRequired: IDL.Record({ label: IDL.Text }),
     DepositTimerExceeded: IDL.Record({ loan_id: IDL.Nat }),
@@ -235,8 +244,14 @@ const flexibleSimpleLoansIdlFactory: IDL.InterfaceFactory = ({ IDL }) => {
     DepositAlreadyProcessed: IDL.Record({ loan_id: IDL.Nat }),
     MissingPrice: IDL.Record({ symbol: IDL.Text }),
     InvalidLtvTimerS: IDL.Null,
+    PoolLendingDisabled: IDL.Record({ pool_id: IDL.Principal }),
     DebtNotFullyRepaid: IDL.Record({ loan_id: IDL.Nat }),
     EmptyCollateralPosition: IDL.Null,
+    PoolAssetMismatch: IDL.Record({
+      configured_asset: IDL.Unknown,
+      requested_asset: IDL.Unknown,
+      pool_id: IDL.Principal,
+    }),
     SigningFailed: IDL.Record({ reason: IDL.Text }),
   });
   const CreateLoanRequest = IDL.Record({
@@ -298,6 +313,11 @@ const flexibleSimpleLoansIdlFactory: IDL.InterfaceFactory = ({ IDL }) => {
       eth_address: IDL.Text,
       lending_profile: IDL.Principal,
     }),
+    IcpProfileWarmed: IDL.Record({
+      subaccount: IDL.Vec(IDL.Nat8),
+      warmed_profile_id: IDL.Nat,
+      lending_profile: IDL.Principal,
+    }),
     RepayComplete: CreateLoanResponse,
     DepositTimerStarted: IDL.Record({
       loan_id: IDL.Nat,
@@ -315,6 +335,9 @@ const flexibleSimpleLoansIdlFactory: IDL.InterfaceFactory = ({ IDL }) => {
       derivation_index: IDL.Vec(IDL.Nat8),
       pubkey: IDL.Vec(IDL.Nat8),
       address: IDL.Text,
+    }),
+    IcpCaller: IDL.Record({
+      subaccount: IDL.Vec(IDL.Nat8),
     }),
   });
   const Loan = IDL.Record({

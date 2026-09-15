@@ -62,6 +62,7 @@ describe("MarketModule", () => {
       {
         id: "pool-1",
         asset: "BTC",
+        displayName: "Bitcoin",
         chain: "BTC",
         decimals: 8n,
         frozen: false,
@@ -77,7 +78,9 @@ describe("MarketModule", () => {
         reserveFactor: 100n,
         rateDecimals: RATE_DECIMALS,
         lendingRate: 20n,
+        estimatedLendingApy: 0n,
         borrowingRate: 10n,
+        estimatedBorrowingApy: 0n,
         utilizationRate: 30n,
         baseRate: 5n,
         optimalUtilizationRate: 80n,
@@ -137,6 +140,56 @@ describe("MarketModule", () => {
     });
   });
 
+  test("maps native ETH reserves with 18 decimals", async () => {
+    // given
+    const ETH_POOL_ID = "pool-eth";
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi.fn().mockResolvedValue([
+        {
+          optimal_utilization_rate: 80n,
+          principal: { toString: () => ETH_POOL_ID, toText: () => ETH_POOL_ID },
+          total_generated_interest_snapshot: 0n,
+          supply_cap: [],
+          same_asset_borrowing: [],
+          asset: { ETH: null },
+          rate_slope_before: 1n,
+          borrow_cap: [],
+          total_debt_at_last_sync: 1_000_000_000_000_000_000n,
+          chain: { ETH: null },
+          rate_slope_after: 2n,
+          reserve_factor: 100n,
+          last_updated: [],
+          lending_index: RATE_SCALE,
+          protocol_liquidation_fee: 50n,
+          borrow_index: RATE_SCALE,
+          base_rate: 5n,
+          frozen: false,
+          liquidation_bonus: 200n,
+          liquidation_threshold: 7_500n,
+          max_ltv: 7_000n,
+          total_supply_at_last_sync: 3_000_000_000_000_000_000n,
+        },
+      ]),
+      get_pool_rate: vi.fn().mockResolvedValue([[10n, 20n, 30n]]),
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const reserve = await client.market.getReserveData({
+      asset: "ETH",
+      chain: "ETH",
+    });
+
+    // then
+    expect(reserve).toMatchObject({
+      id: ETH_POOL_ID,
+      asset: "ETH",
+      chain: "ETH",
+      decimals: 18n,
+      availableLiquidity: 2_000_000_000_000_000_000n,
+    });
+  });
+
   test("defaults pool rates to zero when get_pool_rate returns none", async () => {
     // given
     vi.spyOn(Actor, "createActor").mockReturnValue({
@@ -179,7 +232,9 @@ describe("MarketModule", () => {
       chain: "ETH",
       rateDecimals: RATE_DECIMALS,
       borrowingRate: 0n,
+      estimatedBorrowingApy: 0n,
       lendingRate: 0n,
+      estimatedLendingApy: 0n,
       utilizationRate: 0n,
       maxLtv: 0n,
       sameAssetBorrowing: false,
@@ -386,6 +441,37 @@ describe("MarketModule", () => {
     });
   });
 
+  test("resolves native and chain-key ETH identifiers to the ETH backing pool", async () => {
+    // given
+    const ethPoolPrincipal = "pool-eth";
+    const client = new LiquidiumClient({});
+    vi.spyOn(client.market, "listPools").mockResolvedValue([
+      {
+        id: ethPoolPrincipal,
+        asset: "ETH",
+        chain: "ETH",
+      } as never,
+    ]);
+
+    // when
+    const nativePool = await client.market.findPool({
+      asset: "ETH",
+      chain: "ETH",
+    });
+    const chainKeyPool = await client.market.findPool({
+      asset: "ETH",
+      chain: "ICP",
+    });
+
+    // then
+    expect(nativePool).toMatchObject({
+      id: ethPoolPrincipal,
+      asset: "ETH",
+      chain: "ETH",
+    });
+    expect(chainKeyPool).toBe(nativePool);
+  });
+
   test("rejects an unsupported asset and chain pair", async () => {
     const client = new LiquidiumClient({});
 
@@ -530,6 +616,26 @@ describe("MarketModule", () => {
     expect(prices).toEqual({});
   });
 
+  test("returns prices with the SDK fetch timestamp", async () => {
+    // given
+    const FETCHED_AT_SECONDS = 1_750_000_000n;
+    vi.useFakeTimers();
+    vi.setSystemTime(Number(FETCHED_AT_SECONDS * 1_000n));
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      get_prices: vi.fn().mockResolvedValue([["BTC_USDT", 68_500_000_000n, 6]]),
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const snapshot = await client.market.getAssetPriceSnapshot();
+
+    // then
+    expect(snapshot).toEqual({
+      prices: { BTC: 68_500 },
+      fetchedAt: FETCHED_AT_SECONDS,
+    });
+  });
+
   test("gets a pool rate from the lending canister", async () => {
     // given
     vi.spyOn(Actor, "createActor").mockReturnValue({
@@ -544,7 +650,9 @@ describe("MarketModule", () => {
     expect(rate).toEqual({
       rateDecimals: RATE_DECIMALS,
       borrowRate: 10n,
+      estimatedBorrowApy: 0n,
       lendRate: 20n,
+      estimatedLendApy: 0n,
       utilizationRate: 30n,
     });
   });

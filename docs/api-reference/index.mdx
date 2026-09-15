@@ -1,29 +1,33 @@
 ---
-title: API Reference
+title: API reference
 description: Look up Liquidium SDK modules, methods, and exported types.
-order: 400
+sidebar_position: 400
 ---
 
-# API Reference
+# API reference
 
 The SDK exports `LiquidiumClient`, error types, constants, module request types, response types, and wallet action types from `@liquidium/client`.
 
-## Client Modules
+## Client modules
+
+The client provides the following modules:
 
 | Module | Purpose |
 | --- | --- |
 | `client.accounts` | Profile lifecycle, account lookup, and linked wallets |
 | `client.activities` | Activity lists and receipt-oriented status |
-| `client.history` | Pool and user history through the Liquidium SDK API |
+| `client.history` | User history and confirmed protocol-wide activity through the Liquidium SDK API |
 | `client.simpleLoans` | Accountless Simple Loans with generated deposit and repayment targets |
 | `client.lending` | Supply, borrow, withdraw, and inflow reporting |
 | `client.market` | Pools, prices, and pool rate lookups |
 | `client.positions` | Per-pool positions, health, and aggregate stats |
 | `client.quote` | Pure quote helpers from market inputs |
 
-## Shared Status Types
+## Shared status types
 
 Use [`LiquidiumStatus`](./generated/interfaces/LiquidiumStatus.md) for flow state across Simple Loans, activities, lending responses, and history entries.
+
+The following types define shared status data:
 
 | Type | Purpose |
 | --- | --- |
@@ -33,11 +37,54 @@ Use [`LiquidiumStatus`](./generated/interfaces/LiquidiumStatus.md) for flow stat
 | [`Activity`](./generated/type-aliases/Activity.md) | Inflow or outflow activity returned by activity APIs |
 | [`GetActivityStatusResponse`](./generated/type-aliases/GetActivityStatusResponse.md) | Found or missing result from `client.activities.getStatus(...)` |
 
-See [Status System](../concepts/status-system.mdx) for UI guidance.
+For UI guidance, see the [status system](../concepts/status-system.mdx).
 
-## Generated Reference
+For APR and estimated APY semantics, see [market data](../concepts/market-data.mdx).
 
-The [generated API reference](./generated/README.md) is built from the current `@liquidium/client` exports.
+## Error behavior
+
+Public SDK methods can reject with
+[`LiquidiumError`](./generated/classes/LiquidiumError.md). Branch on its stable
+[`LiquidiumErrorCode`](./generated/variables/LiquidiumErrorCode.md) value
+instead of parsing `message`.
+
+`client.simpleLoans.create(...)` can also reject with
+[`SimpleLoanCreatedError`](./generated/classes/SimpleLoanCreatedError.md) after
+the remote loan is created but before the SDK loads its hydrated state. Recover
+the loan with the error's `loanId` or `ref`. Do not call `create(...)` again.
+
+For retry decisions and recovery code, see [Handle errors](../guides/error-handling.mdx).
+
+## History
+
+Use `client.history.getUserTransactionHistory(profileId, filters?)` for paginated profile transaction history. It accepts `cursor`, `limit`, `market`, `poolId`, `operations`, `states`, `from`, and `to`.
+
+Use `client.history.getLiquidationHistory(profileId, filters?)` for paginated liquidation history. It accepts `cursor`, `limit`, `market`, `poolId`, `from`, and `to`.
+
+Continue pagination with the opaque `nextCursor` value.
+
+Use `client.history.getProtocolActivity(filters?)` for recent confirmed activity across the protocol. It calls `GET /v2/history/activities`, accepts `poolId`, `operations`, and `limit`, and returns an unpaginated array with each pool's `asset`, `decimals`, and base-unit `amount`. History and protocol activity entries expose `txids?: string[]`.
+
+## Asset identifiers
+
+`AssetIdentifier` is a union of named types for each supported asset and
+transfer-chain pair.
+
+| Type | Asset | Chain |
+| --- | --- | --- |
+| `BtcOnBtcAssetIdentifier` | `BTC` | `BTC` |
+| `EthOnEthAssetIdentifier` | `ETH` | `ETH` |
+| `UsdcOnEthAssetIdentifier` | `USDC` | `ETH` |
+| `UsdtOnEthAssetIdentifier` | `USDT` | `ETH` |
+| `BtcOnIcpAssetIdentifier` | `BTC` | `ICP` |
+| `EthOnIcpAssetIdentifier` | `ETH` | `ICP` |
+| `IcpOnIcpAssetIdentifier` | `ICP` | `ICP` |
+| `UsdcOnIcpAssetIdentifier` | `USDC` | `ICP` |
+| `UsdtOnIcpAssetIdentifier` | `USDT` | `ICP` |
+
+## Generated reference
+
+The [generated API reference](./generated/README.md) is built from the `@liquidium/client` exports.
 
 Regenerate it with TypeDoc and `typedoc-plugin-markdown` after changing exported APIs:
 

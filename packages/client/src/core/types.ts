@@ -1,8 +1,18 @@
-import type { Identity } from "@icp-sdk/core/agent";
+import type { Agent, Identity } from "@icp-sdk/core/agent";
 import type { PublicClient } from "viem";
 
-/** Minimal viem-compatible client shape required for SDK EVM read calls. */
-export type EvmReadClient = Pick<PublicClient, "readContract">;
+/**
+ * Minimal viem-compatible client shape required for SDK EVM read calls.
+ *
+ * When `getCode` is present and `chain` identifies Ethereum mainnet, the SDK
+ * uses it for a best-effort native ETH contract-destination check. Provider
+ * failures fail open and do not block the outflow.
+ */
+export interface EvmReadClient {
+  readContract: PublicClient["readContract"];
+  chain?: PublicClient["chain"];
+  getCode?: PublicClient["getCode"];
+}
 
 /**
  * Runtime options for `new LiquidiumClient(config)`.
@@ -13,6 +23,8 @@ export type EvmReadClient = Pick<PublicClient, "readContract">;
 export interface LiquidiumClientConfig {
   /** Preset canister IDs. Only `mainnet` is bundled. */
   environment?: Environment;
+  /** Preconfigured ICP agent. Takes precedence over `icHost` and `identity`. */
+  agent?: Agent;
   /** ICP replica host override (defaults follow `@icp-sdk/core/agent`). */
   icHost?: string;
   /** Agent identity for signed canister calls. */
@@ -31,11 +43,11 @@ export interface LiquidiumClientConfig {
   fetch?: typeof fetch;
   /** Per-request timeout for SDK API calls in milliseconds. */
   timeoutMs?: number;
-  /** Ethereum RPC URL used for public ERC-20 reads in EVM supply flows. */
+  /** Ethereum RPC URL used for best-effort native ETH outflow checks and public ERC-20 reads. */
   evmRpcUrl?: string;
   /** Optional headers for RPC providers that authenticate via HTTP headers. */
   evmRpcHeaders?: Record<string, string>;
-  /** Existing viem public client or compatible read client for EVM reads. */
+  /** Existing viem client; mainnet `chain` and `getCode` enable native ETH outflow checks. */
   evmPublicClient?: EvmReadClient;
 }
 
@@ -43,6 +55,8 @@ export interface LiquidiumClientConfig {
 export interface PoolCanisterIds {
   /** BTC pool canister principal. */
   btc: string;
+  /** ETH pool canister principal. */
+  eth: string;
   /** USDT pool canister principal. */
   usdt: string;
   /** USDC pool canister principal. */
@@ -79,6 +93,7 @@ export type Environment = (typeof Environment)[keyof typeof Environment];
 /** Canonical asset symbols supported by state-mutating protocol flows. */
 export const Asset = {
   BTC: "BTC",
+  ETH: "ETH",
   ICP: "ICP",
   USDC: "USDC",
   USDT: "USDT",
@@ -98,15 +113,71 @@ export type Chain = (typeof Chain)[keyof typeof Chain];
 /** Chains whose wallets can authorize Liquidium protocol actions. */
 export type SigningChain = typeof Chain.BTC | typeof Chain.ETH;
 
+/** BTC transferred on the Bitcoin chain. */
+export interface BtcOnBtcAssetIdentifier {
+  chain: typeof Chain.BTC;
+  asset: typeof Asset.BTC;
+}
+
+/** ETH transferred on the Ethereum chain. */
+export interface EthOnEthAssetIdentifier {
+  chain: typeof Chain.ETH;
+  asset: typeof Asset.ETH;
+}
+
+/** USDC transferred on the Ethereum chain. */
+export interface UsdcOnEthAssetIdentifier {
+  chain: typeof Chain.ETH;
+  asset: typeof Asset.USDC;
+}
+
+/** USDT transferred on the Ethereum chain. */
+export interface UsdtOnEthAssetIdentifier {
+  chain: typeof Chain.ETH;
+  asset: typeof Asset.USDT;
+}
+
+/** BTC transferred on the Internet Computer chain. */
+export interface BtcOnIcpAssetIdentifier {
+  chain: typeof Chain.ICP;
+  asset: typeof Asset.BTC;
+}
+
+/** ETH transferred on the Internet Computer chain. */
+export interface EthOnIcpAssetIdentifier {
+  chain: typeof Chain.ICP;
+  asset: typeof Asset.ETH;
+}
+
+/** ICP transferred on the Internet Computer chain. */
+export interface IcpOnIcpAssetIdentifier {
+  chain: typeof Chain.ICP;
+  asset: typeof Asset.ICP;
+}
+
+/** USDC transferred on the Internet Computer chain. */
+export interface UsdcOnIcpAssetIdentifier {
+  chain: typeof Chain.ICP;
+  asset: typeof Asset.USDC;
+}
+
+/** USDT transferred on the Internet Computer chain. */
+export interface UsdtOnIcpAssetIdentifier {
+  chain: typeof Chain.ICP;
+  asset: typeof Asset.USDT;
+}
+
 /** Supported asset and transfer-chain combinations. */
 export type AssetIdentifier =
-  | { chain: typeof Chain.BTC; asset: typeof Asset.BTC }
-  | { chain: typeof Chain.ETH; asset: typeof Asset.USDC }
-  | { chain: typeof Chain.ETH; asset: typeof Asset.USDT }
-  | { chain: typeof Chain.ICP; asset: typeof Asset.BTC }
-  | { chain: typeof Chain.ICP; asset: typeof Asset.ICP }
-  | { chain: typeof Chain.ICP; asset: typeof Asset.USDC }
-  | { chain: typeof Chain.ICP; asset: typeof Asset.USDT };
+  | BtcOnBtcAssetIdentifier
+  | EthOnEthAssetIdentifier
+  | UsdcOnEthAssetIdentifier
+  | UsdtOnEthAssetIdentifier
+  | BtcOnIcpAssetIdentifier
+  | EthOnIcpAssetIdentifier
+  | IcpOnIcpAssetIdentifier
+  | UsdcOnIcpAssetIdentifier
+  | UsdtOnIcpAssetIdentifier;
 
 /** Returns whether an asset and chain form a supported SDK identifier. */
 export function isAssetIdentifier(identifier: {
@@ -117,10 +188,15 @@ export function isAssetIdentifier(identifier: {
     case Chain.BTC:
       return identifier.asset === Asset.BTC;
     case Chain.ETH:
-      return identifier.asset === Asset.USDC || identifier.asset === Asset.USDT;
+      return (
+        identifier.asset === Asset.ETH ||
+        identifier.asset === Asset.USDC ||
+        identifier.asset === Asset.USDT
+      );
     case Chain.ICP:
       return (
         identifier.asset === Asset.BTC ||
+        identifier.asset === Asset.ETH ||
         identifier.asset === Asset.ICP ||
         identifier.asset === Asset.USDC ||
         identifier.asset === Asset.USDT

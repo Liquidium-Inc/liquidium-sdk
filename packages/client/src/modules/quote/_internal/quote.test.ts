@@ -11,6 +11,7 @@ describe("QuoteModule", () => {
   const btcPool: Pool = {
     id: "aaaaa-btc-pool",
     asset: "BTC",
+    displayName: "Bitcoin",
     chain: "BTC",
     decimals: 8n,
     frozen: false,
@@ -24,7 +25,9 @@ describe("QuoteModule", () => {
     reserveFactor: 2000n,
     rateDecimals: RATE_DECIMALS,
     lendingRate: 0n,
+    estimatedLendingApy: 0n,
     borrowingRate: 0n,
+    estimatedBorrowingApy: 0n,
     utilizationRate: 0n,
     baseRate: 0n,
     optimalUtilizationRate: 8000n,
@@ -39,6 +42,7 @@ describe("QuoteModule", () => {
   const usdtPool: Pool = {
     id: "xxxxx-usdt-pool",
     asset: "USDT",
+    displayName: "Tether USD",
     chain: "ETH",
     decimals: 6n,
     frozen: false,
@@ -52,7 +56,9 @@ describe("QuoteModule", () => {
     reserveFactor: 1000n,
     rateDecimals: RATE_DECIMALS,
     lendingRate: 0n,
+    estimatedLendingApy: 0n,
     borrowingRate: 0n,
+    estimatedBorrowingApy: 0n,
     utilizationRate: 0n,
     baseRate: 0n,
     optimalUtilizationRate: 8000n,
@@ -148,31 +154,34 @@ describe("QuoteModule", () => {
     ["below", SAME_ASSET_DUST_THRESHOLD_SATS - 1n, false],
     ["at", SAME_ASSET_DUST_THRESHOLD_SATS, false],
     ["above", SAME_ASSET_DUST_THRESHOLD_SATS + 1n, false],
-  ])("applies the same-asset dust policy %s the threshold", (_position, collateralAmount, shouldReject) => {
-    // given
-    const sameAssetPool: Pool = {
-      ...btcPool,
-      sameAssetBorrowing: true,
-      sameAssetBorrowingDustThreshold: SAME_ASSET_DUST_THRESHOLD_SATS,
-    };
-    const request = {
-      borrowAmount: 10_000n,
-      borrowPoolId: sameAssetPool.id,
-      collateralAmount,
-      collateralPoolId: sameAssetPool.id,
-    };
+  ])(
+    "applies the same-asset dust policy %s the threshold",
+    (_position, collateralAmount, shouldReject) => {
+      // given
+      const sameAssetPool: Pool = {
+        ...btcPool,
+        sameAssetBorrowing: true,
+        sameAssetBorrowingDustThreshold: SAME_ASSET_DUST_THRESHOLD_SATS,
+      };
+      const request = {
+        borrowAmount: 10_000n,
+        borrowPoolId: sameAssetPool.id,
+        collateralAmount,
+        collateralPoolId: sameAssetPool.id,
+      };
 
-    // when
-    const result = quoteModule.calculateLtv(request, [sameAssetPool], prices);
+      // when
+      const result = quoteModule.calculateLtv(request, [sameAssetPool], prices);
 
-    // then
-    expect(
-      result.validationErrors.some(
-        (error) =>
-          error.code === QuoteValidationErrorCode.SAME_ASSET_NOT_ALLOWED
-      )
-    ).toBe(shouldReject);
-  });
+      // then
+      expect(
+        result.validationErrors.some(
+          (error) =>
+            error.code === QuoteValidationErrorCode.SAME_ASSET_NOT_ALLOWED
+        )
+      ).toBe(shouldReject);
+    }
+  );
 
   test("calculates required collateral for valid cross-asset quote", () => {
     // given

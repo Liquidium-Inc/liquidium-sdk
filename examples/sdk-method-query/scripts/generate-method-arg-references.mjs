@@ -41,10 +41,12 @@ const METHOD_REFERENCE_TARGETS = {
   "accounts.prepareCreateProfile": "accounts.prepareCreateProfile",
   "accounts.createProfile": "accounts.createProfile",
   "accounts.getProfileId": "accounts.getProfileId",
+  "accounts.profileExists": "accounts.profileExists",
   "accounts.getWalletNonce": "accounts.getWalletNonce",
   "accounts.listLinkedWallets": "accounts.listLinkedWallets",
   "market.listPools": "market.listPools",
   "market.getAssetPrices": "market.getAssetPrices",
+  "market.getAssetPriceSnapshot": "market.getAssetPriceSnapshot",
   "market.findPool": "market.findPool",
   "market.getPoolRate": "market.getPoolRate",
   "market.getReserveData": "market.getReserveData",
@@ -64,6 +66,7 @@ const METHOD_REFERENCE_TARGETS = {
   "activities.getStatus": "activities.getStatus",
   "history.getUserTransactionHistory": "history.getUserTransactionHistory",
   "history.getLiquidationHistory": "history.getLiquidationHistory",
+  "history.getProtocolActivity": "history.getProtocolActivity",
   "quote.getQuote": "quote.getQuote",
   "lending.prepareWithdraw": "lending.prepareWithdraw",
   "lending.withdraw": "lending.withdraw",
@@ -360,7 +363,7 @@ function normalizeTypeText(value) {
   return value
     .replace(/import\("[^"]+"\)\./g, "")
     .replace(/typeof Chain\.(BTC|ETH|ICP)/g, '"$1"')
-    .replace(/typeof Asset\.(BTC|ICP|USDC|USDT)/g, '"$1"')
+    .replace(/typeof Asset\.(BTC|ETH|ICP|USDC|USDT)/g, '"$1"')
     .replace(/typeof SupplyPlanType\.(contractInteraction|transfer)/g, '"$1"');
 }
 

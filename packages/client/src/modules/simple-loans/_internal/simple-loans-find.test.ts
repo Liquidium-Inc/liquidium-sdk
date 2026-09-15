@@ -183,4 +183,44 @@ describe("SimpleLoansModule find", () => {
       message: "Invalid simple loan loan ID",
     });
   });
+
+  test("maps native ETH collateral and borrow assets from find results", async () => {
+    // given
+    const ETH_POOL_ID = "qcg7y-syaaa-aaaar-qb75q-cai";
+    vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          success: true,
+          candidates: [
+            {
+              loan_id: LOAN_ID.toString(),
+              short_ref: publicIdFromInt(LOAN_ID),
+              profile: PROFILE_ID,
+              created_at: "2026-05-27T08:16:26.194Z",
+              lend_asset: "ETH",
+              borrow_asset: "ETH",
+              collateral_amount: "5000000000000000",
+              lend_pool_ic_id: ETH_POOL_ID,
+              borrow_pool_ic_id: ETH_POOL_ID,
+            },
+          ],
+        }),
+        { status: 200, headers: { "content-type": "application/json" } }
+      )
+    );
+    const client = new LiquidiumClient({});
+
+    // when
+    const results = await client.simpleLoans.find("0xeth-transaction");
+
+    // then
+    expect(results[0]).toMatchObject({
+      collateral: {
+        poolId: ETH_POOL_ID,
+        asset: "ETH",
+        amount: 5_000_000_000_000_000n,
+      },
+      borrow: { poolId: ETH_POOL_ID, asset: "ETH" },
+    });
+  });
 });

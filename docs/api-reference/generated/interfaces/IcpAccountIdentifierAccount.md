@@ -6,7 +6,7 @@
 
 # Interface: IcpAccountIdentifierAccount
 
-Defined in: [packages/client/src/core/accounts.ts:36](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/accounts.ts#L36)
+Defined in: packages/client/src/core/accounts.ts:36
 
 Legacy ICP ledger account identifier.
 
@@ -16,7 +16,7 @@ Legacy ICP ledger account identifier.
 
 > **address**: `string`
 
-Defined in: [packages/client/src/core/accounts.ts:40](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/accounts.ts#L40)
+Defined in: packages/client/src/core/accounts.ts:40
 
 ICP ledger account identifier text.
 
@@ -26,6 +26,6 @@ ICP ledger account identifier text.
 
 > **type**: `"IcpAccountIdentifier"`
 
-Defined in: [packages/client/src/core/accounts.ts:38](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/accounts.ts#L38)
+Defined in: packages/client/src/core/accounts.ts:38
 
 Account type.

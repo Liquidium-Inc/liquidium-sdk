@@ -1,6 +1,6 @@
 {
   "name": "@liquidium/client",
-  "version": "0.5.0",
+  "version": "0.8.3",
   "description": "The official client for the Liquidium protocol",
   "keywords": [
     "liquidium",
@@ -55,11 +55,12 @@
     "@icp-sdk/core": "^5.4.0",
     "@scure/base": "^2.2.0",
     "bitcoin-address-validation": "^3.0.0",
-    "viem": "^2.50.4"
+    "viem": "^2.55.10"
   },
   "devDependencies": {
     "tsup": "^8.5.1",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest-mock-extended": "^5.1.1"
   },
   "license": "MIT"
 }

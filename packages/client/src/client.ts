@@ -58,6 +58,7 @@ export class LiquidiumClient {
     const timeoutMs = config.timeoutMs ?? DEFAULT_TIMEOUT_MS;
 
     this.canisterContext = createCanisterContext({
+      agent: config.agent,
       icHost: config.icHost,
       identity: config.identity,
       canisterIds,

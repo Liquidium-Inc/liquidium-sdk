@@ -139,6 +139,22 @@ describe("decodeFlexiblePool", () => {
     expect(decoded?.chain).toBe("ICP");
   });
 
+  test("should decode an ETH pool", () => {
+    // given
+    const pool = createFlexiblePool({
+      asset: { ETH: null },
+      chain: { ETH: null },
+    });
+
+    // when
+    const decoded = decodeFlexiblePool(pool);
+
+    // then
+    expect(decoded).not.toBeNull();
+    expect(decoded?.asset).toBe("ETH");
+    expect(decoded?.chain).toBe("ETH");
+  });
+
   test("should return null for an unsupported SOL pool", () => {
     // given
     const pool = createFlexiblePool({

@@ -6,7 +6,7 @@
 
 # Interface: QuoteValidationError
 
-Defined in: [packages/client/src/modules/quote/types.ts:26](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/quote/types.ts#L26)
+Defined in: packages/client/src/modules/quote/types.ts:26
 
 Validation error produced by quote helpers.
 
@@ -16,7 +16,7 @@ Validation error produced by quote helpers.
 
 > **code**: [`QuoteValidationErrorCode`](../enumerations/QuoteValidationErrorCode.md)
 
-Defined in: [packages/client/src/modules/quote/types.ts:28](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/quote/types.ts#L28)
+Defined in: packages/client/src/modules/quote/types.ts:28
 
 Stable machine-readable validation code.
 
@@ -26,6 +26,6 @@ Stable machine-readable validation code.
 
 > **message**: `string`
 
-Defined in: [packages/client/src/modules/quote/types.ts:30](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/quote/types.ts#L30)
+Defined in: packages/client/src/modules/quote/types.ts:30
 
 Human-readable validation message.

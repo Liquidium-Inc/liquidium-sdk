@@ -37,6 +37,8 @@ export class AccountsModule {
    *
    * @param options - `account` is the wallet address that will own the new profile.
    * @returns A signable {@link CreateAccountAction} with `submit` wired to the canister.
+   * @throws {@link LiquidiumError} If account validation or protocol
+   * preparation fails.
    */
   async prepareCreateProfile(
     options: PrepareCreateProfileOptions
@@ -51,6 +53,9 @@ export class AccountsModule {
    *
    * @param params - Wallet `account`, signing `chain`, and `walletAdapter` with `signMessage`.
    * @returns The new profile principal as text.
+   * @throws {@link LiquidiumError} If SDK validation or protocol submission
+   * fails.
+   * @throws `Error` If the wallet adapter rejects message signing.
    */
   async createProfile(params: CreateProfileParams): Promise<string> {
     const account = normalizeProfileAccount(params.account);
@@ -85,6 +90,34 @@ export class AccountsModule {
       }
 
       throw mapCanisterCallErrorToLiquidiumError("get_wallet_profile", error);
+    }
+  }
+
+  /**
+   * Checks whether a profile is registered with the protocol.
+   *
+   * Production profile registration always links an initial wallet, and the
+   * protocol prevents removal of a profile's final wallet. This method uses
+   * that invariant because the current canister API has no direct existence
+   * query.
+   *
+   * @param profileId - The Liquidium profile principal text.
+   * @returns `true` when the profile has at least one linked wallet.
+   */
+  async profileExists(profileId: string): Promise<boolean> {
+    try {
+      const profilePrincipal = parseProfilePrincipal(profileId);
+      const wallets = await createLendingActor(
+        this.canisterContext
+      ).get_profile_wallets(profilePrincipal);
+
+      return wallets.length > 0;
+    } catch (error) {
+      if (error instanceof LiquidiumError) {
+        throw error;
+      }
+
+      throw mapCanisterCallErrorToLiquidiumError("get_profile_wallets", error);
     }
   }
 
@@ -211,6 +244,18 @@ export class AccountsModule {
 
 function normalizeProfileAccount(account: string): string {
   return normalizeEvmAddress(account);
+}
+
+function parseProfilePrincipal(profileId: string): Principal {
+  try {
+    return Principal.fromText(profileId);
+  } catch (error) {
+    throw new LiquidiumError(
+      LiquidiumErrorCode.VALIDATION_ERROR,
+      `Invalid profile id: ${profileId}`,
+      error
+    );
+  }
 }
 
 function createInitializeAccountMessage(

@@ -6,7 +6,7 @@
 
 # Interface: PoolCanisterIds
 
-Defined in: [packages/client/src/core/types.ts:43](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L43)
+Defined in: packages/client/src/core/types.ts:55
 
 Pool canister principal text values grouped by pool asset.
 
@@ -16,9 +16,19 @@ Pool canister principal text values grouped by pool asset.
 
 > **btc**: `string`
 
-Defined in: [packages/client/src/core/types.ts:45](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L45)
+Defined in: packages/client/src/core/types.ts:57
 
 BTC pool canister principal.
+
+***
+
+### eth
+
+> **eth**: `string`
+
+Defined in: packages/client/src/core/types.ts:59
+
+ETH pool canister principal.
 
 ***
 
@@ -26,7 +36,7 @@ BTC pool canister principal.
 
 > **icp**: `string`
 
-Defined in: [packages/client/src/core/types.ts:51](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L51)
+Defined in: packages/client/src/core/types.ts:65
 
 ICP pool canister principal.
 
@@ -36,7 +46,7 @@ ICP pool canister principal.
 
 > **usdc**: `string`
 
-Defined in: [packages/client/src/core/types.ts:49](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L49)
+Defined in: packages/client/src/core/types.ts:63
 
 USDC pool canister principal.
 
@@ -46,6 +56,6 @@ USDC pool canister principal.
 
 > **usdt**: `string`
 
-Defined in: [packages/client/src/core/types.ts:47](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/types.ts#L47)
+Defined in: packages/client/src/core/types.ts:61
 
 USDT pool canister principal.

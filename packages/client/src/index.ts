@@ -9,11 +9,18 @@ export type {
   LiquidiumAccountReference,
 } from "./core/accounts";
 export { LiquidiumAccountType } from "./core/accounts";
+export type { AssetMetadata } from "./core/asset-metadata";
+export { ASSET_METADATA, getAssetMetadata } from "./core/asset-metadata";
 export {
   getMinimumBorrowAmount,
   MIN_BORROW_AMOUNTS_BY_ASSET,
   type MinimumBorrowAsset,
 } from "./core/borrow-minimums";
+export {
+  getMinimumDepositAmount,
+  MIN_DEPOSIT_AMOUNTS_BY_ASSET,
+  type MinimumDepositAsset,
+} from "./core/deposit-minimums";
 export type { LiquidiumErrorContext } from "./core/errors";
 export { LiquidiumError, LiquidiumErrorCode } from "./core/errors";
 export {
@@ -21,7 +28,14 @@ export {
   USDC_CONTRACT_ADDRESS,
   USDT_CONTRACT_ADDRESS,
 } from "./core/evm";
-export { RATE_DECIMALS, RATE_SCALE } from "./core/rates";
+export {
+  estimateBorrowApy,
+  estimateSupplyApy,
+  INTEREST_YEAR_365_DAYS_SECONDS,
+  RATE_DECIMALS,
+  RATE_SCALE,
+  SUPPLY_COMPOUNDING_INTERVAL_15_SECONDS,
+} from "./core/rates";
 export type {
   LiquidiumOperation,
   LiquidiumState,
@@ -29,12 +43,21 @@ export type {
 } from "./core/status";
 export type {
   AssetIdentifier,
+  BtcOnBtcAssetIdentifier,
+  BtcOnIcpAssetIdentifier,
   CanisterIdOverrides,
   CanisterIds,
+  EthOnEthAssetIdentifier,
+  EthOnIcpAssetIdentifier,
   EvmReadClient,
+  IcpOnIcpAssetIdentifier,
   LiquidiumClientConfig,
   PoolCanisterIds,
   SigningChain,
+  UsdcOnEthAssetIdentifier,
+  UsdcOnIcpAssetIdentifier,
+  UsdtOnEthAssetIdentifier,
+  UsdtOnIcpAssetIdentifier,
   Wallet,
 } from "./core/types";
 export {
@@ -100,12 +123,16 @@ export type {
 export { ActivitiesModule, ActivityFilter } from "./modules/activities";
 export type {
   PaginatedResponse,
+  ProtocolActivityEntry,
+  ProtocolActivityFeedFilters,
+  ProtocolActivityOperation,
   UserHistoryEntry,
   UserHistoryEntryApiItem,
   UserHistoryOperation,
   UserHistoryResponse,
   UserLiquidationHistoryEntry,
   UserLiquidationHistoryFilters,
+  UserLiquidationHistoryStatus,
   UserTransactionHistoryEntry,
   UserTransactionHistoryFilters,
   UserTransactionHistoryOperation,
@@ -149,6 +176,7 @@ export {
   SupplyPlanType,
 } from "./modules/lending";
 export type {
+  AssetPriceSnapshot,
   AssetPrices,
   FindPoolQuery,
   Pool,
@@ -165,7 +193,11 @@ export type {
   UserReserve,
   UserStats,
 } from "./modules/positions";
-export { PositionsModule } from "./modules/positions";
+export {
+  HEALTH_FACTOR_DECIMALS,
+  HEALTH_FACTOR_SCALE,
+  PositionsModule,
+} from "./modules/positions";
 export type {
   CalculateLtvRequest,
   LtvCalculation,
@@ -196,6 +228,7 @@ export type {
   SimpleLoanDepositTimerExceededEventType,
   SimpleLoanDepositTimerStartedEventType,
   SimpleLoanDestination,
+  SimpleLoanEthSignatureAuthorization,
   SimpleLoanEvent,
   SimpleLoanEventType,
   SimpleLoanFindBorrow,
@@ -205,6 +238,8 @@ export type {
   SimpleLoanGetByIdRequest,
   SimpleLoanGetByRefRequest,
   SimpleLoanGetRequest,
+  SimpleLoanIcpCallerAuthorization,
+  SimpleLoanIcpProfileWarmedEventType,
   SimpleLoanInitialDeposit,
   SimpleLoanInitialDepositTargetQuote,
   SimpleLoanLeg,

@@ -2,7 +2,9 @@ import { Principal } from "@icp-sdk/core/principal";
 import type {
   CanisterLiquidiumAccount,
   LiquidiumAccountInput,
+  LiquidiumAccountReference,
 } from "../../core/accounts";
+import { normalizeAndValidateEvmAddress } from "../../core/address-validation";
 import { getBorrowAmountMinimumValidationError } from "../../core/borrow-minimums";
 import { createCkBtcLedgerActor } from "../../core/canisters/ckbtc/ledger";
 import { createCkBtcMinterActor } from "../../core/canisters/ckbtc/minter";
@@ -24,6 +26,7 @@ import {
 } from "../../core/canisters/lending/messages";
 import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
 import { normalizeEvmAddress } from "../../core/evm";
+import { guardEthereumOutflowDestination } from "../../core/evm-outflow-validation";
 import {
   getPoolLedgerAssetRoute,
   type PoolLedgerAssetRoute,
@@ -55,7 +58,7 @@ import { executeWith } from "../../execute";
 import { roundInflowFeeEstimate } from "./_internal/inflow-fee-rounding";
 import { SupplyFlowExecutor } from "./_internal/supply-flow";
 import {
-  getEthStablecoinContractAddress,
+  getEthDepositTokenAddress,
   getPoolById,
   isEthStablecoin,
   mapDepositAccountErrorToLiquidiumError,
@@ -90,13 +93,15 @@ interface OutflowActionData {
   poolId: string;
   amount: bigint;
   chain: Chain;
-  receiver: LiquidiumAccountInput;
+  receiver: LiquidiumAccountReference;
   signerWalletAddress: string;
   expiryTimestamp: bigint;
 }
 
 interface OutflowSubmissionData extends OutflowActionData {
+  asset: Asset;
   receiverAccount: CanisterLiquidiumAccount;
+  receiverAddress: string;
 }
 
 interface ResolveOutflowDestinationInputParams {
@@ -123,6 +128,8 @@ export class LendingModule {
    * Use this when you need explicit control over signing and submission.
    * @param request - Profile, pool, amount (pool asset base units), outflow address, and signer wallet.
    * @returns A signable {@link WithdrawAction} with `submit` wired to the canister.
+   * @throws {@link LiquidiumError} If request validation, destination
+   * validation, or protocol preparation fails.
    */
   async prepareWithdraw(
     request: CreateWithdrawRequest
@@ -167,6 +174,13 @@ export class LendingModule {
       poolChain: selectedPool.chain,
       destinationChain: request.chain,
     });
+    await guardEthereumOutflowDestination({
+      address: receiver.address,
+      apiClient: this.apiClient,
+      asset: selectedAsset,
+      chain: request.chain,
+      evmReadClient: this.evmReadClient,
+    });
 
     const lendingActor = createLendingActor(this.canisterContext);
 
@@ -187,7 +201,9 @@ export class LendingModule {
       };
       const withdrawSubmissionData: OutflowSubmissionData = {
         ...withdrawActionData,
+        asset: selectedAsset,
         receiverAccount: receiver.canisterAccount,
+        receiverAddress: receiver.address,
       };
 
       return {
@@ -225,6 +241,14 @@ export class LendingModule {
     request: OutflowSubmissionData,
     signatureInfo: SignatureInfo
   ): Promise<WithdrawOutflowDetails> {
+    await guardEthereumOutflowDestination({
+      address: request.receiverAddress,
+      apiClient: this.apiClient,
+      asset: request.asset,
+      chain: request.chain,
+      evmReadClient: this.evmReadClient,
+    });
+
     try {
       const result = await createLendingActor(this.canisterContext).withdraw(
         Principal.fromText(request.profileId),
@@ -273,6 +297,9 @@ export class LendingModule {
    *
    * @param params - Withdraw request fields plus `signerChain` and `signerWalletAdapter`.
    * @returns The canister {@link OutflowDetails} for the completed withdraw.
+   * @throws {@link LiquidiumError} If SDK validation or protocol submission
+   * fails.
+   * @throws `Error` If the wallet adapter rejects message signing.
    */
   async withdraw(
     params: CreateWithdrawRequest & WalletExecutionParams
@@ -295,6 +322,8 @@ export class LendingModule {
    *
    * @param request - Profile, pool, amount (borrow asset base units), outflow address, and signer wallet.
    * @returns A signable {@link BorrowAction} with `submit` wired to the canister.
+   * @throws {@link LiquidiumError} If request validation, destination
+   * validation, or protocol preparation fails.
    */
   async prepareBorrow(request: CreateBorrowRequest): Promise<BorrowAction> {
     const destination = resolveOutflowDestinationInput({
@@ -337,6 +366,13 @@ export class LendingModule {
       poolChain: selectedPool.chain,
       destinationChain: request.chain,
     });
+    await guardEthereumOutflowDestination({
+      address: receiver.address,
+      apiClient: this.apiClient,
+      asset: selectedAsset,
+      chain: request.chain,
+      evmReadClient: this.evmReadClient,
+    });
     await this.guardBorrowSameAssetPolicy({
       profileId: request.profileId,
       pool: selectedPool,
@@ -361,7 +397,9 @@ export class LendingModule {
       };
       const borrowSubmissionData: OutflowSubmissionData = {
         ...borrowActionData,
+        asset: selectedAsset,
         receiverAccount: receiver.canisterAccount,
+        receiverAddress: receiver.address,
       };
 
       return {
@@ -396,6 +434,14 @@ export class LendingModule {
     request: OutflowSubmissionData,
     signatureInfo: SignatureInfo
   ): Promise<BorrowOutflowDetails> {
+    await guardEthereumOutflowDestination({
+      address: request.receiverAddress,
+      apiClient: this.apiClient,
+      asset: request.asset,
+      chain: request.chain,
+      evmReadClient: this.evmReadClient,
+    });
+
     try {
       const result = await createLendingActor(
         this.canisterContext
@@ -444,6 +490,9 @@ export class LendingModule {
    *
    * @param params - Borrow request fields plus `signerChain` and `signerWalletAdapter`.
    * @returns The lending canister receipt as {@link OutflowDetails}.
+   * @throws {@link LiquidiumError} If SDK validation or protocol submission
+   * fails.
+   * @throws `Error` If the wallet adapter rejects message signing.
    *
    * @remarks
    * `id` is always present. `txid` may be missing on the first response; the SDK does not
@@ -473,6 +522,10 @@ export class LendingModule {
    *
    * @returns A {@link SupplyFlow} receipt with `type`, `target`, `submit`, and
    *   an optional `txid` present when the SDK broadcast for you.
+   * @throws {@link LiquidiumError} If validation, transfer planning, or
+   * protocol submission fails.
+   * @throws `Error` If the wallet adapter rejects or fails to broadcast a
+   * transaction.
    */
   async supply(request: SupplyFlowRequest): Promise<SupplyFlow> {
     return await this.createSupplyFlowExecutor().create(request);
@@ -494,7 +547,7 @@ export class LendingModule {
   }
 
   /**
-   * Returns the read-only deposit address for an ETH stablecoin inflow target.
+   * Returns the read-only deposit address for an ETH-chain inflow target.
    *
    * This is a query call that does not create or mutate state. Use it when you
    * need the deposit address without hitting the authorization-gated update path.
@@ -503,14 +556,30 @@ export class LendingModule {
    * @returns The EVM deposit address for the derived account.
    */
   async getDepositAddress(request: GetDepositAddressRequest): Promise<string> {
-    if (!isEthStablecoin(request.asset, Chain.ETH)) {
+    if (
+      request.asset !== Asset.ETH &&
+      !isEthStablecoin(request.asset, Chain.ETH)
+    ) {
       throw new LiquidiumError(
         LiquidiumErrorCode.VALIDATION_ERROR,
-        "getDepositAddress is only supported for ETH stablecoins"
+        "getDepositAddress is only supported for ETH-chain assets"
       );
     }
 
-    const tokenAddress = getEthStablecoinContractAddress(request.asset);
+    const selectedPool = await getPoolById(
+      this.canisterContext,
+      request.poolId
+    );
+    if (
+      selectedPool.asset !== request.asset ||
+      selectedPool.chain !== Chain.ETH
+    ) {
+      throw new LiquidiumError(
+        LiquidiumErrorCode.VALIDATION_ERROR,
+        `Deposit address asset ${request.asset} does not match pool ${request.poolId}`
+      );
+    }
+
     const subaccount = encodeInflowSubaccount({
       action: request.action,
       principal: Principal.fromText(request.profileId),
@@ -523,20 +592,23 @@ export class LendingModule {
         owner: Principal.fromText(request.poolId),
         subaccount: [subaccount],
       },
-      [tokenAddress]
+      getEthDepositTokenAddress(request.asset)
     );
 
     if ("Err" in result) {
       throw mapDepositAccountErrorToLiquidiumError(result.Err);
     }
 
-    return result.Ok;
+    return normalizeAndValidateEvmAddress(
+      result.Ok,
+      "Deposit address canister returned an invalid EVM address"
+    );
   }
 
   /**
    * Estimates the network/deposit fee for an inflow target.
    *
-   * ETH stablecoin deposit-address estimates are served by the deposit-address
+   * ETH-chain deposit-address estimates are served by the deposit-address
    * canister. BTC estimates include the ckBTC minter deposit fee and ledger fee.
    * ICP-chain estimates return the corresponding ICRC ledger fee.
    *
@@ -553,10 +625,14 @@ export class LendingModule {
       };
     }
 
-    if (isEthStablecoin(request.asset, request.chain)) {
+    if (
+      request.chain === Chain.ETH &&
+      (request.asset === Asset.ETH ||
+        isEthStablecoin(request.asset, request.chain))
+    ) {
       const result = await createDepositAccountsActor(
         this.canisterContext
-      ).estimate_deposit_fee([getEthStablecoinContractAddress(request.asset)]);
+      ).estimate_deposit_fee(getEthDepositTokenAddress(request.asset));
 
       if ("Err" in result) {
         throw mapDepositAccountErrorToLiquidiumError(result.Err);
@@ -608,6 +684,8 @@ export class LendingModule {
    *
    * @param request - Broadcast `txid` plus inflow `operation` and optional `chain`.
    * @returns Acknowledgement including the submitted `txid`.
+   * @throws {@link LiquidiumError} If the chain is unsupported or the API
+   * request fails.
    */
   async submitInflow(
     request: SubmitInflowRequest

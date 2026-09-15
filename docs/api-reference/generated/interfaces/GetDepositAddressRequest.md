@@ -6,9 +6,9 @@
 
 # Interface: GetDepositAddressRequest
 
-Defined in: [packages/client/src/modules/lending/types.ts:294](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L294)
+Defined in: packages/client/src/modules/lending/types.ts:297
 
-Request for an ETH stablecoin deposit address.
+Request for a native ETH or ETH stablecoin deposit address.
 
 ## Properties
 
@@ -16,7 +16,7 @@ Request for an ETH stablecoin deposit address.
 
 > **action**: [`SupplyAction`](../type-aliases/SupplyAction.md)
 
-Defined in: [packages/client/src/modules/lending/types.ts:302](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L302)
+Defined in: packages/client/src/modules/lending/types.ts:305
 
 Deposit or repayment action for the inflow.
 
@@ -24,11 +24,11 @@ Deposit or repayment action for the inflow.
 
 ### asset
 
-> **asset**: `"USDC"` \| `"USDT"`
+> **asset**: `"ETH"` \| `"USDC"` \| `"USDT"`
 
-Defined in: [packages/client/src/modules/lending/types.ts:300](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L300)
+Defined in: packages/client/src/modules/lending/types.ts:303
 
-ETH stablecoin asset.
+Native ETH or ETH stablecoin asset.
 
 ***
 
@@ -36,7 +36,7 @@ ETH stablecoin asset.
 
 > **poolId**: `string`
 
-Defined in: [packages/client/src/modules/lending/types.ts:298](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L298)
+Defined in: packages/client/src/modules/lending/types.ts:301
 
 Pool principal text receiving the inflow.
 
@@ -46,6 +46,6 @@ Pool principal text receiving the inflow.
 
 > **profileId**: `string`
 
-Defined in: [packages/client/src/modules/lending/types.ts:296](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/lending/types.ts#L296)
+Defined in: packages/client/src/modules/lending/types.ts:299
 
 Liquidium profile principal text.

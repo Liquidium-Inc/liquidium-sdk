@@ -6,7 +6,7 @@
 
 # Interface: CreateAccountAction
 
-Defined in: [packages/client/src/modules/accounts/types.ts:33](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/accounts/types.ts#L33)
+Defined in: packages/client/src/modules/accounts/types.ts:33
 
 Prepared action for creating a Liquidium profile.
 
@@ -20,7 +20,7 @@ Prepared action for creating a Liquidium profile.
 
 > **account**: `string`
 
-Defined in: [packages/client/src/core/wallet-actions.ts:138](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L138)
+Defined in: packages/client/src/core/wallet-actions.ts:138
 
 Default account to pass to the wallet adapter.
 
@@ -34,7 +34,7 @@ Default account to pass to the wallet adapter.
 
 > **actionType**: `"create-account"`
 
-Defined in: [packages/client/src/modules/accounts/types.ts:40](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/accounts/types.ts#L40)
+Defined in: packages/client/src/modules/accounts/types.ts:40
 
 Adapter-facing action type.
 
@@ -48,7 +48,7 @@ Adapter-facing action type.
 
 > **data**: [`CreateAccountData`](CreateAccountData.md)
 
-Defined in: [packages/client/src/core/wallet-actions.ts:142](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L142)
+Defined in: packages/client/src/core/wallet-actions.ts:142
 
 Original request data needed to submit the signed action.
 
@@ -62,7 +62,7 @@ Original request data needed to submit the signed action.
 
 > **executionKind**: `"sign-message"`
 
-Defined in: [packages/client/src/modules/accounts/types.ts:38](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/accounts/types.ts#L38)
+Defined in: packages/client/src/modules/accounts/types.ts:38
 
 Required wallet capability.
 
@@ -76,7 +76,7 @@ Required wallet capability.
 
 > **kind**: `"create-account"`
 
-Defined in: [packages/client/src/modules/accounts/types.ts:36](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/modules/accounts/types.ts#L36)
+Defined in: packages/client/src/modules/accounts/types.ts:36
 
 Protocol action kind.
 
@@ -90,7 +90,7 @@ Protocol action kind.
 
 > **message**: `string`
 
-Defined in: [packages/client/src/core/wallet-actions.ts:140](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L140)
+Defined in: packages/client/src/core/wallet-actions.ts:140
 
 Plaintext message that must be signed.
 
@@ -104,7 +104,7 @@ Plaintext message that must be signed.
 
 > **submit**(`signatureInfo`): `Promise`\<`string`\>
 
-Defined in: [packages/client/src/core/wallet-actions.ts:144](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/packages/client/src/core/wallet-actions.ts#L144)
+Defined in: packages/client/src/core/wallet-actions.ts:144
 
 Submits the signature and resolves the protocol result.
 

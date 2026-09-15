@@ -1,3 +1,4 @@
+type IcpCallerAuth = record { "principal" : principal; subaccount : opt blob };
 type IcrcAccount = record { owner : principal; subaccount : opt vec nat8 };
 type AccountType = variant {
   Icrc : IcrcAccount;
@@ -12,7 +13,7 @@ type AddAccountRequest = record {
   expiry_timestamp : nat64;
 };
 type AssetType = variant { CkAsset : principal; Unknown };
-type Assets = variant { BTC; ICP; SOL; USDC; USDT };
+type Assets = variant { BTC; ETH; ICP; SOL; USDC; USDT };
 type BorrowAssetRequest = record {
   expiry_timestamp : nat64;
   account : AccountType;
@@ -269,15 +270,21 @@ type SignatureInfo = record {
   chain : Chains;
   account : text;
 };
-type SignatureScheme = variant { Wallet : SignatureInfo };
+type SignatureScheme = variant {
+  Wallet : SignatureInfo;
+  IcpCaller : IcpCallerAuth;
+};
 type SignatureVerificationError = variant {
   InvalidEthSignature;
+  IcpCallerMismatch;
   UnsupportedChain;
   InvalidSolSignature;
   InvalidEthAddress;
   CouldNotDecode : text;
   ProfileNotFound;
   InvalidBtcSignature;
+  AnonymousIcpCaller;
+  InvalidIcpSubaccount;
 };
 type SignedRequest = record {
   data : AddAccountRequest;

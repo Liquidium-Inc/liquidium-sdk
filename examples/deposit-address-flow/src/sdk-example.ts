@@ -9,7 +9,12 @@ import type {
   SupplyFlow,
   WalletAdapter,
 } from "@liquidium/client";
-import { Chain } from "@liquidium/client";
+import {
+  Chain,
+  getMinimumDepositAmount,
+  SupplyAction as SupplyActionValue,
+  SupplyPlanType,
+} from "@liquidium/client";
 import { client } from "./client";
 
 type MarketData = {
@@ -27,6 +32,12 @@ type CreateSupplyFlowParams = {
   poolId: string;
   action: SupplyAction;
   chain: Chain;
+};
+
+type ValidateDepositAmountParams = {
+  action: SupplyAction;
+  amount: bigint;
+  asset: string;
 };
 
 type RegisterSupplyTxidParams = {
@@ -63,6 +74,25 @@ export async function loadMarketData(): Promise<MarketData> {
   return { pools, assetPrices };
 }
 
+export function validateDepositAmount({
+  action,
+  amount,
+  asset,
+}: ValidateDepositAmountParams): void {
+  if (action !== SupplyActionValue.deposit) {
+    return;
+  }
+
+  const minimumAmount = getMinimumDepositAmount(asset);
+  if (amount >= minimumAmount) {
+    return;
+  }
+
+  throw new Error(
+    `Deposit amount must be at least ${minimumAmount} base units for ${asset}`
+  );
+}
+
 export async function getOrCreateWalletProfile({
   account,
   walletAdapter,
@@ -96,6 +126,7 @@ export async function createSupplyFlow({
     poolId,
     action,
     chain,
+    mechanism: SupplyPlanType.transfer,
   });
 }
 

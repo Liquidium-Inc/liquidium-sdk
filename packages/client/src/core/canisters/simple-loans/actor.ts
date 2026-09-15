@@ -23,6 +23,10 @@ export interface SimpleLoanIcpAsset {
   ICP: null;
 }
 
+export interface SimpleLoanEthAsset {
+  ETH: null;
+}
+
 export interface SimpleLoanSolAsset {
   SOL: null;
 }
@@ -37,6 +41,7 @@ export interface SimpleLoanUsdtAsset {
 
 export type SimpleLoanAsset =
   | SimpleLoanBtcAsset
+  | SimpleLoanEthAsset
   | SimpleLoanIcpAsset
   | SimpleLoanSolAsset
   | SimpleLoanUsdcAsset
@@ -58,9 +63,13 @@ export interface SimpleLoanEthSignatureAuthorisation {
   address: string;
 }
 
-export interface SimpleLoanAuthorisation {
-  EthSignature: SimpleLoanEthSignatureAuthorisation;
+export interface SimpleLoanIcpCallerAuthorisation {
+  subaccount: Uint8Array;
 }
+
+export type SimpleLoanAuthorisation =
+  | { EthSignature: SimpleLoanEthSignatureAuthorisation }
+  | { IcpCaller: SimpleLoanIcpCallerAuthorisation };
 
 export interface CreateSimpleLoanCanisterRequest {
   borrow_destination: SimpleLoanAccountType;
@@ -153,6 +162,16 @@ export interface HeadlessLoanProfileWarmedEventType {
   ProfileWarmed: HeadlessLoanProfileWarmedEventPayload;
 }
 
+export interface HeadlessLoanIcpProfileWarmedEventPayload {
+  subaccount: Uint8Array;
+  warmed_profile_id: bigint;
+  lending_profile: Principal;
+}
+
+export interface HeadlessLoanIcpProfileWarmedEventType {
+  IcpProfileWarmed: HeadlessLoanIcpProfileWarmedEventPayload;
+}
+
 export interface HeadlessLoanRepayCompleteEventType {
   RepayComplete: CreateSimpleLoanCanisterResponse;
 }
@@ -173,6 +192,7 @@ export type HeadlessLoanEventType =
   | HeadlessLoanDepositTimerExceededEventType
   | HeadlessLoanStuckFundsWithdrawalRequestedEventType
   | HeadlessLoanProfileWarmedEventType
+  | HeadlessLoanIcpProfileWarmedEventType
   | HeadlessLoanRepayCompleteEventType
   | HeadlessLoanDepositTimerStartedEventType;
 
@@ -234,12 +254,15 @@ type LendingClientError =
 
 export type SimpleLoansCanisterError =
   | BorrowAmountRequiredError
+  | AnonymousPrincipalNotAllowedError
   | NoCollateralPositionError
   | LtvTimerOutOfRangeError
   | LtvMaxExceededError
   | MemoryLockFailedError
   | UnauthorizedAccessListCallerError
   | LendingClientCanisterError
+  | PoolNotFoundError
+  | LendingCanisterImmutableError
   | LtvMaxOutOfRangeError
   | AccountRequiredError
   | DepositTimerExceededError
@@ -249,12 +272,18 @@ export type SimpleLoansCanisterError =
   | DepositAlreadyProcessedError
   | MissingPriceError
   | InvalidLtvTimerSError
+  | PoolLendingDisabledError
   | DebtNotFullyRepaidError
   | EmptyCollateralPositionError
+  | PoolAssetMismatchError
   | SigningFailedError;
 
 interface BorrowAmountRequiredError {
   BorrowAmountRequired: null;
+}
+
+interface AnonymousPrincipalNotAllowedError {
+  AnonymousPrincipalNotAllowed: null;
 }
 
 interface LoanIdErrorPayload {
@@ -300,6 +329,23 @@ interface UnauthorizedAccessListCallerError {
 
 interface LendingClientCanisterError {
   LendingClient: LendingClientError;
+}
+
+interface PoolErrorPayload {
+  pool_id: Principal;
+}
+
+interface PoolNotFoundError {
+  PoolNotFound: PoolErrorPayload;
+}
+
+interface LendingCanisterImmutablePayload {
+  configured: Principal;
+  requested: Principal;
+}
+
+interface LendingCanisterImmutableError {
+  LendingCanisterImmutable: LendingCanisterImmutablePayload;
 }
 
 interface LtvMaxOutOfRangeError {
@@ -351,12 +397,26 @@ interface InvalidLtvTimerSError {
   InvalidLtvTimerS: null;
 }
 
+interface PoolLendingDisabledError {
+  PoolLendingDisabled: PoolErrorPayload;
+}
+
 interface DebtNotFullyRepaidError {
   DebtNotFullyRepaid: LoanIdErrorPayload;
 }
 
 interface EmptyCollateralPositionError {
   EmptyCollateralPosition: null;
+}
+
+interface PoolAssetMismatchPayload {
+  configured_asset: SimpleLoanAsset;
+  requested_asset: SimpleLoanAsset;
+  pool_id: Principal;
+}
+
+interface PoolAssetMismatchError {
+  PoolAssetMismatch: PoolAssetMismatchPayload;
 }
 
 interface SigningFailedError {
