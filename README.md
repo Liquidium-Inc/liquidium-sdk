@@ -11,6 +11,8 @@ TypeScript client for Liquidium lending and accountless Simple Loans.
 
 [Documentation](https://liquidium-inc.github.io/liquidium-sdk/) · [API reference](https://liquidium-inc.github.io/liquidium-sdk/api-reference/) · [Simple Loans example](https://github.com/Liquidium-Inc/liquidium-sdk/tree/main/examples/simple-loans-flow)
 
+[Interactive architecture and C4 diagrams](docs/c4/README.md)
+
 ## Install
 
 ```bash
@@ -75,7 +77,7 @@ See the [quick start](https://liquidium-inc.github.io/liquidium-sdk/getting-star
 
 ## Development
 
-Requires Node.js 22.12+ in the 22.x line, 24.x, or 26+, and pnpm 11+.
+Requires Node.js 22.22.3+ in the 22.x line, 24.x, or 26+, and pnpm 11+.
 
 ```bash
 pnpm install
