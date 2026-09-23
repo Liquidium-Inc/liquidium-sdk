@@ -35,6 +35,7 @@ const flexibleLendingIdlFactory: IDL.InterfaceFactory = ({ IDL }) => {
     same_asset_borrowing_dust_threshold: IDL.Nat,
     frozen: IDL.Bool,
     last_updated: IDL.Opt(IDL.Nat64),
+    activation_fee: IDL.Opt(IDL.Nat64),
   });
 
   const BorrowingPowerRecord = IDL.Record({
@@ -128,6 +129,7 @@ export type FlexiblePool = {
   same_asset_borrowing_dust_threshold: bigint;
   frozen: boolean;
   last_updated: [bigint] | [];
+  activation_fee: [bigint] | [];
 };
 
 export type FlexibleBorrowingPower = {
@@ -215,6 +217,7 @@ export interface DecodedPool {
   same_asset_borrowing_dust_threshold: bigint;
   frozen: boolean;
   last_updated: [bigint] | [];
+  activation_fee: [bigint] | [];
 }
 
 export interface DecodedPosition {
@@ -309,6 +312,7 @@ export function decodeFlexiblePool(pool: FlexiblePool): DecodedPool | null {
       pool.same_asset_borrowing_dust_threshold,
     frozen: pool.frozen,
     last_updated: pool.last_updated,
+    activation_fee: pool.activation_fee ?? [],
   };
 }
 

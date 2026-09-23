@@ -35,6 +35,7 @@ describe("MarketModule", () => {
           chain: { BTC: null },
           rate_slope_after: 2n,
           reserve_factor: 100n,
+          activation_fee: [50n],
           last_updated: [123n],
           lending_index: lendingIndex,
           protocol_liquidation_fee: 50n,
@@ -76,6 +77,7 @@ describe("MarketModule", () => {
         liquidationBonus: 200n,
         protocolLiquidationFee: 50n,
         reserveFactor: 100n,
+        activationFee: 50n,
         rateDecimals: RATE_DECIMALS,
         lendingRate: 20n,
         estimatedLendingApy: 0n,
@@ -137,6 +139,7 @@ describe("MarketModule", () => {
       asset: "ICP",
       chain: "ICP",
       decimals: 8n,
+      activationFee: 0n,
     });
   });
 

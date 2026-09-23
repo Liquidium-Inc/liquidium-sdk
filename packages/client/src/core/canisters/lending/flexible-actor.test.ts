@@ -44,6 +44,7 @@ function createFlexiblePool(overrides?: Partial<FlexiblePool>): FlexiblePool {
     same_asset_borrowing_dust_threshold: 100n,
     frozen: false,
     last_updated: [123n],
+    activation_fee: [],
     ...overrides,
   };
 }
