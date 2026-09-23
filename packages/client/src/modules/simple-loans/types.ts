@@ -140,7 +140,7 @@ export interface CreateSimpleLoanRequest {
    * Maximum allowed loan-to-value ratio in basis points.
    *
    * `6_000n` means 60%. Use `client.quote.calculateLtv(...)` to calculate the
-   * implied LTV for the selected amounts and pass the policy value your app is
+   * fee-inclusive LTV for the selected amounts and pass the policy value your app is
    * willing to accept. Creation is rejected if the requested borrow would exceed
    * this limit.
    */

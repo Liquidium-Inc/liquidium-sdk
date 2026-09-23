@@ -59,7 +59,7 @@ export enum QuoteWarningCode {
 export interface QuoteResult {
   /** Requested borrow amount in borrow asset base units. */
   borrowAmount: bigint;
-  /** Borrow value in internal USD units. */
+  /** Opening debt value, including the activation fee, in internal USD units. */
   borrowUsd: bigint;
   /** Required collateral amount in collateral asset base units. */
   requiredCollateralAmount: bigint;
@@ -89,7 +89,7 @@ export interface LtvCalculation {
   borrowAmount: bigint;
   /** Collateral amount in collateral asset base units. */
   collateralAmount: bigint;
-  /** Borrow value in internal USD units. */
+  /** Opening debt value, including the activation fee, in internal USD units. */
   borrowUsd: bigint;
   /** Collateral value in internal USD units. */
   collateralUsd: bigint;

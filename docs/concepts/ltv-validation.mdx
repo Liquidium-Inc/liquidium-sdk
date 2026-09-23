@@ -27,6 +27,8 @@ if (ltv.validationErrors.length > 0) {
 
 Amounts must use each asset's smallest unit. BTC uses satoshis. Native ETH and ckETH use wei with 18 decimals. USDC and USDT use token base units based on the selected pool decimals.
 
+`borrowAmount` is the amount the borrower receives. If the borrow pool charges an activation fee, the SDK calculates `fee = borrowAmount * pool.activationFee / 10_000n` (rounded down in base units) and uses `borrowAmount + fee` as the opening debt for LTV and required-collateral quotes. The `borrowUsd` quote field is the value of this opening debt, while the returned `borrowAmount` stays the requested amount. Read `activationFee` from `client.market.listPools()`; it is `0n` for pools on older canisters. The pool fee can change between a quote and a borrow, so recheck the pool before submission.
+
 The SDK also validates minimum borrow amounts. BTC borrows must be at least `5_100n` sats. ETH borrows must be at least `5_000_000_000_000_000n` wei (`0.005 ETH`). USDC and USDT borrows must be at least `1_000_000n` base units. To display the same minimum before the user submits, use `getMinimumBorrowAmount(asset)`.
 
 Pools expose `sameAssetBorrowing` and `sameAssetBorrowingDustThreshold`. When same-asset borrowing is disabled, same-asset collateral must be strictly below the base-unit dust threshold. The SDK rejects equality. The quote helpers, `client.simpleLoans.create(...)`, and `client.lending.prepareBorrow(...)` enforce this policy.

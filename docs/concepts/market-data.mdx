@@ -51,6 +51,8 @@ Health factors use three decimal places: `1000n` means `1.0`. When you format a 
 
 Pool rate fields such as `lendingRate`, `borrowingRate`, and `utilizationRate` use the 27-decimal `rateDecimals` scale. Pool risk fields such as `maxLtv`, `liquidationThreshold`, `liquidationBonus`, `protocolLiquidationFee`, and `reserveFactor` use basis points instead.
 
+`activationFee` is the borrow pool's activation fee in basis points (`50n` means 0.5%). It is `0n` if the canister has no activation-fee field. Borrowers receive the requested amount but owe that amount plus the fee, rounded down in base units. The canister can reject a borrow if its fee-inclusive debt exceeds available liquidity, the borrow cap, or the LTV limit.
+
 ## Profile existence
 
 Position queries return empty values for both registered profiles with no positions and unknown principal IDs. If your app must distinguish between them, call `client.accounts.profileExists(...)`:

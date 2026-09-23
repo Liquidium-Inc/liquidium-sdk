@@ -167,7 +167,7 @@ export class QuoteModule {
     }
 
     const borrowUsd = computeUsdInternalFromBaseUnits({
-      amountBaseUnits: request.borrowAmount,
+      amountBaseUnits: getOpeningDebt(request.borrowAmount, borrowPool),
       priceScaled: scalePriceUsdToBigint(borrowPrice as number),
       assetDecimalPlaces: getPoolDecimalPlaces(borrowPool),
     });
@@ -357,7 +357,7 @@ export class QuoteModule {
     );
 
     const borrowUsdInternal = computeUsdInternalFromBaseUnits({
-      amountBaseUnits: borrowAmount,
+      amountBaseUnits: getOpeningDebt(borrowAmount, borrowPool),
       priceScaled: borrowPriceScaled,
       assetDecimalPlaces: borrowAssetDecimals,
     });
@@ -409,6 +409,13 @@ export class QuoteModule {
       warnings,
     });
   }
+}
+
+function getOpeningDebt(borrowAmount: bigint, borrowPool: Pool): bigint {
+  return (
+    borrowAmount +
+    (borrowAmount * borrowPool.activationFee) / BASIS_POINTS_DENOMINATOR
+  );
 }
 
 function createLtvCalculation(

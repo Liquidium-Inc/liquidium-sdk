@@ -1578,6 +1578,43 @@ describe("SimpleLoansModule create", () => {
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
+  test("rejects a loan when its activation fee pushes LTV above the policy limit", async () => {
+    // given
+    const ACTIVATION_FEE_BPS = 50n;
+    const MAX_LTV_BPS = 5_925n;
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    vi.spyOn(Actor, "createActor")
+      .mockReturnValueOnce({
+        list_pools: vi
+          .fn()
+          .mockResolvedValue([
+            createBtcPoolRecord(),
+            createUsdtPoolRecord({ activation_fee: [ACTIVATION_FEE_BPS] }),
+          ]),
+        get_pool_rate: vi
+          .fn()
+          .mockResolvedValue([[10_000_000_000_000_000_000_000_000n, 0n, 0n]]),
+      } as never)
+      .mockReturnValueOnce({
+        get_prices: vi.fn().mockResolvedValue(prices()),
+      } as never);
+    const client = new LiquidiumClient({
+      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
+    });
+
+    // when
+    const result = client.simpleLoans.create(
+      createSimpleLoanRequest({ ltvMaxBps: MAX_LTV_BPS })
+    );
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message: expect.stringContaining("current implied LTV 57.55%"),
+    });
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
   test("rejects a loan when max LTV exceeds the collateral pool max", async () => {
     // given
     const fetchSpy = vi.spyOn(globalThis, "fetch");

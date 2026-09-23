@@ -34,6 +34,8 @@ export interface Pool {
   protocolLiquidationFee: bigint;
   /** Reserve factor in basis points. */
   reserveFactor: bigint;
+  /** Borrow activation fee in basis points; zero on canisters without this field. */
+  activationFee: bigint;
   /** Decimal scale used by APR and utilization fields. */
   rateDecimals: bigint;
   /** Current supply APR, scaled by `rateDecimals`. */
