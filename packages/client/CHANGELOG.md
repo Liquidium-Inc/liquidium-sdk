@@ -1,5 +1,11 @@
 # @liquidium/client
 
+## 0.9.0
+
+### Minor Changes
+
+- d671ea0: Expose borrow activation fees on pools and include them in LTV and collateral quotes.
+
 ## 0.8.3
 
 ### Patch Changes
