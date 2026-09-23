@@ -46,6 +46,7 @@ export function mapDecodedPoolToPool(
     liquidationBonus: pool.liquidation_bonus,
     protocolLiquidationFee: pool.protocol_liquidation_fee,
     reserveFactor: pool.reserve_factor,
+    activationFee: pool.activation_fee[0] ?? 0n,
     rateDecimals: RATE_DECIMALS,
     lendingRate: rate[1],
     estimatedLendingApy: estimateSupplyApy(rate[1]),

@@ -23,6 +23,7 @@ describe("QuoteModule", () => {
     liquidationBonus: 500n,
     protocolLiquidationFee: 1000n,
     reserveFactor: 2000n,
+    activationFee: 0n,
     rateDecimals: RATE_DECIMALS,
     lendingRate: 0n,
     estimatedLendingApy: 0n,
@@ -54,6 +55,7 @@ describe("QuoteModule", () => {
     liquidationBonus: 500n,
     protocolLiquidationFee: 1000n,
     reserveFactor: 1000n,
+    activationFee: 0n,
     rateDecimals: RATE_DECIMALS,
     lendingRate: 0n,
     estimatedLendingApy: 0n,
@@ -105,6 +107,63 @@ describe("QuoteModule", () => {
     expect(result.maxAllowedLtvBps).toBe(btcPool.maxLtv);
     expect(result.borrowAsset).toBe(usdtPool.asset);
     expect(result.collateralAsset).toBe(btcPool.asset);
+  });
+
+  test("should include the activation fee in the LTV but preserve the received amount", () => {
+    // given
+    const BORROW_AMOUNT_USDT_BASE_UNITS = 100_000_000n;
+    const COLLATERAL_AMOUNT_SATS = 200_000n;
+    const ACTIVATION_FEE_BPS = 50n;
+    const feePool = { ...usdtPool, activationFee: ACTIVATION_FEE_BPS };
+
+    // when
+    const result = quoteModule.calculateLtv(
+      {
+        borrowAmount: BORROW_AMOUNT_USDT_BASE_UNITS,
+        borrowPoolId: feePool.id,
+        collateralAmount: COLLATERAL_AMOUNT_SATS,
+        collateralPoolId: btcPool.id,
+      },
+      [btcPool, feePool],
+      prices
+    );
+
+    // then
+    const EXPECTED_OPENING_DEBT_USD = 10_050_000_000n;
+    const EXPECTED_LTV_BPS = 5_025n;
+    expect(result.borrowAmount).toBe(BORROW_AMOUNT_USDT_BASE_UNITS);
+    expect(result.borrowUsd).toBe(EXPECTED_OPENING_DEBT_USD);
+    expect(result.ltvBps).toBe(EXPECTED_LTV_BPS);
+  });
+
+  test("should round the activation fee down in base units", () => {
+    // given
+    const BORROW_AMOUNT_SATS = 5_100n;
+    const COLLATERAL_AMOUNT_SATS = 10_000n;
+    const ACTIVATION_FEE_BPS = 50n;
+    const feePool = {
+      ...btcPool,
+      activationFee: ACTIVATION_FEE_BPS,
+      sameAssetBorrowing: true,
+    };
+
+    // when
+    const result = quoteModule.calculateLtv(
+      {
+        borrowAmount: BORROW_AMOUNT_SATS,
+        borrowPoolId: feePool.id,
+        collateralAmount: COLLATERAL_AMOUNT_SATS,
+        collateralPoolId: feePool.id,
+      },
+      [feePool],
+      prices
+    );
+
+    // then
+    const EXPECTED_FEE_SATS = 25n;
+    const EXPECTED_OPENING_DEBT_USD = 512_500_000n;
+    expect(result.borrowUsd).toBe(EXPECTED_OPENING_DEBT_USD);
+    expect(result.borrowAmount + EXPECTED_FEE_SATS).toBe(5_125n);
   });
 
   test("should return validation errors when LTV inputs cannot be valued", () => {
@@ -201,6 +260,33 @@ describe("QuoteModule", () => {
     expect(result.borrowUsd).toBe(10_000_000_000n);
     expect(result.requiredCollateralAmount).toBe(200_000n);
     expect(result.requiredCollateralUsd).toBe(20_000_000_000n);
+  });
+
+  test("should size required collateral against fee-inclusive opening debt", () => {
+    // given
+    const BORROW_AMOUNT_USDT_BASE_UNITS = 100_000_000n;
+    const TARGET_LTV_BPS = 5_000n;
+    const ACTIVATION_FEE_BPS = 50n;
+    const feePool = { ...usdtPool, activationFee: ACTIVATION_FEE_BPS };
+
+    // when
+    const result = quoteModule.getQuote(
+      {
+        borrowAmount: BORROW_AMOUNT_USDT_BASE_UNITS,
+        borrowPoolId: feePool.id,
+        collateralPoolId: btcPool.id,
+        targetLtvBps: TARGET_LTV_BPS,
+      },
+      [btcPool, feePool],
+      prices
+    );
+
+    // then
+    const EXPECTED_REQUIRED_COLLATERAL_SATS = 201_000n;
+    expect(result.borrowAmount).toBe(BORROW_AMOUNT_USDT_BASE_UNITS);
+    expect(result.requiredCollateralAmount).toBe(
+      EXPECTED_REQUIRED_COLLATERAL_SATS
+    );
   });
 
   test("should use pool decimals for quote calculations", () => {
