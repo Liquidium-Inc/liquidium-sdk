@@ -1,0 +1,224 @@
+specification {
+  element actor {
+    style { shape person; color muted }
+  }
+  element application {
+    style { shape browser; color muted }
+  }
+  element system
+  element module {
+    style { color primary }
+  }
+  element transport {
+    style { color secondary }
+  }
+  element service {
+    style { color amber }
+  }
+}
+
+model {
+  user = actor 'Borrower or supplier'
+  app = application 'Integrating application' {
+    description 'Runs the TypeScript SDK in a browser or server application.'
+  }
+  wallet = service 'Wallet adapter' {
+    description 'Signs messages and sends BTC, ETH, ERC-20, or ICRC transfers when the application supplies an adapter.'
+  }
+  chains = service 'Asset chains and ledgers' {
+    description 'Receive deposits and repayments or deliver borrowed assets.'
+  }
+
+  sdk = system '@liquidium/client' {
+    description 'Client-side orchestration, validation, mapping, and transaction preparation. It does not custody assets.'
+
+    client = module 'LiquidiumClient' {
+      description 'Configures shared transports and exposes accounts, lending, market, positions, activities, history, simpleLoans, and quote.'
+    }
+    simpleLoans = module 'SimpleLoansModule' {
+      description 'Creates accountless loans via the SDK API; reads canonical state and builds deposit and repayment targets.'
+    }
+    accounts = module 'AccountsModule' {
+      description 'Prepares and submits signed profile creation; resolves profile wallets.'
+    }
+    lending = module 'LendingModule' {
+      description 'Prepares and submits borrow and withdraw actions; plans supply and repayment transfers.'
+    }
+    market = module 'MarketModule' {
+      description 'Reads supported pools, prices, and rates from Lending.'
+    }
+    positions = module 'PositionsModule' {
+      description 'Reads profile positions and health from Lending.'
+    }
+    activities = module 'ActivitiesModule' {
+      description 'Reads activity status from the SDK API; resolves a short loan reference via the Simple Loans canister.'
+    }
+    history = module 'HistoryModule' {
+      description 'Reads user and protocol history from the SDK API.'
+    }
+    quote = module 'QuoteModule' {
+      description 'Computes quotes locally from supplied market inputs.'
+    }
+    canisterContext = transport 'IC agent and actors' {
+      description 'Uses a supplied agent or an HttpAgent to query and update IC canisters.'
+    }
+    apiClient = transport 'HTTP API client' {
+      description 'Uses fetch with a timeout to call the Liquidium SDK API.'
+    }
+    evmRead = transport 'Optional EVM read client' {
+      description 'Reads Ethereum contract state for contract-interaction supply and destination checks.'
+    }
+  }
+
+  sdkApi = system 'Liquidium SDK API' {
+    description 'Creates Simple Loans, provides search and amount hints, and serves activity, history, and inflow indexing endpoints.'
+  }
+  protocol = system 'Liquidium canisters' {
+    lendingCanister = service 'Lending canister'
+    simpleLoansCanister = service 'Simple Loans canister'
+    depositAccountsCanister = service 'Deposit accounts canister'
+  }
+  ledgers = service 'ICRC ledgers and ckBTC minter'
+  ethereumRpc = service 'Ethereum RPC' {
+    description 'Optional read provider supplied by the integrating application.'
+  }
+
+  user -> app 'uses'
+  app -> sdk.client 'calls SDK methods'
+  app -> wallet 'provides a wallet adapter and approves transactions'
+  wallet -> chains 'broadcasts transfers'
+  sdk.client -> sdk.simpleLoans 'exposes accountless borrowing'
+  sdk.client -> sdk.accounts 'exposes profile creation'
+  sdk.client -> sdk.lending 'exposes borrowing, withdrawals, and supply'
+  sdk.client -> sdk.market 'exposes market reads'
+  sdk.client -> sdk.positions 'exposes position reads'
+  sdk.client -> sdk.activities 'exposes activity reads'
+  sdk.client -> sdk.history 'exposes history reads'
+  sdk.client -> sdk.quote 'exposes local quote helpers'
+  sdk.simpleLoans -> sdk.apiClient 'creates loans, searches, and loads amount hints'
+  sdk.simpleLoans -> sdk.canisterContext 'loads loan state and builds transfer targets'
+  sdk.simpleLoans -> sdk.positions 'reads positions, pools, prices, and rates'
+  sdk.simpleLoans -> sdk.lending 'estimates inflow fees'
+  sdk.simpleLoans -> sdk.activities 'loads active receipts'
+  sdk.accounts -> sdk.canisterContext 'registers profiles and reads wallet links'
+  sdk.lending -> sdk.canisterContext 'submits actions and resolves targets'
+  sdk.lending -> sdk.apiClient 'submits inflow hints and checks EVM destinations'
+  sdk.lending -> sdk.evmRead 'reads allowances and EVM destinations when configured'
+  sdk.market -> sdk.canisterContext 'reads pools, prices, and rates'
+  sdk.positions -> sdk.canisterContext 'reads positions and risk data'
+  sdk.activities -> sdk.apiClient 'reads activity status'
+  sdk.activities -> sdk.canisterContext 'resolves loan references'
+  sdk.history -> sdk.apiClient 'reads history'
+  sdk.canisterContext -> protocol.lendingCanister 'queries and updates'
+  sdk.canisterContext -> protocol.simpleLoansCanister 'queries loans and events'
+  sdk.canisterContext -> protocol.depositAccountsCanister 'resolves ETH deposit targets and fees'
+  sdk.canisterContext -> ledgers 'reads fees and BTC minter data'
+  sdk.apiClient -> sdkApi 'sends HTTPS requests'
+  sdk.evmRead -> ethereumRpc 'reads Ethereum state'
+  sdkApi -> protocol.simpleLoansCanister 'creates accountless loans'
+}
+
+views {
+  view index {
+    title 'SDK system context'
+    description 'An integrating app calls the SDK; wallet transfers and protocol settlement happen outside the SDK.'
+    include user, app, wallet, chains, sdk, sdkApi, protocol, ledgers, ethereumRpc
+    autoLayout LeftRight
+  }
+
+  view components of sdk {
+    title 'SDK modules and transports'
+    description 'Public modules share canister, HTTP, and optional EVM read transports.'
+    include *
+    autoLayout LeftRight
+  }
+
+  dynamic view simple_loan {
+    title 'Simple Loan creation and reload'
+    description 'Creation uses the SDK API; hydration reads canonical canister state and obtains transfer targets and fee estimates.'
+    app -> sdk.simpleLoans 'calls create with pools, amounts, and destinations'
+    sdk.simpleLoans -> sdk.positions 'reads pools and prices for LTV validation'
+    sdk.simpleLoans -> sdk.apiClient 'posts the create request'
+    sdk.apiClient -> sdkApi 'creates an accountless loan'
+    sdkApi -> protocol.simpleLoansCanister 'requests loan creation'
+    sdk.simpleLoans -> sdk.canisterContext 'loads canonical loan and transfer targets'
+    sdk.simpleLoans -> sdk.positions 'loads positions and borrow pool rate'
+    sdk.simpleLoans -> sdk.lending 'estimates deposit and repayment fees'
+    sdk.simpleLoans -> sdk.activities 'loads active activities'
+    sdk.simpleLoans -> app 'returns loan reference and transfer targets'
+    app -> sdk.simpleLoans 'later calls get with loan id or reference'
+    sdk.simpleLoans -> sdk.canisterContext 'reloads canonical loan state'
+    sdk.simpleLoans -> sdk.apiClient 'loads collateral amount hint for hydration'
+    include sdk, sdkApi, protocol
+  }
+
+  dynamic view profile_borrow {
+    title 'Profile borrow with a wallet'
+    description 'A wallet signs the prepared action before the SDK submits it to Lending.'
+    app -> sdk.accounts 'creates or resolves a profile'
+    alt 'Profile access' {
+      when 'Create profile' {
+        sdk.accounts -> sdk.canisterContext 'reads signing nonce'
+        sdk.accounts -> wallet 'requests profile creation signature'
+        wallet -> sdk.accounts 'returns signature'
+        sdk.accounts -> sdk.canisterContext 'registers signed profile'
+      }
+      else {
+        sdk.accounts -> sdk.canisterContext 'resolves existing profile'
+      }
+    }
+    app -> sdk.lending 'calls borrow with a wallet adapter'
+    sdk.lending -> sdk.canisterContext 'reads pool, position policy, and signing nonce'
+    sdk.lending -> wallet 'requests a message signature through executeWith'
+    wallet -> sdk.lending 'returns the signature'
+    sdk.lending -> sdk.canisterContext 'submits borrow_assets with the signature'
+    sdk.canisterContext -> protocol.lendingCanister 'commits the borrow request'
+    sdk.lending -> app 'returns an outflow receipt'
+    include sdk, protocol
+  }
+
+  dynamic view supply {
+    title 'Supply or repayment'
+    description 'The SDK resolves a target; a manual or wallet transfer follows. An API inflow hint speeds indexing but does not settle the transfer.'
+    app -> sdk.lending 'calls supply with a profile, pool, and action'
+    sdk.lending -> sdk.canisterContext 'reads pool and resolves chain transfer target'
+    sdk.canisterContext -> protocol.depositAccountsCanister 'gets ETH deposit address when applicable'
+    alt 'Transfer mode' {
+      when 'Wallet-executed' {
+        sdk.lending -> wallet 'sends funds through the wallet adapter'
+        wallet -> chains 'broadcasts deposit or repayment'
+        sdk.lending -> sdk.apiClient 'optionally submits BTC or ETH inflow txid'
+        sdk.apiClient -> sdkApi 'provides an indexing hint'
+        sdk.lending -> app 'returns target and broadcast txid'
+      }
+      else {
+        sdk.lending -> app 'returns target for a manual transfer'
+        app -> wallet 'sends funds to the target'
+        wallet -> chains 'broadcasts deposit or repayment'
+        app -> sdk.lending 'optionally reports the broadcast txid'
+        sdk.lending -> sdk.apiClient 'submits BTC or ETH inflow txid'
+        sdk.apiClient -> sdkApi 'provides an indexing hint'
+      }
+    }
+    app -> sdk.activities 'checks status after broadcast'
+    sdk.activities -> sdk.apiClient 'loads activity status'
+    sdk.apiClient -> sdkApi 'sends HTTPS request'
+    include sdk, sdkApi, protocol
+  }
+
+  dynamic view reads {
+    title 'Market, positions, and activity reads'
+    description 'Market and position reads use canisters; activities and history use the SDK API. Quotes are calculated locally.'
+    app -> sdk.market 'requests pools, prices, or rates'
+    sdk.market -> sdk.canisterContext 'queries Lending'
+    app -> sdk.positions 'requests profile positions and health'
+    sdk.positions -> sdk.canisterContext 'queries Lending'
+    app -> sdk.activities 'requests receipt status'
+    sdk.activities -> sdk.apiClient 'loads activity data'
+    app -> sdk.history 'requests user or protocol history'
+    sdk.history -> sdk.apiClient 'loads history data'
+    sdk.apiClient -> sdkApi 'sends HTTPS requests'
+    app -> sdk.quote 'calculates a quote from supplied inputs'
+    include sdk, sdkApi, protocol
+  }
+}
