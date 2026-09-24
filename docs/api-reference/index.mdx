@@ -19,6 +19,7 @@ The client provides the following modules:
 | `client.history` | User history and confirmed protocol-wide activity through the Liquidium SDK API |
 | `client.simpleLoans` | Accountless Simple Loans with generated deposit and repayment targets |
 | `client.lending` | Supply, borrow, withdraw, and inflow reporting |
+| `client.liquidations` | Candidate scanning, slippage-protected liquidation execution, and status lookup |
 | `client.market` | Pools, prices, and pool rate lookups |
 | `client.positions` | Per-pool positions, health, and aggregate stats |
 | `client.quote` | Pure quote helpers from market inputs |
@@ -54,6 +55,34 @@ the remote loan is created but before the SDK loads its hydrated state. Recover
 the loan with the error's `loanId` or `ref`. Do not call `create(...)` again.
 
 For retry decisions and recovery code, see [Handle errors](../guides/error-handling.mdx).
+
+## Liquidations
+
+Use `client.liquidations.scan(request)` for cursor-based candidate discovery, `client.liquidations.liquidate(request)` for slippage-protected execution, and `client.liquidations.getLiquidation(liquidationId)` for status lookup. The SDK exports these public types:
+
+| Type | Purpose |
+| --- | --- |
+| `ScanLiquidationsRequest` | Optional cursor, accounts to scan, and maximum candidates to return |
+| `LiquidationScanResult` | Candidates, scanned account count, and next cursor |
+| `LiquidationCandidate` | Liquidatable borrower, health factor, total debt, and pool positions |
+| `LiquidationCandidatePosition` | Pool, asset, debt, collateral, threshold, bonus, and protocol fee |
+| `LiquidationCandidateAsset` | Supported asset symbol or legacy SOL candidate symbol |
+| `ExecuteLiquidationRequest` | Borrower, pools, debt amount, receiver, required minimum collateral, and optional bad-debt choice |
+| `LiquidationResult` | Liquidation id, timestamp, amounts, assets, lifecycle state, and transfer states |
+| `LiquidationAmounts` | Debt repaid and net collateral received in base units |
+| `LiquidationAsset` | Chain-key ledger principal or unknown asset type |
+| `CkLiquidationAsset` | Chain-key ledger route with its required ledger canister principal |
+| `UnknownLiquidationAsset` | Asset route the lending canister cannot identify |
+| `LiquidationStatus` | Progress, success, or failed lifecycle status |
+| `LiquidationProgressStatus` | Pending or processing lifecycle state without an error |
+| `LiquidationSuccessStatus` | Successful lifecycle state without an error |
+| `LiquidationFailedStatus` | Failed lifecycle state with its required protocol error |
+| `LiquidationTransfer` | Pending, successful, or failed collateral or change transfer |
+| `LiquidationPendingTransfer` | Pending transfer without an error |
+| `LiquidationSuccessTransfer` | Successful transfer without an error |
+| `LiquidationFailedTransfer` | Failed transfer with its required error |
+
+See [Liquidations](../guides/liquidations.mdx) for allowance, slippage, receiver, and refund requirements.
 
 ## History
 

@@ -1,0 +1,62 @@
+---
+title: Liquidations
+description: Execute and track profile-based liquidations.
+order: 125
+---
+
+# Liquidations
+
+Use `client.liquidations.scan(...)` to find undercollateralized profiles, then use `liquidate(...)` to repay debt and receive seized collateral.
+
+## Requirements
+
+- Configure `LiquidiumClient` with the IC identity or agent that will act as the liquidator.
+- Before funding or approving that identity, ask a lending-canister administrator to register its principal with `add_liquidator`. Verify membership with `get_liquidators`.
+- From that principal's default ICRC account, approve the lending canister to spend at least `debtAmount + ledgerTransferFee`.
+- Keep enough debt asset in the account to cover `debtAmount` and ledger fees.
+
+The SDK does not create the allowance, poll liquidation status, or execute scan results automatically.
+
+Run the [liquidation flow example](../examples/liquidation-flow.mdx) for candidate discovery, ICRC-2 approval, and signed liquidation submission.
+
+## Scan
+
+```ts
+const page = await client.liquidations.scan({
+  scanLimit: 100n,
+  maxResults: 20n,
+});
+```
+
+`scanLimit` is the maximum number of borrower accounts to examine. `maxResults` is the maximum number of liquidatable borrowers to return. Both values must be positive and no greater than `2n ** 64n - 1n`. Pass `page.nextCursor` as `cursor` to continue after the last scanned account.
+
+Each candidate contains `borrowerProfileId`, its health factor, and its pool positions. Choose a position with debt and a position with collateral, then pass their pool IDs and the borrower profile ID to `liquidate(...)`. Scan results can become stale, so liquidation execution revalidates the position.
+
+## Execute
+
+```ts
+const liquidation = await client.liquidations.liquidate({
+  borrowerProfileId,
+  debtPoolId,
+  collateralPoolId,
+  debtAmount,
+  receiverPrincipal,
+  minCollateralAmount,
+});
+```
+
+`minCollateralAmount` is required. It is the minimum gross collateral before transfer fees. Set it to `0n` only when you want to disable slippage protection. `buyBadDebt` is optional and defaults to `false`.
+
+Seized collateral goes to `receiverPrincipal`. Change and refunds go to the calling principal.
+
+## Track
+
+Save `liquidation.id` and query it when your app needs a fresh result:
+
+```ts
+const current = await client.liquidations.getLiquidation(liquidation.id);
+```
+
+Read `current.status` for the liquidation lifecycle. Read `current.collateralTx` and `current.changeTx` for transfer state, transaction IDs, and transfer errors.
+
+A canister `Err` throws `LiquidiumError`. A result with `status.state === "failed_liquidation"` is not thrown because refund processing can continue. Keep checking its transfer fields when your app needs the final refund state.

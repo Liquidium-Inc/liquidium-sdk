@@ -176,6 +176,28 @@ export {
   SupplyPlanType,
 } from "./modules/lending";
 export type {
+  CkLiquidationAsset,
+  ExecuteLiquidationRequest,
+  LiquidationAmounts,
+  LiquidationAsset,
+  LiquidationCandidate,
+  LiquidationCandidateAsset,
+  LiquidationCandidatePosition,
+  LiquidationFailedStatus,
+  LiquidationFailedTransfer,
+  LiquidationPendingTransfer,
+  LiquidationProgressStatus,
+  LiquidationResult,
+  LiquidationScanResult,
+  LiquidationStatus,
+  LiquidationSuccessStatus,
+  LiquidationSuccessTransfer,
+  LiquidationTransfer,
+  ScanLiquidationsRequest,
+  UnknownLiquidationAsset,
+} from "./modules/liquidations";
+export { LiquidationsModule } from "./modules/liquidations";
+export type {
   AssetPriceSnapshot,
   AssetPrices,
   FindPoolQuery,
