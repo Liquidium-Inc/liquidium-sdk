@@ -100,6 +100,8 @@ describe("QuoteModule", () => {
 
     expect(result.validationErrors).toHaveLength(0);
     expect(result.borrowAmount).toBe(BORROW_AMOUNT_USDT_BASE_UNITS);
+    expect(result.activationFeeAmount).toBe(0n);
+    expect(result.openingDebtAmount).toBe(BORROW_AMOUNT_USDT_BASE_UNITS);
     expect(result.collateralAmount).toBe(COLLATERAL_AMOUNT_SATS);
     expect(result.borrowUsd).toBe(EXPECTED_BORROW_USD_INTERNAL);
     expect(result.collateralUsd).toBe(EXPECTED_COLLATERAL_USD_INTERNAL);
@@ -109,7 +111,7 @@ describe("QuoteModule", () => {
     expect(result.collateralAsset).toBe(btcPool.asset);
   });
 
-  test("should include the activation fee in the LTV but preserve the received amount", () => {
+  test("should include the activation fee in the LTV but preserve the requested amount", () => {
     // given
     const BORROW_AMOUNT_USDT_BASE_UNITS = 100_000_000n;
     const COLLATERAL_AMOUNT_SATS = 200_000n;
@@ -129,9 +131,13 @@ describe("QuoteModule", () => {
     );
 
     // then
+    const EXPECTED_ACTIVATION_FEE_BASE_UNITS = 500_000n;
+    const EXPECTED_OPENING_DEBT_BASE_UNITS = 100_500_000n;
     const EXPECTED_OPENING_DEBT_USD = 10_050_000_000n;
     const EXPECTED_LTV_BPS = 5_025n;
     expect(result.borrowAmount).toBe(BORROW_AMOUNT_USDT_BASE_UNITS);
+    expect(result.activationFeeAmount).toBe(EXPECTED_ACTIVATION_FEE_BASE_UNITS);
+    expect(result.openingDebtAmount).toBe(EXPECTED_OPENING_DEBT_BASE_UNITS);
     expect(result.borrowUsd).toBe(EXPECTED_OPENING_DEBT_USD);
     expect(result.ltvBps).toBe(EXPECTED_LTV_BPS);
   });
@@ -141,6 +147,7 @@ describe("QuoteModule", () => {
     const BORROW_AMOUNT_SATS = 5_100n;
     const COLLATERAL_AMOUNT_SATS = 10_000n;
     const ACTIVATION_FEE_BPS = 50n;
+    const TARGET_LTV_BPS = 5_000n;
     const feePool = {
       ...btcPool,
       activationFee: ACTIVATION_FEE_BPS,
@@ -158,12 +165,27 @@ describe("QuoteModule", () => {
       [feePool],
       prices
     );
+    const collateralQuote = quoteModule.getQuote(
+      {
+        borrowAmount: BORROW_AMOUNT_SATS,
+        borrowPoolId: feePool.id,
+        collateralPoolId: feePool.id,
+        targetLtvBps: TARGET_LTV_BPS,
+      },
+      [feePool],
+      prices
+    );
 
     // then
     const EXPECTED_FEE_SATS = 25n;
+    const EXPECTED_OPENING_DEBT_SATS = 5_125n;
     const EXPECTED_OPENING_DEBT_USD = 512_500_000n;
+    expect(result.activationFeeAmount).toBe(EXPECTED_FEE_SATS);
+    expect(result.openingDebtAmount).toBe(EXPECTED_OPENING_DEBT_SATS);
     expect(result.borrowUsd).toBe(EXPECTED_OPENING_DEBT_USD);
-    expect(result.borrowAmount + EXPECTED_FEE_SATS).toBe(5_125n);
+    expect(collateralQuote.activationFeeAmount).toBe(EXPECTED_FEE_SATS);
+    expect(collateralQuote.openingDebtAmount).toBe(EXPECTED_OPENING_DEBT_SATS);
+    expect(collateralQuote.borrowUsd).toBe(EXPECTED_OPENING_DEBT_USD);
   });
 
   test("should return validation errors when LTV inputs cannot be valued", () => {
@@ -181,6 +203,8 @@ describe("QuoteModule", () => {
 
     // then
     expect(result.ltvBps).toBe(0n);
+    expect(result.activationFeeAmount).toBe(0n);
+    expect(result.openingDebtAmount).toBe(0n);
     expect(result.validationErrors).toEqual([
       expect.objectContaining({
         code: QuoteValidationErrorCode.PRICE_NOT_AVAILABLE,
@@ -257,6 +281,8 @@ describe("QuoteModule", () => {
     // then
     expect(result.validationErrors).toHaveLength(0);
     expect(result.borrowAmount).toBe(100000000n);
+    expect(result.activationFeeAmount).toBe(0n);
+    expect(result.openingDebtAmount).toBe(request.borrowAmount);
     expect(result.borrowUsd).toBe(10_000_000_000n);
     expect(result.requiredCollateralAmount).toBe(200_000n);
     expect(result.requiredCollateralUsd).toBe(20_000_000_000n);
@@ -282,8 +308,12 @@ describe("QuoteModule", () => {
     );
 
     // then
+    const EXPECTED_ACTIVATION_FEE_BASE_UNITS = 500_000n;
+    const EXPECTED_OPENING_DEBT_BASE_UNITS = 100_500_000n;
     const EXPECTED_REQUIRED_COLLATERAL_SATS = 201_000n;
     expect(result.borrowAmount).toBe(BORROW_AMOUNT_USDT_BASE_UNITS);
+    expect(result.activationFeeAmount).toBe(EXPECTED_ACTIVATION_FEE_BASE_UNITS);
+    expect(result.openingDebtAmount).toBe(EXPECTED_OPENING_DEBT_BASE_UNITS);
     expect(result.requiredCollateralAmount).toBe(
       EXPECTED_REQUIRED_COLLATERAL_SATS
     );
@@ -292,11 +322,13 @@ describe("QuoteModule", () => {
   test("should use pool decimals for quote calculations", () => {
     // given
     const TOKEN_BASE_UNITS = 1_000_000_000_000_000_000n;
+    const ACTIVATION_FEE_BPS = 50n;
     const highPrecisionUsdcPool: Pool = {
       ...usdtPool,
       id: "eeee-usdc-pool",
       asset: "USDC",
       decimals: 18n,
+      activationFee: ACTIVATION_FEE_BPS,
     };
     const request = {
       borrowAmount: TOKEN_BASE_UNITS,
@@ -317,11 +349,15 @@ describe("QuoteModule", () => {
     );
 
     // then
-    const EXPECTED_BORROW_USD_INTERNAL = 250_000_000_000n;
-    const EXPECTED_REQUIRED_COLLATERAL_USD_INTERNAL = 500_000_000_000n;
-    const EXPECTED_REQUIRED_COLLATERAL_SATS = 5_000_000n;
+    const EXPECTED_ACTIVATION_FEE_BASE_UNITS = 5_000_000_000_000_000n;
+    const EXPECTED_OPENING_DEBT_BASE_UNITS = 1_005_000_000_000_000_000n;
+    const EXPECTED_BORROW_USD_INTERNAL = 251_250_000_000n;
+    const EXPECTED_REQUIRED_COLLATERAL_USD_INTERNAL = 502_500_000_000n;
+    const EXPECTED_REQUIRED_COLLATERAL_SATS = 5_025_000n;
 
     expect(result.validationErrors).toHaveLength(0);
+    expect(result.activationFeeAmount).toBe(EXPECTED_ACTIVATION_FEE_BASE_UNITS);
+    expect(result.openingDebtAmount).toBe(EXPECTED_OPENING_DEBT_BASE_UNITS);
     expect(result.borrowUsd).toBe(EXPECTED_BORROW_USD_INTERNAL);
     expect(result.requiredCollateralUsd).toBe(
       EXPECTED_REQUIRED_COLLATERAL_USD_INTERNAL
@@ -363,6 +399,8 @@ describe("QuoteModule", () => {
     const result = quoteModule.getQuote(request, pools, prices);
 
     // then
+    expect(result.activationFeeAmount).toBe(0n);
+    expect(result.openingDebtAmount).toBe(0n);
     expect(result.validationErrors).toHaveLength(1);
     expect(result.validationErrors[0]?.code).toBe(
       QuoteValidationErrorCode.POOL_NOT_FOUND
@@ -662,25 +700,30 @@ describe("QuoteModule", () => {
     expect(result.requiredCollateralAmount).toBe(2_000_000_000n);
   });
 
-  test("returns error when borrow amount is negative", () => {
-    // given
-    const request = {
-      borrowAmount: -1n,
-      borrowPoolId: "xxxxx-usdt-pool",
-      collateralPoolId: "aaaaa-btc-pool",
-      targetLtvBps: 5_000n,
-    };
+  test.each([0n, -1n])(
+    "returns error when borrow amount is %s",
+    (borrowAmount) => {
+      // given
+      const request = {
+        borrowAmount,
+        borrowPoolId: "xxxxx-usdt-pool",
+        collateralPoolId: "aaaaa-btc-pool",
+        targetLtvBps: 5_000n,
+      };
 
-    // when
-    const result = quoteModule.getQuote(request, pools, prices);
+      // when
+      const result = quoteModule.getQuote(request, pools, prices);
 
-    // then
-    expect(result.validationErrors).toHaveLength(1);
-    expect(result.validationErrors[0]?.code).toBe(
-      QuoteValidationErrorCode.BORROW_AMOUNT_TOO_LOW
-    );
-    expect(result.validationErrors[0]?.message).toBe(
-      "Borrow amount must be greater than 0"
-    );
-  });
+      // then
+      expect(result.activationFeeAmount).toBe(0n);
+      expect(result.openingDebtAmount).toBe(0n);
+      expect(result.validationErrors).toHaveLength(1);
+      expect(result.validationErrors[0]?.code).toBe(
+        QuoteValidationErrorCode.BORROW_AMOUNT_TOO_LOW
+      );
+      expect(result.validationErrors[0]?.message).toBe(
+        "Borrow amount must be greater than 0"
+      );
+    }
+  );
 });

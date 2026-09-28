@@ -51,7 +51,7 @@ Health factors use three decimal places: `1000n` means `1.0`. When you format a 
 
 Pool rate fields such as `lendingRate`, `borrowingRate`, and `utilizationRate` use the 27-decimal `rateDecimals` scale. Pool risk fields such as `maxLtv`, `liquidationThreshold`, `liquidationBonus`, `protocolLiquidationFee`, and `reserveFactor` use basis points instead.
 
-`activationFee` is the borrow pool's activation fee in basis points (`50n` means 0.5%). It is `0n` if the canister has no activation-fee field. Borrowers receive the requested amount but owe that amount plus the fee, rounded down in base units. The canister can reject a borrow if its fee-inclusive debt exceeds available liquidity, the borrow cap, or the LTV limit.
+`activationFee` is the borrow pool's activation fee in basis points (`50n` means 0.5%). It is `0n` if the canister has no activation-fee field. On each borrow, the fee is rounded down in base units and added to the requested amount to form the opening debt. Network fees reduce the amount delivered to the wallet. Quote results expose `activationFeeAmount` and `openingDebtAmount` in borrow asset base units; see [LTV validation](./ltv-validation.mdx). The canister can reject a borrow if its fee-inclusive debt exceeds available liquidity, the borrow cap, or the LTV limit.
 
 ## Profile existence
 
