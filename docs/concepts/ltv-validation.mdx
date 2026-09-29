@@ -27,7 +27,29 @@ if (ltv.validationErrors.length > 0) {
 
 Amounts must use each asset's smallest unit. BTC uses satoshis. Native ETH and ckETH use wei with 18 decimals. USDC and USDT use token base units based on the selected pool decimals.
 
-`borrowAmount` is the amount the borrower receives. If the borrow pool charges an activation fee, the SDK calculates `fee = borrowAmount * pool.activationFee / 10_000n` (rounded down in base units) and uses `borrowAmount + fee` as the opening debt for LTV and required-collateral quotes. The `borrowUsd` quote field is the value of this opening debt, while the returned `borrowAmount` stays the requested amount. Read `activationFee` from `client.market.listPools()`; it is `0n` for pools on older canisters. The pool fee can change between a quote and a borrow, so recheck the pool before submission.
+`borrowAmount` is the requested amount before network fees. The activation fee is added to debt on each borrow. Both `client.quote.calculateLtv(...)` and `client.quote.getQuote(...)` return:
+
+| Field | Meaning |
+| --- | --- |
+| `borrowAmount` | Requested amount before network fees, in borrow asset base units. |
+| `activationFeeAmount` | `borrowAmount * pool.activationFee / 10_000n`, rounded down in borrow asset base units. |
+| `openingDebtAmount` | `borrowAmount + activationFeeAmount`, used for LTV and required-collateral calculations. |
+| `borrowUsd` | Value of `openingDebtAmount` in USD scaled to 8 decimal places. |
+
+For a 100 USDT request with 6 decimals, a $1 USDT price, and a 0.5% activation fee, the result includes:
+
+```ts
+const amounts = {
+  borrowAmount: 100_000_000n,
+  activationFeeAmount: 500_000n,
+  openingDebtAmount: 100_500_000n,
+  borrowUsd: 10_050_000_000n,
+};
+```
+
+These quotes do not estimate network fees or the final amount received in the wallet. Always check `validationErrors` before using a quote. If validation stops the calculation, `activationFeeAmount` and `openingDebtAmount` are `0n`; this does not mean the pool has no fee.
+
+Read `activationFee` from `client.market.listPools()`; it is `0n` for pools on older canisters. The pool fee can change between a quote and a borrow, so recheck the pool before submission.
 
 The SDK also validates minimum borrow amounts. BTC borrows must be at least `5_100n` sats. ETH borrows must be at least `5_000_000_000_000_000n` wei (`0.005 ETH`). USDC and USDT borrows must be at least `1_000_000n` base units. To display the same minimum before the user submits, use `getMinimumBorrowAmount(asset)`.
 
