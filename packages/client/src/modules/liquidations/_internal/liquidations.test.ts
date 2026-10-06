@@ -89,6 +89,8 @@ const PROTOCOL_FEE_BPS = 100n;
 
 const APPROVAL_DURATION_5_MINUTES_NS = 300_000_000_000n;
 
+const ALLOWANCE_RENEWAL_WINDOW_1_MINUTE_NS = 60_000_000_000n;
+
 const BASE_REQUEST: ExecuteLiquidationRequest = {
   borrowerProfileId: VALID_IC_PRINCIPAL,
   debtPoolId: USDT_POOL_ID,
@@ -582,6 +584,13 @@ describe("automatic liquidation allowance", () => {
         bigint,
       ],
     },
+    {
+      label: "allowance just outside the renewal window",
+      allowance: REQUIRED_ALLOWANCE,
+      expires_at: [
+        NOW_NANOSECONDS + ALLOWANCE_RENEWAL_WINDOW_1_MINUTE_NS + 1n,
+      ] satisfies [bigint],
+    },
   ])(
     "reuses $label without paying another approval fee",
     async ({ allowance, expires_at }) => {
@@ -618,6 +627,22 @@ describe("automatic liquidation allowance", () => {
       expires_at: [NOW_NANOSECONDS] satisfies [bigint],
       expectedAllowance: 0n,
     },
+    {
+      label: "allowance expiring just inside the renewal window",
+      allowance: REQUIRED_ALLOWANCE,
+      expires_at: [
+        NOW_NANOSECONDS + ALLOWANCE_RENEWAL_WINDOW_1_MINUTE_NS - 1n,
+      ] satisfies [bigint],
+      expectedAllowance: REQUIRED_ALLOWANCE,
+    },
+    {
+      label: "renewal boundary",
+      allowance: REQUIRED_ALLOWANCE,
+      expires_at: [
+        NOW_NANOSECONDS + ALLOWANCE_RENEWAL_WINDOW_1_MINUTE_NS,
+      ] satisfies [bigint],
+      expectedAllowance: REQUIRED_ALLOWANCE,
+    },
   ])(
     "replaces $label before execution",
     async ({ allowance, expires_at, expectedAllowance }) => {
@@ -644,19 +669,34 @@ describe("automatic liquidation allowance", () => {
       label: "approval fee missing",
       allowance: 0n,
       balance: FUNDED_BALANCE - 1n,
+      expires_at: [] satisfies [],
     },
     {
       label: "collection fee missing",
       allowance: REQUIRED_ALLOWANCE,
       balance: REQUIRED_ALLOWANCE - 1n,
+      expires_at: [] satisfies [],
     },
-    { label: "empty account", allowance: 0n, balance: 0n },
+    {
+      label: "empty account",
+      allowance: 0n,
+      balance: 0n,
+      expires_at: [] satisfies [],
+    },
+    {
+      label: "renewal approval fee missing",
+      allowance: REQUIRED_ALLOWANCE,
+      balance: REQUIRED_ALLOWANCE,
+      expires_at: [
+        NOW_NANOSECONDS + ALLOWANCE_RENEWAL_WINDOW_1_MINUTE_NS,
+      ] satisfies [bigint],
+    },
   ])(
     "rejects $label without approving or liquidating",
-    async ({ allowance, balance }) => {
+    async ({ allowance, balance, expires_at }) => {
       // given
       const { client, liquidateWithSlippage } = mockExecution();
-      debtLedger.allowance.mockResolvedValue({ allowance, expires_at: [] });
+      debtLedger.allowance.mockResolvedValue({ allowance, expires_at });
       debtLedger.balance.mockResolvedValue(balance);
 
       // when

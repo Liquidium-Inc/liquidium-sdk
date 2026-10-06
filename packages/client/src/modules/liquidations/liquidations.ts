@@ -80,9 +80,10 @@ export class LiquidationsModule {
    * paths. Normal collateral-backed liquidations ignore it and allow partial
    * fills. Setting `buyBadDebt: true` permits, but does not force, a bad-debt path.
    *
-    * The configured signing IC identity or agent is the liquidator.
-    * Liquidator registration is not required. A sufficient unexpired allowance
-   * is reused; otherwise the SDK approves the debt amount plus the transfer fee
+   * The configured signing IC identity or agent is the liquidator.
+   * Liquidator registration is not required. A sufficient allowance with no
+   * expiry or more than one minute remaining is reused; otherwise the SDK
+   * approves the debt amount plus the transfer fee
    * for five minutes before submission. Approval incurs a separate ledger fee.
    *
    * @param request - Borrower, pools, debt amount, collateral receiver, and minimum collateral.

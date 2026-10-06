@@ -64,7 +64,7 @@ On bad-debt and hybrid paths, `minCollateralAmount` is an absolute amount, not a
 
 ### Allowance and fees
 
-Before execution, the SDK reads the debt pool's registered ledger, its fee, your balance, and your allowance for the configured lending canister. It reuses a sufficient, unexpired allowance. Otherwise, it approves exactly `debtAmount + ledgerTransferFee` for five minutes with the same signing agent, then submits the liquidation. You do not need to create a ledger client or approve separately. Existing larger or non-expiring allowances are reused without replacement.
+Before execution, the SDK reads the debt pool's registered ledger, its fee, your balance, and your allowance for the configured lending canister. It reuses a sufficient allowance with no expiry or more than one minute remaining. Otherwise, it approves exactly `debtAmount + ledgerTransferFee` for five minutes with the same signing agent, then submits the liquidation. Renewing an allowance also incurs an approval fee. You do not need to create a ledger client or approve separately. The one-minute buffer reduces expiry risk; it does not guarantee that collection completes before expiry.
 
 Approval and liquidation are separate signed operations. A wallet can request a signature for each. When approval is needed, fund `debtAmount + 2 * ledgerTransferFee`: one fee for approval and one for collection. With a reusable allowance, fund `debtAmount + ledgerTransferFee`. Approval fees are spent even if the later liquidation fails. The collateral transfer fee is deducted from the collateral received.
 

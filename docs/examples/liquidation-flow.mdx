@@ -30,7 +30,7 @@ Copy `examples/liquidation-flow/.env.example` to `.env`, then configure:
 | `LIQUIDATION_DEBT_AMOUNT_BASE_UNITS` | Amount to repay in debt-asset base units |
 | `LIQUIDATION_MIN_COLLATERAL_AMOUNT_BASE_UNITS` | Submitted minimum in collateral-asset base units; normal liquidation ignores it |
 
-The identity's default ICRC account must hold the debt amount plus ledger fees. The SDK resolves the registered debt ledger from the debt pool and reuses a sufficient, unexpired allowance. If needed, it approves the debt amount plus the ledger transfer fee for five minutes before executing. A new approval requires a separate ledger fee. The CLI needs no manual approval call.
+The identity's default ICRC account must hold the debt amount plus ledger fees. The SDK resolves the registered debt ledger from the debt pool and reuses a sufficient allowance with no expiry or more than one minute remaining. If needed, it approves the debt amount plus the ledger transfer fee for five minutes before executing. A new or renewed approval requires a separate ledger fee. The CLI needs no manual approval call.
 
 Run it from the SDK root:
 

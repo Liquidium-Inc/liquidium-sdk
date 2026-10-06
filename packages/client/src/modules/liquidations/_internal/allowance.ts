@@ -11,6 +11,8 @@ const NANOSECONDS_PER_MILLISECOND = 1_000_000n;
 
 const APPROVAL_DURATION_5_MINUTES_NS = 5n * 60n * 1_000_000_000n;
 
+const ALLOWANCE_RENEWAL_WINDOW_1_MINUTE_NS = 60n * 1_000_000_000n;
+
 interface EnsureLiquidationAllowanceParams {
   canisterContext: CanisterContext;
   debtPoolId: Principal;
@@ -85,7 +87,15 @@ export async function ensureLiquidationAllowance({
       : allowance.allowance;
 
   const requiredAllowanceBaseUnits = debtAmountBaseUnits + ledgerFeeBaseUnits;
-  const needsApproval = currentAllowanceBaseUnits < requiredAllowanceBaseUnits;
+
+  const isAllowanceExpiringSoon =
+    expiresAtNanoseconds !== undefined &&
+    expiresAtNanoseconds <=
+      nowNanoseconds + ALLOWANCE_RENEWAL_WINDOW_1_MINUTE_NS;
+
+  const needsApproval =
+    currentAllowanceBaseUnits < requiredAllowanceBaseUnits ||
+    isAllowanceExpiringSoon;
 
   const requiredBalanceBaseUnits =
     requiredAllowanceBaseUnits + (needsApproval ? ledgerFeeBaseUnits : 0n);

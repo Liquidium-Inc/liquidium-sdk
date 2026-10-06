@@ -359,7 +359,8 @@ Scan results can become stale, so execution always revalidates the position.
 
 `liquidate(...)` executes through the configured IC identity or agent.
 Liquidator registration is not required.
-The SDK reuses a sufficient unexpired allowance or approves
+The SDK reuses a sufficient allowance with no expiry or more than one minute
+remaining. Otherwise, it approves
 `debtAmount + ledgerTransferFee` for five minutes before submission. The
 principal's default ICRC account must cover the debt offer and ledger fees,
 including a separate approval fee when needed.
