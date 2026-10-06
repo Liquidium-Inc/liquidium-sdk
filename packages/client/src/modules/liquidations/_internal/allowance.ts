@@ -1,10 +1,14 @@
-import { IcrcLedgerCanister } from "@icp-sdk/canisters/ledger/icrc";
+import {
+  type ApproveParams,
+  IcrcLedgerCanister,
+} from "@icp-sdk/canisters/ledger/icrc";
 import { Principal } from "@icp-sdk/core/principal";
 import { createFlexibleLendingActor } from "../../../core/canisters/lending/flexible-actor";
 import { LiquidiumError, LiquidiumErrorCode } from "../../../core/errors";
 import type { CanisterContext } from "../../../core/transports/canister-context";
 
 const NANOSECONDS_PER_MILLISECOND = 1_000_000n;
+
 const APPROVAL_DURATION_5_MINUTES_NS = 5n * 60n * 1_000_000_000n;
 
 interface EnsureLiquidationAllowanceParams {
@@ -16,16 +20,19 @@ interface EnsureLiquidationAllowanceParams {
 export async function ensureLiquidationAllowance({
   canisterContext,
   debtPoolId,
-  debtAmount,
+  debtAmount: debtAmountBaseUnits,
 }: EnsureLiquidationAllowanceParams): Promise<void> {
-  const owner = await canisterContext.agent.getPrincipal();
-  if (owner.isAnonymous()) {
+  const liquidatorPrincipal = await canisterContext.agent.getPrincipal();
+
+  if (liquidatorPrincipal.isAnonymous()) {
     throw new LiquidiumError(
       LiquidiumErrorCode.NOT_ALLOWED,
       "Liquidation requires a signing IC identity or agent"
     );
   }
+
   const lendingCanisterId = canisterContext.canisterIds.lending;
+
   if (!lendingCanisterId) {
     throw new LiquidiumError(
       LiquidiumErrorCode.SERVICE_UNAVAILABLE,
@@ -33,57 +40,73 @@ export async function ensureLiquidationAllowance({
     );
   }
 
-  const lending = createFlexibleLendingActor(canisterContext);
-  const [pool] = await lending.get_pool(debtPoolId);
-  if (!pool) {
+  const lendingActor = createFlexibleLendingActor(canisterContext);
+  const [debtPool] = await lendingActor.get_pool(debtPoolId);
+
+  if (!debtPool) {
     throw new LiquidiumError(
       LiquidiumErrorCode.POOL_NOT_FOUND,
       "Liquidation debt pool was not found"
     );
   }
-  if (!("CkAsset" in pool.asset_type)) {
+
+  if (!("CkAsset" in debtPool.asset_type)) {
     throw new LiquidiumError(
       LiquidiumErrorCode.NOT_ALLOWED,
       "Liquidation debt pool has no supported ICRC ledger"
     );
   }
 
-  const ledger = IcrcLedgerCanister.create({
+  const debtLedger = IcrcLedgerCanister.create({
     agent: canisterContext.agent,
-    canisterId: pool.asset_type.CkAsset,
+    canisterId: debtPool.asset_type.CkAsset,
   });
-  const spender = {
+
+  const spender: ApproveParams["spender"] = {
     owner: Principal.fromText(lendingCanisterId),
-    subaccount: [] as [],
+    subaccount: [],
   };
-  const [fee, allowance, balance] = await Promise.all([
-    ledger.transactionFee({}),
-    ledger.allowance({ account: { owner, subaccount: [] }, spender }),
-    ledger.balance({ owner }),
+
+  const [ledgerFeeBaseUnits, allowance, balanceBaseUnits] = await Promise.all([
+    debtLedger.transactionFee({}),
+    debtLedger.allowance({
+      account: { owner: liquidatorPrincipal, subaccount: [] },
+      spender,
+    }),
+    debtLedger.balance({ owner: liquidatorPrincipal }),
   ]);
+
   const nowNanoseconds = BigInt(Date.now()) * NANOSECONDS_PER_MILLISECOND;
   const expiresAtNanoseconds = allowance.expires_at[0];
-  const currentAllowance =
+
+  const currentAllowanceBaseUnits =
     expiresAtNanoseconds !== undefined && expiresAtNanoseconds <= nowNanoseconds
       ? 0n
       : allowance.allowance;
-  const requiredAllowance = debtAmount + fee;
-  const needsApproval = currentAllowance < requiredAllowance;
-  const requiredBalance = requiredAllowance + (needsApproval ? fee : 0n);
-  if (balance < requiredBalance) {
+
+  const requiredAllowanceBaseUnits = debtAmountBaseUnits + ledgerFeeBaseUnits;
+  const needsApproval = currentAllowanceBaseUnits < requiredAllowanceBaseUnits;
+
+  const requiredBalanceBaseUnits =
+    requiredAllowanceBaseUnits + (needsApproval ? ledgerFeeBaseUnits : 0n);
+
+  if (balanceBaseUnits < requiredBalanceBaseUnits) {
     throw new LiquidiumError(
       LiquidiumErrorCode.INSUFFICIENT_FUNDS,
       "Debt ledger balance cannot cover repayment and required ledger fees"
     );
   }
-  if (!needsApproval) return;
+
+  if (!needsApproval) {
+    return;
+  }
 
   try {
-    await ledger.approve({
+    await debtLedger.approve({
       spender,
-      amount: requiredAllowance,
-      fee,
-      expected_allowance: currentAllowance,
+      amount: requiredAllowanceBaseUnits,
+      fee: ledgerFeeBaseUnits,
+      expected_allowance: currentAllowanceBaseUnits,
       created_at_time: nowNanoseconds,
       expires_at: nowNanoseconds + APPROVAL_DURATION_5_MINUTES_NS,
     });

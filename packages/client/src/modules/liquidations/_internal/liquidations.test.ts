@@ -2,12 +2,18 @@ import {
   IcrcLedgerCanister,
   IcrcTransferError,
 } from "@icp-sdk/canisters/ledger/icrc";
-import { Actor, HttpAgent } from "@icp-sdk/core/agent";
+import { Actor, type ActorSubclass, HttpAgent } from "@icp-sdk/core/agent";
 import { Principal } from "@icp-sdk/core/principal";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { mockDeep } from "vitest-mock-extended";
+import type {
+  FlexibleLendingActor,
+  PoolLedgerRoute,
+} from "../../../core/canisters/lending/flexible-actor";
 import type {
   LiquidationResult as CanisterLiquidationResult,
   ScanResult as CanisterLiquidationScanResult,
+  _SERVICE as LendingService,
 } from "../../../generated/canisters/lending/lending.did";
 import {
   type ExecuteLiquidationRequest,
@@ -21,19 +27,68 @@ import {
   VALID_IC_PRINCIPAL,
 } from "../../lending/_internal/test-fixtures";
 
+type LiquidationActorMethods = Pick<
+  LendingService,
+  "scan_at_risk_positions" | "liquidate_with_slippage" | "get_liquidation"
+> &
+  Pick<FlexibleLendingActor, "get_pool">;
+
+type LiquidationActorCalls = {
+  [Method in keyof LiquidationActorMethods]: (
+    ...args: Parameters<LiquidationActorMethods[Method]>
+  ) => ReturnType<LiquidationActorMethods[Method]>;
+};
+
 const LIQUIDATION_ID = 42n;
+
 const DEBT_AMOUNT = 1_000_000n;
+
 const MIN_COLLATERAL_AMOUNT = 0n;
+
 const MAX_NAT64_VALUE = 2n ** 64n - 1n;
+
 const DEBT_LEDGER_ID = "cngnf-vqaaa-aaaar-qag4q-cai";
+
 const CUSTOM_LENDING_ID = "nja4y-2yaaa-aaaae-qddxa-cai";
+
 const LEDGER_FEE = 10_000n;
+
 const REQUIRED_ALLOWANCE = DEBT_AMOUNT + LEDGER_FEE;
+
 const FUNDED_BALANCE = REQUIRED_ALLOWANCE + LEDGER_FEE;
+
 const APPROVAL_BLOCK_INDEX = 123n;
+
 const NOW_MILLISECONDS = 1_790_000_000_000;
+
 const NOW_NANOSECONDS = BigInt(NOW_MILLISECONDS) * 1_000_000n;
+
+const SCAN_LIMIT = 100n;
+
+const MAX_RESULTS = 20n;
+
+const SCANNED_ACCOUNTS = 25n;
+
+const LIQUIDATION_TIMESTAMP_SECONDS = 1_786_028_400n;
+
+const REPAID_DEBT_AMOUNT_BASE_UNITS = 900_000n;
+
+const RECEIVED_COLLATERAL_AMOUNT_BASE_UNITS = 75_000n;
+
+const COLLATERAL_AMOUNT_BASE_UNITS = 2_000_000n;
+
+const HEALTH_FACTOR = 900n;
+
+const TOTAL_DEBT_USD_RAY = 10n ** 27n;
+
+const LIQUIDATION_THRESHOLD_BPS = 7_500n;
+
+const LIQUIDATION_BONUS_BPS = 500n;
+
+const PROTOCOL_FEE_BPS = 100n;
+
 const APPROVAL_DURATION_5_MINUTES_NS = 300_000_000_000n;
+
 const BASE_REQUEST: ExecuteLiquidationRequest = {
   borrowerProfileId: VALID_IC_PRINCIPAL,
   debtPoolId: USDT_POOL_ID,
@@ -47,7 +102,7 @@ let debtLedger: ReturnType<typeof createMockDebtLedger>;
 
 beforeEach(() => {
   debtLedger = createMockDebtLedger();
-  vi.spyOn(IcrcLedgerCanister, "create").mockReturnValue(debtLedger as never);
+  vi.spyOn(IcrcLedgerCanister, "create").mockReturnValue(debtLedger);
   vi.spyOn(HttpAgent.prototype, "getPrincipal").mockResolvedValue(
     Principal.fromText(VALID_IC_PRINCIPAL)
   );
@@ -64,31 +119,32 @@ describe("LiquidationsModule", () => {
     const scanAtRiskPositions = vi
       .fn()
       .mockResolvedValue(createCanisterLiquidationScanResult());
-    vi.spyOn(Actor, "createActor").mockReturnValue({
+
+    mockLendingActor({
       scan_at_risk_positions: scanAtRiskPositions,
-    } as never);
+    });
     const client = new LiquidiumClient({});
 
     // when
     const result = await client.liquidations.scan({
       cursor: ICP_POOL_ID,
-      scanLimit: 100n,
-      maxResults: 20n,
+      scanLimit: SCAN_LIMIT,
+      maxResults: MAX_RESULTS,
     });
 
     // then
     expect(scanAtRiskPositions).toHaveBeenCalledWith(
       [Principal.fromText(ICP_POOL_ID)],
-      100n,
-      20n
+      SCAN_LIMIT,
+      MAX_RESULTS
     );
     expect(result).toEqual({
       candidates: [
         {
           borrowerProfileId: VALID_IC_PRINCIPAL,
-          healthFactor: 900n,
-          totalDebtUsd: 10n ** 27n,
-          weightedLiquidationThresholdBps: 7_500n,
+          healthFactor: HEALTH_FACTOR,
+          totalDebtUsd: TOTAL_DEBT_USD_RAY,
+          weightedLiquidationThresholdBps: LIQUIDATION_THRESHOLD_BPS,
           positions: [
             {
               poolId: USDT_POOL_ID,
@@ -97,16 +153,16 @@ describe("LiquidationsModule", () => {
                 type: "ck_asset",
                 ledgerCanisterId: USDT_POOL_ID,
               },
-              collateralAmount: 2_000_000n,
-              debtAmount: 1_000_000n,
-              liquidationBonusBps: 500n,
-              liquidationThresholdBps: 7_500n,
-              protocolFeeBps: 100n,
+              collateralAmount: COLLATERAL_AMOUNT_BASE_UNITS,
+              debtAmount: DEBT_AMOUNT,
+              liquidationBonusBps: LIQUIDATION_BONUS_BPS,
+              liquidationThresholdBps: LIQUIDATION_THRESHOLD_BPS,
+              protocolFeeBps: PROTOCOL_FEE_BPS,
             },
           ],
         },
       ],
-      scanned: 25n,
+      scanned: SCANNED_ACCOUNTS,
       nextCursor: BTC_POOL_ID,
     });
   });
@@ -142,16 +198,20 @@ describe("LiquidationsModule", () => {
 
       // when
       const result = client.liquidations.scan({
-        scanLimit: 100n,
-        maxResults: 20n,
+        scanLimit: SCAN_LIMIT,
+        maxResults: MAX_RESULTS,
         ...change,
       });
 
       // then
       await expect(result).rejects.toMatchObject({
         code: LiquidiumErrorCode.VALIDATION_ERROR,
-        ...(message ? { message } : {}),
       });
+
+      if (message !== undefined) {
+        await expect(result).rejects.toMatchObject({ message });
+      }
+
       expect(createActor).not.toHaveBeenCalled();
     }
   );
@@ -161,9 +221,10 @@ describe("LiquidationsModule", () => {
     const scanAtRiskPositions = vi
       .fn()
       .mockResolvedValue(createCanisterLiquidationScanResult());
-    vi.spyOn(Actor, "createActor").mockReturnValue({
+
+    mockLendingActor({
       scan_at_risk_positions: scanAtRiskPositions,
-    } as never);
+    });
     const client = new LiquidiumClient({});
 
     // when
@@ -183,15 +244,15 @@ describe("LiquidationsModule", () => {
   test("maps scan transport errors", async () => {
     // given
     const cause = new Error("replica unavailable");
-    vi.spyOn(Actor, "createActor").mockReturnValue({
+    mockLendingActor({
       scan_at_risk_positions: vi.fn().mockRejectedValue(cause),
-    } as never);
+    });
     const client = new LiquidiumClient({});
 
     // when
     const result = client.liquidations.scan({
-      scanLimit: 100n,
-      maxResults: 20n,
+      scanLimit: SCAN_LIMIT,
+      maxResults: MAX_RESULTS,
     });
 
     // then
@@ -207,10 +268,11 @@ describe("LiquidationsModule", () => {
     const liquidateWithSlippage = vi.fn().mockResolvedValue({
       Ok: createCanisterLiquidationResult(),
     });
-    vi.spyOn(Actor, "createActor").mockReturnValue({
+
+    mockLendingActor({
       get_pool: createDebtPoolQuery(),
       liquidate_with_slippage: liquidateWithSlippage,
-    } as never);
+    });
     const client = new LiquidiumClient({});
 
     // when
@@ -230,10 +292,10 @@ describe("LiquidationsModule", () => {
     );
     expect(result).toEqual({
       id: LIQUIDATION_ID,
-      timestamp: 1_786_028_400n,
+      timestamp: LIQUIDATION_TIMESTAMP_SECONDS,
       amounts: {
-        debtRepaid: 900_000n,
-        collateralReceived: 75_000n,
+        debtRepaid: REPAID_DEBT_AMOUNT_BASE_UNITS,
+        collateralReceived: RECEIVED_COLLATERAL_AMOUNT_BASE_UNITS,
       },
       debtAsset: {
         type: "ck_asset",
@@ -248,7 +310,7 @@ describe("LiquidationsModule", () => {
 
   test("returns failed liquidation and transfer states with their messages", async () => {
     // given
-    vi.spyOn(Actor, "createActor").mockReturnValue({
+    mockLendingActor({
       get_pool: createDebtPoolQuery(),
       liquidate_with_slippage: vi.fn().mockResolvedValue({
         Ok: createCanisterLiquidationResult({
@@ -263,7 +325,7 @@ describe("LiquidationsModule", () => {
           },
         }),
       }),
-    } as never);
+    });
     const client = new LiquidiumClient({});
 
     // when
@@ -296,9 +358,10 @@ describe("LiquidationsModule", () => {
         status: { Pending: null },
       }),
     });
-    vi.spyOn(Actor, "createActor").mockReturnValue({
+
+    mockLendingActor({
       get_liquidation: getLiquidation,
-    } as never);
+    });
     const client = new LiquidiumClient({});
 
     // when
@@ -311,13 +374,16 @@ describe("LiquidationsModule", () => {
 
   test("rejects an unrecognized liquidation status", async () => {
     // given
-    vi.spyOn(Actor, "createActor").mockReturnValue({
+    const futureLiquidationResult = {
+      ...createCanisterLiquidationResult(),
+      status: { FutureStatus: null },
+    };
+
+    mockLendingActor({
       get_liquidation: vi.fn().mockResolvedValue({
-        Ok: createCanisterLiquidationResult({
-          status: { FutureStatus: null } as never,
-        }),
+        Ok: futureLiquidationResult,
       }),
-    } as never);
+    });
     const client = new LiquidiumClient({});
 
     // when
@@ -359,9 +425,9 @@ describe("LiquidationsModule", () => {
   test.each([
     ["zero debt", { debtAmount: 0n }],
     ["negative debt", { debtAmount: -1n }],
-    ["number debt", { debtAmount: 1 as never }],
-    ["number minimum collateral", { minCollateralAmount: 0 as never }],
-    ["invalid bad debt flag", { buyBadDebt: "false" as never }],
+    ["number debt", { debtAmount: 1 }],
+    ["number minimum collateral", { minCollateralAmount: 0 }],
+    ["invalid bad debt flag", { buyBadDebt: "false" }],
     ["negative minimum collateral", { minCollateralAmount: -1n }],
   ] as const)("rejects %s before the canister call", async (_, change) => {
     // given
@@ -369,10 +435,13 @@ describe("LiquidationsModule", () => {
     const client = new LiquidiumClient({});
 
     // when
-    const result = client.liquidations.liquidate({
+    // SAFETY: these cases intentionally pass invalid runtime types to test input validation.
+    const invalidRequest = {
       ...BASE_REQUEST,
       ...change,
-    });
+    } as ExecuteLiquidationRequest;
+
+    const result = client.liquidations.liquidate(invalidRequest);
 
     // then
     await expect(result).rejects.toMatchObject({
@@ -399,12 +468,12 @@ describe("LiquidationsModule", () => {
 
   test("maps liquidation protocol errors", async () => {
     // given
-    vi.spyOn(Actor, "createActor").mockReturnValue({
+    mockLendingActor({
       get_pool: createDebtPoolQuery(),
       liquidate_with_slippage: vi.fn().mockResolvedValue({
         Err: { InsufficientCollateral: null },
       }),
-    } as never);
+    });
     const client = new LiquidiumClient({});
 
     // when
@@ -419,11 +488,11 @@ describe("LiquidationsModule", () => {
 
   test("maps liquidation-not-found status errors", async () => {
     // given
-    vi.spyOn(Actor, "createActor").mockReturnValue({
+    mockLendingActor({
       get_liquidation: vi.fn().mockResolvedValue({
         Err: { LiquidationNotFound: "liquidation 42 not found" },
       }),
-    } as never);
+    });
     const client = new LiquidiumClient({});
 
     // when
@@ -449,10 +518,10 @@ describe("LiquidationsModule", () => {
   ] as const)("maps %s transport errors", async (method, invoke) => {
     // given
     const cause = new Error("replica unavailable");
-    vi.spyOn(Actor, "createActor").mockReturnValue({
+    mockLendingActor({
       get_pool: createDebtPoolQuery(),
       [method]: vi.fn().mockRejectedValue(cause),
-    } as never);
+    });
     const client = new LiquidiumClient({});
 
     // when
@@ -504,12 +573,14 @@ describe("automatic liquidation allowance", () => {
     {
       label: "exact non-expiring allowance",
       allowance: REQUIRED_ALLOWANCE,
-      expires_at: [],
+      expires_at: [] satisfies [],
     },
     {
       label: "larger unexpired allowance",
       allowance: REQUIRED_ALLOWANCE * 2n,
-      expires_at: [NOW_NANOSECONDS + APPROVAL_DURATION_5_MINUTES_NS],
+      expires_at: [NOW_NANOSECONDS + APPROVAL_DURATION_5_MINUTES_NS] satisfies [
+        bigint,
+      ],
     },
   ])(
     "reuses $label without paying another approval fee",
@@ -532,19 +603,19 @@ describe("automatic liquidation allowance", () => {
     {
       label: "one unit below requirement",
       allowance: REQUIRED_ALLOWANCE - 1n,
-      expires_at: [],
+      expires_at: [] satisfies [],
       expectedAllowance: REQUIRED_ALLOWANCE - 1n,
     },
     {
       label: "expired allowance",
       allowance: REQUIRED_ALLOWANCE,
-      expires_at: [NOW_NANOSECONDS - 1n],
+      expires_at: [NOW_NANOSECONDS - 1n] satisfies [bigint],
       expectedAllowance: 0n,
     },
     {
       label: "expiry boundary",
       allowance: REQUIRED_ALLOWANCE,
-      expires_at: [NOW_NANOSECONDS],
+      expires_at: [NOW_NANOSECONDS] satisfies [bigint],
       expectedAllowance: 0n,
     },
   ])(
@@ -637,15 +708,20 @@ describe("automatic liquidation allowance", () => {
     // given
     const { client, liquidateWithSlippage } = mockExecution();
     let completeApproval!: (blockIndex: bigint) => void;
+
     const approval = new Promise<bigint>((resolve) => {
       completeApproval = resolve;
     });
+
     let approvalStarted!: () => void;
+
     const started = new Promise<void>((resolve) => {
       approvalStarted = resolve;
     });
+
     debtLedger.approve.mockImplementation(() => {
       approvalStarted();
+
       return approval;
     });
 
@@ -663,17 +739,19 @@ describe("automatic liquidation allowance", () => {
   test("keeps large debt amounts exact when adding ledger fees", async () => {
     // given
     const { client } = mockExecution();
-    const largeDebtAmount = BigInt(Number.MAX_SAFE_INTEGER) + 1n;
-    debtLedger.balance.mockResolvedValue(largeDebtAmount + LEDGER_FEE * 2n);
+    const largeDebtAmountBaseUnits = BigInt(Number.MAX_SAFE_INTEGER) + 1n;
+    debtLedger.balance.mockResolvedValue(
+      largeDebtAmountBaseUnits + LEDGER_FEE * 2n
+    );
 
     // when
     await client.liquidations.liquidate({
       ...BASE_REQUEST,
-      debtAmount: largeDebtAmount,
+      debtAmount: largeDebtAmountBaseUnits,
     });
 
     // then
-    const EXPECTED_ALLOWANCE = largeDebtAmount + LEDGER_FEE;
+    const EXPECTED_ALLOWANCE = largeDebtAmountBaseUnits + LEDGER_FEE;
     expect(debtLedger.approve).toHaveBeenCalledWith(
       expect.objectContaining({ amount: EXPECTED_ALLOWANCE })
     );
@@ -682,20 +760,23 @@ describe("automatic liquidation allowance", () => {
   test("supports a one-unit debt amount on a zero-fee ledger", async () => {
     // given
     const { client, liquidateWithSlippage } = mockExecution();
-    const minimumDebtAmount = 1n;
-    const zeroFee = 0n;
-    debtLedger.transactionFee.mockResolvedValue(zeroFee);
-    debtLedger.balance.mockResolvedValue(minimumDebtAmount);
+    const minimumDebtAmountBaseUnits = 1n;
+    const zeroFeeBaseUnits = 0n;
+    debtLedger.transactionFee.mockResolvedValue(zeroFeeBaseUnits);
+    debtLedger.balance.mockResolvedValue(minimumDebtAmountBaseUnits);
 
     // when
     await client.liquidations.liquidate({
       ...BASE_REQUEST,
-      debtAmount: minimumDebtAmount,
+      debtAmount: minimumDebtAmountBaseUnits,
     });
 
     // then
     expect(debtLedger.approve).toHaveBeenCalledWith(
-      expect.objectContaining({ amount: minimumDebtAmount, fee: zeroFee })
+      expect.objectContaining({
+        amount: minimumDebtAmountBaseUnits,
+        fee: zeroFeeBaseUnits,
+      })
     );
     expect(liquidateWithSlippage).toHaveBeenCalledTimes(1);
   });
@@ -743,18 +824,18 @@ describe("automatic liquidation allowance", () => {
   test.each([
     {
       label: "missing pool",
-      pools: [],
+      pools: [] satisfies [],
       code: LiquidiumErrorCode.POOL_NOT_FOUND,
     },
     {
       label: "unsupported ledger",
-      pools: [{ asset_type: { Unknown: null } }],
+      pools: [{ asset_type: { Unknown: null } }] satisfies [PoolLedgerRoute],
       code: LiquidiumErrorCode.NOT_ALLOWED,
     },
   ])("rejects $label before approval", async ({ pools, code }) => {
     // given
     const { client, getPool, liquidateWithSlippage } = mockExecution();
-    getPool.mockResolvedValue(pools as never);
+    getPool.mockResolvedValue(pools);
 
     // when
     const result = client.liquidations.liquidate(BASE_REQUEST);
@@ -788,17 +869,18 @@ describe("automatic liquidation allowance", () => {
 });
 
 function createMockDebtLedger() {
-  return {
-    transactionFee: vi.fn().mockResolvedValue(LEDGER_FEE),
-    balance: vi.fn().mockResolvedValue(FUNDED_BALANCE),
-    allowance: vi.fn().mockResolvedValue({ allowance: 0n, expires_at: [] }),
-    approve: vi.fn().mockResolvedValue(APPROVAL_BLOCK_INDEX),
-  };
+  const debtLedger = mockDeep<IcrcLedgerCanister>();
+  debtLedger.transactionFee.mockResolvedValue(LEDGER_FEE);
+  debtLedger.balance.mockResolvedValue(FUNDED_BALANCE);
+  debtLedger.allowance.mockResolvedValue({ allowance: 0n, expires_at: [] });
+  debtLedger.approve.mockResolvedValue(APPROVAL_BLOCK_INDEX);
+
+  return debtLedger;
 }
 
 function createDebtPoolQuery() {
   return vi
-    .fn()
+    .fn<FlexibleLendingActor["get_pool"]>()
     .mockResolvedValue([
       { asset_type: { CkAsset: Principal.fromText(DEBT_LEDGER_ID) } },
     ]);
@@ -806,17 +888,28 @@ function createDebtPoolQuery() {
 
 function mockExecution() {
   const getPool = createDebtPoolQuery();
+
   const liquidateWithSlippage = vi
     .fn()
     .mockResolvedValue({ Ok: createCanisterLiquidationResult() });
-  vi.spyOn(Actor, "createActor").mockReturnValue({
+
+  mockLendingActor({
     get_pool: getPool,
     liquidate_with_slippage: liquidateWithSlippage,
-  } as never);
+  });
+
   const client = new LiquidiumClient({
     canisterIds: { lending: CUSTOM_LENDING_ID },
   });
+
   return { client, getPool, liquidateWithSlippage };
+}
+
+function mockLendingActor(methods: Partial<LiquidationActorCalls>) {
+  const actor = mockDeep<ActorSubclass<LiquidationActorCalls>>(methods);
+  vi.spyOn(Actor, "createActor").mockReturnValue(actor);
+
+  return actor;
 }
 
 function createCanisterLiquidationScanResult(): CanisterLiquidationScanResult {
@@ -824,25 +917,25 @@ function createCanisterLiquidationScanResult(): CanisterLiquidationScanResult {
     users: [
       {
         account: Principal.fromText(VALID_IC_PRINCIPAL),
-        health_factor: 900n,
-        total_debt: 10n ** 27n,
-        weighted_liquidation_threshold: 7_500n,
+        health_factor: HEALTH_FACTOR,
+        total_debt: TOTAL_DEBT_USD_RAY,
+        weighted_liquidation_threshold: LIQUIDATION_THRESHOLD_BPS,
         positions: [
           {
             pool_id: Principal.fromText(USDT_POOL_ID),
             asset: { USDT: null },
             asset_type: { CkAsset: Principal.fromText(USDT_POOL_ID) },
             account: Principal.fromText(VALID_IC_PRINCIPAL),
-            collateral_amount: 2_000_000n,
-            debt_amount: 1_000_000n,
-            liquidation_bonus: 500n,
-            liquidation_threshold: 7_500n,
-            protocol_fee: 100n,
+            collateral_amount: COLLATERAL_AMOUNT_BASE_UNITS,
+            debt_amount: DEBT_AMOUNT,
+            liquidation_bonus: LIQUIDATION_BONUS_BPS,
+            liquidation_threshold: LIQUIDATION_THRESHOLD_BPS,
+            protocol_fee: PROTOCOL_FEE_BPS,
           },
         ],
       },
     ],
-    scanned: 25n,
+    scanned: SCANNED_ACCOUNTS,
     next_cursor: [Principal.fromText(BTC_POOL_ID)],
   };
 }
@@ -852,10 +945,10 @@ function createCanisterLiquidationResult(
 ): CanisterLiquidationResult {
   return {
     id: LIQUIDATION_ID,
-    timestamp: 1_786_028_400n,
+    timestamp: LIQUIDATION_TIMESTAMP_SECONDS,
     amounts: {
-      debt_repaid: 900_000n,
-      collateral_received: 75_000n,
+      debt_repaid: REPAID_DEBT_AMOUNT_BASE_UNITS,
+      collateral_received: RECEIVED_COLLATERAL_AMOUNT_BASE_UNITS,
     },
     debt_asset: { CkAsset: Principal.fromText(USDT_POOL_ID) },
     collateral_asset: { Unknown: null },

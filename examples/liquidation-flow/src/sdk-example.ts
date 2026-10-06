@@ -6,6 +6,7 @@ import type {
 } from "@liquidium/client";
 
 const SCAN_LIMIT = 100n;
+
 const MAX_RESULTS = 20n;
 
 interface FindLiquidationCandidateParams {
@@ -73,7 +74,7 @@ export async function findLiquidationCandidate({
   throw new Error(`No liquidation candidate found for ${debtAsset}`);
 }
 
-export async function executeLiquidation({
+export function executeLiquidation({
   client,
   borrowerProfileId,
   debtPoolId,
@@ -82,7 +83,7 @@ export async function executeLiquidation({
   receiverPrincipal,
   minCollateralAmount,
 }: ExecuteLiquidationParams): Promise<LiquidationResult> {
-  return await client.liquidations.liquidate({
+  return client.liquidations.liquidate({
     borrowerProfileId,
     debtPoolId,
     collateralPoolId,

@@ -7,22 +7,29 @@ import { createClient } from "./client";
 import { executeLiquidation, findLiquidationCandidate } from "./sdk-example";
 
 const ICP_HOST = "https://icp-api.io";
+
 const MINIMUM_DEBT_AMOUNT = 1n;
+
 const MINIMUM_COLLATERAL_AMOUNT = 0n;
+
 const SUPPORTED_DEBT_ASSETS = new Set<string>(Object.values(Asset));
 
 async function main(): Promise<void> {
   const identityPemPath = getRequiredEnvironmentVariable(
     "LIQUIDATOR_IDENTITY_PEM_PATH"
   );
+
   const lendingCanisterId = parsePrincipalEnvironmentVariable(
     "LIQUIDIUM_LENDING_CANISTER_ID"
   );
+
   const debtAsset = getRequiredEnvironmentVariable("LIQUIDATION_DEBT_ASSET");
+
   const debtAmount = parseBigIntEnvironmentVariable(
     "LIQUIDATION_DEBT_AMOUNT_BASE_UNITS",
     MINIMUM_DEBT_AMOUNT
   );
+
   const minCollateralAmount = parseBigIntEnvironmentVariable(
     "LIQUIDATION_MIN_COLLATERAL_AMOUNT_BASE_UNITS",
     MINIMUM_COLLATERAL_AMOUNT
@@ -37,10 +44,12 @@ async function main(): Promise<void> {
   const identityPem = await readFile(identityPemPath, "utf8");
   const identity = Secp256k1KeyIdentity.fromPem(identityPem);
   const agent = await HttpAgent.create({ host: ICP_HOST, identity });
+
   const client = createClient({
     agent,
     lendingCanisterId: lendingCanisterId.toText(),
   });
+
   const { candidate, debtPosition, collateralPosition } =
     await findLiquidationCandidate({ client, debtAsset, debtAmount });
 

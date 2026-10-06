@@ -37,18 +37,21 @@ export class LiquidationsModule {
         "Liquidation scan limit must be greater than 0"
       );
     }
+
     if (request.scanLimit > MAX_NAT64_VALUE) {
       throw new LiquidiumError(
         LiquidiumErrorCode.VALIDATION_ERROR,
         `Liquidation scan limit must not exceed ${MAX_NAT64_VALUE}`
       );
     }
+
     if (request.maxResults <= 0n) {
       throw new LiquidiumError(
         LiquidiumErrorCode.VALIDATION_ERROR,
         "Liquidation maximum results must be greater than 0"
       );
     }
+
     if (request.maxResults > MAX_NAT64_VALUE) {
       throw new LiquidiumError(
         LiquidiumErrorCode.VALIDATION_ERROR,
@@ -89,18 +92,21 @@ export class LiquidationsModule {
     request: ExecuteLiquidationRequest
   ): Promise<LiquidationResult> {
     const { debtAmount, minCollateralAmount, buyBadDebt = false } = request;
+
     if (typeof debtAmount !== "bigint" || debtAmount <= 0n) {
       throw new LiquidiumError(
         LiquidiumErrorCode.VALIDATION_ERROR,
         "Liquidation debt amount must be greater than 0"
       );
     }
+
     if (typeof minCollateralAmount !== "bigint" || minCollateralAmount < 0n) {
       throw new LiquidiumError(
         LiquidiumErrorCode.VALIDATION_ERROR,
         "Liquidation minimum collateral amount must be at least 0"
       );
     }
+
     if (typeof buyBadDebt !== "boolean") {
       throw new LiquidiumError(
         LiquidiumErrorCode.VALIDATION_ERROR,
@@ -112,11 +118,14 @@ export class LiquidationsModule {
       request.borrowerProfileId,
       "borrowerProfileId"
     );
+
     const debtPoolId = parsePrincipal(request.debtPoolId, "debtPoolId");
+
     const collateralPoolId = parsePrincipal(
       request.collateralPoolId,
       "collateralPoolId"
     );
+
     const receiverAddress = parsePrincipal(
       request.receiverPrincipal,
       "receiverPrincipal"
@@ -129,7 +138,10 @@ export class LiquidationsModule {
         debtAmount,
       });
     } catch (cause) {
-      if (cause instanceof LiquidiumError) throw cause;
+      if (cause instanceof LiquidiumError) {
+        throw cause;
+      }
+
       throw new LiquidiumError(
         LiquidiumErrorCode.CANISTER_REJECTED,
         "Could not prepare liquidation allowance; liquidation was not submitted",
@@ -203,13 +215,13 @@ async function callLendingCanister<T>(
   }
 }
 
-function parsePrincipal(value: string, field: string): Principal {
+function parsePrincipal(principalText: string, fieldName: string): Principal {
   try {
-    return Principal.fromText(value);
+    return Principal.fromText(principalText);
   } catch (error) {
     throw new LiquidiumError(
       LiquidiumErrorCode.VALIDATION_ERROR,
-      `${field} must be a valid principal`,
+      `${fieldName} must be a valid principal`,
       error
     );
   }

@@ -3,10 +3,46 @@ import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import { runInNewContext } from "node:vm";
 import {
-  parseAmount,
-  parseAssetAmount,
+  parseAssetAmountToBaseUnits,
+  parseBaseUnitAmount,
   requireLocalRequest,
 } from "./web-safety.js";
+
+interface BrowserEvent {
+  preventDefault(): void;
+}
+
+type BrowserEventHandler = (event?: BrowserEvent) => void | Promise<void>;
+
+interface BrowserElement {
+  value: string;
+  dataset: { state?: string; error?: string };
+  textContent: string;
+  disabled: boolean;
+  open: boolean;
+  addEventListener(eventName: string, handler: BrowserEventHandler): void;
+  replaceChildren(): void;
+  scrollIntoView(): void;
+  showModal(): void;
+  close(): void;
+}
+
+interface SubmittedRequest {
+  path: string;
+  body: string;
+  headers: { "x-csrf-token": string };
+}
+
+interface BrowserRequestOptions {
+  method?: string;
+  body: string;
+  headers: SubmittedRequest["headers"];
+}
+
+interface BrowserTransfer {
+  state: string;
+  txid?: string;
+}
 
 test("confirms liquidation only after the lifecycle and both transfers succeed", () => {
   // given
@@ -14,6 +50,7 @@ test("confirms liquidation only after the lifecycle and both transfers succeed",
     new URL("../../ui/app.js", import.meta.url),
     "utf8"
   );
+
   const cases = [
     {
       status: "success",
@@ -76,9 +113,8 @@ test("confirms liquidation only after the lifecycle and both transfers succeed",
       expected: "failed",
     },
   ];
-  const document = {
-    getElementById: () => ({ value: "", dataset: {}, addEventListener() {} }),
-  };
+
+  const document = createBrowserDocument();
 
   // when
   const results = runInNewContext(
@@ -101,40 +137,12 @@ test("reviews without spending and sends one liquidation request only after conf
     new URL("../../ui/app.js", import.meta.url),
     "utf8"
   );
-  const handlers = new Map<string, (event?: unknown) => unknown>();
-  const elements = new Map<string, ReturnType<typeof createElement>>();
-  const document = {
-    getElementById(id: string) {
-      let element = elements.get(id);
-      if (!element) {
-        element = createElement(id);
-        elements.set(id, element);
-      }
-      return element;
-    },
-  };
-  function createElement(id: string) {
-    return {
-      value: "",
-      dataset: {},
-      textContent: "",
-      disabled: true,
-      open: false,
-      addEventListener(event: string, handler: (event?: unknown) => unknown) {
-        handlers.set(`${id}:${event}`, handler);
-      },
-      replaceChildren() {},
-      scrollIntoView() {},
-      showModal() {
-        this.open = true;
-      },
-      close() {
-        this.open = false;
-      },
-    };
-  }
-  const debtAmount = "1";
-  const minCollateralAmount = "0.00001";
+
+  const document = createBrowserDocument();
+
+  const debtAmountText = "1";
+  const minCollateralAmountText = "0.00001";
+
   const liquidation = {
     id: "42",
     timestamp: "1791201050",
@@ -143,11 +151,16 @@ test("reviews without spending and sends one liquidation request only after conf
     collateralTx: { state: "success" },
     changeTx: { state: "success" },
   };
-  const state = {
+
+  let liquidationResult: typeof liquidation | undefined;
+
+  const snapshot = {
     csrfToken: "test-token",
     eligible: true,
     submitted: false,
-    result: undefined as typeof liquidation | undefined,
+    get result() {
+      return liquidationResult;
+    },
     debtAsset: "USDT",
     collateralAsset: "BTC",
     borrowerProfileId: "test-borrower",
@@ -162,60 +175,65 @@ test("reviews without spending and sends one liquidation request only after conf
     maximumDebtAmount: "1000000",
     defaultMinCollateralAmount: "0",
   };
-  const posts: Array<{
-    path: string;
-    body: string;
-    headers: Record<string, string>;
-  }> = [];
-  const fetch = async (
-    path: string,
-    options: { method?: string; body: string; headers: Record<string, string> }
-  ) => {
+
+  const submittedRequests: SubmittedRequest[] = [];
+
+  const fetch = async (path: string, options: BrowserRequestOptions) => {
     if (options.method === "POST") {
-      posts.push({ path, body: options.body, headers: options.headers });
-      state.submitted = true;
-      state.result = liquidation;
+      submittedRequests.push({
+        path,
+        body: options.body,
+        headers: options.headers,
+      });
+      snapshot.submitted = true;
+      liquidationResult = liquidation;
+
       return { ok: true, json: async () => liquidation };
     }
-    return { ok: true, json: async () => state };
+
+    return { ok: true, json: async () => snapshot };
   };
+
   await runInNewContext(`${browserCode}\nrefresh()`, {
     document,
     fetch,
     clearTimeout,
   });
-  document.getElementById("debt").value = debtAmount;
-  document.getElementById("minimum").value = minCollateralAmount;
-  const submit = handlers.get("action-form:submit");
-  const confirm = handlers.get("confirm:click");
-  const cancel = handlers.get("cancel:click");
+  document.getElementById("debt").value = debtAmountText;
+  document.getElementById("minimum").value = minCollateralAmountText;
+  const submit = document.eventHandlers.get("action-form:submit");
+  const confirm = document.eventHandlers.get("confirm:click");
+  const cancel = document.eventHandlers.get("cancel:click");
   assert.ok(submit && confirm && cancel);
 
   // when
   submit({ preventDefault() {} });
-  const reviewEnabled = !document.getElementById("execute").disabled;
-  const reviewOpened = document.getElementById("confirmation").open;
-  const postsAfterReview = posts.length;
+  const isReviewEnabled = !document.getElementById("execute").disabled;
+  const isReviewOpen = document.getElementById("confirmation").open;
+  const requestsAfterReview = submittedRequests.length;
   cancel();
   await confirm();
-  const postsAfterCancel = posts.length;
+  const requestsAfterCancel = submittedRequests.length;
   submit({ preventDefault() {} });
-  const pending = confirm();
+  const pendingSubmission = confirm();
   await confirm();
-  await pending;
+  await pendingSubmission;
 
   // then
-  assert.equal(reviewEnabled, true);
-  assert.equal(reviewOpened, true);
-  assert.equal(postsAfterReview, 0);
-  assert.equal(postsAfterCancel, 0);
-  assert.equal(posts.length, 1);
-  assert.equal(posts[0]?.path, "/api/liquidate");
-  assert.deepEqual(JSON.parse(posts[0]?.body ?? ""), {
-    debtAmount,
-    minCollateralAmount,
+  assert.equal(isReviewEnabled, true);
+  assert.equal(isReviewOpen, true);
+  assert.equal(requestsAfterReview, 0);
+  assert.equal(requestsAfterCancel, 0);
+  assert.equal(submittedRequests.length, 1);
+  assert.equal(submittedRequests[0]?.path, "/api/liquidate");
+  assert.deepEqual(JSON.parse(submittedRequests[0]?.body ?? ""), {
+    debtAmount: debtAmountText,
+    minCollateralAmount: minCollateralAmountText,
   });
-  assert.equal(posts[0]?.headers["x-csrf-token"], state.csrfToken);
+  assert.equal(
+    submittedRequests[0]?.headers["x-csrf-token"],
+    snapshot.csrfToken
+  );
   assert.equal(document.getElementById("execute").disabled, true);
   assert.equal(
     document.getElementById("result-badge").textContent,
@@ -229,35 +247,13 @@ test("keeps checking a pending refund after liquidation fails and stops when it 
     new URL("../../ui/app.js", import.meta.url),
     "utf8"
   );
-  const nodes = new Map<
-    string,
-    {
-      value: string;
-      dataset: Record<string, string>;
-      textContent: string;
-      disabled: boolean;
-      addEventListener(): void;
-      replaceChildren(): void;
-    }
-  >();
-  const document = {
-    getElementById(id: string) {
-      let node = nodes.get(id);
-      if (!node) {
-        node = {
-          value: "",
-          dataset: {},
-          textContent: "",
-          disabled: true,
-          addEventListener() {},
-          replaceChildren() {},
-        };
-        nodes.set(id, node);
-      }
-      return node;
-    },
-  };
+
+  const document = createBrowserDocument();
+
   const refundTransactionId = "refund-block";
+
+  const changeTransfer: BrowserTransfer = { state: "pending" };
+
   const result = {
     id: "42",
     timestamp: "1791201050",
@@ -267,8 +263,9 @@ test("keeps checking a pending refund after liquidation fails and stops when it 
       error: "Minimum collateral not met",
     },
     collateralTx: { state: "success" },
-    changeTx: { state: "pending", txid: undefined as string | undefined },
+    changeTx: changeTransfer,
   };
+
   const snapshot = {
     submitted: true,
     result,
@@ -285,10 +282,12 @@ test("keeps checking a pending refund after liquidation fails and stops when it 
     maximumDebtAmount: "1000000",
     defaultMinCollateralAmount: "0",
   };
+
   let nextRefresh: (() => Promise<void>) | undefined;
   let refreshDelayMilliseconds: number | undefined;
-  let failQuery = false;
+  let hasQueryFailure = false;
   const requests: string[] = [];
+
   const context = {
     document,
     clearTimeout: () => {
@@ -300,10 +299,11 @@ test("keeps checking a pending refund after liquidation fails and stops when it 
     },
     fetch: async (path: string, options: { method?: string }) => {
       requests.push(`${options.method ?? "GET"} ${path}`);
+
       return {
-        ok: !failQuery,
+        ok: !hasQueryFailure,
         json: async () =>
-          failQuery ? { error: "Status query failed" } : snapshot,
+          hasQueryFailure ? { error: "Status query failed" } : snapshot,
       };
     },
   };
@@ -314,12 +314,12 @@ test("keeps checking a pending refund after liquidation fails and stops when it 
   const pendingBadge = document.getElementById("result-badge").textContent;
   const pendingRefresh = nextRefresh;
   assert.ok(pendingRefresh);
-  failQuery = true;
+  hasQueryFailure = true;
   await pendingRefresh();
   const canRefreshAfterError = !document.getElementById("track").disabled;
   const canSubmitAfterError = !document.getElementById("execute").disabled;
-  const stoppedAfterError = nextRefresh === undefined;
-  failQuery = false;
+  const hasStoppedAfterError = nextRefresh === undefined;
+  hasQueryFailure = false;
   await pendingRefresh();
   const resumedRefresh = nextRefresh;
   assert.ok(resumedRefresh);
@@ -333,7 +333,7 @@ test("keeps checking a pending refund after liquidation fails and stops when it 
   assert.equal(pendingBadge, "Refund pending");
   assert.equal(canRefreshAfterError, true);
   assert.equal(canSubmitAfterError, false);
-  assert.equal(stoppedAfterError, true);
+  assert.equal(hasStoppedAfterError, true);
   assert.equal(nextRefresh, undefined);
   assert.equal(
     document.getElementById("result-badge").textContent,
@@ -349,6 +349,46 @@ test("keeps checking a pending refund after liquidation fails and stops when it 
     "Not sent — liquidation failed"
   );
   assert.ok(requests.every((request) => request === "GET /api/state"));
+});
+
+test("formats base-unit amounts without losing precision", () => {
+  // given
+  const browserCode = readFileSync(
+    new URL("../../ui/app.js", import.meta.url),
+    "utf8"
+  );
+
+  const cases = [
+    { amountBaseUnits: "0", decimals: "6", expected: "0" },
+    { amountBaseUnits: "1", decimals: "8", expected: "0.00000001" },
+    { amountBaseUnits: "1000000", decimals: "6", expected: "1" },
+    {
+      amountBaseUnits: "100000000000000001",
+      decimals: "18",
+      expected: "0.100000000000000001",
+    },
+    { amountBaseUnits: null, decimals: "8", expected: "—" },
+  ];
+
+  const document = createBrowserDocument();
+
+  // when
+  const formattedAmountsJson = runInNewContext(
+    `${browserCode}\nJSON.stringify(cases.map(testCase => formatAssetAmount(testCase.amountBaseUnits, testCase.decimals)))`,
+    {
+      document,
+      cases,
+      clearTimeout,
+      fetch: () => new Promise(() => {}),
+    }
+  );
+
+  // then
+  const EXPECTED_AMOUNTS_JSON = JSON.stringify(
+    cases.map(({ expected }) => expected)
+  );
+
+  assert.equal(formattedAmountsJson, EXPECTED_AMOUNTS_JSON);
 });
 
 test("converts asset amounts exactly at supported scales", () => {
@@ -372,13 +412,13 @@ test("converts asset amounts exactly at supported scales", () => {
   ];
 
   // when
-  const amounts = cases.map(({ input, decimals, asset }) =>
-    parseAssetAmount(input, decimals, asset)
+  const amountsBaseUnits = cases.map(({ input, decimals, asset }) =>
+    parseAssetAmountToBaseUnits(input, decimals, asset)
   );
 
   // then
   assert.deepEqual(
-    amounts,
+    amountsBaseUnits,
     cases.map(({ expected }) => expected)
   );
 });
@@ -386,7 +426,8 @@ test("converts asset amounts exactly at supported scales", () => {
 test("rejects excessive precision, zero, invalid syntax, and amounts above the spending cap", () => {
   // given
   const decimals = 6n;
-  const maximum = 1_000_000n;
+  const spendingCapBaseUnits = 1_000_000n;
+
   const invalidAmounts = [
     "0",
     "0.000000",
@@ -403,34 +444,48 @@ test("rejects excessive precision, zero, invalid syntax, and amounts above the s
   ];
 
   // when
-  const boundaryAmount = parseAssetAmount(
+  const boundaryAmountBaseUnits = parseAssetAmountToBaseUnits(
     "1.000000",
     decimals,
     "USDT",
-    maximum
+    spendingCapBaseUnits
   );
 
   // then
-  assert.equal(boundaryAmount, maximum);
+  assert.equal(boundaryAmountBaseUnits, spendingCapBaseUnits);
+
   for (const amount of invalidAmounts) {
-    assert.throws(() => parseAssetAmount(amount, decimals, "USDT", maximum));
+    assert.throws(() =>
+      parseAssetAmountToBaseUnits(
+        amount,
+        decimals,
+        "USDT",
+        spendingCapBaseUnits
+      )
+    );
   }
-  assert.throws(() => parseAssetAmount("1", -1n, "TOKEN"));
-  assert.throws(() => parseAssetAmount("1", 19n, "TOKEN"));
+
+  assert.throws(() => parseAssetAmountToBaseUnits("1", -1n, "TOKEN"));
+  assert.throws(() => parseAssetAmountToBaseUnits("1", 19n, "TOKEN"));
 });
 
 test("rejects invalid amounts and accepts the configured boundary", () => {
   // given
-  const maximum = 1_000_000n;
+  const spendingCapBaseUnits = 1_000_000n;
   const invalidAmounts = ["0", "-1", "1.5", "1000001", "1e6", null];
 
   // when
-  const amount = parseAmount(maximum.toString(), 1n, maximum);
+  const amountBaseUnits = parseBaseUnitAmount(
+    spendingCapBaseUnits.toString(),
+    1n,
+    spendingCapBaseUnits
+  );
 
   // then
-  assert.equal(amount, maximum);
+  assert.equal(amountBaseUnits, spendingCapBaseUnits);
+
   for (const value of invalidAmounts) {
-    assert.throws(() => parseAmount(value, 1n, maximum));
+    assert.throws(() => parseBaseUnitAmount(value, 1n, spendingCapBaseUnits));
   }
 });
 
@@ -450,3 +505,42 @@ test("rejects foreign origins and DNS rebinding hosts", () => {
     requireLocalRequest(host, "https://attacker.example", origin)
   );
 });
+
+function createBrowserDocument() {
+  const elements = new Map<string, BrowserElement>();
+  const eventHandlers = new Map<string, BrowserEventHandler>();
+
+  return {
+    eventHandlers,
+    getElementById(id: string): BrowserElement {
+      const existingElement = elements.get(id);
+
+      if (existingElement) {
+        return existingElement;
+      }
+
+      const element: BrowserElement = {
+        value: "",
+        dataset: {},
+        textContent: "",
+        disabled: true,
+        open: false,
+        addEventListener(eventName, handler) {
+          eventHandlers.set(`${id}:${eventName}`, handler);
+        },
+        replaceChildren() {},
+        scrollIntoView() {},
+        showModal() {
+          this.open = true;
+        },
+        close() {
+          this.open = false;
+        },
+      };
+
+      elements.set(id, element);
+
+      return element;
+    },
+  };
+}
