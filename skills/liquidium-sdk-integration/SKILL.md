@@ -357,9 +357,8 @@ Each candidate contains its `borrowerProfileId` and pool positions. Select a
 position with debt and a position with collateral before calling `liquidate`.
 Scan results can become stale, so execution always revalidates the position.
 
-`liquidate(...)` executes through the configured IC identity or agent. Before
-the call, a lending-canister administrator must register that principal with
-`add_liquidator`. Verify membership with `get_liquidators` before funding it.
+`liquidate(...)` executes through the configured IC identity or agent.
+Liquidator registration is not required.
 The SDK reuses a sufficient unexpired allowance or approves
 `debtAmount + ledgerTransferFee` for five minutes before submission. The
 principal's default ICRC account must cover the debt offer and ledger fees,

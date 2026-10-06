@@ -102,7 +102,7 @@ async function refresh() {
     getElement("lending").textContent = snapshot.lendingCanisterId;
     getElement("allowlisted").textContent = snapshot.allowlisted
       ? "Registered"
-      : "Not listed. Some test builds require registration.";
+      : "Not listed. Registration is not required.";
     getElement("eligibility").textContent = snapshot.eligible
       ? "Eligible"
       : "Not liquidatable";

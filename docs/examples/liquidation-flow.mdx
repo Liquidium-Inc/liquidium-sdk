@@ -18,7 +18,7 @@ umask 077
 dfx identity export liquidation-example > /absolute/private/path/liquidator.pem
 ```
 
-Before funding the identity, give its principal to a lending-canister administrator. The administrator must register it with `add_liquidator`; verify that `get_liquidators` includes it before you continue.
+Liquidator registration is not required.
 
 Copy `examples/liquidation-flow/.env.example` to `.env`, then configure:
 
@@ -56,7 +56,7 @@ Open `http://127.0.0.1:4318`. Do not expose this server through a tunnel or depl
 
 Set `LIQUIDATION_BORROWER_PROFILE_ID` to the one borrower allowed by this example and `LIQUIDATION_COLLATERAL_ASSET` to the asset you want to receive. The UI uses `LIQUIDATION_DEBT_ASSET` for the debt asset. These restrictions are enforced by the local server, not by the SDK or canister. The CLI `start` command still selects the first matching scan candidate; these UI restrictions do not apply to that command.
 
-The screen shows the locked borrower's positions, health factor, debt ledger, liquidator principal, balance, and liquidator-list membership. List membership is informational: normal builds allow unlisted callers; builds with `dev-hooks` without `e2e-testing` reject them.
+The screen shows the locked borrower's positions, health factor, debt ledger, liquidator principal, balance, and liquidator-list membership. List membership is informational; it does not determine whether the borrower is eligible for liquidation.
 
 Liquidator wallet balances shows the PEM principal's default-account balances on all supported registered pool ledgers. Amounts are displayed in normal asset units, with ledger IDs below each asset. Refresh position and Refresh transfers also reload these balances. Failed balance queries show Unavailable, not zero. These balances do not include subaccounts, Liquidium deposits, or assets on ledgers that are not registered pools.
 
