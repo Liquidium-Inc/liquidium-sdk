@@ -57,7 +57,7 @@ export interface LiquidationScanResult {
   nextCursor?: string;
 }
 
-/** Fields required to execute a slippage-protected liquidation. */
+/** Fields required to execute a liquidation. */
 export interface ExecuteLiquidationRequest {
   /** Liquidium profile principal that owns the position. */
   borrowerProfileId: string;
@@ -69,9 +69,17 @@ export interface ExecuteLiquidationRequest {
   debtAmount: bigint;
   /** Principal that receives seized collateral. */
   receiverPrincipal: string;
-  /** Minimum gross collateral before transfer fees. Zero disables this guard. */
+  /**
+   * Minimum gross collateral in collateral-asset base units, before transfer fees.
+   * Required, but the canister enforces it only on bad-debt and hybrid paths.
+   * Normal collateral-backed liquidations ignore it and can fill smaller amounts,
+   * even with `buyBadDebt: true`. Zero disables the guard where it applies.
+   */
   minCollateralAmount: bigint;
-  /** Whether the liquidator accepts bad debt. Defaults to `false`. */
+  /**
+   * Allow repayment beyond what collateral can cover, including zero collateral.
+   * Defaults to `false`. Does not force a bad-debt or hybrid path.
+   */
   buyBadDebt?: boolean;
 }
 

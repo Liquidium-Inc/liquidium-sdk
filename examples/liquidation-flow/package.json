@@ -4,6 +4,8 @@
   "version": "0.0.1",
   "type": "module",
   "scripts": {
+    "ui": "pnpm run build && node --env-file=.env dist/server.js",
+    "test": "pnpm run build && node --test dist/_internal/web-safety.test.js",
     "build": "pnpm --filter @liquidium/client build && tsc",
     "start": "node --env-file=.env dist/index.js",
     "typecheck": "tsc --noEmit"

@@ -12,10 +12,9 @@ Use `client.liquidations.scan(...)` to find undercollateralized profiles, then u
 
 - Configure `LiquidiumClient` with the IC identity or agent that will act as the liquidator.
 - Before funding or approving that identity, ask a lending-canister administrator to register its principal with `add_liquidator`. Verify membership with `get_liquidators`.
-- From that principal's default ICRC account, approve the lending canister to spend at least `debtAmount + ledgerTransferFee`.
-- Keep enough debt asset in the account to cover `debtAmount` and ledger fees.
+- Keep enough debt asset in that principal's default ICRC account to cover `debtAmount` and ledger fees. Subaccounts are not used by this flow.
 
-The SDK does not create the allowance, poll liquidation status, or execute scan results automatically.
+The SDK handles allowance checks and approval inside `liquidate(...)`. It does not poll liquidation status or execute scan results automatically.
 
 Run the [liquidation flow example](../examples/liquidation-flow.mdx) for candidate discovery, ICRC-2 approval, and signed liquidation submission.
 
@@ -41,11 +40,36 @@ const liquidation = await client.liquidations.liquidate({
   collateralPoolId,
   debtAmount,
   receiverPrincipal,
-  minCollateralAmount,
+  minCollateralAmount: 0n,
+  buyBadDebt: false,
 });
 ```
 
-`minCollateralAmount` is required. It is the minimum gross collateral before transfer fees. Set it to `0n` only when you want to disable slippage protection. `buyBadDebt` is optional and defaults to `false`.
+### Minimum collateral and partial fills
+
+`minCollateralAmount` is required and must be a non-negative `bigint` in collateral-asset base units. The SDK forwards it to the canister. **Normal collateral-backed liquidations do not enforce this minimum.**
+
+| Execution path | Repayment behavior | Minimum collateral check |
+| --- | --- | --- |
+| Normal collateral-backed liquidation | Limits repayment to what available collateral and pool liquidity can cover | Ignores `minCollateralAmount`; permits smaller partial fills |
+| Hybrid liquidation (collateral plus bad debt) | Can repay more debt than the collateral can cover | Checks total gross collateral before transfer fees |
+| Pure bad-debt liquidation (no collateral) | Repays debt without receiving collateral | Requires `minCollateralAmount: 0n` |
+
+`buyBadDebt` defaults to `false`. Set it to `true` to permit hybrid or pure bad-debt liquidation when the canister's conditions allow it. This flag does not force either path: execution can still take the normal path and ignore the minimum.
+
+Normal liquidation uses current oracle prices, the liquidation bonus, protocol fees, and rounding to calculate the fill. A smaller fill consumes less of your debt offer; unused funds return as change, subject to transfer fees. A large `minCollateralAmount` does not force rejection or a refund on this path.
+
+On bad-debt and hybrid paths, `minCollateralAmount` is an absolute amount, not a minimum exchange rate or a profitability guarantee. `0n` disables the guard where it applies and permits receiving zero collateral. A positive value rejects those paths if gross collateral falls below the minimum, including when another liquidation has consumed collateral. The net amount received can be lower because of the collateral transfer fee.
+
+### Allowance and fees
+
+Before execution, the SDK reads the debt pool's registered ledger, its fee, your balance, and your allowance for the configured lending canister. It reuses a sufficient, unexpired allowance. Otherwise, it approves exactly `debtAmount + ledgerTransferFee` for five minutes with the same signing agent, then submits the liquidation. You do not need to create a ledger client or approve separately. Existing larger or non-expiring allowances are reused without replacement.
+
+Approval and liquidation are separate signed operations. A wallet can request a signature for each. When approval is needed, fund `debtAmount + 2 * ledgerTransferFee`: one fee for approval and one for collection. With a reusable allowance, fund `debtAmount + ledgerTransferFee`. Approval fees are spent even if the later liquidation fails. The collateral transfer fee is deducted from the collateral received.
+
+Insufficient balance throws `INSUFFICIENT_FUNDS` before approval or submission. An approval rejection or uncertain approval response throws `LIQUIDATION_APPROVAL_FAILED`, with the original ledger error in `cause`; liquidation is not submitted. Check the allowance before retrying an uncertain approval. The SDK does not automatically retry approval or liquidation. Concurrent spending or a fee change can still make execution fail after these checks.
+
+The protocol collects the debt asset before core liquidation checks, including the minimum on bad-debt and hybrid paths. A failed core liquidation can therefore require a separate refund and incur refund transfer fees; approval does not provide a collateral quote.
 
 Seized collateral goes to `receiverPrincipal`. Change and refunds go to the calling principal.
 

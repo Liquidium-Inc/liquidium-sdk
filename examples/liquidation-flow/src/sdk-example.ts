@@ -1,6 +1,3 @@
-import { IcrcLedgerCanister } from "@icp-sdk/canisters/ledger/icrc";
-import type { HttpAgent } from "@icp-sdk/core/agent";
-import { Principal } from "@icp-sdk/core/principal";
 import type {
   LiquidationCandidate,
   LiquidationCandidatePosition,
@@ -10,8 +7,6 @@ import type {
 
 const SCAN_LIMIT = 100n;
 const MAX_RESULTS = 20n;
-const NANOSECONDS_PER_MILLISECOND = 1_000_000n;
-const APPROVAL_DURATION_5_MINUTES_NS = 5n * 60n * 1_000_000_000n;
 
 interface FindLiquidationCandidateParams {
   client: LiquidiumClient;
@@ -23,19 +18,6 @@ interface SelectedLiquidationCandidate {
   candidate: LiquidationCandidate;
   debtPosition: LiquidationCandidatePosition;
   collateralPosition: LiquidationCandidatePosition;
-}
-
-interface ApproveLiquidationAllowanceParams {
-  agent: HttpAgent;
-  debtLedgerCanisterId: string;
-  lendingCanisterId: Principal;
-  debtAmount: bigint;
-}
-
-interface LiquidationAllowanceApproval {
-  debtLedgerFee: bigint;
-  approvedAllowanceAmount: bigint;
-  approvalBlockIndex: bigint;
 }
 
 interface ExecuteLiquidationParams {
@@ -89,30 +71,6 @@ export async function findLiquidationCandidate({
   } while (cursor !== undefined);
 
   throw new Error(`No liquidation candidate found for ${debtAsset}`);
-}
-
-export async function approveLiquidationAllowance({
-  agent,
-  debtLedgerCanisterId,
-  lendingCanisterId,
-  debtAmount,
-}: ApproveLiquidationAllowanceParams): Promise<LiquidationAllowanceApproval> {
-  const debtLedger = IcrcLedgerCanister.create({
-    agent,
-    canisterId: Principal.fromText(debtLedgerCanisterId),
-  });
-  const debtLedgerFee = await debtLedger.transactionFee({});
-  const approvedAllowanceAmount = debtAmount + debtLedgerFee;
-  const approvalExpiresAtNanoseconds =
-    BigInt(Date.now()) * NANOSECONDS_PER_MILLISECOND +
-    APPROVAL_DURATION_5_MINUTES_NS;
-  const approvalBlockIndex = await debtLedger.approve({
-    amount: approvedAllowanceAmount,
-    expires_at: approvalExpiresAtNanoseconds,
-    spender: { owner: lendingCanisterId, subaccount: [] },
-  });
-
-  return { debtLedgerFee, approvedAllowanceAmount, approvalBlockIndex };
 }
 
 export async function executeLiquidation({

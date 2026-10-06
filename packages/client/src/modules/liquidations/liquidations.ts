@@ -6,6 +6,7 @@ import {
 } from "../../core/canisters/lending/error-mappers";
 import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
 import type { CanisterContext } from "../../core/transports/canister-context";
+import { ensureLiquidationAllowance } from "./_internal/allowance";
 import {
   mapCanisterLiquidationResult,
   mapCanisterLiquidationScanResult,
@@ -19,7 +20,7 @@ import type {
 
 const MAX_NAT64_VALUE = 2n ** 64n - 1n;
 
-/** Liquidation candidate scanning, slippage-protected execution, and status lookup. */
+/** Liquidation candidate scanning, execution, and status lookup. */
 export class LiquidationsModule {
   constructor(private readonly canisterContext: CanisterContext) {}
 
@@ -70,11 +71,16 @@ export class LiquidationsModule {
   }
 
   /**
-   * Executes a liquidation with minimum gross collateral slippage protection.
+   * Executes a liquidation with automatic debt-ledger allowance handling.
+   *
+   * The canister enforces `minCollateralAmount` only on bad-debt and hybrid
+   * paths. Normal collateral-backed liquidations ignore it and allow partial
+   * fills. Setting `buyBadDebt: true` permits, but does not force, a bad-debt path.
    *
    * The configured IC identity or agent is the liquidator. The lending
-   * canister must allow the caller, and the caller must pre-approve the lending
-   * canister to spend the debt amount plus the ledger transfer fee.
+   * canister must allow the caller. A sufficient unexpired debt-ledger allowance
+   * is reused; otherwise the SDK approves the debt amount plus the transfer fee
+   * for five minutes before submission. Approval incurs a separate ledger fee.
    *
    * @param request - Borrower, pools, debt amount, collateral receiver, and minimum collateral.
    * @returns The current liquidation result. Failed lifecycle states remain results.
@@ -82,16 +88,23 @@ export class LiquidationsModule {
   async liquidate(
     request: ExecuteLiquidationRequest
   ): Promise<LiquidationResult> {
-    if (request.debtAmount <= 0n) {
+    const { debtAmount, minCollateralAmount, buyBadDebt = false } = request;
+    if (typeof debtAmount !== "bigint" || debtAmount <= 0n) {
       throw new LiquidiumError(
         LiquidiumErrorCode.VALIDATION_ERROR,
         "Liquidation debt amount must be greater than 0"
       );
     }
-    if (request.minCollateralAmount < 0n) {
+    if (typeof minCollateralAmount !== "bigint" || minCollateralAmount < 0n) {
       throw new LiquidiumError(
         LiquidiumErrorCode.VALIDATION_ERROR,
         "Liquidation minimum collateral amount must be at least 0"
+      );
+    }
+    if (typeof buyBadDebt !== "boolean") {
+      throw new LiquidiumError(
+        LiquidiumErrorCode.VALIDATION_ERROR,
+        "buyBadDebt must be a boolean"
       );
     }
 
@@ -109,6 +122,21 @@ export class LiquidationsModule {
       "receiverPrincipal"
     );
 
+    try {
+      await ensureLiquidationAllowance({
+        canisterContext: this.canisterContext,
+        debtPoolId,
+        debtAmount,
+      });
+    } catch (cause) {
+      if (cause instanceof LiquidiumError) throw cause;
+      throw new LiquidiumError(
+        LiquidiumErrorCode.CANISTER_REJECTED,
+        "Could not prepare liquidation allowance; liquidation was not submitted",
+        cause
+      );
+    }
+
     return callLendingCanister("liquidate_with_slippage", async () => {
       const result = await createLendingActor(
         this.canisterContext
@@ -117,11 +145,11 @@ export class LiquidationsModule {
           borrower,
           debt_pool_id: debtPoolId,
           collateral_pool_id: collateralPoolId,
-          debt_amount: request.debtAmount,
+          debt_amount: debtAmount,
           receiver_address: receiverAddress,
-          buy_bad_debt: request.buyBadDebt ?? false,
+          buy_bad_debt: buyBadDebt,
         },
-        request.minCollateralAmount
+        minCollateralAmount
       );
 
       if ("Err" in result) {

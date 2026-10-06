@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Liquidium · Local liquidation</title>
+  <link rel="stylesheet" href="/style.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <header><a href="/" class="brand">Liquidium</a><span class="tag">Local PEM signer</span></header>
+  <main>
+    <div class="heading"><div><h1>Liquidation desk</h1><p>One borrower. One debt asset. You control each transfer.</p></div><button id="refresh" type="button">Refresh position</button></div>
+    <p class="notice">This tool spends real ledger assets. Your private key stays on the local server. No price changes or automatic liquidations.</p>
+    <p id="message" role="status" aria-live="polite">Reading staging positions…</p>
+    <section class="wallet" aria-labelledby="wallet-title">
+      <h2 id="wallet-title">Liquidator wallet balances</h2>
+      <p>Funds held by your PEM identity. These are separate from the borrower's positions.</p>
+      <label for="funding-address">Send ck assets to this principal</label>
+      <input id="funding-address" class="principal" readonly aria-describedby="funding-address-help" value="Loading liquidator account…">
+      <button id="copy-funding-address" type="button" disabled>Copy funding address</button>
+      <p id="funding-address-help" class="hint">Choose the ck asset in your wallet and send to this principal, with no subaccount. Use the matching ledger below. This is not a Bitcoin or Ethereum address.</p>
+      <p id="funding-copy-status" role="status" aria-live="polite"></p>
+      <div class="table-wrap"><table><caption>Default account · no subaccount · registered pool ledgers</caption><thead><tr><th scope="col">Asset</th><th scope="col">Available balance</th></tr></thead><tbody id="wallet-balances"><tr><td colspan="2">Loading balances…</td></tr></tbody></table></div>
+      <p id="wallet-updated" class="hint"></p>
+    </section>
+    <div class="workspace">
+      <section class="portfolio" aria-labelledby="position-title">
+        <div class="section-heading"><h2 id="position-title">Borrower position</h2><span id="eligibility" class="tag">Checking</span></div>
+        <p id="borrower" class="principal">Loading borrower…</p>
+        <div class="health"><span>Health factor</span><strong id="health">—</strong><span>Liquidatable below 1.000</span></div>
+        <div class="table-wrap"><table><caption>Pool balances in asset units</caption><thead><tr><th scope="col">Asset</th><th scope="col">Supplied</th><th scope="col">Debt</th></tr></thead><tbody id="positions"></tbody></table></div>
+        <details><summary>Signing and funding account</summary><dl><dt>Liquidator principal</dt><dd id="principal" class="principal">—</dd><dt>Debt ledger</dt><dd id="ledger" class="principal">—</dd><dt>Lending canister</dt><dd id="lending" class="principal">—</dd><dt>Liquidator list</dt><dd id="allowlisted">—</dd></dl><p>Fund the liquidator's default account on this ledger. Do not send funds to the lending canister.</p></details>
+      </section>
+      <section class="execution" aria-labelledby="execution-title">
+        <h2 id="execution-title">Execute liquidation</h2>
+        <div class="pair"><div><span>You pay</span><strong id="pay">USDT</strong></div><span aria-hidden="true">→</span><div><span>You receive</span><strong id="receive">BTC</strong></div></div>
+        <dl class="funding"><div><dt>Available balance</dt><dd id="balance">—</dd></div><div><dt>Ledger fee per transfer</dt><dd id="fee">—</dd></div></dl>
+        <form id="action-form" method="post" action="/api/liquidate">
+          <fieldset id="controls" disabled>
+            <label for="debt">Amount to repay <span id="debt-unit">(USDT)</span></label>
+            <input id="debt" name="debtAmount" inputmode="decimal" pattern="[0-9]+(\.[0-9]+)?" maxlength="100" required aria-describedby="debt-help" placeholder="1">
+            <p id="debt-help" class="hint">—</p>
+            <label for="minimum">Minimum collateral (not enforced) <span id="collateral-unit">(BTC)</span></label>
+            <input id="minimum" name="minCollateralAmount" inputmode="decimal" pattern="[0-9]+(\.[0-9]+)?" maxlength="100" required aria-describedby="minimum-help" placeholder="0.00001">
+            <p id="minimum-help" class="hint">This example requires a positive BTC amount, but normal liquidation ignores this minimum and allows smaller partial fills. Transfer fees apply.</p>
+            <button id="execute" class="primary" type="submit" disabled>Review liquidation</button>
+          </fieldset>
+        </form>
+        <p id="action-error" role="alert"></p>
+        <p class="hint">The SDK approves debt spending if needed when you confirm execution. Approval has a separate ledger fee. Only one liquidation is permitted per server session.</p>
+      </section>
+    </div>
+    <section id="tracking" class="tracking" aria-labelledby="tracking-title">
+      <div class="section-heading"><h2 id="tracking-title">Liquidation receipt</h2><span id="result-badge" class="tag">Not submitted</span><button id="track" type="button" disabled>Refresh transfers</button></div>
+      <p id="result-summary">No liquidation submitted.</p>
+      <p id="result-amounts" hidden></p>
+      <dl id="receipt" hidden><dt>Liquidation ID</dt><dd id="receipt-id"></dd><dt>Submitted</dt><dd id="receipt-time"></dd><dt>Collateral transfer</dt><dd id="receipt-collateral" class="principal"></dd><dt>Change / refund transfer</dt><dd id="receipt-change" class="principal"></dd></dl>
+      <p id="result-error"></p>
+      <details id="result-details" hidden><summary>Technical details</summary><pre id="result"></pre></details>
+    </section>
+  </main>
+  <dialog id="confirmation" aria-labelledby="confirmation-title"><h2 id="confirmation-title">Confirm liquidation</h2><p id="confirmation-text"></p><p>This moves real assets. A failed request may still require a refund. Do not submit again until the outcome is confirmed.</p><div class="dialog-actions"><button id="cancel" type="button">Cancel</button><button id="confirm" class="primary" type="button">Execute liquidation</button></div></dialog>
+</body>
+</html>

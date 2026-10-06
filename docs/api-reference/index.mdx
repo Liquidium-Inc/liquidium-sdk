@@ -19,7 +19,7 @@ The client provides the following modules:
 | `client.history` | User history and confirmed protocol-wide activity through the Liquidium SDK API |
 | `client.simpleLoans` | Accountless Simple Loans with generated deposit and repayment targets |
 | `client.lending` | Supply, borrow, withdraw, and inflow reporting |
-| `client.liquidations` | Candidate scanning, slippage-protected liquidation execution, and status lookup |
+| `client.liquidations` | Candidate scanning, liquidation execution, and status lookup |
 | `client.market` | Pools, prices, and pool rate lookups |
 | `client.positions` | Per-pool positions, health, and aggregate stats |
 | `client.quote` | Pure quote helpers from market inputs |
@@ -58,7 +58,11 @@ For retry decisions and recovery code, see [Handle errors](../guides/error-handl
 
 ## Liquidations
 
-Use `client.liquidations.scan(request)` for cursor-based candidate discovery, `client.liquidations.liquidate(request)` for slippage-protected execution, and `client.liquidations.getLiquidation(liquidationId)` for status lookup. The SDK exports these public types:
+Use `client.liquidations.scan(request)` for cursor-based candidate discovery, `client.liquidations.liquidate(request)` for automatic debt-ledger allowance handling and execution, and `client.liquidations.getLiquidation(liquidationId)` for status lookup. Approval failures throw `LiquidiumError` with code `LIQUIDATION_APPROVAL_FAILED`; in this case, liquidation was not submitted.
+
+`minCollateralAmount` is required in collateral-asset base units. The canister enforces it before transfer fees on bad-debt and hybrid paths only; normal collateral-backed liquidations ignore it and allow smaller partial fills. `buyBadDebt` defaults to `false`. Setting it to `true` permits bad-debt repayment but can still use the normal path. See [Minimum collateral and partial fills](../guides/liquidations.mdx#minimum-collateral-and-partial-fills).
+
+The SDK exports these public types:
 
 | Type | Purpose |
 | --- | --- |

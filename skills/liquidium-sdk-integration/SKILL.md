@@ -343,7 +343,7 @@ or after optional SDK broadcasting; the SDK does not poll it to completion.
 
 ### liquidations
 
-Cursor-based candidate scanning, slippage-protected execution, and status lookup.
+Cursor-based candidate scanning, execution, and status lookup.
 
 ```ts
 client.liquidations.scan({ scanLimit, maxResults, cursor });
@@ -360,10 +360,18 @@ Scan results can become stale, so execution always revalidates the position.
 `liquidate(...)` executes through the configured IC identity or agent. Before
 the call, a lending-canister administrator must register that principal with
 `add_liquidator`. Verify membership with `get_liquidators` before funding it.
-The principal's default ICRC account must allow the lending canister to spend
-at least `debtAmount + ledgerTransferFee` and must cover ledger fees. The SDK
-does not create the allowance. `minCollateralAmount` is required and measures
-gross collateral before transfer fees; `0n` disables the slippage guard.
+The SDK reuses a sufficient unexpired allowance or approves
+`debtAmount + ledgerTransferFee` for five minutes before submission. The
+principal's default ICRC account must cover the debt offer and ledger fees,
+including a separate approval fee when needed.
+
+`minCollateralAmount` is required in collateral-asset base units, before
+transfer fees. The canister enforces it only on bad-debt and hybrid paths;
+`0n` disables the guard where it applies and permits zero collateral. Normal
+collateral-backed liquidations ignore it and allow smaller partial fills.
+`buyBadDebt` defaults to `false`. Setting it to `true` permits repayment beyond
+what collateral can cover, but does not force a bad-debt or hybrid path.
+
 Seized collateral goes to `receiverPrincipal`, while change and refunds go to
 the calling principal. Save the returned `id` and call `getLiquidation(id)`
 when a fresh result is needed. A `failed_liquidation` lifecycle state remains

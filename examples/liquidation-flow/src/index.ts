@@ -4,11 +4,7 @@ import { Secp256k1KeyIdentity } from "@icp-sdk/core/identity/secp256k1";
 import { Principal } from "@icp-sdk/core/principal";
 import { Asset } from "@liquidium/client";
 import { createClient } from "./client";
-import {
-  approveLiquidationAllowance,
-  executeLiquidation,
-  findLiquidationCandidate,
-} from "./sdk-example";
+import { executeLiquidation, findLiquidationCandidate } from "./sdk-example";
 
 const ICP_HOST = "https://icp-api.io";
 const MINIMUM_DEBT_AMOUNT = 1n;
@@ -48,18 +44,6 @@ async function main(): Promise<void> {
   const { candidate, debtPosition, collateralPosition } =
     await findLiquidationCandidate({ client, debtAsset, debtAmount });
 
-  if (debtPosition.assetType.type !== "ck_asset") {
-    throw new Error("Selected debt position has no ICRC ledger canister id");
-  }
-
-  const debtLedgerCanisterId = debtPosition.assetType.ledgerCanisterId;
-  const { debtLedgerFee, approvedAllowanceAmount, approvalBlockIndex } =
-    await approveLiquidationAllowance({
-      agent,
-      debtLedgerCanisterId,
-      lendingCanisterId,
-      debtAmount,
-    });
   const liquidation = await executeLiquidation({
     client,
     borrowerProfileId: candidate.borrowerProfileId,
@@ -75,10 +59,6 @@ async function main(): Promise<void> {
     borrowerProfileId: candidate.borrowerProfileId,
     debtAsset: debtPosition.asset,
     collateralAsset: collateralPosition.asset,
-    debtLedgerCanisterId,
-    debtLedgerFee,
-    approvedAllowanceAmount,
-    approvalBlockIndex,
     liquidationId: liquidation.id,
     liquidationStatus: liquidation.status,
   });
