@@ -373,7 +373,7 @@ async function main(): Promise<void> {
 
         if (
           !snapshot.debtPosition ||
-          snapshot.debtPosition.borrowed < debtAmountBaseUnits ||
+          snapshot.debtPosition.borrowed <= 0n ||
           !snapshot.collateralPosition ||
           snapshot.collateralPosition.deposited <= 0n
         ) {

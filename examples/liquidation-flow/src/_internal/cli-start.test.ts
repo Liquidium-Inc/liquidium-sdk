@@ -23,7 +23,9 @@ test("loads the compiled CLI before validating its configuration", () => {
 
   // then
   const EXPECTED_EXIT_CODE = 1;
-  const EXPECTED_CONFIGURATION_ERROR = "LIQUIDATOR_IDENTITY_PEM_PATH is required";
+
+  const EXPECTED_CONFIGURATION_ERROR =
+    "LIQUIDATOR_IDENTITY_PEM_PATH is required";
 
   assert.equal(result.error, undefined);
   assert.equal(result.status, EXPECTED_EXIT_CODE);

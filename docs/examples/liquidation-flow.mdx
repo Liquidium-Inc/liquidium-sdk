@@ -27,7 +27,7 @@ Copy `examples/liquidation-flow/.env.example` to `.env`, then configure:
 | `LIQUIDATOR_IDENTITY_PEM_PATH` | Absolute path to the dedicated identity PEM file |
 | `LIQUIDIUM_LENDING_CANISTER_ID` | Lending canister that receives the ICRC-2 approval and executes the liquidation |
 | `LIQUIDATION_DEBT_ASSET` | Debt asset to find: `BTC`, `ETH`, `USDC`, `USDT`, or `ICP` |
-| `LIQUIDATION_DEBT_AMOUNT_BASE_UNITS` | Amount to repay in debt-asset base units |
+| `LIQUIDATION_DEBT_AMOUNT_BASE_UNITS` | Maximum debt offer in debt-asset base units |
 | `LIQUIDATION_MIN_COLLATERAL_AMOUNT_BASE_UNITS` | Submitted minimum in collateral-asset base units; normal liquidation ignores it |
 
 The identity's default ICRC account must hold the debt amount plus ledger fees. The SDK resolves the registered debt ledger from the debt pool and reuses a sufficient allowance with no expiry or more than one minute remaining. If needed, it approves the debt amount plus the ledger transfer fee for five minutes before executing. A new or renewed approval requires a separate ledger fee. The CLI needs no manual approval call.
@@ -40,7 +40,7 @@ pnpm --filter @liquidium/example-liquidation-flow build
 pnpm --filter @liquidium/example-liquidation-flow start
 ```
 
-The CLI and UI omit `buyBadDebt`, so the SDK uses its default of `false`. They execute normal collateral-backed liquidations, which allow smaller partial fills and ignore `minCollateralAmount`. A nonzero minimum does not guarantee a minimum receipt or force a failure. Candidate state can change after the scan, so execution can fill a smaller amount or reject a stale candidate. See [Minimum collateral and partial fills](../guides/liquidations.mdx#minimum-collateral-and-partial-fills) for bad-debt behavior.
+The CLI and UI omit `buyBadDebt`, so the SDK uses its default of `false`. They execute normal collateral-backed liquidations, which allow smaller partial fills and ignore `minCollateralAmount`. The debt offer can exceed the borrower's outstanding debt; the canister limits repayment and returns unused debt assets as change, subject to transfer fees. A nonzero minimum does not guarantee a minimum receipt or force a failure. Candidate state can change after the scan, so execution can fill a smaller amount or reject a stale candidate. See [Minimum collateral and partial fills](../guides/liquidations.mdx#minimum-collateral-and-partial-fills) for bad-debt behavior.
 
 ## Local liquidation UI
 

@@ -51,7 +51,7 @@ async function main(): Promise<void> {
   });
 
   const { candidate, debtPosition, collateralPosition } =
-    await findLiquidationCandidate({ client, debtAsset, debtAmount });
+    await findLiquidationCandidate({ client, debtAsset });
 
   const liquidation = await executeLiquidation({
     client,

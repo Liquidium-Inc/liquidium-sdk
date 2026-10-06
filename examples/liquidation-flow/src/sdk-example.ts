@@ -12,7 +12,6 @@ const MAX_RESULTS = 20n;
 interface FindLiquidationCandidateParams {
   client: LiquidiumClient;
   debtAsset: string;
-  debtAmount: bigint;
 }
 
 interface SelectedLiquidationCandidate {
@@ -34,7 +33,6 @@ interface ExecuteLiquidationParams {
 export async function findLiquidationCandidate({
   client,
   debtAsset,
-  debtAmount,
 }: FindLiquidationCandidateParams): Promise<SelectedLiquidationCandidate> {
   let cursor: string | undefined;
 
@@ -49,7 +47,7 @@ export async function findLiquidationCandidate({
       const debtPosition = candidate.positions.find(
         (position) =>
           position.asset === debtAsset &&
-          position.debtAmount >= debtAmount &&
+          position.debtAmount > 0n &&
           position.assetType.type === "ck_asset"
       );
 
