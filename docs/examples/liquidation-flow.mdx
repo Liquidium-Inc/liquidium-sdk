@@ -1,0 +1,78 @@
+---
+title: Liquidation Flow Example
+description: Run candidate discovery, ICRC approval, and liquidation submission.
+order: 340
+---
+
+# Liquidation Flow Example
+
+Use `examples/liquidation-flow` to run the complete liquidation flow from a Node CLI. It scans for a candidate and calls `client.liquidations.liquidate(...)`, which handles debt-ledger approval and submission with the same IC identity.
+
+This example sends mainnet transactions and spends ledger fees. Use a dedicated funded identity. Do not use a primary or high-value identity.
+
+Create an exportable identity and protect its PEM file:
+
+```bash
+dfx identity new liquidation-example
+umask 077
+dfx identity export liquidation-example > /absolute/private/path/liquidator.pem
+```
+
+Liquidator registration is not required.
+
+Copy `examples/liquidation-flow/.env.example` to `.env`, then configure:
+
+| Variable | Value |
+| --- | --- |
+| `LIQUIDATOR_IDENTITY_PEM_PATH` | Absolute path to the dedicated identity PEM file |
+| `LIQUIDIUM_LENDING_CANISTER_ID` | Lending canister that receives the ICRC-2 approval and executes the liquidation |
+| `LIQUIDATION_DEBT_ASSET` | Debt asset to find: `BTC`, `ETH`, `USDC`, `USDT`, or `ICP` |
+| `LIQUIDATION_DEBT_AMOUNT_BASE_UNITS` | Maximum debt offer in debt-asset base units |
+| `LIQUIDATION_MIN_COLLATERAL_AMOUNT_BASE_UNITS` | Submitted minimum in collateral-asset base units; normal liquidation ignores it |
+
+The identity's default ICRC account must hold the debt amount plus ledger fees. The SDK resolves the registered debt ledger from the debt pool and reuses a sufficient allowance with no expiry or more than one minute remaining. If needed, it approves the debt amount plus the ledger transfer fee for five minutes before executing. A new or renewed approval requires a separate ledger fee. The CLI needs no manual approval call.
+
+Run it from the SDK root:
+
+```bash
+pnpm install
+pnpm --filter @liquidium/example-liquidation-flow build
+pnpm --filter @liquidium/example-liquidation-flow start
+```
+
+The CLI and UI omit `buyBadDebt`, so the SDK uses its default of `false`. They execute normal collateral-backed liquidations, which allow smaller partial fills and ignore `minCollateralAmount`. The debt offer can exceed the borrower's outstanding debt; the canister limits repayment and returns unused debt assets as change, subject to transfer fees. A nonzero minimum does not guarantee a minimum receipt or force a failure. Candidate state can change after the scan, so execution can fill a smaller amount or reject a stale candidate. See [Minimum collateral and partial fills](../guides/liquidations.mdx#minimum-collateral-and-partial-fills) for bad-debt behavior.
+
+## Local liquidation UI
+
+The wallet section displays the funding principal with a Copy funding address button. Send ck assets to this principal's default account with no subaccount, on the matching ledger shown in the balance table. This principal is not an L1 Bitcoin or Ethereum address.
+
+Run the local UI with the same PEM identity:
+
+```bash
+pnpm --filter @liquidium/example-liquidation-flow ui
+```
+
+Open `http://127.0.0.1:4318`. Do not expose this server through a tunnel or deploy it publicly. The PEM stays on the server; browser code cannot access its file or contents. The server binds only to loopback and checks the Host, Origin, and a session CSRF token for signing actions.
+
+Set `LIQUIDATION_BORROWER_PROFILE_ID` to the one borrower allowed by this example and `LIQUIDATION_COLLATERAL_ASSET` to the asset you want to receive. The UI uses `LIQUIDATION_DEBT_ASSET` for the debt asset. These restrictions are enforced by the local server, not by the SDK or canister. The CLI `start` command still selects the first matching scan candidate; these UI restrictions do not apply to that command.
+
+The screen shows the locked borrower's positions, health factor, debt ledger, liquidator principal, balance, and liquidator-list membership. List membership is informational; it does not determine whether the borrower is eligible for liquidation.
+
+Liquidator wallet balances shows the PEM principal's default-account balances on all supported registered pool ledgers. Amounts are displayed in normal asset units, with ledger IDs below each asset. Refresh position and Refresh transfers also reload these balances. Failed balance queries show Unavailable, not zero. These balances do not include subaccounts, Liquidium deposits, or assets on ledgers that are not registered pools.
+
+1. Refresh the position and confirm the debt/collateral pair and ledger.
+2. Fund the liquidator's default ledger account with the offer plus approval and transfer fees.
+3. Enter the amount in normal asset units, such as `1` USDT. `LIQUIDATION_DEBT_AMOUNT_BASE_UNITS` remains the server's base-unit spending cap; the UI displays it in asset units.
+4. Enter a positive value in the minimum collateral field, such as `0.00001` BTC. The UI requires this input, but the canister ignores it in normal liquidation. It does not protect the amount you receive. The CLI also accepts zero.
+5. Select Review liquidation and confirm execution. The server calls the SDK once; the SDK reuses an existing allowance or approves debt spending before liquidating. The confirmation shows the separate approval fee that applies if approval is needed. Opening or canceling the review does not approve or spend funds. The receiver is the PEM principal; change and refunds also return to it.
+6. Check the Liquidation receipt. It shows Confirmed only when the liquidation, collateral transfer, and change/refund transfer all report success. It keeps refreshing every five seconds while execution or either transfer is pending, even after a liquidation failure. A failed core liquidation shows Refund pending until refund processing settles, then Refund complete or Needs attention. Refund complete does not mean liquidation succeeded; check the refund transaction and wallet balance. A completed refund can have no transaction when the amount does not exceed the fee. If a refresh fails, automatic checking pauses; use Refresh transfers to try the status query again.
+
+The receipt shows the liquidation ID, submission time, debt repaid, net collateral amount, and transaction references when available. It remains available after a page reload while the same server session is running; it is not persistent history across server restarts.
+
+Only one liquidation can be submitted per server session. The server blocks a second submission even when the first request fails, because its remote outcome can be uncertain. Reconcile canister and ledger state before restarting. After a server restart, restore an existing result with `client.liquidations.getLiquidation(id)`; the UI does not persist its session or automatically retry transactions. No liquidation, approval, or price change happens on page load.
+
+### Minimum-collateral testing
+
+Setting a minimum above the borrower's entire collateral balance does not force this example to fail or refund. Normal liquidation ignores that value and can succeed with a smaller fill.
+
+To test rejection by the minimum, use a controlled bad-debt or hybrid test case. `buyBadDebt: true` alone is not sufficient; the position and repayment must enter one of those paths. This example does not enable bad-debt purchases. Its refund-display tests use simulated failed results.
