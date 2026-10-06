@@ -3,8 +3,8 @@ import { HttpAgent } from "@icp-sdk/core/agent";
 import { Secp256k1KeyIdentity } from "@icp-sdk/core/identity/secp256k1";
 import { Principal } from "@icp-sdk/core/principal";
 import { Asset } from "@liquidium/client";
-import { createClient } from "./client";
-import { executeLiquidation, findLiquidationCandidate } from "./sdk-example";
+import { createClient } from "./client.js";
+import { executeLiquidation, findLiquidationCandidate } from "./sdk-example.js";
 
 const ICP_HOST = "https://icp-api.io";
 
