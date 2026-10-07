@@ -1,5 +1,12 @@
 # @liquidium/client
 
+## 0.10.0
+
+### Minor Changes
+
+- 63823d5: Expose activationFeeAmount and openingDebtAmount in LTV and collateral quote results, in borrow asset base units.
+- 82eba5d: Add a dedicated module for liquidation candidate scanning, execution, and status lookup. Minimum collateral applies to bad-debt and hybrid paths; normal collateral-backed liquidations allow partial fills without this check.
+
 ## 0.9.0
 
 ### Minor Changes
