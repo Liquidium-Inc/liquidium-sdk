@@ -298,10 +298,10 @@ export function formatSimpleLoan(
       loan.position.collateralInterestAmount,
       collateralDecimals
     )} ${loan.collateral.asset}`,
-    `Borrowed: ${formatAmount(loan.position.borrowedAmount, borrowDecimals)} ${
+    `Current debt: ${formatAmount(loan.position.borrowedAmount, borrowDecimals)} ${
       loan.borrow.asset
     }`,
-    `Debt interest: ${formatAmount(
+    `Reported debt interest (not added to current debt): ${formatAmount(
       loan.position.debtInterestAmount,
       borrowDecimals
     )} ${loan.borrow.asset}`,
