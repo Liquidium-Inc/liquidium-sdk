@@ -1,0 +1,170 @@
+---
+title: Recover profile funds
+description: Read recovery balances and withdraw rejected inflows or repayment refunds.
+sidebar_position: 150
+---
+
+# Recover profile funds
+
+Use this flow for a Liquidium profile that you control. The protocol can move
+rejected inflows and refundable excess repayments into a recovery subaccount.
+This transfer is automatic. Withdrawal to a wallet requires authorization from
+an account linked to the profile.
+
+Recovery funds are separate from supplied funds and outstanding debt. A recovery
+does not create a supply position or apply an old repayment to new debt.
+
+## Read available funds
+
+```ts
+import { LiquidiumClient } from "@liquidium/client";
+
+const client = new LiquidiumClient({});
+const amount = await client.lending.getRecoveryBalance(profileId, poolId);
+```
+
+`amount` is a `bigint` in the pool asset's base units. Use the pool's decimals
+for display. It is the full balance for that profile and pool, not one refund.
+Query each relevant pool, including pools with no current position. No rejected
+history entry is required, so successful repayments with excess refunds are
+included too.
+
+Refund delivery is asynchronous. Zero can mean that there are no recovery funds
+or that a scheduled refund has not arrived yet. The SDK does not poll.
+
+## Recover through an ICP wallet
+
+Use a default, read-only client for queries. Pass the authenticated wallet agent
+in `authorization`. Only the update uses this agent, so an ICP delegation does
+not need permission to query each ledger or minter.
+
+```ts
+import type { Agent } from "@icp-sdk/core/agent";
+import { Chain, LiquidiumClient } from "@liquidium/client";
+
+async function recoverToIcp(
+  agent: Agent,
+  profileId: string,
+  poolId: string,
+  receiverPrincipal: string,
+) {
+  const client = new LiquidiumClient({});
+  return client.lending.recover({
+    profileId,
+    poolId,
+    chain: Chain.ICP,
+    receiver: { type: "IcPrincipal", address: receiverPrincipal },
+    authorization: { type: "icp_caller", agent },
+  });
+}
+```
+
+The agent's principal must identify an account linked to the profile. If that
+linked account uses an ICRC subaccount, pass its 32 bytes in
+`authorization.subaccount`. Anonymous callers are rejected. The lending
+canister verifies profile ownership.
+
+`chain: "ICP"` delivers ICP or the pool's chain-key asset: ckBTC, ckETH, ckUSDC,
+or ckUSDT. Chain-key recovery destinations must be IC principals. Native ICP
+also supports ICRC accounts and ICP account identifiers.
+
+## Recover through a BTC or ETH wallet
+
+```ts
+const receipt = await client.lending.recover({
+  profileId,
+  poolId,
+  chain: "ICP",
+  receiver: { type: "IcPrincipal", address: receiverPrincipal },
+  signerWalletAddress,
+  signerChain: "ETH",
+  signerWalletAdapter: {
+    signMessage: ({ message }) => wallet.signMessage(message),
+  },
+});
+```
+
+The signing wallet must be linked to the profile. The signing chain and delivery
+chain are independent. Use `chain: "BTC"` with a BTC address for native BTC, or
+`chain: "ETH"` with an Ethereum address for native ETH, USDC, or USDT. Native ETH
+does not support contract destinations.
+
+For separate signing and submission, use `prepareRecovery(...)`:
+
+```ts
+const action = await client.lending.prepareRecovery({
+  profileId,
+  poolId,
+  chain: "ICP",
+  receiver: receiverPrincipal,
+  signerWalletAddress,
+});
+
+const signature = await wallet.signMessage(action.message);
+const receipt = await action.submit({ signature, chain: "ETH" });
+```
+
+Preparation selects the full available recovery balance. The signed amount stays
+fixed: funds that arrive later need a new recovery. If the balance falls before
+submission, the SDK rejects with `INSUFFICIENT_FUNDS`.
+
+## Fees and receipts
+
+The SDK checks ledger fees and destination minimums before authorization and
+again before submission. An empty balance throws `INSUFFICIENT_FUNDS`. A balance
+below the destination's fee boundary throws `RECOVERY_AMOUNT_TOO_LOW`. Recovery
+uses its own fee checks rather than normal product withdrawal minimums.
+
+Native BTC and ETH use live minter minimums and fee estimates. USDC and USDT on
+Ethereum also pay the pool's ERC-20 burn charge. The SDK estimates that charge
+from the ckETH minter's ckERC20 gas quote and protocol prices. If those prices
+are unavailable, the SDK throws `SERVICE_UNAVAILABLE`. Network fees can change
+during delivery. The amount received is less than the recovery balance because
+withdrawal fees are deducted.
+
+Native minimums are often larger than small refunds. If a native destination
+throws `RECOVERY_AMOUNT_TOO_LOW`, recover to `chain: "ICP"` instead. The pool
+then sends ckBTC, ckETH, ckUSDC, or ckUSDT to an IC principal.
+
+`RecoveryResult` contains:
+
+| Field | Meaning |
+| --- | --- |
+| `amount` | Amount removed from recovery, before withdrawal fees |
+| `ledgerCanisterId` | Ledger for the recovery transfer |
+| `blockIndex` | Block index for the recovery transfer |
+| `status` | `operation: "withdrawal"`, `state: "processing"`, with null confirmation fields |
+
+For the ICP pool, the recovery transfer is the transfer to the destination. The
+other pools move funds into an internal outflow subaccount first and deliver
+later. If that delivery fails, the funds wait in the outflow subaccount, and
+`getRecoveryBalance(...)` does not show them. Track final receipt at the
+destination. A reduced recovery balance alone does not prove delivery.
+
+`blockIndex` is not an outflow ID for `activities.getStatus(...)`. Liquidium
+transaction history can list a recovery as a `withdraw` item with status
+`CONFIRMED` and an `id` that ends with `:recovery`. That status confirms the
+recovery transfer, not delivery to the destination.
+
+The SDK does not retry recovery updates. A `CANISTER_REJECTED` error from
+`recover(...)` or `submit(...)` can follow an update that succeeded. Read
+`getRecoveryBalance(...)` and the destination before you prepare another
+recovery.
+
+## Which funds are refundable?
+
+- A repayment rejected with `PositionNotFound` creates a full refund obligation,
+  subject to transfer fees.
+- Excess on an accepted repayment is refundable only if the pool has a positive
+  `overpay_refund_min` and the excess exceeds that threshold. The protocol
+  subtracts one base unit of rounding dust before it compares. Otherwise the
+  protocol retains the excess as a service fee.
+- Supply-cap and same-asset borrowing deposit rejections can also create refunds.
+- A repayment for an unknown profile is retained as a service fee.
+- A refund at or below the ledger fee is retained. Other refunds arrive in
+  recovery minus one ledger fee.
+
+The SDK reads funds already delivered to recovery. It does not enable pool
+refunds, replay historical failures, or recover funds retained as service fees.
+Repayments that the protocol processed before refund support went live did not
+create refunds. Contact Liquidium to reconcile those repayments.
