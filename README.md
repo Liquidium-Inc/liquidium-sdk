@@ -72,6 +72,7 @@ See the [quick start](https://liquidium-inc.github.io/liquidium-sdk/getting-star
 
 - [Simple Loans](https://github.com/Liquidium-Inc/liquidium-sdk/tree/main/examples/simple-loans-flow)
 - [SDK method query](https://github.com/Liquidium-Inc/liquidium-sdk/tree/main/examples/sdk-method-query)
+- [Profile recovery with OISY or Ethereum](https://github.com/Liquidium-Inc/liquidium-sdk/tree/main/examples/recovery-flow)
 - [Deposit address flow](https://github.com/Liquidium-Inc/liquidium-sdk/tree/main/examples/deposit-address-flow)
 - [Contract interaction flow](https://github.com/Liquidium-Inc/liquidium-sdk/tree/main/examples/contract-interaction-flow)
 

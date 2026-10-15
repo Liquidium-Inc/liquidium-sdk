@@ -1,3 +1,4 @@
+import type { Agent } from "@icp-sdk/core/agent";
 import type {
   LiquidiumAccount,
   LiquidiumAccountInput,
@@ -153,6 +154,75 @@ export interface WithdrawAction
   /** Adapter-facing action type. */
   actionType: typeof WalletActionKind.createWithdraw;
 }
+
+/** Destination for withdrawing a profile's full, currently available recovery balance. */
+export interface RecoveryRequest {
+  /** Liquidium profile principal text. */
+  profileId: string;
+  /** Pool principal text. Recovery balances are grouped by pool. */
+  poolId: string;
+  /** Delivery chain; use ICP for chain-key assets. */
+  chain: Chain;
+  /** Destination that receives recovered funds after fees. */
+  receiver: LiquidiumAccountInput;
+}
+
+/** Recovery authorized by a linked BTC or ETH wallet signature. */
+export interface PrepareRecoveryRequest extends RecoveryRequest {
+  signerWalletAddress: string;
+}
+
+/** Recovery request captured before message signing. */
+export interface RecoveryData extends PrepareRecoveryRequest {
+  /** Recovery balance in pool asset base units, before withdrawal fees. */
+  amount: bigint;
+  /** Unix expiry timestamp in seconds. */
+  expiryTimestamp: bigint;
+}
+
+/**
+ * Receipt for the recovery transfer. For the ICP pool, this transfer is the
+ * destination delivery. Other pools deliver later from an outflow subaccount.
+ */
+export interface RecoveryResult {
+  /** Amount removed from the recovery balance, before withdrawal fees. */
+  amount: bigint;
+  /** Ledger containing the recovery transfer. */
+  ledgerCanisterId: string;
+  /** Recovery transfer block index, not an activities API outflow id. */
+  blockIndex: bigint;
+  /** Withdrawal processing status. Final delivery must be tracked separately. */
+  status: LiquidiumStatus;
+}
+
+/** Prepared wallet-signature recovery action. */
+export interface RecoveryAction
+  extends SignMessageWalletAction<RecoveryData, RecoveryResult> {
+  kind: typeof WalletActionKind.recoverFunds;
+  actionType: typeof WalletActionKind.recoverFunds;
+}
+
+/** Wallet dependencies for recovery through a linked BTC or ETH account. */
+export interface RecoverWithWalletRequest
+  extends PrepareRecoveryRequest,
+    WalletExecutionParams {}
+
+/** Authenticated ICP caller used only for the recovery update. */
+export interface IcpRecoveryAuthorization {
+  type: "icp_caller";
+  /** Agent for an ICP account linked to the profile. Public reads use the SDK client. */
+  agent: Agent;
+  /** Linked ICRC account subaccount. Must contain exactly 32 bytes when provided. */
+  subaccount?: Uint8Array;
+}
+
+/** Recovery through ICP ingress authentication rather than message signing. */
+export interface RecoverWithIcpRequest extends RecoveryRequest {
+  authorization: IcpRecoveryAuthorization;
+}
+
+/** Supported recovery authorization paths. */
+export type RecoverRequest = RecoverWithWalletRequest | RecoverWithIcpRequest;
 
 /** Supply execution plan selected by the SDK. */
 export const SupplyPlanType = {

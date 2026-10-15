@@ -14,6 +14,7 @@ export const WalletActionKind = {
   createAccount: "create-account",
   createBorrow: "create-borrow",
   createWithdraw: "create-withdraw",
+  recoverFunds: "recover-funds",
 } as const;
 /** Protocol action represented by a prepared wallet action. */
 export type WalletActionKind =
@@ -100,7 +101,7 @@ export interface SendIcrcTransferRequest {
 /**
  * Optional wallet capabilities. Implement only what your flow uses:
  *
- * - `signMessage` - account creation, borrow, withdraw
+ * - `signMessage` - account creation, borrow, withdraw, recovery
  * - `sendBtcTransaction` / `sendEthTransaction` - automated native-asset transfer supply
  * - `sendIcrcTransfer` - automated ck-ledger and ICP ledger transfer supply
  * - `sendEthTransaction` - contract-interaction supply and ETH native-asset sends

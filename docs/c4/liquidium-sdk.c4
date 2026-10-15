@@ -42,7 +42,7 @@ model {
       description 'Prepares and submits signed profile creation; resolves profile wallets.'
     }
     lending = module 'LendingModule' {
-      description 'Prepares and submits borrow and withdraw actions; plans supply and repayment transfers.'
+      description 'Prepares and submits borrow, withdraw, and recovery actions; plans supply and repayment transfers.'
     }
     market = module 'MarketModule' {
       description 'Reads supported pools, prices, and rates from Lending.'
@@ -89,7 +89,7 @@ model {
   wallet -> chains 'broadcasts transfers'
   sdk.client -> sdk.simpleLoans 'exposes accountless borrowing'
   sdk.client -> sdk.accounts 'exposes profile creation'
-  sdk.client -> sdk.lending 'exposes borrowing, withdrawals, and supply'
+  sdk.client -> sdk.lending 'exposes borrowing, withdrawals, recovery, and supply'
   sdk.client -> sdk.market 'exposes market reads'
   sdk.client -> sdk.positions 'exposes position reads'
   sdk.client -> sdk.activities 'exposes activity reads'

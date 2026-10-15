@@ -1,7 +1,6 @@
 import { Principal } from "@icp-sdk/core/principal";
 import type {
   CanisterLiquidiumAccount,
-  LiquidiumAccountInput,
   LiquidiumAccountReference,
 } from "../../core/accounts";
 import { normalizeAndValidateEvmAddress } from "../../core/address-validation";
@@ -56,6 +55,12 @@ import {
 import { getWithdrawAmountMinimumValidationError } from "../../core/withdraw-minimums";
 import { executeWith } from "../../execute";
 import { roundInflowFeeEstimate } from "./_internal/inflow-fee-rounding";
+import {
+  prepareRecovery,
+  type RecoveryContext,
+  readRecoveryBalance,
+  recoverWithIcp,
+} from "./_internal/recovery";
 import { SupplyFlowExecutor } from "./_internal/supply-flow";
 import {
   getEthDepositTokenAddress,
@@ -67,6 +72,7 @@ import {
   mapCanisterOutflowDetails,
   mapWalletChainToLendingChain,
   parseOutflowDestination,
+  resolveOutflowDestinationInput,
 } from "./mappers";
 import type {
   BorrowAction,
@@ -79,6 +85,10 @@ import type {
   GetEvmSupplyContextRequest,
   InflowFeeEstimate,
   OutflowDetails,
+  PrepareRecoveryRequest,
+  RecoverRequest,
+  RecoveryAction,
+  RecoveryResult,
   SubmitInflowRequest,
   SubmitInflowResponse,
   SupplyFlow,
@@ -104,23 +114,67 @@ interface OutflowSubmissionData extends OutflowActionData {
   receiverAddress: string;
 }
 
-interface ResolveOutflowDestinationInputParams {
-  receiver: LiquidiumAccountInput;
-  errorMessage: string;
-}
-
 interface GuardBorrowSameAssetPolicyParams {
   profileId: string;
   pool: DecodedPool;
 }
 
-/** Borrow, withdraw, supply, inflow reporting, and fee-estimation helpers. */
+/** Borrow, withdraw, recovery, supply, inflow reporting, and fee-estimation helpers. */
 export class LendingModule {
   constructor(
     private readonly canisterContext: CanisterContext,
     private readonly apiClient: ApiClient | undefined,
     private readonly evmReadClient: EvmReadClient | undefined
   ) {}
+
+  /**
+   * Reads the profile's live recovery balance in pool asset base units.
+   * Includes excess repayments and rejected inflows once refund delivery settles.
+   * Does not require a position, a rejection history entry, or authorization.
+   */
+  async getRecoveryBalance(profileId: string, poolId: string): Promise<bigint> {
+    return readRecoveryBalance(this.canisterContext, profileId, poolId);
+  }
+
+  /**
+   * Prepares withdrawal of the current full recovery balance for BTC/ETH signing.
+   * Checks destination fees before signing and again before submission.
+   * The signed amount stays fixed if more funds arrive after preparation.
+   */
+  async prepareRecovery(
+    request: PrepareRecoveryRequest
+  ): Promise<RecoveryAction> {
+    return prepareRecovery(this.recoveryContext(), request);
+  }
+
+  /**
+   * Withdraws the current recovery balance using a linked wallet or ICP caller.
+   * ICP authorization uses its agent only for the update; reads use the client's agent.
+   * The receipt records the recovery transfer. For pools other than ICP, final
+   * delivery happens later. A `CANISTER_REJECTED` error can follow an update
+   * that succeeded, so read the balance again before you retry.
+   */
+  async recover(request: RecoverRequest): Promise<RecoveryResult> {
+    if ("authorization" in request) {
+      return recoverWithIcp(this.recoveryContext(), request);
+    }
+
+    const action = await this.prepareRecovery(request);
+
+    return executeWith({
+      walletAdapter: request.signerWalletAdapter,
+      chain: request.signerChain,
+      account: action.account,
+    })(action);
+  }
+
+  private recoveryContext(): RecoveryContext {
+    return {
+      canisterContext: this.canisterContext,
+      apiClient: this.apiClient,
+      evmReadClient: this.evmReadClient,
+    };
+  }
 
   /**
    * Prepares a withdraw action that can be signed and submitted later.
@@ -804,30 +858,6 @@ function getInflowFeeLedgerAssetRoute(
   }
 
   return getPoolLedgerAssetRoute(request);
-}
-
-function resolveOutflowDestinationInput(
-  params: ResolveOutflowDestinationInputParams
-): LiquidiumAccountInput {
-  const receiver = params.receiver;
-  const address =
-    typeof receiver === "string" ? receiver.trim() : receiver.address.trim();
-
-  if (!address) {
-    throw new LiquidiumError(
-      LiquidiumErrorCode.VALIDATION_ERROR,
-      params.errorMessage
-    );
-  }
-
-  if (typeof receiver === "string") {
-    return address;
-  }
-
-  return {
-    address,
-    type: receiver.type,
-  };
 }
 
 function mapExpectedOutflowDetails(

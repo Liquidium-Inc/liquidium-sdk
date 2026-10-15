@@ -1,0 +1,31 @@
+{
+  "name": "@liquidium/example-recovery-flow",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1 --port 5178 --strictPort",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --host 127.0.0.1 --port 5178 --strictPort",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --config vitest.config.ts"
+  },
+  "dependencies": {
+    "@icp-sdk/canisters": "^3.6.0",
+    "@icp-sdk/core": "^5.4.0",
+    "@icp-sdk/signer": "5.6.0",
+    "@liquidium/client": "workspace:*",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "viem": "^2.55.10"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "@vitejs/plugin-react": "^5.2.0",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.6",
+    "vitest": "^5.0.0",
+    "vitest-mock-extended": "^5.1.1"
+  }
+}
