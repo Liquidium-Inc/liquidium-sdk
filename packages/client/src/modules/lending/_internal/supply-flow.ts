@@ -205,6 +205,9 @@ export class SupplyFlowExecutor {
         asset: selectedPool.asset,
       });
     }
+    if (request.action === SupplyAction.repayment) {
+      await this.guardOutstandingDebt(request.profileId, selectedPool);
+    }
     const target = await resolveSupplyTargetForPool(
       this.params.canisterContext,
       {
@@ -216,9 +219,6 @@ export class SupplyFlowExecutor {
       },
       selectedPool
     );
-    if (request.action === SupplyAction.repayment) {
-      await this.guardOutstandingDebt(request.profileId, selectedPool);
-    }
     const mechanism =
       requestedMechanism === PlanType.contractInteraction
         ? PlanType.contractInteraction

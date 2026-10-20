@@ -208,10 +208,10 @@ describe("LendingModule supply", () => {
           },
         ]),
       } as never)
+      .mockReturnValueOnce(createOutstandingDebtPositionActor())
       .mockReturnValueOnce({
         get_deposit_address: getDepositAddress,
-      } as never)
-      .mockReturnValueOnce(createOutstandingDebtPositionActor());
+      } as never);
     const client = new LiquidiumClient({});
 
     // when
@@ -1964,10 +1964,10 @@ describe("LendingModule supply", () => {
           },
         ]),
       } as never)
+      .mockReturnValueOnce(createOutstandingDebtPositionActor())
       .mockReturnValueOnce({
         get_btc_address: vi.fn().mockResolvedValue("bc1qexamplerepayaddress"),
-      } as never)
-      .mockReturnValueOnce(createOutstandingDebtPositionActor());
+      } as never);
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
       new Response(JSON.stringify({ txid }), {
         status: 200,
@@ -2162,4 +2162,32 @@ describe("LendingModule supply", () => {
       expect(sendIcrcTransfer).not.toHaveBeenCalled();
     }
   );
+
+  test("checks debt before requesting a repayment deposit address", async () => {
+    // given
+    const getDepositAddress = vi.fn();
+    vi.spyOn(Actor, "createActor")
+      .mockReturnValueOnce({
+        list_pools: vi.fn().mockResolvedValue([createUsdtPoolRecord()]),
+      } as never)
+      .mockReturnValueOnce({
+        get_position: vi.fn().mockResolvedValue([]),
+      } as never)
+      .mockReturnValueOnce({ get_deposit_address: getDepositAddress } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const supplyPromise = client.lending.supply({
+      profileId: "aaaaa-aa",
+      poolId: USDT_POOL_ID,
+      action: "repayment",
+      chain: "ETH",
+    });
+
+    // then
+    await expect(supplyPromise).rejects.toMatchObject({
+      code: LiquidiumErrorCode.NO_OUTSTANDING_DEBT,
+    });
+    expect(getDepositAddress).not.toHaveBeenCalled();
+  });
 });
