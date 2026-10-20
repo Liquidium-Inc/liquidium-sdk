@@ -314,9 +314,10 @@ export type SupplyFlowRequest =
  *   registration.
  * - If post-broadcast inflow registration fails after the SDK broadcasts the
  *   transaction, `txid` is still returned so callers can track the transaction.
- * - `submit` registers a broadcast txid with the SDK API when needed. ETH
- *   stablecoin deposit-address transfers are indexed from ERC-20 transfer logs,
- *   so `submit` acknowledges the txid without posting it to the inflow endpoint.
+ * - `submit` registers a broadcast txid with the SDK API when needed. ICP
+ *   ledger transfers are detected by the pool canister and ETH stablecoin
+ *   deposit-address transfers are indexed from ERC-20 transfer logs, so for
+ *   those `submit` returns the txid without posting it to the inflow endpoint.
  *
  * The SDK does not poll inflow status. When you have a `txid`, it is your
  * responsibility to track confirmation state with your own polling.

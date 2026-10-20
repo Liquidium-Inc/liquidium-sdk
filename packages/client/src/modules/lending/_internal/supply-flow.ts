@@ -1,8 +1,14 @@
+import { Principal } from "@icp-sdk/core/principal";
 import { decodeIcrcAccountAddress } from "../../../core/accounts";
 import {
   type EvmAddress,
   normalizeAndValidateEvmAddress,
 } from "../../../core/address-validation";
+import { mapCanisterCallErrorToLiquidiumError } from "../../../core/canisters/lending/error-mappers";
+import {
+  createFlexibleLendingActor,
+  type DecodedPool,
+} from "../../../core/canisters/lending/flexible-actor";
 import { getDepositAmountMinimumValidationError } from "../../../core/deposit-minimums";
 import { LiquidiumError, LiquidiumErrorCode } from "../../../core/errors";
 import {
@@ -210,6 +216,9 @@ export class SupplyFlowExecutor {
       },
       selectedPool
     );
+    if (request.action === SupplyAction.repayment) {
+      await this.guardOutstandingDebt(request.profileId, selectedPool);
+    }
     const mechanism =
       requestedMechanism === PlanType.contractInteraction
         ? PlanType.contractInteraction
@@ -264,6 +273,35 @@ export class SupplyFlowExecutor {
         });
       },
     };
+  }
+
+  // The protocol refunds a repayment without a position, but keeps a repayment
+  // to a debt-free position as a service fee unless the pool enables refunds.
+  private async guardOutstandingDebt(
+    profileId: string,
+    pool: DecodedPool
+  ): Promise<void> {
+    const lendingActor = createFlexibleLendingActor(
+      this.params.canisterContext
+    );
+    let positionResult: Awaited<ReturnType<typeof lendingActor.get_position>>;
+    try {
+      positionResult = await lendingActor.get_position(
+        Principal.fromText(profileId),
+        pool.principal
+      );
+    } catch (error) {
+      throw mapCanisterCallErrorToLiquidiumError("get_position", error);
+    }
+
+    if ((positionResult[0]?.debt_native_now ?? 0n) > 0n) {
+      return;
+    }
+
+    throw new LiquidiumError(
+      LiquidiumErrorCode.NO_OUTSTANDING_DEBT,
+      `No outstanding debt to repay in pool ${pool.principal.toText()}`
+    );
   }
 
   async getEvmSupplyContext(
