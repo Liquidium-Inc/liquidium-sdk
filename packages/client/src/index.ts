@@ -111,6 +111,7 @@ export type {
   GetActivityStatusRequest,
   GetActivityStatusResponse,
   InflowActivity,
+  InflowActivityFailure,
   InflowActivityOperation,
   InflowActivityStatus,
   ListActivitiesByProfileRequest,
@@ -120,7 +121,11 @@ export type {
   OutflowActivityOperation,
   OutflowActivityStatus,
 } from "./modules/activities";
-export { ActivitiesModule, ActivityFilter } from "./modules/activities";
+export {
+  ActivitiesModule,
+  ActivityFilter,
+  InflowRefundState,
+} from "./modules/activities";
 export type {
   PaginatedResponse,
   ProtocolActivityEntry,

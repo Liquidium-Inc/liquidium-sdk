@@ -3,6 +3,7 @@ import { Principal } from "@icp-sdk/core/principal";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { DEFAULT_API_BASE_URL } from "../../../core/config";
 import {
+  InflowRefundState,
   LiquidiumClient,
   LiquidiumErrorCode,
   publicIdFromInt,
@@ -491,6 +492,82 @@ describe("ActivitiesModule", () => {
           depositedAmount: ACTIVITY_AMOUNT_BASE_UNITS,
           feeAmount: TOP_UP_FEE_AMOUNT_BASE_UNITS,
           shortfallAmount: TOP_UP_SHORTFALL_AMOUNT_BASE_UNITS,
+        },
+      },
+    });
+  });
+
+  test("maps rejection details for failed inflows", async () => {
+    // given
+    const ACTIVITY_AMOUNT = "2500000";
+    const ACTIVITY_AMOUNT_BASE_UNITS = 2500000n;
+    const ACTIVITY_TIMESTAMP_MS = 1777889521994;
+    const ICP_BLOCK_INDEX = "39037090";
+    const FAILURE_CODE = "position_not_found";
+    const FAILURE_MESSAGE = "Position not found";
+    const responsePayload = {
+      found: true as const,
+      activity: {
+        id: "repayment-1",
+        status: {
+          operation: "repayment" as const,
+          state: "failed" as const,
+          confirmations: null,
+          requiredConfirmations: null,
+        },
+        poolId: "pool-1",
+        asset: "USDT",
+        chain: "ICP" as const,
+        amount: ACTIVITY_AMOUNT,
+        timestampMs: ACTIVITY_TIMESTAMP_MS,
+        txids: [ICP_BLOCK_INDEX],
+        failure: {
+          code: FAILURE_CODE,
+          message: FAILURE_MESSAGE,
+          refund: "recoverable" as const,
+          unexpectedWireField: "ignored",
+        },
+      },
+    };
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify(responsePayload), {
+        status: 200,
+        headers: {
+          "content-type": "application/json",
+        },
+      })
+    );
+    const client = new LiquidiumClient({
+      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
+    });
+
+    // when
+    const result = await client.activities.getStatus({
+      profileId: "profile-1",
+      id: ICP_BLOCK_INDEX,
+    });
+
+    // then
+    expect(result).toEqual({
+      found: true,
+      activity: {
+        id: "repayment-1",
+        status: {
+          operation: "repayment",
+          state: "failed",
+          confirmations: null,
+          requiredConfirmations: null,
+        },
+        poolId: "pool-1",
+        asset: "USDT",
+        chain: "ICP",
+        amount: ACTIVITY_AMOUNT_BASE_UNITS,
+        timestampMs: ACTIVITY_TIMESTAMP_MS,
+        txids: [ICP_BLOCK_INDEX],
+        failure: {
+          code: FAILURE_CODE,
+          message: FAILURE_MESSAGE,
+          refund: InflowRefundState.recoverable,
         },
       },
     });

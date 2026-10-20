@@ -35,6 +35,23 @@ included too.
 Refund delivery is asynchronous. Zero can mean that there are no recovery funds
 or that a scheduled refund has not arrived yet. The SDK does not poll.
 
+To find the pools to query, list failed activities. A rejected deposit or
+repayment has `activity.failure.refund` set to `recoverable` until a recovery
+withdraws that pool's balance, then `recovered`:
+
+```ts
+const activities = await client.activities.list({ profileId, filter: "all" });
+const poolIds = new Set(
+  activities
+    .filter((activity) => activity.failure?.refund === "recoverable")
+    .map((activity) => activity.poolId)
+);
+```
+
+`refund` does not include an amount. One recovery withdraws the full pool
+balance, which can hold several refunds, so use `getRecoveryBalance(...)` for
+the amount.
+
 ## Recover through an ICP wallet
 
 Use a default, read-only client for queries. Pass the authenticated wallet agent
