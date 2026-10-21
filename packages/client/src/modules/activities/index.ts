@@ -11,6 +11,7 @@ export type {
   GetActivityStatusRequest,
   GetActivityStatusResponse,
   InflowActivity,
+  InflowActivityFailure,
   InflowActivityOperation,
   InflowActivityStatus,
   ListActivitiesByProfileRequest,
@@ -20,4 +21,4 @@ export type {
   OutflowActivityOperation,
   OutflowActivityStatus,
 } from "./types";
-export { ActivityFilter } from "./types";
+export { ActivityFilter, InflowRefundState } from "./types";

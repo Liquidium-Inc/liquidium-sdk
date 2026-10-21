@@ -17,6 +17,7 @@ import type {
   GetActivityStatusRequest,
   GetActivityStatusResponse,
   InflowActivity,
+  InflowActivityFailure,
   InflowActivityStatus,
   ListActivitiesRequest,
   OutflowActivity,
@@ -44,6 +45,7 @@ interface ActivityWire {
   txids?: string[];
   status: LiquidiumStatus;
   topUp?: ActivityTopUpWire;
+  failure?: InflowActivityFailure;
 }
 
 interface ListActivitiesResponseWire {
@@ -209,6 +211,10 @@ function mapActivity(wire: ActivityWire): Activity {
       activity.topUp = mapActivityTopUp(wire.topUp);
     }
 
+    if (wire.failure) {
+      activity.failure = mapActivityFailure(wire.failure);
+    }
+
     return activity;
   }
 
@@ -256,5 +262,15 @@ function mapActivityTopUp(wire: ActivityTopUpWire): ActivityTopUp {
       wire.shortfallAmount,
       "activity top-up shortfall amount"
     ),
+  };
+}
+
+function mapActivityFailure(
+  wire: InflowActivityFailure
+): InflowActivityFailure {
+  return {
+    code: wire.code,
+    message: wire.message,
+    refund: wire.refund,
   };
 }
