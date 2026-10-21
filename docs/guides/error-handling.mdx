@@ -56,6 +56,8 @@ try {
 
 If your UI needs different messages for timeout, transport, validation, or protocol failures, use the exported `LiquidiumErrorCode` values.
 
+`NO_OUTSTANDING_DEBT` means `lending.supply(...)` stopped a repayment because the profile has no debt in that pool. Nothing was sent. Reload the position before you offer another repayment.
+
 `SimpleLoanCreatedError` means the remote loan was created but response hydration failed. Recover with the error's `loanId` or `ref` through `client.simpleLoans.get(...)`. Do not call `create(...)` again because that can create a duplicate loan.
 
 Wallet-executed deposit, borrow, and withdraw amounts below SDK minimums throw or return validation errors before state-changing calls. To show the minimum next to an amount input, use `getMinimumDepositAmount(asset)`, `getMinimumBorrowAmount(asset)`, or `getMinimumWithdrawAmount(asset)`. Manual deposit-address flows do not accept an amount, so callers must apply the deposit minimum before broadcasting.

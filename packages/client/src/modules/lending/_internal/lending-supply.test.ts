@@ -11,6 +11,7 @@ import {
   createBtcPoolRecord,
   createEthPoolRecord,
   createIcpPoolRecord,
+  createOutstandingDebtPositionActor,
   createUsdcPoolRecord,
   createUsdtPoolRecord,
   ETH_POOL_ID,
@@ -67,9 +68,11 @@ describe("LendingModule supply", () => {
       action: "repayment",
       principal: Principal.fromText(profileId),
     });
-    vi.spyOn(Actor, "createActor").mockReturnValueOnce({
-      list_pools: vi.fn().mockResolvedValue([createEthPoolRecord()]),
-    } as never);
+    vi.spyOn(Actor, "createActor")
+      .mockReturnValueOnce({
+        list_pools: vi.fn().mockResolvedValue([createEthPoolRecord()]),
+      } as never)
+      .mockReturnValueOnce(createOutstandingDebtPositionActor());
     const client = new LiquidiumClient({});
 
     // when
@@ -205,6 +208,7 @@ describe("LendingModule supply", () => {
           },
         ]),
       } as never)
+      .mockReturnValueOnce(createOutstandingDebtPositionActor())
       .mockReturnValueOnce({
         get_deposit_address: getDepositAddress,
       } as never);
@@ -364,9 +368,11 @@ describe("LendingModule supply", () => {
       action: "repayment",
       principal: Principal.fromText(profileId),
     });
-    vi.spyOn(Actor, "createActor").mockReturnValueOnce({
-      list_pools: vi.fn().mockResolvedValue([createUsdcPoolRecord()]),
-    } as never);
+    vi.spyOn(Actor, "createActor")
+      .mockReturnValueOnce({
+        list_pools: vi.fn().mockResolvedValue([createUsdcPoolRecord()]),
+      } as never)
+      .mockReturnValueOnce(createOutstandingDebtPositionActor());
     const client = new LiquidiumClient({});
 
     // when
@@ -820,9 +826,11 @@ describe("LendingModule supply", () => {
     // given
     const profileId = "aaaaa-aa";
     const repaymentTxid = "0xcontractrepayment";
-    vi.spyOn(Actor, "createActor").mockReturnValueOnce({
-      list_pools: vi.fn().mockResolvedValue([createEthPoolRecord()]),
-    } as never);
+    vi.spyOn(Actor, "createActor")
+      .mockReturnValueOnce({
+        list_pools: vi.fn().mockResolvedValue([createEthPoolRecord()]),
+      } as never)
+      .mockReturnValueOnce(createOutstandingDebtPositionActor());
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
       new Response(JSON.stringify({ txid: repaymentTxid }), {
         status: 200,
@@ -1646,9 +1654,11 @@ describe("LendingModule supply", () => {
   test("executes ckUSDC supply with an ICRC wallet transfer", async () => {
     // given
     const txid = "42";
-    vi.spyOn(Actor, "createActor").mockReturnValueOnce({
-      list_pools: vi.fn().mockResolvedValue([createUsdcPoolRecord()]),
-    } as never);
+    vi.spyOn(Actor, "createActor")
+      .mockReturnValueOnce({
+        list_pools: vi.fn().mockResolvedValue([createUsdcPoolRecord()]),
+      } as never)
+      .mockReturnValueOnce(createOutstandingDebtPositionActor());
     const fetchSpy = vi.spyOn(globalThis, "fetch");
     const sendIcrcTransfer = vi.fn().mockResolvedValue(txid);
     const client = new LiquidiumClient({});
@@ -1954,6 +1964,7 @@ describe("LendingModule supply", () => {
           },
         ]),
       } as never)
+      .mockReturnValueOnce(createOutstandingDebtPositionActor())
       .mockReturnValueOnce({
         get_btc_address: vi.fn().mockResolvedValue("bc1qexamplerepayaddress"),
       } as never);
@@ -2113,5 +2124,70 @@ describe("LendingModule supply", () => {
       message: "Unsupported supply mechanism: contractInteractions",
     });
     expect(createActor).not.toHaveBeenCalled();
+  });
+
+  test.each([
+    { case: "no position", positionResult: [] },
+    { case: "a debt-free position", positionResult: [{ debt_native_now: 0n }] },
+  ])(
+    "rejects repayment with $case before broadcasting",
+    async ({ positionResult }) => {
+      // given
+      const REPAYMENT_AMOUNT = 1_000_000n;
+      const getPosition = vi.fn().mockResolvedValue(positionResult);
+      vi.spyOn(Actor, "createActor")
+        .mockReturnValueOnce({
+          list_pools: vi.fn().mockResolvedValue([createUsdcPoolRecord()]),
+        } as never)
+        .mockReturnValueOnce({ get_position: getPosition } as never);
+      const sendIcrcTransfer = vi.fn();
+      const client = new LiquidiumClient({});
+
+      // when
+      const supplyPromise = client.lending.supply({
+        profileId: "aaaaa-aa",
+        poolId: USDC_POOL_ID,
+        action: "repayment",
+        chain: "ICP",
+        walletAdapter: { sendIcrcTransfer },
+        account: "aaaaa-aa",
+        amount: REPAYMENT_AMOUNT,
+      });
+
+      // then
+      await expect(supplyPromise).rejects.toMatchObject({
+        code: LiquidiumErrorCode.NO_OUTSTANDING_DEBT,
+      });
+      expect(getPosition.mock.calls[0]?.[1]?.toText()).toBe(USDC_POOL_ID);
+      expect(sendIcrcTransfer).not.toHaveBeenCalled();
+    }
+  );
+
+  test("checks debt before requesting a repayment deposit address", async () => {
+    // given
+    const getDepositAddress = vi.fn();
+    vi.spyOn(Actor, "createActor")
+      .mockReturnValueOnce({
+        list_pools: vi.fn().mockResolvedValue([createUsdtPoolRecord()]),
+      } as never)
+      .mockReturnValueOnce({
+        get_position: vi.fn().mockResolvedValue([]),
+      } as never)
+      .mockReturnValueOnce({ get_deposit_address: getDepositAddress } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const supplyPromise = client.lending.supply({
+      profileId: "aaaaa-aa",
+      poolId: USDT_POOL_ID,
+      action: "repayment",
+      chain: "ETH",
+    });
+
+    // then
+    await expect(supplyPromise).rejects.toMatchObject({
+      code: LiquidiumErrorCode.NO_OUTSTANDING_DEBT,
+    });
+    expect(getDepositAddress).not.toHaveBeenCalled();
   });
 });

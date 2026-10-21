@@ -577,7 +577,8 @@ export class LendingModule {
    * @returns A {@link SupplyFlow} receipt with `type`, `target`, `submit`, and
    *   an optional `txid` present when the SDK broadcast for you.
    * @throws {@link LiquidiumError} If validation, transfer planning, or
-   * protocol submission fails.
+   * protocol submission fails. Repayments throw `NO_OUTSTANDING_DEBT` before
+   * returning a target when the profile has no debt in the pool.
    * @throws `Error` If the wallet adapter rejects or fails to broadcast a
    * transaction.
    */
