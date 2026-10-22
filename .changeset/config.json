@@ -12,6 +12,7 @@
     "@liquidium/example-contract-interaction-flow",
     "@liquidium/example-deposit-address-flow",
     "@liquidium/example-liquidation-flow",
+    "@liquidium/example-recovery-flow",
     "@liquidium/example-simple-loans-flow",
     "@liquidium/example-sdk-method-query"
   ]
