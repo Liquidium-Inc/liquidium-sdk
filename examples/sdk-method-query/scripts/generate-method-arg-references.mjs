@@ -354,7 +354,13 @@ function formatDeclaration(declaration) {
     }
   }
 
-  const sourceText = declaration.getText();
+  // getText() omits leading JSDoc, which can carry requirements the type cannot express.
+  const docText = ts
+    .getJSDocCommentsAndTags(declaration)
+    .filter(ts.isJSDoc)
+    .map((doc) => `${doc.getText()}\n`)
+    .join("");
+  const sourceText = `${docText}${declaration.getText()}`;
   return normalizeTypeText(
     sourceText.replace(/^export\s+/, "").replace(/\nexport\s+/g, "\n")
   );
