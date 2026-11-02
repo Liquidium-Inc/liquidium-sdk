@@ -28,7 +28,7 @@ Pool asset symbol.
 
 Defined in: packages/client/src/modules/positions/types.ts:15
 
-Borrowed principal in base units.
+Current outstanding debt in base units after applying the borrow index.
 
 ***
 
@@ -48,7 +48,7 @@ Decimal scale for borrowed amounts.
 
 Defined in: packages/client/src/modules/positions/types.ts:21
 
-Accrued borrow interest in base units.
+Reported borrow-interest metric; do not add it to `borrowed`.
 
 ***
 
