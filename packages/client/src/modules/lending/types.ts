@@ -373,10 +373,12 @@ export interface SolInflowFeeRequest {
   action: SupplyAction;
 }
 
-/** SOL requires account context; other assets require only an asset and chain. */
-export type EstimateInflowFeeRequest =
-  | Exclude<AssetIdentifier, { asset: typeof Asset.SOL }>
-  | SolInflowFeeRequest;
+/**
+ * Asset and chain pair. SOL and ckSOL also require `poolId`, `profileId`, and
+ * `action`; the SDK rejects SOL requests without them before any network call.
+ */
+export type EstimateInflowFeeRequest = AssetIdentifier &
+  Partial<Pick<SolInflowFeeRequest, "poolId" | "profileId" | "action">>;
 
 /** Request for a native ETH or ETH stablecoin deposit address. */
 export interface GetDepositAddressRequest {

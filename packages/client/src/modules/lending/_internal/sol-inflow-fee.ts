@@ -4,7 +4,7 @@ import { LiquidiumError, LiquidiumErrorCode } from "../../../core/errors";
 import { SdkApiPath } from "../../../core/sdk-api-paths";
 import type { ApiClient } from "../../../core/transports/api-client";
 import { parseUnsignedApiBigint } from "../../../core/utils/api-response-parsers";
-import type { InflowFeeEstimate, SolInflowFeeRequest } from "../types";
+import type { EstimateInflowFeeRequest, InflowFeeEstimate } from "../types";
 
 interface SolInflowFeeWire {
   totalFee: string;
@@ -14,7 +14,7 @@ interface SolInflowFeeWire {
 
 export async function estimateSolInflowFee(
   api: ApiClient,
-  request: SolInflowFeeRequest
+  request: EstimateInflowFeeRequest
 ): Promise<InflowFeeEstimate> {
   if (
     !request.poolId ||

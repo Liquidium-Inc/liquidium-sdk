@@ -1,7 +1,7 @@
 import { Actor } from "@icp-sdk/core/agent";
 import { Principal } from "@icp-sdk/core/principal";
 import { base58 } from "@scure/base";
-import { afterEach, expect, test, vi } from "vitest";
+import { afterEach, expect, expectTypeOf, test, vi } from "vitest";
 import { mockDeep } from "vitest-mock-extended";
 import { decodeIcrcAccountAddress } from "../../../core/accounts";
 import {
@@ -20,8 +20,14 @@ import type {
 import { CK_CANISTER_IDS } from "../../../core/config";
 import { encodeInflowSubaccount } from "../../../core/utils/inflow-subaccount";
 import { normalizeWalletSignature } from "../../../core/utils/signature";
-import { LiquidiumClient, LiquidiumErrorCode } from "../../../index";
+import {
+  type AssetIdentifier,
+  LiquidiumClient,
+  LiquidiumErrorCode,
+  type SupplyTarget,
+} from "../../../index";
 import { parseOutflowDestination } from "../mappers";
+import type { EstimateInflowFeeRequest } from "../types";
 import { createBtcPoolRecord } from "./test-fixtures";
 
 type SolTestActor = Pick<
@@ -283,6 +289,12 @@ test("sends ckSOL to the correct ledger and repayment subaccount", async () => {
       }),
     })
   );
+});
+
+test("keeps pre-SOL fee request call shapes assignable", () => {
+  // then
+  expectTypeOf<AssetIdentifier>().toExtend<EstimateInflowFeeRequest>();
+  expectTypeOf<SupplyTarget>().toExtend<EstimateInflowFeeRequest>();
 });
 
 test("requires account context for SOL fees and never returns a fallback on failure", async () => {
