@@ -30,7 +30,10 @@ type SolTestActor = Pick<
 > &
   Pick<CkSolMinterActor, "get_deposit_address" | "get_minter_info"> &
   IcrcLedgerActor &
-  Pick<LendingActor, "get_nonce" | "get_wallet_profile" | "register_profile">;
+  Pick<
+    LendingActor,
+    "get_nonce" | "get_wallet_profile" | "register_profile" | "withdraw"
+  >;
 
 const SOL_POOL_ID = "efo3x-cyaaa-aaaae-qkpva-cai";
 const PROFILE_ID = "rrkah-fqaaa-aaaaa-aaaaq-cai";
@@ -397,6 +400,39 @@ test("requires native SOL withdrawals to cover the minter minimum and ledger fee
   });
   await expect(atMinimum).resolves.toMatchObject({ account: SOL_ADDRESS });
   await expect(smallCkSol).resolves.toMatchObject({ account: SOL_ADDRESS });
+});
+
+test("rechecks the native SOL floor when a prepared withdrawal is submitted", async () => {
+  // given
+  const actor = createSolActor();
+  const client = new LiquidiumClient({ canisterIds: SOL_CANISTER_IDS });
+  const preparedLamports =
+    MINTER_MINIMUM_WITHDRAWAL_LAMPORTS +
+    CKSOL_LEDGER_FEE_LAMPORTS * SOL_OUTFLOW_LEDGER_FEE_COUNT;
+  const action = await client.lending.prepareWithdraw({
+    profileId: PROFILE_ID,
+    poolId: SOL_POOL_ID,
+    amount: preparedLamports,
+    chain: "SOL",
+    receiver: SOL_ADDRESS,
+    signerWalletAddress: SOL_ADDRESS,
+  });
+  actor.get_minter_info.mockResolvedValue({
+    minimum_withdrawal_amount: preparedLamports,
+    withdrawal_fee: 1_000_000n,
+  } satisfies Awaited<ReturnType<SolTestActor["get_minter_info"]>>);
+
+  // when
+  const result = action.submit({
+    signature: "ab".repeat(SIGNATURE_BYTES),
+    chain: "SOL",
+  });
+
+  // then
+  await expect(result).rejects.toMatchObject({
+    code: LiquidiumErrorCode.VALIDATION_ERROR,
+  });
+  expect(actor.withdraw).not.toHaveBeenCalled();
 });
 
 function solPool(poolId: string): FlexiblePool {

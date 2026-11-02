@@ -317,6 +317,11 @@ export class LendingModule {
       chain: request.chain,
       evmReadClient: this.evmReadClient,
     });
+    await guardSolNativeOutflowMinimum(this.canisterContext, {
+      asset: request.asset,
+      destinationChain: request.chain,
+      amount: request.amount,
+    });
 
     try {
       const result = await createLendingActor(this.canisterContext).withdraw(
@@ -517,6 +522,11 @@ export class LendingModule {
       asset: request.asset,
       chain: request.chain,
       evmReadClient: this.evmReadClient,
+    });
+    await guardSolNativeOutflowMinimum(this.canisterContext, {
+      asset: request.asset,
+      destinationChain: request.chain,
+      amount: request.amount,
     });
 
     try {
