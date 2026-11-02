@@ -846,6 +846,40 @@ describe("PositionsModule", () => {
     });
   });
 
+  /**
+   * Given: the USDC position from the reported overpay, where debt_native_now
+   * already includes accrued interest
+   * When: quoting the max repay amount
+   * Then: only the 0.1 percent buffer is added, not the reported interest
+   */
+  test("quotes the reported USDC overpay position from current debt only", async () => {
+    // given
+    const CURRENT_DEBT_USDC_NATIVE = 1_250_468_210n;
+    const REPORTED_DEBT_INTEREST_USDC_NATIVE = 10_112_145n;
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      get_position: vi.fn().mockResolvedValue([
+        makePositionView({
+          asset: { USDC: null },
+          debt_native_now: CURRENT_DEBT_USDC_NATIVE,
+          total_debt_interest: REPORTED_DEBT_INTEREST_USDC_NATIVE,
+        }),
+      ]),
+    } as never);
+    const client = new LiquidiumClient({});
+
+    // when
+    const repay = await client.positions.getMaxRepayAmount(PROFILE_ID, POOL_ID);
+
+    // then
+    const EXPECTED_AMOUNT = 1_251_718_678n;
+    const MAX_BUFFER_OVERPAY = 1_250_469n;
+    expect(repay.amount).toBe(EXPECTED_AMOUNT);
+    expect(repay.amount).toBeGreaterThanOrEqual(CURRENT_DEBT_USDC_NATIVE);
+    expect(repay.amount - CURRENT_DEBT_USDC_NATIVE).toBeLessThanOrEqual(
+      MAX_BUFFER_OVERPAY
+    );
+  });
+
   test("applies a custom accrual buffer when provided", async () => {
     // given
     const DEBT_NATIVE = 1_000_000n;
