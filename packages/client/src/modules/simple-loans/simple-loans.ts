@@ -50,6 +50,7 @@ import { getVariantKey } from "../../core/utils/variant";
 import type { ActivitiesModule, Activity } from "../activities";
 import { ActivityFilter } from "../activities";
 import {
+  assertConfiguredSolPool,
   getPoolById,
   resolveSupplyTargetForPool,
 } from "../lending/_internal/supply-targets";
@@ -360,6 +361,12 @@ export class SimpleLoansModule {
    */
   async create(request: CreateSimpleLoanRequest): Promise<SimpleLoan> {
     validateCreateRequest(request);
+    // Hydration needs SOL targets after the POST; fail before creating the loan.
+    for (const leg of [request.collateral, request.borrow]) {
+      if (leg.asset === CoreAsset.SOL) {
+        assertConfiguredSolPool(this.canisterContext, leg.poolId);
+      }
+    }
     const borrowDestination = resolveSimpleLoanDestination({
       destination: request.borrow.destination,
       asset: request.borrow.asset,

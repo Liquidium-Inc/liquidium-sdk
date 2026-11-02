@@ -1,8 +1,9 @@
 import { Actor } from "@icp-sdk/core/agent";
 import { Principal } from "@icp-sdk/core/principal";
 import { afterEach, expect, test, vi } from "vitest";
-import { LiquidiumClient } from "../../../index";
+import { LiquidiumClient, LiquidiumErrorCode } from "../../../index";
 import {
+  BTC_POOL_ID,
   createBtcPoolRecord,
   createSimpleLoan,
   createSimpleLoanPosition,
@@ -149,3 +150,37 @@ function quoteFetch(failRepayment = false) {
     throw new Error(`Unexpected request: ${url}`);
   });
 }
+
+test("rejects a SOL loan for an unconfigured pool before creating it", async () => {
+  // given
+  const BORROW_SATS = 10_000n;
+  const LTV_MAX_BPS = 6_000n;
+  const DEPOSIT_WINDOW_SECONDS = 3_600n;
+  const fetch = vi.fn<typeof globalThis.fetch>();
+  const client = new LiquidiumClient({ fetch });
+
+  // when
+  const result = client.simpleLoans.create({
+    collateral: {
+      poolId: SOL_POOL_ID,
+      asset: "SOL",
+      amount: COLLATERAL_LAMPORTS,
+    },
+    borrow: {
+      poolId: BTC_POOL_ID,
+      asset: "BTC",
+      chain: "ICP",
+      amount: BORROW_SATS,
+      destination: PROFILE_ID,
+    },
+    refund: { chain: "SOL", destination: SOL_ADDRESS },
+    ltvMaxBps: LTV_MAX_BPS,
+    depositWindowSeconds: DEPOSIT_WINDOW_SECONDS,
+  });
+
+  // then
+  await expect(result).rejects.toMatchObject({
+    code: LiquidiumErrorCode.VALIDATION_ERROR,
+  });
+  expect(fetch).not.toHaveBeenCalled();
+});

@@ -71,16 +71,8 @@ export async function resolveSupplyTargetForPool(
     action: request.action,
   };
 
-  // Only the active pool's addresses are monitored and sponsored.
-  const configuredSolPoolId = canisterContext.canisterIds.pools.sol;
-  if (
-    identifier.asset === Asset.SOL &&
-    request.poolId !== configuredSolPoolId
-  ) {
-    throw new LiquidiumError(
-      LiquidiumErrorCode.VALIDATION_ERROR,
-      `SOL inflow targets require the configured canisterIds.pools.sol ${configuredSolPoolId ?? "(unset)"}, received ${request.poolId}`
-    );
+  if (identifier.asset === Asset.SOL) {
+    assertConfiguredSolPool(canisterContext, request.poolId);
   }
 
   if (mechanism === SupplyPlanType.contractInteraction) {
@@ -198,6 +190,20 @@ export function mapDepositAccountErrorToLiquidiumError(
     LiquidiumErrorCode.DEPOSIT_ADDRESS_ERROR,
     "Deposit address canister returned an unknown error"
   );
+}
+
+/** Only the active SOL pool's addresses are monitored and sponsored. */
+export function assertConfiguredSolPool(
+  canisterContext: CanisterContext,
+  poolId: string
+): void {
+  const configuredSolPoolId = canisterContext.canisterIds.pools.sol;
+  if (poolId !== configuredSolPoolId) {
+    throw new LiquidiumError(
+      LiquidiumErrorCode.VALIDATION_ERROR,
+      `SOL pools require the configured canisterIds.pools.sol ${configuredSolPoolId ?? "(unset)"}, received ${poolId}`
+    );
+  }
 }
 
 export async function getPoolById(
