@@ -1053,6 +1053,7 @@ function createMockWalletAdapter(
     sendBtcTransaction: async () => txHash,
     sendEthTransaction: async () => txHash,
     sendIcrcTransfer: async () => txHash,
+    sendSolTransaction: async () => txHash,
   };
 }
 
