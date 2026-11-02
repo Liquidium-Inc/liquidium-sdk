@@ -10,6 +10,7 @@ export interface AssetMetadata {
 
 /** Presentation metadata keyed by SDK asset symbol. */
 export const ASSET_METADATA: Readonly<Record<AssetSymbol, AssetMetadata>> = {
+  [Asset.SOL]: { symbol: Asset.SOL, displayName: "Solana" },
   [Asset.BTC]: {
     symbol: Asset.BTC,
     displayName: "Bitcoin",

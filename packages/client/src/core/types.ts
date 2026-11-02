@@ -53,6 +53,8 @@ export interface LiquidiumClientConfig {
 
 /** Pool canister principal text values grouped by pool asset. */
 export interface PoolCanisterIds {
+  /** Active SOL pool. Set explicitly until a production default is published. */
+  sol?: string;
   /** BTC pool canister principal. */
   btc: string;
   /** ETH pool canister principal. */
@@ -92,6 +94,7 @@ export type Environment = (typeof Environment)[keyof typeof Environment];
 
 /** Canonical asset symbols supported by state-mutating protocol flows. */
 export const Asset = {
+  SOL: "SOL",
   BTC: "BTC",
   ETH: "ETH",
   ICP: "ICP",
@@ -103,6 +106,7 @@ export type Asset = (typeof Asset)[keyof typeof Asset];
 
 /** Canonical chain identifiers used by wallet and protocol actions. */
 export const Chain = {
+  SOL: "SOL",
   BTC: "BTC",
   ETH: "ETH",
   ICP: "ICP",
@@ -111,7 +115,22 @@ export const Chain = {
 export type Chain = (typeof Chain)[keyof typeof Chain];
 
 /** Chains whose wallets can authorize Liquidium protocol actions. */
-export type SigningChain = typeof Chain.BTC | typeof Chain.ETH;
+export type SigningChain =
+  | typeof Chain.BTC
+  | typeof Chain.ETH
+  | typeof Chain.SOL;
+
+/** Native SOL transferred on Solana. */
+export interface SolOnSolAssetIdentifier {
+  chain: typeof Chain.SOL;
+  asset: typeof Asset.SOL;
+}
+
+/** ckSOL transferred on the Internet Computer. */
+export interface SolOnIcpAssetIdentifier {
+  chain: typeof Chain.ICP;
+  asset: typeof Asset.SOL;
+}
 
 /** BTC transferred on the Bitcoin chain. */
 export interface BtcOnBtcAssetIdentifier {
@@ -169,6 +188,8 @@ export interface UsdtOnIcpAssetIdentifier {
 
 /** Supported asset and transfer-chain combinations. */
 export type AssetIdentifier =
+  | SolOnSolAssetIdentifier
+  | SolOnIcpAssetIdentifier
   | BtcOnBtcAssetIdentifier
   | EthOnEthAssetIdentifier
   | UsdcOnEthAssetIdentifier
@@ -185,6 +206,8 @@ export function isAssetIdentifier(identifier: {
   asset: string;
 }): identifier is AssetIdentifier {
   switch (identifier.chain) {
+    case Chain.SOL:
+      return identifier.asset === Asset.SOL;
     case Chain.BTC:
       return identifier.asset === Asset.BTC;
     case Chain.ETH:
@@ -195,6 +218,7 @@ export function isAssetIdentifier(identifier: {
       );
     case Chain.ICP:
       return (
+        identifier.asset === Asset.SOL ||
         identifier.asset === Asset.BTC ||
         identifier.asset === Asset.ETH ||
         identifier.asset === Asset.ICP ||

@@ -63,7 +63,7 @@ export type CreateSimpleLoanBorrow = AssetIdentifier & {
   /**
    * Destination that receives the borrowed asset after the loan starts.
    *
-   * Pass either a string shorthand or a typed destination. For BTC/ETH chain
+   * Pass either a string shorthand or a typed destination. For BTC/ETH/SOL chain
    * outflows this is usually the user's chain address. Chain-key assets on ICP
    * require an `IcPrincipal`; native ICP also accepts `IcpAccountIdentifier`
    * and `IcrcAccount` destinations.
@@ -78,7 +78,7 @@ export interface CreateSimpleLoanRefund {
   /**
    * Destination that receives collateral refunds or withdrawals.
    *
-   * Pass either a string shorthand or a typed destination. For BTC/ETH chain
+   * Pass either a string shorthand or a typed destination. For BTC/ETH/SOL chain
    * outflows this is usually the user's chain address. Chain-key assets on ICP
    * require an `IcPrincipal`; native ICP also accepts `IcpAccountIdentifier`
    * and `IcrcAccount` destinations.
@@ -365,7 +365,7 @@ export type SimpleLoanEventType =
 
 /** Fee-inclusive collateral deposit quote for one transfer target. */
 export interface SimpleLoanInitialDepositTargetQuote {
-  /** Full amount to send to the collateral deposit target, including fee. */
+  /** Full transfer including inflow fee and any SOL minimum-send floor. Sender transaction fees are separate. */
   amount: bigint;
   /** Inflow fee amount in base units added to the transfer amount. Native ETH falls back to 0.00025 ETH when the live estimate fails or is non-positive. */
   inflowFeeAmount: bigint;
@@ -375,7 +375,7 @@ export interface SimpleLoanInitialDepositTargetQuote {
 
 /** Fee-inclusive repayment quote for one transfer target. */
 export interface SimpleLoanRepaymentTargetQuote {
-  /** Full amount to send to the repayment target, including fee and interest buffer. */
+  /** Full transfer including fee, interest buffer, and any SOL minimum-send floor. Native SOL can exceed the debt plus fees for small repayments; the protocol keeps that excess as a pool fee unless the pool sets a repayment refund threshold. */
   amount: bigint;
   /** Inflow fee amount in base units added to the repayment transfer. Native ETH falls back to 0.00025 ETH when the live estimate fails or is non-positive. */
   inflowFeeAmount: bigint;

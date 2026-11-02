@@ -1,11 +1,13 @@
 import { base64, base64nopad } from "@scure/base";
 import { bytesToHex as encodeBytesToHex, isHex } from "viem";
+import { validateSolAddress } from "../address-validation";
 import { LiquidiumError, LiquidiumErrorCode } from "../errors";
 import { Chain, type SigningChain } from "../types";
 
 const HEX_PREFIX = "0x";
 const HEX_BYTE_CHAR_LENGTH = 2;
 const BASE64_PADDING = "=";
+const SOL_SIGNATURE_HEX_LENGTH = 128;
 
 export function normalizeWalletSignature(
   signature: string,
@@ -16,7 +18,27 @@ export function normalizeWalletSignature(
       return normalizeBtcSignature(signature);
     case Chain.ETH:
       return normalizeHexSignature(signature);
+    case Chain.SOL: {
+      const normalized = normalizeHexSignature(signature);
+      if (
+        normalized.length !== SOL_SIGNATURE_HEX_LENGTH ||
+        !isHexBytes(normalized)
+      ) {
+        throw new LiquidiumError(
+          LiquidiumErrorCode.SIGNATURE_ERROR,
+          "SOL signature must be 64 hex-encoded bytes"
+        );
+      }
+      return normalized;
+    }
   }
+}
+
+export function validateSigningAccount(
+  account: string,
+  chain: SigningChain
+): void {
+  if (chain === Chain.SOL) validateSolAddress(account);
 }
 
 export function normalizeHexSignature(signature: string): string {

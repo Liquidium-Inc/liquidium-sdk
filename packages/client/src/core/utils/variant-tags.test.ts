@@ -53,7 +53,7 @@ describe("extractVariantTag", () => {
     expect(tag).toBe("ETH");
   });
 
-  test("should return null for an unsupported hashed tag", () => {
+  test("should decode a hashed SOL tag", () => {
     // given
     const hash = idlLabelToId("SOL");
     const variant = { [`_${hash}_`]: null };
@@ -62,7 +62,7 @@ describe("extractVariantTag", () => {
     const tag = extractVariantTag(variant, KNOWN_ASSET_TAGS);
 
     // then
-    expect(tag).toBeNull();
+    expect(tag).toBe("SOL");
   });
 
   test("should return null for an unknown tag", () => {

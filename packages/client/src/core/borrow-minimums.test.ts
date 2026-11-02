@@ -66,7 +66,7 @@ describe("borrow minimums", () => {
   test("should not return a minimum validation error for unsupported assets", () => {
     // given
     const amount = 1n;
-    const asset = "SOL";
+    const asset = "DOGE";
 
     // when
     const validationError = getBorrowAmountMinimumValidationError({

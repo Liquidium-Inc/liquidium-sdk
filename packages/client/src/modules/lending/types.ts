@@ -167,7 +167,7 @@ export interface RecoveryRequest {
   receiver: LiquidiumAccountInput;
 }
 
-/** Recovery authorized by a linked BTC or ETH wallet signature. */
+/** Recovery authorized by a linked BTC, ETH, or SOL wallet signature. */
 export interface PrepareRecoveryRequest extends RecoveryRequest {
   signerWalletAddress: string;
 }
@@ -202,7 +202,7 @@ export interface RecoveryAction
   actionType: typeof WalletActionKind.recoverFunds;
 }
 
-/** Wallet dependencies for recovery through a linked BTC or ETH account. */
+/** Wallet dependencies for recovery through a linked BTC, ETH, or SOL account. */
 export interface RecoverWithWalletRequest
   extends PrepareRecoveryRequest,
     WalletExecutionParams {}
@@ -272,7 +272,10 @@ export interface WalletTransferSupplyFlowRequest extends BaseSupplyFlowRequest {
   /** Wallet adapter used to broadcast the transfer. */
   walletAdapter: Pick<
     WalletAdapter,
-    "sendBtcTransaction" | "sendEthTransaction" | "sendIcrcTransfer"
+    | "sendBtcTransaction"
+    | "sendEthTransaction"
+    | "sendIcrcTransfer"
+    | "sendSolTransaction"
   >;
   /** Sender wallet account. */
   account: string;
@@ -346,7 +349,7 @@ export interface SubmitSupplyFlowInflowRequest {
   /** Broadcast transaction id or hash. */
   txid: string;
   /** Chain where the transaction was broadcast, when not implied by the flow. */
-  chain?: Extract<Chain, "BTC" | "ETH">;
+  chain?: Extract<Chain, "BTC" | "ETH" | "SOL">;
 }
 
 /** Body for direct `lending.submitInflow`. */
@@ -361,8 +364,19 @@ export interface SubmitInflowResponse {
   txid: string;
 }
 
-/** Chain and asset pair for estimating an inflow target fee. */
-export type EstimateInflowFeeRequest = AssetIdentifier;
+/** Account-specific native SOL or ckSOL fee request. */
+export interface SolInflowFeeRequest {
+  asset: typeof Asset.SOL;
+  chain: typeof Chain.SOL | typeof Chain.ICP;
+  poolId: string;
+  profileId: string;
+  action: SupplyAction;
+}
+
+/** SOL requires account context; other assets require only an asset and chain. */
+export type EstimateInflowFeeRequest =
+  | Exclude<AssetIdentifier, { asset: typeof Asset.SOL }>
+  | SolInflowFeeRequest;
 
 /** Request for a native ETH or ETH stablecoin deposit address. */
 export interface GetDepositAddressRequest {
@@ -380,6 +394,10 @@ export interface GetDepositAddressRequest {
 export interface InflowFeeEstimate {
   /** Estimated total fee rounded up in the asset's base units. */
   totalFee: bigint;
+  /** SOL/ckSOL minimum gross transfer that can produce a positive credit. */
+  minimumSendAmount?: bigint;
+  /** SOL/ckSOL sender fee, paid separately from the transfer amount. */
+  walletTransferFee?: bigint;
 }
 
 /** Request for ERC-20 approval and deposit planning. */

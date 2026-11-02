@@ -1,0 +1,21 @@
+---
+title: SOL transfer quotes
+description: Inspect native SOL and ckSOL deposit targets without broadcasting.
+sidebar_position: 430
+---
+
+# SOL transfer quotes
+
+Build the client, then run the read-only example with an existing Liquidium
+profile and the active SOL pool for your SDK API deployment:
+
+```sh
+pnpm --filter @liquidium/client build
+node examples/solana-flow.mjs <pool-principal> <profile-principal> \
+  https://your-deployment.example/api/sdk
+```
+
+Pass the lending principal as a fourth argument for a non-default deployment.
+The script prints native SOL and ckSOL targets, inflow fees, minimum sends, and
+sender fees. It does not create a profile or send funds. Amounts are decimal
+lamport strings. See [Use SOL and ckSOL](../guides/solana) for wallet integration.

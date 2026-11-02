@@ -33,6 +33,7 @@ const OMITTED_DECLARATIONS = new Set([
   "SendBtcTransactionRequest",
   "SendEthTransactionRequest",
   "SendIcrcTransferRequest",
+  "SendSolTransactionRequest",
   "SignMessageRequest",
   "WalletAdapter",
 ]);

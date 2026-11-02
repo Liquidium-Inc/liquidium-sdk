@@ -1,3 +1,4 @@
+import { base58 } from "@scure/base";
 import {
   Network as BitcoinAddressNetwork,
   validate as validateBitcoinAddress,
@@ -17,10 +18,22 @@ interface NormalizeExternalAddressParams {
 const BTC_MAINNET_ADDRESS_ERROR = "Address must be a valid mainnet BTC address";
 const EVM_ADDRESS_ERROR = "Address must be a valid EVM address";
 const ADDRESS_CHAIN_MISMATCH_ERROR = "Address chain must match asset";
+const SOL_ADDRESS_BYTES = 32;
+const SOL_ADDRESS_MAX_LENGTH = 44;
+export const MAX_SOL_AMOUNT_LAMPORTS = (1n << 64n) - 1n;
 
 export function normalizeExternalAddress(
   params: NormalizeExternalAddressParams
 ): string {
+  if (params.asset === Asset.SOL) {
+    if (params.chain !== Chain.SOL) {
+      throw new LiquidiumError(
+        LiquidiumErrorCode.INVALID_ADDRESS,
+        ADDRESS_CHAIN_MISMATCH_ERROR
+      );
+    }
+    return validateSolAddress(params.address);
+  }
   if (params.asset === Asset.BTC) {
     if (params.chain !== Chain.BTC) {
       throw new LiquidiumError(
@@ -71,6 +84,33 @@ export function normalizeAndValidateEvmAddress(
   }
 
   return getAddress(address) as EvmAddress;
+}
+
+export function validateSolAddress(address: string): string {
+  try {
+    if (
+      address.length > SOL_ADDRESS_MAX_LENGTH ||
+      base58.decode(address).length !== SOL_ADDRESS_BYTES
+    ) {
+      throw new Error("Invalid SOL address size");
+    }
+    return address;
+  } catch (cause) {
+    throw new LiquidiumError(
+      LiquidiumErrorCode.INVALID_ADDRESS,
+      "Address must be a base58-encoded 32-byte Solana address",
+      cause
+    );
+  }
+}
+
+export function validateSolAmount(amount: bigint): void {
+  if (amount <= 0n || amount > MAX_SOL_AMOUNT_LAMPORTS) {
+    throw new LiquidiumError(
+      LiquidiumErrorCode.VALIDATION_ERROR,
+      "SOL amount must be positive and fit in uint64 lamports"
+    );
+  }
 }
 
 function isEvmAsset(asset: string): boolean {

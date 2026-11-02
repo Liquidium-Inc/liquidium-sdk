@@ -15,9 +15,9 @@ export type ActivityFilter =
 export interface ActivityTopUp {
   /** Whether another transfer is needed before processing can continue. */
   required: boolean;
-  /** Total same-token deposited amount counted toward the current fee. */
+  /** Total same-token deposited amount counted toward the current fee. For native SOL, the finalised address balance, including retained rent. */
   depositedAmount: bigint;
-  /** Current deposit-address processing fee. */
+  /** Current deposit-address processing fee. For native SOL, the total address balance required before processing, not only the fee. */
   feeAmount: bigint;
   /** Additional amount needed before processing can start. */
   shortfallAmount: bigint;

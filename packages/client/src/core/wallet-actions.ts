@@ -70,6 +70,15 @@ export interface SendBtcTransactionRequest {
   actionType: string;
 }
 
+/** Native SOL transfer. The adapter builds, signs, and broadcasts the transaction. */
+export interface SendSolTransactionRequest {
+  chain: "SOL";
+  toAddress: string;
+  amountLamports: bigint;
+  account?: string;
+  actionType: string;
+}
+
 /** ICRC ledger transfer payload passed to wallet adapters. */
 export interface IcrcTransferDetails {
   /** Ledger canister principal that should receive the transfer call. */
@@ -102,12 +111,14 @@ export interface SendIcrcTransferRequest {
  * Optional wallet capabilities. Implement only what your flow uses:
  *
  * - `signMessage` - account creation, borrow, withdraw, recovery
- * - `sendBtcTransaction` / `sendEthTransaction` - automated native-asset transfer supply
+ * - `sendBtcTransaction` / `sendEthTransaction` / `sendSolTransaction` - native-asset transfer supply
  * - `sendIcrcTransfer` - automated ck-ledger and ICP ledger transfer supply
  * - `sendEthTransaction` - contract-interaction supply and ETH native-asset sends
  */
 export interface WalletAdapter {
-  /** Signs an SDK plaintext message and returns the wallet signature. BTC adapters may return base64 BIP-322 or hex-encoded signature bytes. */
+  /** Sends native SOL and returns its case-sensitive base58 transaction signature. */
+  sendSolTransaction?: (request: SendSolTransactionRequest) => Promise<string>;
+  /** Signs an SDK plaintext message. BTC accepts base64 BIP-322 or hex; SOL requires 64 hex-encoded Ed25519 bytes. */
   signMessage?: (request: SignMessageRequest) => Promise<string>;
   /** Sends an EVM transaction and returns its transaction hash. */
   sendEthTransaction?: (request: SendEthTransactionRequest) => Promise<string>;
@@ -119,7 +130,7 @@ export interface WalletAdapter {
 
 /** Signature payload submitted to a sign-message action. */
 export interface SignatureInfo {
-  /** Wallet signature over the action message. BTC signatures may be base64 BIP-322 or hex-encoded bytes. */
+  /** Wallet signature. BTC accepts base64 BIP-322 or hex; SOL requires 64 hex-encoded Ed25519 bytes. */
   signature: string;
   /** Chain used to produce the signature. */
   chain: SigningChain;

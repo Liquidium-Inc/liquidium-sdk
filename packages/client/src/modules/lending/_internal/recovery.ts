@@ -14,7 +14,10 @@ import { createLiquidiumStatus } from "../../../core/status";
 import type { ApiClient } from "../../../core/transports/api-client";
 import type { CanisterContext } from "../../../core/transports/canister-context";
 import type { Asset, EvmReadClient } from "../../../core/types";
-import { normalizeWalletSignature } from "../../../core/utils/signature";
+import {
+  normalizeWalletSignature,
+  validateSigningAccount,
+} from "../../../core/utils/signature";
 import { computeExpiryTimestampFromNow } from "../../../core/utils/time";
 import {
   WalletActionKind,
@@ -143,8 +146,9 @@ export async function prepareRecovery(
       signerWalletAddress: signerAccount,
       expiryTimestamp: transfer.expiryTimestamp,
     },
-    submit: async (signature) =>
-      submitTransfer(
+    submit: async (signature) => {
+      validateSigningAccount(signerAccount, signature.chain);
+      return submitTransfer(
         context,
         transfer,
         {
@@ -158,7 +162,8 @@ export async function prepareRecovery(
           },
         },
         context.canisterContext
-      ),
+      );
+    },
   };
 }
 

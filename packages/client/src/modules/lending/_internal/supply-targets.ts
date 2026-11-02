@@ -3,8 +3,12 @@ import {
   createIcrcAccount,
   encodeIcpAccountIdentifier,
 } from "../../../core/accounts";
-import { normalizeAndValidateEvmAddress } from "../../../core/address-validation";
+import {
+  normalizeAndValidateEvmAddress,
+  validateSolAddress,
+} from "../../../core/address-validation";
 import { createCkBtcMinterActor } from "../../../core/canisters/ckbtc/minter";
+import { createCkSolMinterActor } from "../../../core/canisters/cksol/minter";
 import {
   createDepositAccountsActor,
   type DepositAccountErrors,
@@ -66,6 +70,18 @@ export async function resolveSupplyTargetForPool(
     poolId: request.poolId,
     action: request.action,
   };
+
+  // Only the active pool's addresses are monitored and sponsored.
+  const configuredSolPoolId = canisterContext.canisterIds.pools.sol;
+  if (
+    identifier.asset === Asset.SOL &&
+    request.poolId !== configuredSolPoolId
+  ) {
+    throw new LiquidiumError(
+      LiquidiumErrorCode.VALIDATION_ERROR,
+      `SOL inflow targets require the configured canisterIds.pools.sol ${configuredSolPoolId ?? "(unset)"}, received ${request.poolId}`
+    );
+  }
 
   if (mechanism === SupplyPlanType.contractInteraction) {
     return getIcrcAccountSupplyTarget(request.profileId, targetRequest);
@@ -211,6 +227,13 @@ interface ResolveSupplyAssetIdentifierParams {
 function resolveSupplyAssetIdentifier(
   params: ResolveSupplyAssetIdentifierParams
 ): AssetIdentifier {
+  if (
+    params.asset === Asset.SOL &&
+    params.poolChain === Chain.SOL &&
+    (params.transferChain === Chain.SOL || params.transferChain === Chain.ICP)
+  ) {
+    return { asset: Asset.SOL, chain: params.transferChain };
+  }
   if (params.asset === Asset.BTC && params.poolChain === Chain.BTC) {
     if (params.transferChain === Chain.BTC) {
       return { asset: Asset.BTC, chain: Chain.BTC };
@@ -255,6 +278,20 @@ async function getChainAddressSupplyTarget(
   profileId: string,
   request: SupplyTargetRequest
 ): Promise<SupplyTarget> {
+  if (request.chain === Chain.SOL) {
+    const address = await createCkSolMinterActor(
+      canisterContext
+    ).get_deposit_address({
+      owner: [Principal.fromText(request.poolId)],
+      subaccount: [
+        encodeInflowSubaccount({
+          action: request.action,
+          principal: Principal.fromText(profileId),
+        }),
+      ],
+    });
+    return { ...request, address: validateSolAddress(address) };
+  }
   if (request.chain === Chain.ETH) {
     const subaccount = encodeInflowSubaccount({
       action: request.action,

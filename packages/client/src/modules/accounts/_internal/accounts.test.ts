@@ -375,7 +375,7 @@ describe("AccountsModule", () => {
     expect(createActor).not.toHaveBeenCalled();
   });
 
-  test("throws when a profile contains an unsupported wallet chain", async () => {
+  test("returns a linked SOL wallet without changing its address", async () => {
     // given
     vi.spyOn(Actor, "createActor").mockReturnValue({
       get_profile_wallets: vi.fn().mockResolvedValue([
@@ -388,14 +388,12 @@ describe("AccountsModule", () => {
     const client = new LiquidiumClient({});
 
     // when
+    const wallets = await client.accounts.listLinkedWallets("aaaaa-aa");
 
     // then
-    await expect(
-      client.accounts.listLinkedWallets("aaaaa-aa")
-    ).rejects.toMatchObject({
-      code: LiquidiumErrorCode.INTERNAL,
-      message: "Unsupported wallet chain returned for profile wallet: SOL",
-    });
+    expect(wallets).toEqual([
+      { address: "So11111111111111111111111111111111111111112", chain: "SOL" },
+    ]);
   });
 
   test("rejects ICP as a profile signing wallet chain", async () => {

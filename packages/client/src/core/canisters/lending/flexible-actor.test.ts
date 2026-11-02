@@ -156,7 +156,7 @@ describe("decodeFlexiblePool", () => {
     expect(decoded?.chain).toBe("ETH");
   });
 
-  test("should return null for an unsupported SOL pool", () => {
+  test("should decode a SOL pool", () => {
     // given
     const pool = createFlexiblePool({
       asset: { SOL: null },
@@ -167,7 +167,7 @@ describe("decodeFlexiblePool", () => {
     const decoded = decodeFlexiblePool(pool);
 
     // then
-    expect(decoded).toBeNull();
+    expect(decoded).toMatchObject({ asset: "SOL", chain: "SOL" });
   });
 
   test("should decode a pool with hashed variant keys from IDL.Unknown", () => {

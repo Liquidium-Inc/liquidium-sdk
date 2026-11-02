@@ -3,7 +3,10 @@ import type {
   CanisterLiquidiumAccount,
   LiquidiumAccountReference,
 } from "../../core/accounts";
-import { normalizeAndValidateEvmAddress } from "../../core/address-validation";
+import {
+  normalizeAndValidateEvmAddress,
+  validateSolAmount,
+} from "../../core/address-validation";
 import { getBorrowAmountMinimumValidationError } from "../../core/borrow-minimums";
 import { createCkBtcLedgerActor } from "../../core/canisters/ckbtc/ledger";
 import { createCkBtcMinterActor } from "../../core/canisters/ckbtc/minter";
@@ -32,6 +35,7 @@ import {
 } from "../../core/pool-ledger-assets";
 import { guardSameAssetBorrowing } from "../../core/same-asset-borrowing";
 import { SdkApiPath } from "../../core/sdk-api-paths";
+import { guardSolNativeOutflowMinimum } from "../../core/sol-outflow-minimum";
 import {
   createLiquidiumStatus,
   type LiquidiumOperation,
@@ -45,7 +49,10 @@ import {
   OutflowType,
 } from "../../core/types";
 import { encodeInflowSubaccount } from "../../core/utils/inflow-subaccount";
-import { normalizeWalletSignature } from "../../core/utils/signature";
+import {
+  normalizeWalletSignature,
+  validateSigningAccount,
+} from "../../core/utils/signature";
 import { computeExpiryTimestampFromNow } from "../../core/utils/time";
 import {
   type SignatureInfo,
@@ -61,6 +68,7 @@ import {
   readRecoveryBalance,
   recoverWithIcp,
 } from "./_internal/recovery";
+import { estimateSolInflowFee } from "./_internal/sol-inflow-fee";
 import { SupplyFlowExecutor } from "./_internal/supply-flow";
 import {
   getEthDepositTokenAddress,
@@ -137,7 +145,7 @@ export class LendingModule {
   }
 
   /**
-   * Prepares withdrawal of the current full recovery balance for BTC/ETH signing.
+   * Prepares withdrawal of the current full recovery balance for BTC/ETH/SOL signing.
    * Checks destination fees before signing and again before submission.
    * The signed amount stays fixed if more funds arrive after preparation.
    */
@@ -212,6 +220,7 @@ export class LendingModule {
       request.poolId
     );
     const selectedAsset = selectedPool.asset;
+    if (selectedAsset === Asset.SOL) validateSolAmount(request.amount);
     const minimumWithdrawAmountError = getWithdrawAmountMinimumValidationError({
       amount: request.amount,
       asset: selectedAsset,
@@ -234,6 +243,11 @@ export class LendingModule {
       asset: selectedAsset,
       chain: request.chain,
       evmReadClient: this.evmReadClient,
+    });
+    await guardSolNativeOutflowMinimum(this.canisterContext, {
+      asset: selectedAsset,
+      destinationChain: request.chain,
+      amount: request.amount,
     });
 
     const lendingActor = createLendingActor(this.canisterContext);
@@ -295,6 +309,7 @@ export class LendingModule {
     request: OutflowSubmissionData,
     signatureInfo: SignatureInfo
   ): Promise<WithdrawOutflowDetails> {
+    validateSigningAccount(request.signerWalletAddress, signatureInfo.chain);
     await guardEthereumOutflowDestination({
       address: request.receiverAddress,
       apiClient: this.apiClient,
@@ -404,6 +419,7 @@ export class LendingModule {
       request.poolId
     );
     const selectedAsset = selectedPool.asset;
+    if (selectedAsset === Asset.SOL) validateSolAmount(request.amount);
     const minimumBorrowAmountError = getBorrowAmountMinimumValidationError({
       amount: request.amount,
       asset: selectedAsset,
@@ -426,6 +442,11 @@ export class LendingModule {
       asset: selectedAsset,
       chain: request.chain,
       evmReadClient: this.evmReadClient,
+    });
+    await guardSolNativeOutflowMinimum(this.canisterContext, {
+      asset: selectedAsset,
+      destinationChain: request.chain,
+      amount: request.amount,
     });
     await this.guardBorrowSameAssetPolicy({
       profileId: request.profileId,
@@ -488,6 +509,8 @@ export class LendingModule {
     request: OutflowSubmissionData,
     signatureInfo: SignatureInfo
   ): Promise<BorrowOutflowDetails> {
+    validateSigningAccount(request.signerWalletAddress, signatureInfo.chain);
+    if (request.asset === Asset.SOL) validateSolAmount(request.amount);
     await guardEthereumOutflowDestination({
       address: request.receiverAddress,
       apiClient: this.apiClient,
@@ -665,7 +688,8 @@ export class LendingModule {
    *
    * ETH-chain deposit-address estimates are served by the deposit-address
    * canister. BTC estimates include the ckBTC minter deposit fee and ledger fee.
-   * ICP-chain estimates return the corresponding ICRC ledger fee.
+   * SOL and ckSOL use account-specific SDK API quotes, including minimum sends.
+   * Other ICP-chain estimates return the corresponding ICRC ledger fee.
    *
    * @param request - Asset and chain pair to estimate for.
    * @returns Total fee estimate rounded up in the asset's base units.
@@ -673,6 +697,9 @@ export class LendingModule {
   async estimateInflowFee(
     request: EstimateInflowFeeRequest
   ): Promise<InflowFeeEstimate> {
+    if (request.asset === Asset.SOL) {
+      return estimateSolInflowFee(this.requireApi(), request);
+    }
     if (request.chain === Chain.ICP) {
       const ledgerFee = await this.estimateIcrcLedgerFee(request);
       return {
@@ -748,7 +775,8 @@ export class LendingModule {
     if (
       request.chain !== undefined &&
       request.chain !== Chain.BTC &&
-      request.chain !== Chain.ETH
+      request.chain !== Chain.ETH &&
+      request.chain !== Chain.SOL
     ) {
       throw new LiquidiumError(
         LiquidiumErrorCode.VALIDATION_ERROR,
@@ -809,6 +837,8 @@ export class LendingModule {
         this.requireApi();
       },
       submitInflow: async (request) => await this.submitInflow(request),
+      estimateInflowFee: async (request) =>
+        await this.estimateInflowFee(request),
     });
   }
 

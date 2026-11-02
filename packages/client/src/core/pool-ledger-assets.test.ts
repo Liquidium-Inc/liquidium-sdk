@@ -78,7 +78,7 @@ describe("pool ledger asset routes", () => {
 
   test("should reject unsupported asset and chain pairs", () => {
     // given
-    const unsupportedAsset = "SOL";
+    const unsupportedAsset = "USDC";
     const unsupportedChain = "SOL";
 
     // when
@@ -94,6 +94,6 @@ describe("pool ledger asset routes", () => {
         asset: unsupportedAsset,
         chain: unsupportedChain,
       })
-    ).toThrow("IC ledger transfers are not supported for SOL on SOL");
+    ).toThrow("IC ledger transfers are not supported for USDC on SOL");
   });
 });

@@ -8,6 +8,11 @@ sidebar_position: 100
 
 Use Simple Loans for a checkout-style borrow flow. The SDK creates a generated Liquidium profile, returns transfer targets, and lets your app restore the loan from a short reference.
 
+SOL collateral and borrowing support native SOL and ckSOL targets. SOL quotes
+include account-specific fees and minimum-send limits, which also apply to
+small repayments. See [Use SOL and ckSOL](./solana) for deployment configuration
+and the distinction between native and ICP transfers.
+
 ## Simple Loan flow
 
 The following table shows the flow and your app's responsibility at each step:

@@ -674,9 +674,16 @@ const SDK_METHODS: MethodDefinition[] = [
     defaultArgs: '{\n  "asset": "USDT",\n  "chain": "ETH"\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
-      return await client.lending.estimateInflowFee(
-        expectAssetIdentifier(args.asset, args.chain)
-      );
+      const identifier = expectAssetIdentifier(args.asset, args.chain);
+      if (identifier.asset === "SOL") {
+        return client.lending.estimateInflowFee({
+          ...identifier,
+          poolId: expectNonEmptyString(args.poolId, "poolId"),
+          profileId: expectNonEmptyString(args.profileId, "profileId"),
+          action: expectSupplyAction(args.action, "action"),
+        });
+      }
+      return await client.lending.estimateInflowFee(identifier);
     },
   },
   {
@@ -1218,21 +1225,26 @@ function expectOptionalStringValues<T extends string>(
 function expectChain(value: unknown, fieldName: string): Chain {
   const chain = expectNonEmptyString(value, fieldName).toUpperCase();
 
-  if (chain === "BTC" || chain === "ETH" || chain === "ICP") {
+  if (
+    chain === "BTC" ||
+    chain === "ETH" ||
+    chain === "ICP" ||
+    chain === "SOL"
+  ) {
     return chain;
   }
 
-  throw new Error(`${fieldName} must be BTC, ETH, or ICP.`);
+  throw new Error(`${fieldName} must be BTC, ETH, ICP, or SOL.`);
 }
 
 function expectSigningChain(value: unknown, fieldName: string): SigningChain {
   const chain = expectNonEmptyString(value, fieldName).toUpperCase();
 
-  if (chain === "BTC" || chain === "ETH") {
+  if (chain === "BTC" || chain === "ETH" || chain === "SOL") {
     return chain;
   }
 
-  throw new Error(`${fieldName} must be BTC or ETH.`);
+  throw new Error(`${fieldName} must be BTC, ETH, or SOL.`);
 }
 
 function expectAsset(value: unknown, fieldName: string): Asset {
@@ -1242,13 +1254,14 @@ function expectAsset(value: unknown, fieldName: string): Asset {
     asset === "BTC" ||
     asset === "ETH" ||
     asset === "ICP" ||
+    asset === "SOL" ||
     asset === "USDC" ||
     asset === "USDT"
   ) {
     return asset;
   }
 
-  throw new Error(`${fieldName} must be BTC, ETH, ICP, USDC, or USDT.`);
+  throw new Error(`${fieldName} must be BTC, ETH, ICP, SOL, USDC, or USDT.`);
 }
 
 function expectAssetIdentifier(

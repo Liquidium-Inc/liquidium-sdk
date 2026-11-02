@@ -28,6 +28,7 @@ import type {
 
 const ZERO_POOL_RATE: PoolRateTuple = [0n, 0n, 0n];
 const BACKING_POOL_CHAIN_BY_ASSET = {
+  [Asset.SOL]: Chain.SOL,
   [Asset.BTC]: Chain.BTC,
   [Asset.ETH]: Chain.ETH,
   [Asset.ICP]: Chain.ICP,
@@ -139,7 +140,11 @@ export class MarketModule {
     const backingPoolChain = BACKING_POOL_CHAIN_BY_ASSET[identifier.asset];
     const matchedPools = pools.filter(
       (pool) =>
-        pool.asset === identifier.asset && pool.chain === backingPoolChain
+        pool.asset === identifier.asset &&
+        pool.chain === backingPoolChain &&
+        (identifier.asset !== Asset.SOL ||
+          !this.canisterContext.canisterIds.pools.sol ||
+          pool.id === this.canisterContext.canisterIds.pools.sol)
     );
 
     if (matchedPools.length === 0) {
