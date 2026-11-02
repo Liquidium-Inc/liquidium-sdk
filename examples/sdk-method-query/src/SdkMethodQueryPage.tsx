@@ -30,6 +30,9 @@ const MAX_HISTORY_LIMIT = 200;
 const MAX_PROTOCOL_ACTIVITY_LIMIT = 100;
 const DEFAULT_MOCK_SIGNATURE = "replace-with-real-signature";
 const DEFAULT_MOCK_TX_HASH = "0xmockedtxhash";
+// SOL transaction signatures are 64 base58-encoded bytes.
+const DEFAULT_MOCK_SOL_SIGNATURE =
+  "99eUso3aSbE9tqGSTXzo3TLfKb9RkMTURrHKQ1K7Zh3BbeqPevr5E1iCbpTjqHuTFLtfxTTD5ekfVuZFzQyEQf8";
 const HISTORY_OPERATIONS = [
   "deposit",
   "borrow",
@@ -1053,7 +1056,8 @@ function createMockWalletAdapter(
     sendBtcTransaction: async () => txHash,
     sendEthTransaction: async () => txHash,
     sendIcrcTransfer: async () => txHash,
-    sendSolTransaction: async () => txHash,
+    sendSolTransaction: async () =>
+      txHash === DEFAULT_MOCK_TX_HASH ? DEFAULT_MOCK_SOL_SIGNATURE : txHash,
   };
 }
 
