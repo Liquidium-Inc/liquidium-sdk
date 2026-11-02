@@ -30,7 +30,7 @@ describeLive("live positions e2e", () => {
         ({ pool, position }) =>
           position !== null &&
           position.deposited > 0n &&
-          position.borrowed + position.debtInterest > 0n &&
+          position.borrowed > 0n &&
           position.deposited < pool.sameAssetBorrowingDustThreshold
       );
       if (!dustFixture) {

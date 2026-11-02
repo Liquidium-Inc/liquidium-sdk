@@ -109,6 +109,12 @@ Most UIs need these fields after `create(...)` or `get(...)`:
 | `loan.repayment.debtAmount` | Current debt before transfer fees |
 | `loan.repayment.targets[chain]` | Fee-inclusive repayment amount, fee metadata, and target for an available repayment rail |
 
+`loan.position.borrowedAmount`, `loan.position.totalDebtAmount`, and
+`loan.repayment.debtAmount` contain current debt, including accrued interest.
+`loan.position.debtInterestAmount` is a reporting value that can include interest
+already paid. Do not add it to current debt. The same rule applies to
+`Position.borrowed` and `Position.debtInterest`.
+
 Target maps are partial. A missing chain entry means that transfer rail is unavailable, not that no debt exists. Check `loan.repayment.debtAmount > 0n` or the selected quote's `amount > 0n` before prompting for repayment.
 
 `client.simpleLoans.find(...)` returns lightweight indexed fields, including `loanId`, `ref`, `profileId`, `createdAt`, `collateral`, and `borrow`. To load the full loan fields for a selected match, use `client.simpleLoans.get(...)`. If you need active or completed flow activity, use `client.activities.list(...)` separately.
