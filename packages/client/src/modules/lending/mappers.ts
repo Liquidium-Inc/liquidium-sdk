@@ -44,6 +44,11 @@ export interface ParseOutflowDestinationParams {
   destinationChain: string;
 }
 
+export interface ResolveOutflowDestinationInputParams {
+  receiver: LiquidiumAccountInput;
+  errorMessage: string;
+}
+
 interface NormalizedOutflowDestinationInput {
   address: string;
   type: LiquidiumAccountType | null;
@@ -77,6 +82,30 @@ export function mapCanisterAccountType(
   receiver: CanisterLiquidiumAccount
 ): OutflowDetails["receiver"] {
   return mapCanisterAccountToLiquidiumAccount(receiver);
+}
+
+export function resolveOutflowDestinationInput(
+  params: ResolveOutflowDestinationInputParams
+): LiquidiumAccountInput {
+  const receiver = params.receiver;
+  const address =
+    typeof receiver === "string" ? receiver.trim() : receiver.address.trim();
+
+  if (!address) {
+    throw new LiquidiumError(
+      LiquidiumErrorCode.VALIDATION_ERROR,
+      params.errorMessage
+    );
+  }
+
+  if (typeof receiver === "string") {
+    return address;
+  }
+
+  return {
+    address,
+    type: receiver.type,
+  };
 }
 
 export function parseOutflowDestination(

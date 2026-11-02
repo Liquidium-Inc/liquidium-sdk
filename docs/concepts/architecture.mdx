@@ -1,0 +1,13 @@
+---
+title: SDK architecture
+description: See where the SDK calls canisters, HTTP endpoints, and wallets.
+sidebar_position: 190
+---
+
+# SDK architecture
+
+The [C4 model](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/docs/c4/liquidium-sdk.c4) shows the SDK context, modules, transports, and main transaction flows. Follow the [preview and validation instructions](../c4/README.md) to explore the interactive diagrams locally.
+
+`LiquidiumClient` exposes the SDK modules. The modules use an IC agent to read canisters and submit profile or lending actions. The HTTP SDK API creates Simple Loans and supplies activity, history, search, and inflow indexing data. An optional EVM read client supports contract-interaction supply planning and destination checks. The integrating app supplies a wallet adapter for signing and transfers.
+
+The SDK does not hold funds. The [public protocol architecture documentation](https://liquidium.fi/docs/technical/architecture) shows canister custody and settlement after a transfer or lending action.

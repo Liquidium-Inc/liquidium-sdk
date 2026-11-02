@@ -56,6 +56,8 @@ try {
 
 If your UI needs different messages for timeout, transport, validation, or protocol failures, use the exported `LiquidiumErrorCode` values.
 
+`NO_OUTSTANDING_DEBT` means `lending.supply(...)` stopped a repayment because the profile has no debt in that pool. Nothing was sent. Reload the position before you offer another repayment.
+
 `SimpleLoanCreatedError` means the remote loan was created but response hydration failed. Recover with the error's `loanId` or `ref` through `client.simpleLoans.get(...)`. Do not call `create(...)` again because that can create a duplicate loan.
 
 Wallet-executed deposit, borrow, and withdraw amounts below SDK minimums throw or return validation errors before state-changing calls. To show the minimum next to an amount input, use `getMinimumDepositAmount(asset)`, `getMinimumBorrowAmount(asset)`, or `getMinimumWithdrawAmount(asset)`. Manual deposit-address flows do not accept an amount, so callers must apply the deposit minimum before broadcasting.
@@ -70,6 +72,8 @@ Use the error type and the operation type before you retry:
 | State-changing request times out | Reload the related loan, activity, position, or history before you decide whether to submit another request |
 | Request fails with `VALIDATION_ERROR` or a protocol error | Correct the input or wait for the protocol state to change before you retry |
 | `SimpleLoanCreatedError` is thrown | Recover with `client.simpleLoans.get(...)`; do not create another loan |
+| `LIQUIDATION_APPROVAL_FAILED` is thrown | Liquidation was not submitted. Inspect `cause` and check the ledger allowance if approval may have succeeded before deciding to retry |
+| `recover(...)` or a recovery `submit(...)` fails with `CANISTER_REJECTED` | The update may have succeeded. Read `getRecoveryBalance(...)` before you prepare another recovery |
 
 The SDK does not define an application retry interval. Do not automatically
 repeat a state-changing method because an error might have occurred after the

@@ -1,5 +1,26 @@
 # @liquidium/client
 
+## 0.11.0
+
+### Minor Changes
+
+- 95f7516: Map rejection details on failed inflow activities as `activity.failure`, with the lower_snake_case rejection code, message, and refund state (`none`, `recoverable`, or `recovered`).
+- 3943454: Add profile recovery balance reads, prepared wallet recovery actions, and recovery withdrawals through BTC/ETH signatures or authenticated ICP agents. Validate destination fees, including the ERC-20 burn charge, and preserve the signed amount through submission.
+- 663a3cc: Reject `lending.supply(...)` repayments with `NO_OUTSTANDING_DEBT` before returning a target or broadcasting when the profile has no debt in the pool, and document that `submit(...)` does not post ICP ledger transfers.
+
+## 0.10.0
+
+### Minor Changes
+
+- 63823d5: Expose activationFeeAmount and openingDebtAmount in LTV and collateral quote results, in borrow asset base units.
+- 82eba5d: Add a dedicated module for liquidation candidate scanning, execution, and status lookup. Minimum collateral applies to bad-debt and hybrid paths; normal collateral-backed liquidations allow partial fills without this check.
+
+## 0.9.0
+
+### Minor Changes
+
+- d671ea0: Expose borrow activation fees on pools and include them in LTV and collateral quotes.
+
 ## 0.8.3
 
 ### Patch Changes

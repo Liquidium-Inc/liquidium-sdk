@@ -1,6 +1,6 @@
 /** Input for calculating required collateral from a target LTV. */
 export interface QuoteRequest {
-  /** Requested borrow amount in borrow asset base units. */
+  /** Requested amount before network fees, in borrow asset base units. */
   borrowAmount: bigint;
   /** Pool principal text for the borrow side. */
   borrowPoolId: string;
@@ -12,7 +12,7 @@ export interface QuoteRequest {
 
 /** Input for calculating LTV from explicit borrow and collateral amounts. */
 export interface CalculateLtvRequest {
-  /** Requested borrow amount in borrow asset base units. */
+  /** Requested amount before network fees, in borrow asset base units. */
   borrowAmount: bigint;
   /** Pool principal text for the borrow side. */
   borrowPoolId: string;
@@ -57,8 +57,12 @@ export enum QuoteWarningCode {
 
 /** Quote result for a requested borrow amount and target LTV. */
 export interface QuoteResult {
-  /** Requested borrow amount in borrow asset base units. */
+  /** Requested amount before network fees, in borrow asset base units. */
   borrowAmount: bigint;
+  /** Activation fee rounded down in borrow asset base units; zero if calculation is skipped. */
+  activationFeeAmount: bigint;
+  /** Requested amount plus activation fee in borrow asset base units; zero if calculation is skipped. */
+  openingDebtAmount: bigint;
   /** Opening debt value, including the activation fee, in internal USD units. */
   borrowUsd: bigint;
   /** Required collateral amount in collateral asset base units. */
@@ -85,8 +89,12 @@ export interface QuoteResult {
 
 /** LTV calculation result for explicit borrow and collateral amounts. */
 export interface LtvCalculation {
-  /** Requested borrow amount in borrow asset base units. */
+  /** Requested amount before network fees, in borrow asset base units. */
   borrowAmount: bigint;
+  /** Activation fee rounded down in borrow asset base units; zero if calculation is skipped. */
+  activationFeeAmount: bigint;
+  /** Requested amount plus activation fee in borrow asset base units; zero if calculation is skipped. */
+  openingDebtAmount: bigint;
   /** Collateral amount in collateral asset base units. */
   collateralAmount: bigint;
   /** Opening debt value, including the activation fee, in internal USD units. */

@@ -23,6 +23,29 @@ export interface ActivityTopUp {
   shortfallAmount: bigint;
 }
 
+/** Refund outcome for a failed inflow. */
+export const InflowRefundState = {
+  /** The protocol does not refund this failure. */
+  none: "none",
+  /** The protocol refunds this failure to the profile recovery balance for the pool. */
+  recoverable: "recoverable",
+  /** A recovery withdrew the pool's recovery balance after this failure. */
+  recovered: "recovered",
+} as const;
+/** Refund outcome for a failed inflow. */
+export type InflowRefundState =
+  (typeof InflowRefundState)[keyof typeof InflowRefundState];
+
+/** Protocol rejection details for a failed inflow. */
+export interface InflowActivityFailure {
+  /** Rejection code in lower_snake_case, such as `position_not_found`. */
+  code: string;
+  /** Readable rejection reason when Liquidium stored one. */
+  message: string | null;
+  /** Whether the rejected amount can be withdrawn with `lending.recover(...)`. */
+  refund: InflowRefundState;
+}
+
 /** Operation emitted by deposit or repayment inflows. */
 export type InflowActivityOperation = Extract<
   LiquidiumOperation,
@@ -58,6 +81,8 @@ export interface InflowActivity extends BaseActivity {
   status: InflowActivityStatus;
   /** Fee top-up state when the inflow is below the current processing fee. */
   topUp?: ActivityTopUp;
+  /** Protocol rejection details when `status.state` is `failed`. */
+  failure?: InflowActivityFailure;
 }
 
 /** Borrow or withdrawal activity returned by the activity API. */
@@ -66,6 +91,8 @@ export interface OutflowActivity extends BaseActivity {
   status: OutflowActivityStatus;
   /** Outflows never carry top-up state. */
   topUp?: never;
+  /** Outflows never carry inflow rejection details. */
+  failure?: never;
 }
 
 /** Any activity returned by `activities.list` or `activities.getStatus`. */

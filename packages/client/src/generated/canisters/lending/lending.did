@@ -369,6 +369,7 @@ service : (opt text) -> {
   get_wallet_profile : (text) -> (opt principal) query;
   // Execute a liquidation of an undercollateralized position
   liquidate : (LiquidationRequest) -> (Result_2);
+  liquidate_with_slippage : (LiquidationRequest, nat) -> (Result_2);
   // Fetch all canister events with offset-based pagination
   list_events : (nat, nat64) -> (vec record { nat; ProtocolEvent }) query;
   // Pool related functionality

@@ -38,6 +38,18 @@ Expires: ${request.expiry_timestamp}
 Nonce: ${nonce}`;
 }
 
+export function createRecoveryMessage(
+  request: OutflowMessageRequest,
+  nonce: bigint
+): string {
+  return `I want to withdraw assets from pool \n Pool Id: ${request.pool_id}
+ Amount: ${request.amount}
+ Account: ${accountTypeToString(request.account)}
+Expires: ${request.expiry_timestamp}
+Nonce: ${nonce}
+`;
+}
+
 function accountTypeToString(accountType: MessageAccount): string {
   switch (accountType.type) {
     case "External":

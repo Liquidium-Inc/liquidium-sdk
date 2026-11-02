@@ -5,7 +5,7 @@
   "private": true,
   "type": "module",
   "engines": {
-    "node": "^22.12.0 || ^24.0.0 || >=26.0.0",
+    "node": "^22.22.3 || ^24.0.0 || >=26.0.0",
     "pnpm": ">=11"
   },
   "scripts": {
@@ -16,6 +16,9 @@
     "lint:fix": "biome check --write",
     "docs:changelog": "node scripts/generate-docs-changelog.mjs",
     "docs:api": "typedoc",
+    "architecture:serve": "env -u OPENAI_API_KEY -u OPENROUTER_API_KEY -u ANTHROPIC_API_KEY -u GEMINI_API_KEY -u OLLAMA_HOST likec4 serve docs/c4 --title \"Liquidium SDK Architecture\" --use-hash-history",
+    "architecture:validate": "likec4 validate docs/c4",
+    "architecture:build": "likec4 build docs/c4 -o docs/c4/dist --title \"Liquidium SDK Architecture\" --use-hash-history",
     "test": "vitest run",
     "test:e2e": "LIQUIDIUM_LIVE_E2E=1 vitest run --project client-e2e",
     "typecheck": "turbo typecheck",
@@ -29,6 +32,7 @@
     "@types/node": "^26.1.2",
     "bitcoinjs-lib": "^7.0.1",
     "ecpair": "^3.0.1",
+    "likec4": "1.59.2",
     "rimraf": "^6.1.3",
     "tiny-secp256k1": "^2.2.4",
     "turbo": "^2.10.8",

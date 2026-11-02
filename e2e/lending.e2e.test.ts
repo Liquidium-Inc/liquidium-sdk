@@ -1,4 +1,4 @@
-import { expect, test } from "vitest";
+import { expect, test, vi } from "vitest";
 import {
   Asset,
   Chain,
@@ -167,7 +167,7 @@ describeLive("live lending e2e", () => {
   });
 
   test.each([Asset.USDC, Asset.USDT] as const)(
-    "should build a ck%s ledger wallet transfer without broadcasting funds",
+    "should build a ck%s deposit ledger transfer without broadcasting funds",
     async (asset) => {
       // given
       const client = new LiquidiumClient();
@@ -179,7 +179,7 @@ describeLive("live lending e2e", () => {
       const ckStablecoinSupplyFlow = await client.lending.supply({
         profileId: TEST_PROFILE_ID,
         poolId: stablecoinPool.id,
-        action: SupplyAction.repayment,
+        action: SupplyAction.deposit,
         chain: Chain.ICP,
         amount: CK_STABLECOIN_TRANSFER_AMOUNT_BASE_UNITS,
         account: "ck-stablecoin-sender",
@@ -197,7 +197,7 @@ describeLive("live lending e2e", () => {
         chain: Chain.ICP,
         asset: stablecoinPool.asset,
         account: "ck-stablecoin-sender",
-        actionType: "supply-repayment",
+        actionType: "supply-deposit",
         transfer: {
           ledgerCanisterId: getExpectedStablecoinLedgerCanisterId(
             stablecoinPool.asset
@@ -209,6 +209,34 @@ describeLive("live lending e2e", () => {
       expect(capturedTransferRequest?.transfer.to.address).toBe(
         ckStablecoinSupplyFlow.target.address
       );
+    }
+  );
+
+  test.each([Asset.USDC, Asset.USDT] as const)(
+    "should reject a ck%s repayment without debt before broadcasting funds",
+    async (asset) => {
+      // given
+      const client = new LiquidiumClient();
+      const pools = await client.market.listPools();
+      const stablecoinPool = selectEthStablecoinPoolByAsset(pools, asset);
+      const sendIcrcTransfer = vi.fn();
+
+      // when
+      const result = client.lending.supply({
+        profileId: TEST_PROFILE_ID,
+        poolId: stablecoinPool.id,
+        action: SupplyAction.repayment,
+        chain: Chain.ICP,
+        amount: CK_STABLECOIN_TRANSFER_AMOUNT_BASE_UNITS,
+        account: "ck-stablecoin-sender",
+        walletAdapter: { sendIcrcTransfer },
+      });
+
+      // then
+      await expect(result).rejects.toMatchObject({
+        code: LiquidiumErrorCode.NO_OUTSTANDING_DEBT,
+      });
+      expect(sendIcrcTransfer).not.toHaveBeenCalled();
     }
   );
 

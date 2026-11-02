@@ -32,6 +32,16 @@ export function encodePrincipalToBytes32(principal: Principal): `0x${string}` {
   return encodeBytes32Hex(fixedBytes);
 }
 
+export const OUTSTANDING_DEBT_NATIVE = 1_000n;
+
+export function createOutstandingDebtPositionActor() {
+  return {
+    get_position: vi
+      .fn()
+      .mockResolvedValue([{ debt_native_now: OUTSTANDING_DEBT_NATIVE }]),
+  } as never;
+}
+
 export function mockUsdtPoolList(): void {
   vi.spyOn(Actor, "createActor").mockReturnValueOnce({
     list_pools: vi.fn().mockResolvedValue([createUsdtPoolRecord()]),

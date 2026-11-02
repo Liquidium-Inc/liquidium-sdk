@@ -105,6 +105,16 @@ const activities = await client.activities.list({
 
 For inflow activities, check `activity.topUp`. When `topUp.required` is `true`, the user must send `topUp.shortfallAmount` more before processing can continue.
 
+When the protocol rejects a deposit or repayment, the inflow activity has `status.state: "failed"` and an `activity.failure` object:
+
+| Field | Meaning |
+| --- | --- |
+| `code` | Rejection code in lower_snake_case, such as `position_not_found` |
+| `message` | Readable rejection reason, or `null` |
+| `refund` | `none` when the protocol keeps the funds, `recoverable` when it refunds them to the profile recovery balance, or `recovered` after a recovery withdrew that pool's balance |
+
+Failed activities are listed with `filter: "completed"` or `filter: "all"`. `client.activities.getStatus(...)` also finds them by the transaction ID that sent the funds, such as an ICP ledger block index. When `refund` is `recoverable`, follow [Recover profile funds](../guides/recover-funds.mdx).
+
 ## Poll for status changes
 
 The SDK returns status snapshots. It does not start background polling or set a

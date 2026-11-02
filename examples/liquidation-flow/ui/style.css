@@ -1,0 +1,412 @@
+:root {
+  color-scheme: dark;
+  --desk-bg: #080c0c;
+  --desk-surface: #121919;
+  --desk-line: #344242;
+  --desk-text: #f2f6f5;
+  --desk-muted: #adbebb;
+  --desk-accent: #72d4c2;
+  --desk-error: #ffb3a6;
+  --desk-radius: 16px;
+  --desk-space: 24px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.wallet {
+  margin-bottom: var(--desk-space);
+}
+
+.wallet td small {
+  display: block;
+  color: var(--desk-muted);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.wallet td {
+  vertical-align: top;
+}
+
+.tracking[data-state="confirmed"] {
+  border-color: var(--desk-accent);
+}
+
+.tracking[data-state="confirmed"] #result-badge {
+  color: var(--desk-accent);
+  border-color: var(--desk-accent);
+}
+
+.tracking[data-state="failed"] {
+  border-color: var(--desk-error);
+}
+
+#result-error {
+  color: var(--desk-error);
+}
+
+body {
+  margin: 0;
+  background: var(--desk-bg);
+  color: var(--desk-text);
+  font:
+    16px/1.5 "Avenir Next",
+    Avenir,
+    system-ui,
+    sans-serif;
+}
+
+header {
+  max-width: 1180px;
+  margin: auto;
+  padding: 28px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--desk-line);
+}
+
+.brand {
+  color: var(--desk-text);
+  font-size: 24px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+main {
+  max-width: 1180px;
+  padding: 40px 32px 64px;
+  margin: auto;
+}
+
+h1 {
+  font-size: clamp(30px, 5vw, 44px);
+  line-height: 1.15;
+  margin: 0 0 12px;
+  text-wrap: balance;
+}
+
+h2 {
+  font-size: 21px;
+  margin: 0;
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+  color: var(--desk-muted);
+}
+
+.heading,
+.section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.heading {
+  margin-bottom: 24px;
+}
+
+.heading p {
+  margin: 0;
+}
+
+.tag {
+  border: 1px solid var(--desk-line);
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.notice {
+  max-width: 85ch;
+  border-left: 3px solid var(--desk-accent);
+  padding-left: 16px;
+  margin-bottom: 28px;
+}
+
+#message {
+  min-height: 24px;
+}
+
+#message[data-error="true"],
+#action-error {
+  color: var(--desk-error);
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  gap: var(--desk-space);
+}
+
+section {
+  background: var(--desk-surface);
+  border: 1px solid var(--desk-line);
+  border-radius: var(--desk-radius);
+  padding: 28px;
+}
+
+.principal {
+  overflow-wrap: anywhere;
+  font-size: 14px;
+}
+
+.health {
+  display: flex;
+  flex-direction: column;
+  padding: 24px 0;
+}
+
+.health span {
+  color: var(--desk-muted);
+  font-size: 14px;
+}
+
+.health strong {
+  font-size: 56px;
+  line-height: 1.2;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.table-wrap {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+caption {
+  text-align: left;
+  color: var(--desk-muted);
+  font-size: 13px;
+  padding-bottom: 12px;
+}
+
+th,
+td {
+  padding: 14px 0;
+  text-align: right;
+  border-bottom: 1px solid var(--desk-line);
+}
+
+th {
+  color: var(--desk-muted);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+th:first-child,
+td:first-child {
+  text-align: left;
+}
+
+details {
+  margin-top: 24px;
+}
+
+summary {
+  cursor: pointer;
+  padding: 12px 0;
+}
+
+dt {
+  color: var(--desk-muted);
+  font-size: 13px;
+}
+
+dd {
+  margin: 4px 0 16px;
+}
+
+details p {
+  font-size: 13px;
+}
+
+.pair {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin: 24px 0;
+  border-bottom: 1px solid var(--desk-line);
+  padding-bottom: 24px;
+}
+
+.pair div {
+  display: flex;
+  flex-direction: column;
+}
+
+.pair span {
+  color: var(--desk-muted);
+}
+
+.pair strong {
+  font-size: 28px;
+}
+
+.funding div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.funding dd {
+  font-variant-numeric: tabular-nums;
+  font-size: 14px;
+}
+
+fieldset {
+  border: 0;
+  padding: 0;
+  margin: 24px 0 0;
+}
+
+label {
+  display: block;
+  margin-top: 20px;
+  margin-bottom: 8px;
+}
+
+label span {
+  color: var(--desk-muted);
+  font-size: 12px;
+}
+
+input {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid var(--desk-line);
+  border-radius: 8px;
+  background: var(--desk-bg);
+  color: var(--desk-text);
+  padding: 12px;
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+}
+
+input:user-invalid {
+  border-color: var(--desk-error);
+}
+
+.hint {
+  font-size: 13px;
+  margin: 8px 0 20px;
+}
+
+button {
+  min-height: 48px;
+  padding: 12px 18px;
+  border: 1px solid var(--desk-line);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--desk-text);
+  cursor: pointer;
+  font: 600 14px/1.3 inherit;
+}
+
+button:hover:not(:disabled) {
+  background: #253332;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.primary {
+  background: var(--desk-accent);
+  color: var(--desk-bg);
+  border-color: var(--desk-accent);
+}
+
+.primary:hover:not(:disabled) {
+  background: #a0e5d9;
+}
+
+fieldset button {
+  width: 100%;
+  margin-top: 12px;
+}
+
+:focus-visible {
+  outline: 3px solid var(--desk-accent);
+  outline-offset: 4px;
+}
+
+.tracking {
+  margin-top: 24px;
+}
+
+pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 420px;
+  overflow: auto;
+  padding: 20px;
+  background: var(--desk-bg);
+  font-size: 13px;
+}
+
+dialog {
+  max-width: 520px;
+  width: calc(100% - 32px);
+  background: var(--desk-surface);
+  color: var(--desk-text);
+  border: 1px solid var(--desk-line);
+  border-radius: var(--desk-radius);
+  padding: 28px;
+}
+
+dialog::backdrop {
+  background: rgb(0 0 0 / 0.75);
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+@media (max-width: 760px) {
+  header {
+    padding: 20px;
+  }
+
+  main {
+    padding: 28px 20px;
+  }
+
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  section {
+    padding: 20px;
+  }
+
+  .section-heading {
+    flex-wrap: wrap;
+  }
+
+  .funding div {
+    flex-wrap: wrap;
+    gap: 0;
+  }
+}

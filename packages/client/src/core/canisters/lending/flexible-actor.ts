@@ -1,6 +1,7 @@
 import { Actor } from "@icp-sdk/core/agent";
 import type { IDL } from "@icp-sdk/core/candid";
 import type { Principal } from "@icp-sdk/core/principal";
+import type { AssetType } from "../../../generated/canisters/lending/lending.did";
 import { LiquidiumError, LiquidiumErrorCode } from "../../errors";
 import type { CanisterContext } from "../../transports/canister-context";
 import {
@@ -86,6 +87,20 @@ const flexibleLendingIdlFactory: IDL.InterfaceFactory = ({ IDL }) => {
   });
 
   return IDL.Service({
+    get_pool: IDL.Func(
+      [IDL.Principal],
+      [
+        IDL.Opt(
+          IDL.Record({
+            asset_type: IDL.Variant({
+              CkAsset: IDL.Principal,
+              Unknown: IDL.Null,
+            }),
+          })
+        ),
+      ],
+      ["query"]
+    ),
     list_pools: IDL.Func([], [IDL.Vec(PoolRecord)], ["query"]),
     get_pool_rate: IDL.Func(
       [IDL.Principal],
@@ -180,6 +195,7 @@ export type FlexiblePositionView = {
 };
 
 export interface FlexibleLendingActor {
+  get_pool: (poolId: Principal) => Promise<[] | [PoolLedgerRoute]>;
   list_pools: () => Promise<FlexiblePool[]>;
   get_pool_rate: (
     poolId: Principal
@@ -192,6 +208,10 @@ export interface FlexibleLendingActor {
     profileId: Principal,
     poolId: Principal
   ) => Promise<[] | [FlexiblePositionView]>;
+}
+
+export interface PoolLedgerRoute {
+  asset_type: AssetType;
 }
 
 export interface DecodedPool {

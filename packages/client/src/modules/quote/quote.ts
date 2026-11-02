@@ -21,6 +21,8 @@ const PRICE_SCALE_DECIMAL_PLACES = 8;
 
 interface CreateQuoteResultParams {
   borrowAmount: bigint;
+  activationFeeAmount: bigint;
+  openingDebtAmount: bigint;
   borrowPoolId: string;
   collateralPoolId: string;
   borrowUsd: bigint;
@@ -36,6 +38,8 @@ interface CreateQuoteResultParams {
 
 interface CreateLtvCalculationParams {
   request: CalculateLtvRequest;
+  activationFeeAmount: bigint;
+  openingDebtAmount: bigint;
   borrowUsd: bigint;
   collateralUsd: bigint;
   ltvBps: bigint;
@@ -97,6 +101,8 @@ export class QuoteModule {
     if (!borrowPool || !collateralPool) {
       return createLtvCalculation({
         request,
+        activationFeeAmount: 0n,
+        openingDebtAmount: 0n,
         borrowUsd: 0n,
         collateralUsd: 0n,
         ltvBps: 0n,
@@ -156,6 +162,8 @@ export class QuoteModule {
     if (validationErrors.length > 0) {
       return createLtvCalculation({
         request,
+        activationFeeAmount: 0n,
+        openingDebtAmount: 0n,
         borrowUsd: 0n,
         collateralUsd: 0n,
         ltvBps: 0n,
@@ -166,8 +174,10 @@ export class QuoteModule {
       });
     }
 
+    const openingDebtAmount = getOpeningDebt(request.borrowAmount, borrowPool);
+    const activationFeeAmount = openingDebtAmount - request.borrowAmount;
     const borrowUsd = computeUsdInternalFromBaseUnits({
-      amountBaseUnits: getOpeningDebt(request.borrowAmount, borrowPool),
+      amountBaseUnits: openingDebtAmount,
       priceScaled: scalePriceUsdToBigint(borrowPrice as number),
       assetDecimalPlaces: getPoolDecimalPlaces(borrowPool),
     });
@@ -185,6 +195,8 @@ export class QuoteModule {
 
       return createLtvCalculation({
         request,
+        activationFeeAmount,
+        openingDebtAmount,
         borrowUsd,
         collateralUsd,
         ltvBps: 0n,
@@ -197,6 +209,8 @@ export class QuoteModule {
 
     return createLtvCalculation({
       request,
+      activationFeeAmount,
+      openingDebtAmount,
       borrowUsd,
       collateralUsd,
       ltvBps: roundDivBigint(
@@ -253,6 +267,8 @@ export class QuoteModule {
     if (!borrowPool || !collateralPool) {
       return createQuoteResult({
         borrowAmount,
+        activationFeeAmount: 0n,
+        openingDebtAmount: 0n,
         borrowPoolId,
         collateralPoolId,
         borrowUsd: 0n,
@@ -335,6 +351,8 @@ export class QuoteModule {
     if (validationErrors.length > 0) {
       return createQuoteResult({
         borrowAmount,
+        activationFeeAmount: 0n,
+        openingDebtAmount: 0n,
         borrowPoolId,
         collateralPoolId,
         borrowUsd: 0n,
@@ -356,8 +374,10 @@ export class QuoteModule {
       collateralPrice as number
     );
 
+    const openingDebtAmount = getOpeningDebt(borrowAmount, borrowPool);
+    const activationFeeAmount = openingDebtAmount - borrowAmount;
     const borrowUsdInternal = computeUsdInternalFromBaseUnits({
-      amountBaseUnits: getOpeningDebt(borrowAmount, borrowPool),
+      amountBaseUnits: openingDebtAmount,
       priceScaled: borrowPriceScaled,
       assetDecimalPlaces: borrowAssetDecimals,
     });
@@ -396,6 +416,8 @@ export class QuoteModule {
 
     return createQuoteResult({
       borrowAmount,
+      activationFeeAmount,
+      openingDebtAmount,
       borrowPoolId,
       collateralPoolId,
       borrowUsd: borrowUsdInternal,
@@ -423,6 +445,8 @@ function createLtvCalculation(
 ): LtvCalculation {
   return {
     borrowAmount: params.request.borrowAmount,
+    activationFeeAmount: params.activationFeeAmount,
+    openingDebtAmount: params.openingDebtAmount,
     collateralAmount: params.request.collateralAmount,
     borrowUsd: params.borrowUsd,
     collateralUsd: params.collateralUsd,
@@ -439,6 +463,8 @@ function createLtvCalculation(
 function createQuoteResult(params: CreateQuoteResultParams): QuoteResult {
   return {
     borrowAmount: params.borrowAmount,
+    activationFeeAmount: params.activationFeeAmount,
+    openingDebtAmount: params.openingDebtAmount,
     borrowUsd: params.borrowUsd,
     requiredCollateralAmount: params.requiredCollateralAmount,
     requiredCollateralUsd: params.requiredCollateralUsd,

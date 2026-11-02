@@ -111,6 +111,7 @@ export type {
   GetActivityStatusRequest,
   GetActivityStatusResponse,
   InflowActivity,
+  InflowActivityFailure,
   InflowActivityOperation,
   InflowActivityStatus,
   ListActivitiesByProfileRequest,
@@ -120,7 +121,11 @@ export type {
   OutflowActivityOperation,
   OutflowActivityStatus,
 } from "./modules/activities";
-export { ActivitiesModule, ActivityFilter } from "./modules/activities";
+export {
+  ActivitiesModule,
+  ActivityFilter,
+  InflowRefundState,
+} from "./modules/activities";
 export type {
   PaginatedResponse,
   ProtocolActivityEntry,
@@ -153,10 +158,19 @@ export type {
   EvmSupplyContext,
   GetDepositAddressRequest,
   GetEvmSupplyContextRequest,
+  IcpRecoveryAuthorization,
   InflowFeeEstimate,
   InflowOperation,
   ManualTransferSupplyFlowRequest,
   OutflowDetails,
+  PrepareRecoveryRequest,
+  RecoverRequest,
+  RecoverWithIcpRequest,
+  RecoverWithWalletRequest,
+  RecoveryAction,
+  RecoveryData,
+  RecoveryRequest,
+  RecoveryResult,
   SubmitInflowRequest,
   SubmitInflowResponse,
   SubmitSupplyFlowInflowRequest,
@@ -175,6 +189,28 @@ export {
   LendingModule,
   SupplyPlanType,
 } from "./modules/lending";
+export type {
+  CkLiquidationAsset,
+  ExecuteLiquidationRequest,
+  LiquidationAmounts,
+  LiquidationAsset,
+  LiquidationCandidate,
+  LiquidationCandidateAsset,
+  LiquidationCandidatePosition,
+  LiquidationFailedStatus,
+  LiquidationFailedTransfer,
+  LiquidationPendingTransfer,
+  LiquidationProgressStatus,
+  LiquidationResult,
+  LiquidationScanResult,
+  LiquidationStatus,
+  LiquidationSuccessStatus,
+  LiquidationSuccessTransfer,
+  LiquidationTransfer,
+  ScanLiquidationsRequest,
+  UnknownLiquidationAsset,
+} from "./modules/liquidations";
+export { LiquidationsModule } from "./modules/liquidations";
 export type {
   AssetPriceSnapshot,
   AssetPrices,

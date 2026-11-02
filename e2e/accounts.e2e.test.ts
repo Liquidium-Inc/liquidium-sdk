@@ -10,6 +10,9 @@ import {
   createEthereumTestWallet,
 } from "./_internal/test-wallets";
 
+const QUERY_CONSISTENCY_TIMEOUT_MS = 10_000;
+const QUERY_POLL_INTERVAL_MS = 500;
+
 describeLive("live account signing e2e", () => {
   test("should create and resolve a profile with a real Ethereum signature", async () => {
     // given
@@ -22,16 +25,24 @@ describeLive("live account signing e2e", () => {
       chain: Chain.ETH,
       walletAdapter,
     });
-    const resolvedProfileId = await client.accounts.getProfileId(account);
-    const linkedWallets = await client.accounts.listLinkedWallets(profileId);
 
     // then
     expect(profileId).toBeTruthy();
-    expect(resolvedProfileId).toBe(profileId);
-    expect(linkedWallets).toContainEqual({
-      address: account,
-      chain: Chain.ETH,
-    });
+    await expect
+      .poll(() => client.accounts.getProfileId(account), {
+        interval: QUERY_POLL_INTERVAL_MS,
+        timeout: QUERY_CONSISTENCY_TIMEOUT_MS,
+      })
+      .toBe(profileId);
+    await expect
+      .poll(() => client.accounts.listLinkedWallets(profileId), {
+        interval: QUERY_POLL_INTERVAL_MS,
+        timeout: QUERY_CONSISTENCY_TIMEOUT_MS,
+      })
+      .toContainEqual({
+        address: account,
+        chain: Chain.ETH,
+      });
   });
 
   test("should create and resolve a profile with a bitcoinjs signature", async () => {

@@ -1,0 +1,65 @@
+---
+title: Run the recovery example
+description: Check profile recovery balances and withdraw with OISY or Ethereum.
+sidebar_position: 360
+---
+
+# Run the recovery example
+
+`examples/recovery-flow` is a browser app for rejected-inflow refunds and excess
+repayment refunds. It reads every pool's recovery balance without requiring a
+position or rejection-history entry.
+
+The example uses the local SDK source and bundled mainnet defaults. No API key
+or environment file is required. Balance checks are read-only. Approved recovery
+requests move real funds and deduct withdrawal fees.
+
+## Start
+
+Use Node.js 22.22.3 or later in the 22.x line, 24.x, or 26 or later, and pnpm 11
+or later. From the SDK repository root:
+
+```bash
+pnpm install
+pnpm --filter @liquidium/example-recovery-flow dev
+```
+
+Open [http://127.0.0.1:5178](http://127.0.0.1:5178).
+
+## Recover funds
+
+1. Enter the Liquidium profile principal and select **Check balances**, or
+   connect a linked wallet and select **Load wallet profile**.
+2. Connect **OISY** or an **Ethereum** browser wallet. If OISY shares multiple
+   accounts, select the account linked to the profile. Allow wallet popups.
+3. Select a funded pool and a delivery chain. On ICP, the destination receives
+   ICP or the pool's chain-key token. Chain-key tokens require an IC principal.
+   Native-chain delivery uses a Bitcoin or Ethereum address.
+4. Enter the destination. With OISY, select **Recover with OISY** and approve the
+   call. With Ethereum, select **Prepare recovery**, review the exact message,
+   then select **Sign and recover**.
+5. Inspect the receipt and the receiving wallet. The app refreshes recovery
+   balances after submission and preserves the receipt if that refresh fails.
+
+An Ethereum preparation fixes the amount to sign. Funds that arrive later need a
+new preparation. ICP authorization uses the selected OISY principal and its
+subaccount; only the recovery update uses the signer agent.
+
+`blockIndex` identifies the recovery transfer, not an activity outflow ID. For
+non-ICP pools, funds move into an outflow subaccount before final delivery. A
+reduced recovery balance does not prove wallet delivery. If submission is not
+confirmed, check balances and the destination before another attempt.
+
+## Verify locally
+
+```bash
+pnpm --filter @liquidium/example-recovery-flow test
+pnpm --filter @liquidium/example-recovery-flow build
+```
+
+Tests use mocked clients and signers. They check partial balance-read failures,
+receipt preservation, no automatic update retries, and wallet account selection.
+They do not move funds.
+
+See [Recover profile funds](../guides/recover-funds.mdx) for refund eligibility,
+fee checks, and receipt limits.
