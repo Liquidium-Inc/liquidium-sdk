@@ -14,13 +14,15 @@ The SDK method query screen lets you:
 1. Copy `.env.example` to `.env`
 2. Set `VITE_INFURA_API_KEY` for ETH reads that need an RPC provider.
    Alternatively, set `VITE_EVM_RPC_URL` to a full Ethereum mainnet RPC URL.
-3. Install dependencies from the SDK root:
+3. For SOL methods, set `VITE_LIQUIDIUM_SOL_POOL_ID` to the active SOL pool and
+   `VITE_LIQUIDIUM_API_BASE_URL` to an SDK API deployment that serves it.
+4. Install dependencies from the SDK root:
 
 ```bash
 pnpm install
 ```
 
-4. Run the example:
+5. Run the example:
 
 ```bash
 pnpm --filter @liquidium/example-sdk-method-query dev
