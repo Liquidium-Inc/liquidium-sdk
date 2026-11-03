@@ -87,9 +87,10 @@ Lending outflow and Simple Loan destinations are validated against the selected 
 | --- | --- | --- |
 | BTC L1 | `"BTC"` | Bitcoin mainnet chain address |
 | Native ETH | `"ETH"` | Ethereum address |
+| Native SOL | `"SOL"` | Base58-encoded 32-byte Solana address |
 | ETH L1 USDC/USDT | `"ETH"` | Ethereum address |
 | ICP native | `"ICP"` | IC principal, ICRC account, or ICP account identifier |
-| ckBTC, ckETH, ckUSDC, ckUSDT | `"ICP"` | IC principal |
+| ckBTC, ckETH, ckUSDC, ckUSDT, ckSOL | `"ICP"` | IC principal |
 
 Lending uses `chain` and `receiver`. Simple Loans use `borrow.chain`, `borrow.destination`, `refund.chain`, and `refund.destination`. Prefer typed destination objects when the account family matters.
 

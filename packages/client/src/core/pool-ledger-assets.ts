@@ -4,9 +4,9 @@ import { Asset, Chain } from "./types";
 
 export type PoolLedgerTransferAsset = Extract<
   Asset,
-  "BTC" | "ETH" | "ICP" | "USDC" | "USDT"
+  "BTC" | "ETH" | "ICP" | "SOL" | "USDC" | "USDT"
 >;
-export type PoolLedgerTransferChain = Extract<Chain, "BTC" | "ETH" | "ICP">;
+export type PoolLedgerTransferChain = Chain;
 
 export interface PoolLedgerAssetRoute {
   ledgerCanisterId: string;
@@ -21,6 +21,16 @@ export function getPoolLedgerAssetRoute(params: {
   asset: string;
   chain: string;
 }): PoolLedgerAssetRoute {
+  if (
+    params.asset === Asset.SOL &&
+    (params.chain === Chain.SOL || params.chain === Chain.ICP)
+  ) {
+    return {
+      ledgerCanisterId: CK_CANISTER_IDS.SOL.ledger,
+      asset: Asset.SOL,
+      chain: params.chain,
+    };
+  }
   if (
     params.asset === Asset.BTC &&
     (params.chain === Chain.BTC || params.chain === Chain.ICP)

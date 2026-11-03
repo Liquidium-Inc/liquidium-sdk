@@ -4,6 +4,7 @@ import {
   mapCanisterAccountToLiquidiumAccount,
   normalizeIcpAccountIdentifier,
 } from "../../core/accounts";
+import { validateSolAmount } from "../../core/address-validation";
 import { mapCanisterCallErrorToLiquidiumError } from "../../core/canisters/lending/error-mappers";
 import type {
   SimpleLoanAuthorisation,
@@ -26,6 +27,7 @@ import {
   buildSimpleLoanFindPath,
   SdkApiPath,
 } from "../../core/sdk-api-paths";
+import { guardSolNativeOutflowMinimum } from "../../core/sol-outflow-minimum";
 import { createLiquidiumStatus, type LiquidiumStatus } from "../../core/status";
 import type { ApiClient } from "../../core/transports/api-client";
 import type { CanisterContext } from "../../core/transports/canister-context";
@@ -48,6 +50,7 @@ import { getVariantKey } from "../../core/utils/variant";
 import type { ActivitiesModule, Activity } from "../activities";
 import { ActivityFilter } from "../activities";
 import {
+  assertConfiguredSolPool,
   getPoolById,
   resolveSupplyTargetForPool,
 } from "../lending/_internal/supply-targets";
@@ -98,6 +101,7 @@ const SIMPLE_LOAN_MIN_SLIPPAGE_BUFFER_BPS = 200n;
 const SIMPLE_LOAN_FIND_QUERY_MAX_LENGTH = 256;
 const SIMPLE_LOAN_WIRE_CONTEXT = "simple loan";
 const SIMPLE_LOAN_ASSETS = [
+  CoreAsset.SOL,
   CoreAsset.BTC,
   CoreAsset.ETH,
   CoreAsset.ICP,
@@ -105,6 +109,7 @@ const SIMPLE_LOAN_ASSETS = [
   CoreAsset.USDT,
 ] as const satisfies readonly SimpleLoanAsset[];
 const SIMPLE_LOAN_CHAINS = [
+  CoreChain.SOL,
   CoreChain.BTC,
   CoreChain.ETH,
   CoreChain.ICP,
@@ -235,12 +240,20 @@ interface SimpleLoanHydrationChainOptions {
 }
 
 interface SimpleLoanInitialDepositQuoteInput {
+  profileId: string;
   collateralAmount: bigint;
   decimals: bigint;
   asset: SimpleLoanAsset;
   targets: Partial<Record<Chain, SupplyTarget>>;
   detectedTimestamp: bigint | null;
   expiryTimestamp: bigint | null;
+}
+
+interface SimpleLoanRepaymentQuoteInput {
+  profileId: string;
+  baseRepaymentAmount: bigint;
+  asset: SimpleLoanAsset;
+  targets: Partial<Record<Chain, SupplyTarget>>;
 }
 
 interface ResolveSimpleLoanInflowTargetsRequest {
@@ -253,8 +266,7 @@ interface ResolvedSimpleLoanInflowTargets {
   targets: Partial<Record<Chain, SupplyTarget>>;
 }
 
-interface RepaymentInflowFeeEstimate {
-  totalFee: bigint;
+interface RepaymentInflowFeeEstimate extends InflowFeeEstimate {
   estimateAvailable: boolean;
 }
 
@@ -349,6 +361,12 @@ export class SimpleLoansModule {
    */
   async create(request: CreateSimpleLoanRequest): Promise<SimpleLoan> {
     validateCreateRequest(request);
+    // Hydration needs SOL targets after the POST; fail before creating the loan.
+    for (const leg of [request.collateral, request.borrow]) {
+      if (leg.asset === CoreAsset.SOL) {
+        assertConfiguredSolPool(this.canisterContext, leg.poolId);
+      }
+    }
     const borrowDestination = resolveSimpleLoanDestination({
       destination: request.borrow.destination,
       asset: request.borrow.asset,
@@ -366,6 +384,11 @@ export class SimpleLoansModule {
     const apiClient = this.requireApi("Simple loan creation");
 
     await this.validateSimpleLoanLtvPolicy(request);
+    await guardSolNativeOutflowMinimum(this.canisterContext, {
+      asset: request.borrow.asset,
+      destinationChain: request.borrow.chain,
+      amount: request.borrow.amount,
+    });
 
     const response = await apiClient.post<
       V1SimpleLoanCreateResponseWire,
@@ -726,6 +749,7 @@ export class SimpleLoansModule {
     });
 
     const initialDeposit = await this.createInitialDepositQuote({
+      profileId,
       collateralAmount,
       decimals: collateralDecimals,
       asset: collateralAsset,
@@ -735,6 +759,7 @@ export class SimpleLoansModule {
     });
 
     const repaymentTargets = await this.createRepaymentTargetQuotes({
+      profileId,
       baseRepaymentAmount: totalDebtAmount + interestBufferAmount,
       asset: borrowAsset,
       targets: repaymentTargetSet.targets,
@@ -802,9 +827,16 @@ export class SimpleLoansModule {
       if (!target) continue;
       assertTargetAsset(target, input.asset);
 
-      const inflowFee = await this.estimateInitialDepositInflowFee(target);
+      const inflowFee = await this.estimateInitialDepositInflowFee(
+        target,
+        input.profileId
+      );
       targets[chain] = {
-        amount: input.collateralAmount + inflowFee.totalFee,
+        amount: applyMinimumSend(
+          input.collateralAmount + inflowFee.totalFee,
+          inflowFee,
+          target.asset
+        ),
         inflowFeeAmount: inflowFee.totalFee,
         target,
       };
@@ -821,10 +853,13 @@ export class SimpleLoansModule {
   }
 
   private async estimateInitialDepositInflowFee(
-    target: SupplyTarget
+    target: SupplyTarget,
+    profileId: string
   ): Promise<InflowFeeEstimate> {
     try {
-      const fee = await this.lending.estimateInflowFee(target);
+      const fee = await this.lending.estimateInflowFee(
+        target.asset === CoreAsset.SOL ? { ...target, profileId } : target
+      );
       if (shouldUseNativeEthInflowFeeFallback(target, fee.totalFee)) {
         return {
           totalFee: getRepaymentInflowFeeFallback(target.asset, target.chain),
@@ -880,11 +915,9 @@ export class SimpleLoansModule {
     return { targets };
   }
 
-  private async createRepaymentTargetQuotes(input: {
-    baseRepaymentAmount: bigint;
-    asset: SimpleLoanAsset;
-    targets: Partial<Record<Chain, SupplyTarget>>;
-  }): Promise<Partial<Record<Chain, SimpleLoanRepaymentTargetQuote>>> {
+  private async createRepaymentTargetQuotes(
+    input: SimpleLoanRepaymentQuoteInput
+  ): Promise<Partial<Record<Chain, SimpleLoanRepaymentTargetQuote>>> {
     const quotes: Partial<Record<Chain, SimpleLoanRepaymentTargetQuote>> = {};
 
     for (const chain of SIMPLE_LOAN_CHAINS) {
@@ -894,11 +927,15 @@ export class SimpleLoansModule {
 
       const repaymentInflowFee =
         input.baseRepaymentAmount > 0n
-          ? await this.estimateRepaymentInflowFee(target)
+          ? await this.estimateRepaymentInflowFee(target, input.profileId)
           : { totalFee: 0n, estimateAvailable: false };
 
       quotes[chain] = {
-        amount: input.baseRepaymentAmount + repaymentInflowFee.totalFee,
+        amount: applyMinimumSend(
+          input.baseRepaymentAmount + repaymentInflowFee.totalFee,
+          repaymentInflowFee,
+          target.asset
+        ),
         inflowFeeAmount: repaymentInflowFee.totalFee,
         inflowFeeEstimateAvailable: repaymentInflowFee.estimateAvailable,
         target,
@@ -909,10 +946,13 @@ export class SimpleLoansModule {
   }
 
   private async estimateRepaymentInflowFee(
-    target: SupplyTarget
+    target: SupplyTarget,
+    profileId: string
   ): Promise<RepaymentInflowFeeEstimate> {
     try {
-      const fee = await this.lending.estimateInflowFee(target);
+      const fee = await this.lending.estimateInflowFee(
+        target.asset === CoreAsset.SOL ? { ...target, profileId } : target
+      );
       if (shouldUseNativeEthInflowFeeFallback(target, fee.totalFee)) {
         return {
           totalFee: getRepaymentInflowFeeFallback(target.asset, target.chain),
@@ -920,8 +960,9 @@ export class SimpleLoansModule {
         };
       }
 
-      return { totalFee: fee.totalFee, estimateAvailable: true };
-    } catch {
+      return { ...fee, estimateAvailable: true };
+    } catch (error) {
+      if (target.asset === CoreAsset.SOL) throw error;
       return {
         totalFee: getRepaymentInflowFeeFallback(target.asset, target.chain),
         estimateAvailable: false,
@@ -1025,6 +1066,19 @@ function getRepaymentInflowFeeFallback(
   }
 
   return 0n;
+}
+
+function applyMinimumSend(
+  amount: bigint,
+  fee: InflowFeeEstimate,
+  asset: SimpleLoanAsset
+): bigint {
+  const sendAmount =
+    fee.minimumSendAmount !== undefined && amount < fee.minimumSendAmount
+      ? fee.minimumSendAmount
+      : amount;
+  if (asset === CoreAsset.SOL && sendAmount > 0n) validateSolAmount(sendAmount);
+  return sendAmount;
 }
 
 function shouldUseNativeEthInflowFeeFallback(
@@ -1184,6 +1238,10 @@ function deriveDepositExpiryTimestamp(
 }
 
 function validateCreateRequest(request: CreateSimpleLoanRequest): void {
+  if (request.borrow.asset === CoreAsset.SOL)
+    validateSolAmount(request.borrow.amount);
+  if (request.collateral.asset === CoreAsset.SOL)
+    validateSolAmount(request.collateral.amount);
   getSimpleLoanAssetIdentifier(
     request.borrow.asset,
     request.borrow.chain,
@@ -1254,6 +1312,7 @@ function inferSimpleLoanDeliveryChain(
   if (asset === CoreAsset.BTC) {
     return CoreChain.BTC;
   }
+  if (asset === CoreAsset.SOL) return CoreChain.SOL;
 
   if (
     asset === CoreAsset.ETH ||

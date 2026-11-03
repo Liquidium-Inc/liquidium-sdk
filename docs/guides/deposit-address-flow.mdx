@@ -38,7 +38,7 @@ console.log("Send funds to", supplyFlow.target.address);
 
 `mechanism: "transfer"` is optional because transfer is the default. Set it when your app exposes an explicit deposit-address versus contract-interaction choice. When the flow needs a transaction ID, call `supplyFlow.submit(...)` after the user broadcasts the transfer.
 
-`submit(...)` posts only BTC and native ETH transfers. Liquidium detects ICP ledger transfers and ETH stablecoin deposit-address transfers itself, so `submit(...)` returns the `txid` without a request. To track any transfer, poll `client.activities.getStatus(...)` with its transaction ID.
+`submit(...)` posts BTC, native ETH, and native SOL transfers. Liquidium detects ICP ledger transfers and ETH stablecoin deposit-address transfers itself, so `submit(...)` returns the `txid` without a request. To track any transfer, poll `client.activities.getStatus(...)` with its transaction ID.
 
 For `action: "repayment"`, `supply(...)` throws `LiquidiumErrorCode.NO_OUTSTANDING_DEBT` before it returns a target or broadcasts when the profile has no debt in the pool. The protocol refunds a repayment for a missing position, but keeps a repayment to a debt-free position as a service fee unless the pool enables refunds.
 
@@ -51,5 +51,9 @@ Manual transfer requests do not include an amount, so the SDK cannot validate th
 | ICP | `10_000n` e8s (`0.0001 ICP`) |
 | USDC / ckUSDC | `1_000_000n` base units (`1 USDC`) |
 | USDT / ckUSDT | `1_000_000n` base units (`1 USDT`) |
+| SOL / ckSOL | Use the account-specific `estimateInflowFee(...).minimumSendAmount` |
+
+For SOL, supply `poolId`, `profileId`, and `action` in the fee request. The minimum
+applies to repayments too. See [Use SOL and ckSOL](./solana).
 
 For manual deposits, account for the inflow fee returned by `client.lending.estimateInflowFee(...)`. The Liquidium app displays the product floor plus that fee. For external USDT deposit addresses, it uses a separate `1.5 USDT` floor before it adds fees. This route-specific guidance does not change the SDK's `1 USDT` product minimum.

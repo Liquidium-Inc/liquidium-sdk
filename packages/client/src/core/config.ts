@@ -33,6 +33,7 @@ const SUPPORTED_CANISTER_ID_OVERRIDE_KEYS = new Set([
   "simpleLoans",
 ]);
 const SUPPORTED_POOL_CANISTER_ID_OVERRIDE_KEYS = new Set([
+  "sol",
   "btc",
   "eth",
   "usdt",
@@ -97,6 +98,11 @@ export const DEFAULT_TIMEOUT_MS = 30_000;
 
 /** Mainnet chain-key asset and ICP helper canister principals. */
 export const CK_CANISTER_IDS = {
+  SOL: {
+    minter: "lh22c-kyaaa-aaaar-qb5nq-cai",
+    ledger: "ls5lp-lqaaa-aaaar-qb5oa-cai",
+    index: "2ezyf-hqaaa-aaaar-qb6ga-cai",
+  },
   BTC: {
     minter: "mqygn-kiaaa-aaaar-qaadq-cai",
     ledger: "mxzaz-hqaaa-aaaar-qaada-cai",

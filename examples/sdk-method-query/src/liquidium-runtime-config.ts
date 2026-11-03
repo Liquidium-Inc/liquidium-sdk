@@ -10,9 +10,21 @@ export function resolveLiquidiumClientConfig(): LiquidiumClientConfig {
     import.meta.env.VITE_INFURA_API_KEY
   );
   const evmRpcUrl = resolveEvmRpcUrl(configuredEvmRpcUrl, infuraApiKey);
+  const configuredApiBaseUrl = normalizeOptionalValue(
+    import.meta.env.VITE_LIQUIDIUM_API_BASE_URL
+  );
+  const apiBaseUrl = configuredApiBaseUrl
+    ? resolveValidOptionalUrl(configuredApiBaseUrl)
+    : undefined;
+  // SOL flows need the active pool and an SDK API deployment that serves it.
+  const solPoolId = normalizeOptionalValue(
+    import.meta.env.VITE_LIQUIDIUM_SOL_POOL_ID
+  );
 
   return {
     ...(evmRpcUrl ? { evmRpcUrl } : {}),
+    ...(apiBaseUrl ? { apiBaseUrl } : {}),
+    ...(solPoolId ? { canisterIds: { pools: { sol: solPoolId } } } : {}),
   };
 }
 

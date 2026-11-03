@@ -138,7 +138,7 @@ describe("decodeFlexibleSimpleLoanRecord", () => {
     expect(decoded?.borrow_asset).toBe("USDT");
   });
 
-  test("should return null for an unsupported SOL asset tag", () => {
+  test("should decode a SOL collateral asset", () => {
     // given
     const record = createFlexibleSimpleLoanRecord({
       lend_asset: { SOL: null },
@@ -148,7 +148,7 @@ describe("decodeFlexibleSimpleLoanRecord", () => {
     const decoded = decodeFlexibleSimpleLoanRecord(record);
 
     // then
-    expect(decoded).toBeNull();
+    expect(decoded?.lend_asset).toBe("SOL");
   });
 
   test("should return null for an unknown lend asset tag", () => {

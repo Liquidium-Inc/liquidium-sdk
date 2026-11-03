@@ -1,7 +1,9 @@
 import type { IcrcLedgerCanister } from "@icp-sdk/canisters/ledger/icrc";
 import { Principal } from "@icp-sdk/core/principal";
+import { validateSolAmount } from "../../../core/address-validation";
 import { createCkBtcMinterActor } from "../../../core/canisters/ckbtc/minter";
 import { createCkEthMinterActor } from "../../../core/canisters/cketh/minter";
+import { createCkSolMinterActor } from "../../../core/canisters/cksol/minter";
 import {
   createLendingActor,
   type PriceRecord,
@@ -72,6 +74,19 @@ async function getRequiredAmount(
   switch (params.chain) {
     case Chain.BTC:
       return getRequiredBtcAmount(params, ledgerFee);
+    case Chain.SOL: {
+      validateSolAmount(params.amount);
+      const info = await createCkSolMinterActor(
+        params.canisterContext
+      ).get_minter_info();
+      return (
+        ledgerFee * ERC_NATIVE_LEDGER_FEE_COUNT +
+        maxBigint(
+          info.minimum_withdrawal_amount,
+          info.withdrawal_fee + MIN_RECEIVED_UNITS
+        )
+      );
+    }
     case Chain.ETH:
       return params.asset === Asset.ETH
         ? getRequiredEthAmount(params, ledgerFee)

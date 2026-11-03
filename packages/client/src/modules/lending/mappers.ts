@@ -23,7 +23,12 @@ export interface LendingEthChainVariant {
   ETH: null;
 }
 
+export interface LendingSolChainVariant {
+  SOL: null;
+}
+
 export type LendingChainVariant =
+  | LendingSolChainVariant
   | LendingBtcChainVariant
   | LendingEthChainVariant;
 
@@ -166,6 +171,8 @@ export function mapWalletChainToLendingChain(
       return { BTC: null };
     case Chain.ETH:
       return { ETH: null };
+    case Chain.SOL:
+      return { SOL: null };
   }
 
   throw new LiquidiumError(
@@ -290,7 +297,11 @@ function assertDestinationTypeSupportedByChain(params: {
   poolChain: string;
   destinationChain: string;
 }): void {
-  if (params.poolChain === Chain.BTC || params.poolChain === Chain.ETH) {
+  if (
+    params.poolChain === Chain.BTC ||
+    params.poolChain === Chain.ETH ||
+    params.poolChain === Chain.SOL
+  ) {
     if (
       params.destinationChain === params.poolChain &&
       params.accountType === "ChainAddress"

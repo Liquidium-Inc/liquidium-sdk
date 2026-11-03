@@ -27,6 +27,7 @@ export type {
   RecoveryData,
   RecoveryRequest,
   RecoveryResult,
+  SolInflowFeeRequest,
   SubmitInflowRequest,
   SubmitInflowResponse,
   SubmitSupplyFlowInflowRequest,

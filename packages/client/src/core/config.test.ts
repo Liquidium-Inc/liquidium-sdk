@@ -70,7 +70,7 @@ describe("config", () => {
     // given
     const unsupportedPoolOverrides = {
       pools: {
-        sol: "ddddd-dd",
+        doge: "ddddd-dd",
       },
     };
 
@@ -80,7 +80,7 @@ describe("config", () => {
 
     // then
     expect(resolveWithUnsupportedPoolOverrides).toThrowError(
-      "Unsupported canisterIds.pools override: sol"
+      "Unsupported canisterIds.pools override: doge"
     );
     expect(resolveWithUnsupportedPoolOverrides).toThrowError(
       expect.objectContaining({ code: LiquidiumErrorCode.VALIDATION_ERROR })

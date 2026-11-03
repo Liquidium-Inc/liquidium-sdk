@@ -3,6 +3,7 @@ import { Actor, type Agent } from "@icp-sdk/core/agent";
 import { Principal } from "@icp-sdk/core/principal";
 import { afterEach, expect, test, vi } from "vitest";
 import { mockDeep } from "vitest-mock-extended";
+import type { CkSolMinterActor } from "../../../core/canisters/cksol/minter";
 import type { LendingActor } from "../../../core/canisters/lending/actor";
 import type { FlexibleLendingActor } from "../../../core/canisters/lending/flexible-actor";
 import { CK_CANISTER_IDS, resolveCanisterIds } from "../../../core/config";
@@ -56,6 +57,9 @@ const SIGNATURE = "0xsigned";
 const BTC_MINIMUM = 60_000n;
 
 const ETH_MINIMUM = 5_000_000_000_000_000n;
+const SOL_POOL_ID = "efo3x-cyaaa-aaaae-qkpva-cai";
+const SOL_MINIMUM_LAMPORTS = 1_000_000n;
+const SOL_ADDRESS = "So11111111111111111111111111111111111111112";
 
 const NETWORK_FEE = 1_000n;
 
@@ -93,6 +97,7 @@ test.each([
   [ICP_POOL_ID, CK_CANISTER_IDS.ICP.ledger],
   [USDC_POOL_ID, CK_CANISTER_IDS.USDC.ledger],
   [USDT_POOL_ID, CK_CANISTER_IDS.USDT.ledger],
+  [SOL_POOL_ID, CK_CANISTER_IDS.SOL.ledger],
 ])(
   "reads the recovery ledger for %s without a position or rejected inflow",
   async (poolId, ledgerId) => {
@@ -814,6 +819,33 @@ test("preserves a ledger read failure rather than treating it as zero balance", 
   await expect(result).rejects.toMatchObject({ cause: failure });
 });
 
+test.each([-1n, 0n])(
+  "checks the native SOL recovery fee boundary at offset %s",
+  async (offset) => {
+    // given
+    const requiredAmount = SOL_MINIMUM_LAMPORTS + THREE_LEDGER_FEES;
+    const { client, lending } = setupRecovery(requiredAmount + offset);
+
+    // when
+    const result = client.lending.prepareRecovery({
+      ...BASE_REQUEST,
+      poolId: SOL_POOL_ID,
+      chain: "SOL",
+      receiver: SOL_ADDRESS,
+    });
+
+    // then
+    if (offset < 0n) {
+      await expect(result).rejects.toMatchObject({
+        code: LiquidiumErrorCode.RECOVERY_AMOUNT_TOO_LOW,
+      });
+      expect(lending.get_nonce).not.toHaveBeenCalled();
+      return;
+    }
+    expect((await result).data.amount).toBe(requiredAmount);
+  }
+);
+
 function setupRecovery(balance = RECOVERY_BALANCE) {
   const lending = mockDeep<RecoveryLendingActor>();
 
@@ -823,6 +855,11 @@ function setupRecovery(balance = RECOVERY_BALANCE) {
     createIcpPoolRecord(),
     createUsdcPoolRecord(),
     createUsdtPoolRecord(),
+    {
+      ...createBtcPoolRecord(SOL_POOL_ID),
+      asset: { SOL: null },
+      chain: { SOL: null },
+    },
   ];
 
   lending.list_pools.mockResolvedValue(
@@ -879,6 +916,12 @@ function setupRecovery(balance = RECOVERY_BALANCE) {
     [CK_CANISTER_IDS.BTC.minter, btcMinter],
     [CK_CANISTER_IDS.ETH.minter, ethMinter],
   ]);
+  const solMinter = mockDeep<CkSolMinterActor>();
+  solMinter.get_minter_info.mockResolvedValue({
+    minimum_withdrawal_amount: SOL_MINIMUM_LAMPORTS,
+    withdrawal_fee: NETWORK_FEE,
+  } satisfies Awaited<ReturnType<CkSolMinterActor["get_minter_info"]>>);
+  actorsByCanisterId.set(CK_CANISTER_IDS.SOL.minter, solMinter);
 
   const createActor = vi
     .spyOn(Actor, "createActor")
