@@ -1,5 +1,12 @@
 # @liquidium/client
 
+## 0.11.1
+
+### Patch Changes
+
+- abb3647: Use current indexed debt for reserve values and repayment quotes without adding
+  reported interest. Hide dust-only positions when only historical paid interest remains.
+
 ## 0.11.0
 
 ### Minor Changes

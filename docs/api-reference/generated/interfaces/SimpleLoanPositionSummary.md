@@ -18,7 +18,7 @@ Current lending position backing the simple loan.
 
 Defined in: packages/client/src/modules/simple-loans/types.ts:429
 
-Borrowed principal in the borrow asset's base units.
+Current outstanding debt in the borrow asset's base units.
 
 ***
 
@@ -68,7 +68,7 @@ Earned interest on the collateral side in base units.
 
 Defined in: packages/client/src/modules/simple-loans/types.ts:433
 
-Accrued borrow interest in base units.
+Reported borrow-interest metric; do not add it to `borrowedAmount`.
 
 ***
 
@@ -78,4 +78,4 @@ Accrued borrow interest in base units.
 
 Defined in: packages/client/src/modules/simple-loans/types.ts:435
 
-Borrowed principal plus accrued interest in base units, before repayment buffer.
+Current outstanding debt in base units, before the repayment buffer.

@@ -18,7 +18,7 @@ Position joined with pool metadata and current USD valuation.
 
 Defined in: packages/client/src/modules/positions/types.ts:97
 
-Borrowed value in USD-scaled units.
+Current outstanding debt value in USD-scaled units.
 
 ***
 
