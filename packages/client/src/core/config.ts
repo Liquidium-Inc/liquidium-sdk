@@ -17,6 +17,7 @@ const MAINNET_CANISTER_IDS: CanisterIds = {
     usdt: "hnnn4-iyaaa-aaaar-qb4bq-cai",
     usdc: "6sna2-oiaaa-aaaar-qb66q-cai",
     icp: "r2pk3-4yaaa-aaaar-qb7zq-cai",
+    sol: "xhh4q-qyaaa-aaaar-qci2q-cai",
   },
   ethDeposit: "z5jz7-nyaaa-aaaar-qb6pq-cai",
   simpleLoans: "u5rm3-niaaa-aaaar-qb7eq-cai",

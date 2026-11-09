@@ -12,9 +12,10 @@ ckSOL. Both routes use the same lending pool and nine decimals. Amounts are
 
 ## Configure the deployment
 
-Set `canisterIds.pools.sol` to the active pool for your deployment. The SDK does
-not bundle a production SOL pool ID. Retired pools can remain in market results;
-`market.findPool(...)` uses this override to select the active SOL pool. SOL and
+The SDK uses `xhh4q-qyaaa-aaaar-qci2q-cai` as the default mainnet SOL pool.
+Set `canisterIds.pools.sol` only when your deployment uses a different active
+pool. Retired pools can remain in market results;
+`market.findPool(...)` uses the configured ID to select the active SOL pool. SOL and
 ckSOL inflow targets reject any other pool, because only the active pool's
 addresses are monitored.
 

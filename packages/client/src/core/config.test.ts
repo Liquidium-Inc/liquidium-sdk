@@ -3,11 +3,24 @@ import { CK_CANISTER_IDS, resolveCanisterIds } from "./config";
 import { LiquidiumErrorCode } from "./errors";
 
 describe("config", () => {
+  test("should resolve the mainnet SOL pool by default", () => {
+    // given
+    const environment = "mainnet";
+
+    // when
+    const canisterIds = resolveCanisterIds(environment);
+
+    // then
+    const EXPECTED_SOL_POOL_CANISTER_ID = "xhh4q-qyaaa-aaaar-qci2q-cai";
+    expect(canisterIds.pools.sol).toBe(EXPECTED_SOL_POOL_CANISTER_ID);
+  });
+
   test("should resolve only canonical canister id override fields", () => {
     // given
     const lendingCanisterId = "aaaaa-aa";
     const btcPoolCanisterId = "bbbbb-bb";
     const ethPoolCanisterId = "ccccc-cc";
+    const solPoolCanisterId = "efo3x-cyaaa-aaaae-qkpva-cai";
 
     // when
     const canisterIds = resolveCanisterIds("mainnet", {
@@ -15,6 +28,7 @@ describe("config", () => {
       pools: {
         btc: btcPoolCanisterId,
         eth: ethPoolCanisterId,
+        sol: solPoolCanisterId,
       },
     });
 
@@ -22,6 +36,7 @@ describe("config", () => {
     expect(canisterIds.lending).toBe(lendingCanisterId);
     expect(canisterIds.pools.btc).toBe(btcPoolCanisterId);
     expect(canisterIds.pools.eth).toBe(ethPoolCanisterId);
+    expect(canisterIds.pools.sol).toBe(solPoolCanisterId);
     expect(canisterIds).not.toHaveProperty("btcPool");
     expect(canisterIds).not.toHaveProperty("ercPool");
   });
