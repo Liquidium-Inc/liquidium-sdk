@@ -20,6 +20,13 @@ export default defineConfig({
       {
         extends: true,
         test: {
+          name: "release",
+          include: ["scripts/_internal/**/*.test.ts"],
+        },
+      },
+      {
+        extends: true,
+        test: {
           name: "client-e2e",
           include: ["e2e/**/*.{test,spec}.{ts,tsx}"],
           fileParallelism: false,
