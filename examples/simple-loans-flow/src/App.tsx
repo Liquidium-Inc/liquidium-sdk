@@ -334,8 +334,9 @@ export function App() {
           onChange={(event) => handleCollateralPoolChange(event.target.value)}
         >
           {pools.map((pool) => (
-            <option key={pool.id} value={pool.id}>
+            <option key={pool.id} value={pool.id} disabled={pool.frozen}>
               Asset: {pool.asset} | Pool chain: {pool.chain}
+              {pool.frozen ? " (frozen)" : ""}
             </option>
           ))}
         </select>
@@ -373,8 +374,9 @@ export function App() {
           onChange={(event) => handleBorrowPoolChange(event.target.value)}
         >
           {pools.map((pool) => (
-            <option key={pool.id} value={pool.id}>
+            <option key={pool.id} value={pool.id} disabled={pool.frozen}>
               Asset: {pool.asset} | Pool chain: {pool.chain}
+              {pool.frozen ? " (frozen)" : ""}
             </option>
           ))}
         </select>

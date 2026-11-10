@@ -9,20 +9,26 @@ The SDK method query screen lets you:
 - Apply connected-wallet defaults where relevant
 - Run the method and inspect the return payload
 
+The execution mode defaults to **Mock wallet**, which does not open wallet
+prompts. SDK calls still use production and can change protocol state.
+Use **Connected wallet** to sign messages or send transfers with an ETH or SOL
+wallet. This mode ignores mock signatures and transaction IDs for wallet
+execution. Check the method, account, destination, and amount before running.
+
 ## Setup
 
 1. Copy `.env.example` to `.env`
 2. Set `VITE_INFURA_API_KEY` for ETH reads that need an RPC provider.
    Alternatively, set `VITE_EVM_RPC_URL` to a full Ethereum mainnet RPC URL.
-3. For SOL methods, set `VITE_LIQUIDIUM_SOL_POOL_ID` to the active SOL pool and
-   `VITE_LIQUIDIUM_API_BASE_URL` to an SDK API deployment that serves it.
-4. Install dependencies from the SDK root:
+   All assets, including SOL, use the SDK's bundled mainnet canisters and
+   production API. No API URL or SOL pool override is needed.
+3. Install dependencies from the SDK root:
 
 ```bash
 pnpm install
 ```
 
-5. Run the example:
+4. Run the example:
 
 ```bash
 pnpm --filter @liquidium/example-sdk-method-query dev
