@@ -1,18 +1,8 @@
 import type { RegisterProfileRequest } from "../../core/canisters/lending/actor";
 import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
-import { Chain, type SigningChain } from "../../core/types";
 import { normalizeWalletSignature } from "../../core/utils/signature";
+import { mapWalletChainToLendingChain } from "../lending/mappers";
 import type { CreateAccountRequest } from "./types";
-
-interface AccountBtcChainVariant {
-  BTC: null;
-}
-
-interface AccountEthChainVariant {
-  ETH: null;
-}
-
-type AccountChainVariant = AccountBtcChainVariant | AccountEthChainVariant;
 
 export function mapCreateAccountRequestToRegisterProfileRequest(
   request: CreateAccountRequest
@@ -35,22 +25,9 @@ export function mapCreateAccountRequestToRegisterProfileRequest(
           request.signatureInfo.signature,
           request.signatureInfo.chain
         ),
-        chain: mapAccountChainToLendingChainVariant(
-          request.signatureInfo.chain
-        ),
+        chain: mapWalletChainToLendingChain(request.signatureInfo.chain),
         account: signingAccount,
       },
     },
   };
-}
-
-function mapAccountChainToLendingChainVariant(
-  chain: SigningChain
-): AccountChainVariant {
-  switch (chain) {
-    case Chain.BTC:
-      return { BTC: null };
-    case Chain.ETH:
-      return { ETH: null };
-  }
 }

@@ -1,5 +1,6 @@
 import { isEthereumWallet } from "@dynamic-labs/ethereum";
-import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
+import { DynamicWidget, useDynamicContext } from "@dynamic-labs/sdk-react-core";
+import { isSolanaWallet } from "@dynamic-labs/solana";
 import type {
   ActivityFilter,
   Asset,
@@ -20,6 +21,7 @@ import type {
 } from "@liquidium/client";
 import { isAssetIdentifier } from "@liquidium/client";
 import { useMemo, useState } from "react";
+import { createConnectedWalletAdapter } from "./dynamic-wallet";
 import type { SharedExampleState } from "./example-state";
 import { METHOD_ARG_REFERENCES } from "./generated-method-arg-references";
 import { createLiquidiumClient } from "./lib/client";
@@ -30,6 +32,15 @@ const MAX_HISTORY_LIMIT = 200;
 const MAX_PROTOCOL_ACTIVITY_LIMIT = 100;
 const DEFAULT_MOCK_SIGNATURE = "replace-with-real-signature";
 const DEFAULT_MOCK_TX_HASH = "0xmockedtxhash";
+// SOL transaction signatures are 64 base58-encoded bytes.
+const DEFAULT_MOCK_SOL_SIGNATURE =
+  "99eUso3aSbE9tqGSTXzo3TLfKb9RkMTURrHKQ1K7Zh3BbeqPevr5E1iCbpTjqHuTFLtfxTTD5ekfVuZFzQyEQf8";
+const WALLET_EXECUTION_METHODS = new Set([
+  "accounts.createProfile",
+  "lending.borrow",
+  "lending.withdraw",
+  "lending.supply",
+]);
 const HISTORY_OPERATIONS = [
   "deposit",
   "borrow",
@@ -51,7 +62,8 @@ type MethodDefinition = {
   defaultArgs: string;
   execute: (
     client: LiquidiumClient,
-    input: unknown
+    input: unknown,
+    walletAdapter?: WalletAdapter
   ) => unknown | Promise<unknown>;
 };
 
@@ -72,14 +84,16 @@ const SDK_METHODS: MethodDefinition[] = [
     label: "accounts.createProfile",
     defaultArgs:
       '{\n  "account": "0xYourWalletAddress",\n  "chain": "ETH",\n  "mockSignature": "replace-with-real-signature"\n}',
-    execute: async (client, input) => {
+    execute: async (client, input, walletAdapter) => {
       const args = expectObject(input);
       return await client.accounts.createProfile({
         account: expectNonEmptyString(args.account, "account"),
         chain: expectSigningChain(args.chain, "chain"),
-        walletAdapter: createMockWalletAdapter(
-          expectNonEmptyString(args.mockSignature, "mockSignature")
-        ),
+        walletAdapter:
+          walletAdapter ??
+          createMockWalletAdapter(
+            expectNonEmptyString(args.mockSignature, "mockSignature")
+          ),
       });
     },
   },
@@ -540,7 +554,7 @@ const SDK_METHODS: MethodDefinition[] = [
     label: "lending.withdraw",
     defaultArgs:
       '{\n  "profileId": "aaaaa-aa",\n  "poolId": "bbbbb-bb",\n  "amount": "10000",\n  "chain": "BTC",\n  "receiver": {\n    "address": "bc1..."\n  },\n  "signerWalletAddress": "bc1...",\n  "signerChain": "BTC",\n  "mockSignature": "replace-with-real-signature"\n}',
-    execute: async (client, input) => {
+    execute: async (client, input, walletAdapter) => {
       const args = expectObject(input);
       return await client.lending.withdraw({
         profileId: expectNonEmptyString(args.profileId, "profileId"),
@@ -553,9 +567,11 @@ const SDK_METHODS: MethodDefinition[] = [
           "signerWalletAddress"
         ),
         signerChain: expectSigningChain(args.signerChain, "signerChain"),
-        signerWalletAdapter: createMockWalletAdapter(
-          expectNonEmptyString(args.mockSignature, "mockSignature")
-        ),
+        signerWalletAdapter:
+          walletAdapter ??
+          createMockWalletAdapter(
+            expectNonEmptyString(args.mockSignature, "mockSignature")
+          ),
       });
     },
   },
@@ -584,7 +600,7 @@ const SDK_METHODS: MethodDefinition[] = [
     label: "lending.borrow",
     defaultArgs:
       '{\n  "profileId": "aaaaa-aa",\n  "poolId": "bbbbb-bb",\n  "amount": "10000",\n  "chain": "BTC",\n  "receiver": {\n    "address": "bc1..."\n  },\n  "signerWalletAddress": "bc1...",\n  "signerChain": "BTC",\n  "mockSignature": "replace-with-real-signature"\n}',
-    execute: async (client, input) => {
+    execute: async (client, input, walletAdapter) => {
       const args = expectObject(input);
       return await client.lending.borrow({
         profileId: expectNonEmptyString(args.profileId, "profileId"),
@@ -597,9 +613,11 @@ const SDK_METHODS: MethodDefinition[] = [
           "signerWalletAddress"
         ),
         signerChain: expectSigningChain(args.signerChain, "signerChain"),
-        signerWalletAdapter: createMockWalletAdapter(
-          expectNonEmptyString(args.mockSignature, "mockSignature")
-        ),
+        signerWalletAdapter:
+          walletAdapter ??
+          createMockWalletAdapter(
+            expectNonEmptyString(args.mockSignature, "mockSignature")
+          ),
       });
     },
   },
@@ -608,7 +626,7 @@ const SDK_METHODS: MethodDefinition[] = [
     label: "lending.supply",
     defaultArgs:
       '{\n  "profileId": "aaaaa-aa",\n  "poolId": "bbbbb-bb",\n  "action": "deposit",\n  "chain": "ETH",\n  "account": "0xYourWalletAddress",\n  "amount": "5000000000000000",\n  "mockTxHash": "0xmockedtxhash"\n}',
-    execute: async (client, input) => {
+    execute: async (client, input, connectedWalletAdapter) => {
       const args = expectObject(input);
       const mockTxHash =
         expectOptionalString(args.mockTxHash, "mockTxHash") ??
@@ -620,7 +638,8 @@ const SDK_METHODS: MethodDefinition[] = [
           : expectBigInt(args.amount, "amount");
       const walletAdapter =
         account || amount || args.mockTxHash !== undefined
-          ? createMockWalletAdapter(DEFAULT_MOCK_SIGNATURE, mockTxHash)
+          ? (connectedWalletAdapter ??
+            createMockWalletAdapter(DEFAULT_MOCK_SIGNATURE, mockTxHash))
           : undefined;
       const mechanism = expectOptionalSupplyMechanism(
         args.mechanism,
@@ -641,10 +660,9 @@ const SDK_METHODS: MethodDefinition[] = [
           mechanism,
           account: expectNonEmptyString(args.account, "account"),
           amount: expectBigInt(args.amount, "amount"),
-          walletAdapter: createMockWalletAdapter(
-            DEFAULT_MOCK_SIGNATURE,
-            mockTxHash
-          ),
+          walletAdapter:
+            connectedWalletAdapter ??
+            createMockWalletAdapter(DEFAULT_MOCK_SIGNATURE, mockTxHash),
         });
       }
 
@@ -674,9 +692,16 @@ const SDK_METHODS: MethodDefinition[] = [
     defaultArgs: '{\n  "asset": "USDT",\n  "chain": "ETH"\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
-      return await client.lending.estimateInflowFee(
-        expectAssetIdentifier(args.asset, args.chain)
-      );
+      const identifier = expectAssetIdentifier(args.asset, args.chain);
+      if (identifier.asset === "SOL") {
+        return client.lending.estimateInflowFee({
+          ...identifier,
+          poolId: expectNonEmptyString(args.poolId, "poolId"),
+          profileId: expectNonEmptyString(args.profileId, "profileId"),
+          action: expectSupplyAction(args.action, "action"),
+        });
+      }
+      return await client.lending.estimateInflowFee(identifier);
     },
   },
   {
@@ -705,15 +730,15 @@ const SDK_METHODS: MethodDefinition[] = [
 
 const SDK_METHOD_GROUPS = groupMethodsByModule(SDK_METHODS);
 
-type SdkMethodQueryPageProps = Pick<
-  SharedExampleState,
-  "profileId" | "pools" | "prices"
->;
+type SdkMethodQueryPageProps = SharedExampleState;
 
 export function SdkMethodQueryPage({
   profileId,
+  setProfileId,
   pools,
+  setPools,
   prices,
+  setPrices,
 }: SdkMethodQueryPageProps) {
   const { primaryWallet } = useDynamicContext();
   const [selectedMethodId, setSelectedMethodId] = useState(SDK_METHODS[0].id);
@@ -721,6 +746,7 @@ export function SdkMethodQueryPage({
   const [result, setResult] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isRunning, setIsRunning] = useState(false);
+  const [executionMode, setExecutionMode] = useState("mock");
 
   const selectedMethod = useMemo(() => {
     return (
@@ -744,7 +770,30 @@ export function SdkMethodQueryPage({
     try {
       const parsedInput = JSON.parse(argsInput) as unknown;
       const client = createLiquidiumClient();
-      const rawResult = await selectedMethod.execute(client, parsedInput);
+      const walletAdapter =
+        executionMode === "connected" &&
+        WALLET_EXECUTION_METHODS.has(selectedMethod.id)
+          ? createConnectedWalletAdapter(primaryWallet)
+          : undefined;
+      const rawResult = await selectedMethod.execute(
+        client,
+        parsedInput,
+        walletAdapter
+      );
+      if (
+        ["accounts.createProfile", "accounts.getProfileId"].includes(
+          selectedMethod.id
+        ) &&
+        (typeof rawResult === "string" || rawResult === null)
+      ) {
+        setProfileId(rawResult);
+      }
+      if (selectedMethod.id === "market.listPools") {
+        setPools(rawResult as Pool[]);
+      }
+      if (selectedMethod.id === "market.getAssetPrices") {
+        setPrices(rawResult as AssetPrices);
+      }
       const elapsedMs = Date.now() - startedAtMs;
 
       setResult(
@@ -789,6 +838,14 @@ export function SdkMethodQueryPage({
       const nextArgs: Record<string, unknown> = {
         ...argsObject,
       };
+      const previousTransferChain = nextArgs.chain;
+      const selectedPool = pools.find((pool) => pool.id === nextArgs.poolId);
+      const isOutflow = [
+        "lending.borrow",
+        "lending.prepareBorrow",
+        "lending.withdraw",
+        "lending.prepareWithdraw",
+      ].includes(selectedMethod.id);
 
       if (
         "account" in nextArgs ||
@@ -819,18 +876,7 @@ export function SdkMethodQueryPage({
         nextArgs.newWalletAddress = walletAddress;
       }
 
-      if (
-        "receiver" in nextArgs &&
-        nextArgs.receiver !== null &&
-        typeof nextArgs.receiver === "object"
-      ) {
-        nextArgs.receiver = {
-          ...nextArgs.receiver,
-          address: walletAddress,
-        };
-      }
-
-      if ("chain" in nextArgs) {
+      if ("chain" in nextArgs && (!isOutflow || !selectedPool)) {
         nextArgs.chain = walletChain;
       }
 
@@ -842,8 +888,27 @@ export function SdkMethodQueryPage({
         nextArgs.profileId = profileId;
       }
 
-      if (pools.length > 0 && "poolId" in nextArgs) {
-        nextArgs.poolId = pools[0]?.id;
+      if (
+        pools.length > 0 &&
+        "poolId" in nextArgs &&
+        (!selectedPool || selectedPool.frozen)
+      ) {
+        nextArgs.poolId = pools.find(
+          (pool) => !pool.frozen && pool.chain === walletChain
+        )?.id;
+        if ("amount" in nextArgs) {
+          nextArgs.amount = "";
+        }
+      }
+      if (previousTransferChain !== nextArgs.chain && "amount" in nextArgs) {
+        nextArgs.amount = "";
+      }
+      if (
+        nextArgs.chain === walletChain &&
+        nextArgs.receiver !== null &&
+        typeof nextArgs.receiver === "object"
+      ) {
+        nextArgs.receiver = { ...nextArgs.receiver, address: walletAddress };
       }
 
       if (selectedMethod.id === "simpleLoans.create") {
@@ -910,6 +975,26 @@ export function SdkMethodQueryPage({
         <p>
           Pick any SDK method, edit JSON args, and run it to inspect the raw
           return payload.
+        </p>
+
+        <DynamicWidget />
+        <label>
+          Execution mode
+          <select
+            value={executionMode}
+            disabled={isRunning}
+            onChange={(event) => setExecutionMode(event.target.value)}
+          >
+            <option value="mock">Mock wallet (no wallet prompts)</option>
+            <option value="connected">
+              Connected wallet (real signing and sends)
+            </option>
+          </select>
+        </label>
+        <p className="warning">
+          Production Liquidium canisters use real mainnet assets. Connected
+          wallet mode ignores mock signatures and transaction IDs. Review the
+          JSON before running.
         </p>
 
         <div className="details">
@@ -1007,7 +1092,11 @@ export function SdkMethodQueryPage({
           </button>
         </div>
 
-        {errorMessage ? <p className="error">{errorMessage}</p> : null}
+        {errorMessage ? (
+          <p className="error" role="alert">
+            {errorMessage}
+          </p>
+        ) : null}
 
         {result ? (
           <div className="output">
@@ -1046,6 +1135,8 @@ function createMockWalletAdapter(
     sendBtcTransaction: async () => txHash,
     sendEthTransaction: async () => txHash,
     sendIcrcTransfer: async () => txHash,
+    sendSolTransaction: async () =>
+      txHash === DEFAULT_MOCK_TX_HASH ? DEFAULT_MOCK_SOL_SIGNATURE : txHash,
   };
 }
 
@@ -1218,21 +1309,26 @@ function expectOptionalStringValues<T extends string>(
 function expectChain(value: unknown, fieldName: string): Chain {
   const chain = expectNonEmptyString(value, fieldName).toUpperCase();
 
-  if (chain === "BTC" || chain === "ETH" || chain === "ICP") {
+  if (
+    chain === "BTC" ||
+    chain === "ETH" ||
+    chain === "ICP" ||
+    chain === "SOL"
+  ) {
     return chain;
   }
 
-  throw new Error(`${fieldName} must be BTC, ETH, or ICP.`);
+  throw new Error(`${fieldName} must be BTC, ETH, ICP, or SOL.`);
 }
 
 function expectSigningChain(value: unknown, fieldName: string): SigningChain {
   const chain = expectNonEmptyString(value, fieldName).toUpperCase();
 
-  if (chain === "BTC" || chain === "ETH") {
+  if (chain === "BTC" || chain === "ETH" || chain === "SOL") {
     return chain;
   }
 
-  throw new Error(`${fieldName} must be BTC or ETH.`);
+  throw new Error(`${fieldName} must be BTC, ETH, or SOL.`);
 }
 
 function expectAsset(value: unknown, fieldName: string): Asset {
@@ -1242,13 +1338,14 @@ function expectAsset(value: unknown, fieldName: string): Asset {
     asset === "BTC" ||
     asset === "ETH" ||
     asset === "ICP" ||
+    asset === "SOL" ||
     asset === "USDC" ||
     asset === "USDT"
   ) {
     return asset;
   }
 
-  throw new Error(`${fieldName} must be BTC, ETH, ICP, USDC, or USDT.`);
+  throw new Error(`${fieldName} must be BTC, ETH, ICP, SOL, USDC, or USDT.`);
 }
 
 function expectAssetIdentifier(
@@ -1402,10 +1499,13 @@ function expectOptionalActivityFilter(
 
 function getWalletChainLabel(
   primaryWallet: ReturnType<typeof useDynamicContext>["primaryWallet"]
-): "ETH" {
+): "ETH" | "SOL" | "" {
+  if (primaryWallet && isSolanaWallet(primaryWallet)) {
+    return "SOL";
+  }
   if (primaryWallet && isEthereumWallet(primaryWallet)) {
     return "ETH";
   }
 
-  return "ETH";
+  return "";
 }

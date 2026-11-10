@@ -3,6 +3,8 @@ import { decodeIcrcAccountAddress } from "../../../core/accounts";
 import {
   type EvmAddress,
   normalizeAndValidateEvmAddress,
+  validateSolAddress,
+  validateSolAmount,
 } from "../../../core/address-validation";
 import { mapCanisterCallErrorToLiquidiumError } from "../../../core/canisters/lending/error-mappers";
 import {
@@ -39,9 +41,11 @@ import {
 } from "../evm-transactions";
 import type {
   ContractInteractionSupplyFlowRequest,
+  EstimateInflowFeeRequest,
   EvmSupplyApprovalStrategy,
   EvmSupplyContext,
   GetEvmSupplyContextRequest,
+  InflowFeeEstimate,
   InflowOperation,
   SubmitInflowRequest,
   SubmitInflowResponse,
@@ -76,6 +80,9 @@ interface SupplyFlowExecutorParams {
   evmReadClient: EvmReadClient | undefined;
   requireApi(): void;
   submitInflow(request: SubmitInflowRequest): Promise<SubmitInflowResponse>;
+  estimateInflowFee(
+    request: EstimateInflowFeeRequest
+  ): Promise<InflowFeeEstimate>;
 }
 
 interface GetEvmSupplyContextForPoolParams {
@@ -106,7 +113,7 @@ interface ExecuteContractSupplyParams {
 interface SendChainAddressSupplyTransactionParams {
   walletAdapter: Pick<
     WalletAdapter,
-    "sendBtcTransaction" | "sendEthTransaction"
+    "sendBtcTransaction" | "sendEthTransaction" | "sendSolTransaction"
   >;
   chain: string;
   asset: string;
@@ -422,6 +429,23 @@ export class SupplyFlowExecutor {
       );
     }
 
+    if (target.asset === Asset.SOL) {
+      validateSolAmount(request.amount);
+      const estimate = await this.params.estimateInflowFee({
+        ...target,
+        profileId: request.profileId,
+      });
+      if (
+        estimate.minimumSendAmount === undefined ||
+        request.amount < estimate.minimumSendAmount
+      ) {
+        throw new LiquidiumError(
+          LiquidiumErrorCode.VALIDATION_ERROR,
+          `SOL transfer must be at least ${estimate.minimumSendAmount} lamports`
+        );
+      }
+    }
+
     const txid =
       target.chain === Chain.ICP
         ? await this.sendIcrcSupplyTransaction({
@@ -663,6 +687,21 @@ export class SupplyFlowExecutor {
     params: SendChainAddressSupplyTransactionParams
   ): Promise<string> {
     switch (params.chain) {
+      case Chain.SOL: {
+        if (!params.walletAdapter.sendSolTransaction) {
+          throw new LiquidiumError(
+            LiquidiumErrorCode.VALIDATION_ERROR,
+            "SOL wallet adapter does not support transaction sending"
+          );
+        }
+        return params.walletAdapter.sendSolTransaction({
+          chain: Chain.SOL,
+          account: validateSolAddress(params.senderAccount),
+          toAddress: validateSolAddress(params.toAddress),
+          amountLamports: params.amount,
+          actionType: `supply-${params.action}`,
+        });
+      }
       case Chain.BTC: {
         if (!params.walletAdapter.sendBtcTransaction) {
           throw new LiquidiumError(
@@ -918,7 +957,11 @@ function getUnknownErrorMessage(error: unknown): string | null {
 function getDefaultSubmitInflowRequest(
   params: DefaultSubmitInflowRequestParams
 ): SubmitInflowDefaults | null {
-  if (params.chain !== Chain.BTC && params.chain !== Chain.ETH) {
+  if (
+    params.chain !== Chain.BTC &&
+    params.chain !== Chain.ETH &&
+    params.chain !== Chain.SOL
+  ) {
     return null;
   }
 

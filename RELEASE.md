@@ -53,6 +53,8 @@ git push origin @liquidium/client@<version>
 ```
 
 Pushing the tag creates the GitHub Release from `packages/client/CHANGELOG.md`.
+Prerelease tags create GitHub prereleases and do not replace the latest stable
+GitHub Release.
 
 ## Release Candidates
 

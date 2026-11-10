@@ -14,7 +14,9 @@
   "dependencies": {
     "@dynamic-labs/ethereum": "4.83.1",
     "@dynamic-labs/sdk-react-core": "4.83.1",
+    "@dynamic-labs/solana": "4.83.1",
     "@liquidium/client": "workspace:*",
+    "@solana/web3.js": "1.98.1",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
   },

@@ -40,4 +40,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           TAG_NAME: ${{ github.ref_name }}
-        run: gh release create "$TAG_NAME" --title "$TAG_NAME" --verify-tag --notes-file "$RELEASE_NOTES_PATH" --latest
+        run: |
+          release_flags=(--latest)
+          version="${TAG_NAME##*@}"
+          if [[ "$version" == *-* ]]; then
+            release_flags=(--prerelease --latest=false)
+          fi
+          gh release create "$TAG_NAME" --title "$TAG_NAME" --verify-tag --notes-file "$RELEASE_NOTES_PATH" "${release_flags[@]}"

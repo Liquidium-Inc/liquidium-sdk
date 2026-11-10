@@ -1,0 +1,120 @@
+---
+title: Use SOL and ckSOL
+description: Configure Solana transfers, account-specific fees, and wallet signing.
+sidebar_position: 115
+---
+
+# Use SOL and ckSOL
+
+Use `asset: "SOL"` with `chain: "SOL"` for native SOL or `chain: "ICP"` for
+ckSOL. Both routes use the same lending pool and nine decimals. Amounts are
+`bigint` lamports. SPL tokens, including Solana USDC and USDT, are not supported.
+
+## Configure the deployment
+
+The SDK uses `xhh4q-qyaaa-aaaar-qci2q-cai` as the default mainnet SOL pool.
+Set `canisterIds.pools.sol` only when your deployment uses a different active
+pool. Retired pools can remain in market results;
+`market.findPool(...)` uses the configured ID to select the active SOL pool. SOL and
+ckSOL inflow targets reject any other pool, because only the active pool's
+addresses are monitored.
+
+Use an `apiBaseUrl` with SOL support and the same pool configuration. SOL fee
+quotes use the public SDK API, not a browser RPC connection. The bundled ckSOL
+minter and ledger IDs are mainnet IDs. Override the lending and Simple Loans
+canisters when using another Liquidium deployment.
+
+```ts
+const client = new LiquidiumClient({
+  apiBaseUrl,
+  canisterIds: { pools: { sol: solPoolId } },
+});
+```
+
+## Simple Loans
+
+Use `client.simpleLoans.create(...)` for accountless borrowing. SOL can be either
+collateral or the borrowed asset. Native SOL destinations are base58 addresses;
+ckSOL destinations must be IC principals.
+
+Select `loan.initialDeposit.targets.SOL` or `.ICP` for collateral and
+`loan.repayment.targets.SOL` or `.ICP` for repayment. These actions use separate
+addresses and fee debts. Reload the loan before displaying repayment instructions.
+
+SOL quotes include the inflow fee and enforce the live minimum send amount. For
+a small repayment, the native quote can exceed the remaining debt plus fees to
+meet the minter minimum. The protocol keeps that excess as a pool fee unless the
+pool sets a repayment refund threshold, so it is not refunded by default. Select
+the ckSOL quote to avoid this native minimum.
+The sender's own transaction fee is additional. Failed SOL fee lookups throw;
+the SDK does not substitute a zero fee. After `SimpleLoanCreatedError`, recover
+with `get(...)` rather than creating another loan.
+
+## Profile deposits and repayments
+
+```ts
+const flow = await client.lending.supply({
+  profileId,
+  poolId: solPoolId,
+  action: "deposit",
+  chain: "SOL",
+});
+const fee = await client.lending.estimateInflowFee({
+  ...flow.target,
+  profileId,
+});
+
+console.log(flow.target.address);
+console.log(fee.totalFee, fee.minimumSendAmount, fee.walletTransferFee);
+```
+
+Both native SOL and ckSOL fee requests require `poolId`, `profileId`, and
+`action`. `totalFee` is deducted from the gross transfer. `minimumSendAmount`
+is the smallest gross transfer that meets processing requirements and leaves a
+positive credit. `walletTransferFee` is paid separately by the sender.
+
+Native quotes include processing, sweep and ledger fees, missing rent reserve,
+and existing sponsorship debt. Only retained rent is reusable; other address
+funds can belong to a pending sweep. Direct ckSOL quotes include the treasury
+ledger fee and, when debt exists, its principal and collection ledger fee.
+They exclude native rent and minter costs.
+
+`getMinimumDepositAmount("SOL")` returns zero because SOL has no fixed deposit
+floor in that helper. Always use `minimumSendAmount` for both deposits and
+repayments. Wallet-executed supply checks this minimum before broadcasting.
+
+To automate native transfers, implement `WalletAdapter.sendSolTransaction`.
+It receives `{ chain, toAddress, amountLamports, account, actionType }` and must
+return the base58 transaction signature. The adapter owns RPC selection,
+transaction construction, signing, and broadcasting. For ckSOL, reuse
+`sendIcrcTransfer`; the SDK supplies the ckSOL ledger and action-specific account.
+
+After a manual native transfer, call `flow.submit({ txid })`. Direct submissions
+must specify `chain: "SOL"`. The API requires a successful finalised transaction;
+retry a not-found response after finality. Cron scanning also detects transfers.
+An indexing error after SDK broadcasting does not discard the returned `txid`.
+Never repeat the wallet transfer merely because an indexing hint failed.
+
+## Signing and outflows
+
+Use `signerChain: "SOL"` for profile borrowing, withdrawal, and recovery, or
+`chain: "SOL"` when creating a profile. Sign the exact UTF-8 message and return
+the 64-byte Ed25519 signature as hex, optionally prefixed with `0x`.
+Message signatures and transaction IDs use different encodings.
+
+SOL addresses and transaction IDs are case-sensitive. Address validation checks
+that base58 decoding produces 32 bytes; off-curve addresses are not rejected
+solely for being off-curve. Native amounts must fit in an unsigned 64-bit integer.
+The product borrow and withdrawal minimum is `1_000_000n` lamports. Native SOL
+destinations must also cover the live ckSOL minter withdrawal minimum plus two
+ledger fees; the SDK checks this before signing.
+
+Poll `activities` for completion. A queued deposit is not a completed mint.
+Native activity uses `chain: "SOL"`; ckSOL ledger transfers use `chain: "ICP"`.
+Underfunded native inflows expose `topUp` and `action_required` status. For
+native SOL, `topUp.depositedAmount` is the finalised address balance, including
+retained rent, and `topUp.feeAmount` is the total address balance required before
+processing, not only the fee. Send `topUp.shortfallAmount`.
+
+Run `examples/solana-flow.mjs` to inspect a target and live quote for an existing
+profile. It does not broadcast a transfer.

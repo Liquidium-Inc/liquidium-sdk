@@ -17,3 +17,9 @@ showAddress(target.address);
 ```
 
 Each target also includes `poolId`, `asset`, `chain`, and `action`. Native ICP targets may include `icpAccountIdentifier` for legacy ledger integrations. Do not branch on removed `type` or `account` fields.
+
+SOL uses `asset: "SOL"` on both routes: `chain: "SOL"` returns a native deposit
+address; `chain: "ICP"` returns a ckSOL ICRC account. The minter derives native
+addresses from the pool principal and the profile's deposit or repayment
+subaccount. Address lookup does not start minting. The backend sponsors minting
+after finalised funds meet the minimum.

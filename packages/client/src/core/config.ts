@@ -17,6 +17,7 @@ const MAINNET_CANISTER_IDS: CanisterIds = {
     usdt: "hnnn4-iyaaa-aaaar-qb4bq-cai",
     usdc: "6sna2-oiaaa-aaaar-qb66q-cai",
     icp: "r2pk3-4yaaa-aaaar-qb7zq-cai",
+    sol: "xhh4q-qyaaa-aaaar-qci2q-cai",
   },
   ethDeposit: "z5jz7-nyaaa-aaaar-qb6pq-cai",
   simpleLoans: "u5rm3-niaaa-aaaar-qb7eq-cai",
@@ -33,6 +34,7 @@ const SUPPORTED_CANISTER_ID_OVERRIDE_KEYS = new Set([
   "simpleLoans",
 ]);
 const SUPPORTED_POOL_CANISTER_ID_OVERRIDE_KEYS = new Set([
+  "sol",
   "btc",
   "eth",
   "usdt",
@@ -97,6 +99,11 @@ export const DEFAULT_TIMEOUT_MS = 30_000;
 
 /** Mainnet chain-key asset and ICP helper canister principals. */
 export const CK_CANISTER_IDS = {
+  SOL: {
+    minter: "lh22c-kyaaa-aaaar-qb5nq-cai",
+    ledger: "ls5lp-lqaaa-aaaar-qb5oa-cai",
+    index: "2ezyf-hqaaa-aaaar-qb6ga-cai",
+  },
   BTC: {
     minter: "mqygn-kiaaa-aaaar-qaadq-cai",
     ledger: "mxzaz-hqaaa-aaaar-qaada-cai",

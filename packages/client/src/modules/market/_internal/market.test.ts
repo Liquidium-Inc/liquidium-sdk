@@ -244,7 +244,7 @@ describe("MarketModule", () => {
     });
   });
 
-  test("excludes unsupported SOL pools returned by the canister", async () => {
+  test("includes SOL pools with nine decimals", async () => {
     // given
     vi.spyOn(Actor, "createActor").mockReturnValue({
       list_pools: vi.fn().mockResolvedValue([
@@ -281,7 +281,12 @@ describe("MarketModule", () => {
     const pools = await client.market.listPools();
 
     // then
-    expect(pools).toHaveLength(0);
+    expect(pools).toHaveLength(1);
+    expect(pools[0]).toMatchObject({
+      asset: "SOL",
+      chain: "SOL",
+      decimals: 9n,
+    });
   });
 
   test("ignores pools with unsupported assets instead of failing", async () => {

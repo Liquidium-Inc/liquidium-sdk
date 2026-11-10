@@ -13,6 +13,8 @@ describe("AssetIdentifier", () => {
   test("should accept exactly the supported asset and chain pairs", () => {
     // given
     const supportedIdentifiers: AssetIdentifier[] = [
+      { chain: Chain.SOL, asset: Asset.SOL },
+      { chain: Chain.ICP, asset: Asset.SOL },
       { chain: Chain.BTC, asset: Asset.BTC },
       { chain: Chain.ETH, asset: Asset.ETH },
       { chain: Chain.ETH, asset: Asset.USDC },
@@ -26,7 +28,8 @@ describe("AssetIdentifier", () => {
     const unsupportedIdentifiers = [
       { chain: Chain.BTC, asset: Asset.USDT },
       { chain: Chain.ETH, asset: Asset.BTC },
-      { chain: "SOL", asset: "SOL" },
+      { chain: "SOL", asset: "USDC" },
+      { chain: "ETH", asset: "SOL" },
     ];
 
     // when
@@ -41,9 +44,9 @@ describe("AssetIdentifier", () => {
     expect(areUnsupportedIdentifiersInvalid).toBe(true);
   });
 
-  test("should keep signing chains limited to BTC and ETH", () => {
+  test("should support BTC, ETH, and SOL signing", () => {
     // given
-    type ExpectedSigningChain = "BTC" | "ETH";
+    type ExpectedSigningChain = "BTC" | "ETH" | "SOL";
 
     // when
     type ActualSigningChain = SigningChain;

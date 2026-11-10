@@ -33,6 +33,7 @@ const OMITTED_DECLARATIONS = new Set([
   "SendBtcTransactionRequest",
   "SendEthTransactionRequest",
   "SendIcrcTransferRequest",
+  "SendSolTransactionRequest",
   "SignMessageRequest",
   "WalletAdapter",
 ]);
@@ -341,6 +342,13 @@ function createDeclarationKey(declaration) {
 }
 
 function formatDeclaration(declaration) {
+  // getText() omits leading JSDoc, which can carry requirements the type cannot express.
+  const docText = ts
+    .getJSDocCommentsAndTags(declaration)
+    .filter(ts.isJSDoc)
+    .map((doc) => `${doc.getText()}\n`)
+    .join("");
+
   if (ts.isTypeAliasDeclaration(declaration)) {
     const type = checker.getTypeFromTypeNode(declaration.type);
 
@@ -349,11 +357,11 @@ function formatDeclaration(declaration) {
       type.types.every((member) => member.isStringLiteral())
     ) {
       const members = type.types.map((member) => JSON.stringify(member.value));
-      return `type ${declaration.name.text} = ${members.join(" | ")};`;
+      return `${docText}type ${declaration.name.text} = ${members.join(" | ")};`;
     }
   }
 
-  const sourceText = declaration.getText();
+  const sourceText = `${docText}${declaration.getText()}`;
   return normalizeTypeText(
     sourceText.replace(/^export\s+/, "").replace(/\nexport\s+/g, "\n")
   );

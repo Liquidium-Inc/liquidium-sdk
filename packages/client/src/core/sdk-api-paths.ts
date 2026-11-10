@@ -118,6 +118,7 @@ export function buildSimpleLoanCollateralHintPath(
 }
 
 export const SdkApiPath = {
+  solInflowFee: `${SDK_API_V2_PATH}/solana/inflow-fee`,
   inflow: INFLOW,
   simpleLoans: SIMPLE_LOANS,
 } as const;

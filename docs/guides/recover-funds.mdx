@@ -85,10 +85,10 @@ linked account uses an ICRC subaccount, pass its 32 bytes in
 canister verifies profile ownership.
 
 `chain: "ICP"` delivers ICP or the pool's chain-key asset: ckBTC, ckETH, ckUSDC,
-or ckUSDT. Chain-key recovery destinations must be IC principals. Native ICP
+ckUSDT, or ckSOL. Chain-key recovery destinations must be IC principals. Native ICP
 also supports ICRC accounts and ICP account identifiers.
 
-## Recover through a BTC or ETH wallet
+## Recover through a BTC, ETH, or SOL wallet
 
 ```ts
 const receipt = await client.lending.recover({
@@ -108,6 +108,9 @@ The signing wallet must be linked to the profile. The signing chain and delivery
 chain are independent. Use `chain: "BTC"` with a BTC address for native BTC, or
 `chain: "ETH"` with an Ethereum address for native ETH, USDC, or USDT. Native ETH
 does not support contract destinations.
+
+Use `chain: "SOL"` for native SOL delivery. SOL signing uses a 64-byte
+hex-encoded Ed25519 message signature. See [Use SOL and ckSOL](./solana).
 
 For separate signing and submission, use `prepareRecovery(...)`:
 
@@ -135,7 +138,7 @@ again before submission. An empty balance throws `INSUFFICIENT_FUNDS`. A balance
 below the destination's fee boundary throws `RECOVERY_AMOUNT_TOO_LOW`. Recovery
 uses its own fee checks rather than normal product withdrawal minimums.
 
-Native BTC and ETH use live minter minimums and fee estimates. USDC and USDT on
+Native BTC, ETH, and SOL use live minter minimums and fee estimates. USDC and USDT on
 Ethereum also pay the pool's ERC-20 burn charge. The SDK estimates that charge
 from the ckETH minter's ckERC20 gas quote and protocol prices. If those prices
 are unavailable, the SDK throws `SERVICE_UNAVAILABLE`. Network fees can change
@@ -144,7 +147,7 @@ withdrawal fees are deducted.
 
 Native minimums are often larger than small refunds. If a native destination
 throws `RECOVERY_AMOUNT_TOO_LOW`, recover to `chain: "ICP"` instead. The pool
-then sends ckBTC, ckETH, ckUSDC, or ckUSDT to an IC principal.
+then sends ckBTC, ckETH, ckUSDC, ckUSDT, or ckSOL to an IC principal.
 
 `RecoveryResult` contains:
 

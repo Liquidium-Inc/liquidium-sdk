@@ -1,5 +1,6 @@
 import { EthereumWalletConnectors } from "@dynamic-labs/ethereum";
 import { DynamicContextProvider } from "@dynamic-labs/sdk-react-core";
+import { SolanaWalletConnectors } from "@dynamic-labs/solana";
 import React from "react";
 import type { Root } from "react-dom/client";
 import RootPage from "./Root";
@@ -16,7 +17,7 @@ export function mountApp({ root, dynamicEnvironmentId }: MountAppParams) {
         settings={{
           environmentId: dynamicEnvironmentId,
           initialAuthenticationMode: "connect-only",
-          walletConnectors: [EthereumWalletConnectors],
+          walletConnectors: [EthereumWalletConnectors, SolanaWalletConnectors],
         }}
       >
         <RootPage />

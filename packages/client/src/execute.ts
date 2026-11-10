@@ -1,5 +1,6 @@
 import { LiquidiumError, LiquidiumErrorCode } from "./core/errors";
 import type { SigningChain } from "./core/types";
+import { validateSigningAccount } from "./core/utils/signature";
 import {
   type WalletAction,
   type WalletAdapter,
@@ -57,6 +58,10 @@ export function executeWith(options: ExecuteWithOptions) {
           );
         }
 
+        validateSigningAccount(
+          options.account ?? action.account,
+          options.chain
+        );
         const signature = await options.walletAdapter.signMessage({
           chain: options.chain,
           message: action.message,

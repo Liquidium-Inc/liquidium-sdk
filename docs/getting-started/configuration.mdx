@@ -38,7 +38,7 @@ The client accepts the following configuration fields:
 | `identity` | Sends signed canister calls with a caller identity. |
 | `apiBaseUrl` | Overrides the Liquidium SDK HTTP API root. The default is `https://app.liquidium.fi/api/sdk`. |
 | `headers` | Adds headers to SDK HTTP API requests. |
-| `canisterIds` | Partially overrides `lending`, `ethDeposit`, `simpleLoans`, or `pools.{btc,eth,usdt,usdc,icp}` for custom deployments. |
+| `canisterIds` | Partially overrides `lending`, `ethDeposit`, `simpleLoans`, or `pools.{btc,eth,usdt,usdc,icp,sol}` for custom deployments. `sol` has no bundled default. |
 | `fetch` | Provides a custom fetch implementation. |
 | `timeoutMs` | Sets the SDK API request timeout in milliseconds. The default is `30_000`. |
 | `evmRpcUrl` | Creates a viem public client for ERC-20 reads and native ETH destination checks. |
@@ -80,3 +80,6 @@ const client = new LiquidiumClient({
 The client rejects removed flat keys such as `instantLoans`, `btcPool`, and `ercPool` with `LiquidiumErrorCode.VALIDATION_ERROR`.
 
 If an example needs Ethereum reads, set `VITE_INFURA_API_KEY` or `VITE_EVM_RPC_URL`.
+
+For SOL, configure the active pool and a matching SDK API deployment. Native SOL
+and ckSOL fee quotes use that API. See [Use SOL and ckSOL](../guides/solana).

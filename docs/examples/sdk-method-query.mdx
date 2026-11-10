@@ -11,6 +11,7 @@ Use `examples/sdk-method-query` to call SDK methods from a Vite React app that l
 :::warning Mainnet operations
 
 This example uses bundled mainnet canister and production service defaults.
+SOL uses the bundled production pool. No API URL or SOL pool override is needed.
 It exposes state-changing SDK methods that can create protocol state or submit
 wallet transactions. Review the selected method and all arguments before you
 select **Run method**.
@@ -23,8 +24,15 @@ The method query screen provides the following capabilities:
 | --- | --- |
 | Method dropdown | Pick an SDK method |
 | JSON editor | Edit method arguments |
+| Method argument type | Inspect request types and their declaration comments, including string-union aliases |
 | Wallet defaults | Apply connected-wallet values where relevant |
 | Raw result view | Inspect return payloads |
+
+The execution mode defaults to **Mock wallet**, which does not open wallet
+prompts. SDK calls still use production and can change protocol state.
+Select **Connected wallet** to sign messages or send transfers with an ETH or
+SOL wallet. This mode ignores mock signatures and transaction IDs for wallet
+execution. Review the account, destination, and amount before running a method.
 
 ## Start the example
 

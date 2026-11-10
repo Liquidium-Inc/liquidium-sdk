@@ -11,6 +11,7 @@ import { LiquidiumError, LiquidiumErrorCode } from "../../core/errors";
 import { normalizeEvmAddress } from "../../core/evm";
 import type { CanisterContext } from "../../core/transports/canister-context";
 import { Chain, type Wallet } from "../../core/types";
+import { validateSigningAccount } from "../../core/utils/signature";
 import { computeExpiryTimestampFromNow } from "../../core/utils/time";
 import { getVariantKey } from "../../core/utils/variant";
 import {
@@ -219,6 +220,8 @@ export class AccountsModule {
         );
       }
 
+      validateSigningAccount(signingAccount, request.signatureInfo.chain);
+
       await assertWalletHasNoProfile(this.canisterContext, signingAccount);
 
       const result = await createLendingActor(
@@ -293,6 +296,7 @@ function mapCanisterWalletToWallet(canisterWallet: WalletRecord): Wallet {
   switch (walletChain) {
     case Chain.BTC:
     case Chain.ETH:
+    case Chain.SOL:
       return {
         address: canisterWallet.address,
         chain: walletChain,

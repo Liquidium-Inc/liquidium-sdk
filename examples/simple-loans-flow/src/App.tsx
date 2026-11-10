@@ -32,7 +32,7 @@ const PRICE_DISPLAY_DECIMALS = 8;
 const DEFAULT_COLLATERAL_ASSET = "BTC";
 const DEFAULT_BORROW_ASSET = "USDC";
 const DEFAULT_TRANSFER_CHAIN: Chain = Chain.ETH;
-const CK_TARGET_ASSETS = new Set(["BTC", "ETH", "USDC", "USDT"]);
+const CK_TARGET_ASSETS = new Set(["BTC", "ETH", "SOL", "USDC", "USDT"]);
 
 type LoanTargetOptions = {
   initialDeposit: LoanTargetOption[];
@@ -334,8 +334,9 @@ export function App() {
           onChange={(event) => handleCollateralPoolChange(event.target.value)}
         >
           {pools.map((pool) => (
-            <option key={pool.id} value={pool.id}>
+            <option key={pool.id} value={pool.id} disabled={pool.frozen}>
               Asset: {pool.asset} | Pool chain: {pool.chain}
+              {pool.frozen ? " (frozen)" : ""}
             </option>
           ))}
         </select>
@@ -373,8 +374,9 @@ export function App() {
           onChange={(event) => handleBorrowPoolChange(event.target.value)}
         >
           {pools.map((pool) => (
-            <option key={pool.id} value={pool.id}>
+            <option key={pool.id} value={pool.id} disabled={pool.frozen}>
               Asset: {pool.asset} | Pool chain: {pool.chain}
+              {pool.frozen ? " (frozen)" : ""}
             </option>
           ))}
         </select>
