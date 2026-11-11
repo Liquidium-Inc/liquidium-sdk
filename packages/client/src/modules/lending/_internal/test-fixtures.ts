@@ -1,6 +1,12 @@
-import { Actor } from "@icp-sdk/core/agent";
+import { mockActor } from "../../../_internal/mock-actor";
+import { Actor, type ActorSubclass } from "@icp-sdk/core/agent";
 import type { Principal } from "@icp-sdk/core/principal";
 import { vi } from "vite-plus/test";
+import { mockDeep } from "vitest-mock-extended";
+import type {
+  FlexibleLendingActor,
+  FlexiblePositionView,
+} from "../../../core/canisters/lending/flexible-actor";
 
 export const LONG_RETRY_TEST_TIMEOUT_MS = 15_000;
 export const BTC_POOL_ID = "hkmli-faaaa-aaaar-qb4ba-cai";
@@ -10,10 +16,13 @@ export const ETH_POOL_ID = "qcg7y-syaaa-aaaar-qb75q-cai";
 export const ICP_POOL_ID = "r2pk3-4yaaa-aaaar-qb7zq-cai";
 export const VALID_BTC_OUTFLOW_ADDRESS = "1BoatSLRHtKNngkdXEeobR76b53LETtpyT";
 export const VALID_IC_PRINCIPAL = "aaaaa-aa";
+
 export const VALID_ICP_ACCOUNT_IDENTIFIER =
   "2d0e897f7e862d2b57d9bc9ea5c65f9a24ac6c074575f47898314b8d6cb0929d";
+
 export const LOWERCASE_EVM_OUTFLOW_ADDRESS =
   "0x52908400098527886e0f7030069857d2e4169ee7";
+
 export const CHECKSUM_EVM_OUTFLOW_ADDRESS =
   "0x52908400098527886E0F7030069857D2E4169EE7";
 
@@ -32,18 +41,26 @@ export function encodePrincipalToBytes32(principal: Principal): `0x${string}` {
 
 export const OUTSTANDING_DEBT_NATIVE = 1_000n;
 
-export function createOutstandingDebtPositionActor() {
-  return {
+export function createOutstandingDebtPositionActor(): ActorSubclass<
+  Pick<FlexibleLendingActor, "get_position">
+> {
+  return mockActor({
     get_position: vi
-      .fn()
-      .mockResolvedValue([{ debt_native_now: OUTSTANDING_DEBT_NATIVE }]),
-  } as never;
+      .fn<FlexibleLendingActor["get_position"]>()
+      .mockResolvedValue([
+        mockDeep<FlexiblePositionView>({
+          debt_native_now: OUTSTANDING_DEBT_NATIVE,
+        }),
+      ]),
+  });
 }
 
 export function mockUsdtPoolList(): void {
-  vi.spyOn(Actor, "createActor").mockReturnValueOnce({
-    list_pools: vi.fn().mockResolvedValue([createUsdtPoolRecord()]),
-  } as never);
+  vi.spyOn(Actor, "createActor").mockReturnValueOnce(
+    mockActor({
+      list_pools: vi.fn().mockResolvedValue([createUsdtPoolRecord()]),
+    })
+  );
 }
 
 export function createUsdtPoolRecord() {

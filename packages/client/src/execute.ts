@@ -7,10 +7,6 @@ import {
   WalletExecutionKind,
 } from "./core/wallet-actions";
 
-interface WalletExecutionKindCarrier {
-  executionKind?: unknown;
-}
-
 /**
  * Wallet wiring for {@link executeWith}.
  *
@@ -42,7 +38,9 @@ export function executeWith(options: ExecuteWithOptions) {
   return async function execute<TResult>(
     action: WalletAction<TResult>
   ): Promise<TResult> {
-    switch (action.executionKind) {
+    const executionKind = action.executionKind;
+
+    switch (executionKind) {
       case WalletExecutionKind.signMessage: {
         if (!options.walletAdapter.signMessage) {
           throw new LiquidiumError(
@@ -62,6 +60,7 @@ export function executeWith(options: ExecuteWithOptions) {
           options.account ?? action.account,
           options.chain
         );
+
         const signature = await options.walletAdapter.signMessage({
           chain: options.chain,
           message: action.message,
@@ -75,12 +74,11 @@ export function executeWith(options: ExecuteWithOptions) {
           account: options.account ?? action.account,
         });
       }
+
       default:
         throw new LiquidiumError(
           LiquidiumErrorCode.VALIDATION_ERROR,
-          `Unsupported wallet execution kind: ${String(
-            (action as WalletExecutionKindCarrier).executionKind
-          )}`
+          `Unsupported wallet execution kind: ${String(executionKind)}`
         );
     }
   };

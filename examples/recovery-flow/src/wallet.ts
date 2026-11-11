@@ -24,17 +24,22 @@ export async function connectOisy(): Promise<OisyConnection> {
   const signer = new Signer({
     transport: new PostMessageTransport({ url: OISY_SIGNER_URL }),
   });
+
   return withSignerChannel(signer, async () => {
     const standards = await signer.getSupportedStandards();
+
     for (const required of ["ICRC-27", "ICRC-49"]) {
       if (!standards.some(({ name }) => name === required))
         throw new Error(`Wallet does not support ${required}.`);
     }
+
     const accounts = await signer.getAccounts();
+
     if (accounts.length === 0)
       throw new Error(
         "No accounts shared. Connect again and select an account."
       );
+
     return { signer, accounts };
   });
 }
@@ -46,6 +51,7 @@ export async function withOisyAuthorization<T>(
 ): Promise<T> {
   return withSignerChannel(connection.signer, async () => {
     const offered = await connection.signer.getAccounts();
+
     if (
       !offered.some(
         (candidate) =>
@@ -56,11 +62,13 @@ export async function withOisyAuthorization<T>(
         "The selected OISY account is no longer available. Connect again."
       );
     }
+
     const agent = SignerAgent.createSync({
       signer: connection.signer,
       account: account.owner,
       agent: HttpAgent.createSync({ host: IC_HOST }),
     });
+
     return operation({
       type: "icp_caller",
       agent,
@@ -76,7 +84,9 @@ export async function connectEthereum() {
     );
   const wallet = createWalletClient({ transport: custom(window.ethereum) });
   const [address] = await wallet.requestAddresses();
+
   if (!address) throw new Error("No Ethereum account selected.");
+
   return { wallet, address };
 }
 
@@ -85,9 +95,11 @@ export async function signEthereumMessage(
   message: string
 ): Promise<string> {
   const [currentAddress] = await connection.wallet.getAddresses();
+
   if (currentAddress?.toLowerCase() !== connection.address.toLowerCase()) {
     throw new Error("Ethereum account changed. Connect again before signing.");
   }
+
   return connection.wallet.signMessage({
     account: connection.address,
     message,
@@ -101,8 +113,10 @@ export async function withSignerChannel<T>(
   signer.autoCloseTransportChannel = false;
   // Open before the first await so the popup retains the user's click.
   const channel = signer.openChannel();
+
   try {
     await channel;
+
     return await operation();
   } finally {
     signer.autoCloseTransportChannel = true;

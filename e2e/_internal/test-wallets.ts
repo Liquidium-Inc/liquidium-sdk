@@ -10,6 +10,7 @@ const BTC_MESSAGE_PREFIX = Buffer.from(
   "\u0018Bitcoin Signed Message:\n",
   "utf8"
 );
+
 const COMPACT_SIGNATURE_HEADER_OFFSET = 27;
 const COMPRESSED_SIGNATURE_HEADER_OFFSET = 4;
 const BITCOIN_VARINT_UINT16_PREFIX = 0xfd;
@@ -20,12 +21,19 @@ const BITCOIN_VARINT_PREFIX_BYTE_LENGTH = 1;
 const UINT16_BYTE_LENGTH = 2;
 const UINT32_BYTE_LENGTH = 4;
 
-bitcoin.initEccLib(ecc);
-
-export function createEthereumTestWallet(): {
+interface EthereumTestWallet {
   account: `0x${string}`;
   walletAdapter: WalletAdapter;
-} {
+}
+
+interface BitcoinTestWallet {
+  account: string;
+  walletAdapter: WalletAdapter;
+}
+
+bitcoin.initEccLib(ecc);
+
+export function createEthereumTestWallet(): EthereumTestWallet {
   const account = privateKeyToAccount(generatePrivateKey());
 
   return {
@@ -38,13 +46,11 @@ export function createEthereumTestWallet(): {
   };
 }
 
-export function createBitcoinjsTestWallet(): {
-  account: string;
-  walletAdapter: WalletAdapter;
-} {
+export function createBitcoinjsTestWallet(): BitcoinTestWallet {
   const ECPair = ECPairFactory(ecc);
   const keyPair = ECPair.makeRandom({ network: bitcoin.networks.bitcoin });
   const privateKey = keyPair.privateKey;
+
   const { address } = bitcoin.payments.p2pkh({
     pubkey: keyPair.publicKey,
     network: bitcoin.networks.bitcoin,
@@ -66,10 +72,12 @@ export function createBitcoinjsTestWallet(): {
 
 function signBitcoinMessage(message: string, privateKey: Uint8Array): string {
   const messageHash = hashBitcoinMessage(message);
+
   const { signature, recoveryId } = ecc.signRecoverable(
     messageHash,
     privateKey
   );
+
   const compactSignatureHeader = Buffer.from([
     recoveryId +
       COMPACT_SIGNATURE_HEADER_OFFSET +
@@ -84,6 +92,7 @@ function signBitcoinMessage(message: string, privateKey: Uint8Array): string {
 
 function hashBitcoinMessage(message: string): Buffer {
   const messageBytes = Buffer.from(message, "utf8");
+
   const payload = Buffer.concat([
     BTC_MESSAGE_PREFIX,
     encodeBitcoinVarInt(messageBytes.length),
@@ -108,15 +117,19 @@ function encodeBitcoinVarInt(value: number): Buffer {
     const buffer = Buffer.allocUnsafe(
       BITCOIN_VARINT_PREFIX_BYTE_LENGTH + UINT16_BYTE_LENGTH
     );
+
     buffer[0] = BITCOIN_VARINT_UINT16_PREFIX;
     buffer.writeUInt16LE(value, BITCOIN_VARINT_PREFIX_BYTE_LENGTH);
+
     return buffer;
   }
 
   const buffer = Buffer.allocUnsafe(
     BITCOIN_VARINT_PREFIX_BYTE_LENGTH + UINT32_BYTE_LENGTH
   );
+
   buffer[0] = BITCOIN_VARINT_UINT32_PREFIX;
   buffer.writeUInt32LE(value, BITCOIN_VARINT_PREFIX_BYTE_LENGTH);
+
   return buffer;
 }

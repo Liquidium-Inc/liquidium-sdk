@@ -17,6 +17,7 @@ describeLive("live positions e2e", () => {
       // given
       const client = new LiquidiumClient();
       const pools = await client.market.listPools();
+
       const positionsByPool = await Promise.all(
         pools.map(async (pool) => ({
           pool,
@@ -26,6 +27,7 @@ describeLive("live positions e2e", () => {
           ),
         }))
       );
+
       const dustFixture = positionsByPool.find(
         ({ pool, position }) =>
           position !== null &&
@@ -33,6 +35,7 @@ describeLive("live positions e2e", () => {
           position.borrowed > 0n &&
           position.deposited < pool.sameAssetBorrowingDustThreshold
       );
+
       if (!dustFixture) {
         const positionSummary = positionsByPool
           .filter(({ position }) => position !== null)
@@ -44,6 +47,7 @@ describeLive("live positions e2e", () => {
             debtInterest: position?.debtInterest.toString(),
             dustThreshold: pool.sameAssetBorrowingDustThreshold.toString(),
           }));
+
         throw new Error(
           `Profile has no dust supply with debt: ${JSON.stringify(positionSummary)}`
         );
@@ -52,6 +56,7 @@ describeLive("live positions e2e", () => {
       // when
       const visiblePositions =
         await client.positions.listPositions(DUST_PROFILE_ID);
+
       const visibleDustPosition = visiblePositions.find(
         (position) => position.poolId === dustFixture.pool.id
       );

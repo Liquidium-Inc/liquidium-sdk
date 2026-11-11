@@ -70,27 +70,34 @@ export class HistoryModule {
     if (filters.cursor) {
       query.set(SdkApiQueryParam.cursor, filters.cursor);
     }
+
     if (filters.market) {
       query.set(SdkApiQueryParam.market, filters.market);
     }
+
     if (filters.poolId) {
       query.set(SdkApiQueryParam.poolId, filters.poolId);
     }
+
     if (filters.operations?.length) {
       query.set(SdkApiQueryParam.operations, filters.operations.join(","));
     }
+
     if (filters.states?.length) {
       query.set(
         SdkApiQueryParam.states,
         createHistoryStateFilterParam(filters.states)
       );
     }
+
     if (filters.from) {
       query.set(SdkApiQueryParam.from, filters.from);
     }
+
     if (filters.to) {
       query.set(SdkApiQueryParam.to, filters.to);
     }
+
     if (filters.limit !== undefined) {
       validateHistoryLimit(filters.limit, MAX_USER_HISTORY_LIMIT);
       query.set(SdkApiQueryParam.limit, String(filters.limit));
@@ -118,21 +125,27 @@ export class HistoryModule {
   ): Promise<PaginatedResponse<UserLiquidationHistoryEntry>> {
     const apiClient = this.requireApi();
     const query = new URLSearchParams();
+
     if (filters.cursor) {
       query.set(SdkApiQueryParam.cursor, filters.cursor);
     }
+
     if (filters.market) {
       query.set(SdkApiQueryParam.market, filters.market);
     }
+
     if (filters.poolId) {
       query.set(SdkApiQueryParam.poolId, filters.poolId);
     }
+
     if (filters.from) {
       query.set(SdkApiQueryParam.from, filters.from);
     }
+
     if (filters.to) {
       query.set(SdkApiQueryParam.to, filters.to);
     }
+
     if (filters.limit !== undefined) {
       validateHistoryLimit(filters.limit, MAX_USER_HISTORY_LIMIT);
       query.set(SdkApiQueryParam.limit, String(filters.limit));
@@ -162,15 +175,18 @@ export class HistoryModule {
     if (filters.poolId) {
       query.set(SdkApiQueryParam.poolId, filters.poolId);
     }
+
     if (filters.operations?.length) {
       query.set(SdkApiQueryParam.operations, filters.operations.join(","));
     }
+
     if (filters.limit !== undefined) {
       validateHistoryLimit(filters.limit, MAX_PROTOCOL_ACTIVITY_LIMIT);
       query.set(SdkApiQueryParam.limit, String(filters.limit));
     }
 
     const requestPath = buildProtocolActivityPath(query);
+
     const response =
       await apiClient.get<ProtocolActivityFeedResponse>(requestPath);
 

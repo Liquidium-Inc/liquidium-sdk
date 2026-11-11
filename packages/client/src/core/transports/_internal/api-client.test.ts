@@ -27,6 +27,7 @@ describe("ApiClient", () => {
     vi.mocked(fetch).mockResolvedValueOnce(
       new Response(JSON.stringify(expected), { status: 200 })
     );
+
     const client = createApiClient({
       baseUrl: MOCK_BASE_URL,
       timeoutMs: TIMEOUT_MS,
@@ -49,6 +50,7 @@ describe("ApiClient", () => {
     vi.mocked(fetch).mockResolvedValueOnce(
       new Response(JSON.stringify(expected), { status: 200 })
     );
+
     const client = createApiClient({
       baseUrl: `${MOCK_BASE_URL}/`,
       timeoutMs: TIMEOUT_MS,
@@ -70,6 +72,7 @@ describe("ApiClient", () => {
     vi.mocked(fetch).mockResolvedValue(
       new Response("Not Found", { status: 404, statusText: "Not Found" })
     );
+
     const client = createApiClient({
       baseUrl: MOCK_BASE_URL,
       timeoutMs: TIMEOUT_MS,
@@ -97,6 +100,7 @@ describe("ApiClient", () => {
         },
       })
     );
+
     const client = createApiClient({
       baseUrl: MOCK_BASE_URL,
       timeoutMs: TIMEOUT_MS,
@@ -116,6 +120,7 @@ describe("ApiClient", () => {
   test("throws NETWORK_ERROR on fetch failure", async () => {
     // given
     vi.mocked(fetch).mockRejectedValue(new TypeError("fetch failed"));
+
     const client = createApiClient({
       baseUrl: MOCK_BASE_URL,
       timeoutMs: TIMEOUT_MS,
@@ -135,6 +140,7 @@ describe("ApiClient", () => {
     vi.mocked(fetch).mockResolvedValueOnce(
       new Response(JSON.stringify({ success: true }), { status: 200 })
     );
+
     const client = createApiClient({
       baseUrl: MOCK_BASE_URL,
       headers: {
@@ -165,6 +171,7 @@ describe("ApiClient", () => {
       .mockResolvedValue(
         new Response(JSON.stringify({ ok: true }), { status: 200 })
       );
+
     const client = createApiClient({
       baseUrl: MOCK_BASE_URL,
       fetchFn: customFetch,

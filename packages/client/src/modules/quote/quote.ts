@@ -80,6 +80,7 @@ export class QuoteModule {
   ): LtvCalculation {
     const validationErrors: QuoteValidationError[] = [];
     const borrowPool = pools.find((pool) => pool.id === request.borrowPoolId);
+
     const collateralPool = pools.find(
       (pool) => pool.id === request.collateralPoolId
     );
@@ -134,6 +135,7 @@ export class QuoteModule {
       amount: request.borrowAmount,
       asset: borrowPool.asset,
     });
+
     if (borrowAmountError) {
       validationErrors.push(borrowAmountError);
     }
@@ -152,6 +154,7 @@ export class QuoteModule {
       poolId: request.borrowPoolId,
       policy: borrowPool,
     });
+
     if (sameAssetBorrowingError) {
       validationErrors.push({
         code: QuoteValidationErrorCode.SAME_ASSET_NOT_ALLOWED,
@@ -176,11 +179,15 @@ export class QuoteModule {
 
     const openingDebtAmount = getOpeningDebt(request.borrowAmount, borrowPool);
     const activationFeeAmount = openingDebtAmount - request.borrowAmount;
+
+    // SAFETY: Invalid prices add validation errors, which return above.
     const borrowUsd = computeUsdInternalFromBaseUnits({
       amountBaseUnits: openingDebtAmount,
       priceScaled: scalePriceUsdToBigint(borrowPrice as number),
       assetDecimalPlaces: getPoolDecimalPlaces(borrowPool),
     });
+
+    // SAFETY: Invalid prices add validation errors, which return above.
     const collateralUsd = computeUsdInternalFromBaseUnits({
       amountBaseUnits: request.collateralAmount,
       priceScaled: scalePriceUsdToBigint(collateralPrice as number),
@@ -314,6 +321,7 @@ export class QuoteModule {
       amount: borrowAmount,
       asset: borrowAsset,
     });
+
     if (borrowAmountError) {
       validationErrors.push(borrowAmountError);
     }
@@ -333,6 +341,7 @@ export class QuoteModule {
     }
 
     const maxAllowedLtvBps = collateralPool.maxLtv;
+
     if (targetLtvBps > maxAllowedLtvBps) {
       validationErrors.push({
         code: QuoteValidationErrorCode.LTV_EXCEEDS_MAX,
@@ -341,6 +350,7 @@ export class QuoteModule {
     }
 
     const isSameAssetBorrowingRequest = borrowAsset === collateralAsset;
+
     if (targetLtvBps >= HIGH_LTV_WARNING_THRESHOLD_BPS) {
       warnings.push({
         code: QuoteWarningCode.HIGH_LTV,
@@ -369,13 +379,17 @@ export class QuoteModule {
 
     const borrowAssetDecimals = getPoolDecimalPlaces(borrowPool);
     const collateralAssetDecimals = getPoolDecimalPlaces(collateralPool);
+    // SAFETY: Invalid prices add validation errors, which return above.
     const borrowPriceScaled = scalePriceUsdToBigint(borrowPrice as number);
+
+    // SAFETY: Invalid prices add validation errors, which return above.
     const collateralPriceScaled = scalePriceUsdToBigint(
       collateralPrice as number
     );
 
     const openingDebtAmount = getOpeningDebt(borrowAmount, borrowPool);
     const activationFeeAmount = openingDebtAmount - borrowAmount;
+
     const borrowUsdInternal = computeUsdInternalFromBaseUnits({
       amountBaseUnits: openingDebtAmount,
       priceScaled: borrowPriceScaled,
@@ -400,6 +414,7 @@ export class QuoteModule {
       poolId: borrowPoolId,
       policy: borrowPool,
     });
+
     if (sameAssetBorrowingError) {
       validationErrors.push({
         code: QuoteValidationErrorCode.SAME_ASSET_NOT_ALLOWED,
@@ -492,6 +507,7 @@ function createBorrowAmountValidationError(params: {
 
   const minimumBorrowAmountError =
     getBorrowAmountMinimumValidationError(params);
+
   if (!minimumBorrowAmountError) {
     return null;
   }
@@ -543,11 +559,12 @@ function roundDivBigint(numerator: bigint, denominator: bigint): bigint {
 
 function scalePriceUsdToBigint(priceUsd: number): bigint {
   const scaled = Math.round(priceUsd * 10 ** PRICE_SCALE_DECIMAL_PLACES);
+
   return BigInt(scaled);
 }
 
 function isValidPrice(price: number | undefined): price is number {
-  return typeof price === "number" && Number.isFinite(price) && price > 0;
+  return price !== undefined && Number.isFinite(price) && price > 0;
 }
 
 function getPoolDecimalPlaces(pool: Pool): number {
@@ -557,10 +574,12 @@ function getPoolDecimalPlaces(pool: Pool): number {
 function formatBpsAsPercent(bps: bigint): string {
   const whole = bps / BPS_PER_PERCENT;
   const fractional = bps % BPS_PER_PERCENT;
+
   if (fractional === 0n) {
     return whole.toString();
   }
 
   const padded = fractional.toString().padStart(2, "0").replace(/0+$/, "");
+
   return `${whole}.${padded}`;
 }

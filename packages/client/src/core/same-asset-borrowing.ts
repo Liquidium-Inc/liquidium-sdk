@@ -21,6 +21,7 @@ export function guardSameAssetBorrowing(
   params: ValidateSameAssetBorrowingParams
 ): void {
   const validationError = getSameAssetBorrowingValidationError(params);
+
   if (!validationError) {
     return;
   }

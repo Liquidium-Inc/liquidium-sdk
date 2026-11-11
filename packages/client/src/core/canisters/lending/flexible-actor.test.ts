@@ -1,6 +1,7 @@
 import { idlLabelToId } from "@icp-sdk/core/candid";
 import type { Principal } from "@icp-sdk/core/principal";
 import { describe, expect, test } from "vite-plus/test";
+import { mockDeep } from "vitest-mock-extended";
 import {
   decodeFlexiblePool,
   decodeFlexiblePosition,
@@ -12,13 +13,13 @@ import {
   type FlexibleUserStats,
 } from "./flexible-actor";
 
-const POOL_PRINCIPAL = {
+const POOL_PRINCIPAL = mockDeep<Principal>({
   toString: () => "pool-1",
-} as unknown as Principal;
+});
 
-const PROFILE_PRINCIPAL = {
+const PROFILE_PRINCIPAL = mockDeep<Principal>({
   toString: () => "profile-1",
-} as unknown as Principal;
+});
 
 function createFlexiblePool(overrides?: Partial<FlexiblePool>): FlexiblePool {
   return {
@@ -174,6 +175,7 @@ describe("decodeFlexiblePool", () => {
     // given
     const assetHash = idlLabelToId("USDC");
     const chainHash = idlLabelToId("ETH");
+
     const pool = createFlexiblePool({
       asset: { [`_${assetHash}_`]: null },
       chain: { [`_${chainHash}_`]: null },
@@ -239,6 +241,7 @@ describe("decodeFlexiblePosition", () => {
   test("should decode a position with a hashed variant key", () => {
     // given
     const assetHash = idlLabelToId("USDT");
+
     const position = createFlexiblePosition({
       asset: { [`_${assetHash}_`]: null },
     });

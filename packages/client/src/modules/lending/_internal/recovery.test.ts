@@ -8,6 +8,7 @@ import type { LendingActor } from "../../../core/canisters/lending/actor";
 import type { FlexibleLendingActor } from "../../../core/canisters/lending/flexible-actor";
 import { CK_CANISTER_IDS, resolveCanisterIds } from "../../../core/config";
 import type { _SERVICE as BtcMinter } from "../../../generated/canisters/ck-btc-minter/declaration";
+import { mockActor } from "../../../_internal/mock-actor";
 import type { _SERVICE as EthMinter } from "../../../generated/canisters/ck-eth-minter/declaration";
 import {
   Chain,
@@ -311,7 +312,7 @@ test.each([0, 31, 33])(
     await expect(result).rejects.toMatchObject({
       code: LiquidiumErrorCode.VALIDATION_ERROR,
     });
-    expect(agent.getPrincipal).not.toHaveBeenCalled();
+    expect(agent.getPrincipal.mock.calls).toHaveLength(0);
   }
 );
 
@@ -840,8 +841,10 @@ test.each([-1n, 0n])(
         code: LiquidiumErrorCode.RECOVERY_AMOUNT_TOO_LOW,
       });
       expect(lending.get_nonce).not.toHaveBeenCalled();
+
       return;
     }
+
     expect((await result).data.amount).toBe(requiredAmount);
   }
 );
@@ -911,17 +914,18 @@ function setupRecovery(balance = RECOVERY_BALANCE) {
     createEthTransactionPrice(erc20 ? ERC_TRANSACTION_FEE_WEI : NETWORK_FEE)
   );
 
-  const actorsByCanisterId = new Map<string, unknown>([
-    [LENDING_CANISTER_ID, lending],
-    [CK_CANISTER_IDS.BTC.minter, btcMinter],
-    [CK_CANISTER_IDS.ETH.minter, ethMinter],
+  const actorsByCanisterId = new Map<string, Actor>([
+    [LENDING_CANISTER_ID, mockActor(lending)],
+    [CK_CANISTER_IDS.BTC.minter, mockActor(btcMinter)],
+    [CK_CANISTER_IDS.ETH.minter, mockActor(ethMinter)],
   ]);
+
   const solMinter = mockDeep<CkSolMinterActor>();
   solMinter.get_minter_info.mockResolvedValue({
     minimum_withdrawal_amount: SOL_MINIMUM_LAMPORTS,
     withdrawal_fee: NETWORK_FEE,
   } satisfies Awaited<ReturnType<CkSolMinterActor["get_minter_info"]>>);
-  actorsByCanisterId.set(CK_CANISTER_IDS.SOL.minter, solMinter);
+  actorsByCanisterId.set(CK_CANISTER_IDS.SOL.minter, mockActor(solMinter));
 
   const createActor = vi
     .spyOn(Actor, "createActor")
@@ -931,8 +935,7 @@ function setupRecovery(balance = RECOVERY_BALANCE) {
 
       if (!routedActor) throw new Error(`Unexpected canister ${canisterId}`);
 
-      // SAFETY: each mock implements the service registered for its canister ID.
-      return routedActor as never;
+      return routedActor;
     });
 
   const createdLedgerIds = () =>

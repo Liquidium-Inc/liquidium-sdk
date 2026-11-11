@@ -8,9 +8,11 @@ const PROFILE_ID = "rrkah-fqaaa-aaaaa-aaaaq-cai";
 test("shows a failed pool read separately from zero and available funds", async () => {
   // given
   const client = mockDeep<LiquidiumClient>();
+
   const pools = ["btc-pool", "eth-pool", "icp-pool"].map((id) =>
     mockDeep<Pool>({ id })
   );
+
   const availableAmount = 100_000n;
   const emptyAmount = 0n;
   const readError = new Error("Ledger unavailable");
@@ -34,8 +36,8 @@ test("shows a failed pool read separately from zero and available funds", async 
   expect(client.lending.getRecoveryBalance.mock.calls).toEqual(
     pools.map(({ id }) => [PROFILE_ID, id])
   );
-  expect(client.positions.listPositions).not.toHaveBeenCalled();
-  expect(client.activities.list).not.toHaveBeenCalled();
+  expect(client.positions.listPositions.mock.calls).toHaveLength(0);
+  expect(client.activities.list.mock.calls).toHaveLength(0);
 });
 
 test("rejects an invalid profile before reading pools", async () => {
@@ -48,12 +50,13 @@ test("rejects an invalid profile before reading pools", async () => {
 
   // then
   await expect(load).rejects.toThrow();
-  expect(client.market.listPools).not.toHaveBeenCalled();
+  expect(client.market.listPools.mock.calls).toHaveLength(0);
 });
 
 test("keeps the transfer receipt when the following balance refresh fails", async () => {
   // given
   const client = mockDeep<LiquidiumClient>();
+
   const receipt: RecoveryResult = {
     amount: 100_000n,
     ledgerCanisterId: "ryjl3-tyaaa-aaaaa-aaaba-cai",
@@ -65,10 +68,13 @@ test("keeps the transfer receipt when the following balance refresh fails", asyn
       requiredConfirmations: null,
     },
   };
+
   const refreshError = new Error("Pool query failed");
+
   const submit = vi
     .fn<() => Promise<RecoveryResult>>()
     .mockResolvedValue(receipt satisfies RecoveryResult);
+
   client.market.listPools.mockRejectedValue(refreshError);
 
   // when
@@ -87,6 +93,7 @@ test("does not retry an uncertain transfer", async () => {
   // given
   const client = mockDeep<LiquidiumClient>();
   const transferError = new Error("Update reply unavailable");
+
   const submit = vi
     .fn<() => Promise<RecoveryResult>>()
     .mockRejectedValue(transferError);
@@ -97,5 +104,5 @@ test("does not retry an uncertain transfer", async () => {
   // then
   await expect(result).rejects.toBe(transferError);
   expect(submit).toHaveBeenCalledOnce();
-  expect(client.market.listPools).not.toHaveBeenCalled();
+  expect(client.market.listPools.mock.calls).toHaveLength(0);
 });

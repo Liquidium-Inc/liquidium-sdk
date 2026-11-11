@@ -2,6 +2,7 @@ import { encodeIcrcAccount } from "@icp-sdk/canisters/ledger/icrc";
 import { Principal } from "@icp-sdk/core/principal";
 import { vi } from "vite-plus/test";
 import type { FlexibleSimpleLoanCanisterRecord } from "../../../core/canisters/simple-loans/flexible-actor";
+import type { FlexiblePositionView } from "../../../core/canisters/lending/flexible-actor";
 
 interface TestBtcAssetVariant {
   BTC: null;
@@ -32,13 +33,18 @@ export const ETH_POOL_ID = "qcg7y-syaaa-aaaar-qb75q-cai";
 export const USDT_POOL_ID = "hnnn4-iyaaa-aaaar-qb4bq-cai";
 export const LOAN_ID = 42n;
 export const VALID_BTC_REFUND_ADDRESS = "1BoatSLRHtKNngkdXEeobR76b53LETtpyT";
+
 export const ACCOUNT_IDENTIFIER =
   "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+
 export const ICRC_SUBACCOUNT = new Uint8Array(32).fill(7);
+
 export const LOWERCASE_EVM_BORROW_ADDRESS =
   "0x52908400098527886e0f7030069857d2e4169ee7";
+
 export const CHECKSUM_EVM_BORROW_ADDRESS =
   "0x52908400098527886E0F7030069857D2E4169EE7";
+
 export const CANISTER_EVM_BORROW_ADDRESS =
   "0x2222222222222222222222222222222222222222";
 
@@ -85,7 +91,8 @@ export function mockSimpleLoanCollateralHintFetch(
   }> = {}
 ) {
   return vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
-    const url = input.toString();
+    const url = new Request(input).url;
+
     if (url.includes("/activities?")) {
       return new Response(JSON.stringify({ activities: [] }), {
         status: 200,
@@ -144,8 +151,8 @@ export function createLoanCreatedEvent() {
 export function createSimpleLoanPosition(
   poolId: string,
   asset: TestSimpleLoanPositionAsset,
-  overrides: Record<string, unknown> = {}
-) {
+  overrides: Partial<FlexiblePositionView> = {}
+): FlexiblePositionView {
   return {
     lending_index_now: 0n,
     interest_since_snapshot: 0n,
@@ -160,13 +167,9 @@ export function createSimpleLoanPosition(
     deposit_scaled: 0n,
     earned_since_snapshot: 0n,
     deposited_native_now: 0n,
-    pool_id: {
-      toText: () => poolId,
-    },
+    pool_id: Principal.fromText(poolId),
     last_update: 0n,
-    user_profile: {
-      toText: () => PROFILE_ID,
-    },
+    user_profile: Principal.fromText(PROFILE_ID),
     ...overrides,
   };
 }

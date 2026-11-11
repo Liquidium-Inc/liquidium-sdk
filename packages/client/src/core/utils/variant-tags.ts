@@ -10,13 +10,15 @@ export const KNOWN_ASSET_TAGS = [
   "USDC",
   "USDT",
 ] as const;
+
 export const KNOWN_CHAIN_TAGS = ["BTC", "ETH", "ICP", "SOL"] as const;
 
 export type KnownAssetTag = (typeof KNOWN_ASSET_TAGS)[number];
+
 export type KnownChainTag = (typeof KNOWN_CHAIN_TAGS)[number];
 
-export function extractVariantTag<T extends string>(
-  variant: object,
+export function extractVariantTag<T extends string, TVariant extends object>(
+  variant: TVariant,
   knownTags: readonly T[]
 ): T | null {
   const [key] = Object.keys(variant);
@@ -26,12 +28,15 @@ export function extractVariantTag<T extends string>(
   }
 
   // Known variants decoded by a matching IDL already use the tag name.
-  if (knownTags.includes(key as T)) {
-    return key as T;
+  const knownTag = knownTags.find((tag) => tag === key);
+
+  if (knownTag !== undefined) {
+    return knownTag;
   }
 
   // IDL.Unknown returns variants with hashed field names: _${hash}_
   const hashMatch = /^_(\d+)_$/.exec(key);
+
   if (!hashMatch) {
     return null;
   }

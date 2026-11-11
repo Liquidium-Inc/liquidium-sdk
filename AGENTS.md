@@ -21,6 +21,10 @@ Do not run TypeDoc through `bun run docs:api` or modify its `docs/api-reference/
 - Use Vite+ for builds, tests, lint, formatting, and workspace tasks.
 - Run `bun run build`, `bun run lint`, `bun run typecheck`, and `bun run test`.
 - Keep lint and format settings in the root `vite.config.ts`.
+- All generic anti-slop rules run at error severity. Do not disable them to pass checks.
+- Pin `oxlint` and `@oxlint/plugins` to the Oxlint version bundled with Vite+.
+- Validate untrusted input with a schema at its boundary. Preserve SDK error codes and messages.
+- Retain a type assertion only when a nearby `SAFETY:` comment states its checked invariant.
 
 ## TypeScript API Shape
 

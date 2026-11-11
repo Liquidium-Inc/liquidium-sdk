@@ -2,6 +2,8 @@ import { DynamicWidget, useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import type { ActivityFilter, Pool } from "@liquidium/client";
 import { Asset, Chain } from "@liquidium/client";
 import { useEffect, useState } from "react";
+import { z } from "zod";
+import { activityFilterSchema, parseSelectedOption } from "../../_shared/input";
 import { formatConfig } from "./client";
 import {
   createDynamicWalletAdapter,
@@ -37,8 +39,10 @@ const DEFAULT_CONTRACT_INTERACTION_ASSET = "USDC";
 const DEFAULT_BORROW_ASSET = "USDC";
 const DEFAULT_ETH_INFLOW_AMOUNT = "0.005";
 const DEFAULT_TOKEN_INFLOW_AMOUNT = "10";
+const INFLOW_MODE_SCHEMA = z.enum(["contractInteraction", "ck"]);
 
 type ContractInteractionTab = "supply" | "repay" | "borrow" | "withdraw";
+
 type InflowMode = "contractInteraction" | "ck";
 
 const DEFAULT_INFLOW_MODE: InflowMode = "contractInteraction";
@@ -54,43 +58,60 @@ function ContractInteractionPage() {
   const [pools, setPools] = useState<Pool[]>([]);
   const [activeTab, setActiveTab] = useState<ContractInteractionTab>("supply");
   const [profileId, setProfileId] = useState("");
+
   const [profileResult, setProfileResult] = useState(
     "Connect a wallet, then create or load a profile."
   );
+
   const [selectedSupplyPoolId, setSelectedSupplyPoolId] = useState("");
   const [selectedRepaymentPoolId, setSelectedRepaymentPoolId] = useState("");
   const [selectedBorrowPoolId, setSelectedBorrowPoolId] = useState("");
   const [selectedWithdrawPoolId, setSelectedWithdrawPoolId] = useState("");
+
   const [supplyInflowMode, setSupplyInflowMode] =
     useState<InflowMode>(DEFAULT_INFLOW_MODE);
+
   const [repaymentInflowMode, setRepaymentInflowMode] =
     useState<InflowMode>(DEFAULT_INFLOW_MODE);
+
   const [supplyAmount, setSupplyAmount] = useState(DEFAULT_TOKEN_INFLOW_AMOUNT);
+
   const [supplyResult, setSupplyResult] = useState(
     "No contract interaction submitted yet."
   );
+
   const [repaymentAmount, setRepaymentAmount] = useState(
     DEFAULT_TOKEN_INFLOW_AMOUNT
   );
+
   const [repaymentResult, setRepaymentResult] = useState(
     "No contract interaction repayment submitted yet."
   );
+
   const [borrowAmount, setBorrowAmount] = useState("9");
+
   const [borrowChainSelection, setBorrowChainSelection] = useState<Chain>(
     Chain.ETH
   );
+
   const [borrowDestination, setBorrowDestination] = useState("");
+
   const [borrowResult, setBorrowResult] = useState(
     "Connect a wallet, then submit a borrow."
   );
+
   const [withdrawAmount, setWithdrawAmount] = useState("1");
+
   const [withdrawChainSelection, setWithdrawChainSelection] = useState<Chain>(
     Chain.ETH
   );
+
   const [withdrawDestination, setWithdrawDestination] = useState("");
+
   const [withdrawResult, setWithdrawResult] = useState(
     "Connect a wallet, then submit a withdraw."
   );
+
   const [status, setStatus] = useState("Ready.");
   const walletAddress = primaryWallet?.address ?? "";
   const contractInteractionPools = getContractInteractionPools(pools);
@@ -101,13 +122,17 @@ function ContractInteractionPage() {
     void run(async () => {
       setStatus("Loading pools...");
       const loadedPools = await listMarketPools();
+
       const availableContractInteractionPools =
         getContractInteractionPools(loadedPools);
+
       const availableBorrowPools = getBorrowPools(loadedPools);
+
       const defaultContractInteractionPool =
         availableContractInteractionPools.find(
           (pool) => pool.asset === DEFAULT_CONTRACT_INTERACTION_ASSET
         ) ?? availableContractInteractionPools[0];
+
       const defaultBorrowPool =
         availableBorrowPools.find(
           (pool) => pool.asset === DEFAULT_BORROW_ASSET
@@ -173,13 +198,17 @@ function ContractInteractionPage() {
   async function loadPools(): Promise<void> {
     setStatus("Loading pools...");
     const loadedPools = await listMarketPools();
+
     const availableContractInteractionPools =
       getContractInteractionPools(loadedPools);
+
     const availableBorrowPools = getBorrowPools(loadedPools);
+
     const defaultContractInteractionPool =
       availableContractInteractionPools.find(
         (pool) => pool.asset === DEFAULT_CONTRACT_INTERACTION_ASSET
       ) ?? availableContractInteractionPools[0];
+
     const defaultBorrowPool =
       availableBorrowPools.find(
         (pool) => pool.asset === DEFAULT_BORROW_ASSET
@@ -218,6 +247,7 @@ function ContractInteractionPage() {
       contractInteractionPools,
       selectedSupplyPoolId
     );
+
     const trimmedProfileId = profileId.trim();
 
     if (!trimmedProfileId) {
@@ -228,14 +258,17 @@ function ContractInteractionPage() {
     validateDepositAmount({ amount, asset: selectedPool.asset });
 
     const isCkInflowMode = supplyInflowMode === "ck";
+
     if (isCkInflowMode) {
       setStatus("Generating direct ck supply target...");
       setSupplyResult("Generating direct ck supply target...");
+
       const supplyFlow = await createCkTransferTarget({
         profileId: trimmedProfileId,
         poolId: selectedPool.id,
         action: "deposit",
       });
+
       setSupplyResult(
         [
           `Supply amount: ${formatAmount(amount, selectedPool.decimals)} ${selectedPool.asset}`,
@@ -247,11 +280,13 @@ function ContractInteractionPage() {
         ].join("\n")
       );
       setStatus("Generated direct ck supply target.");
+
       return;
     }
 
     setStatus("Submitting contract interaction supply...");
     setSupplyResult("Submitting contract interaction supply...");
+
     const supplyFlow = await submitContractInteractionSupply({
       profileId: trimmedProfileId,
       poolId: selectedPool.id,
@@ -282,6 +317,7 @@ function ContractInteractionPage() {
       contractInteractionPools,
       selectedRepaymentPoolId
     );
+
     const trimmedProfileId = profileId.trim();
 
     if (!trimmedProfileId) {
@@ -292,15 +328,19 @@ function ContractInteractionPage() {
       repaymentAmount,
       selectedPool.decimals
     );
+
     const isCkInflowMode = repaymentInflowMode === "ck";
+
     if (isCkInflowMode) {
       setStatus("Generating direct ck repayment target...");
       setRepaymentResult("Generating direct ck repayment target...");
+
       const repaymentFlow = await createCkTransferTarget({
         profileId: trimmedProfileId,
         poolId: selectedPool.id,
         action: "repayment",
       });
+
       setRepaymentResult(
         [
           `Repayment amount: ${formatAmount(amount, selectedPool.decimals)} ${selectedPool.asset}`,
@@ -312,11 +352,13 @@ function ContractInteractionPage() {
         ].join("\n")
       );
       setStatus("Generated direct ck repayment target.");
+
       return;
     }
 
     setStatus("Submitting contract interaction repayment...");
     setRepaymentResult("Submitting contract interaction repayment...");
+
     const repaymentFlow = await submitContractInteractionRepayment({
       profileId: trimmedProfileId,
       poolId: selectedPool.id,
@@ -347,10 +389,12 @@ function ContractInteractionPage() {
       borrowPools,
       selectedBorrowPoolId
     );
+
     const amount = parseAmountToBaseUnits(
       borrowAmount,
       selectedBorrowPool.decimals
     );
+
     const destinationAddress = borrowDestination.trim();
     const signerWalletAddress = getConnectedWalletAddress(primaryWallet);
     const trimmedProfileId = profileId.trim();
@@ -392,10 +436,12 @@ function ContractInteractionPage() {
       withdrawPools,
       selectedWithdrawPoolId
     );
+
     const amount = parseAmountToBaseUnits(
       withdrawAmount,
       selectedWithdrawPool.decimals
     );
+
     const destinationAddress = withdrawDestination.trim();
     const signerWalletAddress = getConnectedWalletAddress(primaryWallet);
     const trimmedProfileId = profileId.trim();
@@ -568,7 +614,9 @@ function ContractInteractionPage() {
               id="supply-inflow-mode-select"
               value={supplyInflowMode}
               onChange={(event) =>
-                setSupplyInflowMode(event.target.value as InflowMode)
+                setSupplyInflowMode(
+                  INFLOW_MODE_SCHEMA.parse(event.target.value)
+                )
               }
             >
               <option value="contractInteraction">Contract interaction</option>
@@ -629,7 +677,9 @@ function ContractInteractionPage() {
               id="repayment-inflow-mode-select"
               value={repaymentInflowMode}
               onChange={(event) =>
-                setRepaymentInflowMode(event.target.value as InflowMode)
+                setRepaymentInflowMode(
+                  INFLOW_MODE_SCHEMA.parse(event.target.value)
+                )
               }
             >
               <option value="contractInteraction">Contract interaction</option>
@@ -692,7 +742,12 @@ function ContractInteractionPage() {
               value={borrowChainSelection}
               onChange={(event) =>
                 setSelectedOutflowChainSelection({
-                  chain: event.target.value as Chain,
+                  chain: parseSelectedOption(
+                    event.target.value,
+                    getChainOptions(
+                      pools.find((pool) => pool.id === selectedBorrowPoolId)
+                    )
+                  ),
                   pool: pools.find((pool) => pool.id === selectedBorrowPoolId),
                   setChainSelection: setBorrowChainSelection,
                   setDestination: setBorrowDestination,
@@ -771,7 +826,12 @@ function ContractInteractionPage() {
               value={withdrawChainSelection}
               onChange={(event) =>
                 setSelectedOutflowChainSelection({
-                  chain: event.target.value as Chain,
+                  chain: parseSelectedOption(
+                    event.target.value,
+                    getChainOptions(
+                      pools.find((pool) => pool.id === selectedWithdrawPoolId)
+                    )
+                  ),
                   pool: pools.find(
                     (pool) => pool.id === selectedWithdrawPoolId
                   ),
@@ -885,7 +945,7 @@ function getChainOptions(pool: Pool | undefined): Chain[] {
 }
 
 function getDefaultChain(pool: Pool | undefined): Chain {
-  return (pool?.chain as Chain | undefined) ?? Chain.ETH;
+  return pool?.chain ?? Chain.ETH;
 }
 
 function formatDestinationInputLabel(
@@ -904,20 +964,26 @@ function ActivityTrackerPage() {
   const [profileId, setProfileId] = useState(
     new URLSearchParams(window.location.search).get("profileId") ?? ""
   );
+
   const [activityId, setActivityId] = useState(
     new URLSearchParams(window.location.search).get("activityId") ?? ""
   );
+
   const [activityFilter, setActivityFilter] =
     useState<ActivityFilter>("active");
+
   const [activitiesOutput, setActivitiesOutput] = useState(
     "Enter a profile id to load activities."
   );
+
   const [activityOutput, setActivityOutput] = useState(
     "Enter a profile id and activity id."
   );
+
   const [recentActivityIds, setRecentActivityIds] = useState<string[]>(() =>
     getRecentActivityIds()
   );
+
   const [status, setStatus] = useState("Ready.");
 
   async function loadActivities(): Promise<void> {
@@ -938,6 +1004,7 @@ function ActivityTrackerPage() {
     if (activities.length === 0) {
       setActivitiesOutput("No activities found.");
       setStatus("No activities found.");
+
       return;
     }
 
@@ -1021,7 +1088,7 @@ function ActivityTrackerPage() {
           id="activity-filter-select"
           value={activityFilter}
           onChange={(event) =>
-            setActivityFilter(event.target.value as ActivityFilter)
+            setActivityFilter(activityFilterSchema.parse(event.target.value))
           }
         >
           <option value="active">Active</option>

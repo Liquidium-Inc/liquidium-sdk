@@ -26,29 +26,37 @@ export async function estimateSolInflowFee(
       "SOL fee estimates require poolId, profileId, and action"
     );
   }
+
   const query = new URLSearchParams({
     poolId: Principal.fromText(request.poolId).toText(),
     profileId: Principal.fromText(request.profileId).toText(),
     operation: request.action,
     chain: request.chain,
   });
+
   const response = await api.get<SolInflowFeeWire>(
     `${SdkApiPath.solInflowFee}?${query}`
   );
+
   const parseAmount = (value: string, label: string) =>
     parseUnsignedApiBigint(value, { context: "SOL inflow fee", label });
+
   const totalFee = parseAmount(response.totalFee, "total fee");
+
   const minimumSendAmount = parseAmount(
     response.minimumSendAmount,
     "minimum send"
   );
+
   validateSolAmount(minimumSendAmount);
+
   if (minimumSendAmount <= totalFee) {
     throw new LiquidiumError(
       LiquidiumErrorCode.INTERNAL,
       "SOL minimum send must cover fees and a positive credit"
     );
   }
+
   return {
     totalFee,
     minimumSendAmount,

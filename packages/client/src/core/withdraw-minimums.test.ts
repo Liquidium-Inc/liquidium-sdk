@@ -60,8 +60,10 @@ describe("withdraw minimums", () => {
 
     // then
     const EXPECTED_MINIMUM_AMOUNT = 5_000n;
+
     const EXPECTED_MESSAGE =
       "Withdraw amount must be at least 5000 base units for BTC";
+
     expect(validationError).toEqual({
       asset,
       minimumAmount: EXPECTED_MINIMUM_AMOUNT,

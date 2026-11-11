@@ -33,6 +33,7 @@ const SUPPORTED_CANISTER_ID_OVERRIDE_KEYS = new Set([
   "ethDeposit",
   "simpleLoans",
 ]);
+
 const SUPPORTED_POOL_CANISTER_ID_OVERRIDE_KEYS = new Set([
   "sol",
   "btc",

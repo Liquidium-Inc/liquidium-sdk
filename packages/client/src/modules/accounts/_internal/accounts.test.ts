@@ -1,3 +1,4 @@
+import { mockActor } from "../../../_internal/mock-actor";
 import { Actor } from "@icp-sdk/core/agent";
 import { afterEach, describe, expect, test, vi } from "vite-plus/test";
 import {
@@ -19,18 +20,22 @@ describe("AccountsModule", () => {
         toText: () => "ccccc-cc",
       },
     });
+
     const getNonce = vi.fn().mockResolvedValue(11n);
-    vi.spyOn(Actor, "createActor").mockReturnValue({
-      get_nonce: getNonce,
-      get_wallet_profile: vi.fn().mockResolvedValue([]),
-      register_profile: registerProfile,
-    } as never);
+    vi.spyOn(Actor, "createActor").mockReturnValue(
+      mockActor({
+        get_nonce: getNonce,
+        get_wallet_profile: vi.fn().mockResolvedValue([]),
+        register_profile: registerProfile,
+      })
+    );
     const client = new LiquidiumClient({});
 
     // when
     const createAction = await client.accounts.prepareCreateProfile({
       account: "0xabc",
     });
+
     const profileId = await createAction.submit({
       signature: "0xsigned",
       chain: "ETH",
@@ -55,11 +60,14 @@ describe("AccountsModule", () => {
         toText: () => "ccccc-cc",
       },
     });
-    vi.spyOn(Actor, "createActor").mockReturnValue({
-      get_nonce: vi.fn().mockResolvedValue(11n),
-      get_wallet_profile: vi.fn().mockResolvedValue([]),
-      register_profile: registerProfile,
-    } as never);
+
+    vi.spyOn(Actor, "createActor").mockReturnValue(
+      mockActor({
+        get_nonce: vi.fn().mockResolvedValue(11n),
+        get_wallet_profile: vi.fn().mockResolvedValue([]),
+        register_profile: registerProfile,
+      })
+    );
     const signMessage = vi.fn().mockResolvedValue("0xsigned");
     const client = new LiquidiumClient({});
 
@@ -92,11 +100,14 @@ describe("AccountsModule", () => {
         toText: () => "ddddd-dd",
       },
     });
-    vi.spyOn(Actor, "createActor").mockReturnValue({
-      get_nonce: vi.fn().mockResolvedValue(13n),
-      get_wallet_profile: vi.fn().mockResolvedValue([]),
-      register_profile: registerProfile,
-    } as never);
+
+    vi.spyOn(Actor, "createActor").mockReturnValue(
+      mockActor({
+        get_nonce: vi.fn().mockResolvedValue(13n),
+        get_wallet_profile: vi.fn().mockResolvedValue([]),
+        register_profile: registerProfile,
+      })
+    );
     const signMessage = vi.fn().mockResolvedValue("0xabcdef");
     const client = new LiquidiumClient({});
 
@@ -125,16 +136,20 @@ describe("AccountsModule", () => {
     const CHECKSUM_ETH_ADDRESS = "0x0fDC16C8EA36b2eBadCdC31A780759287120a5e5";
     const getWalletProfile = vi.fn().mockResolvedValue([]);
     const getNonce = vi.fn().mockResolvedValue(17n);
+
     const registerProfile = vi.fn().mockResolvedValue({
       Ok: {
         toText: () => "eeeee-ee",
       },
     });
-    vi.spyOn(Actor, "createActor").mockReturnValue({
-      get_nonce: getNonce,
-      get_wallet_profile: getWalletProfile,
-      register_profile: registerProfile,
-    } as never);
+
+    vi.spyOn(Actor, "createActor").mockReturnValue(
+      mockActor({
+        get_nonce: getNonce,
+        get_wallet_profile: getWalletProfile,
+        register_profile: registerProfile,
+      })
+    );
     const signMessage = vi.fn().mockResolvedValue("0xsigned");
     const client = new LiquidiumClient({});
 
@@ -165,17 +180,22 @@ describe("AccountsModule", () => {
     // given
     const BTC_ADDRESS =
       "bc1pyt9znef2papnhjq7wgt065gp9g6yxcg6z8waurq59t995f6ru0qq5nxp3r";
+
     const BTC_SIGNATURE_BASE64 = "AQID/v8=";
+
     const registerProfile = vi.fn().mockResolvedValue({
       Ok: {
         toText: () => "fffff-ff",
       },
     });
-    vi.spyOn(Actor, "createActor").mockReturnValue({
-      get_nonce: vi.fn().mockResolvedValue(17n),
-      get_wallet_profile: vi.fn().mockResolvedValue([]),
-      register_profile: registerProfile,
-    } as never);
+
+    vi.spyOn(Actor, "createActor").mockReturnValue(
+      mockActor({
+        get_nonce: vi.fn().mockResolvedValue(17n),
+        get_wallet_profile: vi.fn().mockResolvedValue([]),
+        register_profile: registerProfile,
+      })
+    );
     const signMessage = vi.fn().mockResolvedValue(BTC_SIGNATURE_BASE64);
     const client = new LiquidiumClient({});
 
@@ -210,13 +230,15 @@ describe("AccountsModule", () => {
 
   test("maps protocol errors when account creation fails", async () => {
     // given
-    vi.spyOn(Actor, "createActor").mockReturnValue({
-      get_wallet_profile: vi.fn().mockResolvedValue([]),
-      get_nonce: vi.fn().mockResolvedValue(7n),
-      register_profile: vi.fn().mockResolvedValue({
-        Err: { ProfileAlreadyExists: null },
-      }),
-    } as never);
+    vi.spyOn(Actor, "createActor").mockReturnValue(
+      mockActor({
+        get_wallet_profile: vi.fn().mockResolvedValue([]),
+        get_nonce: vi.fn().mockResolvedValue(7n),
+        register_profile: vi.fn().mockResolvedValue({
+          Err: { ProfileAlreadyExists: null },
+        }),
+      })
+    );
     const client = new LiquidiumClient({});
 
     // when
@@ -242,12 +264,15 @@ describe("AccountsModule", () => {
     const getWalletProfile = vi
       .fn()
       .mockResolvedValue([{ toText: () => "aaaaa-aa" }]);
+
     const getNonce = vi.fn().mockResolvedValue(23n);
-    vi.spyOn(Actor, "createActor").mockReturnValue({
-      get_wallet_profile: getWalletProfile,
-      get_nonce: getNonce,
-      register_profile: vi.fn(),
-    } as never);
+    vi.spyOn(Actor, "createActor").mockReturnValue(
+      mockActor({
+        get_wallet_profile: getWalletProfile,
+        get_nonce: getNonce,
+        register_profile: vi.fn(),
+      })
+    );
     const client = new LiquidiumClient({});
 
     // when
@@ -264,13 +289,15 @@ describe("AccountsModule", () => {
   test("blocks action submission when wallet already has a profile", async () => {
     // given
     const registerProfile = vi.fn();
-    vi.spyOn(Actor, "createActor").mockReturnValue({
-      get_wallet_profile: vi
-        .fn()
-        .mockResolvedValue([{ toText: () => "bbbbb-bb" }]),
-      get_nonce: vi.fn().mockResolvedValue(29n),
-      register_profile: registerProfile,
-    } as never);
+    vi.spyOn(Actor, "createActor").mockReturnValue(
+      mockActor({
+        get_wallet_profile: vi
+          .fn()
+          .mockResolvedValue([{ toText: () => "bbbbb-bb" }]),
+        get_nonce: vi.fn().mockResolvedValue(29n),
+        register_profile: registerProfile,
+      })
+    );
     const client = new LiquidiumClient({});
 
     // when
@@ -295,18 +322,20 @@ describe("AccountsModule", () => {
 
   test("returns wallets linked to a profile", async () => {
     // given
-    vi.spyOn(Actor, "createActor").mockReturnValue({
-      get_profile_wallets: vi.fn().mockResolvedValue([
-        {
-          address: "bc1qexample",
-          chain: { Wallet: { BTC: null } },
-        },
-        {
-          address: "0xabc",
-          chain: { Wallet: { ETH: null } },
-        },
-      ]),
-    } as never);
+    vi.spyOn(Actor, "createActor").mockReturnValue(
+      mockActor({
+        get_profile_wallets: vi.fn().mockResolvedValue([
+          {
+            address: "bc1qexample",
+            chain: { Wallet: { BTC: null } },
+          },
+          {
+            address: "0xabc",
+            chain: { Wallet: { ETH: null } },
+          },
+        ]),
+      })
+    );
     const client = new LiquidiumClient({});
 
     // when
@@ -333,9 +362,12 @@ describe("AccountsModule", () => {
         chain: { Wallet: { ETH: null } },
       },
     ]);
-    vi.spyOn(Actor, "createActor").mockReturnValue({
-      get_profile_wallets: getProfileWallets,
-    } as never);
+
+    vi.spyOn(Actor, "createActor").mockReturnValue(
+      mockActor({
+        get_profile_wallets: getProfileWallets,
+      })
+    );
     const client = new LiquidiumClient({});
 
     // when
@@ -347,9 +379,11 @@ describe("AccountsModule", () => {
 
   test("returns false when a profile has no linked wallets", async () => {
     // given
-    vi.spyOn(Actor, "createActor").mockReturnValue({
-      get_profile_wallets: vi.fn().mockResolvedValue([]),
-    } as never);
+    vi.spyOn(Actor, "createActor").mockReturnValue(
+      mockActor({
+        get_profile_wallets: vi.fn().mockResolvedValue([]),
+      })
+    );
     const client = new LiquidiumClient({});
 
     // when
@@ -377,14 +411,16 @@ describe("AccountsModule", () => {
 
   test("returns a linked SOL wallet without changing its address", async () => {
     // given
-    vi.spyOn(Actor, "createActor").mockReturnValue({
-      get_profile_wallets: vi.fn().mockResolvedValue([
-        {
-          address: "So11111111111111111111111111111111111111112",
-          chain: { Wallet: { SOL: null } },
-        },
-      ]),
-    } as never);
+    vi.spyOn(Actor, "createActor").mockReturnValue(
+      mockActor({
+        get_profile_wallets: vi.fn().mockResolvedValue([
+          {
+            address: "So11111111111111111111111111111111111111112",
+            chain: { Wallet: { SOL: null } },
+          },
+        ]),
+      })
+    );
     const client = new LiquidiumClient({});
 
     // when
@@ -398,14 +434,16 @@ describe("AccountsModule", () => {
 
   test("rejects ICP as a profile signing wallet chain", async () => {
     // given
-    vi.spyOn(Actor, "createActor").mockReturnValue({
-      get_profile_wallets: vi.fn().mockResolvedValue([
-        {
-          address: "aaaaa-aa",
-          chain: { Wallet: { ICP: null } },
-        },
-      ]),
-    } as never);
+    vi.spyOn(Actor, "createActor").mockReturnValue(
+      mockActor({
+        get_profile_wallets: vi.fn().mockResolvedValue([
+          {
+            address: "aaaaa-aa",
+            chain: { Wallet: { ICP: null } },
+          },
+        ]),
+      })
+    );
     const client = new LiquidiumClient({});
 
     // when

@@ -15,6 +15,7 @@ describe("encodeInflowSubaccount", () => {
     const principal = Principal.fromText(
       "pimqm-2dtug-w3ejt-krqai-jlp3u-uux2y-erjcw-wbvhu-pmvhu-hunju-wqe"
     );
+
     const principalBytes = principal.toUint8Array();
 
     // when
@@ -22,6 +23,7 @@ describe("encodeInflowSubaccount", () => {
       action: SupplyAction.deposit,
       principal,
     });
+
     const repaymentSubaccount = encodeInflowSubaccount({
       action: SupplyAction.repayment,
       principal,

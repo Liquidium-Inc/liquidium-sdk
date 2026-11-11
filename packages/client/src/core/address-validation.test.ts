@@ -17,6 +17,7 @@ describe("normalizeExternalAddress for ETH", () => {
     // then
     const EXPECTED_CHECKSUM_ADDRESS =
       "0x52908400098527886E0F7030069857D2E4169EE7";
+
     expect(result).toBe(EXPECTED_CHECKSUM_ADDRESS);
   });
 
@@ -26,6 +27,7 @@ describe("normalizeExternalAddress for ETH", () => {
 
     // when
     let result: unknown;
+
     try {
       normalizeExternalAddress({
         address,

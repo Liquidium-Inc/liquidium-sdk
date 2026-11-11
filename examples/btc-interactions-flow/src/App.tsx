@@ -6,6 +6,7 @@ import type {
 } from "@liquidium/client";
 import { Chain, SupplyAction } from "@liquidium/client";
 import { useEffect, useState } from "react";
+import { activityFilterSchema, parseSelectedOption } from "../../_shared/input";
 import { formatConfig } from "./client";
 import {
   createDynamicBitcoinWalletAdapter,
@@ -42,17 +43,23 @@ function BtcInteractionsPage() {
   const { primaryWallet } = useDynamicContext();
   const [pools, setPools] = useState<Pool[]>([]);
   const [profileId, setProfileId] = useState("");
+
   const [profileResult, setProfileResult] = useState(
     "Connect a Bitcoin wallet, then create or load a profile."
   );
+
   const [selectedPoolId, setSelectedPoolId] = useState("");
+
   const [supplyAction, setSupplyAction] = useState<SupplyActionType>(
     SupplyAction.deposit
   );
+
   const [supplyAmount, setSupplyAmount] = useState(DEFAULT_SUPPLY_AMOUNT_BTC);
+
   const [supplyResult, setSupplyResult] = useState(
     "No BTC transaction submitted yet."
   );
+
   const [status, setStatus] = useState("Ready.");
   const walletAddress = getOptionalConnectedBitcoinAddress(primaryWallet);
   const btcPools = getBtcPools(pools);
@@ -219,7 +226,12 @@ function BtcInteractionsPage() {
           id="supply-action-select"
           value={supplyAction}
           onChange={(event) =>
-            setSupplyAction(event.target.value as SupplyActionType)
+            setSupplyAction(
+              parseSelectedOption(
+                event.target.value,
+                Object.values(SupplyAction)
+              )
+            )
           }
         >
           <option value={SupplyAction.deposit}>Supply deposit</option>
@@ -255,22 +267,29 @@ function BtcInteractionsPage() {
 
 function ActivityTrackerPage() {
   const searchParams = new URLSearchParams(window.location.search);
+
   const [profileId, setProfileId] = useState(
     searchParams.get("profileId") ?? ""
   );
+
   const [activityId, setActivityId] = useState(
     searchParams.get("activityId") ?? ""
   );
+
   const [activityFilter, setActivityFilter] = useState<ActivityFilter>("all");
+
   const [activitiesOutput, setActivitiesOutput] = useState(
     "Enter a profile id to load activities."
   );
+
   const [activityOutput, setActivityOutput] = useState(
     "Enter a profile id and activity id."
   );
+
   const [recentActivityIds, setRecentActivityIds] = useState<string[]>(() =>
     getRecentActivityIds()
   );
+
   const [status, setStatus] = useState("Ready.");
 
   async function loadActivities(): Promise<void> {
@@ -291,6 +310,7 @@ function ActivityTrackerPage() {
     if (activities.length === 0) {
       setActivitiesOutput("No activities found.");
       setStatus("No activities found.");
+
       return;
     }
 
@@ -377,7 +397,7 @@ function ActivityTrackerPage() {
           id="activity-filter-select"
           value={activityFilter}
           onChange={(event) =>
-            setActivityFilter(event.target.value as ActivityFilter)
+            setActivityFilter(activityFilterSchema.parse(event.target.value))
           }
         >
           <option value="active">In progress</option>

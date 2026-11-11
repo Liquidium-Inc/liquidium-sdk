@@ -8,6 +8,7 @@ import { LiquidiumError, LiquidiumErrorCode } from "../../errors";
 import type { CanisterContext } from "../../transports/canister-context";
 
 export type DepositAccountsActor = _SERVICE;
+
 export type DepositAccountErrors = GeneratedDepositAccountErrors;
 
 export function createDepositAccountsActor(

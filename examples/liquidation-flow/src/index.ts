@@ -110,7 +110,7 @@ function parseBigIntEnvironmentVariable(name: string, minimum: bigint): bigint {
   return parsedValue;
 }
 
-main().catch((error: unknown) => {
+main().catch((error) => {
   console.error(error);
   process.exitCode = 1;
 });

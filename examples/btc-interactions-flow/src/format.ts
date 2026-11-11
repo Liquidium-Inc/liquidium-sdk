@@ -7,12 +7,16 @@ import type {
   SupplyFlow,
 } from "@liquidium/client";
 import { SupplyAction as SupplyActionValue } from "@liquidium/client";
+import { parseStoredStrings } from "../../_shared/format";
+
+export { formatError } from "../../_shared/format";
 
 const DISPLAY_DECIMALS = 8;
+
 const RECENT_ACTIVITY_IDS_STORAGE_KEY =
   "liquidium-btc-interactions.recentActivityIds";
+
 const MAX_RECENT_ACTIVITY_IDS = 10;
-const ERROR_FIELD_EXCLUDE_LIST = new Set(["name", "message", "stack", "cause"]);
 
 type StatusSubject = "Activity" | "Flow";
 
@@ -40,10 +44,12 @@ export function parseAmountToBaseUnits(
   }
 
   const paddedFractionalPart = fractionalPart.padEnd(decimalPlaces, "0");
+
   const baseUnitText = `${wholePart}${paddedFractionalPart}`.replace(
     /^0+(?=\d)/,
     ""
   );
+
   const amount = BigInt(baseUnitText || "0");
 
   if (amount <= 0n) {
@@ -65,7 +71,9 @@ export function formatAmount(amount: bigint, decimals: bigint): string {
   const paddedAmount = absoluteAmount
     .toString()
     .padStart(decimalPlaces + 1, "0");
+
   const wholePart = paddedAmount.slice(0, -decimalPlaces) || "0";
+
   const fractionalPart = paddedAmount
     .slice(-decimalPlaces)
     .slice(0, DISPLAY_DECIMALS)
@@ -98,6 +106,7 @@ export function formatBtcSupplyFlow(
 ): string {
   const actionLabel =
     action === SupplyActionValue.repayment ? "repayment" : "supply";
+
   const title = flow.txid
     ? `BTC ${actionLabel} submitted.`
     : `BTC ${actionLabel} target generated.`;
@@ -151,6 +160,7 @@ export function formatActivity(activity: Activity): string {
 
 export function saveRecentActivityId(activityId: string): void {
   const existingIds = getRecentActivityIds();
+
   const nextIds = [
     activityId,
     ...existingIds.filter((existingId) => existingId !== activityId),
@@ -171,25 +181,7 @@ export function getRecentActivityIds(): string[] {
     return [];
   }
 
-  try {
-    const parsedValue = JSON.parse(storedValue);
-
-    if (!Array.isArray(parsedValue)) {
-      return [];
-    }
-
-    return parsedValue.filter(
-      (value): value is string => typeof value === "string"
-    );
-  } catch {
-    return [];
-  }
-}
-
-export function formatError(error: unknown): string {
-  const seenErrors = new WeakSet<object>();
-
-  return formatErrorWithDetails(error, seenErrors);
+  return parseStoredStrings(storedValue);
 }
 
 function formatStatus(status: LiquidiumStatus, subject: StatusSubject): string {
@@ -213,63 +205,4 @@ function formatActivityTopUp(topUp: Activity["topUp"]): string {
     `Fee amount: ${topUp.feeAmount.toString()} base units`,
     `Shortfall amount: ${topUp.shortfallAmount.toString()} base units`,
   ].join("\n");
-}
-
-function formatErrorWithDetails(
-  error: unknown,
-  seenErrors: WeakSet<object>
-): string {
-  if (error instanceof Error) {
-    if (seenErrors.has(error)) {
-      return "[Circular error]";
-    }
-    seenErrors.add(error);
-
-    const code = "code" in error ? String(error.code) : null;
-    const details = getErrorDetails(error);
-    const cause = "cause" in error ? error.cause : undefined;
-    const parts = [code ? `${code}: ${error.message}` : error.message];
-
-    if (details) {
-      parts.push(`Details: ${details}`);
-    }
-
-    if (cause !== undefined) {
-      parts.push(`Cause: ${formatErrorWithDetails(cause, seenErrors)}`);
-    }
-
-    return parts.join("\n");
-  }
-
-  if (typeof error === "object" && error !== null) {
-    return stringifyForDisplay(error);
-  }
-
-  return String(error);
-}
-
-function getErrorDetails(error: Error): string | undefined {
-  const entries = Object.entries(error).filter(
-    ([key, value]) => !ERROR_FIELD_EXCLUDE_LIST.has(key) && value !== undefined
-  );
-
-  if (entries.length === 0) {
-    return undefined;
-  }
-
-  return stringifyForDisplay(Object.fromEntries(entries));
-}
-
-function stringifyForDisplay(value: unknown): string {
-  return JSON.stringify(
-    value,
-    (_key, nestedValue) => {
-      if (typeof nestedValue === "bigint") {
-        return nestedValue.toString();
-      }
-
-      return nestedValue;
-    },
-    2
-  );
 }

@@ -9,6 +9,9 @@ import type {
   SimpleLoanRepaymentTargetQuote,
   SupplyTarget,
 } from "@liquidium/client";
+import { parseStoredStrings } from "../../_shared/format";
+
+export { formatError, stringifyForDisplay } from "../../_shared/format";
 
 const DISPLAY_DECIMALS = 6;
 const PERCENT_DECIMALS = 2n;
@@ -16,7 +19,6 @@ const PERCENT_SCALE = 100n;
 const MILLISECONDS_PER_SECOND = 1_000n;
 const RECENT_LOANS_STORAGE_KEY = "liquidium-simple-loans.recentRefs";
 const MAX_RECENT_LOANS = 10;
-const ERROR_FIELD_EXCLUDE_LIST = new Set(["name", "message", "stack", "cause"]);
 
 type SimpleLoanFormatOptions = {
   pools?: Pool[];
@@ -32,6 +34,7 @@ export function getElement<T extends HTMLElement>(id: string): T {
     throw new Error(`Missing element: ${id}`);
   }
 
+  // SAFETY: status.html fixes each ID to the element type used by status.ts.
   return element as T;
 }
 
@@ -59,10 +62,12 @@ export function parseAmountToBaseUnits(
   }
 
   const paddedFractionalPart = fractionalPart.padEnd(decimalPlaces, "0");
+
   const baseUnitText = `${wholePart}${paddedFractionalPart}`.replace(
     /^0+(?=\d)/,
     ""
   );
+
   const amount = BigInt(baseUnitText || "0");
 
   if (amount <= 0n) {
@@ -106,7 +111,9 @@ export function formatAmount(amount: bigint, decimals: bigint): string {
   const paddedAmount = absoluteAmount
     .toString()
     .padStart(decimalPlaces + 1, "0");
+
   const wholePart = paddedAmount.slice(0, -decimalPlaces) || "0";
+
   const fractionalPart = paddedAmount
     .slice(-decimalPlaces)
     .slice(0, DISPLAY_DECIMALS)
@@ -201,20 +208,25 @@ export function formatSimpleLoan(
     loan.collateral.poolId,
     loan.collateral.decimals
   );
+
   const borrowDecimals = getSimpleLoanPoolDecimals(
     options.pools,
     loan.borrow.poolId,
     loan.borrow.decimals
   );
+
   const includeTargets = options.includeTargets ?? true;
+
   const initialDepositQuotes = Object.values(
     loan.initialDeposit.targets
   ).filter(
     (quote): quote is SimpleLoanInitialDepositTargetQuote => quote !== undefined
   );
+
   const repaymentQuotes = Object.values(loan.repayment.targets).filter(
     (quote): quote is SimpleLoanRepaymentTargetQuote => quote !== undefined
   );
+
   const targetLines = includeTargets
     ? [
         "",
@@ -241,6 +253,7 @@ export function formatSimpleLoan(
         )}`,
       ]
     : [];
+
   const repaymentLines = includeTargets
     ? [
         "Repayment targets:",
@@ -412,22 +425,9 @@ function formatLoanStatusDetail(status: LiquidiumStatus): string {
   return `Related action: ${status.operation}`;
 }
 
-export function stringifyForDisplay(value: unknown): string {
-  return JSON.stringify(
-    value,
-    (_key, nestedValue) => {
-      if (typeof nestedValue === "bigint") {
-        return nestedValue.toString();
-      }
-
-      return nestedValue;
-    },
-    2
-  );
-}
-
 export function saveRecentLoanRef(ref: string): void {
   const existingRefs = getRecentLoanRefs();
+
   const nextRefs = [
     ref,
     ...existingRefs.filter((existingRef) => existingRef !== ref),
@@ -446,70 +446,7 @@ export function getRecentLoanRefs(): string[] {
     return [];
   }
 
-  try {
-    const parsedValue = JSON.parse(storedValue);
-
-    if (!Array.isArray(parsedValue)) {
-      return [];
-    }
-
-    return parsedValue.filter(
-      (value): value is string => typeof value === "string"
-    );
-  } catch {
-    return [];
-  }
-}
-
-export function formatError(error: unknown): string {
-  const seenErrors = new WeakSet<object>();
-
-  return formatErrorWithDetails(error, seenErrors);
-}
-
-function formatErrorWithDetails(
-  error: unknown,
-  seenErrors: WeakSet<object>
-): string {
-  if (error instanceof Error) {
-    if (seenErrors.has(error)) {
-      return "[Circular error]";
-    }
-    seenErrors.add(error);
-
-    const code = "code" in error ? String(error.code) : null;
-    const details = getErrorDetails(error);
-    const cause = "cause" in error ? error.cause : undefined;
-    const parts = [code ? `${code}: ${error.message}` : error.message];
-
-    if (details) {
-      parts.push(`Details: ${details}`);
-    }
-
-    if (cause !== undefined) {
-      parts.push(`Cause: ${formatErrorWithDetails(cause, seenErrors)}`);
-    }
-
-    return parts.join("\n");
-  }
-
-  if (typeof error === "object" && error !== null) {
-    return stringifyForDisplay(error);
-  }
-
-  return String(error);
-}
-
-function getErrorDetails(error: Error): string | undefined {
-  const entries = Object.entries(error).filter(
-    ([key, value]) => !ERROR_FIELD_EXCLUDE_LIST.has(key) && value !== undefined
-  );
-
-  if (entries.length === 0) {
-    return undefined;
-  }
-
-  return stringifyForDisplay(Object.fromEntries(entries));
+  return parseStoredStrings(storedValue);
 }
 
 function formatSimpleLoanAccount(

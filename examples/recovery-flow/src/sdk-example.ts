@@ -7,6 +7,8 @@ import {
   type RecoveryResult,
 } from "@liquidium/client";
 
+export { stringifyForDisplay as formatJson } from "../../_shared/format";
+
 export type PoolRecoveryBalance =
   | { pool: Pool; amount: bigint; error?: never }
   | { pool: Pool; amount?: never; error: string };
@@ -23,11 +25,14 @@ export async function loadRecoveryBalances(
 ): Promise<PoolRecoveryBalance[]> {
   Principal.fromText(profileId);
   const pools = await client.market.listPools();
+
   const results = await Promise.allSettled(
     pools.map((pool) => client.lending.getRecoveryBalance(profileId, pool.id))
   );
+
   return results.map((result, index) => {
     const pool = pools[index];
+
     return result.status === "fulfilled"
       ? { pool, amount: result.value }
       : { pool, error: formatError(result.reason) };
@@ -40,6 +45,7 @@ export async function submitAndRefresh(
   submit: () => Promise<RecoveryResult>
 ): Promise<RecoverySubmission> {
   const receipt = await submit();
+
   try {
     return {
       receipt,
@@ -55,15 +61,8 @@ export function getDeliveryChains(pool: Pool): Chain[] {
   return pool.chain === Chain.ICP ? [Chain.ICP] : [Chain.ICP, pool.chain];
 }
 
-export function formatError(error: unknown): string {
-  if (error instanceof LiquidiumError) return `${error.code}: ${error.message}`;
-  return error instanceof Error ? error.message : String(error);
-}
+export function formatError(cause: unknown): string {
+  if (cause instanceof LiquidiumError) return `${cause.code}: ${cause.message}`;
 
-export function formatJson(value: unknown): string {
-  return JSON.stringify(
-    value,
-    (_key, item) => (typeof item === "bigint" ? item.toString() : item),
-    2
-  );
+  return cause instanceof Error ? cause.message : String(cause);
 }

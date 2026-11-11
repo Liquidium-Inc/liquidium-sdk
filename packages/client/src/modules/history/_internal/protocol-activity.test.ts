@@ -24,6 +24,7 @@ describe("HistoryModule protocol activity", () => {
         },
       ],
     };
+
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(JSON.stringify(responsePayload), {
         status: 200,
@@ -32,6 +33,7 @@ describe("HistoryModule protocol activity", () => {
         },
       })
     );
+
     const client = new LiquidiumClient({});
 
     // when
@@ -66,6 +68,7 @@ describe("HistoryModule protocol activity", () => {
         },
       })
     );
+
     const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
     });

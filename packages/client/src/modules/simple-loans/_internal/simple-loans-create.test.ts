@@ -1,3 +1,4 @@
+import { mockActor } from "../../../_internal/mock-actor";
 import { Actor } from "@icp-sdk/core/agent";
 import { Principal } from "@icp-sdk/core/principal";
 import { afterEach, describe, expect, test, vi } from "vite-plus/test";
@@ -38,9 +39,11 @@ const VALID_ICRC_DESTINATION = encodeIcrcAccount({
   owner: Principal.fromText(PROFILE_ID),
   subaccount: ICRC_SUBACCOUNT,
 });
+
 const VALID_ACCOUNT_IDENTIFIER = encodeIcpAccountIdentifier({
   owner: Principal.fromText(PROFILE_ID),
 });
+
 const DEFAULT_COLLATERAL_AMOUNT_BASE_UNITS = 10_000_000n;
 const DEFAULT_BORROW_AMOUNT_BASE_UNITS = 5_726_000_000n;
 const DEFAULT_ICP_AMOUNT_E8S = 1_000_000n;
@@ -85,6 +88,7 @@ describe("SimpleLoansModule create", () => {
     // given
     const MINIMUM_ETH_AMOUNT_WEI = 5_000_000_000_000_000n;
     const MINIMUM_USDT_BORROW_AMOUNT_BASE_UNITS = 1_000_000n;
+
     const fetchSpy = vi
       .spyOn(globalThis, "fetch")
       .mockImplementation(async (input, init) => {
@@ -100,7 +104,8 @@ describe("SimpleLoansModule create", () => {
             { status: 200, headers: { "content-type": "application/json" } }
           );
         }
-        if (input.toString().includes("/activities?")) {
+
+        if (new Request(input).url.includes("/activities?")) {
           return new Response(JSON.stringify({ activities: [] }), {
             status: 200,
             headers: { "content-type": "application/json" },
@@ -112,6 +117,7 @@ describe("SimpleLoansModule create", () => {
           headers: { "content-type": "application/json" },
         });
       });
+
     mockSimpleLoanCreateHydrationActors({
       getLoan: vi.fn().mockResolvedValue({
         Ok: createSimpleLoan({
@@ -147,7 +153,8 @@ describe("SimpleLoansModule create", () => {
     const post = fetchSpy.mock.calls.find(
       ([, init]) => init?.method === "POST"
     );
-    expect(JSON.parse(post?.[1]?.body as string)).toMatchObject({
+
+    expect(await new Response(post?.[1]?.body).json()).toMatchObject({
       collateralPoolId: ETH_POOL_ID,
       collateralAsset: "ETH",
       collateralAmount: MINIMUM_ETH_AMOUNT_WEI.toString(),
@@ -195,6 +202,7 @@ describe("SimpleLoansModule create", () => {
     const ICRC_LEDGER_FEE_BASE_UNITS = 2_000_000_000_000n;
     const HTTP_OK_STATUS = 200;
     const HTTP_NOT_FOUND_STATUS = 404;
+
     const fetchSpy = vi
       .spyOn(globalThis, "fetch")
       .mockImplementation(async (input, init) => {
@@ -215,7 +223,8 @@ describe("SimpleLoansModule create", () => {
             }
           );
         }
-        if (input.toString().includes("/activities?")) {
+
+        if (new Request(input).url.includes("/activities?")) {
           return new Response(JSON.stringify({ activities: [] }), {
             status: HTTP_OK_STATUS,
             headers: { "content-type": "application/json" },
@@ -227,6 +236,7 @@ describe("SimpleLoansModule create", () => {
           headers: { "content-type": "application/json" },
         });
       });
+
     mockSimpleLoanCreateHydrationActors({
       getLoan: vi.fn().mockResolvedValue({
         Ok: createSimpleLoan({
@@ -240,6 +250,7 @@ describe("SimpleLoansModule create", () => {
       icrc1Fee: ICRC_LEDGER_FEE_BASE_UNITS,
     });
     const evmPublicClient = mockDeep<Required<EvmReadClient>>();
+
     const client = new LiquidiumClient({
       evmPublicClient,
     });
@@ -261,7 +272,7 @@ describe("SimpleLoansModule create", () => {
     expect(evmPublicClient.getCode).not.toHaveBeenCalled();
     expect(
       fetchSpy.mock.calls.some(([input]) =>
-        input.toString().includes("/v2/ethereum/addresses/")
+        new Request(input).url.includes("/v2/ethereum/addresses/")
       )
     ).toBe(false);
   });
@@ -271,13 +282,16 @@ describe("SimpleLoansModule create", () => {
     const BTC_MINTER_DEPOSIT_FEE_SATS = 2_000n;
     const CKBTC_LEDGER_FEE_SATS = 10n;
     const EXPIRY_TIMESTAMP_SECONDS = 1_775_235_600n;
+
     const getLoan = vi.fn().mockResolvedValue({
       Ok: createSimpleLoan({ expires_at: [EXPIRY_TIMESTAMP_SECONDS] }),
     });
+
     const fetchSpy = vi
       .spyOn(globalThis, "fetch")
       .mockImplementation(async (input, init) => {
-        const url = input.toString();
+        const url = new Request(input).url;
+
         if (init?.method === "POST") {
           return new Response(
             JSON.stringify({
@@ -292,6 +306,7 @@ describe("SimpleLoansModule create", () => {
             { status: 200, headers: { "content-type": "application/json" } }
           );
         }
+
         if (url.includes("/activities?")) {
           return new Response(JSON.stringify({ activities: [] }), {
             status: 200,
@@ -310,6 +325,7 @@ describe("SimpleLoansModule create", () => {
       btcMinterDepositFee: BTC_MINTER_DEPOSIT_FEE_SATS,
       icrc1Fee: CKBTC_LEDGER_FEE_SATS,
     });
+
     const client = new LiquidiumClient({
       canisterIds: { simpleLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
     });
@@ -430,10 +446,12 @@ describe("SimpleLoansModule create", () => {
   test("creates a ckUSDT loan with a principal destination", async () => {
     // given
     const CKBTC_LEDGER_FEE_SATS = 10n;
+
     const fetchSpy = vi
       .spyOn(globalThis, "fetch")
       .mockImplementation(async (input, init) => {
-        const url = input.toString();
+        const url = new Request(input).url;
+
         if (init?.method === "POST") {
           return new Response(
             JSON.stringify({
@@ -448,6 +466,7 @@ describe("SimpleLoansModule create", () => {
             { status: 200, headers: { "content-type": "application/json" } }
           );
         }
+
         if (url.includes("/activities?")) {
           return new Response(JSON.stringify({ activities: [] }), {
             status: 200,
@@ -470,6 +489,7 @@ describe("SimpleLoansModule create", () => {
       btcMinterDepositFee: 2_000n,
       icrc1Fee: CKBTC_LEDGER_FEE_SATS,
     });
+
     const client = new LiquidiumClient({
       canisterIds: { simpleLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
     });
@@ -564,7 +584,7 @@ describe("SimpleLoansModule create", () => {
       canisterDestination: {
         Icrc: {
           owner: Principal.fromText(PROFILE_ID),
-          subaccount: [ICRC_SUBACCOUNT],
+          subaccount: [ICRC_SUBACCOUNT] satisfies [Uint8Array],
         },
       },
     },
@@ -588,7 +608,7 @@ describe("SimpleLoansModule create", () => {
             );
           }
 
-          if (input.toString().includes("/activities?")) {
+          if (new Request(input).url.includes("/activities?")) {
             return new Response(JSON.stringify({ activities: [] }), {
               status: 200,
               headers: { "content-type": "application/json" },
@@ -600,10 +620,11 @@ describe("SimpleLoansModule create", () => {
             headers: { "content-type": "application/json" },
           });
         });
+
       mockSimpleLoanCreateHydrationActors({
         getLoan: vi.fn().mockResolvedValue({
           Ok: createSimpleLoan({
-            borrow_destination: canisterDestination as never,
+            borrow_destination: canisterDestination,
             borrow_amount: DEFAULT_ICP_AMOUNT_E8S,
             borrow_pool_id: Principal.fromText(ICP_POOL_ID),
             borrow_asset: { ICP: null },
@@ -612,6 +633,7 @@ describe("SimpleLoansModule create", () => {
         btcMinterDepositFee: 2_000n,
         icrc1Fee: 10n,
       });
+
       const client = new LiquidiumClient({
         canisterIds: { simpleLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
       });
@@ -633,10 +655,10 @@ describe("SimpleLoansModule create", () => {
       const post = fetchSpy.mock.calls.find(
         ([, init]) => init?.method === "POST"
       );
+
       expect(post).toBeDefined();
-      expect(JSON.parse(post?.[1]?.body as string).borrowDestination).toEqual(
-        wireDestination
-      );
+      const postBody = await new Response(post?.[1]?.body).json();
+      expect(postBody.borrowDestination).toEqual(wireDestination);
       expect(loan.borrow).toMatchObject({
         asset: "ICP",
         chain: "ICP",
@@ -648,10 +670,12 @@ describe("SimpleLoansModule create", () => {
   test("returns the created loan id when a second hydration fee lookup fails", async () => {
     // given
     const hydrationFailure = new Error("ICP ledger fee unavailable");
+
     const icrc1Fee = vi
       .fn()
       .mockResolvedValueOnce(10n)
       .mockRejectedValueOnce(hydrationFailure);
+
     const fetchSpy = vi
       .spyOn(globalThis, "fetch")
       .mockImplementation(async (input, init) => {
@@ -668,7 +692,7 @@ describe("SimpleLoansModule create", () => {
           );
         }
 
-        if (input.toString().includes("/activities?")) {
+        if (new Request(input).url.includes("/activities?")) {
           return new Response(JSON.stringify({ activities: [] }), {
             status: 200,
             headers: { "content-type": "application/json" },
@@ -680,12 +704,14 @@ describe("SimpleLoansModule create", () => {
           headers: { "content-type": "application/json" },
         });
       });
+
     mockSimpleLoanCreateHydrationActors({
       getLoan: vi.fn().mockResolvedValue({ Ok: createSimpleLoan() }),
       btcMinterDepositFee: 2_000n,
       icrc1Fee: 10n,
       icrc1FeeMock: icrc1Fee,
     });
+
     const client = new LiquidiumClient({
       canisterIds: { simpleLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
     });
@@ -1179,17 +1205,21 @@ describe("SimpleLoansModule create", () => {
     // given
     const fetchSpy = vi.spyOn(globalThis, "fetch");
     vi.spyOn(Actor, "createActor")
-      .mockReturnValueOnce({
-        list_pools: vi
-          .fn()
-          .mockResolvedValue([createBtcPoolRecord(), createUsdtPoolRecord()]),
-        get_pool_rate: vi
-          .fn()
-          .mockResolvedValue([[10_000_000_000_000_000_000_000_000n, 0n, 0n]]),
-      } as never)
-      .mockReturnValueOnce({
-        get_prices: vi.fn().mockResolvedValue(prices()),
-      } as never);
+      .mockReturnValueOnce(
+        mockActor({
+          list_pools: vi
+            .fn()
+            .mockResolvedValue([createBtcPoolRecord(), createUsdtPoolRecord()]),
+          get_pool_rate: vi
+            .fn()
+            .mockResolvedValue([[10_000_000_000_000_000_000_000_000n, 0n, 0n]]),
+        })
+      )
+      .mockReturnValueOnce(
+        mockActor({
+          get_prices: vi.fn().mockResolvedValue(prices()),
+        })
+      );
     const client = new LiquidiumClient({});
 
     // when
@@ -1212,8 +1242,10 @@ describe("SimpleLoansModule create", () => {
   test("rejects ETH collateral below the deposit minimum before creation", async () => {
     // given
     const MINIMUM_ETH_COLLATERAL_AMOUNT_WEI = 5_000_000_000_000_000n;
+
     const ETH_COLLATERAL_AMOUNT_BELOW_MINIMUM_WEI =
       MINIMUM_ETH_COLLATERAL_AMOUNT_WEI - 1n;
+
     const fetchSpy = vi.spyOn(globalThis, "fetch");
     const actorCreateSpy = vi.spyOn(Actor, "createActor");
     const client = new LiquidiumClient({});
@@ -1236,6 +1268,7 @@ describe("SimpleLoansModule create", () => {
     // then
     const EXPECTED_ERROR_MESSAGE =
       "Deposit amount must be at least 5000000000000000 base units for ETH";
+
     await expect(result).rejects.toMatchObject({
       code: LiquidiumErrorCode.VALIDATION_ERROR,
       message: EXPECTED_ERROR_MESSAGE,
@@ -1249,20 +1282,25 @@ describe("SimpleLoansModule create", () => {
     const DUST_THRESHOLD_SATS = 10_000n;
     const fetchSpy = vi.spyOn(globalThis, "fetch");
     vi.spyOn(Actor, "createActor")
-      .mockReturnValueOnce({
-        list_pools: vi.fn().mockResolvedValue([
-          createBtcPoolRecord({
-            same_asset_borrowing: [false],
-            same_asset_borrowing_dust_threshold: DUST_THRESHOLD_SATS,
-          }),
-        ]),
-        get_pool_rate: vi
-          .fn()
-          .mockResolvedValue([[10_000_000_000_000_000_000_000_000n, 0n, 0n]]),
-      } as never)
-      .mockReturnValueOnce({
-        get_prices: vi.fn().mockResolvedValue(prices()),
-      } as never);
+      .mockReturnValueOnce(
+        mockActor({
+          list_pools: vi.fn().mockResolvedValue([
+            createBtcPoolRecord({
+              same_asset_borrowing: [false],
+              same_asset_borrowing_dust_threshold: DUST_THRESHOLD_SATS,
+            }),
+          ]),
+          get_pool_rate: vi
+            .fn()
+            .mockResolvedValue([[10_000_000_000_000_000_000_000_000n, 0n, 0n]]),
+        })
+      )
+      .mockReturnValueOnce(
+        mockActor({
+          get_prices: vi.fn().mockResolvedValue(prices()),
+        })
+      );
+
     const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
     });
@@ -1297,17 +1335,22 @@ describe("SimpleLoansModule create", () => {
     // given
     const fetchSpy = vi.spyOn(globalThis, "fetch");
     vi.spyOn(Actor, "createActor")
-      .mockReturnValueOnce({
-        list_pools: vi
-          .fn()
-          .mockResolvedValue([createBtcPoolRecord(), createUsdtPoolRecord()]),
-        get_pool_rate: vi
-          .fn()
-          .mockResolvedValue([[10_000_000_000_000_000_000_000_000n, 0n, 0n]]),
-      } as never)
-      .mockReturnValueOnce({
-        get_prices: vi.fn().mockResolvedValue(prices()),
-      } as never);
+      .mockReturnValueOnce(
+        mockActor({
+          list_pools: vi
+            .fn()
+            .mockResolvedValue([createBtcPoolRecord(), createUsdtPoolRecord()]),
+          get_pool_rate: vi
+            .fn()
+            .mockResolvedValue([[10_000_000_000_000_000_000_000_000n, 0n, 0n]]),
+        })
+      )
+      .mockReturnValueOnce(
+        mockActor({
+          get_prices: vi.fn().mockResolvedValue(prices()),
+        })
+      );
+
     const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
     });
@@ -1337,17 +1380,22 @@ describe("SimpleLoansModule create", () => {
     // given
     const fetchSpy = vi.spyOn(globalThis, "fetch");
     vi.spyOn(Actor, "createActor")
-      .mockReturnValueOnce({
-        list_pools: vi
-          .fn()
-          .mockResolvedValue([createBtcPoolRecord(), createUsdtPoolRecord()]),
-        get_pool_rate: vi
-          .fn()
-          .mockResolvedValue([[10_000_000_000_000_000_000_000_000n, 0n, 0n]]),
-      } as never)
-      .mockReturnValueOnce({
-        get_prices: vi.fn().mockResolvedValue(prices()),
-      } as never);
+      .mockReturnValueOnce(
+        mockActor({
+          list_pools: vi
+            .fn()
+            .mockResolvedValue([createBtcPoolRecord(), createUsdtPoolRecord()]),
+          get_pool_rate: vi
+            .fn()
+            .mockResolvedValue([[10_000_000_000_000_000_000_000_000n, 0n, 0n]]),
+        })
+      )
+      .mockReturnValueOnce(
+        mockActor({
+          get_prices: vi.fn().mockResolvedValue(prices()),
+        })
+      );
+
     const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
     });
@@ -1497,20 +1545,25 @@ describe("SimpleLoansModule create", () => {
     // given
     const fetchSpy = vi.spyOn(globalThis, "fetch");
     vi.spyOn(Actor, "createActor")
-      .mockReturnValueOnce({
-        list_pools: vi
-          .fn()
-          .mockResolvedValue([
-            createBtcPoolRecord({ max_ltv: 6_500n }),
-            createUsdtPoolRecord(),
-          ]),
-        get_pool_rate: vi
-          .fn()
-          .mockResolvedValue([[10_000_000_000_000_000_000_000_000n, 0n, 0n]]),
-      } as never)
-      .mockReturnValueOnce({
-        get_prices: vi.fn().mockResolvedValue(prices()),
-      } as never);
+      .mockReturnValueOnce(
+        mockActor({
+          list_pools: vi
+            .fn()
+            .mockResolvedValue([
+              createBtcPoolRecord({ max_ltv: 6_500n }),
+              createUsdtPoolRecord(),
+            ]),
+          get_pool_rate: vi
+            .fn()
+            .mockResolvedValue([[10_000_000_000_000_000_000_000_000n, 0n, 0n]]),
+        })
+      )
+      .mockReturnValueOnce(
+        mockActor({
+          get_prices: vi.fn().mockResolvedValue(prices()),
+        })
+      );
+
     const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
       canisterIds: { simpleLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
@@ -1540,20 +1593,25 @@ describe("SimpleLoansModule create", () => {
     // given
     const fetchSpy = vi.spyOn(globalThis, "fetch");
     vi.spyOn(Actor, "createActor")
-      .mockReturnValueOnce({
-        list_pools: vi
-          .fn()
-          .mockResolvedValue([
-            createBtcPoolRecord({ max_ltv: 6_500n }),
-            createUsdtPoolRecord(),
-          ]),
-        get_pool_rate: vi
-          .fn()
-          .mockResolvedValue([[10_000_000_000_000_000_000_000_000n, 0n, 0n]]),
-      } as never)
-      .mockReturnValueOnce({
-        get_prices: vi.fn().mockResolvedValue(prices()),
-      } as never);
+      .mockReturnValueOnce(
+        mockActor({
+          list_pools: vi
+            .fn()
+            .mockResolvedValue([
+              createBtcPoolRecord({ max_ltv: 6_500n }),
+              createUsdtPoolRecord(),
+            ]),
+          get_pool_rate: vi
+            .fn()
+            .mockResolvedValue([[10_000_000_000_000_000_000_000_000n, 0n, 0n]]),
+        })
+      )
+      .mockReturnValueOnce(
+        mockActor({
+          get_prices: vi.fn().mockResolvedValue(prices()),
+        })
+      );
+
     const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
       canisterIds: { simpleLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
@@ -1584,20 +1642,25 @@ describe("SimpleLoansModule create", () => {
     const MAX_LTV_BPS = 5_925n;
     const fetchSpy = vi.spyOn(globalThis, "fetch");
     vi.spyOn(Actor, "createActor")
-      .mockReturnValueOnce({
-        list_pools: vi
-          .fn()
-          .mockResolvedValue([
-            createBtcPoolRecord(),
-            createUsdtPoolRecord({ activation_fee: [ACTIVATION_FEE_BPS] }),
-          ]),
-        get_pool_rate: vi
-          .fn()
-          .mockResolvedValue([[10_000_000_000_000_000_000_000_000n, 0n, 0n]]),
-      } as never)
-      .mockReturnValueOnce({
-        get_prices: vi.fn().mockResolvedValue(prices()),
-      } as never);
+      .mockReturnValueOnce(
+        mockActor({
+          list_pools: vi
+            .fn()
+            .mockResolvedValue([
+              createBtcPoolRecord(),
+              createUsdtPoolRecord({ activation_fee: [ACTIVATION_FEE_BPS] }),
+            ]),
+          get_pool_rate: vi
+            .fn()
+            .mockResolvedValue([[10_000_000_000_000_000_000_000_000n, 0n, 0n]]),
+        })
+      )
+      .mockReturnValueOnce(
+        mockActor({
+          get_prices: vi.fn().mockResolvedValue(prices()),
+        })
+      );
+
     const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
     });
@@ -1619,17 +1682,22 @@ describe("SimpleLoansModule create", () => {
     // given
     const fetchSpy = vi.spyOn(globalThis, "fetch");
     vi.spyOn(Actor, "createActor")
-      .mockReturnValueOnce({
-        list_pools: vi
-          .fn()
-          .mockResolvedValue([createBtcPoolRecord(), createUsdtPoolRecord()]),
-        get_pool_rate: vi
-          .fn()
-          .mockResolvedValue([[10_000_000_000_000_000_000_000_000n, 0n, 0n]]),
-      } as never)
-      .mockReturnValueOnce({
-        get_prices: vi.fn().mockResolvedValue(prices()),
-      } as never);
+      .mockReturnValueOnce(
+        mockActor({
+          list_pools: vi
+            .fn()
+            .mockResolvedValue([createBtcPoolRecord(), createUsdtPoolRecord()]),
+          get_pool_rate: vi
+            .fn()
+            .mockResolvedValue([[10_000_000_000_000_000_000_000_000n, 0n, 0n]]),
+        })
+      )
+      .mockReturnValueOnce(
+        mockActor({
+          get_prices: vi.fn().mockResolvedValue(prices()),
+        })
+      );
+
     const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
       canisterIds: { simpleLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
@@ -1678,6 +1746,7 @@ function createSimpleLoanRequest(
     depositWindowSeconds: DEFAULT_DEPOSIT_WINDOW_SECONDS,
   };
 
+  // SAFETY: overrides include unsupported asset and chain names for runtime validation; all other fields keep their request types.
   return {
     ...request,
     ...overrides,
@@ -1702,28 +1771,30 @@ function mockSimpleLoanCreateHydrationActors(params: {
   icrc1Fee: bigint;
   icrc1FeeMock?: ReturnType<typeof vi.fn>;
 }): void {
-  vi.spyOn(Actor, "createActor").mockReturnValue({
-    list_pools: vi
-      .fn()
-      .mockResolvedValue([
-        createBtcPoolRecord({ max_ltv: 6_500n }),
-        createEthPoolRecord(),
-        createUsdtPoolRecord(),
-        createIcpPoolRecord(),
-      ]),
-    get_prices: vi.fn().mockResolvedValue(prices()),
-    get_loan: params.getLoan,
-    get_position: vi.fn().mockResolvedValue([]),
-    get_pool_rate: vi
-      .fn()
-      .mockResolvedValue([[10_000_000_000_000_000_000_000_000n, 0n, 0n]]),
-    get_btc_address: vi.fn().mockResolvedValue("bc1qinstantdeposit"),
-    get_deposit_address: vi.fn().mockResolvedValue({
-      Ok: "0x1111111111111111111111111111111111111111",
-    }),
-    estimate_deposit_fee: vi.fn().mockResolvedValue({ Ok: 1_500_000n }),
-    get_deposit_fee: vi.fn().mockResolvedValue(params.btcMinterDepositFee),
-    icrc1_fee:
-      params.icrc1FeeMock ?? vi.fn().mockResolvedValue(params.icrc1Fee),
-  } as never);
+  vi.spyOn(Actor, "createActor").mockReturnValue(
+    mockActor({
+      list_pools: vi
+        .fn()
+        .mockResolvedValue([
+          createBtcPoolRecord({ max_ltv: 6_500n }),
+          createEthPoolRecord(),
+          createUsdtPoolRecord(),
+          createIcpPoolRecord(),
+        ]),
+      get_prices: vi.fn().mockResolvedValue(prices()),
+      get_loan: params.getLoan,
+      get_position: vi.fn().mockResolvedValue([]),
+      get_pool_rate: vi
+        .fn()
+        .mockResolvedValue([[10_000_000_000_000_000_000_000_000n, 0n, 0n]]),
+      get_btc_address: vi.fn().mockResolvedValue("bc1qinstantdeposit"),
+      get_deposit_address: vi.fn().mockResolvedValue({
+        Ok: "0x1111111111111111111111111111111111111111",
+      }),
+      estimate_deposit_fee: vi.fn().mockResolvedValue({ Ok: 1_500_000n }),
+      get_deposit_fee: vi.fn().mockResolvedValue(params.btcMinterDepositFee),
+      icrc1_fee:
+        params.icrc1FeeMock ?? vi.fn().mockResolvedValue(params.icrc1Fee),
+    })
+  );
 }

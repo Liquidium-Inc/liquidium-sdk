@@ -9,8 +9,9 @@ const MOD = BASE ** BigInt(REF_LENGTH);
 const A = 1_103_515_245n;
 const B = 123_456_789n;
 const A_INVERSE = modInverse(A, MOD);
+
 const ALPHABET_INDEX = new Map(
-  [...REF_ALPHABET].map((character, index) => [character, BigInt(index)])
+  REF_ALPHABET.split("").map((character, index) => [character, BigInt(index)])
 );
 
 /**
@@ -21,6 +22,7 @@ const ALPHABET_INDEX = new Map(
  */
 export function publicIdFromInt(id: bigint): string {
   if (id < 0n || id >= MOD) throw new Error("id out of range");
+
   return toBase32Fixed((id * A + B) % MOD);
 }
 
@@ -33,6 +35,7 @@ export function publicIdFromInt(id: bigint): string {
 export function intFromPublicId(ref: string): bigint {
   const encodedId = fromBase32Fixed(ref.toUpperCase());
   const id = ((encodedId - B) * A_INVERSE) % MOD;
+
   return (id + MOD) % MOD;
 }
 
@@ -63,10 +66,12 @@ function modInverse(value: bigint, modulo: bigint): bigint {
 function toBase32Fixed(value: bigint): string {
   let encoded = "";
   let remaining = value;
+
   for (let i = 0; i < REF_LENGTH; i++) {
     encoded = REF_ALPHABET[Number(remaining % BASE)] + encoded;
     remaining /= BASE;
   }
+
   return encoded;
 }
 
@@ -76,8 +81,10 @@ function fromBase32Fixed(ref: string): bigint {
   }
 
   let decoded = 0n;
+
   for (const character of ref) {
     const value = ALPHABET_INDEX.get(character);
+
     if (value === undefined) {
       throw new Error("ref contains invalid character");
     }

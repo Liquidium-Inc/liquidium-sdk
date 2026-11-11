@@ -26,6 +26,7 @@ describe("executeWith", () => {
 
   test("should throw a validation error for unsupported execution kinds", async () => {
     // given
+    // SAFETY: the unsupported execution kind must reach runtime dispatch.
     const action = { executionKind: "unsupported" } as never;
     const execute = executeWith({ walletAdapter: {} });
 

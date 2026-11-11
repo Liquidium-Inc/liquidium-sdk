@@ -13,17 +13,22 @@ export function createConnectedWalletAdapter(
   if (!primaryWallet) {
     throw new Error("Connect an ETH or SOL wallet first.");
   }
+
   if (isSolanaWallet(primaryWallet)) {
     return createSolanaWalletAdapter(primaryWallet);
   }
+
   if (!isEthereumWallet(primaryWallet)) {
     throw new Error("Connected wallet mode supports ETH and SOL wallets.");
   }
+
   const adapter = createDynamicWalletAdapter(primaryWallet);
   const { signMessage, sendEthTransaction } = adapter;
+
   if (!signMessage || !sendEthTransaction) {
     throw new Error("Ethereum adapter is missing signing or sending support.");
   }
+
   return {
     signMessage: async (request) => {
       if (request.chain !== "ETH") {
@@ -31,6 +36,7 @@ export function createConnectedWalletAdapter(
           "The connected Ethereum wallet only signs ETH requests."
         );
       }
+
       if (
         request.account &&
         request.account.toLowerCase() !== primaryWallet.address.toLowerCase()
@@ -39,6 +45,7 @@ export function createConnectedWalletAdapter(
           "The request account does not match the connected wallet."
         );
       }
+
       return signMessage(request);
     },
     sendEthTransaction: async (request) => {
@@ -50,6 +57,7 @@ export function createConnectedWalletAdapter(
           "The request account does not match the connected wallet."
         );
       }
+
       return sendEthTransaction(request);
     },
   };
