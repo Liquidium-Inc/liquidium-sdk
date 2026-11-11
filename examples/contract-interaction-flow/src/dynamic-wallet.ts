@@ -139,6 +139,7 @@ async function getDynamicWalletClient(
   primaryWallet: PrimaryWallet
 ): Promise<DynamicWalletClient> {
   const dynamicWallet = getDynamicEthereumWallet(primaryWallet);
+
   const walletClient = dynamicWallet.getWalletClient
     ? await dynamicWallet.getWalletClient(ETH_MAINNET_CHAIN_ID_STRING)
     : await dynamicWallet.connector?.getWalletClient?.(

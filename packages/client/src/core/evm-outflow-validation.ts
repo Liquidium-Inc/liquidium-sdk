@@ -7,8 +7,10 @@ import { Asset, Chain, type EvmReadClient } from "./types";
 
 const EMPTY_EVM_BYTECODE = "0x";
 const LAST_ETHEREUM_MAINNET_PRECOMPILE_ADDRESS = 0x11n;
+
 const CONTRACT_DESTINATION_UNSUPPORTED_MESSAGE =
   "Contract addresses are not supported for native ETH withdrawals or borrowing";
+
 const RESERVED_DESTINATION_MESSAGE =
   "Ethereum outflow destination must not be the zero address or a precompile";
 
@@ -50,6 +52,7 @@ export async function guardEthereumOutflowDestination({
   }
 
   const normalizedAddress = getAddress(address);
+
   if (BigInt(normalizedAddress) <= LAST_ETHEREUM_MAINNET_PRECOMPILE_ADDRESS) {
     throw new LiquidiumError(
       LiquidiumErrorCode.INVALID_ADDRESS,
@@ -63,6 +66,7 @@ export async function guardEthereumOutflowDestination({
 
   if (evmReadClient?.chain?.id === mainnet.id && evmReadClient.getCode) {
     let bytecode: unknown;
+
     try {
       bytecode = await evmReadClient.getCode({
         address: normalizedAddress,
@@ -93,6 +97,7 @@ export async function guardEthereumOutflowDestination({
   }
 
   let response: unknown;
+
   try {
     response = await apiClient.get<EthereumAddressBytecodeResponseWire>(
       buildEthereumAddressBytecodePath({ address: normalizedAddress })

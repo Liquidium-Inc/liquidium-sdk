@@ -15,14 +15,19 @@ describe("SimpleLoansModule canister queries", () => {
     const getConfig = vi.fn().mockResolvedValue({
       lending_canister: Principal.fromText("aaaaa-aa"),
     });
+
     const getEvent = vi.fn().mockResolvedValue([createLoanCreatedEvent()]);
+
     const listEvents = vi
       .fn()
       .mockResolvedValue([[1n, createLoanCreatedEvent()]]);
+
     const listAccessList = vi
       .fn()
       .mockResolvedValue([Principal.fromText("aaaaa-aa")]);
+
     const countWarmedProfiles = vi.fn().mockResolvedValue(2n);
+
     const listWarmedProfiles = vi.fn().mockResolvedValue([
       {
         id: 7n,
@@ -37,6 +42,7 @@ describe("SimpleLoansModule canister queries", () => {
         lending_profile: Principal.fromText(PROFILE_ID),
       },
     ]);
+
     vi.spyOn(Actor, "createActor").mockReturnValue({
       count_warmed_profiles: countWarmedProfiles,
       get_config: getConfig,
@@ -45,6 +51,7 @@ describe("SimpleLoansModule canister queries", () => {
       list_events: listEvents,
       list_warmed_profiles: listWarmedProfiles,
     } as never);
+
     const client = new LiquidiumClient({
       canisterIds: { simpleLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
     });
@@ -52,10 +59,12 @@ describe("SimpleLoansModule canister queries", () => {
     // when
     const config = await client.simpleLoans.getConfig();
     const event = await client.simpleLoans.getEvent(1n);
+
     const events = await client.simpleLoans.listEvents({
       start: 1n,
       limit: 10n,
     });
+
     const accessList = await client.simpleLoans.listAccessList();
     const warmedProfileCount = await client.simpleLoans.countWarmedProfiles();
     const warmedProfiles = await client.simpleLoans.listWarmedProfiles();
@@ -123,6 +132,7 @@ describe("SimpleLoansModule canister queries", () => {
         },
       ]),
     } as never);
+
     const client = new LiquidiumClient({
       canisterIds: { simpleLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
     });

@@ -44,6 +44,7 @@ export function getWithdrawAmountMinimumValidationError(
   params: WithdrawAmountMinimumValidationParams
 ): WithdrawAmountMinimumValidationError | null {
   const minimumAmount = getMinimumWithdrawAmount(params.asset);
+
   if (minimumAmount <= 0n || params.amount >= minimumAmount) {
     return null;
   }

@@ -40,6 +40,7 @@ describeLive("live Simple Loans e2e", () => {
       pools,
       assetPrices,
     });
+
     const loanById = await client.simpleLoans.get({ loanId: loan.loanId });
     const loanByRef = await client.simpleLoans.get({ ref: loan.ref });
 
@@ -95,6 +96,7 @@ async function createLiveSimpleLoan(params: {
   const { account: evmAddress } = createEthereumTestWallet();
   const { account: bitcoinAddress } = createBitcoinjsTestWallet();
   const borrowAmount = getMinimumBorrowAmount(params.borrowPool);
+
   const quote = params.client.quote.getQuote(
     {
       borrowAmount,

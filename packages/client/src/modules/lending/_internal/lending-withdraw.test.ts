@@ -50,6 +50,7 @@ describe("LendingModule withdraw", () => {
       list_pools: vi.fn().mockResolvedValue([createEthPoolRecord()]),
       get_nonce: getNonce,
     } as never);
+
     const client = new LiquidiumClient({
       evmPublicClient: {
         getCode: vi.fn().mockResolvedValue(undefined),
@@ -88,6 +89,7 @@ describe("LendingModule withdraw", () => {
       get_nonce: vi.fn().mockResolvedValue(23n),
       withdraw,
     } as never);
+
     const fetch = vi
       .fn()
       .mockResolvedValueOnce(
@@ -102,7 +104,9 @@ describe("LendingModule withdraw", () => {
           headers: { "content-type": "application/json" },
         })
       ) as typeof globalThis.fetch;
+
     const client = new LiquidiumClient({ fetch });
+
     const withdrawAction = await client.lending.prepareWithdraw({
       profileId: "aaaaa-aa",
       poolId: ETH_POOL_ID,
@@ -129,6 +133,7 @@ describe("LendingModule withdraw", () => {
     // given
     const MINIMUM_ETH_AMOUNT_WEI = 5_000_000_000_000_000n;
     const MUTATED_EVM_ADDRESS = "0xde709f2102306220921060314715629080e2fb77";
+
     const withdraw = vi.fn().mockResolvedValue({
       Ok: {
         id: "outflow-eth",
@@ -139,6 +144,7 @@ describe("LendingModule withdraw", () => {
         receiver: { External: CHECKSUM_EVM_OUTFLOW_ADDRESS },
       },
     });
+
     vi.spyOn(Actor, "createActor").mockReturnValue({
       list_pools: vi.fn().mockResolvedValue([createEthPoolRecord()]),
       get_nonce: vi.fn().mockResolvedValue(23n),
@@ -147,9 +153,11 @@ describe("LendingModule withdraw", () => {
     const evmPublicClient = mockDeep<Required<EvmReadClient>>();
     evmPublicClient.chain.id = mainnet.id;
     evmPublicClient.getCode.mockResolvedValue(undefined);
+
     const client = new LiquidiumClient({
       evmPublicClient,
     });
+
     const withdrawAction = await client.lending.prepareWithdraw({
       profileId: "aaaaa-aa",
       poolId: ETH_POOL_ID,
@@ -158,10 +166,13 @@ describe("LendingModule withdraw", () => {
       receiver: LOWERCASE_EVM_OUTFLOW_ADDRESS,
       signerWalletAddress: "0xsigner",
     });
+
     const publicReceiver = withdrawAction.data.receiver;
+
     if (typeof publicReceiver === "string" || !("address" in publicReceiver)) {
       throw new Error("Expected a typed withdraw receiver");
     }
+
     publicReceiver.address = MUTATED_EVM_ADDRESS;
 
     // when
@@ -239,6 +250,7 @@ describe("LendingModule withdraw", () => {
     // given
     vi.setSystemTime(new Date("2026-04-01T00:00:00.000Z"));
     const getNonce = vi.fn().mockResolvedValue(23n);
+
     const withdraw = vi.fn().mockResolvedValue({
       Ok: {
         id: "outflow-2",
@@ -249,6 +261,7 @@ describe("LendingModule withdraw", () => {
         receiver: { External: VALID_BTC_OUTFLOW_ADDRESS },
       },
     });
+
     vi.spyOn(Actor, "createActor").mockReturnValue({
       list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord()]),
       get_nonce: getNonce,
@@ -268,6 +281,7 @@ describe("LendingModule withdraw", () => {
       },
       signerWalletAddress: "0xsigner",
     });
+
     const outflow = await withdrawAction.submit({
       signature: "0xsigned",
       chain: "ETH",
@@ -337,6 +351,7 @@ Nonce: 23`);
   test("creates an ICP withdraw action to an account identifier destination", async () => {
     // given
     vi.setSystemTime(new Date("2026-04-01T00:00:00.000Z"));
+
     const withdraw = vi.fn().mockResolvedValue({
       Ok: {
         id: "outflow-icp-account-id",
@@ -347,6 +362,7 @@ Nonce: 23`);
         receiver: { AccountIdentifier: VALID_ICP_ACCOUNT_IDENTIFIER },
       },
     });
+
     vi.spyOn(Actor, "createActor").mockReturnValue({
       list_pools: vi.fn().mockResolvedValue([createIcpPoolRecord()]),
       get_nonce: vi.fn().mockResolvedValue(23n),
@@ -366,6 +382,7 @@ Nonce: 23`);
       },
       signerWalletAddress: "0xsigner",
     });
+
     await withdrawAction.submit({ signature: "0xsigned", chain: "ETH" });
 
     // then
@@ -382,10 +399,12 @@ Nonce: 23`);
   test("rejects a BTC withdraw receiver that uses an ICRC account before fetching a nonce", async () => {
     // given
     const ICRC_SUBACCOUNT = new Uint8Array(32).fill(6);
+
     const ICRC_ACCOUNT = encodeIcrcAccount({
       owner: Principal.fromText(VALID_IC_PRINCIPAL),
       subaccount: ICRC_SUBACCOUNT,
     });
+
     const getNonce = vi.fn().mockResolvedValue(23n);
     vi.spyOn(Actor, "createActor").mockReturnValue({
       list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord()]),
@@ -417,10 +436,12 @@ Nonce: 23`);
   test("rejects an ETH stablecoin withdraw receiver that uses an ICRC account before fetching a nonce", async () => {
     // given
     const ICRC_SUBACCOUNT = new Uint8Array(32).fill(7);
+
     const ICRC_ACCOUNT = encodeIcrcAccount({
       owner: Principal.fromText(VALID_IC_PRINCIPAL),
       subaccount: ICRC_SUBACCOUNT,
     });
+
     const getNonce = vi.fn().mockResolvedValue(23n);
     vi.spyOn(Actor, "createActor").mockReturnValue({
       list_pools: vi.fn().mockResolvedValue([createUsdtPoolRecord()]),
@@ -659,6 +680,7 @@ Nonce: 23`);
       list_pools: vi.fn().mockResolvedValue([createUsdtPoolRecord()]),
       get_nonce: getNonce,
     } as never);
+
     const client = new LiquidiumClient({
       evmPublicClient: {
         getCode: vi.fn().mockResolvedValue(undefined),

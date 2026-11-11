@@ -137,6 +137,7 @@ function createDepositAccountContext(params: DepositAccountContextParams): {
     action: params.action,
     principal: Principal.fromText(params.profileId),
   });
+
   const expectedDestinationAccount = encodeIcrcAccount({
     owner: Principal.fromText(params.poolId),
     subaccount: inflowSubaccount,
@@ -159,6 +160,7 @@ function createDepositAccountContext(params: DepositAccountContextParams): {
 
 function encodePrincipalToBytes32(principal: Principal): `0x${string}` {
   const principalBytes = principal.toUint8Array();
+
   if (principalBytes.length > 29) {
     throw new LiquidiumError(
       LiquidiumErrorCode.VALIDATION_ERROR,

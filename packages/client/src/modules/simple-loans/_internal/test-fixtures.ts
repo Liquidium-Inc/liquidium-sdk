@@ -32,13 +32,18 @@ export const ETH_POOL_ID = "qcg7y-syaaa-aaaar-qb75q-cai";
 export const USDT_POOL_ID = "hnnn4-iyaaa-aaaar-qb4bq-cai";
 export const LOAN_ID = 42n;
 export const VALID_BTC_REFUND_ADDRESS = "1BoatSLRHtKNngkdXEeobR76b53LETtpyT";
+
 export const ACCOUNT_IDENTIFIER =
   "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+
 export const ICRC_SUBACCOUNT = new Uint8Array(32).fill(7);
+
 export const LOWERCASE_EVM_BORROW_ADDRESS =
   "0x52908400098527886e0f7030069857d2e4169ee7";
+
 export const CHECKSUM_EVM_BORROW_ADDRESS =
   "0x52908400098527886E0F7030069857D2E4169EE7";
+
 export const CANISTER_EVM_BORROW_ADDRESS =
   "0x2222222222222222222222222222222222222222";
 
@@ -86,6 +91,7 @@ export function mockSimpleLoanCollateralHintFetch(
 ) {
   return vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
     const url = input.toString();
+
     if (url.includes("/activities?")) {
       return new Response(JSON.stringify({ activities: [] }), {
         status: 200,

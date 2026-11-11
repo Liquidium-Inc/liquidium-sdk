@@ -39,6 +39,7 @@ const DEFAULT_ETH_INFLOW_AMOUNT = "0.005";
 const DEFAULT_TOKEN_INFLOW_AMOUNT = "10";
 
 type ContractInteractionTab = "supply" | "repay" | "borrow" | "withdraw";
+
 type InflowMode = "contractInteraction" | "ck";
 
 const DEFAULT_INFLOW_MODE: InflowMode = "contractInteraction";
@@ -54,43 +55,60 @@ function ContractInteractionPage() {
   const [pools, setPools] = useState<Pool[]>([]);
   const [activeTab, setActiveTab] = useState<ContractInteractionTab>("supply");
   const [profileId, setProfileId] = useState("");
+
   const [profileResult, setProfileResult] = useState(
     "Connect a wallet, then create or load a profile."
   );
+
   const [selectedSupplyPoolId, setSelectedSupplyPoolId] = useState("");
   const [selectedRepaymentPoolId, setSelectedRepaymentPoolId] = useState("");
   const [selectedBorrowPoolId, setSelectedBorrowPoolId] = useState("");
   const [selectedWithdrawPoolId, setSelectedWithdrawPoolId] = useState("");
+
   const [supplyInflowMode, setSupplyInflowMode] =
     useState<InflowMode>(DEFAULT_INFLOW_MODE);
+
   const [repaymentInflowMode, setRepaymentInflowMode] =
     useState<InflowMode>(DEFAULT_INFLOW_MODE);
+
   const [supplyAmount, setSupplyAmount] = useState(DEFAULT_TOKEN_INFLOW_AMOUNT);
+
   const [supplyResult, setSupplyResult] = useState(
     "No contract interaction submitted yet."
   );
+
   const [repaymentAmount, setRepaymentAmount] = useState(
     DEFAULT_TOKEN_INFLOW_AMOUNT
   );
+
   const [repaymentResult, setRepaymentResult] = useState(
     "No contract interaction repayment submitted yet."
   );
+
   const [borrowAmount, setBorrowAmount] = useState("9");
+
   const [borrowChainSelection, setBorrowChainSelection] = useState<Chain>(
     Chain.ETH
   );
+
   const [borrowDestination, setBorrowDestination] = useState("");
+
   const [borrowResult, setBorrowResult] = useState(
     "Connect a wallet, then submit a borrow."
   );
+
   const [withdrawAmount, setWithdrawAmount] = useState("1");
+
   const [withdrawChainSelection, setWithdrawChainSelection] = useState<Chain>(
     Chain.ETH
   );
+
   const [withdrawDestination, setWithdrawDestination] = useState("");
+
   const [withdrawResult, setWithdrawResult] = useState(
     "Connect a wallet, then submit a withdraw."
   );
+
   const [status, setStatus] = useState("Ready.");
   const walletAddress = primaryWallet?.address ?? "";
   const contractInteractionPools = getContractInteractionPools(pools);
@@ -101,13 +119,17 @@ function ContractInteractionPage() {
     void run(async () => {
       setStatus("Loading pools...");
       const loadedPools = await listMarketPools();
+
       const availableContractInteractionPools =
         getContractInteractionPools(loadedPools);
+
       const availableBorrowPools = getBorrowPools(loadedPools);
+
       const defaultContractInteractionPool =
         availableContractInteractionPools.find(
           (pool) => pool.asset === DEFAULT_CONTRACT_INTERACTION_ASSET
         ) ?? availableContractInteractionPools[0];
+
       const defaultBorrowPool =
         availableBorrowPools.find(
           (pool) => pool.asset === DEFAULT_BORROW_ASSET
@@ -173,13 +195,17 @@ function ContractInteractionPage() {
   async function loadPools(): Promise<void> {
     setStatus("Loading pools...");
     const loadedPools = await listMarketPools();
+
     const availableContractInteractionPools =
       getContractInteractionPools(loadedPools);
+
     const availableBorrowPools = getBorrowPools(loadedPools);
+
     const defaultContractInteractionPool =
       availableContractInteractionPools.find(
         (pool) => pool.asset === DEFAULT_CONTRACT_INTERACTION_ASSET
       ) ?? availableContractInteractionPools[0];
+
     const defaultBorrowPool =
       availableBorrowPools.find(
         (pool) => pool.asset === DEFAULT_BORROW_ASSET
@@ -218,6 +244,7 @@ function ContractInteractionPage() {
       contractInteractionPools,
       selectedSupplyPoolId
     );
+
     const trimmedProfileId = profileId.trim();
 
     if (!trimmedProfileId) {
@@ -228,14 +255,17 @@ function ContractInteractionPage() {
     validateDepositAmount({ amount, asset: selectedPool.asset });
 
     const isCkInflowMode = supplyInflowMode === "ck";
+
     if (isCkInflowMode) {
       setStatus("Generating direct ck supply target...");
       setSupplyResult("Generating direct ck supply target...");
+
       const supplyFlow = await createCkTransferTarget({
         profileId: trimmedProfileId,
         poolId: selectedPool.id,
         action: "deposit",
       });
+
       setSupplyResult(
         [
           `Supply amount: ${formatAmount(amount, selectedPool.decimals)} ${selectedPool.asset}`,
@@ -247,11 +277,13 @@ function ContractInteractionPage() {
         ].join("\n")
       );
       setStatus("Generated direct ck supply target.");
+
       return;
     }
 
     setStatus("Submitting contract interaction supply...");
     setSupplyResult("Submitting contract interaction supply...");
+
     const supplyFlow = await submitContractInteractionSupply({
       profileId: trimmedProfileId,
       poolId: selectedPool.id,
@@ -282,6 +314,7 @@ function ContractInteractionPage() {
       contractInteractionPools,
       selectedRepaymentPoolId
     );
+
     const trimmedProfileId = profileId.trim();
 
     if (!trimmedProfileId) {
@@ -292,15 +325,19 @@ function ContractInteractionPage() {
       repaymentAmount,
       selectedPool.decimals
     );
+
     const isCkInflowMode = repaymentInflowMode === "ck";
+
     if (isCkInflowMode) {
       setStatus("Generating direct ck repayment target...");
       setRepaymentResult("Generating direct ck repayment target...");
+
       const repaymentFlow = await createCkTransferTarget({
         profileId: trimmedProfileId,
         poolId: selectedPool.id,
         action: "repayment",
       });
+
       setRepaymentResult(
         [
           `Repayment amount: ${formatAmount(amount, selectedPool.decimals)} ${selectedPool.asset}`,
@@ -312,11 +349,13 @@ function ContractInteractionPage() {
         ].join("\n")
       );
       setStatus("Generated direct ck repayment target.");
+
       return;
     }
 
     setStatus("Submitting contract interaction repayment...");
     setRepaymentResult("Submitting contract interaction repayment...");
+
     const repaymentFlow = await submitContractInteractionRepayment({
       profileId: trimmedProfileId,
       poolId: selectedPool.id,
@@ -347,10 +386,12 @@ function ContractInteractionPage() {
       borrowPools,
       selectedBorrowPoolId
     );
+
     const amount = parseAmountToBaseUnits(
       borrowAmount,
       selectedBorrowPool.decimals
     );
+
     const destinationAddress = borrowDestination.trim();
     const signerWalletAddress = getConnectedWalletAddress(primaryWallet);
     const trimmedProfileId = profileId.trim();
@@ -392,10 +433,12 @@ function ContractInteractionPage() {
       withdrawPools,
       selectedWithdrawPoolId
     );
+
     const amount = parseAmountToBaseUnits(
       withdrawAmount,
       selectedWithdrawPool.decimals
     );
+
     const destinationAddress = withdrawDestination.trim();
     const signerWalletAddress = getConnectedWalletAddress(primaryWallet);
     const trimmedProfileId = profileId.trim();
@@ -904,20 +947,26 @@ function ActivityTrackerPage() {
   const [profileId, setProfileId] = useState(
     new URLSearchParams(window.location.search).get("profileId") ?? ""
   );
+
   const [activityId, setActivityId] = useState(
     new URLSearchParams(window.location.search).get("activityId") ?? ""
   );
+
   const [activityFilter, setActivityFilter] =
     useState<ActivityFilter>("active");
+
   const [activitiesOutput, setActivitiesOutput] = useState(
     "Enter a profile id to load activities."
   );
+
   const [activityOutput, setActivityOutput] = useState(
     "Enter a profile id and activity id."
   );
+
   const [recentActivityIds, setRecentActivityIds] = useState<string[]>(() =>
     getRecentActivityIds()
   );
+
   const [status, setStatus] = useState("Ready.");
 
   async function loadActivities(): Promise<void> {
@@ -938,6 +987,7 @@ function ActivityTrackerPage() {
     if (activities.length === 0) {
       setActivitiesOutput("No activities found.");
       setStatus("No activities found.");
+
       return;
     }
 

@@ -54,8 +54,10 @@ describe("borrow minimums", () => {
 
     // then
     const EXPECTED_MINIMUM_AMOUNT = 5_100n;
+
     const EXPECTED_MESSAGE =
       "Borrow amount must be at least 5100 base units for BTC";
+
     expect(validationError).toEqual({
       asset,
       minimumAmount: EXPECTED_MINIMUM_AMOUNT,

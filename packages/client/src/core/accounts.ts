@@ -12,6 +12,7 @@ export const LiquidiumAccountType = {
   IcpAccountIdentifier: "IcpAccountIdentifier",
   IcrcAccount: "IcrcAccount",
 } as const;
+
 /** Account type hint for Liquidium account inputs and normalized account responses. */
 export type LiquidiumAccountType =
   (typeof LiquidiumAccountType)[keyof typeof LiquidiumAccountType];
@@ -150,6 +151,7 @@ export function mapCanisterAccountToLiquidiumAccount(
 export function decodeIcrcAccountAddress(address: string): DecodedIcrcAccount {
   const decoded = decodeIcrcAccountText(address);
   const owner = Principal.fromText(decoded.owner.toText());
+
   const subaccount = decoded.subaccount
     ? Uint8Array.from(decoded.subaccount)
     : undefined;

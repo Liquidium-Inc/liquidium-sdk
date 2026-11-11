@@ -52,11 +52,13 @@ export class PositionsModule {
       ).get_position(Principal.fromText(profileId), Principal.fromText(poolId));
 
       const view = result[0];
+
       if (!view) {
         return null;
       }
 
       const decodedView = decodeFlexiblePositionView(view);
+
       if (!decodedView) {
         return null;
       }
@@ -82,11 +84,14 @@ export class PositionsModule {
     try {
       const actor = createFlexibleLendingActor(this.canisterContext);
       const profilePrincipal = Principal.fromText(profileId);
+
       const [stats, pools] = await Promise.all([
         actor.get_profile_stats(profilePrincipal),
         actor.list_pools(),
       ]);
+
       const decodedStats = decodeFlexibleUserStats(stats);
+
       const dustThresholdsByPoolId = new Map(
         pools.map((pool) => [
           pool.principal.toText(),
@@ -194,9 +199,12 @@ export class PositionsModule {
     const collateral = userStats.collateral;
     const debt = userStats.debt;
     const maxBorrowableUsd = userStats.borrowingPower.maxBorrowableUsd;
+
     const availableBorrowsUsd =
       maxBorrowableUsd > debt ? maxBorrowableUsd - debt : 0n;
+
     const netWorthUsd = collateral - debt;
+
     const currentLtvBps =
       collateral > 0n ? (debt * BPS_SCALE) / collateral : 0n;
 
@@ -240,6 +248,7 @@ export class PositionsModule {
 
     return positions.flatMap((position) => {
       const pool = poolsById.get(position.poolId);
+
       if (!pool) {
         return [];
       }
@@ -282,11 +291,13 @@ export class PositionsModule {
     bufferBps: bigint = DEFAULT_REPAY_BUFFER_BPS
   ): Promise<MaxRepayAmount> {
     const position = await this.getPosition(profileId, poolId);
+
     if (!position) {
       return { amount: 0n, decimals: 0n };
     }
 
     const rawDebt = position.borrowed;
+
     if (rawDebt <= 0n) {
       return { amount: 0n, decimals: position.borrowedDecimals };
     }
@@ -312,6 +323,7 @@ export class PositionsModule {
     poolId: string
   ): Promise<FullWithdrawAmount> {
     const position = await this.getPosition(profileId, poolId);
+
     if (!position) {
       return { amount: 0n, decimals: 0n };
     }
@@ -330,6 +342,7 @@ function getPositionWithSuppliedDustHidden(
   }
 
   const hasDebt = position.borrowed > 0n;
+
   if (!hasDebt) {
     return null;
   }

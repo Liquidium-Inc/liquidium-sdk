@@ -26,9 +26,11 @@ import {
 } from "./wallet";
 
 const client = new LiquidiumClient({});
+
 type Connection =
   | { kind: "oisy"; value: OisyConnection }
   | { kind: "ethereum"; value: EthereumConnection };
+
 interface SubmissionView extends RecoverySubmission {
   request: RecoveryRequest;
   asset: string;
@@ -45,21 +47,26 @@ export function App() {
   const [oisyAccountId, setOisyAccountId] = useState("");
   const [prepared, setPrepared] = useState<RecoveryAction | null>(null);
   const [submission, setSubmission] = useState<SubmissionView | null>(null);
+
   const [status, setStatus] = useState(
     "Enter a profile or connect a linked wallet to begin."
   );
+
   const [error, setError] = useState("");
   const [isBusy, setIsBusy] = useState(false);
   const actionInProgress = useRef(false);
   const selected = balances?.find(({ pool }) => pool.id === poolId);
+
   const oisyAccount =
     connection?.kind === "oisy"
       ? connection.value.accounts.find(
           (account) => encodeIcrcAccount(account) === oisyAccountId
         )
       : undefined;
+
   const walletAccount =
     connection?.kind === "ethereum" ? connection.value.address : oisyAccountId;
+
   const hasFunds = selected?.amount !== undefined && selected.amount > 0n;
   const hasSigner = connection?.kind === "ethereum" || !!oisyAccount;
 
@@ -69,6 +76,7 @@ export function App() {
     setIsBusy(true);
     setStatus(message);
     setError("");
+
     try {
       await task();
     } catch (failure) {
@@ -105,12 +113,14 @@ export function App() {
       throw new Error(
         "Load a funded recovery balance and connect a linked wallet first."
       );
+
     const request: RecoveryRequest = {
       profileId: loadedProfile,
       poolId,
       chain,
       receiver: receiver.trim(),
     };
+
     const asset = selected.pool.asset;
 
     if (connection.kind === "ethereum" && !prepared) {
@@ -118,16 +128,19 @@ export function App() {
         ...request,
         signerWalletAddress: connection.value.address,
       });
+
       setPrepared(action);
       setStatus(
         "Recovery prepared. Review the exact message below, then sign."
       );
+
       return;
     }
 
     // Consume the prepared action before signing. A failed update must not be blindly replayed.
     setPrepared(null);
     let result: RecoverySubmission;
+
     if (connection.kind === "oisy") {
       if (!oisyAccount) throw new Error("Select an OISY account.");
       result = await withOisyAuthorization(
@@ -143,9 +156,11 @@ export function App() {
       const wallet = connection.value;
       result = await submitAndRefresh(client, loadedProfile, async () => {
         const signature = await signEthereumMessage(wallet, prepared.message);
+
         return prepared.submit({ signature, chain: Chain.ETH });
       });
     }
+
     setSubmission({ ...result, request, asset });
     setBalances(result.balances);
     setStatus(
@@ -245,6 +260,7 @@ export function App() {
               <option value="">Select a shared account</option>
               {connection.value.accounts.map((account) => {
                 const id = encodeIcrcAccount(account);
+
                 return (
                   <option key={id} value={id}>
                     {id}
@@ -266,6 +282,7 @@ export function App() {
                 void run("Finding wallet profile…", async () => {
                   const profileId =
                     await client.accounts.getProfileId(walletAccount);
+
                   if (!profileId)
                     throw new Error(
                       "No Liquidium profile is linked to this account. Enter the original profile below or connect another account."
@@ -420,8 +437,10 @@ export function App() {
                         `${formatError(failure)} Check balances and the receiving wallet before another attempt.`
                       );
                       setStatus("Recovery was not confirmed.");
+
                       return;
                     }
+
                     throw failure;
                   }
                 }

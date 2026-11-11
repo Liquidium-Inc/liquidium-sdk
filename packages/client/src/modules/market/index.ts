@@ -1,4 +1,5 @@
 export { MarketModule } from "./market";
+
 export type {
   AssetPriceSnapshot,
   AssetPrices,

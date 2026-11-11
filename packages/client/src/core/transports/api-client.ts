@@ -80,6 +80,7 @@ async function sendRequest<TResponse>(
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), opts.timeoutMs);
   const fetchFn = opts.fetchFn ?? fetch;
+
   const requestHeaders = {
     ...opts.headers,
     ...(request.method === HTTP_METHOD_POST
@@ -104,6 +105,7 @@ async function sendRequest<TResponse>(
     if (!response.ok) {
       const payload = await tryParseJson(response);
       const errorContext = getResponseErrorContext(response);
+
       const message =
         getErrorMessage(payload) ??
         `API request failed: ${response.status} ${response.statusText}`;
@@ -156,6 +158,7 @@ function getErrorMessage(payload: unknown): string | null {
   }
 
   const message = (payload as JsonErrorPayload).message;
+
   return typeof message === "string" && message.length > 0 ? message : null;
 }
 

@@ -10,10 +10,13 @@ export const ETH_POOL_ID = "qcg7y-syaaa-aaaar-qb75q-cai";
 export const ICP_POOL_ID = "r2pk3-4yaaa-aaaar-qb7zq-cai";
 export const VALID_BTC_OUTFLOW_ADDRESS = "1BoatSLRHtKNngkdXEeobR76b53LETtpyT";
 export const VALID_IC_PRINCIPAL = "aaaaa-aa";
+
 export const VALID_ICP_ACCOUNT_IDENTIFIER =
   "2d0e897f7e862d2b57d9bc9ea5c65f9a24ac6c074575f47898314b8d6cb0929d";
+
 export const LOWERCASE_EVM_OUTFLOW_ADDRESS =
   "0x52908400098527886e0f7030069857d2e4169ee7";
+
 export const CHECKSUM_EVM_OUTFLOW_ADDRESS =
   "0x52908400098527886E0F7030069857D2E4169EE7";
 

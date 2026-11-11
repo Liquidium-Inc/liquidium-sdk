@@ -20,6 +20,7 @@ export function normalizeWalletSignature(
       return normalizeHexSignature(signature);
     case Chain.SOL: {
       const normalized = normalizeHexSignature(signature);
+
       if (
         normalized.length !== SOL_SIGNATURE_HEX_LENGTH ||
         !isHexBytes(normalized)
@@ -29,6 +30,7 @@ export function normalizeWalletSignature(
           "SOL signature must be 64 hex-encoded bytes"
         );
       }
+
       return normalized;
     }
   }

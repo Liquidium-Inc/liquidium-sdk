@@ -29,8 +29,10 @@ describe("computeExpiryTimestampFromNow", () => {
     const NOW_MS = 1_700_000_000_000;
     const CURRENT_TIME_SECONDS = 1_700_000_000n;
     const CUSTOM_VALIDITY_SECONDS = 42n;
+
     const EXPECTED_EXPIRY_TIMESTAMP =
       CURRENT_TIME_SECONDS + CUSTOM_VALIDITY_SECONDS;
+
     vi.useFakeTimers();
     vi.setSystemTime(NOW_MS);
 

@@ -61,10 +61,12 @@ export async function resolveSupplyTargetForPool(
     poolChain: selectedPool.chain,
     transferChain: request.chain ?? selectedPool.chain,
   });
+
   const mechanism = resolveSupplyMechanism({
     identifier,
     mechanism: request.mechanism,
   });
+
   const targetRequest: SupplyTargetRequest = {
     ...identifier,
     poolId: request.poolId,
@@ -198,6 +200,7 @@ export function assertConfiguredSolPool(
   poolId: string
 ): void {
   const configuredSolPoolId = canisterContext.canisterIds.pools.sol;
+
   if (poolId !== configuredSolPoolId) {
     throw new LiquidiumError(
       LiquidiumErrorCode.VALIDATION_ERROR,
@@ -240,6 +243,7 @@ function resolveSupplyAssetIdentifier(
   ) {
     return { asset: Asset.SOL, chain: params.transferChain };
   }
+
   if (params.asset === Asset.BTC && params.poolChain === Chain.BTC) {
     if (params.transferChain === Chain.BTC) {
       return { asset: Asset.BTC, chain: Chain.BTC };
@@ -296,13 +300,16 @@ async function getChainAddressSupplyTarget(
         }),
       ],
     });
+
     return { ...request, address: validateSolAddress(address) };
   }
+
   if (request.chain === Chain.ETH) {
     const subaccount = encodeInflowSubaccount({
       action: request.action,
       principal: Principal.fromText(profileId),
     });
+
     const result = await createDepositAccountsActor(
       canisterContext
     ).get_deposit_address(
@@ -332,6 +339,7 @@ async function getChainAddressSupplyTarget(
   }
 
   const configuredBtcPoolId = canisterContext.canisterIds.pools.btc;
+
   if (request.poolId !== configuredBtcPoolId) {
     throw new LiquidiumError(
       LiquidiumErrorCode.VALIDATION_ERROR,
@@ -343,6 +351,7 @@ async function getChainAddressSupplyTarget(
     action: request.action,
     principal: Principal.fromText(profileId),
   });
+
   const address = await createCkBtcMinterActor(canisterContext).get_btc_address(
     {
       owner: [Principal.fromText(configuredBtcPoolId)],
@@ -367,10 +376,12 @@ function getIcpLedgerSupplyTarget(
   request: SupplyTargetRequest
 ): SupplyTarget {
   const poolPrincipal = Principal.fromText(request.poolId);
+
   const subaccount = encodeInflowSubaccount({
     action: request.action,
     principal: Principal.fromText(profileId),
   });
+
   const account = createIcrcAccount({
     owner: poolPrincipal,
     subaccount,

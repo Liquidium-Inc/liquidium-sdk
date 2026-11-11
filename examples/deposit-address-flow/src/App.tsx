@@ -50,49 +50,65 @@ function SupplyBorrowPage() {
   const [assetPrices, setAssetPrices] = useState<AssetPrices>({});
   const [profileId, setProfileId] = useState("");
   const [selectedSupplyPoolId, setSelectedSupplyPoolId] = useState("");
+
   const [supplyAction, setSupplyAction] = useState<SupplyAction>(
     SupplyAction.deposit
   );
+
   const [supplyChainSelection, setSupplyChainSelection] = useState<Chain>(
     Chain.ETH
   );
+
   const [selectedBorrowPoolId, setSelectedBorrowPoolId] = useState("");
   const [supplyAmount, setSupplyAmount] = useState("10");
   const [supplyTxid, setSupplyTxid] = useState("");
+
   const [currentSupplyFlow, setCurrentSupplyFlow] = useState<SupplyFlow | null>(
     null
   );
+
   const [supplyResult, setSupplyResult] = useState(
     "No deposit or repayment target loaded yet."
   );
+
   const [submitSupplyResult, setSubmitSupplyResult] = useState(
     "Generate a deposit or repayment target first, then track the txid."
   );
+
   const [borrowAmount, setBorrowAmount] = useState("9");
+
   const [borrowChainSelection, setBorrowChainSelection] = useState<Chain>(
     Chain.ETH
   );
+
   const [borrowDestination, setBorrowDestination] = useState("");
+
   const [borrowResult, setBorrowResult] = useState(
     "Connect a wallet, then submit a borrow."
   );
+
   const [profileResult, setProfileResult] = useState(
     "Connect a wallet, then create or load a profile."
   );
+
   const [status, setStatus] = useState("Ready.");
   const walletAddress = primaryWallet?.address ?? "";
+
   const walletChain =
     primaryWallet && isEthereumWallet(primaryWallet) ? "ETH" : "Not connected";
 
   useEffect(() => {
     void run(async () => {
       setStatus("Loading pools...");
+
       const { pools: loadedPools, assetPrices: loadedAssetPrices } =
         await loadMarketData();
+
       const defaultSupplyPool = findPoolByAsset(
         loadedPools,
         DEFAULT_SUPPLY_ASSET
       );
+
       const defaultBorrowPool = findPoolByAsset(
         loadedPools,
         DEFAULT_BORROW_ASSET
@@ -134,12 +150,15 @@ function SupplyBorrowPage() {
 
   async function loadPools(): Promise<void> {
     setStatus("Loading pools...");
+
     const { pools: loadedPools, assetPrices: loadedAssetPrices } =
       await loadMarketData();
+
     const defaultSupplyPool = findPoolByAsset(
       loadedPools,
       DEFAULT_SUPPLY_ASSET
     );
+
     const defaultBorrowPool = findPoolByAsset(
       loadedPools,
       DEFAULT_BORROW_ASSET
@@ -156,10 +175,12 @@ function SupplyBorrowPage() {
 
   async function generateSupplyTarget(): Promise<void> {
     const selectedSupplyPool = getSelectedPool(pools, selectedSupplyPoolId);
+
     const parsedSupplyAmount = parseAmountToBaseUnits(
       supplyAmount,
       selectedSupplyPool.decimals
     );
+
     const trimmedProfileId = profileId.trim();
 
     if (!trimmedProfileId) {
@@ -213,14 +234,17 @@ function SupplyBorrowPage() {
 
     setStatus(`Registering ${actionLabel.toLowerCase()} txid...`);
     setSubmitSupplyResult(`Registering ${actionLabel.toLowerCase()} txid...`);
+
     const response = await registerSupplyTxid({
       supplyFlow: currentSupplyFlow,
       txid,
     });
+
     saveRecentActivityId(response.txid);
 
     if (currentSupplyFlow.target.chain === Chain.ETH) {
       await trackEthSupplyTxid(response.txid);
+
       return;
     }
 
@@ -267,10 +291,12 @@ function SupplyBorrowPage() {
 
   async function borrow(): Promise<void> {
     const selectedBorrowPool = getSelectedPool(pools, selectedBorrowPoolId);
+
     const parsedBorrowAmount = parseAmountToBaseUnits(
       borrowAmount,
       selectedBorrowPool.decimals
     );
+
     const destinationAddress = borrowDestination.trim();
     const signerWalletAddress = getConnectedWalletAddress(primaryWallet);
 
@@ -294,6 +320,7 @@ function SupplyBorrowPage() {
       signerWalletAddress,
       signerWalletAdapter: createDynamicWalletAdapter(primaryWallet),
     });
+
     saveRecentActivityId(outflow.id);
     setBorrowResult(
       [
@@ -548,22 +575,29 @@ function SupplyBorrowPage() {
 
 function ActivityTrackerPage() {
   const searchParams = new URLSearchParams(window.location.search);
+
   const [profileId, setProfileId] = useState(
     searchParams.get("profileId") ?? ""
   );
+
   const [activityId, setActivityId] = useState(
     searchParams.get("activityId") ?? ""
   );
+
   const [activityFilter, setActivityFilter] = useState<ActivityFilter>("all");
+
   const [activitiesOutput, setActivitiesOutput] = useState(
     "Enter a profile id to load activities."
   );
+
   const [activityOutput, setActivityOutput] = useState(
     "Enter a profile id and activity id."
   );
+
   const [recentActivityIds, setRecentActivityIds] = useState<string[]>(() =>
     getRecentActivityIds()
   );
+
   const [status, setStatus] = useState("Ready.");
 
   async function loadActivities(): Promise<void> {
@@ -584,6 +618,7 @@ function ActivityTrackerPage() {
     if (activities.length === 0) {
       setActivitiesOutput("No activities found.");
       setStatus("No activities found.");
+
       return;
     }
 

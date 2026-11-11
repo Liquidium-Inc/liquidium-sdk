@@ -7,6 +7,7 @@ import type { ApiClient } from "./transports/api-client";
 import { Asset, Chain, type EvmReadClient } from "./types";
 
 const EVM_ADDRESS = "0x52908400098527886E0F7030069857D2E4169EE7";
+
 const EXPECTED_API_PATH =
   "/v2/ethereum/addresses/0x52908400098527886E0F7030069857D2E4169EE7/bytecode";
 
@@ -150,6 +151,7 @@ describe("guardEthereumOutflowDestination", () => {
     const apiClient = mockDeep<ApiClient>();
     apiClient.get.mockResolvedValue({ hasDeployedBytecode: false });
     const mockedEvmReadClient = mockDeep<Required<EvmReadClient>>();
+
     const evmReadClient: Pick<EvmReadClient, "readContract"> = {
       readContract: mockedEvmReadClient.readContract,
     };

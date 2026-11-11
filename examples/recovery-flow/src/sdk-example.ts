@@ -23,11 +23,14 @@ export async function loadRecoveryBalances(
 ): Promise<PoolRecoveryBalance[]> {
   Principal.fromText(profileId);
   const pools = await client.market.listPools();
+
   const results = await Promise.allSettled(
     pools.map((pool) => client.lending.getRecoveryBalance(profileId, pool.id))
   );
+
   return results.map((result, index) => {
     const pool = pools[index];
+
     return result.status === "fulfilled"
       ? { pool, amount: result.value }
       : { pool, error: formatError(result.reason) };
@@ -40,6 +43,7 @@ export async function submitAndRefresh(
   submit: () => Promise<RecoveryResult>
 ): Promise<RecoverySubmission> {
   const receipt = await submit();
+
   try {
     return {
       receipt,
@@ -57,6 +61,7 @@ export function getDeliveryChains(pool: Pool): Chain[] {
 
 export function formatError(error: unknown): string {
   if (error instanceof LiquidiumError) return `${error.code}: ${error.message}`;
+
   return error instanceof Error ? error.message : String(error);
 }
 

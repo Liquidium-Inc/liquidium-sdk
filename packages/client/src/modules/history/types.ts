@@ -6,6 +6,7 @@ import type {
 
 /** User transaction operations returned by profile transaction history. */
 export type UserTransactionHistoryOperation = LiquidiumOperation;
+
 /** Any user history operation returned by the history API. */
 export type UserHistoryOperation = UserTransactionHistoryOperation;
 

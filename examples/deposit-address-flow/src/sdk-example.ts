@@ -84,6 +84,7 @@ export function validateDepositAmount({
   }
 
   const minimumAmount = getMinimumDepositAmount(asset);
+
   if (amount >= minimumAmount) {
     return;
   }

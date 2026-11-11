@@ -62,6 +62,7 @@ export function executeWith(options: ExecuteWithOptions) {
           options.account ?? action.account,
           options.chain
         );
+
         const signature = await options.walletAdapter.signMessage({
           chain: options.chain,
           message: action.message,
@@ -75,6 +76,7 @@ export function executeWith(options: ExecuteWithOptions) {
           account: options.account ?? action.account,
         });
       }
+
       default:
         throw new LiquidiumError(
           LiquidiumErrorCode.VALIDATION_ERROR,

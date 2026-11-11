@@ -9,8 +9,10 @@ import type {
 } from "@liquidium/client";
 
 const DISPLAY_DECIMALS = 6;
+
 const RECENT_ACTIVITY_IDS_STORAGE_KEY =
   "liquidium-contract-interaction.recentActivityIds";
+
 const MAX_RECENT_ACTIVITY_IDS = 10;
 const ERROR_FIELD_EXCLUDE_LIST = new Set(["name", "message", "stack", "cause"]);
 
@@ -40,10 +42,12 @@ export function parseAmountToBaseUnits(
   }
 
   const paddedFractionalPart = fractionalPart.padEnd(decimalPlaces, "0");
+
   const baseUnitText = `${wholePart}${paddedFractionalPart}`.replace(
     /^0+(?=\d)/,
     ""
   );
+
   const amount = BigInt(baseUnitText || "0");
 
   if (amount <= 0n) {
@@ -65,7 +69,9 @@ export function formatAmount(amount: bigint, decimals: bigint): string {
   const paddedAmount = absoluteAmount
     .toString()
     .padStart(decimalPlaces + 1, "0");
+
   const wholePart = paddedAmount.slice(0, -decimalPlaces) || "0";
+
   const fractionalPart = paddedAmount
     .slice(-decimalPlaces)
     .slice(0, DISPLAY_DECIMALS)
@@ -95,6 +101,7 @@ export function formatPool(pool: Pool): string {
 export function formatSupplyFlow(flow: SupplyFlow): string {
   const actionLabel =
     flow.target.action === "repayment" ? "repayment" : "supply";
+
   const flowLabel = flow.txid
     ? `Contract interaction ${actionLabel} submitted.`
     : `Direct ck ${actionLabel} target generated.`;
@@ -180,6 +187,7 @@ function formatStatus(status: LiquidiumStatus, subject: StatusSubject): string {
 
 export function saveRecentActivityId(activityId: string): void {
   const existingIds = getRecentActivityIds();
+
   const nextIds = [
     activityId,
     ...existingIds.filter((existingId) => existingId !== activityId),
@@ -243,6 +251,7 @@ function formatErrorWithDetails(
     if (seenErrors.has(error)) {
       return "[Circular error]";
     }
+
     seenErrors.add(error);
 
     const code = "code" in error ? String(error.code) : null;

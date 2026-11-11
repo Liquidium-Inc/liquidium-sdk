@@ -71,6 +71,7 @@ describe("simple loan reference codes", () => {
 
     // when
     const decodeShortReference = () => intFromPublicId(shortReference);
+
     const decodeInvalidCharacterReference = () =>
       intFromPublicId(referenceWithInvalidCharacter);
 

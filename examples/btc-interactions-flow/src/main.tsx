@@ -3,8 +3,10 @@ import ReactDOM from "react-dom/client";
 import "./styles.css";
 
 const DEFAULT_DYNAMIC_ENVIRONMENT_ID = "a1ffd9e6-2ac3-4c92-b515-39285248c53f";
+
 const dynamicEnvironmentId =
   import.meta.env.VITE_DYNAMIC_ENVIRONMENT_ID ?? DEFAULT_DYNAMIC_ENVIRONMENT_ID;
+
 const rootElement = document.getElementById("root");
 
 if (!rootElement) {

@@ -44,6 +44,7 @@ export function getDepositAmountMinimumValidationError(
   params: DepositAmountMinimumValidationParams
 ): DepositAmountMinimumValidationError | null {
   const minimumAmount = getMinimumDepositAmount(params.asset);
+
   if (minimumAmount <= 0n || params.amount >= minimumAmount) {
     return null;
   }

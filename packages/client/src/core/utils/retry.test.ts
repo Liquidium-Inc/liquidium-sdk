@@ -11,11 +11,13 @@ describe("retryWithBackoff", () => {
     const BACKOFF_MULTIPLIER = 2;
     const RETRIABLE_ERROR = new Error("retriable");
     const EXPECTED_RESULT = "ok";
+
     const executeMock = vi
       .fn<() => Promise<string>>()
       .mockRejectedValueOnce(RETRIABLE_ERROR)
       .mockRejectedValueOnce(RETRIABLE_ERROR)
       .mockResolvedValueOnce(EXPECTED_RESULT);
+
     const waitForDelayMsMock = vi.fn<(delayMs: number) => Promise<void>>();
     waitForDelayMsMock.mockResolvedValue(undefined);
 
@@ -42,9 +44,11 @@ describe("retryWithBackoff", () => {
     const INITIAL_RETRY_DELAY_MS = 10;
     const BACKOFF_MULTIPLIER = 2;
     const NON_RETRIABLE_ERROR = new Error("non-retriable");
+
     const executeMock = vi
       .fn<() => Promise<void>>()
       .mockRejectedValueOnce(NON_RETRIABLE_ERROR);
+
     const waitForDelayMsMock = vi.fn<(delayMs: number) => Promise<void>>();
     waitForDelayMsMock.mockResolvedValue(undefined);
 

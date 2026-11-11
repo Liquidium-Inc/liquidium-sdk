@@ -39,6 +39,7 @@ describe("normalizeExternalAddress", () => {
 
     // when
     let result: unknown;
+
     try {
       normalizeExternalAddress({
         address,
@@ -62,6 +63,7 @@ describe("normalizeExternalAddress", () => {
 
     // when
     let result: unknown;
+
     try {
       normalizeExternalAddress({
         address,
@@ -82,6 +84,7 @@ describe("normalizeExternalAddress", () => {
   test("should normalize valid EVM destinations", () => {
     // given
     const address = "0x52908400098527886e0f7030069857d2e4169ee7";
+
     const EXPECTED_CHECKSUM_ADDRESS =
       "0x52908400098527886E0F7030069857D2E4169EE7";
 
@@ -102,6 +105,7 @@ describe("normalizeExternalAddress", () => {
 
     // when
     let result: unknown;
+
     try {
       normalizeExternalAddress({
         address,
@@ -125,6 +129,7 @@ describe("normalizeExternalAddress", () => {
 
     // when
     let result: unknown;
+
     try {
       normalizeExternalAddress({
         address,

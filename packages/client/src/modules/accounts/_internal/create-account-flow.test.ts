@@ -14,6 +14,7 @@ describe("create account flow example", () => {
         toText: () => "aaaaa-aa",
       },
     });
+
     const getNonce = vi.fn().mockResolvedValue(7n);
 
     vi.spyOn(Actor, "createActor").mockReturnValue({
@@ -39,10 +40,12 @@ describe("create account flow example", () => {
     const createAction = await client.accounts.prepareCreateProfile({
       account,
     });
+
     const signature = await walletClient.signMessage({
       account,
       message: createAction.message,
     });
+
     const profileId = await createAction.submit({
       signature,
       chain: "ETH",
@@ -57,6 +60,7 @@ describe("create account flow example", () => {
       account: "0x123",
       message: expect.stringContaining("Liquidium: Initialize Account"),
     });
+
     const registerProfileRequest = registerProfile.mock.calls[0][0] as {
       data: { expiry_timestamp: bigint };
       signature_info: {

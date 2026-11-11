@@ -121,6 +121,7 @@ describe("roundInflowFeeEstimate", () => {
       { asset: Asset.USDT, chain: Chain.ETH },
       ZERO_FEE_ESTIMATE
     );
+
     const negativeResult = roundInflowFeeEstimate(
       { asset: Asset.BTC, chain: Chain.BTC },
       NEGATIVE_FEE_ESTIMATE

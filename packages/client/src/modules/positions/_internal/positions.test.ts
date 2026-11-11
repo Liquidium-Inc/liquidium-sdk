@@ -88,6 +88,7 @@ describe("PositionsModule", () => {
         last_update: 1_234n,
       }),
     ]);
+
     vi.spyOn(Actor, "createActor").mockReturnValue({
       get_position: getPosition,
     } as never);
@@ -123,6 +124,7 @@ describe("PositionsModule", () => {
         debt_native_now: 50_000_000n,
       }),
     ]);
+
     vi.spyOn(Actor, "createActor").mockReturnValue({
       get_position: getPosition,
     } as never);
@@ -187,6 +189,7 @@ describe("PositionsModule", () => {
   test("lists positions by fetching per-pool views from get_profile_stats", async () => {
     // given
     const SECOND_POOL_ID = "ryjl3-tyaaa-aaaaa-aaaba-cai";
+
     const getProfileStats = vi.fn().mockResolvedValue({
       debt: 0n,
       collateral: 0n,
@@ -204,6 +207,7 @@ describe("PositionsModule", () => {
       ],
       weighted_liquidation_threshold: 0n,
     });
+
     const getPosition = vi
       .fn()
       .mockResolvedValueOnce([
@@ -220,6 +224,7 @@ describe("PositionsModule", () => {
           pool_id: { toText: () => SECOND_POOL_ID },
         }),
       ]);
+
     vi.spyOn(Actor, "createActor").mockReturnValue({
       get_profile_stats: getProfileStats,
       get_position: getPosition,
@@ -273,11 +278,13 @@ describe("PositionsModule", () => {
       positions: [makePositionRecord()],
       weighted_liquidation_threshold: 0n,
     });
+
     const getPosition = vi.fn().mockResolvedValue([
       makePositionView({
         deposited_native_now: BTC_DUST_THRESHOLD_SATS - 1n,
       }),
     ]);
+
     vi.spyOn(Actor, "createActor").mockReturnValue({
       get_profile_stats: getProfileStats,
       get_position: getPosition,
@@ -296,6 +303,7 @@ describe("PositionsModule", () => {
     // given
     const BORROWED_AMOUNT_SATS = 1n;
     const EARNED_INTEREST_SATS = 2n;
+
     const getProfileStats = vi.fn().mockResolvedValue({
       debt: BORROWED_AMOUNT_SATS,
       collateral: 0n,
@@ -304,6 +312,7 @@ describe("PositionsModule", () => {
       positions: [makePositionRecord()],
       weighted_liquidation_threshold: 0n,
     });
+
     const getPosition = vi.fn().mockResolvedValue([
       makePositionView({
         deposited_native_now: BTC_DUST_THRESHOLD_SATS - 1n,
@@ -311,6 +320,7 @@ describe("PositionsModule", () => {
         total_earned_interest: EARNED_INTEREST_SATS,
       }),
     ]);
+
     vi.spyOn(Actor, "createActor").mockReturnValue({
       get_profile_stats: getProfileStats,
       get_position: getPosition,
@@ -331,6 +341,7 @@ describe("PositionsModule", () => {
   test("filters a dust-only position with historical paid interest", async () => {
     // given
     const PAID_DEBT_INTEREST_SATS = 1n;
+
     const getProfileStats = vi.fn().mockResolvedValue({
       debt: 0n,
       collateral: 0n,
@@ -339,6 +350,7 @@ describe("PositionsModule", () => {
       positions: [makePositionRecord()],
       weighted_liquidation_threshold: 0n,
     });
+
     const getPosition = vi.fn().mockResolvedValue([
       makePositionView({
         deposited_native_now: BTC_DUST_THRESHOLD_SATS - 1n,
@@ -346,6 +358,7 @@ describe("PositionsModule", () => {
         total_debt_interest: PAID_DEBT_INTEREST_SATS,
       }),
     ]);
+
     vi.spyOn(Actor, "createActor").mockReturnValue({
       get_profile_stats: getProfileStats,
       get_position: getPosition,
@@ -366,6 +379,7 @@ describe("PositionsModule", () => {
     const BORROWED_AMOUNT_SATS = 2n;
     const EARNED_INTEREST_SATS = 3n;
     const DEBT_INTEREST_SATS = 4n;
+
     const getProfileStats = vi.fn().mockResolvedValue({
       debt: BORROWED_AMOUNT_SATS + DEBT_INTEREST_SATS,
       collateral: SUPPLIED_AMOUNT_SATS,
@@ -374,6 +388,7 @@ describe("PositionsModule", () => {
       positions: [makePositionRecord()],
       weighted_liquidation_threshold: 0n,
     });
+
     const getPosition = vi.fn().mockResolvedValue([
       makePositionView({
         deposited_native_now: SUPPLIED_AMOUNT_SATS,
@@ -382,6 +397,7 @@ describe("PositionsModule", () => {
         total_debt_interest: DEBT_INTEREST_SATS,
       }),
     ]);
+
     vi.spyOn(Actor, "createActor").mockReturnValue({
       get_profile_stats: getProfileStats,
       get_position: getPosition,
@@ -410,6 +426,7 @@ describe("PositionsModule", () => {
       positions: [makePositionRecord()],
       weighted_liquidation_threshold: 0n,
     });
+
     vi.spyOn(Actor, "createActor").mockReturnValue({
       get_profile_stats: getProfileStats,
       get_position: vi.fn().mockResolvedValue([]),
@@ -440,6 +457,7 @@ describe("PositionsModule", () => {
         weighted_liquidation_threshold: 7_500n,
       },
     ]);
+
     vi.spyOn(Actor, "createActor").mockReturnValue({
       get_health_factor: getHealthFactor,
     } as never);
@@ -539,6 +557,7 @@ describe("PositionsModule", () => {
     // given
     const NO_DEBT_HEALTH_FACTOR =
       340_282_366_920_938_463_463_374_607_431_768_211_455n;
+
     vi.spyOn(Actor, "createActor").mockReturnValue({
       get_health_factor: vi.fn().mockResolvedValue([
         NO_DEBT_HEALTH_FACTOR,
@@ -909,6 +928,7 @@ describe("PositionsModule", () => {
   test("filters out positions with unknown assets in listPositions", async () => {
     // given
     const UNKNOWN_ASSET_POOL_ID = "unknown-asset-pool";
+
     const getProfileStats = vi.fn().mockResolvedValue({
       debt: 0n,
       collateral: 0n,
@@ -923,11 +943,13 @@ describe("PositionsModule", () => {
       ],
       weighted_liquidation_threshold: 0n,
     });
+
     const getPosition = vi.fn().mockResolvedValue([
       makePositionView({
         deposited_native_now: BTC_DUST_THRESHOLD_SATS,
       }),
     ]);
+
     vi.spyOn(Actor, "createActor").mockReturnValue({
       get_profile_stats: getProfileStats,
       get_position: getPosition,

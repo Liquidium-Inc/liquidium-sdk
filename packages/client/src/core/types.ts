@@ -89,6 +89,7 @@ export type CanisterIdOverrides = Omit<Partial<CanisterIds>, "pools"> & {
 export const Environment = {
   mainnet: "mainnet",
 } as const;
+
 /** Supported deployment environment name. */
 export type Environment = (typeof Environment)[keyof typeof Environment];
 
@@ -101,6 +102,7 @@ export const Asset = {
   USDC: "USDC",
   USDT: "USDT",
 } as const;
+
 /** Canonical asset symbol supported by state-mutating protocol flows. */
 export type Asset = (typeof Asset)[keyof typeof Asset];
 
@@ -111,6 +113,7 @@ export const Chain = {
   ETH: "ETH",
   ICP: "ICP",
 } as const;
+
 /** Canonical chain identifier used by wallet and protocol actions. */
 export type Chain = (typeof Chain)[keyof typeof Chain];
 
@@ -235,6 +238,7 @@ export const SupplyAction = {
   deposit: "deposit",
   repayment: "repayment",
 } as const;
+
 /** Inflow operation performed by a supply target. */
 export type SupplyAction = (typeof SupplyAction)[keyof typeof SupplyAction];
 
@@ -244,6 +248,7 @@ export const OutflowType = {
   feeClaim: "feeClaim",
   withdrawal: "withdrawal",
 } as const;
+
 /** Outflow operation reported by the lending canister. */
 export type OutflowType = (typeof OutflowType)[keyof typeof OutflowType];
 

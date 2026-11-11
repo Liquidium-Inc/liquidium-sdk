@@ -58,12 +58,14 @@ describe("LiquidiumClient", () => {
     // given
     const API_BASE_URL = "https://api.example.com/sdk";
     const QUERY = "loan-ref";
+
     const customFetch = vi.fn<typeof fetch>().mockResolvedValue(
       new Response(JSON.stringify({ success: true, candidates: [] }), {
         status: 200,
         headers: { "content-type": "application/json" },
       })
     );
+
     const client = new LiquidiumClient({
       apiBaseUrl: API_BASE_URL,
       fetch: customFetch,

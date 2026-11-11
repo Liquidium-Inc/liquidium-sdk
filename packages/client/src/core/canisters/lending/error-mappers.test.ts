@@ -25,6 +25,7 @@ describe("mapLendingProtocolErrorToLiquidiumError", () => {
   test("should preserve a protocol error payload as the message", () => {
     // given
     const POOL_ID = "pool-principal";
+
     const protocolError = {
       PoolNotFound: POOL_ID,
     } satisfies ProtocolError;

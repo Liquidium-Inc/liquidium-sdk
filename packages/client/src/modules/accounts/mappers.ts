@@ -8,6 +8,7 @@ export function mapCreateAccountRequestToRegisterProfileRequest(
   request: CreateAccountRequest
 ): RegisterProfileRequest {
   const signingAccount = request.signatureInfo.account;
+
   if (!signingAccount) {
     throw new LiquidiumError(
       LiquidiumErrorCode.VALIDATION_ERROR,

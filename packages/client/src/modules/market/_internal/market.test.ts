@@ -431,6 +431,7 @@ describe("MarketModule", () => {
       asset: "BTC",
       chain: "BTC",
     });
+
     const chainKeyPool = await client.market.findPool({
       asset: "USDT",
       chain: "ICP",
@@ -466,6 +467,7 @@ describe("MarketModule", () => {
       asset: "ETH",
       chain: "ETH",
     });
+
     const chainKeyPool = await client.market.findPool({
       asset: "ETH",
       chain: "ICP",

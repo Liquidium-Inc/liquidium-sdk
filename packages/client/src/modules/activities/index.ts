@@ -1,4 +1,5 @@
 export { ActivitiesModule } from "./activities";
+
 export type {
   Activity,
   ActivityStatusFoundResponse,
@@ -21,4 +22,5 @@ export type {
   OutflowActivityOperation,
   OutflowActivityStatus,
 } from "./types";
+
 export { ActivityFilter, InflowRefundState } from "./types";
