@@ -1,5 +1,5 @@
 import { mainnet, sepolia } from "viem/chains";
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "vite-plus/test";
 import { mockDeep } from "vitest-mock-extended";
 import { LiquidiumErrorCode } from "./errors";
 import { guardEthereumOutflowDestination } from "./evm-outflow-validation";

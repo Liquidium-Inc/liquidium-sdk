@@ -1,15 +1,15 @@
 {
   "name": "@liquidium/example-sdk-method-query",
-  "private": true,
   "version": "0.0.1",
+  "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vp dev",
     "generate:method-references": "node scripts/generate-method-arg-references.mjs --write",
     "check:method-references": "node scripts/generate-method-arg-references.mjs --check",
-    "build": "pnpm run check:method-references && tsc --noEmit && vite build",
-    "preview": "vite preview",
-    "typecheck": "pnpm run check:method-references && tsc --noEmit"
+    "build": "bun run check:method-references && tsc --noEmit && vp build",
+    "preview": "vp preview",
+    "typecheck": "bun run check:method-references && tsc --noEmit"
   },
   "dependencies": {
     "@dynamic-labs/ethereum": "4.83.1",
@@ -25,7 +25,8 @@
     "@types/react-dom": "^19.2.4",
     "@vitejs/plugin-react": "^5.2.0",
     "typescript": "^5.9.3",
-    "vite": "^7.3.6",
-    "vite-plugin-node-polyfills": "^0.28.0"
+    "vite": "catalog:",
+    "vite-plugin-node-polyfills": "^0.28.0",
+    "vite-plus": "catalog:"
   }
 }

@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "vite-plus/test";
 import { CK_CANISTER_IDS, resolveCanisterIds } from "./config";
 import { LiquidiumErrorCode } from "./errors";
 

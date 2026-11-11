@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "vite-plus/test";
 import { normalizeExternalAddress } from "../../../core/address-validation";
 import { LiquidiumErrorCode } from "../../../core/errors";
 

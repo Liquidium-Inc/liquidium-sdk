@@ -1,6 +1,6 @@
 import { Actor } from "@icp-sdk/core/agent";
 import { Principal } from "@icp-sdk/core/principal";
-import { afterEach, describe, expect, test, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vite-plus/test";
 import { LiquidiumClient } from "../../../index";
 import { createLoanCreatedEvent, LOAN_ID, PROFILE_ID } from "./test-fixtures";
 

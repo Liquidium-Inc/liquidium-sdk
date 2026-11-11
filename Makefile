@@ -1,19 +1,19 @@
 .PHONY: build dev test lint typecheck clean
 
 build:
-	pnpm build
+	bun run build
 
 dev:
-	pnpm dev
+	bun run dev
 
 test:
-	pnpm test
+	bun run test
 
 lint:
-	pnpm lint
+	bun run lint
 
 typecheck:
-	pnpm typecheck
+	bun run typecheck
 
 clean:
-	pnpm clean
+	bun run clean

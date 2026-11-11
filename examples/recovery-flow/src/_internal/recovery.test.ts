@@ -1,5 +1,5 @@
 import type { LiquidiumClient, Pool, RecoveryResult } from "@liquidium/client";
-import { expect, test, vi } from "vitest";
+import { expect, test, vi } from "vite-plus/test";
 import { mockDeep } from "vitest-mock-extended";
 import { loadRecoveryBalances, submitAndRefresh } from "../sdk-example";
 

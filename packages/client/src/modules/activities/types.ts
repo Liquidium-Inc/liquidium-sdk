@@ -105,15 +105,13 @@ export interface BaseListActivitiesRequest {
 }
 
 /** Activity list request scoped to a Liquidium profile. */
-export interface ListActivitiesByProfileRequest
-  extends BaseListActivitiesRequest {
+export interface ListActivitiesByProfileRequest extends BaseListActivitiesRequest {
   /** Profile principal text to list activities for. */
   profileId: string;
 }
 
 /** Activity list request scoped to a simple loan short reference. */
-export interface ListActivitiesByShortRefRequest
-  extends BaseListActivitiesRequest {
+export interface ListActivitiesByShortRefRequest extends BaseListActivitiesRequest {
   /** Simple loan short reference to list activities for. */
   shortRef: string;
 }
@@ -130,15 +128,13 @@ export interface BaseGetActivityStatusRequest {
 }
 
 /** Activity status lookup scoped to a Liquidium profile. */
-export interface GetActivityStatusByProfileRequest
-  extends BaseGetActivityStatusRequest {
+export interface GetActivityStatusByProfileRequest extends BaseGetActivityStatusRequest {
   /** Profile principal text that owns the activity. */
   profileId: string;
 }
 
 /** Activity status lookup scoped to a simple loan short reference. */
-export interface GetActivityStatusByShortRefRequest
-  extends BaseGetActivityStatusRequest {
+export interface GetActivityStatusByShortRefRequest extends BaseGetActivityStatusRequest {
   /** Simple loan short reference that owns the activity. */
   shortRef: string;
 }

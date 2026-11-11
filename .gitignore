@@ -10,3 +10,4 @@ build
 
 graphify-out/
 .opencode
+.vitest/

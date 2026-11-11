@@ -83,10 +83,7 @@ export type {
   WalletAction,
   WalletAdapter,
 } from "./core/wallet-actions";
-export {
-  WalletActionKind,
-  WalletExecutionKind,
-} from "./core/wallet-actions";
+export { WalletActionKind, WalletExecutionKind } from "./core/wallet-actions";
 export {
   getMinimumWithdrawAmount,
   MIN_WITHDRAW_AMOUNTS_BY_ASSET,

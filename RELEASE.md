@@ -7,14 +7,14 @@ Use this flow for `@liquidium/client` releases. npm publishing is manual.
 1. Add changesets in PRs that change public SDK behavior:
 
 ```sh
-pnpm changeset
+bun run changeset
 ```
 
 2. For missed changesets, add one catch-up changeset for changes since the last release tag.
 3. Create the release version, package changelog, and docs changelog. This creates a Changesets commit with the default `RELEASING: Releasing 1 package(s)` title before `docs/changelog.mdx` is regenerated:
 
 ```sh
-pnpm release:version
+bun run release:version
 ```
 
 4. Reword the Changesets commit to the release-prep title. If `docs/changelog.mdx` is dirty, fold it into the same amend. Replace `<version>` with the version from `packages/client/package.json`:
@@ -34,16 +34,16 @@ git commit --amend -m "chore(client): prepare <version> release"
 2. Run checks:
 
 ```sh
-pnpm lint
-pnpm build
-pnpm typecheck
-pnpm test
+bun run build
+bun run lint
+bun run typecheck
+bun run test
 ```
 
 3. Publish manually:
 
 ```sh
-pnpm changeset publish
+bun run changeset publish
 ```
 
 4. Push the package tag created by Changesets:
@@ -68,13 +68,13 @@ the npm `latest` dist-tag. Users must explicitly install the candidate with
 2. Enter prerelease mode:
 
 ```sh
-pnpm changeset pre enter rc
+bun run changeset pre enter rc
 ```
 
 3. Create the prerelease version and changelogs:
 
 ```sh
-pnpm release:version
+bun run release:version
 ```
 
 4. Format the generated prerelease state and fold it and the docs changelog into
@@ -82,13 +82,13 @@ pnpm release:version
    `packages/client/package.json`:
 
 ```sh
-pnpm exec biome format --write .changeset/pre.json
+bun run format .changeset/pre.json
 git add .changeset/pre.json docs/changelog.mdx
 git commit --amend -m "chore(client): prepare <version> release"
 ```
 
 5. Review and merge the release PR, then follow [Publish](#publish). Use
-   `pnpm changeset publish`; do not use `npm publish` directly. Changesets uses
+   `bun run changeset publish`; do not use `npm publish` directly. Changesets uses
    the `rc` dist-tag recorded in `.changeset/pre.json`.
 6. Confirm that the RC was published without changing `latest`:
 
@@ -110,8 +110,8 @@ prerelease number for each candidate.
 1. Exit prerelease mode and create the stable version:
 
 ```sh
-pnpm changeset pre exit
-pnpm release:version
+bun run changeset pre exit
+bun run release:version
 ```
 
 2. Fold the generated docs changelog into the Changesets commit and reword it

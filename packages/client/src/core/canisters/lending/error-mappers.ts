@@ -4,9 +4,7 @@ import type { ProtocolError, SignatureVerificationError } from "./actor";
 type VariantKey<T> = keyof UnionToIntersection<T> & string;
 
 type UnionToIntersection<T> = (
-  T extends unknown
-    ? (value: T) => void
-    : never
+  T extends unknown ? (value: T) => void : never
 ) extends (value: infer Intersection) => void
   ? Intersection
   : never;
