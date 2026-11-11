@@ -6,14 +6,56 @@ import { fileURLToPath } from "node:url";
 import { expect, test } from "vite-plus/test";
 
 test.each([
-  { source: "const count = { count: 1 }.count;", expectedExitCode: 0 },
+  {
+    source: "const count = { count: 1 }.count;",
+    expectedExitCode: 0,
+    expectedDiagnostic: null,
+  },
   {
     source: 'const count = Reflect.get({ count: 1 }, "count");',
     expectedExitCode: 1,
+    expectedDiagnostic: "anti-slop(no-reflect-get)",
+  },
+  {
+    source: 'import { vi } from "vite-plus/test"; vi.mock("./dependency");',
+    expectedExitCode: 1,
+    expectedDiagnostic: "anti-slop(no-module-mocking)",
+  },
+  {
+    source: 'import { vi } from "vite-plus/test"; vi.doMock("./dependency");',
+    expectedExitCode: 1,
+    expectedDiagnostic: "anti-slop(no-module-mocking)",
+  },
+  {
+    source:
+      'import { vi as mocks } from "vite-plus/test"; mocks.mock("./dependency");',
+    expectedExitCode: 1,
+    expectedDiagnostic: "anti-slop(no-module-mocking)",
+  },
+  {
+    source: 'import { vi } from "vitest"; vi.mock("./dependency");',
+    expectedExitCode: 1,
+    expectedDiagnostic: "anti-slop(no-module-mocking)",
+  },
+  {
+    source: 'import { jest } from "@jest/globals"; jest.mock("./dependency");',
+    expectedExitCode: 1,
+    expectedDiagnostic: "anti-slop(no-module-mocking)",
+  },
+  {
+    source:
+      'import { vi } from "vite-plus/test"; vi.spyOn({ run() {} }, "run");',
+    expectedExitCode: 0,
+    expectedDiagnostic: null,
+  },
+  {
+    source: "const vi = { mock() {} }; vi.mock();",
+    expectedExitCode: 0,
+    expectedDiagnostic: null,
   },
 ])(
   "should return $expectedExitCode for $source",
-  ({ source, expectedExitCode }) => {
+  ({ source, expectedExitCode, expectedDiagnostic }) => {
     // given
     const fixtureDirectory = mkdtempSync(
       join(tmpdir(), "liquidium-anti-slop-")
@@ -35,7 +77,10 @@ test.each([
       configPath,
       JSON.stringify({
         jsPlugins: [{ name: "anti-slop", specifier: pluginPath }],
-        rules: { "anti-slop/no-reflect-get": "error" },
+        rules: {
+          "anti-slop/no-reflect-get": "error",
+          "anti-slop/no-module-mocking": "error",
+        },
       })
     );
 
@@ -52,6 +97,10 @@ test.each([
       expect(result.status, result.stdout + result.stderr).toBe(
         expectedExitCode
       );
+
+      if (expectedDiagnostic) {
+        expect(result.stdout + result.stderr).toContain(expectedDiagnostic);
+      }
     } finally {
       rmSync(fixtureDirectory, { recursive: true, force: true });
     }
