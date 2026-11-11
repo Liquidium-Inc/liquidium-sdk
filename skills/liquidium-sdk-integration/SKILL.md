@@ -37,7 +37,7 @@ Install the client package:
 
 ```bash
 npm install @liquidium/client
-pnpm add @liquidium/client
+bun add @liquidium/client
 bun add @liquidium/client
 ```
 

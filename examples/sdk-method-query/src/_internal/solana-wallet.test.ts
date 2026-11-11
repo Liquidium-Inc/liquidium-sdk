@@ -1,6 +1,6 @@
 import type { SignMessageRequest } from "@liquidium/client";
 import { SystemInstruction } from "@solana/web3.js";
-import { expect, test, vi } from "vitest";
+import { expect, test, vi } from "vite-plus/test";
 import {
   type ConnectedSolanaWallet,
   createSolanaWalletAdapter,

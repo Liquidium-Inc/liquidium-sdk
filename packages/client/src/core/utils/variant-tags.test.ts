@@ -1,5 +1,5 @@
 import { idlLabelToId } from "@icp-sdk/core/candid";
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "vite-plus/test";
 import {
   extractVariantTag,
   KNOWN_ASSET_TAGS,

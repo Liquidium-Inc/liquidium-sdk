@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "vite-plus/test";
 import { RATE_DECIMALS } from "../../../core/rates";
 import type { AssetPrices, Pool } from "../../market/types";
 import { QuoteModule } from "../quote";

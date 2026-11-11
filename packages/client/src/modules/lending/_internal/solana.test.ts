@@ -1,7 +1,7 @@
 import { Actor } from "@icp-sdk/core/agent";
 import { Principal } from "@icp-sdk/core/principal";
 import { base58 } from "@scure/base";
-import { afterEach, expect, expectTypeOf, test, vi } from "vitest";
+import { afterEach, expect, expectTypeOf, test, vi } from "vite-plus/test";
 import { mockDeep } from "vitest-mock-extended";
 import { decodeIcrcAccountAddress } from "../../../core/accounts";
 import {

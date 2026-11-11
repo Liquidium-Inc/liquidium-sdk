@@ -2,7 +2,7 @@ import type { IcrcAccount } from "@icp-sdk/canisters/ledger/icrc";
 import { Principal } from "@icp-sdk/core/principal";
 import type { Channel, Signer } from "@icp-sdk/signer";
 import type { IcpRecoveryAuthorization } from "@liquidium/client";
-import { expect, test, vi } from "vitest";
+import { expect, test, vi } from "vite-plus/test";
 import { mockDeep } from "vitest-mock-extended";
 import {
   type EthereumConnection,

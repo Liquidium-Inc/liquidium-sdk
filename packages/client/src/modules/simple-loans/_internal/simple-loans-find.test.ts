@@ -1,5 +1,5 @@
 import { Actor } from "@icp-sdk/core/agent";
-import { afterEach, describe, expect, test, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vite-plus/test";
 import {
   LiquidiumClient,
   LiquidiumErrorCode,

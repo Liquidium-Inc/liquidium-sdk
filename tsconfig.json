@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "allowJs": true,
+    "types": ["node"]
+  },
+  "include": [
+    "**/vite.config.ts",
+    "**/vitest.config.ts",
+    "scripts/**/*",
+    "apps/docs/**/*.js",
+    "examples/**/*.mjs",
+    "examples/liquidation-flow/ui/*.js"
+  ]
+}

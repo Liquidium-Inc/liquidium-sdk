@@ -1,6 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
-import { expect, test } from "vitest";
+import { expect, test } from "vite-plus/test";
 
 test.each(["0.12.0-rc.0", "0.12.0"])(
   "should select the correct GitHub release flags for %s",

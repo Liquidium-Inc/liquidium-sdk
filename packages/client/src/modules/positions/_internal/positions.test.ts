@@ -1,6 +1,6 @@
 import { Actor } from "@icp-sdk/core/agent";
 import { Principal } from "@icp-sdk/core/principal";
-import { afterEach, describe, expect, test, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vite-plus/test";
 import {
   HEALTH_FACTOR_DECIMALS,
   HEALTH_FACTOR_SCALE,

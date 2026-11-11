@@ -16,12 +16,12 @@ requests move real funds and deduct withdrawal fees.
 
 ## Start
 
-Use Node.js 22.22.3 or later in the 22.x line, 24.x, or 26 or later, and pnpm 11
-or later. From the SDK repository root:
+Use Node.js 22.22.3 or later in the 22.x line, 24.x, or 26 or later, Bun 1.4.4
+or later, and the Vite+ CLI. From the SDK repository root:
 
 ```bash
-pnpm install
-pnpm --filter @liquidium/example-recovery-flow dev
+bun install
+bun run --filter @liquidium/example-recovery-flow dev
 ```
 
 Open [http://127.0.0.1:5178](http://127.0.0.1:5178).
@@ -53,8 +53,8 @@ confirmed, check balances and the destination before another attempt.
 ## Verify locally
 
 ```bash
-pnpm --filter @liquidium/example-recovery-flow test
-pnpm --filter @liquidium/example-recovery-flow build
+bun run --filter @liquidium/example-recovery-flow test
+bun run --filter @liquidium/example-recovery-flow build
 ```
 
 Tests use mocked clients and signers. They check partial balance-read failures,

@@ -197,8 +197,7 @@ type SimpleLoanFindResponseWire =
   | V1SimpleLoanFindResponseWire
   | LegacySimpleLoanFindResponseWire;
 
-interface V1SimpleLoanCollateralHintResponseWire
-  extends SimpleLoanCollateralHintWire {
+interface V1SimpleLoanCollateralHintResponseWire extends SimpleLoanCollateralHintWire {
   success: true;
 }
 

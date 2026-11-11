@@ -1,6 +1,6 @@
 import { Actor } from "@icp-sdk/core/agent";
 import type { Principal } from "@icp-sdk/core/principal";
-import { vi } from "vitest";
+import { vi } from "vite-plus/test";
 
 export const LONG_RETRY_TEST_TIMEOUT_MS = 15_000;
 export const BTC_POOL_ID = "hkmli-faaaa-aaaar-qb4ba-cai";
@@ -18,9 +18,7 @@ export const CHECKSUM_EVM_OUTFLOW_ADDRESS =
   "0x52908400098527886E0F7030069857D2E4169EE7";
 
 export function encodeBytes32Hex(bytes: Uint8Array): `0x${string}` {
-  return `0x${Array.from(bytes, (byte) =>
-    byte.toString(16).padStart(2, "0")
-  ).join("")}`;
+  return `0x${Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("")}`;
 }
 
 export function encodePrincipalToBytes32(principal: Principal): `0x${string}` {

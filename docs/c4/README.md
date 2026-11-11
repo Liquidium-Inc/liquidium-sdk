@@ -13,12 +13,12 @@ The [LikeC4 model](https://github.com/Liquidium-Inc/liquidium-sdk/blob/main/docs
 
 ## Preview and validation
 
-Use Node.js and pnpm versions from the [root README](https://github.com/Liquidium-Inc/liquidium-sdk#development). Install dependencies from the repository root, then run:
+Use the Node.js, Bun, and Vite+ versions from the [root README](https://github.com/Liquidium-Inc/liquidium-sdk#development). Install dependencies from the repository root, then run:
 
 ```bash
-pnpm architecture:serve
-pnpm architecture:validate
-pnpm architecture:build
+bun run architecture:serve
+bun run architecture:validate
+bun run architecture:build
 ```
 
 The build writes an interactive site to the ignored `docs/c4/dist/` directory.

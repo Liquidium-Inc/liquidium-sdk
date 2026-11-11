@@ -23,16 +23,16 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: pnpm/action-setup@v6
-
-      - uses: actions/setup-node@v6
+      - uses: voidzero-dev/setup-vp@v1.22.0
         with:
           node-version-file: ".nvmrc"
-          cache: "pnpm"
+          version: "1.5.0"
+          cache: true
+          run-install: false
 
-      - run: pnpm install --frozen-lockfile
+      - run: vp install --frozen-lockfile
 
-      - run: pnpm --filter docs build
+      - run: vp run --filter docs build
 
       - uses: actions/upload-pages-artifact@v5
         if: github.event_name == 'push'

@@ -1,6 +1,6 @@
 import { idlLabelToId } from "@icp-sdk/core/candid";
 import type { Principal } from "@icp-sdk/core/principal";
-import { assert, describe, expect, test } from "vitest";
+import { assert, describe, expect, test } from "vite-plus/test";
 import {
   decodeFlexibleHeadlessLoanEvent,
   decodeFlexibleSimpleLoanRecord,
