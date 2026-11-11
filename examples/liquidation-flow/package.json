@@ -13,7 +13,8 @@
   "dependencies": {
     "@icp-sdk/canisters": "^3.6.0",
     "@icp-sdk/core": "^5.4.0",
-    "@liquidium/client": "workspace:*"
+    "@liquidium/client": "workspace:*",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@types/node": "^26.1.2",

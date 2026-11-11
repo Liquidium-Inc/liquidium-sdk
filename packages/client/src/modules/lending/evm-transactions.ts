@@ -58,6 +58,7 @@ export interface CreateDepositEthTransactionParams {
 export function createApproveTransaction(
   params: CreateApproveTransactionParams
 ): EvmContractTransaction {
+  // SAFETY: ABI encoding validates the spender as an Ethereum address.
   return {
     to: params.tokenAddress,
     data: encodeFunctionData({
@@ -72,6 +73,7 @@ export function createApproveTransaction(
 export function createTransferErc20Transaction(
   params: CreateTransferErc20TransactionParams
 ): EvmContractTransaction {
+  // SAFETY: ABI encoding validates the recipient as an Ethereum address.
   return {
     to: params.tokenAddress,
     data: encodeFunctionData({
@@ -89,6 +91,7 @@ export function createDepositErc20Transaction(
   const { principalBytes32, subaccountHex } =
     createDepositAccountContext(params);
 
+  // SAFETY: ABI encoding validates the token as an Ethereum address.
   return {
     to: params.depositContractAddress,
     data: encodeFunctionData({
@@ -129,10 +132,14 @@ interface DepositAccountContextParams {
   action: SupplyAction;
 }
 
-function createDepositAccountContext(params: DepositAccountContextParams): {
+interface DepositAccountContext {
   principalBytes32: `0x${string}`;
   subaccountHex: `0x${string}`;
-} {
+}
+
+function createDepositAccountContext(
+  params: DepositAccountContextParams
+): DepositAccountContext {
   const inflowSubaccount = encodeInflowSubaccount({
     action: params.action,
     principal: Principal.fromText(params.profileId),

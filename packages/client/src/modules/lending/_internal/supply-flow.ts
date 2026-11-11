@@ -1,4 +1,5 @@
 import { Principal } from "@icp-sdk/core/principal";
+import { z } from "zod";
 import { decodeIcrcAccountAddress } from "../../../core/accounts";
 import {
   type EvmAddress,
@@ -399,7 +400,7 @@ export class SupplyFlowExecutor {
       poolId: request.poolId,
       walletAddress,
       action: request.action,
-      asset: asset as typeof Asset.USDC | typeof Asset.USDT,
+      asset,
       chain: Chain.ETH,
       amount: request.amount.toString(),
       tokenAddress,
@@ -922,6 +923,7 @@ export class SupplyFlowExecutor {
 async function readErc20Allowance(
   params: ReadErc20AllowanceParams
 ): Promise<bigint> {
+  // SAFETY: The owner is normalized; token and spender are configured contracts.
   const allowance = await params.evmReadClient.readContract({
     address: params.tokenAddress as EvmAddress,
     abi: ERC20_ABI,
@@ -938,6 +940,7 @@ async function readErc20Allowance(
 async function readErc20Balance(
   params: ReadErc20BalanceParams
 ): Promise<bigint> {
+  // SAFETY: The owner is normalized, and the token is a configured contract.
   const balance = await params.evmReadClient.readContract({
     address: params.tokenAddress as EvmAddress,
     abi: ERC20_ABI,
@@ -966,24 +969,22 @@ async function delay(timeoutMs: number): Promise<void> {
   await new Promise<void>((resolve) => setTimeout(resolve, timeoutMs));
 }
 
-function isRetriableInflowSubmitError(error: unknown): boolean {
-  if (!(error instanceof LiquidiumError)) {
+function isRetriableInflowSubmitError(cause: unknown): boolean {
+  if (!(cause instanceof LiquidiumError)) {
     return false;
   }
 
-  return error.code === LiquidiumErrorCode.SERVICE_UNAVAILABLE;
+  return cause.code === LiquidiumErrorCode.SERVICE_UNAVAILABLE;
 }
 
-function getUnknownErrorMessage(error: unknown): string | null {
-  if (error instanceof Error) {
-    return error.message;
+function getUnknownErrorMessage(cause: unknown): string | null {
+  if (cause instanceof Error) {
+    return cause.message;
   }
 
-  if (typeof error === "string") {
-    return error;
-  }
+  const messageResult = z.string().safeParse(cause);
 
-  return null;
+  return messageResult.success ? messageResult.data : null;
 }
 
 function getDefaultSubmitInflowRequest(

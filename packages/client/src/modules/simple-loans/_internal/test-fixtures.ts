@@ -2,6 +2,7 @@ import { encodeIcrcAccount } from "@icp-sdk/canisters/ledger/icrc";
 import { Principal } from "@icp-sdk/core/principal";
 import { vi } from "vite-plus/test";
 import type { FlexibleSimpleLoanCanisterRecord } from "../../../core/canisters/simple-loans/flexible-actor";
+import type { FlexiblePositionView } from "../../../core/canisters/lending/flexible-actor";
 
 interface TestBtcAssetVariant {
   BTC: null;
@@ -90,7 +91,7 @@ export function mockSimpleLoanCollateralHintFetch(
   }> = {}
 ) {
   return vi.spyOn(globalThis, "fetch").mockImplementation(async (input) => {
-    const url = input.toString();
+    const url = new Request(input).url;
 
     if (url.includes("/activities?")) {
       return new Response(JSON.stringify({ activities: [] }), {
@@ -150,8 +151,8 @@ export function createLoanCreatedEvent() {
 export function createSimpleLoanPosition(
   poolId: string,
   asset: TestSimpleLoanPositionAsset,
-  overrides: Record<string, unknown> = {}
-) {
+  overrides: Partial<FlexiblePositionView> = {}
+): FlexiblePositionView {
   return {
     lending_index_now: 0n,
     interest_since_snapshot: 0n,
@@ -166,13 +167,9 @@ export function createSimpleLoanPosition(
     deposit_scaled: 0n,
     earned_since_snapshot: 0n,
     deposited_native_now: 0n,
-    pool_id: {
-      toText: () => poolId,
-    },
+    pool_id: Principal.fromText(poolId),
     last_update: 0n,
-    user_profile: {
-      toText: () => PROFILE_ID,
-    },
+    user_profile: Principal.fromText(PROFILE_ID),
     ...overrides,
   };
 }

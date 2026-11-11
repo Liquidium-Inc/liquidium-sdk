@@ -294,10 +294,10 @@ export function createFlexibleLendingActor(
     );
   }
 
-  return Actor.createActor(flexibleLendingIdlFactory, {
+  return Actor.createActor<FlexibleLendingActor>(flexibleLendingIdlFactory, {
     agent: canisterContext.agent,
     canisterId,
-  }) as FlexibleLendingActor;
+  });
 }
 
 export function decodeFlexiblePool(pool: FlexiblePool): DecodedPool | null {

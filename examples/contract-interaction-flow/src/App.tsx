@@ -2,6 +2,8 @@ import { DynamicWidget, useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import type { ActivityFilter, Pool } from "@liquidium/client";
 import { Asset, Chain } from "@liquidium/client";
 import { useEffect, useState } from "react";
+import { z } from "zod";
+import { activityFilterSchema, parseSelectedOption } from "../../_shared/input";
 import { formatConfig } from "./client";
 import {
   createDynamicWalletAdapter,
@@ -37,6 +39,7 @@ const DEFAULT_CONTRACT_INTERACTION_ASSET = "USDC";
 const DEFAULT_BORROW_ASSET = "USDC";
 const DEFAULT_ETH_INFLOW_AMOUNT = "0.005";
 const DEFAULT_TOKEN_INFLOW_AMOUNT = "10";
+const INFLOW_MODE_SCHEMA = z.enum(["contractInteraction", "ck"]);
 
 type ContractInteractionTab = "supply" | "repay" | "borrow" | "withdraw";
 
@@ -611,7 +614,9 @@ function ContractInteractionPage() {
               id="supply-inflow-mode-select"
               value={supplyInflowMode}
               onChange={(event) =>
-                setSupplyInflowMode(event.target.value as InflowMode)
+                setSupplyInflowMode(
+                  INFLOW_MODE_SCHEMA.parse(event.target.value)
+                )
               }
             >
               <option value="contractInteraction">Contract interaction</option>
@@ -672,7 +677,9 @@ function ContractInteractionPage() {
               id="repayment-inflow-mode-select"
               value={repaymentInflowMode}
               onChange={(event) =>
-                setRepaymentInflowMode(event.target.value as InflowMode)
+                setRepaymentInflowMode(
+                  INFLOW_MODE_SCHEMA.parse(event.target.value)
+                )
               }
             >
               <option value="contractInteraction">Contract interaction</option>
@@ -735,7 +742,12 @@ function ContractInteractionPage() {
               value={borrowChainSelection}
               onChange={(event) =>
                 setSelectedOutflowChainSelection({
-                  chain: event.target.value as Chain,
+                  chain: parseSelectedOption(
+                    event.target.value,
+                    getChainOptions(
+                      pools.find((pool) => pool.id === selectedBorrowPoolId)
+                    )
+                  ),
                   pool: pools.find((pool) => pool.id === selectedBorrowPoolId),
                   setChainSelection: setBorrowChainSelection,
                   setDestination: setBorrowDestination,
@@ -814,7 +826,12 @@ function ContractInteractionPage() {
               value={withdrawChainSelection}
               onChange={(event) =>
                 setSelectedOutflowChainSelection({
-                  chain: event.target.value as Chain,
+                  chain: parseSelectedOption(
+                    event.target.value,
+                    getChainOptions(
+                      pools.find((pool) => pool.id === selectedWithdrawPoolId)
+                    )
+                  ),
                   pool: pools.find(
                     (pool) => pool.id === selectedWithdrawPoolId
                   ),
@@ -928,7 +945,7 @@ function getChainOptions(pool: Pool | undefined): Chain[] {
 }
 
 function getDefaultChain(pool: Pool | undefined): Chain {
-  return (pool?.chain as Chain | undefined) ?? Chain.ETH;
+  return pool?.chain ?? Chain.ETH;
 }
 
 function formatDestinationInputLabel(
@@ -1071,7 +1088,7 @@ function ActivityTrackerPage() {
           id="activity-filter-select"
           value={activityFilter}
           onChange={(event) =>
-            setActivityFilter(event.target.value as ActivityFilter)
+            setActivityFilter(activityFilterSchema.parse(event.target.value))
           }
         >
           <option value="active">Active</option>

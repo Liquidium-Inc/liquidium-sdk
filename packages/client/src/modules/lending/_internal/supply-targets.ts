@@ -116,7 +116,10 @@ function resolveSupplyMechanism(
   );
 }
 
-export function isEthStablecoin(asset: string, chain: string): boolean {
+export function isEthStablecoin(
+  asset: string,
+  chain: string
+): asset is typeof Asset.USDC | typeof Asset.USDT {
   return chain === Chain.ETH && (asset === Asset.USDC || asset === Asset.USDT);
 }
 

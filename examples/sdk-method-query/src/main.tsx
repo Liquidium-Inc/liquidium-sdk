@@ -19,10 +19,10 @@ void import("./bootstrap")
   .then(({ mountApp }) => {
     mountApp({ root, dynamicEnvironmentId });
   })
-  .catch((error: unknown) => {
+  .catch((cause: unknown) => {
     const message =
-      error instanceof Error
-        ? error.message
+      cause instanceof Error
+        ? cause.message
         : "Unknown startup error while loading the app.";
 
     root.render(

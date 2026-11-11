@@ -6,6 +6,7 @@ import type {
 } from "@liquidium/client";
 import { Chain, SupplyAction } from "@liquidium/client";
 import { useEffect, useState } from "react";
+import { activityFilterSchema, parseSelectedOption } from "../../_shared/input";
 import { formatConfig } from "./client";
 import {
   createDynamicBitcoinWalletAdapter,
@@ -225,7 +226,12 @@ function BtcInteractionsPage() {
           id="supply-action-select"
           value={supplyAction}
           onChange={(event) =>
-            setSupplyAction(event.target.value as SupplyActionType)
+            setSupplyAction(
+              parseSelectedOption(
+                event.target.value,
+                Object.values(SupplyAction)
+              )
+            )
           }
         >
           <option value={SupplyAction.deposit}>Supply deposit</option>
@@ -391,7 +397,7 @@ function ActivityTrackerPage() {
           id="activity-filter-select"
           value={activityFilter}
           onChange={(event) =>
-            setActivityFilter(event.target.value as ActivityFilter)
+            setActivityFilter(activityFilterSchema.parse(event.target.value))
           }
         >
           <option value="active">In progress</option>

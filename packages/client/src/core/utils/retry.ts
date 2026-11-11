@@ -9,7 +9,7 @@ export type RetryWithBackoffOptions<T> = {
   maxAttempts: number;
   initialRetryDelayMs: number;
   backoffMultiplier: number;
-  shouldRetryError: (error: unknown) => boolean;
+  shouldRetryError: (cause: unknown) => boolean;
   waitForDelayMs?: (delayMs: number) => Promise<void>;
 };
 

@@ -11,7 +11,7 @@ const B = 123_456_789n;
 const A_INVERSE = modInverse(A, MOD);
 
 const ALPHABET_INDEX = new Map(
-  [...REF_ALPHABET].map((character, index) => [character, BigInt(index)])
+  REF_ALPHABET.split("").map((character, index) => [character, BigInt(index)])
 );
 
 /**

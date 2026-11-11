@@ -7,6 +7,9 @@ import type {
   SupplyFlow,
   SupplyTarget,
 } from "@liquidium/client";
+import { parseStoredStrings } from "../../_shared/format";
+
+export { formatError } from "../../_shared/format";
 
 const DISPLAY_DECIMALS = 6;
 
@@ -14,7 +17,6 @@ const RECENT_ACTIVITY_IDS_STORAGE_KEY =
   "liquidium-contract-interaction.recentActivityIds";
 
 const MAX_RECENT_ACTIVITY_IDS = 10;
-const ERROR_FIELD_EXCLUDE_LIST = new Set(["name", "message", "stack", "cause"]);
 
 type StatusSubject = "Activity" | "Flow";
 
@@ -208,25 +210,7 @@ export function getRecentActivityIds(): string[] {
     return [];
   }
 
-  try {
-    const parsedValue = JSON.parse(storedValue);
-
-    if (!Array.isArray(parsedValue)) {
-      return [];
-    }
-
-    return parsedValue.filter(
-      (value): value is string => typeof value === "string"
-    );
-  } catch {
-    return [];
-  }
-}
-
-export function formatError(error: unknown): string {
-  const seenErrors = new WeakSet<object>();
-
-  return formatErrorWithDetails(error, seenErrors);
+  return parseStoredStrings(storedValue);
 }
 
 function formatActivityTopUp(topUp: Activity["topUp"]): string {
@@ -241,64 +225,4 @@ function formatActivityTopUp(topUp: Activity["topUp"]): string {
     `Fee amount: ${topUp.feeAmount.toString()} base units`,
     `Shortfall amount: ${topUp.shortfallAmount.toString()} base units`,
   ].join("\n");
-}
-
-function formatErrorWithDetails(
-  error: unknown,
-  seenErrors: WeakSet<object>
-): string {
-  if (error instanceof Error) {
-    if (seenErrors.has(error)) {
-      return "[Circular error]";
-    }
-
-    seenErrors.add(error);
-
-    const code = "code" in error ? String(error.code) : null;
-    const details = getErrorDetails(error);
-    const cause = "cause" in error ? error.cause : undefined;
-    const parts = [code ? `${code}: ${error.message}` : error.message];
-
-    if (details) {
-      parts.push(`Details: ${details}`);
-    }
-
-    if (cause !== undefined) {
-      parts.push(`Cause: ${formatErrorWithDetails(cause, seenErrors)}`);
-    }
-
-    return parts.join("\n");
-  }
-
-  if (typeof error === "object" && error !== null) {
-    return stringifyForDisplay(error);
-  }
-
-  return String(error);
-}
-
-function getErrorDetails(error: Error): string | undefined {
-  const entries = Object.entries(error).filter(
-    ([key, value]) => !ERROR_FIELD_EXCLUDE_LIST.has(key) && value !== undefined
-  );
-
-  if (entries.length === 0) {
-    return undefined;
-  }
-
-  return stringifyForDisplay(Object.fromEntries(entries));
-}
-
-function stringifyForDisplay(value: unknown): string {
-  return JSON.stringify(
-    value,
-    (_key, nestedValue) => {
-      if (typeof nestedValue === "bigint") {
-        return nestedValue.toString();
-      }
-
-      return nestedValue;
-    },
-    2
-  );
 }

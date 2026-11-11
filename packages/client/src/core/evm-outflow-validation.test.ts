@@ -28,7 +28,7 @@ describe("guardEthereumOutflowDestination", () => {
 
     // then
     await expect(result).resolves.toBeUndefined();
-    expect(apiClient.get).toHaveBeenCalledWith(EXPECTED_API_PATH);
+    expect(apiClient.get.mock.calls).toContainEqual([EXPECTED_API_PATH]);
   });
 
   test("should reject a contract reported by the SDK API", async () => {
@@ -74,7 +74,7 @@ describe("guardEthereumOutflowDestination", () => {
     await expect(result).rejects.toMatchObject({
       code: LiquidiumErrorCode.CONTRACT_DESTINATION_UNSUPPORTED,
     });
-    expect(apiClient.get).not.toHaveBeenCalled();
+    expect(apiClient.get.mock.calls).toHaveLength(0);
   });
 
   test("should not use the SDK API after a clear EVM client check", async () => {
@@ -96,7 +96,7 @@ describe("guardEthereumOutflowDestination", () => {
 
     // then
     await expect(result).resolves.toBeUndefined();
-    expect(apiClient.get).not.toHaveBeenCalled();
+    expect(apiClient.get.mock.calls).toHaveLength(0);
   });
 
   test("should fail open after an EVM client failure", async () => {
@@ -118,7 +118,7 @@ describe("guardEthereumOutflowDestination", () => {
 
     // then
     await expect(result).resolves.toBeUndefined();
-    expect(apiClient.get).not.toHaveBeenCalled();
+    expect(apiClient.get.mock.calls).toHaveLength(0);
   });
 
   test("should use the SDK API when the EVM client is not on Ethereum mainnet", async () => {
@@ -143,7 +143,7 @@ describe("guardEthereumOutflowDestination", () => {
       code: LiquidiumErrorCode.CONTRACT_DESTINATION_UNSUPPORTED,
     });
     expect(evmReadClient.getCode).not.toHaveBeenCalled();
-    expect(apiClient.get).toHaveBeenCalledWith(EXPECTED_API_PATH);
+    expect(apiClient.get.mock.calls).toContainEqual([EXPECTED_API_PATH]);
   });
 
   test("should support a readContract-only EVM adapter", async () => {
@@ -167,7 +167,7 @@ describe("guardEthereumOutflowDestination", () => {
 
     // then
     await expect(result).resolves.toBeUndefined();
-    expect(apiClient.get).toHaveBeenCalledWith(EXPECTED_API_PATH);
+    expect(apiClient.get.mock.calls).toContainEqual([EXPECTED_API_PATH]);
   });
 
   test("should fail open for a malformed SDK API response", async () => {
@@ -211,6 +211,7 @@ describe("guardEthereumOutflowDestination", () => {
     const apiClient = mockDeep<ApiClient>();
     const evmReadClient = mockDeep<Required<EvmReadClient>>();
     evmReadClient.chain.id = mainnet.id;
+    // SAFETY: malformed RPC bytecode must reach the fail-open response check.
     evmReadClient.getCode.mockResolvedValue("not-bytecode" as never);
 
     // when
@@ -224,7 +225,7 @@ describe("guardEthereumOutflowDestination", () => {
 
     // then
     await expect(result).resolves.toBeUndefined();
-    expect(apiClient.get).not.toHaveBeenCalled();
+    expect(apiClient.get.mock.calls).toHaveLength(0);
   });
 
   test("should fail open for SDK API failures", async () => {
@@ -288,7 +289,7 @@ describe("guardEthereumOutflowDestination", () => {
         "Ethereum outflow destination must not be the zero address or a precompile",
     });
     expect(evmReadClient.getCode).not.toHaveBeenCalled();
-    expect(apiClient.get).not.toHaveBeenCalled();
+    expect(apiClient.get.mock.calls).toHaveLength(0);
   });
 
   test("should not require validation dependencies for a non-Ethereum destination", async () => {
@@ -326,7 +327,7 @@ describe("guardEthereumOutflowDestination", () => {
       // then
       await expect(result).resolves.toBeUndefined();
       expect(evmReadClient.getCode).not.toHaveBeenCalled();
-      expect(apiClient.get).not.toHaveBeenCalled();
+      expect(apiClient.get.mock.calls).toHaveLength(0);
     }
   );
 });

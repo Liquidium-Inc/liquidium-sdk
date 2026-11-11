@@ -406,7 +406,7 @@ describeLive("live lending e2e", () => {
     const isBorrowingDisabled = await client.lending.isBorrowingDisabled();
 
     // then
-    expect(typeof isBorrowingDisabled).toBe("boolean");
+    expect(isBorrowingDisabled).toBeTypeOf("boolean");
   });
 });
 

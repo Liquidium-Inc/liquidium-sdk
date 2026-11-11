@@ -1,4 +1,5 @@
 import { Principal } from "@icp-sdk/core/principal";
+import { z } from "zod";
 import { createLendingActor } from "../../core/canisters/lending/actor";
 import {
   mapCanisterCallErrorToLiquidiumError,
@@ -94,21 +95,21 @@ export class LiquidationsModule {
   ): Promise<LiquidationResult> {
     const { debtAmount, minCollateralAmount, buyBadDebt = false } = request;
 
-    if (typeof debtAmount !== "bigint" || debtAmount <= 0n) {
+    if (!z.bigint().positive().safeParse(debtAmount).success) {
       throw new LiquidiumError(
         LiquidiumErrorCode.VALIDATION_ERROR,
         "Liquidation debt amount must be greater than 0"
       );
     }
 
-    if (typeof minCollateralAmount !== "bigint" || minCollateralAmount < 0n) {
+    if (!z.bigint().nonnegative().safeParse(minCollateralAmount).success) {
       throw new LiquidiumError(
         LiquidiumErrorCode.VALIDATION_ERROR,
         "Liquidation minimum collateral amount must be at least 0"
       );
     }
 
-    if (typeof buyBadDebt !== "boolean") {
+    if (!z.boolean().safeParse(buyBadDebt).success) {
       throw new LiquidiumError(
         LiquidiumErrorCode.VALIDATION_ERROR,
         "buyBadDebt must be a boolean"

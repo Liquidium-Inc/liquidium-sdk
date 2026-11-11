@@ -81,7 +81,9 @@ const METHOD_REFERENCE_TARGETS = {
   "lending.isBorrowingDisabled": "lending.isBorrowingDisabled",
 };
 
-const configFile = ts.readConfigFile(tsconfigPath, ts.sys.readFile);
+const configFile = ts.readConfigFile(tsconfigPath, (filePath) =>
+  ts.sys.readFile(filePath)
+);
 
 if (configFile.error) {
   throw new Error(

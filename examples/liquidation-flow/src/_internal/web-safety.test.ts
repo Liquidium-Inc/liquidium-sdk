@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import { runInNewContext } from "node:vm";
 import {
+  actionBodySchema,
   parseAssetAmountToBaseUnits,
   parseBaseUnitAmount,
   requireLocalRequest,
@@ -44,7 +45,7 @@ interface BrowserTransfer {
   txid?: string;
 }
 
-test("confirms liquidation only after the lifecycle and both transfers succeed", () => {
+void test("confirms liquidation only after the lifecycle and both transfers succeed", () => {
   // given
   const browserCode = readFileSync(
     new URL("../../ui/app.js", import.meta.url),
@@ -131,7 +132,7 @@ test("confirms liquidation only after the lifecycle and both transfers succeed",
   assert.equal(results, cases.map((testCase) => testCase.expected).join(","));
 });
 
-test("reviews without spending and sends one liquidation request only after confirmation", async () => {
+void test("reviews without spending and sends one liquidation request only after confirmation", async () => {
   // given
   const browserCode = readFileSync(
     new URL("../../ui/app.js", import.meta.url),
@@ -207,14 +208,14 @@ test("reviews without spending and sends one liquidation request only after conf
   assert.ok(submit && confirm && cancel);
 
   // when
-  submit({ preventDefault() {} });
+  void submit({ preventDefault() {} });
   const isReviewEnabled = !document.getElementById("execute").disabled;
   const isReviewOpen = document.getElementById("confirmation").open;
   const requestsAfterReview = submittedRequests.length;
-  cancel();
+  void cancel();
   await confirm();
   const requestsAfterCancel = submittedRequests.length;
-  submit({ preventDefault() {} });
+  void submit({ preventDefault() {} });
   const pendingSubmission = confirm();
   await confirm();
   await pendingSubmission;
@@ -241,7 +242,7 @@ test("reviews without spending and sends one liquidation request only after conf
   );
 });
 
-test("keeps checking a pending refund after liquidation fails and stops when it completes", async () => {
+void test("keeps checking a pending refund after liquidation fails and stops when it completes", async () => {
   // given
   const browserCode = readFileSync(
     new URL("../../ui/app.js", import.meta.url),
@@ -351,7 +352,7 @@ test("keeps checking a pending refund after liquidation fails and stops when it 
   assert.ok(requests.every((request) => request === "GET /api/state"));
 });
 
-test("formats base-unit amounts without losing precision", () => {
+void test("formats base-unit amounts without losing precision", () => {
   // given
   const browserCode = readFileSync(
     new URL("../../ui/app.js", import.meta.url),
@@ -391,7 +392,7 @@ test("formats base-unit amounts without losing precision", () => {
   assert.equal(formattedAmountsJson, EXPECTED_AMOUNTS_JSON);
 });
 
-test("converts asset amounts exactly at supported scales", () => {
+void test("converts asset amounts exactly at supported scales", () => {
   // given
   const cases = [
     { asset: "USDT", decimals: 6n, input: "1.25", expected: 1_250_000n },
@@ -423,7 +424,7 @@ test("converts asset amounts exactly at supported scales", () => {
   );
 });
 
-test("rejects excessive precision, zero, invalid syntax, and amounts above the spending cap", () => {
+void test("rejects excessive precision, zero, invalid syntax, and amounts above the spending cap", () => {
   // given
   const decimals = 6n;
   const spendingCapBaseUnits = 1_000_000n;
@@ -469,7 +470,7 @@ test("rejects excessive precision, zero, invalid syntax, and amounts above the s
   assert.throws(() => parseAssetAmountToBaseUnits("1", 19n, "TOKEN"));
 });
 
-test("rejects invalid amounts and accepts the configured boundary", () => {
+void test("rejects invalid amounts and accepts the configured boundary", () => {
   // given
   const spendingCapBaseUnits = 1_000_000n;
   const invalidAmounts = ["0", "-1", "1.5", "1000001", "1e6", null];
@@ -489,7 +490,64 @@ test("rejects invalid amounts and accepts the configured boundary", () => {
   }
 });
 
-test("rejects foreign origins and DNS rebinding hosts", () => {
+void test("decodes request amount fields before asset-specific validation", () => {
+  // given
+  const validDebtAmount = "1.25";
+  const validMinimumCollateralAmount = "0.00001";
+  const malformedAmounts = [null, 1, false, {}, []];
+  const asset = "USDT";
+  const assetDecimals = 6n;
+
+  // when
+  const validBody = actionBodySchema.safeParse({
+    debtAmount: validDebtAmount,
+    minCollateralAmount: validMinimumCollateralAmount,
+    ignored: "unused",
+  });
+
+  const malformedBodies = malformedAmounts.map((debtAmount) =>
+    actionBodySchema.safeParse({ debtAmount })
+  );
+
+  // then
+  assert.equal(validBody.success, true);
+
+  if (validBody.success) {
+    assert.deepEqual(validBody.data, {
+      debtAmount: validDebtAmount,
+      minCollateralAmount: validMinimumCollateralAmount,
+    });
+  }
+
+  for (const body of malformedBodies) {
+    assert.equal(body.success, true);
+
+    if (body.success) {
+      assert.throws(
+        () =>
+          parseAssetAmountToBaseUnits(
+            body.data.debtAmount,
+            assetDecimals,
+            asset
+          ),
+        { message: `Enter a ${asset} amount, such as 1 or 0.5.` }
+      );
+    }
+  }
+});
+
+void test("rejects non-object request bodies at the JSON boundary", () => {
+  // given
+  const invalidBodies = [null, [], "1", 1, true];
+
+  // when
+  const results = invalidBodies.map((body) => actionBodySchema.safeParse(body));
+
+  // then
+  assert.ok(results.every((result) => !result.success));
+});
+
+void test("rejects foreign origins and DNS rebinding hosts", () => {
   // given
   const origin = "http://127.0.0.1:4318";
   const host = "127.0.0.1:4318";

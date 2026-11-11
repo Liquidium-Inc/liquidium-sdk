@@ -475,7 +475,7 @@ export function decodeFlexibleHeadlessLoanEvent(
     id: event.id,
     schema_version: event.schema_version,
     timestamp: event.timestamp,
-    event_type: event.event_type as DecodedHeadlessLoanEventType,
+    event_type: event.event_type,
   };
 }
 

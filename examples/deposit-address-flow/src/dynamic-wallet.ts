@@ -1,4 +1,5 @@
 import { isEthereumWallet } from "@dynamic-labs/ethereum";
+import type { EthereumWalletConnector } from "@dynamic-labs/ethereum";
 import type { useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import type { WalletAdapter } from "@liquidium/client";
 
@@ -6,18 +7,16 @@ const ETH_MAINNET_CHAIN_ID_STRING = "1";
 
 type PrimaryWallet = ReturnType<typeof useDynamicContext>["primaryWallet"];
 
-type DynamicWalletClient = {
-  signMessage(request: {
-    account: `0x${string}`;
-    message: string;
-  }): Promise<string>;
-};
+type DynamicWalletClient = Pick<
+  NonNullable<ReturnType<EthereumWalletConnector["getWalletClient"]>>,
+  "signMessage"
+>;
 
 type DynamicEvmConnector = {
   getWalletClient?(
     chainId?: string
   ): DynamicWalletClient | Promise<DynamicWalletClient | undefined> | undefined;
-  signMessage?(messageToSign: string): Promise<string | undefined>;
+  signMessage?: EthereumWalletConnector["signMessage"];
 };
 
 export function getConnectedWalletAddress(
@@ -38,7 +37,14 @@ export function createDynamicWalletAdapter(
   primaryWallet: PrimaryWallet
 ): WalletAdapter {
   const account = getConnectedWalletAddress(primaryWallet);
-  const connector = primaryWallet?.connector as DynamicEvmConnector | undefined;
+
+  if (!primaryWallet || !isEthereumWallet(primaryWallet)) {
+    throw new Error("Connect an Ethereum wallet first.");
+  }
+
+  // SAFETY: The EVM guard establishes the connector contract omitted by its base
+  // type. Both EVM methods remain optional and are checked before use below.
+  const connector = primaryWallet.connector as DynamicEvmConnector | undefined;
 
   return {
     signMessage: async (request) => {
@@ -57,6 +63,7 @@ export function createDynamicWalletAdapter(
       );
 
       if (walletClient?.signMessage) {
+        // SAFETY: Dynamic supplies an EVM address after the Ethereum wallet guard.
         return await walletClient.signMessage({
           account: account as `0x${string}`,
           message: request.message,

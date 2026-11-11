@@ -48,8 +48,12 @@ export function parseApiStringUnion<const TValue extends string>(
   allowedValues: readonly TValue[],
   field: ApiResponseFieldContext
 ): TValue {
-  if (value !== undefined && allowedValues.includes(value as TValue)) {
-    return value as TValue;
+  const allowedValue = allowedValues.find(
+    (allowedValue) => allowedValue === value
+  );
+
+  if (allowedValue !== undefined) {
+    return allowedValue;
   }
 
   throwInvalidApiResponseField(field);

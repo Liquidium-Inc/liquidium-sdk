@@ -1,3 +1,4 @@
+import { mockActor } from "../../../_internal/mock-actor";
 import { Actor } from "@icp-sdk/core/agent";
 import { afterEach, describe, expect, test, vi } from "vite-plus/test";
 import {
@@ -66,7 +67,7 @@ describe("SimpleLoansModule find", () => {
     const fetchSpy = vi
       .spyOn(globalThis, "fetch")
       .mockImplementation(async (input) => {
-        const url = input.toString();
+        const url = new Request(input).url;
 
         if (url.includes("/instant-loans/find?query=42")) {
           return new Response(
@@ -111,23 +112,31 @@ describe("SimpleLoansModule find", () => {
       });
 
     vi.spyOn(Actor, "createActor")
-      .mockReturnValueOnce({ get_loan: getLoan } as never)
-      .mockReturnValueOnce({
-        list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord()]),
-      } as never)
-      .mockReturnValueOnce({
-        list_pools: vi.fn().mockResolvedValue([createUsdtPoolRecord()]),
-      } as never)
-      .mockReturnValueOnce({ get_position: getCollateralPosition } as never)
-      .mockReturnValueOnce({ get_position: getBorrowPosition } as never)
-      .mockReturnValueOnce({ get_pool_rate: getPoolRate } as never)
-      .mockReturnValueOnce({ get_btc_address: getBtcAddress } as never)
-      .mockReturnValueOnce({ get_deposit_address: getDepositAddress } as never)
-      .mockReturnValueOnce({
-        estimate_deposit_fee: estimateDepositFee,
-      } as never)
-      .mockReturnValueOnce({ get_deposit_fee: getDepositFee } as never)
-      .mockReturnValueOnce({ icrc1_fee: icrc1Fee } as never);
+      .mockReturnValueOnce(mockActor({ get_loan: getLoan }))
+      .mockReturnValueOnce(
+        mockActor({
+          list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord()]),
+        })
+      )
+      .mockReturnValueOnce(
+        mockActor({
+          list_pools: vi.fn().mockResolvedValue([createUsdtPoolRecord()]),
+        })
+      )
+      .mockReturnValueOnce(mockActor({ get_position: getCollateralPosition }))
+      .mockReturnValueOnce(mockActor({ get_position: getBorrowPosition }))
+      .mockReturnValueOnce(mockActor({ get_pool_rate: getPoolRate }))
+      .mockReturnValueOnce(mockActor({ get_btc_address: getBtcAddress }))
+      .mockReturnValueOnce(
+        mockActor({ get_deposit_address: getDepositAddress })
+      )
+      .mockReturnValueOnce(
+        mockActor({
+          estimate_deposit_fee: estimateDepositFee,
+        })
+      )
+      .mockReturnValueOnce(mockActor({ get_deposit_fee: getDepositFee }))
+      .mockReturnValueOnce(mockActor({ icrc1_fee: icrc1Fee }));
 
     const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",

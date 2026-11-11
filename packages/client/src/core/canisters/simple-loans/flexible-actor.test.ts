@@ -1,5 +1,6 @@
 import { idlLabelToId } from "@icp-sdk/core/candid";
 import type { Principal } from "@icp-sdk/core/principal";
+import { mockDeep } from "vitest-mock-extended";
 import { assert, describe, expect, test } from "vite-plus/test";
 import {
   decodeFlexibleHeadlessLoanEvent,
@@ -8,13 +9,13 @@ import {
   type FlexibleSimpleLoanCanisterRecord,
 } from "./flexible-actor";
 
-const POOL_PRINCIPAL = {
+const POOL_PRINCIPAL = mockDeep<Principal>({
   toString: () => "pool-1",
-} as unknown as Principal;
+});
 
-const PROFILE_PRINCIPAL = {
+const PROFILE_PRINCIPAL = mockDeep<Principal>({
   toString: () => "profile-1",
-} as unknown as Principal;
+});
 
 const AUTHORISATION = {
   EthSignature: {

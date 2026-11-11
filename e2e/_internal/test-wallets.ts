@@ -21,12 +21,19 @@ const BITCOIN_VARINT_PREFIX_BYTE_LENGTH = 1;
 const UINT16_BYTE_LENGTH = 2;
 const UINT32_BYTE_LENGTH = 4;
 
-bitcoin.initEccLib(ecc);
-
-export function createEthereumTestWallet(): {
+interface EthereumTestWallet {
   account: `0x${string}`;
   walletAdapter: WalletAdapter;
-} {
+}
+
+interface BitcoinTestWallet {
+  account: string;
+  walletAdapter: WalletAdapter;
+}
+
+bitcoin.initEccLib(ecc);
+
+export function createEthereumTestWallet(): EthereumTestWallet {
   const account = privateKeyToAccount(generatePrivateKey());
 
   return {
@@ -39,10 +46,7 @@ export function createEthereumTestWallet(): {
   };
 }
 
-export function createBitcoinjsTestWallet(): {
-  account: string;
-  walletAdapter: WalletAdapter;
-} {
+export function createBitcoinjsTestWallet(): BitcoinTestWallet {
   const ECPair = ECPairFactory(ecc);
   const keyPair = ECPair.makeRandom({ network: bitcoin.networks.bitcoin });
   const privateKey = keyPair.privateKey;

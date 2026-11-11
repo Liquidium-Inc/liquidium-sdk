@@ -7,6 +7,7 @@ import type {
 } from "@liquidium/client";
 import { Chain, isAssetIdentifier } from "@liquidium/client";
 import { useEffect, useState } from "react";
+import { parseSelectedOption } from "../../_shared/input";
 import { formatConfig } from "./client";
 import {
   formatAmount,
@@ -365,7 +366,14 @@ export function App() {
           id="collateral-deposit-chain-select"
           value={collateralDepositChain}
           onChange={(event) =>
-            setCollateralDepositChain(event.target.value as Chain)
+            setCollateralDepositChain(
+              parseSelectedOption(
+                event.target.value,
+                getChainOptions(
+                  pools.find((pool) => pool.id === selectedCollateralPoolId)
+                )
+              )
+            )
           }
         >
           {getChainOptions(
@@ -405,7 +413,12 @@ export function App() {
           onChange={(event) =>
             setSelectedDestinationChain({
               pool: pools.find((pool) => pool.id === selectedBorrowPoolId),
-              transferChain: event.target.value as Chain,
+              transferChain: parseSelectedOption(
+                event.target.value,
+                getChainOptions(
+                  pools.find((pool) => pool.id === selectedBorrowPoolId)
+                )
+              ),
               setChain: setBorrowChain,
               setDestination: setBorrowDestination,
             })
@@ -485,7 +498,12 @@ export function App() {
           onChange={(event) =>
             setSelectedDestinationChain({
               pool: pools.find((pool) => pool.id === selectedCollateralPoolId),
-              transferChain: event.target.value as Chain,
+              transferChain: parseSelectedOption(
+                event.target.value,
+                getChainOptions(
+                  pools.find((pool) => pool.id === selectedCollateralPoolId)
+                )
+              ),
               setChain: setRefundChain,
               setDestination: setRefundDestination,
             })
@@ -645,7 +663,7 @@ function setSelectedDestinationChain(params: {
 }
 
 function getDefaultChain(pool: Pool | undefined): Chain {
-  return (pool?.chain as Chain | undefined) ?? DEFAULT_TRANSFER_CHAIN;
+  return pool?.chain ?? DEFAULT_TRANSFER_CHAIN;
 }
 
 function getSupportedChain(
@@ -816,7 +834,7 @@ function getSelectedPool(pools: Pool[], poolId: string): Pool {
 }
 
 function formatUsdPrice(price: number | undefined): string {
-  if (typeof price !== "number" || !Number.isFinite(price) || price <= 0) {
+  if (price === undefined || !Number.isFinite(price) || price <= 0) {
     return "unavailable";
   }
 

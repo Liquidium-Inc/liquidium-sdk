@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { LiquidiumError, LiquidiumErrorCode } from "../errors";
 
 const DOM_EXCEPTION_ABORT_ERROR_NAME = "AbortError";
@@ -36,10 +37,6 @@ interface ApiRequest {
 interface ResponseErrorContext {
   traceId?: string;
   requestId?: string;
-}
-
-interface JsonErrorPayload {
-  message?: unknown;
 }
 
 export function createApiClient(opts: CreateApiClientOptions): ApiClient {
@@ -83,12 +80,11 @@ async function sendRequest<TResponse>(
 
   const requestHeaders = {
     ...opts.headers,
-    ...(request.method === HTTP_METHOD_POST
-      ? {
-          [HTTP_HEADER_CONTENT_TYPE]: MIME_TYPE_APPLICATION_JSON,
-        }
-      : {}),
   };
+
+  if (request.method === HTTP_METHOD_POST) {
+    requestHeaders[HTTP_HEADER_CONTENT_TYPE] = MIME_TYPE_APPLICATION_JSON;
+  }
 
   try {
     const response = await fetchFn(url, {
@@ -103,11 +99,11 @@ async function sendRequest<TResponse>(
     });
 
     if (!response.ok) {
-      const payload = await tryParseJson(response);
+      const apiErrorMessage = await tryParseErrorMessage(response);
       const errorContext = getResponseErrorContext(response);
 
       const message =
-        getErrorMessage(payload) ??
+        apiErrorMessage ??
         `API request failed: ${response.status} ${response.statusText}`;
 
       throw new LiquidiumError(
@@ -118,6 +114,7 @@ async function sendRequest<TResponse>(
       );
     }
 
+    // SAFETY: Callers select the wire type for the trusted SDK API endpoint.
     return (await response.json()) as TResponse;
   } catch (error) {
     if (error instanceof LiquidiumError) {
@@ -144,22 +141,18 @@ async function sendRequest<TResponse>(
   }
 }
 
-async function tryParseJson(response: Response): Promise<unknown> {
+async function tryParseErrorMessage(
+  response: Response
+): Promise<string | null> {
   try {
-    return await response.json();
+    const result = z
+      .object({ message: z.string().min(1) })
+      .safeParse(await response.json());
+
+    return result.success ? result.data.message : null;
   } catch {
     return null;
   }
-}
-
-function getErrorMessage(payload: unknown): string | null {
-  if (!payload || typeof payload !== "object") {
-    return null;
-  }
-
-  const message = (payload as JsonErrorPayload).message;
-
-  return typeof message === "string" && message.length > 0 ? message : null;
 }
 
 function getResponseErrorContext(response: Response): ResponseErrorContext {

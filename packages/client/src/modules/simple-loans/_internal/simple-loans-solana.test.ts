@@ -1,3 +1,4 @@
+import { mockActor } from "../../../_internal/mock-actor";
 import { Actor } from "@icp-sdk/core/agent";
 import { Principal } from "@icp-sdk/core/principal";
 import { afterEach, expect, test, vi } from "vite-plus/test";
@@ -56,7 +57,7 @@ test("hydrates SOL and ckSOL quotes with separate actions and native minimums", 
   );
 
   const feeRequests = fetch.mock.calls
-    .map(([url]) => String(url))
+    .map(([url]) => new Request(url).url)
     .filter((url) => url.includes("inflow-fee"));
 
   expect(feeRequests).toHaveLength(4);
@@ -126,12 +127,12 @@ function mockSolLoan() {
       .mockResolvedValueOnce(REPAY_ADDRESS),
   };
 
-  vi.spyOn(Actor, "createActor").mockReturnValue(actor as never);
+  vi.spyOn(Actor, "createActor").mockReturnValue(mockActor(actor));
 }
 
 function quoteFetch(failRepayment = false) {
   return vi.fn<typeof globalThis.fetch>().mockImplementation(async (input) => {
-    const url = new URL(String(input));
+    const url = new URL(new Request(input).url);
 
     if (url.pathname.endsWith("/collateral-hint"))
       return Response.json({

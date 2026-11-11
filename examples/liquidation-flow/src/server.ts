@@ -11,7 +11,10 @@ import { IDL } from "@icp-sdk/core/candid";
 import { Secp256k1KeyIdentity } from "@icp-sdk/core/identity/secp256k1";
 import { Principal } from "@icp-sdk/core/principal";
 import type { LiquidationResult } from "@liquidium/client";
+import { z } from "zod";
 import {
+  type ActionBody,
+  actionBodySchema,
   parseAssetAmountToBaseUnits,
   parseBaseUnitAmount,
   requireLocalRequest,
@@ -30,6 +33,7 @@ const ICP_HOST = "https://icp-api.io";
 const MAX_BODY_BYTES = 2_048;
 
 const CSRF_TOKEN_BYTES = 32;
+const BIGINT_SCHEMA = z.bigint();
 
 const MINIMUM_DEBT_AMOUNT_BASE_UNITS = 1n;
 
@@ -56,11 +60,6 @@ interface PoolLedgerRecord {
 interface LendingQueries {
   list_pools(): Promise<PoolLedgerRecord[]>;
   get_liquidators(): Promise<Principal[]>;
-}
-
-interface ActionBody {
-  debtAmount?: unknown;
-  minCollateralAmount?: unknown;
 }
 
 interface LiquidatorBalance {
@@ -437,9 +436,11 @@ function respond<T>(
 ): void {
   response.writeHead(statusCode, JSON_HEADERS);
   response.end(
-    JSON.stringify(body, (_, value) =>
-      typeof value === "bigint" ? value.toString() : value
-    )
+    JSON.stringify(body, (_, value) => {
+      const bigintValue = BIGINT_SCHEMA.safeParse(value);
+
+      return bigintValue.success ? bigintValue.data.toString() : value;
+    })
   );
 }
 
@@ -458,13 +459,15 @@ async function readActionBody(request: IncomingMessage): Promise<ActionBody> {
     bodyChunks.push(buffer);
   }
 
-  const body: unknown = JSON.parse(Buffer.concat(bodyChunks).toString("utf8"));
+  const body = actionBodySchema.safeParse(
+    JSON.parse(Buffer.concat(bodyChunks).toString("utf8"))
+  );
 
-  if (!body || typeof body !== "object" || Array.isArray(body)) {
+  if (!body.success) {
     throw new Error("Invalid request body.");
   }
 
-  return body;
+  return body.data;
 }
 
 main().catch((error) => {

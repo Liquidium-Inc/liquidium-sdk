@@ -1,3 +1,4 @@
+import { mockActor } from "../../../_internal/mock-actor";
 import { Actor } from "@icp-sdk/core/agent";
 import { afterEach, describe, expect, test, vi } from "vite-plus/test";
 import { DEFAULT_API_BASE_URL } from "../../../core/config";
@@ -24,12 +25,16 @@ describe("LendingModule inflow", () => {
       .mockResolvedValue({ Ok: expectedAddress });
 
     vi.spyOn(Actor, "createActor")
-      .mockReturnValueOnce({
-        list_pools: vi.fn().mockResolvedValue([createEthPoolRecord()]),
-      } as never)
-      .mockReturnValueOnce({
-        get_deposit_address: getDepositAddress,
-      } as never);
+      .mockReturnValueOnce(
+        mockActor({
+          list_pools: vi.fn().mockResolvedValue([createEthPoolRecord()]),
+        })
+      )
+      .mockReturnValueOnce(
+        mockActor({
+          get_deposit_address: getDepositAddress,
+        })
+      );
     const client = new LiquidiumClient({});
 
     // when
@@ -48,10 +53,12 @@ describe("LendingModule inflow", () => {
   test("rejects a native ETH deposit address for a different asset pool", async () => {
     // given
     const getDepositAddress = vi.fn();
-    vi.spyOn(Actor, "createActor").mockReturnValueOnce({
-      list_pools: vi.fn().mockResolvedValue([createUsdtPoolRecord()]),
-      get_deposit_address: getDepositAddress,
-    } as never);
+    vi.spyOn(Actor, "createActor").mockReturnValueOnce(
+      mockActor({
+        list_pools: vi.fn().mockResolvedValue([createUsdtPoolRecord()]),
+        get_deposit_address: getDepositAddress,
+      })
+    );
     const client = new LiquidiumClient({});
 
     // when
@@ -73,14 +80,18 @@ describe("LendingModule inflow", () => {
   test("rejects an invalid EVM deposit address returned by the canister", async () => {
     // given
     vi.spyOn(Actor, "createActor")
-      .mockReturnValueOnce({
-        list_pools: vi.fn().mockResolvedValue([createEthPoolRecord()]),
-      } as never)
-      .mockReturnValueOnce({
-        get_deposit_address: vi.fn().mockResolvedValue({
-          Ok: "invalid-deposit-address",
-        }),
-      } as never);
+      .mockReturnValueOnce(
+        mockActor({
+          list_pools: vi.fn().mockResolvedValue([createEthPoolRecord()]),
+        })
+      )
+      .mockReturnValueOnce(
+        mockActor({
+          get_deposit_address: vi.fn().mockResolvedValue({
+            Ok: "invalid-deposit-address",
+          }),
+        })
+      );
     const client = new LiquidiumClient({});
 
     // when
@@ -106,9 +117,11 @@ describe("LendingModule inflow", () => {
       Ok: feeEstimateWei,
     });
 
-    vi.spyOn(Actor, "createActor").mockReturnValue({
-      estimate_deposit_fee: estimateDepositFee,
-    } as never);
+    vi.spyOn(Actor, "createActor").mockReturnValue(
+      mockActor({
+        estimate_deposit_fee: estimateDepositFee,
+      })
+    );
     const client = new LiquidiumClient({});
 
     // when
@@ -167,6 +180,7 @@ describe("LendingModule inflow", () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch");
     const client = new LiquidiumClient({});
 
+    // SAFETY: the removed ICP inflow submission shape must reach validation.
     const invalidRequest = {
       txid: "icp-ledger-index",
       chain: "ICP",
@@ -193,9 +207,11 @@ describe("LendingModule inflow", () => {
       Ok: ETH_DEPOSIT_FEE_ESTIMATE,
     });
 
-    vi.spyOn(Actor, "createActor").mockReturnValue({
-      estimate_deposit_fee: estimateDepositFee,
-    } as never);
+    vi.spyOn(Actor, "createActor").mockReturnValue(
+      mockActor({
+        estimate_deposit_fee: estimateDepositFee,
+      })
+    );
     const client = new LiquidiumClient({});
 
     // when
@@ -220,9 +236,11 @@ describe("LendingModule inflow", () => {
       Ok: FOUR_CENT_FEE_ESTIMATE,
     });
 
-    vi.spyOn(Actor, "createActor").mockReturnValue({
-      estimate_deposit_fee: estimateDepositFee,
-    } as never);
+    vi.spyOn(Actor, "createActor").mockReturnValue(
+      mockActor({
+        estimate_deposit_fee: estimateDepositFee,
+      })
+    );
     const client = new LiquidiumClient({});
 
     // when
@@ -247,8 +265,8 @@ describe("LendingModule inflow", () => {
 
     const icrc1Fee = vi.fn().mockResolvedValue(CKBTC_LEDGER_FEE_SATS);
     vi.spyOn(Actor, "createActor")
-      .mockReturnValueOnce({ get_deposit_fee: getDepositFee } as never)
-      .mockReturnValueOnce({ icrc1_fee: icrc1Fee } as never);
+      .mockReturnValueOnce(mockActor({ get_deposit_fee: getDepositFee }))
+      .mockReturnValueOnce(mockActor({ icrc1_fee: icrc1Fee }));
     const client = new LiquidiumClient({});
 
     // when
@@ -267,9 +285,11 @@ describe("LendingModule inflow", () => {
     // given
     const CKUSDC_LEDGER_FEE = 10_000n;
     const icrc1Fee = vi.fn().mockResolvedValue(CKUSDC_LEDGER_FEE);
-    vi.spyOn(Actor, "createActor").mockReturnValue({
-      icrc1_fee: icrc1Fee,
-    } as never);
+    vi.spyOn(Actor, "createActor").mockReturnValue(
+      mockActor({
+        icrc1_fee: icrc1Fee,
+      })
+    );
     const client = new LiquidiumClient({});
 
     // when
@@ -287,9 +307,11 @@ describe("LendingModule inflow", () => {
     // given
     const CKBTC_LEDGER_FEE = 10n;
     const icrc1Fee = vi.fn().mockResolvedValue(CKBTC_LEDGER_FEE);
-    vi.spyOn(Actor, "createActor").mockReturnValue({
-      icrc1_fee: icrc1Fee,
-    } as never);
+    vi.spyOn(Actor, "createActor").mockReturnValue(
+      mockActor({
+        icrc1_fee: icrc1Fee,
+      })
+    );
     const client = new LiquidiumClient({});
 
     // when
@@ -307,9 +329,11 @@ describe("LendingModule inflow", () => {
     // given
     const ICP_LEDGER_FEE_E8S = 10_000n;
     const icrc1Fee = vi.fn().mockResolvedValue(ICP_LEDGER_FEE_E8S);
-    vi.spyOn(Actor, "createActor").mockReturnValue({
-      icrc1_fee: icrc1Fee,
-    } as never);
+    vi.spyOn(Actor, "createActor").mockReturnValue(
+      mockActor({
+        icrc1_fee: icrc1Fee,
+      })
+    );
     const client = new LiquidiumClient({});
 
     // when

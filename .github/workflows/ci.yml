@@ -30,3 +30,7 @@ jobs:
       - run: vp run typecheck
 
       - run: vp run test
+
+      - run: vp run --filter @liquidium/example-recovery-flow test
+
+      - run: vp run --filter @liquidium/example-liquidation-flow test

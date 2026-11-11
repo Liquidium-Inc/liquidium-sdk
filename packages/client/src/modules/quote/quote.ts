@@ -180,12 +180,14 @@ export class QuoteModule {
     const openingDebtAmount = getOpeningDebt(request.borrowAmount, borrowPool);
     const activationFeeAmount = openingDebtAmount - request.borrowAmount;
 
+    // SAFETY: Invalid prices add validation errors, which return above.
     const borrowUsd = computeUsdInternalFromBaseUnits({
       amountBaseUnits: openingDebtAmount,
       priceScaled: scalePriceUsdToBigint(borrowPrice as number),
       assetDecimalPlaces: getPoolDecimalPlaces(borrowPool),
     });
 
+    // SAFETY: Invalid prices add validation errors, which return above.
     const collateralUsd = computeUsdInternalFromBaseUnits({
       amountBaseUnits: request.collateralAmount,
       priceScaled: scalePriceUsdToBigint(collateralPrice as number),
@@ -377,8 +379,10 @@ export class QuoteModule {
 
     const borrowAssetDecimals = getPoolDecimalPlaces(borrowPool);
     const collateralAssetDecimals = getPoolDecimalPlaces(collateralPool);
+    // SAFETY: Invalid prices add validation errors, which return above.
     const borrowPriceScaled = scalePriceUsdToBigint(borrowPrice as number);
 
+    // SAFETY: Invalid prices add validation errors, which return above.
     const collateralPriceScaled = scalePriceUsdToBigint(
       collateralPrice as number
     );
@@ -560,7 +564,7 @@ function scalePriceUsdToBigint(priceUsd: number): bigint {
 }
 
 function isValidPrice(price: number | undefined): price is number {
-  return typeof price === "number" && Number.isFinite(price) && price > 0;
+  return price !== undefined && Number.isFinite(price) && price > 0;
 }
 
 function getPoolDecimalPlaces(pool: Pool): number {

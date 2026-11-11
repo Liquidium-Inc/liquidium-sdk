@@ -59,7 +59,7 @@ function expectPoolFieldsToBePopulated(pool: Pool): void {
   expect(pool.asset).toBeTruthy();
   expect(pool.chain).toBeTruthy();
   expect(pool.decimals).toBeGreaterThan(0n);
-  expect(typeof pool.frozen).toBe("boolean");
+  expect(pool.frozen).toBeTypeOf("boolean");
   expect(pool.totalSupply).toBeGreaterThanOrEqual(0n);
   expect(pool.totalDebt).toBeGreaterThanOrEqual(0n);
   expect(pool.availableLiquidity).toBeGreaterThanOrEqual(0n);

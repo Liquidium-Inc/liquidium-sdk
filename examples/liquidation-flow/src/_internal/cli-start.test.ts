@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 
 const CLI_START_TIMEOUT_10_SECONDS_MS = 10_000;
 
-test("loads the compiled CLI before validating its configuration", () => {
+void test("loads the compiled CLI before validating its configuration", () => {
   // given
   const cliEntryPath = fileURLToPath(new URL("../index.js", import.meta.url));
 

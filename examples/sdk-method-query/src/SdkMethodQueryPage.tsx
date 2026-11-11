@@ -2,32 +2,48 @@ import { isEthereumWallet } from "@dynamic-labs/ethereum";
 import { DynamicWidget, useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import { isSolanaWallet } from "@dynamic-labs/solana";
 import type {
-  ActivityFilter,
-  Asset,
-  AssetIdentifier,
   AssetPrices,
-  Chain,
-  InflowOperation,
-  LiquidiumAccountInput,
-  LiquidiumAccountType,
   LiquidiumClient,
   Pool,
   ProtocolActivityOperation,
   QuoteRequest,
-  SigningChain,
   UserTransactionHistoryOperation,
   UserTransactionHistoryState,
   WalletAdapter,
 } from "@liquidium/client";
-import { isAssetIdentifier } from "@liquidium/client";
 import { useMemo, useState } from "react";
+import { z } from "zod";
+import {
+  expectAsset,
+  expectAssetIdentifier,
+  expectAssetPrices,
+  expectBigInt,
+  expectChain,
+  expectNonEmptyString,
+  expectObject,
+  expectOptionalActivityFilter,
+  expectOptionalInflowChain,
+  expectOptionalLimit,
+  expectOptionalObject,
+  expectOptionalString,
+  expectOptionalStringValues,
+  expectOptionalSupplyMechanism,
+  expectPools,
+  expectReceiver,
+  expectSigningChain,
+  expectSupplyAction,
+  type MethodInput,
+  parseMethodInput,
+} from "./_internal/method-input";
+import {
+  stringifyExampleValue,
+  UNDEFINED_JSON_VALUE,
+} from "./_internal/stringify-example-value";
 import { createConnectedWalletAdapter } from "./dynamic-wallet";
 import type { SharedExampleState } from "./example-state";
 import { METHOD_ARG_REFERENCES } from "./generated-method-arg-references";
 import { createLiquidiumClient } from "./lib/client";
 
-const MIN_LIST_LIMIT = 1;
-const MAX_LIST_LIMIT = 1000;
 const MAX_HISTORY_LIMIT = 200;
 const MAX_PROTOCOL_ACTIVITY_LIMIT = 100;
 const DEFAULT_MOCK_SIGNATURE = "replace-with-real-signature";
@@ -66,12 +82,26 @@ type MethodDefinition = {
   defaultArgs: string;
   execute: (
     client: LiquidiumClient,
-    input: unknown,
+    input: MethodInput,
     walletAdapter?: WalletAdapter
-  ) => unknown | Promise<unknown>;
+  ) => SdkModuleResult | Promise<SdkModuleResult>;
 };
 
-const SDK_METHODS: MethodDefinition[] = [
+type ModuleMethodResult<Module> = {
+  [Method in keyof Module]: Module[Method] extends (
+    ...parameters: never[]
+  ) => infer Result
+    ? Awaited<Result>
+    : never;
+}[keyof Module];
+
+type SdkModuleResult = {
+  [Module in keyof LiquidiumClient]: ModuleMethodResult<
+    LiquidiumClient[Module]
+  >;
+}[keyof LiquidiumClient];
+
+const SDK_METHODS = [
   {
     id: "accounts.prepareCreateProfile",
     label: "accounts.prepareCreateProfile",
@@ -359,17 +389,11 @@ const SDK_METHODS: MethodDefinition[] = [
           ...borrowIdentifier,
           poolId: expectNonEmptyString(borrow.poolId, "borrow.poolId"),
           amount: expectBigInt(borrow.amount, "borrow.amount"),
-          destination: expectSimpleLoanAccount(
-            borrow.destination,
-            "borrow.destination"
-          ),
+          destination: expectReceiver(borrow.destination, "borrow.destination"),
         },
         refund: {
           chain: expectChain(refund.chain, "refund.chain"),
-          destination: expectSimpleLoanAccount(
-            refund.destination,
-            "refund.destination"
-          ),
+          destination: expectReceiver(refund.destination, "refund.destination"),
         },
         ltvMaxBps: expectBigInt(args.ltvMaxBps, "ltvMaxBps"),
         depositWindowSeconds: expectBigInt(
@@ -552,8 +576,8 @@ const SDK_METHODS: MethodDefinition[] = [
 
       return client.quote.getQuote(
         quoteRequest,
-        expectArray(args.pools, "pools") as Pool[],
-        expectObject(args.prices, "prices") as AssetPrices
+        expectPools(args.pools),
+        expectAssetPrices(args.prices)
       );
     },
   },
@@ -755,7 +779,7 @@ const SDK_METHODS: MethodDefinition[] = [
       return await client.lending.submitInflow({
         txid: expectNonEmptyString(args.txid, "txid"),
         chain: expectOptionalInflowChain(args.chain, "chain"),
-        operation: expectInflowOperation(args.operation, "operation"),
+        operation: expectSupplyAction(args.operation, "operation"),
       });
     },
   },
@@ -767,7 +791,11 @@ const SDK_METHODS: MethodDefinition[] = [
       return await client.lending.isBorrowingDisabled();
     },
   },
-];
+] as const satisfies readonly MethodDefinition[];
+
+type SdkMethod = (typeof SDK_METHODS)[number];
+
+type MethodResult = Awaited<ReturnType<SdkMethod["execute"]>>;
 
 const SDK_METHOD_GROUPS = groupMethodsByModule(SDK_METHODS);
 
@@ -782,8 +810,15 @@ export function SdkMethodQueryPage({
   setPrices,
 }: SdkMethodQueryPageProps) {
   const { primaryWallet } = useDynamicContext();
-  const [selectedMethodId, setSelectedMethodId] = useState(SDK_METHODS[0].id);
-  const [argsInput, setArgsInput] = useState(SDK_METHODS[0].defaultArgs);
+
+  const [selectedMethodId, setSelectedMethodId] = useState<string>(
+    SDK_METHODS[0].id
+  );
+
+  const [argsInput, setArgsInput] = useState<string>(
+    SDK_METHODS[0].defaultArgs
+  );
+
   const [result, setResult] = useState<string>("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isRunning, setIsRunning] = useState(false);
@@ -810,7 +845,7 @@ export function SdkMethodQueryPage({
     const startedAtMs = Date.now();
 
     try {
-      const parsedInput = JSON.parse(argsInput) as unknown;
+      const parsedInput = parseMethodInput(argsInput);
       const client = createLiquidiumClient();
 
       const walletAdapter =
@@ -826,19 +861,24 @@ export function SdkMethodQueryPage({
       );
 
       if (
-        ["accounts.createProfile", "accounts.getProfileId"].includes(
-          selectedMethod.id
-        ) &&
-        (typeof rawResult === "string" || rawResult === null)
+        selectedMethod.id === "accounts.createProfile" ||
+        selectedMethod.id === "accounts.getProfileId"
       ) {
-        setProfileId(rawResult);
+        // SAFETY: rawResult came from the selected method; both checked account methods return a profile ID or null.
+        setProfileId(
+          rawResult as Awaited<
+            ReturnType<LiquidiumClient["accounts"]["getProfileId"]>
+          >
+        );
       }
 
       if (selectedMethod.id === "market.listPools") {
+        // SAFETY: rawResult came from the selected market.listPools method, whose return value is Pool[].
         setPools(rawResult as Pool[]);
       }
 
       if (selectedMethod.id === "market.getAssetPrices") {
+        // SAFETY: rawResult came from the selected market.getAssetPrices method, whose return value is AssetPrices.
         setPrices(rawResult as AssetPrices);
       }
 
@@ -881,10 +921,10 @@ export function SdkMethodQueryPage({
     }
 
     try {
-      const currentArgs = JSON.parse(argsInput) as unknown;
+      const currentArgs = parseMethodInput(argsInput);
       const argsObject = expectObject(currentArgs);
 
-      const nextArgs: Record<string, unknown> = {
+      const nextArgs = {
         ...argsObject,
       };
 
@@ -944,9 +984,9 @@ export function SdkMethodQueryPage({
         "poolId" in nextArgs &&
         (!selectedPool || selectedPool.frozen)
       ) {
-        nextArgs.poolId = pools.find(
-          (pool) => !pool.frozen && pool.chain === walletChain
-        )?.id;
+        nextArgs.poolId =
+          pools.find((pool) => !pool.frozen && pool.chain === walletChain)
+            ?.id ?? UNDEFINED_JSON_VALUE;
 
         if ("amount" in nextArgs) {
           nextArgs.amount = "";
@@ -957,12 +997,14 @@ export function SdkMethodQueryPage({
         nextArgs.amount = "";
       }
 
-      if (
-        nextArgs.chain === walletChain &&
-        nextArgs.receiver !== null &&
-        typeof nextArgs.receiver === "object"
-      ) {
-        nextArgs.receiver = { ...nextArgs.receiver, address: walletAddress };
+      const receiver = z
+        .union([z.record(z.string(), z.json()), z.array(z.json())])
+        .safeParse(nextArgs.receiver);
+
+      if (nextArgs.chain === walletChain && receiver.success) {
+        nextArgs.receiver = Object.assign({}, receiver.data, {
+          address: walletAddress,
+        });
       }
 
       if (selectedMethod.id === "simpleLoans.create") {
@@ -990,6 +1032,9 @@ export function SdkMethodQueryPage({
         borrow.destination = walletAddress;
         refund.chain = walletChain;
         refund.destination = walletAddress;
+        nextArgs.collateral = collateral;
+        nextArgs.borrow = borrow;
+        nextArgs.refund = refund;
       }
 
       if (pools.length > 0 && "request" in nextArgs) {
@@ -1002,10 +1047,12 @@ export function SdkMethodQueryPage({
         if ("collateralPoolId" in requestArgs) {
           requestArgs.collateralPoolId = pools[1]?.id ?? pools[0]?.id;
         }
+
+        nextArgs.request = requestArgs;
       }
 
       if (pools.length > 0 && "pools" in nextArgs) {
-        nextArgs.pools = pools;
+        nextArgs.pools = parseMethodInput(stringifyExampleValue(pools));
       }
 
       if (Object.keys(prices).length > 0 && "prices" in nextArgs) {
@@ -1016,7 +1063,7 @@ export function SdkMethodQueryPage({
         nextArgs.mockSignature = DEFAULT_MOCK_SIGNATURE;
       }
 
-      setArgsInput(JSON.stringify(nextArgs, jsonReplacer, 2));
+      setArgsInput(stringifyExampleValue(nextArgs));
       setErrorMessage(null);
     } catch {
       setErrorMessage("The current JSON is invalid. Reset template first.");
@@ -1164,8 +1211,8 @@ export function SdkMethodQueryPage({
   );
 }
 
-function groupMethodsByModule(methods: MethodDefinition[]) {
-  const methodsByModule = new Map<string, MethodDefinition[]>();
+function groupMethodsByModule(methods: readonly SdkMethod[]) {
+  const methodsByModule = new Map<string, SdkMethod[]>();
 
   for (const method of methods) {
     const moduleName = method.id.split(".", 1)[0];
@@ -1198,366 +1245,13 @@ function createMockWalletAdapter(
 function createPrettyResult(params: {
   methodId: string;
   elapsedMs: number;
-  payload: unknown;
+  payload: MethodResult;
 }): string {
-  return JSON.stringify(
-    {
-      method: params.methodId,
-      elapsedMs: params.elapsedMs,
-      payload: params.payload,
-    },
-    jsonReplacer,
-    2
-  );
-}
-
-function jsonReplacer(key: string, value: unknown): unknown {
-  if (typeof value === "bigint") {
-    return value.toString();
-  }
-
-  if (typeof value === "function") {
-    return `[Function ${key || "anonymous"}]`;
-  }
-
-  if (value === undefined) {
-    return "[undefined]";
-  }
-
-  if (value instanceof Error) {
-    return {
-      name: value.name,
-      message: value.message,
-      stack: value.stack,
-    };
-  }
-
-  return value;
-}
-
-function expectObject(
-  value: unknown,
-  fieldName = "input"
-): Record<string, unknown> {
-  if (value && typeof value === "object" && !Array.isArray(value)) {
-    return value as Record<string, unknown>;
-  }
-
-  throw new Error(`${fieldName} must be a JSON object.`);
-}
-
-function expectOptionalObject(
-  value: unknown,
-  fieldName: string
-): Record<string, unknown> | undefined {
-  if (value === undefined || value === null) {
-    return undefined;
-  }
-
-  return expectObject(value, fieldName);
-}
-
-function expectArray(value: unknown, fieldName: string): unknown[] {
-  if (Array.isArray(value)) {
-    return value;
-  }
-
-  throw new Error(`${fieldName} must be an array.`);
-}
-
-function expectNonEmptyString(value: unknown, fieldName: string): string {
-  if (typeof value !== "string") {
-    throw new Error(`${fieldName} must be a string.`);
-  }
-
-  const trimmedValue = value.trim();
-
-  if (!trimmedValue) {
-    throw new Error(`${fieldName} is required.`);
-  }
-
-  return trimmedValue;
-}
-
-function expectOptionalString(
-  value: unknown,
-  fieldName: string
-): string | undefined {
-  if (value === undefined || value === null) {
-    return undefined;
-  }
-
-  if (typeof value !== "string") {
-    throw new Error(`${fieldName} must be a string when provided.`);
-  }
-
-  const trimmedValue = value.trim();
-
-  return trimmedValue || undefined;
-}
-
-function expectBigInt(value: unknown, fieldName: string): bigint {
-  if (typeof value === "bigint") {
-    return value;
-  }
-
-  if (typeof value === "number" && Number.isInteger(value)) {
-    return BigInt(value);
-  }
-
-  if (typeof value === "string") {
-    const trimmedValue = value.trim();
-
-    if (!trimmedValue) {
-      throw new Error(`${fieldName} cannot be empty.`);
-    }
-
-    return BigInt(trimmedValue);
-  }
-
-  throw new Error(`${fieldName} must be an integer string, number, or bigint.`);
-}
-
-function expectOptionalLimit(
-  value: unknown,
-  fieldName: string,
-  maximumLimit = MAX_LIST_LIMIT
-): number | undefined {
-  if (value === undefined || value === null) {
-    return undefined;
-  }
-
-  if (typeof value !== "number" || !Number.isInteger(value)) {
-    throw new Error(`${fieldName} must be an integer.`);
-  }
-
-  if (value < MIN_LIST_LIMIT || value > maximumLimit) {
-    throw new Error(
-      `${fieldName} must be between ${MIN_LIST_LIMIT} and ${maximumLimit}.`
-    );
-  }
-
-  return value;
-}
-
-function expectOptionalStringValues<T extends string>(
-  value: unknown,
-  fieldName: string,
-  allowedValues: readonly T[]
-): T[] | undefined {
-  if (value === undefined || value === null) {
-    return undefined;
-  }
-
-  const values = expectArray(value, fieldName).map((item, index) =>
-    expectNonEmptyString(item, `${fieldName}[${index}]`)
-  );
-
-  for (const value of values) {
-    if (!allowedValues.includes(value as T)) {
-      throw new Error(
-        `${fieldName} must contain only: ${allowedValues.join(", ")}.`
-      );
-    }
-  }
-
-  return values as T[];
-}
-
-function expectChain(value: unknown, fieldName: string): Chain {
-  const chain = expectNonEmptyString(value, fieldName).toUpperCase();
-
-  if (
-    chain === "BTC" ||
-    chain === "ETH" ||
-    chain === "ICP" ||
-    chain === "SOL"
-  ) {
-    return chain;
-  }
-
-  throw new Error(`${fieldName} must be BTC, ETH, ICP, or SOL.`);
-}
-
-function expectSigningChain(value: unknown, fieldName: string): SigningChain {
-  const chain = expectNonEmptyString(value, fieldName).toUpperCase();
-
-  if (chain === "BTC" || chain === "ETH" || chain === "SOL") {
-    return chain;
-  }
-
-  throw new Error(`${fieldName} must be BTC, ETH, or SOL.`);
-}
-
-function expectAsset(value: unknown, fieldName: string): Asset {
-  const asset = expectNonEmptyString(value, fieldName).toUpperCase();
-
-  if (
-    asset === "BTC" ||
-    asset === "ETH" ||
-    asset === "ICP" ||
-    asset === "SOL" ||
-    asset === "USDC" ||
-    asset === "USDT"
-  ) {
-    return asset;
-  }
-
-  throw new Error(`${fieldName} must be BTC, ETH, ICP, SOL, USDC, or USDT.`);
-}
-
-function expectAssetIdentifier(
-  assetValue: unknown,
-  chainValue: unknown,
-  fieldPrefix?: string
-): AssetIdentifier {
-  const assetField = fieldPrefix ? `${fieldPrefix}.asset` : "asset";
-  const chainField = fieldPrefix ? `${fieldPrefix}.chain` : "chain";
-
-  const identifier = {
-    asset: expectAsset(assetValue, assetField),
-    chain: expectChain(chainValue, chainField),
-  };
-
-  if (isAssetIdentifier(identifier)) {
-    return identifier;
-  }
-
-  throw new Error(
-    `${chainField} and ${assetField} must form a supported Chain + Asset pair.`
-  );
-}
-
-function expectReceiver(
-  value: unknown,
-  fieldName: string
-): LiquidiumAccountInput {
-  if (typeof value === "string") {
-    return expectNonEmptyString(value, fieldName);
-  }
-
-  const receiver = expectObject(value, fieldName);
-
-  const address = expectNonEmptyString(
-    receiver.address,
-    `${fieldName}.address`
-  );
-
-  const type =
-    receiver.type === undefined
-      ? undefined
-      : expectLiquidiumAccountType(receiver.type, `${fieldName}.type`);
-
-  if (!type) {
-    return address;
-  }
-
-  return {
-    address,
-    type,
-  };
-}
-
-function expectLiquidiumAccountType(
-  value: unknown,
-  fieldName: string
-): LiquidiumAccountType {
-  const accountType = expectNonEmptyString(value, fieldName);
-
-  if (
-    accountType === "ChainAddress" ||
-    accountType === "IcPrincipal" ||
-    accountType === "IcpAccountIdentifier" ||
-    accountType === "IcrcAccount"
-  ) {
-    return accountType;
-  }
-
-  throw new Error(
-    `${fieldName} must be ChainAddress, IcPrincipal, IcpAccountIdentifier, or IcrcAccount.`
-  );
-}
-
-function expectSimpleLoanAccount(
-  value: unknown,
-  fieldName: string
-): LiquidiumAccountInput {
-  if (typeof value === "string") {
-    return expectNonEmptyString(value, fieldName);
-  }
-
-  return expectReceiver(value, fieldName);
-}
-
-function expectOptionalInflowChain(
-  value: unknown,
-  fieldName: string
-): SigningChain | undefined {
-  if (value === undefined || value === null) {
-    return undefined;
-  }
-
-  return expectSigningChain(value, fieldName);
-}
-
-function expectSupplyAction(
-  value: unknown,
-  fieldName: string
-): "deposit" | "repayment" {
-  const action = expectNonEmptyString(value, fieldName).toLowerCase();
-
-  if (action === "deposit" || action === "repayment") {
-    return action;
-  }
-
-  throw new Error(`${fieldName} must be deposit or repayment.`);
-}
-
-function expectOptionalSupplyMechanism(
-  value: unknown,
-  fieldName: string
-): "contractInteraction" | undefined {
-  const mechanism = expectOptionalString(value, fieldName);
-
-  if (!mechanism) {
-    return undefined;
-  }
-
-  if (mechanism === "contractInteraction") {
-    return mechanism;
-  }
-
-  throw new Error(`${fieldName} must be contractInteraction when provided.`);
-}
-
-function expectInflowOperation(
-  value: unknown,
-  fieldName: string
-): InflowOperation {
-  const operation = expectNonEmptyString(value, fieldName).toLowerCase();
-
-  if (operation === "deposit" || operation === "repayment") {
-    return operation;
-  }
-
-  throw new Error(`${fieldName} must be deposit or repayment.`);
-}
-
-function expectOptionalActivityFilter(
-  value: unknown,
-  fieldName: string
-): ActivityFilter | undefined {
-  const filter = expectOptionalString(value, fieldName);
-
-  if (!filter) {
-    return undefined;
-  }
-
-  if (filter === "active" || filter === "completed" || filter === "all") {
-    return filter;
-  }
-
-  throw new Error(`${fieldName} must be active, completed, or all.`);
+  return stringifyExampleValue({
+    method: params.methodId,
+    elapsedMs: params.elapsedMs,
+    payload: params.payload,
+  });
 }
 
 function getWalletChainLabel(

@@ -112,6 +112,7 @@ async function createLiveSimpleLoan(params: {
     throw new Error(quote.validationErrors[0]?.message);
   }
 
+  // SAFETY: getMinimumBorrowAmount rejects assets other than USDC and USDT.
   return await params.client.simpleLoans.create({
     collateral: {
       poolId: params.collateralPool.id,
