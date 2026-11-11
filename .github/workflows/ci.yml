@@ -14,19 +14,19 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: pnpm/action-setup@v6
-
-      - uses: actions/setup-node@v6
+      - uses: voidzero-dev/setup-vp@v1.22.0
         with:
           node-version-file: ".nvmrc"
-          cache: "pnpm"
+          version: "1.5.0"
+          cache: true
+          run-install: false
 
-      - run: pnpm install --frozen-lockfile
+      - run: vp install --frozen-lockfile
 
-      - run: pnpm lint
+      - run: vp run build
 
-      - run: pnpm build
+      - run: vp check
 
-      - run: pnpm typecheck
+      - run: vp run typecheck
 
-      - run: pnpm test
+      - run: vp run test

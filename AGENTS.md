@@ -13,7 +13,14 @@ When changing public SDK behavior, exported types, method names, request fields,
 - Put lookup material in `docs/api-reference/`.
 - Put runnable-app notes in `docs/examples/`.
 
-Do not run TypeDoc through `pnpm docs:api` or modify its `docs/api-reference/generated/` output in feature or fix PRs. Regenerate and commit TypeDoc output in a separate documentation PR so generated files do not bloat implementation diffs, unless the user explicitly requests them in the same PR.
+Do not run TypeDoc through `bun run docs:api` or modify its `docs/api-reference/generated/` output in feature or fix PRs. Regenerate and commit TypeDoc output in a separate documentation PR so generated files do not bloat implementation diffs, unless the user explicitly requests them in the same PR.
+
+## Development tools
+
+- Use Bun for dependency management and workspace scripts. Commit `bun.lock`.
+- Use Vite+ for builds, tests, lint, formatting, and workspace tasks.
+- Run `bun run build`, `bun run lint`, `bun run typecheck`, and `bun run test`.
+- Keep lint and format settings in the root `vite.config.ts`.
 
 ## TypeScript API Shape
 

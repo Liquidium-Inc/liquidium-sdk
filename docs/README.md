@@ -12,7 +12,7 @@ These docs use a Diataxis-inspired structure:
 
 When you change public SDK behavior, exported types, method names, request fields, response fields, errors, examples, or runtime configuration, update the relevant hand-written documentation in this directory.
 
-Do not run TypeDoc through `pnpm docs:api` or modify `api-reference/generated/` in a feature or fix pull request. Regenerate and commit TypeDoc output in a separate documentation pull request unless the implementation pull request explicitly requires it.
+Do not run TypeDoc through `bun run docs:api` or modify `api-reference/generated/` in a feature or fix pull request. Regenerate and commit TypeDoc output in a separate documentation pull request unless the implementation pull request explicitly requires it.
 
 ## Writing checklist
 

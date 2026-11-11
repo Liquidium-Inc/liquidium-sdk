@@ -78,13 +78,15 @@ See the [quick start](https://liquidium-inc.github.io/liquidium-sdk/getting-star
 
 ## Development
 
-Requires Node.js 22.22.3+ in the 22.x line, 24.x, or 26+, and pnpm 11+.
+Requires Node.js 22.22.3+ in the 22.x line, 24.x, or 26+, Bun 1.4.4+,
+and the [Vite+ CLI](https://viteplus.dev/guide/).
 
 ```bash
-pnpm install
-pnpm build
-pnpm typecheck
-pnpm test
+bun install
+bun run build
+bun run lint
+bun run typecheck
+bun run test
 ```
 
 ## License

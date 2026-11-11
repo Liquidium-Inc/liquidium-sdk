@@ -1,6 +1,6 @@
 import { encodeIcrcAccount } from "@icp-sdk/canisters/ledger/icrc";
 import { Principal } from "@icp-sdk/core/principal";
-import { vi } from "vitest";
+import { vi } from "vite-plus/test";
 import type { FlexibleSimpleLoanCanisterRecord } from "../../../core/canisters/simple-loans/flexible-actor";
 
 interface TestBtcAssetVariant {

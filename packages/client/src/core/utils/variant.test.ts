@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "vite-plus/test";
 import { LiquidiumError, LiquidiumErrorCode } from "../errors";
 import { getVariantKey } from "./variant";
 

@@ -9,8 +9,8 @@ mainnet canisters. No API key or environment file is required.
 From the SDK repository root:
 
 ```bash
-pnpm install
-pnpm --filter @liquidium/example-recovery-flow dev
+bun install
+bun run --filter @liquidium/example-recovery-flow dev
 ```
 
 Open http://127.0.0.1:5178.
@@ -47,8 +47,8 @@ this example does not generate refunds or replay old repayments.
 ## Checks
 
 ```bash
-pnpm --filter @liquidium/example-recovery-flow test
-pnpm --filter @liquidium/example-recovery-flow build
+bun run --filter @liquidium/example-recovery-flow test
+bun run --filter @liquidium/example-recovery-flow build
 ```
 
 Tests use mocked clients and signers; they do not move funds.

@@ -1,12 +1,12 @@
 {
   "name": "@liquidium/example-btc-interactions-flow",
-  "private": true,
   "version": "0.0.1",
+  "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc --noEmit && vite build",
-    "preview": "vite preview",
+    "dev": "vp dev",
+    "build": "tsc --noEmit && vp build",
+    "preview": "vp preview",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -21,7 +21,8 @@
     "@types/react-dom": "^19.2.4",
     "@vitejs/plugin-react": "^5.2.0",
     "typescript": "^5.9.3",
-    "vite": "^7.3.6",
-    "vite-plugin-node-polyfills": "^0.28.0"
+    "vite": "catalog:",
+    "vite-plugin-node-polyfills": "^0.28.0",
+    "vite-plus": "catalog:"
   }
 }

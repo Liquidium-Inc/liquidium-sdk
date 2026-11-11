@@ -108,8 +108,10 @@ export interface CreateBorrowData extends CreateBorrowRequest {
 }
 
 /** Prepared action for creating a borrow outflow. */
-export interface BorrowAction
-  extends SignMessageWalletAction<CreateBorrowData, BorrowOutflowDetails> {
+export interface BorrowAction extends SignMessageWalletAction<
+  CreateBorrowData,
+  BorrowOutflowDetails
+> {
   /** Protocol action kind. */
   kind: typeof WalletActionKind.createBorrow;
   /** Required wallet capability. */
@@ -145,8 +147,10 @@ export interface CreateWithdrawData extends CreateWithdrawRequest {
 }
 
 /** Prepared action for creating a withdraw outflow. */
-export interface WithdrawAction
-  extends SignMessageWalletAction<CreateWithdrawData, WithdrawOutflowDetails> {
+export interface WithdrawAction extends SignMessageWalletAction<
+  CreateWithdrawData,
+  WithdrawOutflowDetails
+> {
   /** Protocol action kind. */
   kind: typeof WalletActionKind.createWithdraw;
   /** Required wallet capability. */
@@ -196,16 +200,17 @@ export interface RecoveryResult {
 }
 
 /** Prepared wallet-signature recovery action. */
-export interface RecoveryAction
-  extends SignMessageWalletAction<RecoveryData, RecoveryResult> {
+export interface RecoveryAction extends SignMessageWalletAction<
+  RecoveryData,
+  RecoveryResult
+> {
   kind: typeof WalletActionKind.recoverFunds;
   actionType: typeof WalletActionKind.recoverFunds;
 }
 
 /** Wallet dependencies for recovery through a linked BTC, ETH, or SOL account. */
 export interface RecoverWithWalletRequest
-  extends PrepareRecoveryRequest,
-    WalletExecutionParams {}
+  extends PrepareRecoveryRequest, WalletExecutionParams {}
 
 /** Authenticated ICP caller used only for the recovery update. */
 export interface IcpRecoveryAuthorization {
@@ -289,8 +294,7 @@ export type TransferSupplyFlowRequest =
   | WalletTransferSupplyFlowRequest;
 
 /** Input for contract-interaction `lending.supply`, which always executes now. */
-export interface ContractInteractionSupplyFlowRequest
-  extends BaseSupplyFlowRequest {
+export interface ContractInteractionSupplyFlowRequest extends BaseSupplyFlowRequest {
   /** Contract-interaction mechanism discriminator. */
   mechanism: typeof SupplyPlanType.contractInteraction;
   /** Contract interaction is supported for native ETH, USDC, and USDT pools on Ethereum. */

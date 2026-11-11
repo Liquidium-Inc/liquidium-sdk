@@ -5,13 +5,13 @@ This app uses Docusaurus to render the SDK documentation from `docs/`.
 From the SDK root, start the development server:
 
 ```bash
-pnpm --filter docs dev
+bun run --filter docs dev
 ```
 
 From the SDK root, build the documentation site:
 
 ```bash
-pnpm --filter docs build
+bun run --filter docs build
 ```
 
 The `docs/` directory contains the documentation source. Update hand-written

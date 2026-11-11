@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "vite-plus/test";
 import { Asset, Chain } from "../../../core/types";
 import { roundInflowFeeEstimate } from "./inflow-fee-rounding";
 

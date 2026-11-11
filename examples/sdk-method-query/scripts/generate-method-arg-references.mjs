@@ -118,7 +118,7 @@ if (mode === "--check") {
 
   if (currentOutput !== output) {
     throw new Error(
-      "Method argument references are stale. Run pnpm generate:method-references."
+      "Method argument references are stale. Run bun run generate:method-references."
     );
   }
 } else {

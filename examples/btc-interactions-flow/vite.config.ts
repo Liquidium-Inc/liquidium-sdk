@@ -2,7 +2,7 @@ import { createRequire } from "node:module";
 import { dirname } from "node:path";
 import { fileURLToPath, URL } from "node:url";
 import react from "@vitejs/plugin-react";
-import { defineConfig } from "vite";
+import { defineConfig, lazyPlugins } from "vite-plus";
 import { nodePolyfills } from "vite-plugin-node-polyfills";
 
 const resolveProjectPath = (path: string) =>
@@ -12,7 +12,7 @@ const requireFromExample = createRequire(import.meta.url);
 const nobleHashesUtilsPath = requireFromExample.resolve("@noble/hashes/utils");
 const WALLET_STACK_CHUNK_SIZE_WARNING_LIMIT_KB = 6_000;
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   define: {
     global: "globalThis",
     process: {
@@ -20,18 +20,18 @@ export default defineConfig({
       version: "v18.0.0",
     },
   },
-  plugins: [
+  plugins: lazyPlugins(() => [
     react(),
     nodePolyfills({
       include: ["buffer", "process", "stream", "util"],
       globals: {
-        Buffer: true,
-        global: true,
-        process: true,
+        Buffer: command === "build" ? "build" : "dev",
+        global: command === "build" ? "build" : "dev",
+        process: command === "build" ? "build" : "dev",
       },
       protocolImports: true,
     }),
-  ],
+  ]),
   resolve: {
     alias: {
       "@": resolveProjectPath("./src"),
@@ -63,4 +63,4 @@ export default defineConfig({
       },
     },
   },
-});
+}));

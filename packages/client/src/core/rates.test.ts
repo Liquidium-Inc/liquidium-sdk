@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "vite-plus/test";
 import { estimateBorrowApy, estimateSupplyApy, RATE_SCALE } from "./rates";
 
 describe("rate APY estimates", () => {

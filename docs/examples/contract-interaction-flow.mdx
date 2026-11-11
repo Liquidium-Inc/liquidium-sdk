@@ -19,14 +19,14 @@ and amount before you confirm a transaction.
 ## Start the example
 
 Use Node.js 22.22.3 or later in the 22.x line, 24.x, or 26 or later. Use
-`pnpm` 11 or later and an Ethereum mainnet wallet.
+Bun 1.4.4 or later, the Vite+ CLI, and an Ethereum mainnet wallet.
 
 To start the example, follow these steps:
 
 1. From the SDK root, install the workspace dependencies:
 
    ```bash
-   pnpm install
+    bun install
    ```
 
 2. Optional: To configure your own Ethereum Remote Procedure Call (RPC)
@@ -45,7 +45,7 @@ To start the example, follow these steps:
 3. Start the example:
 
    ```bash
-   pnpm --filter @liquidium/example-contract-interaction-flow dev
+    bun run --filter @liquidium/example-contract-interaction-flow dev
    ```
 
 4. Open the local URL that Vite prints.
