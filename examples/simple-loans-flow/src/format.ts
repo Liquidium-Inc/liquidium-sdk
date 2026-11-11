@@ -59,10 +59,12 @@ export function parseAmountToBaseUnits(
   }
 
   const paddedFractionalPart = fractionalPart.padEnd(decimalPlaces, "0");
+
   const baseUnitText = `${wholePart}${paddedFractionalPart}`.replace(
     /^0+(?=\d)/,
     ""
   );
+
   const amount = BigInt(baseUnitText || "0");
 
   if (amount <= 0n) {
@@ -106,7 +108,9 @@ export function formatAmount(amount: bigint, decimals: bigint): string {
   const paddedAmount = absoluteAmount
     .toString()
     .padStart(decimalPlaces + 1, "0");
+
   const wholePart = paddedAmount.slice(0, -decimalPlaces) || "0";
+
   const fractionalPart = paddedAmount
     .slice(-decimalPlaces)
     .slice(0, DISPLAY_DECIMALS)
@@ -201,20 +205,25 @@ export function formatSimpleLoan(
     loan.collateral.poolId,
     loan.collateral.decimals
   );
+
   const borrowDecimals = getSimpleLoanPoolDecimals(
     options.pools,
     loan.borrow.poolId,
     loan.borrow.decimals
   );
+
   const includeTargets = options.includeTargets ?? true;
+
   const initialDepositQuotes = Object.values(
     loan.initialDeposit.targets
   ).filter(
     (quote): quote is SimpleLoanInitialDepositTargetQuote => quote !== undefined
   );
+
   const repaymentQuotes = Object.values(loan.repayment.targets).filter(
     (quote): quote is SimpleLoanRepaymentTargetQuote => quote !== undefined
   );
+
   const targetLines = includeTargets
     ? [
         "",
@@ -241,6 +250,7 @@ export function formatSimpleLoan(
         )}`,
       ]
     : [];
+
   const repaymentLines = includeTargets
     ? [
         "Repayment targets:",
@@ -428,6 +438,7 @@ export function stringifyForDisplay(value: unknown): string {
 
 export function saveRecentLoanRef(ref: string): void {
   const existingRefs = getRecentLoanRefs();
+
   const nextRefs = [
     ref,
     ...existingRefs.filter((existingRef) => existingRef !== ref),
@@ -475,6 +486,7 @@ function formatErrorWithDetails(
     if (seenErrors.has(error)) {
       return "[Circular error]";
     }
+
     seenErrors.add(error);
 
     const code = "code" in error ? String(error.code) : null;

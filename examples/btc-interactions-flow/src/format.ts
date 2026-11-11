@@ -9,8 +9,10 @@ import type {
 import { SupplyAction as SupplyActionValue } from "@liquidium/client";
 
 const DISPLAY_DECIMALS = 8;
+
 const RECENT_ACTIVITY_IDS_STORAGE_KEY =
   "liquidium-btc-interactions.recentActivityIds";
+
 const MAX_RECENT_ACTIVITY_IDS = 10;
 const ERROR_FIELD_EXCLUDE_LIST = new Set(["name", "message", "stack", "cause"]);
 
@@ -40,10 +42,12 @@ export function parseAmountToBaseUnits(
   }
 
   const paddedFractionalPart = fractionalPart.padEnd(decimalPlaces, "0");
+
   const baseUnitText = `${wholePart}${paddedFractionalPart}`.replace(
     /^0+(?=\d)/,
     ""
   );
+
   const amount = BigInt(baseUnitText || "0");
 
   if (amount <= 0n) {
@@ -65,7 +69,9 @@ export function formatAmount(amount: bigint, decimals: bigint): string {
   const paddedAmount = absoluteAmount
     .toString()
     .padStart(decimalPlaces + 1, "0");
+
   const wholePart = paddedAmount.slice(0, -decimalPlaces) || "0";
+
   const fractionalPart = paddedAmount
     .slice(-decimalPlaces)
     .slice(0, DISPLAY_DECIMALS)
@@ -98,6 +104,7 @@ export function formatBtcSupplyFlow(
 ): string {
   const actionLabel =
     action === SupplyActionValue.repayment ? "repayment" : "supply";
+
   const title = flow.txid
     ? `BTC ${actionLabel} submitted.`
     : `BTC ${actionLabel} target generated.`;
@@ -151,6 +158,7 @@ export function formatActivity(activity: Activity): string {
 
 export function saveRecentActivityId(activityId: string): void {
   const existingIds = getRecentActivityIds();
+
   const nextIds = [
     activityId,
     ...existingIds.filter((existingId) => existingId !== activityId),
@@ -223,6 +231,7 @@ function formatErrorWithDetails(
     if (seenErrors.has(error)) {
       return "[Circular error]";
     }
+
     seenErrors.add(error);
 
     const code = "code" in error ? String(error.code) : null;

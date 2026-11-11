@@ -140,6 +140,7 @@ test("uses the active SOL pool for both native and ckSOL discovery", async () =>
     solPool(retiredPoolId),
     solPool(SOL_POOL_ID),
   ]);
+
   const client = new LiquidiumClient({
     canisterIds: { pools: { sol: SOL_POOL_ID } },
   });
@@ -189,6 +190,7 @@ test.each(["deposit", "repayment"] as const)(
     // given
     createSolActor();
     const sendSolTransaction = vi.fn();
+
     const client = new LiquidiumClient({
       fetch: feeFetch(),
       canisterIds: SOL_CANISTER_IDS,
@@ -231,6 +233,7 @@ test("returns the SOL signature even when post-broadcast indexing fails", async 
     amount: MINIMUM_SEND_LAMPORTS,
     walletAdapter: { sendSolTransaction },
   });
+
   await vi.runAllTimersAsync();
   const flow = await result;
 
@@ -256,6 +259,7 @@ test("sends ckSOL to the correct ledger and repayment subaccount", async () => {
   // given
   createSolActor();
   const sendIcrcTransfer = vi.fn().mockResolvedValue("123");
+
   const client = new LiquidiumClient({
     fetch: feeFetch(),
     canisterIds: SOL_CANISTER_IDS,
@@ -302,6 +306,7 @@ test("requires account context for SOL fees and never returns a fallback on fail
   const fetch = vi
     .fn<typeof globalThis.fetch>()
     .mockRejectedValue(new Error("offline"));
+
   const client = new LiquidiumClient({ fetch });
 
   // when
@@ -381,6 +386,7 @@ test("rejects SOL inflow targets for a pool other than the configured one", asyn
       code: LiquidiumErrorCode.VALIDATION_ERROR,
     });
   }
+
   expect(actor.get_deposit_address).not.toHaveBeenCalled();
 });
 
@@ -388,9 +394,11 @@ test("requires native SOL withdrawals to cover the minter minimum and ledger fee
   // given
   createSolActor();
   const client = new LiquidiumClient({ canisterIds: SOL_CANISTER_IDS });
+
   const minimumLamports =
     MINTER_MINIMUM_WITHDRAWAL_LAMPORTS +
     CKSOL_LEDGER_FEE_LAMPORTS * SOL_OUTFLOW_LEDGER_FEE_COUNT;
+
   const withdraw = (amount: bigint, chain: "SOL" | "ICP", receiver: string) =>
     client.lending.prepareWithdraw({
       profileId: PROFILE_ID,
@@ -418,9 +426,11 @@ test("rechecks the native SOL floor when a prepared withdrawal is submitted", as
   // given
   const actor = createSolActor();
   const client = new LiquidiumClient({ canisterIds: SOL_CANISTER_IDS });
+
   const preparedLamports =
     MINTER_MINIMUM_WITHDRAWAL_LAMPORTS +
     CKSOL_LEDGER_FEE_LAMPORTS * SOL_OUTFLOW_LEDGER_FEE_COUNT;
+
   const action = await client.lending.prepareWithdraw({
     profileId: PROFILE_ID,
     poolId: SOL_POOL_ID,
@@ -429,6 +439,7 @@ test("rechecks the native SOL floor when a prepared withdrawal is submitted", as
     receiver: SOL_ADDRESS,
     signerWalletAddress: SOL_ADDRESS,
   });
+
   actor.get_minter_info.mockResolvedValue({
     minimum_withdrawal_amount: preparedLamports,
     withdrawal_fee: 1_000_000n,
@@ -497,6 +508,7 @@ function createSolActor() {
     Ok: Principal.fromText(PROFILE_ID),
   } satisfies Awaited<ReturnType<SolTestActor["register_profile"]>>);
   vi.spyOn(Actor, "createActor").mockReturnValue(actor as never);
+
   return actor;
 }
 
@@ -509,6 +521,7 @@ function feeFetch() {
         walletTransferFee: SENDER_FEE_LAMPORTS.toString(),
       });
     }
+
     return Response.json(
       { error: "transaction not finalised" },
       { status: 404 }

@@ -7,6 +7,7 @@ export const ActivityFilter = {
   completed: "completed",
   all: "all",
 } as const;
+
 /** Activity list lifecycle filter. */
 export type ActivityFilter =
   (typeof ActivityFilter)[keyof typeof ActivityFilter];
@@ -32,6 +33,7 @@ export const InflowRefundState = {
   /** A recovery withdrew the pool's recovery balance after this failure. */
   recovered: "recovered",
 } as const;
+
 /** Refund outcome for a failed inflow. */
 export type InflowRefundState =
   (typeof InflowRefundState)[keyof typeof InflowRefundState];
@@ -51,6 +53,7 @@ export type InflowActivityOperation = Extract<
   LiquidiumOperation,
   "deposit" | "repayment"
 >;
+
 /** Operation emitted by borrow or withdrawal outflows. */
 export type OutflowActivityOperation = Extract<
   LiquidiumOperation,
@@ -60,6 +63,7 @@ export type OutflowActivityOperation = Extract<
 export type InflowActivityStatus = LiquidiumStatus & {
   operation: InflowActivityOperation;
 };
+
 export type OutflowActivityStatus = LiquidiumStatus & {
   operation: OutflowActivityOperation;
 };

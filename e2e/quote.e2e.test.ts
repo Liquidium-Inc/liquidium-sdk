@@ -21,6 +21,7 @@ describeLive("live quote e2e", () => {
     // when
     const quoteResults = borrowPools.map((borrowPool) => {
       const borrowAmount = getMinimumBorrowAmount(borrowPool);
+
       const quote = client.quote.getQuote(
         {
           borrowAmount,
@@ -31,6 +32,7 @@ describeLive("live quote e2e", () => {
         pools,
         assetPrices
       );
+
       const ltv = client.quote.calculateLtv(
         {
           borrowAmount,
@@ -47,6 +49,7 @@ describeLive("live quote e2e", () => {
 
     // then
     expect(quoteResults.length).toBeGreaterThan(0);
+
     for (const { borrowPool, quote, ltv } of quoteResults) {
       expect(quote.validationErrors).toEqual([]);
       expect(quote.borrowAsset).toBe(borrowPool.asset);
@@ -81,6 +84,7 @@ describeLive("live quote e2e", () => {
       pools,
       assetPrices
     );
+
     const increasedQuote = client.quote.getQuote(
       {
         borrowAmount: increasedBorrowAmount,
@@ -103,6 +107,7 @@ describeLive("live quote e2e", () => {
 
 function getConservativeTargetLtvBps(collateralPool: Pool): bigint {
   const targetLtvBps = collateralPool.maxLtv / 2n;
+
   if (targetLtvBps <= 0n) {
     throw new Error("Live BTC collateral pool has no usable max LTV");
   }

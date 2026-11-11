@@ -32,15 +32,18 @@ const MAX_HISTORY_LIMIT = 200;
 const MAX_PROTOCOL_ACTIVITY_LIMIT = 100;
 const DEFAULT_MOCK_SIGNATURE = "replace-with-real-signature";
 const DEFAULT_MOCK_TX_HASH = "0xmockedtxhash";
+
 // SOL transaction signatures are 64 base58-encoded bytes.
 const DEFAULT_MOCK_SOL_SIGNATURE =
   "99eUso3aSbE9tqGSTXzo3TLfKb9RkMTURrHKQ1K7Zh3BbeqPevr5E1iCbpTjqHuTFLtfxTTD5ekfVuZFzQyEQf8";
+
 const WALLET_EXECUTION_METHODS = new Set([
   "accounts.createProfile",
   "lending.borrow",
   "lending.withdraw",
   "lending.supply",
 ]);
+
 const HISTORY_OPERATIONS = [
   "deposit",
   "borrow",
@@ -48,6 +51,7 @@ const HISTORY_OPERATIONS = [
   "withdrawal",
   "liquidation",
 ] as const satisfies readonly UserTransactionHistoryOperation[];
+
 const HISTORY_STATES = [
   "action_required",
   "confirming",
@@ -74,6 +78,7 @@ const SDK_METHODS: MethodDefinition[] = [
     defaultArgs: '{\n  "account": "0xYourWalletAddress"\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
+
       return await client.accounts.prepareCreateProfile({
         account: expectNonEmptyString(args.account, "account"),
       });
@@ -86,6 +91,7 @@ const SDK_METHODS: MethodDefinition[] = [
       '{\n  "account": "0xYourWalletAddress",\n  "chain": "ETH",\n  "mockSignature": "replace-with-real-signature"\n}',
     execute: async (client, input, walletAdapter) => {
       const args = expectObject(input);
+
       return await client.accounts.createProfile({
         account: expectNonEmptyString(args.account, "account"),
         chain: expectSigningChain(args.chain, "chain"),
@@ -103,6 +109,7 @@ const SDK_METHODS: MethodDefinition[] = [
     defaultArgs: '{\n  "walletAddress": "0xYourWalletAddress"\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
+
       return await client.accounts.getProfileId(
         expectNonEmptyString(args.walletAddress, "walletAddress")
       );
@@ -114,6 +121,7 @@ const SDK_METHODS: MethodDefinition[] = [
     defaultArgs: '{\n  "profileId": "aaaaa-aa"\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
+
       return await client.accounts.profileExists(
         expectNonEmptyString(args.profileId, "profileId")
       );
@@ -125,6 +133,7 @@ const SDK_METHODS: MethodDefinition[] = [
     defaultArgs: '{\n  "walletAddress": "0xYourWalletAddress"\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
+
       return await client.accounts.getWalletNonce(
         expectNonEmptyString(args.walletAddress, "walletAddress")
       );
@@ -136,6 +145,7 @@ const SDK_METHODS: MethodDefinition[] = [
     defaultArgs: '{\n  "profileId": "aaaaa-aa"\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
+
       return await client.accounts.listLinkedWallets(
         expectNonEmptyString(args.profileId, "profileId")
       );
@@ -171,6 +181,7 @@ const SDK_METHODS: MethodDefinition[] = [
     defaultArgs: '{\n  "asset": "BTC",\n  "chain": "BTC"\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
+
       return await client.market.findPool(
         expectAssetIdentifier(args.asset, args.chain)
       );
@@ -182,6 +193,7 @@ const SDK_METHODS: MethodDefinition[] = [
     defaultArgs: '{\n  "poolId": "aaaaa-aa"\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
+
       return await client.market.getPoolRate(
         expectNonEmptyString(args.poolId, "poolId")
       );
@@ -193,6 +205,7 @@ const SDK_METHODS: MethodDefinition[] = [
     defaultArgs: '{\n  "asset": "BTC",\n  "chain": "BTC"\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
+
       return await client.market.getReserveData(
         expectAssetIdentifier(args.asset, args.chain)
       );
@@ -204,6 +217,7 @@ const SDK_METHODS: MethodDefinition[] = [
     defaultArgs: '{\n  "profileId": "aaaaa-aa",\n  "poolId": "bbbbb-bb"\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
+
       return await client.positions.getPosition(
         expectNonEmptyString(args.profileId, "profileId"),
         expectNonEmptyString(args.poolId, "poolId")
@@ -216,6 +230,7 @@ const SDK_METHODS: MethodDefinition[] = [
     defaultArgs: '{\n  "profileId": "aaaaa-aa"\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
+
       return await client.positions.listPositions(
         expectNonEmptyString(args.profileId, "profileId")
       );
@@ -227,6 +242,7 @@ const SDK_METHODS: MethodDefinition[] = [
     defaultArgs: '{\n  "profileId": "aaaaa-aa"\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
+
       return await client.positions.getHealthFactor(
         expectNonEmptyString(args.profileId, "profileId")
       );
@@ -238,6 +254,7 @@ const SDK_METHODS: MethodDefinition[] = [
     defaultArgs: '{\n  "profileId": "aaaaa-aa"\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
+
       return await client.positions.getUserStats(
         expectNonEmptyString(args.profileId, "profileId")
       );
@@ -249,6 +266,7 @@ const SDK_METHODS: MethodDefinition[] = [
     defaultArgs: '{\n  "profileId": "aaaaa-aa"\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
+
       return await client.positions.getUserPositionSummary(
         expectNonEmptyString(args.profileId, "profileId")
       );
@@ -260,6 +278,7 @@ const SDK_METHODS: MethodDefinition[] = [
     defaultArgs: '{\n  "profileId": "aaaaa-aa"\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
+
       return await client.positions.getUserReserves(
         expectNonEmptyString(args.profileId, "profileId")
       );
@@ -271,6 +290,7 @@ const SDK_METHODS: MethodDefinition[] = [
     defaultArgs: '{\n  "profileId": "aaaaa-aa",\n  "poolId": "bbbbb-bb"\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
+
       return await client.positions.getMaxRepayAmount(
         expectNonEmptyString(args.profileId, "profileId"),
         expectNonEmptyString(args.poolId, "poolId")
@@ -283,6 +303,7 @@ const SDK_METHODS: MethodDefinition[] = [
     defaultArgs: '{\n  "profileId": "aaaaa-aa",\n  "poolId": "bbbbb-bb"\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
+
       return await client.positions.getFullWithdrawAmount(
         expectNonEmptyString(args.profileId, "profileId"),
         expectNonEmptyString(args.poolId, "poolId")
@@ -295,6 +316,7 @@ const SDK_METHODS: MethodDefinition[] = [
     defaultArgs: '{\n  "shortRef": "Y7R19F",\n  "filter": "all"\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
+
       const request = args.shortRef
         ? {
             shortRef: expectNonEmptyString(args.shortRef, "shortRef"),
@@ -320,6 +342,7 @@ const SDK_METHODS: MethodDefinition[] = [
       const collateral = expectObject(args.collateral, "collateral");
       const borrow = expectObject(args.borrow, "borrow");
       const refund = expectObject(args.refund, "refund");
+
       const borrowIdentifier = expectAssetIdentifier(
         borrow.asset,
         borrow.chain,
@@ -362,6 +385,7 @@ const SDK_METHODS: MethodDefinition[] = [
     defaultArgs: '{\n  "ref": "Y7R19F"\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
+
       return await client.simpleLoans.get({
         ref: expectNonEmptyString(args.ref, "ref"),
       });
@@ -373,6 +397,7 @@ const SDK_METHODS: MethodDefinition[] = [
     defaultArgs: '{\n  "loanId": "66"\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
+
       return await client.simpleLoans.get({
         loanId: expectBigInt(args.loanId, "loanId"),
       });
@@ -384,6 +409,7 @@ const SDK_METHODS: MethodDefinition[] = [
     defaultArgs: '{\n  "query": "bc1qYourRefundOrDepositAddress"\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
+
       return await client.simpleLoans.find(
         expectNonEmptyString(args.query, "query")
       );
@@ -395,6 +421,7 @@ const SDK_METHODS: MethodDefinition[] = [
     defaultArgs: '{\n  "profileId": "aaaaa-aa",\n  "id": "receipt-id"\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
+
       return await client.activities.getStatus({
         profileId: expectNonEmptyString(args.profileId, "profileId"),
         id: expectNonEmptyString(args.id, "id"),
@@ -503,6 +530,7 @@ const SDK_METHODS: MethodDefinition[] = [
     execute: (client, input) => {
       const args = expectObject(input);
       const requestValue = expectObject(args.request, "request");
+
       const quoteRequest: QuoteRequest = {
         borrowAmount: expectBigInt(
           requestValue.borrowAmount,
@@ -536,6 +564,7 @@ const SDK_METHODS: MethodDefinition[] = [
       '{\n  "profileId": "aaaaa-aa",\n  "poolId": "bbbbb-bb",\n  "amount": "10000",\n  "chain": "BTC",\n  "receiver": {\n    "address": "bc1..."\n  },\n  "signerWalletAddress": "bc1..."\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
+
       return await client.lending.prepareWithdraw({
         profileId: expectNonEmptyString(args.profileId, "profileId"),
         poolId: expectNonEmptyString(args.poolId, "poolId"),
@@ -556,6 +585,7 @@ const SDK_METHODS: MethodDefinition[] = [
       '{\n  "profileId": "aaaaa-aa",\n  "poolId": "bbbbb-bb",\n  "amount": "10000",\n  "chain": "BTC",\n  "receiver": {\n    "address": "bc1..."\n  },\n  "signerWalletAddress": "bc1...",\n  "signerChain": "BTC",\n  "mockSignature": "replace-with-real-signature"\n}',
     execute: async (client, input, walletAdapter) => {
       const args = expectObject(input);
+
       return await client.lending.withdraw({
         profileId: expectNonEmptyString(args.profileId, "profileId"),
         poolId: expectNonEmptyString(args.poolId, "poolId"),
@@ -582,6 +612,7 @@ const SDK_METHODS: MethodDefinition[] = [
       '{\n  "profileId": "aaaaa-aa",\n  "poolId": "bbbbb-bb",\n  "amount": "10000",\n  "chain": "BTC",\n  "receiver": {\n    "address": "bc1..."\n  },\n  "signerWalletAddress": "bc1..."\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
+
       return await client.lending.prepareBorrow({
         profileId: expectNonEmptyString(args.profileId, "profileId"),
         poolId: expectNonEmptyString(args.poolId, "poolId"),
@@ -602,6 +633,7 @@ const SDK_METHODS: MethodDefinition[] = [
       '{\n  "profileId": "aaaaa-aa",\n  "poolId": "bbbbb-bb",\n  "amount": "10000",\n  "chain": "BTC",\n  "receiver": {\n    "address": "bc1..."\n  },\n  "signerWalletAddress": "bc1...",\n  "signerChain": "BTC",\n  "mockSignature": "replace-with-real-signature"\n}',
     execute: async (client, input, walletAdapter) => {
       const args = expectObject(input);
+
       return await client.lending.borrow({
         profileId: expectNonEmptyString(args.profileId, "profileId"),
         poolId: expectNonEmptyString(args.poolId, "poolId"),
@@ -628,23 +660,29 @@ const SDK_METHODS: MethodDefinition[] = [
       '{\n  "profileId": "aaaaa-aa",\n  "poolId": "bbbbb-bb",\n  "action": "deposit",\n  "chain": "ETH",\n  "account": "0xYourWalletAddress",\n  "amount": "5000000000000000",\n  "mockTxHash": "0xmockedtxhash"\n}',
     execute: async (client, input, connectedWalletAdapter) => {
       const args = expectObject(input);
+
       const mockTxHash =
         expectOptionalString(args.mockTxHash, "mockTxHash") ??
         DEFAULT_MOCK_TX_HASH;
+
       const account = expectOptionalString(args.account, "account");
+
       const amount =
         args.amount === undefined
           ? undefined
           : expectBigInt(args.amount, "amount");
+
       const walletAdapter =
         account || amount || args.mockTxHash !== undefined
           ? (connectedWalletAdapter ??
             createMockWalletAdapter(DEFAULT_MOCK_SIGNATURE, mockTxHash))
           : undefined;
+
       const mechanism = expectOptionalSupplyMechanism(
         args.mechanism,
         "mechanism"
       );
+
       const chain = expectChain(args.chain, "chain");
 
       if (mechanism === "contractInteraction") {
@@ -693,6 +731,7 @@ const SDK_METHODS: MethodDefinition[] = [
     execute: async (client, input) => {
       const args = expectObject(input);
       const identifier = expectAssetIdentifier(args.asset, args.chain);
+
       if (identifier.asset === "SOL") {
         return client.lending.estimateInflowFee({
           ...identifier,
@@ -701,6 +740,7 @@ const SDK_METHODS: MethodDefinition[] = [
           action: expectSupplyAction(args.action, "action"),
         });
       }
+
       return await client.lending.estimateInflowFee(identifier);
     },
   },
@@ -711,6 +751,7 @@ const SDK_METHODS: MethodDefinition[] = [
       '{\n  "txid": "replace-with-txid",\n  "chain": "BTC",\n  "operation": "deposit"\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
+
       return await client.lending.submitInflow({
         txid: expectNonEmptyString(args.txid, "txid"),
         chain: expectOptionalInflowChain(args.chain, "chain"),
@@ -754,6 +795,7 @@ export function SdkMethodQueryPage({
       SDK_METHODS[0]
     );
   }, [selectedMethodId]);
+
   const selectedMethodArgReference =
     METHOD_ARG_REFERENCES[selectedMethod.id] ?? "No reference available.";
 
@@ -770,16 +812,19 @@ export function SdkMethodQueryPage({
     try {
       const parsedInput = JSON.parse(argsInput) as unknown;
       const client = createLiquidiumClient();
+
       const walletAdapter =
         executionMode === "connected" &&
         WALLET_EXECUTION_METHODS.has(selectedMethod.id)
           ? createConnectedWalletAdapter(primaryWallet)
           : undefined;
+
       const rawResult = await selectedMethod.execute(
         client,
         parsedInput,
         walletAdapter
       );
+
       if (
         ["accounts.createProfile", "accounts.getProfileId"].includes(
           selectedMethod.id
@@ -788,12 +833,15 @@ export function SdkMethodQueryPage({
       ) {
         setProfileId(rawResult);
       }
+
       if (selectedMethod.id === "market.listPools") {
         setPools(rawResult as Pool[]);
       }
+
       if (selectedMethod.id === "market.getAssetPrices") {
         setPrices(rawResult as AssetPrices);
       }
+
       const elapsedMs = Date.now() - startedAtMs;
 
       setResult(
@@ -828,6 +876,7 @@ export function SdkMethodQueryPage({
   function applyWalletDefaults() {
     if (!walletAddress) {
       setErrorMessage("Connect a wallet before applying wallet defaults.");
+
       return;
     }
 
@@ -838,8 +887,10 @@ export function SdkMethodQueryPage({
       const nextArgs: Record<string, unknown> = {
         ...argsObject,
       };
+
       const previousTransferChain = nextArgs.chain;
       const selectedPool = pools.find((pool) => pool.id === nextArgs.poolId);
+
       const isOutflow = [
         "lending.borrow",
         "lending.prepareBorrow",
@@ -896,13 +947,16 @@ export function SdkMethodQueryPage({
         nextArgs.poolId = pools.find(
           (pool) => !pool.frozen && pool.chain === walletChain
         )?.id;
+
         if ("amount" in nextArgs) {
           nextArgs.amount = "";
         }
       }
+
       if (previousTransferChain !== nextArgs.chain && "amount" in nextArgs) {
         nextArgs.amount = "";
       }
+
       if (
         nextArgs.chain === walletChain &&
         nextArgs.receiver !== null &&
@@ -915,6 +969,7 @@ export function SdkMethodQueryPage({
         const compatiblePools = pools.filter(
           (pool) => pool.chain === walletChain
         );
+
         const collateralPool = compatiblePools[0];
         const borrowPool = compatiblePools[1] ?? compatiblePools[0];
         const collateral = expectObject(nextArgs.collateral, "collateral");
@@ -1216,6 +1271,7 @@ function expectNonEmptyString(value: unknown, fieldName: string): string {
   }
 
   const trimmedValue = value.trim();
+
   if (!trimmedValue) {
     throw new Error(`${fieldName} is required.`);
   }
@@ -1236,6 +1292,7 @@ function expectOptionalString(
   }
 
   const trimmedValue = value.trim();
+
   return trimmedValue || undefined;
 }
 
@@ -1250,6 +1307,7 @@ function expectBigInt(value: unknown, fieldName: string): bigint {
 
   if (typeof value === "string") {
     const trimmedValue = value.trim();
+
     if (!trimmedValue) {
       throw new Error(`${fieldName} cannot be empty.`);
     }
@@ -1355,6 +1413,7 @@ function expectAssetIdentifier(
 ): AssetIdentifier {
   const assetField = fieldPrefix ? `${fieldPrefix}.asset` : "asset";
   const chainField = fieldPrefix ? `${fieldPrefix}.chain` : "chain";
+
   const identifier = {
     asset: expectAsset(assetValue, assetField),
     chain: expectChain(chainValue, chainField),
@@ -1378,10 +1437,12 @@ function expectReceiver(
   }
 
   const receiver = expectObject(value, fieldName);
+
   const address = expectNonEmptyString(
     receiver.address,
     `${fieldName}.address`
   );
+
   const type =
     receiver.type === undefined
       ? undefined
@@ -1457,6 +1518,7 @@ function expectOptionalSupplyMechanism(
   fieldName: string
 ): "contractInteraction" | undefined {
   const mechanism = expectOptionalString(value, fieldName);
+
   if (!mechanism) {
     return undefined;
   }
@@ -1486,6 +1548,7 @@ function expectOptionalActivityFilter(
   fieldName: string
 ): ActivityFilter | undefined {
   const filter = expectOptionalString(value, fieldName);
+
   if (!filter) {
     return undefined;
   }
@@ -1503,6 +1566,7 @@ function getWalletChainLabel(
   if (primaryWallet && isSolanaWallet(primaryWallet)) {
     return "SOL";
   }
+
   if (primaryWallet && isEthereumWallet(primaryWallet)) {
     return "ETH";
   }

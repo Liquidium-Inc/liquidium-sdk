@@ -840,8 +840,10 @@ test.each([-1n, 0n])(
         code: LiquidiumErrorCode.RECOVERY_AMOUNT_TOO_LOW,
       });
       expect(lending.get_nonce).not.toHaveBeenCalled();
+
       return;
     }
+
     expect((await result).data.amount).toBe(requiredAmount);
   }
 );
@@ -916,6 +918,7 @@ function setupRecovery(balance = RECOVERY_BALANCE) {
     [CK_CANISTER_IDS.BTC.minter, btcMinter],
     [CK_CANISTER_IDS.ETH.minter, ethMinter],
   ]);
+
   const solMinter = mockDeep<CkSolMinterActor>();
   solMinter.get_minter_info.mockResolvedValue({
     minimum_withdrawal_amount: SOL_MINIMUM_LAMPORTS,

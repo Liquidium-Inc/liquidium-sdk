@@ -9,18 +9,23 @@ const resolveProjectPath = (path: string) =>
   fileURLToPath(new URL(path, import.meta.url));
 
 const requireFromExample = createRequire(import.meta.url);
+
 const requireFromDynamicEthereum = createRequire(
   requireFromExample.resolve("@dynamic-labs/ethereum/package.json")
 );
+
 const requireFromDynamicEmbeddedWallet = createRequire(
   requireFromDynamicEthereum.resolve(
     "@dynamic-labs/embedded-wallet-evm/package.json"
   )
 );
+
 const nobleHashesUtilsPath = requireFromExample.resolve("@noble/hashes/utils");
+
 const turnkeyApiKeyStamperDistPath = dirname(
   requireFromDynamicEmbeddedWallet.resolve("@turnkey/api-key-stamper")
 );
+
 const WALLET_STACK_CHUNK_SIZE_WARNING_LIMIT_KB = 6_000;
 
 export default defineConfig(({ command }) => ({

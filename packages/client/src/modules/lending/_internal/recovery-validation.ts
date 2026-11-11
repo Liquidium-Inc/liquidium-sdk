@@ -76,9 +76,11 @@ async function getRequiredAmount(
       return getRequiredBtcAmount(params, ledgerFee);
     case Chain.SOL: {
       validateSolAmount(params.amount);
+
       const info = await createCkSolMinterActor(
         params.canisterContext
       ).get_minter_info();
+
       return (
         ledgerFee * ERC_NATIVE_LEDGER_FEE_COUNT +
         maxBigint(
@@ -87,6 +89,7 @@ async function getRequiredAmount(
         )
       );
     }
+
     case Chain.ETH:
       return params.asset === Asset.ETH
         ? getRequiredEthAmount(params, ledgerFee)

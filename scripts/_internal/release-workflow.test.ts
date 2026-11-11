@@ -8,16 +8,20 @@ test.each(["0.12.0-rc.0", "0.12.0"])(
     // given
     const tagName = `@liquidium/client@${version}`;
     const releaseNotesPath = "release-notes.md";
+
     const workflow = readFileSync(
       new URL("../../.github/workflows/release.yml", import.meta.url),
       "utf8"
     );
+
     const releaseScript = workflow.match(
       /name: Create GitHub release notes[\s\S]*?run: \|\n([\s\S]*)$/
     )?.[1];
+
     if (!releaseScript) {
       throw new Error("The GitHub release creation script is missing.");
     }
+
     const recordCommand = 'gh() { printf "%s\\n" "$@"; }';
 
     // when
@@ -39,6 +43,7 @@ test.each(["0.12.0-rc.0", "0.12.0"])(
     const EXPECTED_RELEASE_FLAGS = version.includes("-")
       ? ["--prerelease", "--latest=false"]
       : ["--latest"];
+
     expect(commandArguments).toEqual([
       "release",
       "create",

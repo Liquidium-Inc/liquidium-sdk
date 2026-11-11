@@ -36,6 +36,7 @@ export function selectEthPool(pools: Pool[]): Pool {
 export function selectBorrowPool(pools: Pool[]): Pool {
   for (const asset of ETH_STABLECOIN_BORROW_ASSETS) {
     const pool = findBorrowPoolByAsset(pools, asset);
+
     if (pool) {
       return pool;
     }
@@ -51,6 +52,7 @@ export function selectBorrowPoolByAsset(
   asset: EthStablecoinBorrowAsset
 ): Pool {
   const pool = findBorrowPoolByAsset(pools, asset);
+
   if (!pool) {
     throw new Error(
       `No live ${Chain.ETH} ${asset} pool is available for e2e tests`

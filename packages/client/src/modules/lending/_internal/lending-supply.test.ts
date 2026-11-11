@@ -65,10 +65,12 @@ describe("LendingModule supply", () => {
   test("returns a ckETH ICRC account target for an ICP transfer", async () => {
     // given
     const profileId = "aaaaa-aa";
+
     const expectedSubaccount = encodeInflowSubaccount({
       action: "repayment",
       principal: Principal.fromText(profileId),
     });
+
     vi.spyOn(Actor, "createActor")
       .mockReturnValueOnce({
         list_pools: vi.fn().mockResolvedValue([createEthPoolRecord()]),
@@ -100,9 +102,11 @@ describe("LendingModule supply", () => {
   test("returns a native supply target for the btc pool", async () => {
     // given
     const profileId = "aaaaa-aa";
+
     const getBtcAddress = vi
       .fn()
       .mockResolvedValue("bc1qexampledepositaddress");
+
     vi.spyOn(Actor, "createActor")
       .mockReturnValueOnce({
         list_pools: vi.fn().mockResolvedValue([
@@ -139,6 +143,7 @@ describe("LendingModule supply", () => {
         get_btc_address: getBtcAddress,
       } as never);
     const client = new LiquidiumClient({});
+
     // when
     const supplyFlow = await client.lending.supply({
       profileId,
@@ -174,9 +179,11 @@ describe("LendingModule supply", () => {
   test("returns a deposit address supply target for the usdt pool", async () => {
     // given
     const profileId = "aaaaa-aa";
+
     const getDepositAddress = vi.fn().mockResolvedValue({
       Ok: "0x1111111111111111111111111111111111111111",
     });
+
     vi.spyOn(Actor, "createActor")
       .mockReturnValueOnce({
         list_pools: vi.fn().mockResolvedValue([
@@ -253,9 +260,11 @@ describe("LendingModule supply", () => {
   test("returns a deposit address supply target for the usdc pool when transfer is requested", async () => {
     // given
     const profileId = "aaaaa-aa";
+
     const getDepositAddress = vi.fn().mockResolvedValue({
       Ok: "0x2222222222222222222222222222222222222222",
     });
+
     vi.spyOn(Actor, "createActor")
       .mockReturnValueOnce({
         list_pools: vi.fn().mockResolvedValue([
@@ -332,10 +341,12 @@ describe("LendingModule supply", () => {
   test("returns a ckBTC ICRC account target when ck transfer mode is requested", async () => {
     // given
     const profileId = "aaaaa-aa";
+
     const expectedSubaccount = encodeInflowSubaccount({
       action: "deposit",
       principal: Principal.fromText(profileId),
     });
+
     vi.spyOn(Actor, "createActor").mockReturnValueOnce({
       list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord()]),
     } as never);
@@ -365,10 +376,12 @@ describe("LendingModule supply", () => {
   test("returns a ckUSDC ICRC account target when ck transfer mode is requested", async () => {
     // given
     const profileId = "aaaaa-aa";
+
     const expectedSubaccount = encodeInflowSubaccount({
       action: "repayment",
       principal: Principal.fromText(profileId),
     });
+
     vi.spyOn(Actor, "createActor")
       .mockReturnValueOnce({
         list_pools: vi.fn().mockResolvedValue([createUsdcPoolRecord()]),
@@ -400,10 +413,12 @@ describe("LendingModule supply", () => {
   test("returns an ICP ledger target with ICRC and account identifier formats", async () => {
     // given
     const profileId = "aaaaa-aa";
+
     const expectedSubaccount = encodeInflowSubaccount({
       action: "deposit",
       principal: Principal.fromText(profileId),
     });
+
     vi.spyOn(Actor, "createActor").mockReturnValueOnce({
       list_pools: vi.fn().mockResolvedValue([createIcpPoolRecord()]),
     } as never);
@@ -434,8 +449,10 @@ describe("LendingModule supply", () => {
   test("should not submit eth stablecoin transfer txids through the inflow endpoint", async () => {
     // given
     const profileId = "aaaaa-aa";
+
     const txid =
       "0x76ffa8bd3b89187c1a54b9f9c0adcd53da15623b38dc80304937fe962243b86e";
+
     vi.spyOn(Actor, "createActor")
       .mockReturnValueOnce({
         list_pools: vi.fn().mockResolvedValue([
@@ -474,6 +491,7 @@ describe("LendingModule supply", () => {
         }),
       } as never);
     const fetchSpy = vi.spyOn(globalThis, "fetch");
+
     const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
     });
@@ -485,6 +503,7 @@ describe("LendingModule supply", () => {
       action: "deposit",
       chain: "ETH",
     });
+
     const result = await supplyFlow.submit({ txid });
 
     // then
@@ -686,6 +705,7 @@ describe("LendingModule supply", () => {
       ]),
     } as never);
     const client = new LiquidiumClient({});
+
     const invalidContractInteractionRequest = {
       profileId: "aaaaa-aa",
       poolId: BTC_POOL_ID,
@@ -719,13 +739,16 @@ describe("LendingModule supply", () => {
     vi.spyOn(Actor, "createActor").mockReturnValueOnce({
       list_pools: vi.fn().mockResolvedValue([createEthPoolRecord()]),
     } as never);
+
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
       new Response(JSON.stringify({ txid: depositTxid }), {
         status: 200,
         headers: { "content-type": "application/json" },
       })
     );
+
     const sendEthTransaction = vi.fn().mockResolvedValueOnce(depositTxid);
+
     const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
     });
@@ -764,10 +787,12 @@ describe("LendingModule supply", () => {
         value: amountWei.toString(),
       },
     });
+
     const decodedDeposit = decodeFunctionData({
       abi: CK_DEPOSIT_ABI,
       data: sentEthTransaction?.transaction.data as `0x${string}`,
     });
+
     expect(decodedDeposit.functionName).toBe("depositEth");
     expect(decodedDeposit.args[0]).toBe(
       encodePrincipalToBytes32(Principal.fromText(ETH_POOL_ID))
@@ -832,13 +857,16 @@ describe("LendingModule supply", () => {
         list_pools: vi.fn().mockResolvedValue([createEthPoolRecord()]),
       } as never)
       .mockReturnValueOnce(createOutstandingDebtPositionActor());
+
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
       new Response(JSON.stringify({ txid: repaymentTxid }), {
         status: 200,
         headers: { "content-type": "application/json" },
       })
     );
+
     const sendEthTransaction = vi.fn().mockResolvedValueOnce(repaymentTxid);
+
     const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
     });
@@ -857,10 +885,12 @@ describe("LendingModule supply", () => {
 
     // then
     const sentEthTransaction = sendEthTransaction.mock.calls[0]?.[0];
+
     const decodedDeposit = decodeFunctionData({
       abi: CK_DEPOSIT_ABI,
       data: sentEthTransaction?.transaction.data as `0x${string}`,
     });
+
     expect(decodedDeposit.args[1]).toBe(
       encodeBytes32Hex(
         encodeInflowSubaccount({
@@ -912,10 +942,12 @@ describe("LendingModule supply", () => {
   test("computes evm supply context with the configured EVM read client", async () => {
     // given
     mockUsdtPoolList();
+
     const readContract = vi
       .fn()
       .mockResolvedValueOnce(0n)
       .mockResolvedValueOnce(2_000_000n);
+
     const client = new LiquidiumClient({
       evmPublicClient: { readContract } as never,
     });
@@ -971,6 +1003,7 @@ describe("LendingModule supply", () => {
     const amountBelowMinimum = 999_999n;
     mockUsdtPoolList();
     const readContract = vi.fn();
+
     const client = new LiquidiumClient({
       evmPublicClient: { readContract } as never,
     });
@@ -995,10 +1028,12 @@ describe("LendingModule supply", () => {
   test("should return reset approval strategy for partial EVM allowance", async () => {
     // given
     mockUsdtPoolList();
+
     const readContract = vi
       .fn()
       .mockResolvedValueOnce(500_000n)
       .mockResolvedValueOnce(2_000_000n);
+
     const client = new LiquidiumClient({
       evmPublicClient: { readContract } as never,
     });
@@ -1093,10 +1128,12 @@ describe("LendingModule supply", () => {
       })
     );
     const sentEthTransaction = sendEthTransaction.mock.calls[0]?.[0];
+
     const decodedTransfer = decodeFunctionData({
       abi: ERC20_ABI,
       data: sentEthTransaction?.transaction.data as `0x${string}`,
     });
+
     expect(decodedTransfer.functionName).toBe("transfer");
     expect(decodedTransfer.args).toEqual([
       "0x1111111111111111111111111111111111111111",
@@ -1180,6 +1217,7 @@ describe("LendingModule supply", () => {
     // then
     const EXPECTED_ERROR_MESSAGE =
       "ETH transfer amount exceeds uint256 maximum";
+
     await expect(result).rejects.toMatchObject({
       code: LiquidiumErrorCode.VALIDATION_ERROR,
       message: EXPECTED_ERROR_MESSAGE,
@@ -1248,6 +1286,7 @@ describe("LendingModule supply", () => {
         minimumAmount: 1_000_000n,
       },
     ];
+
     vi.spyOn(Actor, "createActor").mockReturnValue({
       list_pools: vi
         .fn()
@@ -1288,6 +1327,7 @@ describe("LendingModule supply", () => {
         message: `Deposit amount must be at least ${depositCase?.minimumAmount} base units for ${depositCase?.asset}`,
       });
     }
+
     expect(sendBtcTransaction).not.toHaveBeenCalled();
     expect(sendEthTransaction).not.toHaveBeenCalled();
     expect(sendIcrcTransfer).not.toHaveBeenCalled();
@@ -1339,11 +1379,14 @@ describe("LendingModule supply", () => {
         },
       })
     );
+
     const readContract = vi
       .fn()
       .mockResolvedValueOnce(1_000_000n)
       .mockResolvedValueOnce(2_000_000n);
+
     const sendEthTransaction = vi.fn().mockResolvedValueOnce(depositTxid);
+
     const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
       evmPublicClient: { readContract } as never,
@@ -1382,10 +1425,12 @@ describe("LendingModule supply", () => {
       })
     );
     const sentEthTransaction = sendEthTransaction.mock.calls[0]?.[0];
+
     const decodedDeposit = decodeFunctionData({
       abi: CK_DEPOSIT_ABI,
       data: sentEthTransaction?.transaction.data as `0x${string}`,
     });
+
     expect(decodedDeposit.functionName).toBe("depositErc20");
     expect(decodedDeposit.args[0].toLowerCase()).toBe(
       "0xdac17f958d2ee523a2206206994597c13d831ec7"
@@ -1423,14 +1468,18 @@ describe("LendingModule supply", () => {
     const depositTxid = "0xcontractdeposit";
     const API_FAILURE = new Error("api unavailable");
     mockUsdtPoolList();
+
     const fetchSpy = vi
       .spyOn(globalThis, "fetch")
       .mockRejectedValueOnce(API_FAILURE);
+
     const readContract = vi
       .fn()
       .mockResolvedValueOnce(1_000_000n)
       .mockResolvedValueOnce(2_000_000n);
+
     const sendEthTransaction = vi.fn().mockResolvedValueOnce(depositTxid);
+
     const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
       evmPublicClient: { readContract } as never,
@@ -1461,6 +1510,7 @@ describe("LendingModule supply", () => {
     // given
     mockUsdtPoolList();
     const sendEthTransaction = vi.fn();
+
     const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
     });
@@ -1526,6 +1576,7 @@ describe("LendingModule supply", () => {
       .mockReturnValueOnce({
         get_btc_address: vi.fn().mockResolvedValue("bc1qexampledepositaddress"),
       } as never);
+
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
       new Response(JSON.stringify({ txid }), {
         status: 200,
@@ -1534,6 +1585,7 @@ describe("LendingModule supply", () => {
         },
       })
     );
+
     const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
     });
@@ -1545,6 +1597,7 @@ describe("LendingModule supply", () => {
       action: "deposit",
       chain: "BTC",
     });
+
     await flow.submit({ txid });
 
     // then
@@ -1603,6 +1656,7 @@ describe("LendingModule supply", () => {
       .mockReturnValueOnce({
         get_btc_address: vi.fn().mockResolvedValue("bc1qexampledepositaddress"),
       } as never);
+
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
       new Response(JSON.stringify({ txid }), {
         status: 200,
@@ -1611,7 +1665,9 @@ describe("LendingModule supply", () => {
         },
       })
     );
+
     const sendBtcTransaction = vi.fn().mockResolvedValue(txid);
+
     const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
     });
@@ -1817,6 +1873,7 @@ describe("LendingModule supply", () => {
       })
     );
     const sendBtcTransaction = vi.fn().mockResolvedValue(txid);
+
     const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
     });
@@ -1894,6 +1951,7 @@ describe("LendingModule supply", () => {
             .fn()
             .mockResolvedValue("bc1qexampledepositaddress"),
         } as never);
+
       const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
         new Response(
           JSON.stringify({
@@ -1907,7 +1965,9 @@ describe("LendingModule supply", () => {
           }
         )
       );
+
       const sendBtcTransaction = vi.fn().mockResolvedValue(txid);
+
       const client = new LiquidiumClient({
         apiBaseUrl: "https://app.liquidium.fi/api/sdk",
       });
@@ -1985,6 +2045,7 @@ describe("LendingModule supply", () => {
       .mockReturnValueOnce({
         get_btc_address: vi.fn().mockResolvedValue("bc1qexamplerepayaddress"),
       } as never);
+
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
       new Response(JSON.stringify({ txid }), {
         status: 200,
@@ -1993,7 +2054,9 @@ describe("LendingModule supply", () => {
         },
       })
     );
+
     const sendBtcTransaction = vi.fn().mockResolvedValue(txid);
+
     const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
     });
@@ -2071,6 +2134,7 @@ describe("LendingModule supply", () => {
       .mockReturnValueOnce({
         get_btc_address: vi.fn().mockResolvedValue("bc1qexampledepositaddress"),
       } as never);
+
     const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
     });
@@ -2098,6 +2162,7 @@ describe("LendingModule supply", () => {
     // given
     const createActor = vi.spyOn(Actor, "createActor");
     const client = new LiquidiumClient({});
+
     const partialWalletRequest = {
       profileId: "aaaaa-aa",
       poolId: BTC_POOL_ID,
@@ -2124,6 +2189,7 @@ describe("LendingModule supply", () => {
     // given
     const createActor = vi.spyOn(Actor, "createActor");
     const client = new LiquidiumClient({});
+
     const invalidMechanismRequest = {
       profileId: "aaaaa-aa",
       poolId: ETH_POOL_ID,

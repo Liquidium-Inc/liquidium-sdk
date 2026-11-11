@@ -12,10 +12,12 @@ const exampleDir = path.resolve(currentDir, "..");
 const repoRoot = path.resolve(exampleDir, "../..");
 const clientSourcePath = path.join(repoRoot, "packages/client/src/client.ts");
 const tsconfigPath = path.join(exampleDir, "tsconfig.json");
+
 const outputPath = path.join(
   exampleDir,
   "src/generated-method-arg-references.ts"
 );
+
 const mode = process.argv[2];
 
 if (mode !== "--write" && mode !== "--check") {
@@ -80,6 +82,7 @@ const METHOD_REFERENCE_TARGETS = {
 };
 
 const configFile = ts.readConfigFile(tsconfigPath, ts.sys.readFile);
+
 if (configFile.error) {
   throw new Error(
     ts.formatDiagnostic(configFile.error, createDiagnosticHost())
@@ -91,10 +94,12 @@ const parsedConfig = ts.parseJsonConfigFileContent(
   ts.sys,
   exampleDir
 );
+
 const program = ts.createProgram({
   rootNames: parsedConfig.fileNames,
   options: parsedConfig.options,
 });
+
 const checker = program.getTypeChecker();
 const clientSource = program.getSourceFile(clientSourcePath);
 
@@ -104,11 +109,13 @@ if (!clientSource) {
 
 const clientClass = findClass(clientSource, "LiquidiumClient");
 const clientType = checker.getTypeAtLocation(clientClass.name ?? clientClass);
+
 const references = Object.fromEntries(
   Object.entries(METHOD_REFERENCE_TARGETS).map(([methodId, target]) => {
     return [methodId, createMethodReference(target)];
   })
 );
+
 const output = formatReferencesModule(references);
 
 if (mode === "--check") {
@@ -171,6 +178,7 @@ function createMethodReference(target) {
     moduleSymbol,
     clientClass
   );
+
   const methodSymbol = moduleType.getProperty(methodName);
 
   if (!methodSymbol) {
@@ -178,14 +186,17 @@ function createMethodReference(target) {
   }
 
   const methodDeclaration = methodSymbol.valueDeclaration;
+
   const methodType = checker.getTypeOfSymbolAtLocation(
     methodSymbol,
     methodDeclaration ?? clientClass
   );
+
   const signatures = checker.getSignaturesOfType(
     methodType,
     ts.SignatureKind.Call
   );
+
   const signature = signatures[0];
 
   if (!signature) {
@@ -198,6 +209,7 @@ function createMethodReference(target) {
     signature,
     methodDeclaration,
   });
+
   const declarationTexts = collectReferencedDeclarations(methodDeclaration);
 
   if (declarationTexts.length === 0) {
@@ -215,10 +227,12 @@ function createSignatureText({
 }) {
   const parameterTexts = signature.getParameters().map((parameter) => {
     const declaration = parameter.valueDeclaration;
+
     const type = checker.getTypeOfSymbolAtLocation(
       parameter,
       declaration ?? methodDeclaration
     );
+
     const optionalMarker =
       declaration &&
       (ts.isParameter(declaration) || ts.isPropertySignature(declaration)) &&
@@ -230,6 +244,7 @@ function createSignatureText({
       checker.typeToString(type, declaration, ts.TypeFormatFlags.NoTruncation)
     )}`;
   });
+
   const returnType = normalizeTypeText(
     checker.typeToString(
       signature.getReturnType(),
@@ -258,11 +273,13 @@ function collectReferencedDeclarations(methodDeclaration) {
 
   while (queuedDeclarations.length > 0) {
     const declaration = queuedDeclarations.shift();
+
     if (!declaration) {
       continue;
     }
 
     const declarationKey = createDeclarationKey(declaration);
+
     if (seenDeclarationKeys.has(declarationKey)) {
       continue;
     }
@@ -357,11 +374,13 @@ function formatDeclaration(declaration) {
       type.types.every((member) => member.isStringLiteral())
     ) {
       const members = type.types.map((member) => JSON.stringify(member.value));
+
       return `${docText}type ${declaration.name.text} = ${members.join(" | ")};`;
     }
   }
 
   const sourceText = `${docText}${declaration.getText()}`;
+
   return normalizeTypeText(
     sourceText.replace(/^export\s+/, "").replace(/\nexport\s+/g, "\n")
   );

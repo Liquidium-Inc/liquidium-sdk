@@ -12,12 +12,19 @@ import { LiquidiumError, LiquidiumErrorCode } from "../../errors";
 import type { CanisterContext } from "../../transports/canister-context";
 
 export type WalletRecord = Wallet;
+
 export type BorrowingPowerRecord = BorrowingPower;
+
 export type RegisterProfileRequest = SignedRequest_2;
+
 export type PoolRateTuple = [bigint, bigint, bigint];
+
 export type PriceRecord = [string, bigint, number];
+
 export type ProtocolError = GeneratedProtocolError;
+
 export type SignatureVerificationError = GeneratedSignatureVerificationError;
+
 export type LendingActor = _SERVICE;
 
 export function createLendingActor(

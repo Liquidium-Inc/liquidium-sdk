@@ -174,6 +174,7 @@ describe("decodeFlexiblePool", () => {
     // given
     const assetHash = idlLabelToId("USDC");
     const chainHash = idlLabelToId("ETH");
+
     const pool = createFlexiblePool({
       asset: { [`_${assetHash}_`]: null },
       chain: { [`_${chainHash}_`]: null },
@@ -239,6 +240,7 @@ describe("decodeFlexiblePosition", () => {
   test("should decode a position with a hashed variant key", () => {
     // given
     const assetHash = idlLabelToId("USDT");
+
     const position = createFlexiblePosition({
       asset: { [`_${assetHash}_`]: null },
     });

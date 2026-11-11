@@ -83,6 +83,7 @@ export class ActivitiesModule {
   async list(request: ListActivitiesRequest): Promise<Activity[]> {
     const apiClient = this.requireApi();
     const profileId = await this.resolveProfileId(request);
+
     const response = await apiClient.get<ListActivitiesResponseWire>(
       buildActivitiesPath({
         profileId,
@@ -106,6 +107,7 @@ export class ActivitiesModule {
   ): Promise<GetActivityStatusResponse> {
     const apiClient = this.requireApi();
     const profileId = await this.resolveProfileId(request);
+
     const response = await apiClient.get<ActivityStatusResponseWire>(
       buildActivityStatusPath({ id: request.id, profileId })
     );
@@ -139,6 +141,7 @@ export class ActivitiesModule {
     }
 
     let loanId: bigint;
+
     try {
       loanId = intFromPublicId(request.shortRef.trim());
     } catch (error) {

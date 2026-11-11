@@ -60,6 +60,7 @@ export class AccountsModule {
    */
   async createProfile(params: CreateProfileParams): Promise<string> {
     const account = normalizeProfileAccount(params.account);
+
     const action = await this.prepareCreateProfile({
       account,
     });
@@ -80,6 +81,7 @@ export class AccountsModule {
   async getProfileId(walletAddress: string): Promise<string | null> {
     try {
       const account = normalizeProfileAccount(walletAddress);
+
       const profile = await createLendingActor(
         this.canisterContext
       ).get_wallet_profile(account);
@@ -108,6 +110,7 @@ export class AccountsModule {
   async profileExists(profileId: string): Promise<boolean> {
     try {
       const profilePrincipal = parseProfilePrincipal(profileId);
+
       const wallets = await createLendingActor(
         this.canisterContext
       ).get_profile_wallets(profilePrincipal);
@@ -133,6 +136,7 @@ export class AccountsModule {
   async getWalletNonce(walletAddress: string): Promise<bigint> {
     try {
       const account = normalizeProfileAccount(walletAddress);
+
       return await createLendingActor(this.canisterContext).get_nonce(account);
     } catch (error) {
       if (error instanceof LiquidiumError) {
@@ -174,6 +178,7 @@ export class AccountsModule {
       const nonce = await createLendingActor(this.canisterContext).get_nonce(
         normalizedAccount
       );
+
       const expiryTimestamp = computeExpiryTimestampFromNow();
 
       return {
@@ -213,6 +218,7 @@ export class AccountsModule {
   ): Promise<string> {
     try {
       const signingAccount = request.signatureInfo.account;
+
       if (!signingAccount) {
         throw new LiquidiumError(
           LiquidiumErrorCode.VALIDATION_ERROR,
@@ -278,6 +284,7 @@ async function assertWalletHasNoProfile(
 ): Promise<void> {
   const existingProfile =
     await createLendingActor(canisterContext).get_wallet_profile(walletAddress);
+
   const profileId = existingProfile[0]?.toText();
 
   if (!profileId) {

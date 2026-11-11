@@ -26,6 +26,7 @@ export async function retryWithBackoff<T>(
       return await options.execute();
     } catch (error) {
       const isLastAttempt = attempt === options.maxAttempts;
+
       if (isLastAttempt || !options.shouldRetryError(error)) {
         throw error;
       }

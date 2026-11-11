@@ -1,5 +1,7 @@
 export { intFromPublicId, publicIdFromInt } from "./ref-code";
+
 export { SimpleLoanCreatedError, SimpleLoansModule } from "./simple-loans";
+
 export type {
   CreateSimpleLoanBorrow,
   CreateSimpleLoanCollateral,

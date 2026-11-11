@@ -9,6 +9,7 @@ import {
 type SolanaRpcConnection = Awaited<
   ReturnType<ConnectedSolanaWallet["getConnection"]>
 >;
+
 type SolanaTransactionSigner = Awaited<
   ReturnType<ConnectedSolanaWallet["getSigner"]>
 >;
@@ -20,6 +21,7 @@ const SIGNATURE_LENGTH_BYTES = 64;
 const MAINNET_GENESIS_HASH = "5eykt4UsFv8P8NJdTREpY1vzqKqZKvdpKuc147dw2N9d";
 const BLOCK_HEIGHT = 100;
 const TRANSACTION_SIGNATURE = "test-transaction-signature";
+
 test("passes the SDK message unchanged and converts Dynamic base64 to hex", async () => {
   // given
   const signRequest = createSignRequest();
@@ -45,6 +47,7 @@ test.each(["chain", "account"] as const)(
       mismatchedField === "chain"
         ? { chain: "ETH" }
         : { account: RECEIVER_ADDRESS };
+
     const signRequest = { ...createSignRequest(), ...requestChange };
     const { wallet } = createWallet();
     const adapter = createSolanaWalletAdapter(wallet);
@@ -85,11 +88,13 @@ test.each(["minimum", "above-safe-integer", "maximum"] as const)(
     const minimumAmountLamports = 1n;
     const aboveSafeIntegerAmountLamports = BigInt(Number.MAX_SAFE_INTEGER) + 1n;
     const maximumAmountLamports = 2n ** 64n - 1n;
+
     const amountsLamports = {
       minimum: minimumAmountLamports,
       "above-safe-integer": aboveSafeIntegerAmountLamports,
       maximum: maximumAmountLamports,
     };
+
     const amountLamports = amountsLamports[amountCase];
     const adapter = createSolanaWalletAdapter(wallet);
 
@@ -106,9 +111,11 @@ test.each(["minimum", "above-safe-integer", "maximum"] as const)(
     expect(signature).toBe(TRANSACTION_SIGNATURE);
     expect(signer.signAndSendTransaction).toHaveBeenCalledTimes(1);
     const [transaction] = signer.signAndSendTransaction.mock.calls[0];
+
     const transfer = SystemInstruction.decodeTransfer(
       transaction.instructions[0]
     );
+
     expect(transfer.lamports).toBe(amountLamports);
     expect(transfer.fromPubkey.toBase58()).toBe(WALLET_ADDRESS);
     expect(transfer.toPubkey.toBase58()).toBe(RECEIVER_ADDRESS);
@@ -149,11 +156,13 @@ test.each(["zero", "negative", "overflow"] as const)(
     const zeroAmountLamports = 0n;
     const negativeAmountLamports = -1n;
     const overflowAmountLamports = 2n ** 64n;
+
     const amountsLamports = {
       zero: zeroAmountLamports,
       negative: negativeAmountLamports,
       overflow: overflowAmountLamports,
     };
+
     const amountLamports = amountsLamports[amountCase];
     const { wallet, signer } = createWallet();
     const adapter = createSolanaWalletAdapter(wallet);
@@ -186,15 +195,18 @@ function createWallet() {
   const signatureBase64 = btoa(
     String.fromCharCode(SIGNATURE_BYTE).repeat(SIGNATURE_LENGTH_BYTES)
   );
+
   const latestBlockhash = {
     blockhash: WALLET_ADDRESS,
     lastValidBlockHeight: BLOCK_HEIGHT,
   } satisfies Awaited<ReturnType<SolanaRpcConnection["getLatestBlockhash"]>>;
+
   const transactionResponse = {
     signature: TRANSACTION_SIGNATURE,
   } satisfies Awaited<
     ReturnType<SolanaTransactionSigner["signAndSendTransaction"]>
   >;
+
   const connection = {
     getGenesisHash: vi
       .fn<SolanaRpcConnection["getGenesisHash"]>()
@@ -207,11 +219,13 @@ function createWallet() {
       .fn<SolanaRpcConnection["getLatestBlockhash"]>()
       .mockResolvedValue(latestBlockhash),
   };
+
   const signer = {
     signAndSendTransaction: vi
       .fn<SolanaTransactionSigner["signAndSendTransaction"]>()
       .mockResolvedValue(transactionResponse),
   };
+
   const wallet = {
     address: WALLET_ADDRESS,
     signMessage: vi
@@ -234,5 +248,6 @@ function createWallet() {
         signer satisfies Awaited<ReturnType<ConnectedSolanaWallet["getSigner"]>>
       ),
   } satisfies ConnectedSolanaWallet;
+
   return { wallet, connection, signer };
 }

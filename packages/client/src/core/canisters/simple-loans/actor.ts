@@ -8,11 +8,16 @@ import type {
 } from "../../accounts";
 
 export type SimpleLoanIcrcAccount = CanisterIcrcAccount["Icrc"];
+
 export type SimpleLoanIcrcAccountType = CanisterIcrcAccount;
+
 export type SimpleLoanNativeAccountType = CanisterNativeAccount;
+
 export type SimpleLoanAccountIdentifierAccountType =
   CanisterAccountIdentifierAccount;
+
 export type SimpleLoanExternalAccountType = CanisterExternalAccount;
+
 export type SimpleLoanAccountType = CanisterLiquidiumAccount;
 
 export interface SimpleLoanBtcAsset {

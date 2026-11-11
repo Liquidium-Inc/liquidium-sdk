@@ -22,6 +22,7 @@ describe("ActivitiesModule", () => {
         status: 200,
       })
     );
+
     const client = new LiquidiumClient({});
 
     // when
@@ -42,6 +43,7 @@ describe("ActivitiesModule", () => {
     const ACTIVITY_TIMESTAMP_MS = 1775001600000;
     const ACTIVITY_CONFIRMATIONS = 1;
     const ACTIVITY_REQUIRED_CONFIRMATIONS = 6;
+
     const responsePayload = {
       activities: [
         {
@@ -61,6 +63,7 @@ describe("ActivitiesModule", () => {
         },
       ],
     };
+
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(JSON.stringify(responsePayload), {
         status: 200,
@@ -69,6 +72,7 @@ describe("ActivitiesModule", () => {
         },
       })
     );
+
     const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
     });
@@ -153,14 +157,17 @@ describe("ActivitiesModule", () => {
     const LOAN_ID = 42n;
     const PROFILE_ID = "aaaaa-aa";
     const SHORT_REF = publicIdFromInt(LOAN_ID);
+
     const getLoan = vi.fn().mockResolvedValue({
       Ok: {
         lending_profile: Principal.fromText(PROFILE_ID),
       },
     });
+
     vi.spyOn(Actor, "createActor").mockReturnValue({
       get_loan: getLoan,
     } as never);
+
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(
         JSON.stringify({
@@ -174,6 +181,7 @@ describe("ActivitiesModule", () => {
         }
       )
     );
+
     const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
       canisterIds: { simpleLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
@@ -206,6 +214,7 @@ describe("ActivitiesModule", () => {
     const ACTIVITY_TIMESTAMP_MS = 1775001600000;
     const ACTIVITY_CONFIRMATIONS = 0;
     const ACTIVITY_REQUIRED_CONFIRMATIONS = 1;
+
     const responsePayload = {
       found: true as const,
       activity: {
@@ -224,6 +233,7 @@ describe("ActivitiesModule", () => {
         txids: ["tx-1"],
       },
     };
+
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(JSON.stringify(responsePayload), {
         status: 200,
@@ -232,6 +242,7 @@ describe("ActivitiesModule", () => {
         },
       })
     );
+
     const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
     });
@@ -275,10 +286,12 @@ describe("ActivitiesModule", () => {
   test("returns not found when the activity status API misses a receipt", async () => {
     // given
     const ACTIVITY_ID = "missing-activity";
+
     const responsePayload = {
       found: false as const,
       id: ACTIVITY_ID,
     };
+
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(JSON.stringify(responsePayload), {
         status: 200,
@@ -287,6 +300,7 @@ describe("ActivitiesModule", () => {
         },
       })
     );
+
     const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
     });
@@ -309,6 +323,7 @@ describe("ActivitiesModule", () => {
     // given
     const fetchSpy = vi.spyOn(globalThis, "fetch");
     const actorCreateSpy = vi.spyOn(Actor, "createActor");
+
     const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
     });
@@ -337,11 +352,13 @@ describe("ActivitiesModule", () => {
     const ACTIVITY_TIMESTAMP_MS = 1775001600000;
     const ACTIVITY_CONFIRMATIONS = 0;
     const ACTIVITY_REQUIRED_CONFIRMATIONS = 1;
+
     const getLoan = vi.fn().mockResolvedValue({
       Ok: {
         lending_profile: Principal.fromText(PROFILE_ID),
       },
     });
+
     const responsePayload = {
       found: true as const,
       activity: {
@@ -360,9 +377,11 @@ describe("ActivitiesModule", () => {
         txids: ["tx-1"],
       },
     };
+
     vi.spyOn(Actor, "createActor").mockReturnValue({
       get_loan: getLoan,
     } as never);
+
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(JSON.stringify(responsePayload), {
         status: 200,
@@ -371,6 +390,7 @@ describe("ActivitiesModule", () => {
         },
       })
     );
+
     const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
       canisterIds: { simpleLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
@@ -424,6 +444,7 @@ describe("ActivitiesModule", () => {
     const TOP_UP_FEE_AMOUNT_BASE_UNITS = 5740000n;
     const TOP_UP_SHORTFALL_AMOUNT = "1740000";
     const TOP_UP_SHORTFALL_AMOUNT_BASE_UNITS = 1740000n;
+
     const responsePayload = {
       found: true as const,
       activity: {
@@ -450,6 +471,7 @@ describe("ActivitiesModule", () => {
         },
       },
     };
+
     vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(JSON.stringify(responsePayload), {
         status: 200,
@@ -458,6 +480,7 @@ describe("ActivitiesModule", () => {
         },
       })
     );
+
     const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
     });
@@ -505,6 +528,7 @@ describe("ActivitiesModule", () => {
     const ICP_BLOCK_INDEX = "39037090";
     const FAILURE_CODE = "position_not_found";
     const FAILURE_MESSAGE = "Position not found";
+
     const responsePayload = {
       found: true as const,
       activity: {
@@ -529,6 +553,7 @@ describe("ActivitiesModule", () => {
         },
       },
     };
+
     vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(JSON.stringify(responsePayload), {
         status: 200,
@@ -537,6 +562,7 @@ describe("ActivitiesModule", () => {
         },
       })
     );
+
     const client = new LiquidiumClient({
       apiBaseUrl: "https://app.liquidium.fi/api/sdk",
     });

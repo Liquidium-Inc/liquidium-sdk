@@ -47,6 +47,7 @@ describe("LendingModule borrow", () => {
     // given
     const MINIMUM_ETH_AMOUNT_WEI = 5_000_000_000_000_000n;
     const getNonce = vi.fn().mockResolvedValue(17n);
+
     const borrowAssets = vi.fn().mockResolvedValue({
       Ok: {
         id: "outflow-eth",
@@ -57,6 +58,7 @@ describe("LendingModule borrow", () => {
         receiver: { External: CHECKSUM_EVM_OUTFLOW_ADDRESS },
       },
     });
+
     vi.spyOn(Actor, "createActor").mockReturnValue({
       list_pools: vi.fn().mockResolvedValue([createEthPoolRecord()]),
       get_nonce: getNonce,
@@ -65,6 +67,7 @@ describe("LendingModule borrow", () => {
     const evmPublicClient = mockDeep<Required<EvmReadClient>>();
     evmPublicClient.chain.id = mainnet.id;
     evmPublicClient.getCode.mockResolvedValue(undefined);
+
     const client = new LiquidiumClient({
       evmPublicClient,
       fetch: createNoDeployedBytecodeFetch(),
@@ -79,6 +82,7 @@ describe("LendingModule borrow", () => {
       receiver: LOWERCASE_EVM_OUTFLOW_ADDRESS,
       signerWalletAddress: "0xsigner",
     });
+
     await borrowAction.submit({ signature: "0xsigned", chain: "ETH" });
 
     // then
@@ -107,6 +111,7 @@ describe("LendingModule borrow", () => {
       get_nonce: vi.fn().mockResolvedValue(17n),
       borrow_assets: borrowAssets,
     } as never);
+
     const fetch = vi
       .fn()
       .mockResolvedValueOnce(
@@ -121,7 +126,9 @@ describe("LendingModule borrow", () => {
           headers: { "content-type": "application/json" },
         })
       ) as typeof globalThis.fetch;
+
     const client = new LiquidiumClient({ fetch });
+
     const borrowAction = await client.lending.prepareBorrow({
       profileId: "aaaaa-aa",
       poolId: ETH_POOL_ID,
@@ -148,6 +155,7 @@ describe("LendingModule borrow", () => {
     // given
     const MINIMUM_ETH_AMOUNT_WEI = 5_000_000_000_000_000n;
     const MUTATED_EVM_ADDRESS = "0xde709f2102306220921060314715629080e2fb77";
+
     const borrowAssets = vi.fn().mockResolvedValue({
       Ok: {
         id: "outflow-eth",
@@ -158,6 +166,7 @@ describe("LendingModule borrow", () => {
         receiver: { External: CHECKSUM_EVM_OUTFLOW_ADDRESS },
       },
     });
+
     vi.spyOn(Actor, "createActor").mockReturnValue({
       list_pools: vi.fn().mockResolvedValue([createEthPoolRecord()]),
       get_nonce: vi.fn().mockResolvedValue(17n),
@@ -166,9 +175,11 @@ describe("LendingModule borrow", () => {
     const evmPublicClient = mockDeep<Required<EvmReadClient>>();
     evmPublicClient.chain.id = mainnet.id;
     evmPublicClient.getCode.mockResolvedValue(undefined);
+
     const client = new LiquidiumClient({
       evmPublicClient,
     });
+
     const borrowAction = await client.lending.prepareBorrow({
       profileId: "aaaaa-aa",
       poolId: ETH_POOL_ID,
@@ -177,10 +188,13 @@ describe("LendingModule borrow", () => {
       receiver: LOWERCASE_EVM_OUTFLOW_ADDRESS,
       signerWalletAddress: "0xsigner",
     });
+
     const publicReceiver = borrowAction.data.receiver;
+
     if (typeof publicReceiver === "string" || !("address" in publicReceiver)) {
       throw new Error("Expected a typed borrow receiver");
     }
+
     publicReceiver.address = MUTATED_EVM_ADDRESS;
 
     // when
@@ -260,6 +274,7 @@ describe("LendingModule borrow", () => {
     const profileId = "aaaaa-aa";
     const poolId = "rrkah-fqaaa-aaaaa-aaaaq-cai";
     const getNonce = vi.fn().mockResolvedValue(17n);
+
     const borrowAssets = vi.fn().mockResolvedValue({
       Ok: {
         id: "outflow-1",
@@ -270,6 +285,7 @@ describe("LendingModule borrow", () => {
         receiver: { External: VALID_BTC_OUTFLOW_ADDRESS },
       },
     });
+
     vi.spyOn(Actor, "createActor").mockReturnValue({
       list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord(poolId)]),
       get_nonce: getNonce,
@@ -289,6 +305,7 @@ describe("LendingModule borrow", () => {
       },
       signerWalletAddress: "0xsigner",
     });
+
     const outflow = await borrowAction.submit({
       signature: "0xsigned",
       chain: "ETH",
@@ -418,10 +435,12 @@ Nonce: 17`);
     // given
     vi.setSystemTime(new Date("2026-04-01T00:00:00.000Z"));
     const ICRC_SUBACCOUNT = new Uint8Array(32).fill(5);
+
     const ICRC_ACCOUNT = encodeIcrcAccount({
       owner: Principal.fromText(VALID_IC_PRINCIPAL),
       subaccount: ICRC_SUBACCOUNT,
     });
+
     const borrowAssets = vi.fn().mockResolvedValue({
       Ok: {
         id: "outflow-icp-icrc",
@@ -437,6 +456,7 @@ Nonce: 17`);
         },
       },
     });
+
     vi.spyOn(Actor, "createActor").mockReturnValue({
       list_pools: vi.fn().mockResolvedValue([createIcpPoolRecord()]),
       get_nonce: vi.fn().mockResolvedValue(17n),
@@ -456,6 +476,7 @@ Nonce: 17`);
       },
       signerWalletAddress: "0xsigner",
     });
+
     await borrowAction.submit({ signature: "0xsigned", chain: "ETH" });
 
     // then
@@ -475,10 +496,12 @@ Nonce: 17`);
   test("rejects an ETH stablecoin borrow receiver that uses an ICRC account before fetching a nonce", async () => {
     // given
     const ICRC_SUBACCOUNT = new Uint8Array(32).fill(7);
+
     const ICRC_ACCOUNT = encodeIcrcAccount({
       owner: Principal.fromText(VALID_IC_PRINCIPAL),
       subaccount: ICRC_SUBACCOUNT,
     });
+
     const getNonce = vi.fn().mockResolvedValue(17n);
     vi.spyOn(Actor, "createActor").mockReturnValue({
       list_pools: vi.fn().mockResolvedValue([createUsdtPoolRecord()]),
@@ -510,6 +533,7 @@ Nonce: 17`);
   test("creates an ETH USDC borrow action for ICP delivery to an IC principal", async () => {
     // given
     vi.setSystemTime(new Date("2026-04-01T00:00:00.000Z"));
+
     const borrowAssets = vi.fn().mockResolvedValue({
       Ok: {
         id: "outflow-ck-usdc",
@@ -520,6 +544,7 @@ Nonce: 17`);
         receiver: { Native: Principal.fromText(VALID_IC_PRINCIPAL) },
       },
     });
+
     vi.spyOn(Actor, "createActor").mockReturnValue({
       list_pools: vi.fn().mockResolvedValue([createUsdcPoolRecord()]),
       get_nonce: vi.fn().mockResolvedValue(17n),
@@ -539,6 +564,7 @@ Nonce: 17`);
       },
       signerWalletAddress: "0xsigner",
     });
+
     await borrowAction.submit({ signature: "0xsigned", chain: "ETH" });
 
     // then
@@ -560,10 +586,12 @@ Nonce: 17`);
   test("rejects a BTC borrow receiver that uses an ICRC account before fetching a nonce", async () => {
     // given
     const ICRC_SUBACCOUNT = new Uint8Array(32).fill(8);
+
     const ICRC_ACCOUNT = encodeIcrcAccount({
       owner: Principal.fromText(VALID_IC_PRINCIPAL),
       subaccount: ICRC_SUBACCOUNT,
     });
+
     const getNonce = vi.fn().mockResolvedValue(17n);
     vi.spyOn(Actor, "createActor").mockReturnValue({
       list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord()]),
@@ -749,6 +777,7 @@ Nonce: 17`);
     const poolId = "rrkah-fqaaa-aaaaa-aaaaq-cai";
     const ICRC_SUBACCOUNT = new Uint8Array(32).fill(9);
     const getNonce = vi.fn().mockResolvedValue(17n);
+
     const borrowAssets = vi.fn().mockResolvedValue({
       Ok: {
         id: "outflow-icrc",
@@ -764,6 +793,7 @@ Nonce: 17`);
         },
       },
     });
+
     vi.spyOn(Actor, "createActor").mockReturnValue({
       list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord(poolId)]),
       get_nonce: getNonce,
@@ -780,6 +810,7 @@ Nonce: 17`);
       receiver: VALID_BTC_OUTFLOW_ADDRESS,
       signerWalletAddress: "0xsigner",
     });
+
     const outflow = await borrowAction.submit({
       signature: "0xsigned",
       chain: "ETH",
@@ -802,8 +833,10 @@ Nonce: 17`);
     vi.setSystemTime(new Date("2026-04-01T00:00:00.000Z"));
     const profileId = "aaaaa-aa";
     const poolId = "rrkah-fqaaa-aaaaa-aaaaq-cai";
+
     const ACCOUNT_IDENTIFIER =
       "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+
     const borrowAssets = vi.fn().mockResolvedValue({
       Ok: {
         id: "outflow-account-id",
@@ -814,6 +847,7 @@ Nonce: 17`);
         receiver: { AccountIdentifier: ACCOUNT_IDENTIFIER },
       },
     });
+
     vi.spyOn(Actor, "createActor").mockReturnValue({
       list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord(poolId)]),
       get_nonce: vi.fn().mockResolvedValue(17n),
@@ -830,6 +864,7 @@ Nonce: 17`);
       receiver: VALID_BTC_OUTFLOW_ADDRESS,
       signerWalletAddress: "0xsigner",
     });
+
     const outflow = await borrowAction.submit({
       signature: "0xsigned",
       chain: "ETH",
@@ -887,8 +922,10 @@ Nonce: 17`);
     // given
     const LOWERCASE_SIGNER_ADDRESS =
       "0xa5789280df0d6e3f5bc9a00358379768e391bea9";
+
     const EXPECTED_CHECKSUM_SIGNER_ADDRESS =
       "0xA5789280dF0D6E3F5BC9a00358379768e391BEA9";
+
     const borrowAssets = vi.fn().mockResolvedValue({
       Ok: {
         id: "outflow-4",
@@ -899,6 +936,7 @@ Nonce: 17`);
         receiver: { External: VALID_BTC_OUTFLOW_ADDRESS },
       },
     });
+
     const getNonce = vi.fn().mockResolvedValue(31n);
     vi.spyOn(Actor, "createActor").mockReturnValue({
       list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord()]),
@@ -938,8 +976,10 @@ Nonce: 17`);
     // given
     const SIGNATURE_WITH_PREFIX =
       "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1b";
+
     const EXPECTED_SIGNATURE =
       "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef1b";
+
     const borrowAssets = vi.fn().mockResolvedValue({
       Ok: {
         id: "outflow-4",
@@ -950,6 +990,7 @@ Nonce: 17`);
         receiver: { External: VALID_BTC_OUTFLOW_ADDRESS },
       },
     });
+
     vi.spyOn(Actor, "createActor").mockReturnValue({
       list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord()]),
       get_nonce: vi.fn().mockResolvedValue(31n),
@@ -1251,6 +1292,7 @@ Nonce: 17`);
   test("normalizes an EVM borrow receiver address", async () => {
     // given
     const getNonce = vi.fn().mockResolvedValue(17n);
+
     const borrowAssets = vi.fn().mockResolvedValue({
       Ok: {
         id: "outflow-evm",
@@ -1261,11 +1303,13 @@ Nonce: 17`);
         receiver: { External: CHECKSUM_EVM_OUTFLOW_ADDRESS },
       },
     });
+
     vi.spyOn(Actor, "createActor").mockReturnValue({
       list_pools: vi.fn().mockResolvedValue([createUsdtPoolRecord()]),
       get_nonce: getNonce,
       borrow_assets: borrowAssets,
     } as never);
+
     const client = new LiquidiumClient({
       evmPublicClient: {
         getCode: vi.fn().mockResolvedValue(undefined),
@@ -1283,6 +1327,7 @@ Nonce: 17`);
       receiver: LOWERCASE_EVM_OUTFLOW_ADDRESS,
       signerWalletAddress: "0xsigner",
     });
+
     await borrowAction.submit({ signature: "0xsigned", chain: "ETH" });
 
     // then

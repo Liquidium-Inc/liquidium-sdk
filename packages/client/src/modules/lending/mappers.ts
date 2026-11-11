@@ -93,6 +93,7 @@ export function resolveOutflowDestinationInput(
   params: ResolveOutflowDestinationInputParams
 ): LiquidiumAccountInput {
   const receiver = params.receiver;
+
   const address =
     typeof receiver === "string" ? receiver.trim() : receiver.address.trim();
 
@@ -117,6 +118,7 @@ export function parseOutflowDestination(
   params: ParseOutflowDestinationParams
 ): ParsedOutflowDestination {
   const destination = normalizeOutflowDestinationInput(params.destination);
+
   const parsedAccount = destination.type
     ? parseOutflowDestinationWithHint(destination)
     : parseOutflowDestinationAutomatically(destination.address);
