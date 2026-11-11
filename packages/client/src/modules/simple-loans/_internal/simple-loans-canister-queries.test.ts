@@ -1,3 +1,4 @@
+import { mockActor } from "../../../_internal/mock-actor";
 import { Actor } from "@icp-sdk/core/agent";
 import { Principal } from "@icp-sdk/core/principal";
 import { afterEach, describe, expect, test, vi } from "vite-plus/test";
@@ -43,14 +44,16 @@ describe("SimpleLoansModule canister queries", () => {
       },
     ]);
 
-    vi.spyOn(Actor, "createActor").mockReturnValue({
-      count_warmed_profiles: countWarmedProfiles,
-      get_config: getConfig,
-      get_event: getEvent,
-      list_access_list: listAccessList,
-      list_events: listEvents,
-      list_warmed_profiles: listWarmedProfiles,
-    } as never);
+    vi.spyOn(Actor, "createActor").mockReturnValue(
+      mockActor({
+        count_warmed_profiles: countWarmedProfiles,
+        get_config: getConfig,
+        get_event: getEvent,
+        list_access_list: listAccessList,
+        list_events: listEvents,
+        list_warmed_profiles: listWarmedProfiles,
+      })
+    );
 
     const client = new LiquidiumClient({
       canisterIds: { simpleLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },
@@ -108,30 +111,32 @@ describe("SimpleLoansModule canister queries", () => {
     // given
     const subaccount = new Uint8Array(32).fill(7);
     const lendingProfile = Principal.fromText(PROFILE_ID);
-    vi.spyOn(Actor, "createActor").mockReturnValue({
-      get_event: vi.fn().mockResolvedValue([
-        {
-          id: 9n,
-          schema_version: 1,
-          timestamp: 123n,
-          event_type: {
-            IcpProfileWarmed: {
-              subaccount,
-              warmed_profile_id: 7n,
-              lending_profile: lendingProfile,
+    vi.spyOn(Actor, "createActor").mockReturnValue(
+      mockActor({
+        get_event: vi.fn().mockResolvedValue([
+          {
+            id: 9n,
+            schema_version: 1,
+            timestamp: 123n,
+            event_type: {
+              IcpProfileWarmed: {
+                subaccount,
+                warmed_profile_id: 7n,
+                lending_profile: lendingProfile,
+              },
             },
           },
-        },
-      ]),
-      list_warmed_profiles: vi.fn().mockResolvedValue([
-        {
-          id: 7n,
-          authorisation: { IcpCaller: { subaccount } },
-          created_at: 123n,
-          lending_profile: lendingProfile,
-        },
-      ]),
-    } as never);
+        ]),
+        list_warmed_profiles: vi.fn().mockResolvedValue([
+          {
+            id: 7n,
+            authorisation: { IcpCaller: { subaccount } },
+            created_at: 123n,
+            lending_profile: lendingProfile,
+          },
+        ]),
+      })
+    );
 
     const client = new LiquidiumClient({
       canisterIds: { simpleLoans: "kzrva-ziaaa-aaaar-qamyq-cai" },

@@ -1,6 +1,8 @@
 import { LiquidiumError, LiquidiumErrorCode } from "../errors";
 
-export function getVariantKey(variant: object): string {
+export function getVariantKey<TVariant extends object>(
+  variant: TVariant
+): string {
   const [variantKey] = Object.keys(variant);
 
   if (!variantKey) {

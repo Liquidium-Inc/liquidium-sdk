@@ -69,6 +69,7 @@ describe("config", () => {
     };
 
     // when
+    // SAFETY: removed flat override fields must reach runtime validation.
     const resolveWithRemovedOverrides = () =>
       resolveCanisterIds("mainnet", removedOverrides as never);
 
@@ -90,6 +91,7 @@ describe("config", () => {
     };
 
     // when
+    // SAFETY: the unsupported doge pool must reach runtime validation.
     const resolveWithUnsupportedPoolOverrides = () =>
       resolveCanisterIds("mainnet", unsupportedPoolOverrides as never);
 

@@ -1,8 +1,11 @@
+import { mockActor } from "../../../_internal/mock-actor";
 import { Actor } from "@icp-sdk/core/agent";
 import { afterEach, describe, expect, test, vi } from "vite-plus/test";
+import { mockDeep } from "vitest-mock-extended";
 import {
   LiquidiumClient,
   LiquidiumErrorCode,
+  type Pool,
   RATE_DECIMALS,
   RATE_SCALE,
 } from "../../../index";
@@ -19,37 +22,39 @@ describe("MarketModule", () => {
     const totalDebtShares = 25_000n;
     const lendingIndex = 2n * RATE_SCALE;
     const borrowIndex = 3n * RATE_SCALE;
-    vi.spyOn(Actor, "createActor").mockReturnValue({
-      list_pools: vi.fn().mockResolvedValue([
-        {
-          optimal_utilization_rate: 80n,
-          principal: { toString: () => "pool-1", toText: () => "pool-1" },
-          total_generated_interest_snapshot: 0n,
-          supply_cap: [1_000_000n],
-          same_asset_borrowing: [true],
-          same_asset_borrowing_dust_threshold: 100n,
-          asset: { BTC: null },
-          rate_slope_before: 1n,
-          borrow_cap: [500_000n],
-          total_debt_at_last_sync: totalDebtShares,
-          chain: { BTC: null },
-          rate_slope_after: 2n,
-          reserve_factor: 100n,
-          activation_fee: [50n],
-          last_updated: [123n],
-          lending_index: lendingIndex,
-          protocol_liquidation_fee: 50n,
-          borrow_index: borrowIndex,
-          base_rate: 5n,
-          frozen: false,
-          liquidation_bonus: 200n,
-          liquidation_threshold: 7_500n,
-          max_ltv: 7_000n,
-          total_supply_at_last_sync: totalSupplyShares,
-        },
-      ]),
-      get_pool_rate: vi.fn().mockResolvedValue([[10n, 20n, 30n]]),
-    } as never);
+    vi.spyOn(Actor, "createActor").mockReturnValue(
+      mockActor({
+        list_pools: vi.fn().mockResolvedValue([
+          {
+            optimal_utilization_rate: 80n,
+            principal: { toString: () => "pool-1", toText: () => "pool-1" },
+            total_generated_interest_snapshot: 0n,
+            supply_cap: [1_000_000n],
+            same_asset_borrowing: [true],
+            same_asset_borrowing_dust_threshold: 100n,
+            asset: { BTC: null },
+            rate_slope_before: 1n,
+            borrow_cap: [500_000n],
+            total_debt_at_last_sync: totalDebtShares,
+            chain: { BTC: null },
+            rate_slope_after: 2n,
+            reserve_factor: 100n,
+            activation_fee: [50n],
+            last_updated: [123n],
+            lending_index: lendingIndex,
+            protocol_liquidation_fee: 50n,
+            borrow_index: borrowIndex,
+            base_rate: 5n,
+            frozen: false,
+            liquidation_bonus: 200n,
+            liquidation_threshold: 7_500n,
+            max_ltv: 7_000n,
+            total_supply_at_last_sync: totalSupplyShares,
+          },
+        ]),
+        get_pool_rate: vi.fn().mockResolvedValue([[10n, 20n, 30n]]),
+      })
+    );
     const client = new LiquidiumClient({});
 
     // when
@@ -99,35 +104,37 @@ describe("MarketModule", () => {
 
   test("maps ICP pools with 8 native decimals", async () => {
     // given
-    vi.spyOn(Actor, "createActor").mockReturnValue({
-      list_pools: vi.fn().mockResolvedValue([
-        {
-          optimal_utilization_rate: 80n,
-          principal: { toString: () => "pool-icp", toText: () => "pool-icp" },
-          total_generated_interest_snapshot: 0n,
-          supply_cap: [],
-          same_asset_borrowing: [],
-          asset: { ICP: null },
-          rate_slope_before: 1n,
-          borrow_cap: [],
-          total_debt_at_last_sync: 25_000n,
-          chain: { ICP: null },
-          rate_slope_after: 2n,
-          reserve_factor: 100n,
-          last_updated: [],
-          lending_index: 300n,
-          protocol_liquidation_fee: 50n,
-          borrow_index: 400n,
-          base_rate: 5n,
-          frozen: false,
-          liquidation_bonus: 200n,
-          liquidation_threshold: 7_500n,
-          max_ltv: 0n,
-          total_supply_at_last_sync: 50_000n,
-        },
-      ]),
-      get_pool_rate: vi.fn().mockResolvedValue([]),
-    } as never);
+    vi.spyOn(Actor, "createActor").mockReturnValue(
+      mockActor({
+        list_pools: vi.fn().mockResolvedValue([
+          {
+            optimal_utilization_rate: 80n,
+            principal: { toString: () => "pool-icp", toText: () => "pool-icp" },
+            total_generated_interest_snapshot: 0n,
+            supply_cap: [],
+            same_asset_borrowing: [],
+            asset: { ICP: null },
+            rate_slope_before: 1n,
+            borrow_cap: [],
+            total_debt_at_last_sync: 25_000n,
+            chain: { ICP: null },
+            rate_slope_after: 2n,
+            reserve_factor: 100n,
+            last_updated: [],
+            lending_index: 300n,
+            protocol_liquidation_fee: 50n,
+            borrow_index: 400n,
+            base_rate: 5n,
+            frozen: false,
+            liquidation_bonus: 200n,
+            liquidation_threshold: 7_500n,
+            max_ltv: 0n,
+            total_supply_at_last_sync: 50_000n,
+          },
+        ]),
+        get_pool_rate: vi.fn().mockResolvedValue([]),
+      })
+    );
     const client = new LiquidiumClient({});
 
     // when
@@ -146,35 +153,40 @@ describe("MarketModule", () => {
   test("maps native ETH reserves with 18 decimals", async () => {
     // given
     const ETH_POOL_ID = "pool-eth";
-    vi.spyOn(Actor, "createActor").mockReturnValue({
-      list_pools: vi.fn().mockResolvedValue([
-        {
-          optimal_utilization_rate: 80n,
-          principal: { toString: () => ETH_POOL_ID, toText: () => ETH_POOL_ID },
-          total_generated_interest_snapshot: 0n,
-          supply_cap: [],
-          same_asset_borrowing: [],
-          asset: { ETH: null },
-          rate_slope_before: 1n,
-          borrow_cap: [],
-          total_debt_at_last_sync: 1_000_000_000_000_000_000n,
-          chain: { ETH: null },
-          rate_slope_after: 2n,
-          reserve_factor: 100n,
-          last_updated: [],
-          lending_index: RATE_SCALE,
-          protocol_liquidation_fee: 50n,
-          borrow_index: RATE_SCALE,
-          base_rate: 5n,
-          frozen: false,
-          liquidation_bonus: 200n,
-          liquidation_threshold: 7_500n,
-          max_ltv: 7_000n,
-          total_supply_at_last_sync: 3_000_000_000_000_000_000n,
-        },
-      ]),
-      get_pool_rate: vi.fn().mockResolvedValue([[10n, 20n, 30n]]),
-    } as never);
+    vi.spyOn(Actor, "createActor").mockReturnValue(
+      mockActor({
+        list_pools: vi.fn().mockResolvedValue([
+          {
+            optimal_utilization_rate: 80n,
+            principal: {
+              toString: () => ETH_POOL_ID,
+              toText: () => ETH_POOL_ID,
+            },
+            total_generated_interest_snapshot: 0n,
+            supply_cap: [],
+            same_asset_borrowing: [],
+            asset: { ETH: null },
+            rate_slope_before: 1n,
+            borrow_cap: [],
+            total_debt_at_last_sync: 1_000_000_000_000_000_000n,
+            chain: { ETH: null },
+            rate_slope_after: 2n,
+            reserve_factor: 100n,
+            last_updated: [],
+            lending_index: RATE_SCALE,
+            protocol_liquidation_fee: 50n,
+            borrow_index: RATE_SCALE,
+            base_rate: 5n,
+            frozen: false,
+            liquidation_bonus: 200n,
+            liquidation_threshold: 7_500n,
+            max_ltv: 7_000n,
+            total_supply_at_last_sync: 3_000_000_000_000_000_000n,
+          },
+        ]),
+        get_pool_rate: vi.fn().mockResolvedValue([[10n, 20n, 30n]]),
+      })
+    );
     const client = new LiquidiumClient({});
 
     // when
@@ -195,35 +207,37 @@ describe("MarketModule", () => {
 
   test("defaults pool rates to zero when get_pool_rate returns none", async () => {
     // given
-    vi.spyOn(Actor, "createActor").mockReturnValue({
-      list_pools: vi.fn().mockResolvedValue([
-        {
-          optimal_utilization_rate: 80n,
-          principal: { toString: () => "pool-1", toText: () => "pool-1" },
-          total_generated_interest_snapshot: 0n,
-          supply_cap: [],
-          same_asset_borrowing: [],
-          asset: { USDT: null },
-          rate_slope_before: 1n,
-          borrow_cap: [],
-          total_debt_at_last_sync: 25_000n,
-          chain: { ETH: null },
-          rate_slope_after: 2n,
-          reserve_factor: 100n,
-          last_updated: [],
-          lending_index: 300n,
-          protocol_liquidation_fee: 50n,
-          borrow_index: 400n,
-          base_rate: 5n,
-          frozen: false,
-          liquidation_bonus: 200n,
-          liquidation_threshold: 7_500n,
-          max_ltv: 0n,
-          total_supply_at_last_sync: 50_000n,
-        },
-      ]),
-      get_pool_rate: vi.fn().mockResolvedValue([]),
-    } as never);
+    vi.spyOn(Actor, "createActor").mockReturnValue(
+      mockActor({
+        list_pools: vi.fn().mockResolvedValue([
+          {
+            optimal_utilization_rate: 80n,
+            principal: { toString: () => "pool-1", toText: () => "pool-1" },
+            total_generated_interest_snapshot: 0n,
+            supply_cap: [],
+            same_asset_borrowing: [],
+            asset: { USDT: null },
+            rate_slope_before: 1n,
+            borrow_cap: [],
+            total_debt_at_last_sync: 25_000n,
+            chain: { ETH: null },
+            rate_slope_after: 2n,
+            reserve_factor: 100n,
+            last_updated: [],
+            lending_index: 300n,
+            protocol_liquidation_fee: 50n,
+            borrow_index: 400n,
+            base_rate: 5n,
+            frozen: false,
+            liquidation_bonus: 200n,
+            liquidation_threshold: 7_500n,
+            max_ltv: 0n,
+            total_supply_at_last_sync: 50_000n,
+          },
+        ]),
+        get_pool_rate: vi.fn().mockResolvedValue([]),
+      })
+    );
     const client = new LiquidiumClient({});
 
     // when
@@ -246,35 +260,37 @@ describe("MarketModule", () => {
 
   test("includes SOL pools with nine decimals", async () => {
     // given
-    vi.spyOn(Actor, "createActor").mockReturnValue({
-      list_pools: vi.fn().mockResolvedValue([
-        {
-          optimal_utilization_rate: 80n,
-          principal: { toString: () => "pool-sol", toText: () => "pool-sol" },
-          total_generated_interest_snapshot: 0n,
-          supply_cap: [],
-          same_asset_borrowing: [],
-          asset: { SOL: null },
-          rate_slope_before: 1n,
-          borrow_cap: [],
-          total_debt_at_last_sync: 0n,
-          chain: { SOL: null },
-          rate_slope_after: 2n,
-          reserve_factor: 100n,
-          last_updated: [],
-          lending_index: 300n,
-          protocol_liquidation_fee: 50n,
-          borrow_index: 400n,
-          base_rate: 5n,
-          frozen: false,
-          liquidation_bonus: 200n,
-          liquidation_threshold: 7_500n,
-          max_ltv: 7_000n,
-          total_supply_at_last_sync: 50_000n,
-        },
-      ]),
-      get_pool_rate: vi.fn().mockResolvedValue([[10n, 20n, 30n]]),
-    } as never);
+    vi.spyOn(Actor, "createActor").mockReturnValue(
+      mockActor({
+        list_pools: vi.fn().mockResolvedValue([
+          {
+            optimal_utilization_rate: 80n,
+            principal: { toString: () => "pool-sol", toText: () => "pool-sol" },
+            total_generated_interest_snapshot: 0n,
+            supply_cap: [],
+            same_asset_borrowing: [],
+            asset: { SOL: null },
+            rate_slope_before: 1n,
+            borrow_cap: [],
+            total_debt_at_last_sync: 0n,
+            chain: { SOL: null },
+            rate_slope_after: 2n,
+            reserve_factor: 100n,
+            last_updated: [],
+            lending_index: 300n,
+            protocol_liquidation_fee: 50n,
+            borrow_index: 400n,
+            base_rate: 5n,
+            frozen: false,
+            liquidation_bonus: 200n,
+            liquidation_threshold: 7_500n,
+            max_ltv: 7_000n,
+            total_supply_at_last_sync: 50_000n,
+          },
+        ]),
+        get_pool_rate: vi.fn().mockResolvedValue([[10n, 20n, 30n]]),
+      })
+    );
     const client = new LiquidiumClient({});
 
     // when
@@ -291,62 +307,64 @@ describe("MarketModule", () => {
 
   test("ignores pools with unsupported assets instead of failing", async () => {
     // given
-    vi.spyOn(Actor, "createActor").mockReturnValue({
-      list_pools: vi.fn().mockResolvedValue([
-        {
-          optimal_utilization_rate: 80n,
-          principal: { toString: () => "pool-btc", toText: () => "pool-btc" },
-          total_generated_interest_snapshot: 0n,
-          supply_cap: [],
-          same_asset_borrowing: [],
-          asset: { BTC: null },
-          rate_slope_before: 1n,
-          borrow_cap: [],
-          total_debt_at_last_sync: 0n,
-          chain: { BTC: null },
-          rate_slope_after: 2n,
-          reserve_factor: 100n,
-          last_updated: [],
-          lending_index: 300n,
-          protocol_liquidation_fee: 50n,
-          borrow_index: 400n,
-          base_rate: 5n,
-          frozen: false,
-          liquidation_bonus: 200n,
-          liquidation_threshold: 7_500n,
-          max_ltv: 7_000n,
-          total_supply_at_last_sync: 50_000n,
-        },
-        {
-          optimal_utilization_rate: 80n,
-          principal: {
-            toString: () => "pool-unknown",
-            toText: () => "pool-unknown",
+    vi.spyOn(Actor, "createActor").mockReturnValue(
+      mockActor({
+        list_pools: vi.fn().mockResolvedValue([
+          {
+            optimal_utilization_rate: 80n,
+            principal: { toString: () => "pool-btc", toText: () => "pool-btc" },
+            total_generated_interest_snapshot: 0n,
+            supply_cap: [],
+            same_asset_borrowing: [],
+            asset: { BTC: null },
+            rate_slope_before: 1n,
+            borrow_cap: [],
+            total_debt_at_last_sync: 0n,
+            chain: { BTC: null },
+            rate_slope_after: 2n,
+            reserve_factor: 100n,
+            last_updated: [],
+            lending_index: 300n,
+            protocol_liquidation_fee: 50n,
+            borrow_index: 400n,
+            base_rate: 5n,
+            frozen: false,
+            liquidation_bonus: 200n,
+            liquidation_threshold: 7_500n,
+            max_ltv: 7_000n,
+            total_supply_at_last_sync: 50_000n,
           },
-          total_generated_interest_snapshot: 0n,
-          supply_cap: [],
-          same_asset_borrowing: [],
-          asset: { NEWCOIN: null },
-          rate_slope_before: 1n,
-          borrow_cap: [],
-          total_debt_at_last_sync: 0n,
-          chain: { BTC: null },
-          rate_slope_after: 2n,
-          reserve_factor: 100n,
-          last_updated: [],
-          lending_index: 300n,
-          protocol_liquidation_fee: 50n,
-          borrow_index: 400n,
-          base_rate: 5n,
-          frozen: false,
-          liquidation_bonus: 200n,
-          liquidation_threshold: 7_500n,
-          max_ltv: 7_000n,
-          total_supply_at_last_sync: 50_000n,
-        },
-      ]),
-      get_pool_rate: vi.fn().mockResolvedValue([[10n, 20n, 30n]]),
-    } as never);
+          {
+            optimal_utilization_rate: 80n,
+            principal: {
+              toString: () => "pool-unknown",
+              toText: () => "pool-unknown",
+            },
+            total_generated_interest_snapshot: 0n,
+            supply_cap: [],
+            same_asset_borrowing: [],
+            asset: { NEWCOIN: null },
+            rate_slope_before: 1n,
+            borrow_cap: [],
+            total_debt_at_last_sync: 0n,
+            chain: { BTC: null },
+            rate_slope_after: 2n,
+            reserve_factor: 100n,
+            last_updated: [],
+            lending_index: 300n,
+            protocol_liquidation_fee: 50n,
+            borrow_index: 400n,
+            base_rate: 5n,
+            frozen: false,
+            liquidation_bonus: 200n,
+            liquidation_threshold: 7_500n,
+            max_ltv: 7_000n,
+            total_supply_at_last_sync: 50_000n,
+          },
+        ]),
+        get_pool_rate: vi.fn().mockResolvedValue([[10n, 20n, 30n]]),
+      })
+    );
     const client = new LiquidiumClient({});
 
     // when
@@ -365,65 +383,67 @@ describe("MarketModule", () => {
     // given
     const btcPoolPrincipal = "pool-btc";
     const usdtPoolPrincipal = "pool-usdt";
-    vi.spyOn(Actor, "createActor").mockReturnValue({
-      list_pools: vi.fn().mockResolvedValue([
-        {
-          optimal_utilization_rate: 80n,
-          principal: {
-            toString: () => btcPoolPrincipal,
-            toText: () => btcPoolPrincipal,
+    vi.spyOn(Actor, "createActor").mockReturnValue(
+      mockActor({
+        list_pools: vi.fn().mockResolvedValue([
+          {
+            optimal_utilization_rate: 80n,
+            principal: {
+              toString: () => btcPoolPrincipal,
+              toText: () => btcPoolPrincipal,
+            },
+            total_generated_interest_snapshot: 0n,
+            supply_cap: [],
+            same_asset_borrowing: [],
+            asset: { BTC: null },
+            rate_slope_before: 1n,
+            borrow_cap: [],
+            total_debt_at_last_sync: 0n,
+            chain: { BTC: null },
+            rate_slope_after: 2n,
+            reserve_factor: 100n,
+            last_updated: [],
+            lending_index: 300n,
+            protocol_liquidation_fee: 50n,
+            borrow_index: 400n,
+            base_rate: 5n,
+            frozen: false,
+            liquidation_bonus: 200n,
+            liquidation_threshold: 7_500n,
+            max_ltv: 7_000n,
+            total_supply_at_last_sync: 50_000n,
           },
-          total_generated_interest_snapshot: 0n,
-          supply_cap: [],
-          same_asset_borrowing: [],
-          asset: { BTC: null },
-          rate_slope_before: 1n,
-          borrow_cap: [],
-          total_debt_at_last_sync: 0n,
-          chain: { BTC: null },
-          rate_slope_after: 2n,
-          reserve_factor: 100n,
-          last_updated: [],
-          lending_index: 300n,
-          protocol_liquidation_fee: 50n,
-          borrow_index: 400n,
-          base_rate: 5n,
-          frozen: false,
-          liquidation_bonus: 200n,
-          liquidation_threshold: 7_500n,
-          max_ltv: 7_000n,
-          total_supply_at_last_sync: 50_000n,
-        },
-        {
-          optimal_utilization_rate: 80n,
-          principal: {
-            toString: () => usdtPoolPrincipal,
-            toText: () => usdtPoolPrincipal,
+          {
+            optimal_utilization_rate: 80n,
+            principal: {
+              toString: () => usdtPoolPrincipal,
+              toText: () => usdtPoolPrincipal,
+            },
+            total_generated_interest_snapshot: 0n,
+            supply_cap: [],
+            same_asset_borrowing: [],
+            asset: { USDT: null },
+            rate_slope_before: 1n,
+            borrow_cap: [],
+            total_debt_at_last_sync: 0n,
+            chain: { ETH: null },
+            rate_slope_after: 2n,
+            reserve_factor: 100n,
+            last_updated: [],
+            lending_index: 300n,
+            protocol_liquidation_fee: 50n,
+            borrow_index: 400n,
+            base_rate: 5n,
+            frozen: false,
+            liquidation_bonus: 200n,
+            liquidation_threshold: 7_500n,
+            max_ltv: 7_000n,
+            total_supply_at_last_sync: 50_000n,
           },
-          total_generated_interest_snapshot: 0n,
-          supply_cap: [],
-          same_asset_borrowing: [],
-          asset: { USDT: null },
-          rate_slope_before: 1n,
-          borrow_cap: [],
-          total_debt_at_last_sync: 0n,
-          chain: { ETH: null },
-          rate_slope_after: 2n,
-          reserve_factor: 100n,
-          last_updated: [],
-          lending_index: 300n,
-          protocol_liquidation_fee: 50n,
-          borrow_index: 400n,
-          base_rate: 5n,
-          frozen: false,
-          liquidation_bonus: 200n,
-          liquidation_threshold: 7_500n,
-          max_ltv: 7_000n,
-          total_supply_at_last_sync: 50_000n,
-        },
-      ]),
-      get_pool_rate: vi.fn().mockResolvedValue([]),
-    } as never);
+        ]),
+        get_pool_rate: vi.fn().mockResolvedValue([]),
+      })
+    );
     const client = new LiquidiumClient({});
 
     // when
@@ -455,11 +475,11 @@ describe("MarketModule", () => {
     const ethPoolPrincipal = "pool-eth";
     const client = new LiquidiumClient({});
     vi.spyOn(client.market, "listPools").mockResolvedValue([
-      {
+      mockDeep<Pool>({
         id: ethPoolPrincipal,
         asset: "ETH",
         chain: "ETH",
-      } as never,
+      }),
     ]);
 
     // when
@@ -485,6 +505,7 @@ describe("MarketModule", () => {
   test("rejects an unsupported asset and chain pair", async () => {
     const client = new LiquidiumClient({});
 
+    // SAFETY: the unsupported ETH/BTC pair must reach runtime validation.
     await expect(
       client.market.findPool({ asset: "BTC", chain: "ETH" } as never)
     ).rejects.toMatchObject({
@@ -495,65 +516,67 @@ describe("MarketModule", () => {
 
   test("throws VALIDATION_ERROR when multiple pools match the query", async () => {
     // given
-    vi.spyOn(Actor, "createActor").mockReturnValue({
-      list_pools: vi.fn().mockResolvedValue([
-        {
-          optimal_utilization_rate: 80n,
-          principal: {
-            toString: () => "pool-btc-1",
-            toText: () => "pool-btc-1",
+    vi.spyOn(Actor, "createActor").mockReturnValue(
+      mockActor({
+        list_pools: vi.fn().mockResolvedValue([
+          {
+            optimal_utilization_rate: 80n,
+            principal: {
+              toString: () => "pool-btc-1",
+              toText: () => "pool-btc-1",
+            },
+            total_generated_interest_snapshot: 0n,
+            supply_cap: [],
+            same_asset_borrowing: [],
+            asset: { BTC: null },
+            rate_slope_before: 1n,
+            borrow_cap: [],
+            total_debt_at_last_sync: 0n,
+            chain: { BTC: null },
+            rate_slope_after: 2n,
+            reserve_factor: 100n,
+            last_updated: [],
+            lending_index: 300n,
+            protocol_liquidation_fee: 50n,
+            borrow_index: 400n,
+            base_rate: 5n,
+            frozen: false,
+            liquidation_bonus: 200n,
+            liquidation_threshold: 7_500n,
+            max_ltv: 7_000n,
+            total_supply_at_last_sync: 50_000n,
           },
-          total_generated_interest_snapshot: 0n,
-          supply_cap: [],
-          same_asset_borrowing: [],
-          asset: { BTC: null },
-          rate_slope_before: 1n,
-          borrow_cap: [],
-          total_debt_at_last_sync: 0n,
-          chain: { BTC: null },
-          rate_slope_after: 2n,
-          reserve_factor: 100n,
-          last_updated: [],
-          lending_index: 300n,
-          protocol_liquidation_fee: 50n,
-          borrow_index: 400n,
-          base_rate: 5n,
-          frozen: false,
-          liquidation_bonus: 200n,
-          liquidation_threshold: 7_500n,
-          max_ltv: 7_000n,
-          total_supply_at_last_sync: 50_000n,
-        },
-        {
-          optimal_utilization_rate: 80n,
-          principal: {
-            toString: () => "pool-btc-2",
-            toText: () => "pool-btc-2",
+          {
+            optimal_utilization_rate: 80n,
+            principal: {
+              toString: () => "pool-btc-2",
+              toText: () => "pool-btc-2",
+            },
+            total_generated_interest_snapshot: 0n,
+            supply_cap: [],
+            same_asset_borrowing: [],
+            asset: { BTC: null },
+            rate_slope_before: 1n,
+            borrow_cap: [],
+            total_debt_at_last_sync: 0n,
+            chain: { BTC: null },
+            rate_slope_after: 2n,
+            reserve_factor: 100n,
+            last_updated: [],
+            lending_index: 300n,
+            protocol_liquidation_fee: 50n,
+            borrow_index: 400n,
+            base_rate: 5n,
+            frozen: false,
+            liquidation_bonus: 200n,
+            liquidation_threshold: 7_500n,
+            max_ltv: 7_000n,
+            total_supply_at_last_sync: 50_000n,
           },
-          total_generated_interest_snapshot: 0n,
-          supply_cap: [],
-          same_asset_borrowing: [],
-          asset: { BTC: null },
-          rate_slope_before: 1n,
-          borrow_cap: [],
-          total_debt_at_last_sync: 0n,
-          chain: { BTC: null },
-          rate_slope_after: 2n,
-          reserve_factor: 100n,
-          last_updated: [],
-          lending_index: 300n,
-          protocol_liquidation_fee: 50n,
-          borrow_index: 400n,
-          base_rate: 5n,
-          frozen: false,
-          liquidation_bonus: 200n,
-          liquidation_threshold: 7_500n,
-          max_ltv: 7_000n,
-          total_supply_at_last_sync: 50_000n,
-        },
-      ]),
-      get_pool_rate: vi.fn().mockResolvedValue([]),
-    } as never);
+        ]),
+        get_pool_rate: vi.fn().mockResolvedValue([]),
+      })
+    );
     const client = new LiquidiumClient({});
 
     // when
@@ -570,13 +593,15 @@ describe("MarketModule", () => {
 
   test("gets asset prices from USDT-quoted pairs", async () => {
     // given
-    vi.spyOn(Actor, "createActor").mockReturnValue({
-      get_prices: vi.fn().mockResolvedValue([
-        ["BTC_USDT", 72_000_000_000_000_000_000_000_000_000_000n, 27],
-        ["USDC_USDT", 999_910_065_000_000_000_000_000_000n, 27],
-        ["USDT_USDT", 1_000_018_620_000_000_000_000_000_000n, 27],
-      ]),
-    } as never);
+    vi.spyOn(Actor, "createActor").mockReturnValue(
+      mockActor({
+        get_prices: vi.fn().mockResolvedValue([
+          ["BTC_USDT", 72_000_000_000_000_000_000_000_000_000_000n, 27],
+          ["USDC_USDT", 999_910_065_000_000_000_000_000_000n, 27],
+          ["USDT_USDT", 1_000_018_620_000_000_000_000_000_000n, 27],
+        ]),
+      })
+    );
     const client = new LiquidiumClient({});
 
     // when
@@ -590,15 +615,17 @@ describe("MarketModule", () => {
 
   test("ignores pairs that are not USDT-quoted", async () => {
     // given
-    vi.spyOn(Actor, "createActor").mockReturnValue({
-      get_prices: vi.fn().mockResolvedValue([
-        ["BTC_USD", 68_500_000_000n, 6],
-        ["BTC_USDT", 68_500_000_000n, 6],
-        ["USDT_USDT", 1_000_000n, 6],
-        ["SOL_USDT", 150_000_000n, 6],
-        ["ETH_BTC", 50_000n, 6],
-      ]),
-    } as never);
+    vi.spyOn(Actor, "createActor").mockReturnValue(
+      mockActor({
+        get_prices: vi.fn().mockResolvedValue([
+          ["BTC_USD", 68_500_000_000n, 6],
+          ["BTC_USDT", 68_500_000_000n, 6],
+          ["USDT_USDT", 1_000_000n, 6],
+          ["SOL_USDT", 150_000_000n, 6],
+          ["ETH_BTC", 50_000n, 6],
+        ]),
+      })
+    );
     const client = new LiquidiumClient({});
 
     // when
@@ -614,9 +641,13 @@ describe("MarketModule", () => {
 
   test("returns an empty price map when USDT-quoted pairs are missing", async () => {
     // given
-    vi.spyOn(Actor, "createActor").mockReturnValue({
-      get_prices: vi.fn().mockResolvedValue([["BTC_USD", 68_500_000_000n, 6]]),
-    } as never);
+    vi.spyOn(Actor, "createActor").mockReturnValue(
+      mockActor({
+        get_prices: vi
+          .fn()
+          .mockResolvedValue([["BTC_USD", 68_500_000_000n, 6]]),
+      })
+    );
     const client = new LiquidiumClient({});
 
     // when
@@ -631,9 +662,13 @@ describe("MarketModule", () => {
     const FETCHED_AT_SECONDS = 1_750_000_000n;
     vi.useFakeTimers();
     vi.setSystemTime(Number(FETCHED_AT_SECONDS * 1_000n));
-    vi.spyOn(Actor, "createActor").mockReturnValue({
-      get_prices: vi.fn().mockResolvedValue([["BTC_USDT", 68_500_000_000n, 6]]),
-    } as never);
+    vi.spyOn(Actor, "createActor").mockReturnValue(
+      mockActor({
+        get_prices: vi
+          .fn()
+          .mockResolvedValue([["BTC_USDT", 68_500_000_000n, 6]]),
+      })
+    );
     const client = new LiquidiumClient({});
 
     // when
@@ -648,9 +683,11 @@ describe("MarketModule", () => {
 
   test("gets a pool rate from the lending canister", async () => {
     // given
-    vi.spyOn(Actor, "createActor").mockReturnValue({
-      get_pool_rate: vi.fn().mockResolvedValue([[10n, 20n, 30n]]),
-    } as never);
+    vi.spyOn(Actor, "createActor").mockReturnValue(
+      mockActor({
+        get_pool_rate: vi.fn().mockResolvedValue([[10n, 20n, 30n]]),
+      })
+    );
     const client = new LiquidiumClient({});
 
     // when
@@ -670,38 +707,40 @@ describe("MarketModule", () => {
   test("getReserveData returns the enriched pool for an asset/chain pair", async () => {
     // given
     const USDT_POOL_ID = "pool-usdt";
-    vi.spyOn(Actor, "createActor").mockReturnValue({
-      list_pools: vi.fn().mockResolvedValue([
-        {
-          optimal_utilization_rate: 80n,
-          principal: {
-            toString: () => USDT_POOL_ID,
-            toText: () => USDT_POOL_ID,
+    vi.spyOn(Actor, "createActor").mockReturnValue(
+      mockActor({
+        list_pools: vi.fn().mockResolvedValue([
+          {
+            optimal_utilization_rate: 80n,
+            principal: {
+              toString: () => USDT_POOL_ID,
+              toText: () => USDT_POOL_ID,
+            },
+            total_generated_interest_snapshot: 0n,
+            supply_cap: [],
+            same_asset_borrowing: [],
+            asset: { USDT: null },
+            rate_slope_before: 1n,
+            borrow_cap: [],
+            total_debt_at_last_sync: 10_000n,
+            chain: { ETH: null },
+            rate_slope_after: 2n,
+            reserve_factor: 100n,
+            last_updated: [],
+            lending_index: RATE_SCALE,
+            protocol_liquidation_fee: 50n,
+            borrow_index: RATE_SCALE,
+            base_rate: 5n,
+            frozen: false,
+            liquidation_bonus: 200n,
+            liquidation_threshold: 7_500n,
+            max_ltv: 7_000n,
+            total_supply_at_last_sync: 100_000n,
           },
-          total_generated_interest_snapshot: 0n,
-          supply_cap: [],
-          same_asset_borrowing: [],
-          asset: { USDT: null },
-          rate_slope_before: 1n,
-          borrow_cap: [],
-          total_debt_at_last_sync: 10_000n,
-          chain: { ETH: null },
-          rate_slope_after: 2n,
-          reserve_factor: 100n,
-          last_updated: [],
-          lending_index: RATE_SCALE,
-          protocol_liquidation_fee: 50n,
-          borrow_index: RATE_SCALE,
-          base_rate: 5n,
-          frozen: false,
-          liquidation_bonus: 200n,
-          liquidation_threshold: 7_500n,
-          max_ltv: 7_000n,
-          total_supply_at_last_sync: 100_000n,
-        },
-      ]),
-      get_pool_rate: vi.fn().mockResolvedValue([[10n, 20n, 30n]]),
-    } as never);
+        ]),
+        get_pool_rate: vi.fn().mockResolvedValue([[10n, 20n, 30n]]),
+      })
+    );
     const client = new LiquidiumClient({});
 
     // when
@@ -728,9 +767,11 @@ describe("MarketModule", () => {
 
   test("throws POOL_NOT_FOUND when a pool rate is missing", async () => {
     // given
-    vi.spyOn(Actor, "createActor").mockReturnValue({
-      get_pool_rate: vi.fn().mockResolvedValue([]),
-    } as never);
+    vi.spyOn(Actor, "createActor").mockReturnValue(
+      mockActor({
+        get_pool_rate: vi.fn().mockResolvedValue([]),
+      })
+    );
     const client = new LiquidiumClient({});
 
     // when

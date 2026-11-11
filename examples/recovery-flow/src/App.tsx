@@ -7,6 +7,7 @@ import {
 } from "@liquidium/client";
 import { type SyntheticEvent, useRef, useState } from "react";
 import { formatUnits } from "viem";
+import { parseSelectedOption } from "../../_shared/input";
 import {
   formatError,
   formatJson,
@@ -454,7 +455,12 @@ export function App() {
                 name="chain"
                 value={chain}
                 onChange={(event) => {
-                  setChain(event.target.value as Chain);
+                  setChain(
+                    parseSelectedOption(
+                      event.target.value,
+                      selected ? getDeliveryChains(selected.pool) : [Chain.ICP]
+                    )
+                  );
                   setPrepared(null);
                 }}
               >

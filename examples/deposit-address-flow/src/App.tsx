@@ -8,6 +8,7 @@ import type {
 } from "@liquidium/client";
 import { Chain, SupplyAction } from "@liquidium/client";
 import { useEffect, useState } from "react";
+import { activityFilterSchema, parseSelectedOption } from "../../_shared/input";
 import { formatConfig } from "./client";
 import {
   createDynamicWalletAdapter,
@@ -410,7 +411,12 @@ function SupplyBorrowPage() {
           id="supply-action-select"
           value={supplyAction}
           onChange={(event) => {
-            setSupplyAction(event.target.value as SupplyAction);
+            setSupplyAction(
+              parseSelectedOption(
+                event.target.value,
+                Object.values(SupplyAction)
+              )
+            );
             setCurrentSupplyFlow(null);
           }}
         >
@@ -443,7 +449,14 @@ function SupplyBorrowPage() {
           id="supply-chain-select"
           value={supplyChainSelection}
           onChange={(event) =>
-            setSupplyChainSelection(event.target.value as Chain)
+            setSupplyChainSelection(
+              parseSelectedOption(
+                event.target.value,
+                getChainOptions(
+                  pools.find((pool) => pool.id === selectedSupplyPoolId)
+                )
+              )
+            )
           }
         >
           {getChainOptions(
@@ -521,7 +534,14 @@ function SupplyBorrowPage() {
           id="borrow-chain-select"
           value={borrowChainSelection}
           onChange={(event) => {
-            setBorrowChainSelection(event.target.value as Chain);
+            setBorrowChainSelection(
+              parseSelectedOption(
+                event.target.value,
+                getChainOptions(
+                  pools.find((pool) => pool.id === selectedBorrowPoolId)
+                )
+              )
+            );
             setBorrowDestination("");
           }}
         >
@@ -706,7 +726,7 @@ function ActivityTrackerPage() {
           id="activity-filter-select"
           value={activityFilter}
           onChange={(event) =>
-            setActivityFilter(event.target.value as ActivityFilter)
+            setActivityFilter(activityFilterSchema.parse(event.target.value))
           }
         >
           <option value="active">In progress</option>
@@ -778,7 +798,7 @@ function formatSupplyAction(action: SupplyAction): string {
 }
 
 function getDefaultChain(pool: Pool | undefined): Chain {
-  return (pool?.chain as Chain | undefined) ?? Chain.ETH;
+  return pool?.chain ?? Chain.ETH;
 }
 
 function formatDestinationInputLabel(
@@ -823,7 +843,7 @@ function getSelectedPool(pools: Pool[], poolId: string): Pool {
 }
 
 function formatUsdPrice(price: number | undefined): string {
-  if (typeof price !== "number" || !Number.isFinite(price) || price <= 0) {
+  if (price === undefined || !Number.isFinite(price) || price <= 0) {
     return "unavailable";
   }
 

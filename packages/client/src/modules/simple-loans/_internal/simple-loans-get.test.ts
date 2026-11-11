@@ -1,3 +1,4 @@
+import { mockActor } from "../../../_internal/mock-actor";
 import { Actor } from "@icp-sdk/core/agent";
 import { Principal } from "@icp-sdk/core/principal";
 import { afterEach, describe, expect, test, vi } from "vite-plus/test";
@@ -715,23 +716,25 @@ function mockSimpleLoanHydrationActors(params: {
     return params.positionsByPoolId?.[poolId.toText()] ?? [];
   });
 
-  vi.spyOn(Actor, "createActor").mockReturnValue({
-    get_loan: params.getLoan,
-    list_pools: vi
-      .fn()
-      .mockResolvedValue([
-        createBtcPoolRecord(),
-        createEthPoolRecord(),
-        createUsdtPoolRecord(),
-      ]),
-    get_position: getPosition,
-    get_pool_rate: params.getPoolRate,
-    get_btc_address: params.getBtcAddress,
-    get_deposit_address: params.getDepositAddress,
-    estimate_deposit_fee:
-      params.estimateDepositFee ??
-      vi.fn().mockResolvedValue({ Ok: 1_500_000n }),
-    get_deposit_fee: params.getDepositFee,
-    icrc1_fee: params.icrc1Fee,
-  } as never);
+  vi.spyOn(Actor, "createActor").mockReturnValue(
+    mockActor({
+      get_loan: params.getLoan,
+      list_pools: vi
+        .fn()
+        .mockResolvedValue([
+          createBtcPoolRecord(),
+          createEthPoolRecord(),
+          createUsdtPoolRecord(),
+        ]),
+      get_position: getPosition,
+      get_pool_rate: params.getPoolRate,
+      get_btc_address: params.getBtcAddress,
+      get_deposit_address: params.getDepositAddress,
+      estimate_deposit_fee:
+        params.estimateDepositFee ??
+        vi.fn().mockResolvedValue({ Ok: 1_500_000n }),
+      get_deposit_fee: params.getDepositFee,
+      icrc1_fee: params.icrc1Fee,
+    })
+  );
 }

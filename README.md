@@ -89,6 +89,11 @@ bun run typecheck
 bun run test
 ```
 
+`bun run lint` runs Vite+ format, type-aware lint, and TypeScript checks.
+The [vendored anti-slop rules](tools/oxlint/anti-slop/UPSTREAM.md) run as errors.
+Generated files and installed agent tools are excluded. Use `bun run lint:fix`
+for safe fixes, then run the checks again.
+
 ## License
 
 MIT

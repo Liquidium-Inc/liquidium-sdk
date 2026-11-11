@@ -74,9 +74,11 @@ export function selectEthStablecoinPoolByAsset(
 }
 
 export function listAvailableBorrowPools(pools: Pool[]): Pool[] {
-  return ETH_STABLECOIN_BORROW_ASSETS.map((asset) =>
-    findBorrowPoolByAsset(pools, asset)
-  ).filter((pool): pool is Pool => Boolean(pool));
+  return ETH_STABLECOIN_BORROW_ASSETS.flatMap((asset) => {
+    const pool = findBorrowPoolByAsset(pools, asset);
+
+    return pool ? [pool] : [];
+  });
 }
 
 export function getMinimumBorrowAmount(pool: Pool): bigint {

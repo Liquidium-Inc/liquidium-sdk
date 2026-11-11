@@ -1,3 +1,4 @@
+import { mockActor } from "../../../_internal/mock-actor";
 import { Actor } from "@icp-sdk/core/agent";
 import { Principal } from "@icp-sdk/core/principal";
 import { base58 } from "@scure/base";
@@ -310,6 +311,7 @@ test("requires account context for SOL fees and never returns a fallback on fail
   const client = new LiquidiumClient({ fetch });
 
   // when
+  // SAFETY: missing SOL account context must reach runtime validation.
   const missingContext = client.lending.estimateInflowFee({
     asset: "SOL",
     chain: "SOL",
@@ -507,14 +509,14 @@ function createSolActor() {
   actor.register_profile.mockResolvedValue({
     Ok: Principal.fromText(PROFILE_ID),
   } satisfies Awaited<ReturnType<SolTestActor["register_profile"]>>);
-  vi.spyOn(Actor, "createActor").mockReturnValue(actor as never);
+  vi.spyOn(Actor, "createActor").mockReturnValue(mockActor(actor));
 
   return actor;
 }
 
 function feeFetch() {
   return vi.fn<typeof globalThis.fetch>().mockImplementation(async (input) => {
-    if (String(input).includes("/solana/inflow-fee?")) {
+    if (new Request(input).url.includes("/solana/inflow-fee?")) {
       return Response.json({
         totalFee: FEE_LAMPORTS.toString(),
         minimumSendAmount: MINIMUM_SEND_LAMPORTS.toString(),

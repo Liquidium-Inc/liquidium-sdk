@@ -19,7 +19,7 @@ void import("./bootstrap")
   .then(({ mountApp }) => {
     mountApp({ root, dynamicEnvironmentId });
   })
-  .catch((error: unknown) => {
+  .catch((error) => {
     const message =
       error instanceof Error
         ? error.message

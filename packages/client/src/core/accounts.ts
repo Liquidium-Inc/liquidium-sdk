@@ -4,6 +4,7 @@ import {
   encodeIcrcAccount,
 } from "@icp-sdk/canisters/ledger/icrc";
 import { Principal } from "@icp-sdk/core/principal";
+import { z } from "zod";
 
 /** Account type hint for Liquidium account inputs and normalized account responses. */
 export const LiquidiumAccountType = {
@@ -70,6 +71,12 @@ export interface LiquidiumAccountReference {
 
 /** Account input accepted by SDK flows that can auto-detect string addresses. */
 export type LiquidiumAccountInput = string | LiquidiumAccountReference;
+
+export function isUnhintedAccountInput(
+  input: LiquidiumAccountInput
+): input is string {
+  return z.string().safeParse(input).success;
+}
 
 export interface CanisterNativeAccount {
   Native: Principal;

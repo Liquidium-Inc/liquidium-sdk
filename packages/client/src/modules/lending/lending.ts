@@ -959,11 +959,12 @@ function mapExpectedOutflowDetails(
 
   return {
     ...details,
+    outflowType: expectedOutflowType,
     status: createLiquidiumStatus({
       operation: mapOutflowTypeToStatusOperation(expectedOutflowType),
       state: details.txid ? "confirming" : "processing",
     }),
-  } as BorrowOutflowDetails | WithdrawOutflowDetails;
+  };
 }
 
 function mapOutflowTypeToStatusOperation(

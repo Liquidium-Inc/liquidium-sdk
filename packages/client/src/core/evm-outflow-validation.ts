@@ -1,5 +1,6 @@
 import { getAddress } from "viem";
 import { mainnet } from "viem/chains";
+import { z } from "zod";
 import { LiquidiumError, LiquidiumErrorCode } from "./errors";
 import { buildEthereumAddressBytecodePath } from "./sdk-api-paths";
 import type { ApiClient } from "./transports/api-client";
@@ -79,10 +80,12 @@ export async function guardEthereumOutflowDestination({
       return;
     }
 
-    if (
-      typeof bytecode !== "string" ||
-      !/^0x(?:[0-9a-fA-F]{2})*$/.test(bytecode)
-    ) {
+    const bytecodeResult = z
+      .string()
+      .regex(/^0x(?:[0-9a-fA-F]{2})*$/)
+      .safeParse(bytecode);
+
+    if (!bytecodeResult.success) {
       return;
     }
 
@@ -106,16 +109,15 @@ export async function guardEthereumOutflowDestination({
     return;
   }
 
-  if (
-    !response ||
-    typeof response !== "object" ||
-    !("hasDeployedBytecode" in response) ||
-    typeof response.hasDeployedBytecode !== "boolean"
-  ) {
+  const responseResult = z
+    .object({ hasDeployedBytecode: z.boolean() })
+    .safeParse(response);
+
+  if (!responseResult.success) {
     return;
   }
 
-  if (response.hasDeployedBytecode) {
+  if (responseResult.data.hasDeployedBytecode) {
     throw new LiquidiumError(
       LiquidiumErrorCode.CONTRACT_DESTINATION_UNSUPPORTED,
       CONTRACT_DESTINATION_UNSUPPORTED_MESSAGE

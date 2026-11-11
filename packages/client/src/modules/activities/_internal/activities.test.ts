@@ -1,3 +1,4 @@
+import { mockActor } from "../../../_internal/mock-actor";
 import { Actor } from "@icp-sdk/core/agent";
 import { Principal } from "@icp-sdk/core/principal";
 import { afterEach, describe, expect, test, vi } from "vite-plus/test";
@@ -164,9 +165,11 @@ describe("ActivitiesModule", () => {
       },
     });
 
-    vi.spyOn(Actor, "createActor").mockReturnValue({
-      get_loan: getLoan,
-    } as never);
+    vi.spyOn(Actor, "createActor").mockReturnValue(
+      mockActor({
+        get_loan: getLoan,
+      })
+    );
 
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(
@@ -378,9 +381,11 @@ describe("ActivitiesModule", () => {
       },
     };
 
-    vi.spyOn(Actor, "createActor").mockReturnValue({
-      get_loan: getLoan,
-    } as never);
+    vi.spyOn(Actor, "createActor").mockReturnValue(
+      mockActor({
+        get_loan: getLoan,
+      })
+    );
 
     const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(JSON.stringify(responsePayload), {

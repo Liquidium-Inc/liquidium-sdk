@@ -1,6 +1,12 @@
-import { Actor } from "@icp-sdk/core/agent";
+import { mockActor } from "../../../_internal/mock-actor";
+import { Actor, type ActorSubclass } from "@icp-sdk/core/agent";
 import type { Principal } from "@icp-sdk/core/principal";
 import { vi } from "vite-plus/test";
+import { mockDeep } from "vitest-mock-extended";
+import type {
+  FlexibleLendingActor,
+  FlexiblePositionView,
+} from "../../../core/canisters/lending/flexible-actor";
 
 export const LONG_RETRY_TEST_TIMEOUT_MS = 15_000;
 export const BTC_POOL_ID = "hkmli-faaaa-aaaar-qb4ba-cai";
@@ -35,18 +41,26 @@ export function encodePrincipalToBytes32(principal: Principal): `0x${string}` {
 
 export const OUTSTANDING_DEBT_NATIVE = 1_000n;
 
-export function createOutstandingDebtPositionActor() {
-  return {
+export function createOutstandingDebtPositionActor(): ActorSubclass<
+  Pick<FlexibleLendingActor, "get_position">
+> {
+  return mockActor({
     get_position: vi
-      .fn()
-      .mockResolvedValue([{ debt_native_now: OUTSTANDING_DEBT_NATIVE }]),
-  } as never;
+      .fn<FlexibleLendingActor["get_position"]>()
+      .mockResolvedValue([
+        mockDeep<FlexiblePositionView>({
+          debt_native_now: OUTSTANDING_DEBT_NATIVE,
+        }),
+      ]),
+  });
 }
 
 export function mockUsdtPoolList(): void {
-  vi.spyOn(Actor, "createActor").mockReturnValueOnce({
-    list_pools: vi.fn().mockResolvedValue([createUsdtPoolRecord()]),
-  } as never);
+  vi.spyOn(Actor, "createActor").mockReturnValueOnce(
+    mockActor({
+      list_pools: vi.fn().mockResolvedValue([createUsdtPoolRecord()]),
+    })
+  );
 }
 
 export function createUsdtPoolRecord() {

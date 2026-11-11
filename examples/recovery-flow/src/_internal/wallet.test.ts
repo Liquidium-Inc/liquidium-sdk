@@ -32,7 +32,7 @@ test("opens the signer popup synchronously and keeps the result if closing fails
   await expect(result).resolves.toBe(operationResult);
   expect(signer.autoCloseTransportChannel).toBe(true);
   expect(operation).toHaveBeenCalledOnce();
-  expect(signer.closeChannel).toHaveBeenCalledOnce();
+  expect(signer.closeChannel.mock.calls).toHaveLength(1);
 });
 
 test("does not authorize when the wallet no longer shares the selected account", async () => {
@@ -66,7 +66,7 @@ test("does not authorize when the wallet no longer shares the selected account",
   // then
   await expect(result).rejects.toThrow("no longer available");
   expect(operation).not.toHaveBeenCalled();
-  expect(signer.closeChannel).toHaveBeenCalledOnce();
+  expect(signer.closeChannel.mock.calls).toHaveLength(1);
 });
 
 test("authorizes the selected OISY principal and subaccount", async () => {

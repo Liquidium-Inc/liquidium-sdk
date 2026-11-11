@@ -69,3 +69,7 @@ To start the example, follow these steps:
 The page shows **SDK Method Query** when the example starts.
 
 Included method templates cover account, market, position, activity, history, quote, lending, and Simple Loans methods.
+
+The example validates JSON before it calls an SDK method. Use integer strings
+for token amounts. Quote pool fields that use `bigint` also accept integer
+strings; the example converts them before it calls `quote.getQuote`.

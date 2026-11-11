@@ -85,7 +85,7 @@ export function normalizeAndValidateEvmAddress(
     throw new LiquidiumError(LiquidiumErrorCode.INVALID_ADDRESS, errorMessage);
   }
 
-  return getAddress(address) as EvmAddress;
+  return getAddress(address);
 }
 
 export function validateSolAddress(address: string): string {

@@ -1,6 +1,8 @@
 import { Principal } from "@icp-sdk/core/principal";
+import { z } from "zod";
 import {
   decodeIcrcAccountAddress,
+  isUnhintedAccountInput,
   mapCanisterAccountToLiquidiumAccount,
   normalizeIcpAccountIdentifier,
 } from "../../core/accounts";
@@ -46,7 +48,6 @@ import {
   parseUnsignedApiBigint,
 } from "../../core/utils/api-response-parsers";
 import { getAssetNativeDecimals } from "../../core/utils/asset-decimals";
-import { getVariantKey } from "../../core/utils/variant";
 import type { ActivitiesModule, Activity } from "../activities";
 import { ActivityFilter } from "../activities";
 import {
@@ -1370,7 +1371,7 @@ function resolveSimpleLoanDestination(
 ): SimpleLoanApiAccountType {
   getSimpleLoanAssetIdentifier(params.asset, params.chain, params.role);
 
-  if (typeof params.destination === "string") {
+  if (isUnhintedAccountInput(params.destination)) {
     return resolveSimpleLoanStringDestination({
       destination: params.destination,
       asset: params.asset,
@@ -1758,7 +1759,14 @@ function authorizationFromCanister(
 }
 
 function legFromCanister(leg: SimpleLoanCanisterLeg): SimpleLoanLeg {
-  return getVariantKey(leg) as SimpleLoanLeg;
+  if ("Lend" in leg) return "Lend";
+
+  if ("Borrow" in leg) return "Borrow";
+
+  throw new LiquidiumError(
+    LiquidiumErrorCode.INTERNAL,
+    "Unsupported simple loan leg"
+  );
 }
 
 function decodeRef(ref: string): bigint {
@@ -1773,15 +1781,17 @@ function decodeRef(ref: string): bigint {
   }
 }
 
-function validateSimpleLoanFindQuery(query: unknown): string {
-  if (typeof query !== "string") {
+function validateSimpleLoanFindQuery(query: string): string {
+  const queryResult = z.string().safeParse(query);
+
+  if (!queryResult.success) {
     throw new LiquidiumError(
       LiquidiumErrorCode.VALIDATION_ERROR,
       "Simple loan find query must be a string"
     );
   }
 
-  const trimmedQuery = query.trim();
+  const trimmedQuery = queryResult.data.trim();
 
   if (!trimmedQuery) {
     throw new LiquidiumError(
@@ -1871,7 +1881,7 @@ function parseSimpleLoanAsset(value: string, label: string): SimpleLoanAsset {
 function mapSimpleLoansErrorToLiquidiumError(
   error: SimpleLoansCanisterError
 ): LiquidiumError {
-  const [key, payload] = Object.entries(error)[0] as [string, unknown];
+  const [key, payload] = Object.entries(error)[0] ?? ["Unknown", undefined];
 
   switch (key) {
     case "LoanNotFound":
@@ -1916,16 +1926,20 @@ function mapSimpleLoansErrorToLiquidiumError(
   }
 }
 
-function stringifyErrorPayload(payload: unknown): string | undefined {
-  if (payload === null || payload === undefined) return undefined;
+function stringifyErrorPayload(cause: unknown): string | undefined {
+  if (cause === null || cause === undefined) return undefined;
 
-  if (typeof payload === "string") return payload;
+  const messageResult = z.string().safeParse(cause);
 
-  return JSON.stringify(payload, (_key, value) => {
-    if (typeof value === "bigint") return value.toString();
+  if (messageResult.success) return messageResult.data;
 
-    if (value && typeof value === "object" && "toText" in value) {
-      return (value as { toText: () => string }).toText();
+  return JSON.stringify(cause, (_key, value) => {
+    const bigintResult = z.bigint().safeParse(value);
+
+    if (bigintResult.success) return bigintResult.data.toString();
+
+    if (z.object({ toText: z.function() }).safeParse(value).success) {
+      return value.toText();
     }
 
     return value;

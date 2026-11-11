@@ -39,9 +39,7 @@ test("should reject missing string API response fields", () => {
     parseMissingValue();
   } catch (error) {
     expect(error).toBeInstanceOf(LiquidiumError);
-    expect((error as LiquidiumError).code).toBe(
-      LiquidiumErrorCode.VALIDATION_ERROR
-    );
+    expect(error).toMatchObject({ code: LiquidiumErrorCode.VALIDATION_ERROR });
   }
 });
 
@@ -78,9 +76,7 @@ test("should reject non-digit bigint API response fields", () => {
     parseInvalidValue();
   } catch (error) {
     expect(error).toBeInstanceOf(LiquidiumError);
-    expect((error as LiquidiumError).code).toBe(
-      LiquidiumErrorCode.VALIDATION_ERROR
-    );
+    expect(error).toMatchObject({ code: LiquidiumErrorCode.VALIDATION_ERROR });
   }
 });
 
@@ -117,9 +113,7 @@ test("should reject invalid ISO timestamp API response fields", () => {
     parseInvalidValue();
   } catch (error) {
     expect(error).toBeInstanceOf(LiquidiumError);
-    expect((error as LiquidiumError).code).toBe(
-      LiquidiumErrorCode.VALIDATION_ERROR
-    );
+    expect(error).toMatchObject({ code: LiquidiumErrorCode.VALIDATION_ERROR });
   }
 });
 
@@ -157,8 +151,6 @@ test("should reject unsupported string union API response fields", () => {
     parseUnsupportedValue();
   } catch (error) {
     expect(error).toBeInstanceOf(LiquidiumError);
-    expect((error as LiquidiumError).code).toBe(
-      LiquidiumErrorCode.VALIDATION_ERROR
-    );
+    expect(error).toMatchObject({ code: LiquidiumErrorCode.VALIDATION_ERROR });
   }
 });
