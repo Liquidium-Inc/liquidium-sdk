@@ -41,7 +41,8 @@
       "**/*.cjs",
       "**/*.json",
       "**/*.yaml",
-      "!packages/client/src/generated"
+      "!packages/client/src/generated",
+      "!packages/p2p-evm/src/generated"
     ]
   }
 }

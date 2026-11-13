@@ -13,6 +13,13 @@ export default defineConfig({
       {
         extends: true,
         test: {
+          name: "p2p-evm",
+          include: ["packages/p2p-evm/src/**/*.{test,spec}.{ts,tsx}"],
+        },
+      },
+      {
+        extends: true,
+        test: {
           name: "example-wallet",
           include: ["examples/sdk-method-query/src/_internal/**/*.test.ts"],
         },
