@@ -425,9 +425,8 @@ client.history.getLiquidationHistory(profileId, filters?);
 client.history.getProtocolActivity({ poolId, operations, limit });
 ```
 
-Activities and user history entries expose `txids?: string[]`; do not expect
-legacy singular or direction-specific txid fields. Transaction history uses
-canonical operation names:
+Activities and user history entries carry their chain transaction ids in
+`txids?: string[]`. Transaction history uses canonical operation names:
 `deposit`, `borrow`, `repayment`, `withdrawal`, and `liquidation`.
 Use `operations` for operation filters and `states` for lifecycle-state filters;
 do not use removed `type`, `status`, or `kind` filters.
@@ -981,8 +980,9 @@ const contractInteractionFlow = await client.lending.supply({
 ```
 
 `mechanism: "transfer"` explicitly selects the transfer path; omitting it selects
-the same default. `mechanism: "contractInteraction"` requires `apiBaseUrl`,
-`account`, `amount`, and `sendEthTransaction`. USDC and USDT additionally require
+the same default. `mechanism: "contractInteraction"` requires `account`,
+`amount`, and `sendEthTransaction`; set `apiBaseUrl` only for a custom Liquidium
+service deployment. USDC and USDT additionally require
 `evmRpcUrl` or `evmPublicClient` for allowance and balance reads. Native ETH skips
 ERC-20 reads and calls the payable deposit helper. Contract interaction is not
 valid for ckETH because that route uses an ICRC transfer on `chain: "ICP"`.
@@ -1001,7 +1001,7 @@ valid for ckETH because that route uses an ICRC transfer on `chain: "ICP"`.
 10. Handle existing profiles explicitly when account creation can race with existing state. Do not rely on `prepareCreateProfile(...)` to reject an existing profile before signing.
 11. Work from the public modules and names exported by `@liquidium/client`. Do not invent SDK methods.
 12. After `borrow(...)`, treat `outflow.id` as the user-visible reference immediately. Do not assume `outflow.txid` is set on the first response; resolve it later via activities or history if you need the chain transaction id.
-13. History entries use `txids?: string[]`; do not look for legacy direction-specific txid fields.
+13. Activities and user history entries carry their chain transaction ids in `txids?: string[]`.
 14. ETH deposit-address `unauthorized` is usually not an `apiBaseUrl` problem. The deposit-address lookup is a direct canister call. Check the `poolId`, `ethDeposit` canister ID, token address, and deployment/environment alignment first.
 15. Do not model Simple Loans as a `lending.supply(...)` mechanism. Use `client.simpleLoans` for the accountless product flow and `client.lending.supply(...)` only for advanced profile-based supply/repay integrations.
 16. Do not trust address lookup as canonical loan state. Use it to find candidates, then hydrate the selected loan through `simpleLoans.get(...)`.
