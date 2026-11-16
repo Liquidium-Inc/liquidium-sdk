@@ -5,6 +5,7 @@
 When changing public SDK behavior, exported types, method names, request fields, response fields, errors, examples, or runtime configuration:
 
 - Update the relevant hand-written files in `docs/` in the same change.
+- Update `skills/liquidium-sdk-integration/SKILL.md` in the same change. It is the public skill other agents load to integrate the SDK, so a stale claim there becomes wrong integration code.
 - Update examples in `examples/` when the documented flow depends on runnable code.
 - Keep docs direct and specific. Avoid filler, vague claims, and marketing copy.
 - Put user-facing tutorials in `docs/getting-started/`.
