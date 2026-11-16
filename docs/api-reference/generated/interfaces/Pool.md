@@ -12,6 +12,16 @@ Current protocol metadata and rate state for a lending pool.
 
 ## Properties
 
+### activationFee
+
+> **activationFee**: `bigint`
+
+Defined in: packages/client/src/modules/market/types.ts:38
+
+Borrow activation fee in basis points; zero on canisters without this field.
+
+***
+
 ### asset
 
 > **asset**: [`Asset`](../type-aliases/Asset.md)
@@ -36,7 +46,7 @@ Currently available liquidity in base units.
 
 > **baseRate**: `bigint`
 
-Defined in: packages/client/src/modules/market/types.ts:50
+Defined in: packages/client/src/modules/market/types.ts:52
 
 Base borrow rate, scaled by `rateDecimals`.
 
@@ -56,7 +66,7 @@ Optional borrow cap in base units.
 
 > **borrowIndex**: `bigint`
 
-Defined in: packages/client/src/modules/market/types.ts:60
+Defined in: packages/client/src/modules/market/types.ts:62
 
 Current borrow index.
 
@@ -66,7 +76,7 @@ Current borrow index.
 
 > **borrowingRate**: `bigint`
 
-Defined in: packages/client/src/modules/market/types.ts:44
+Defined in: packages/client/src/modules/market/types.ts:46
 
 Current borrow APR, scaled by `rateDecimals`.
 
@@ -106,7 +116,7 @@ Human-readable name of the pool asset.
 
 > **estimatedBorrowingApy**: `bigint`
 
-Defined in: packages/client/src/modules/market/types.ts:46
+Defined in: packages/client/src/modules/market/types.ts:48
 
 Estimated borrow APY, scaled by `rateDecimals`.
 
@@ -116,7 +126,7 @@ Estimated borrow APY, scaled by `rateDecimals`.
 
 > **estimatedLendingApy**: `bigint`
 
-Defined in: packages/client/src/modules/market/types.ts:42
+Defined in: packages/client/src/modules/market/types.ts:44
 
 Estimated supply APY, scaled by `rateDecimals`.
 
@@ -146,7 +156,7 @@ Pool canister principal text.
 
 > `optional` **lastUpdated?**: `bigint`
 
-Defined in: packages/client/src/modules/market/types.ts:66
+Defined in: packages/client/src/modules/market/types.ts:68
 
 Unix timestamp in seconds of the last pool update when available.
 
@@ -156,7 +166,7 @@ Unix timestamp in seconds of the last pool update when available.
 
 > **lendingIndex**: `bigint`
 
-Defined in: packages/client/src/modules/market/types.ts:58
+Defined in: packages/client/src/modules/market/types.ts:60
 
 Current lending index.
 
@@ -166,7 +176,7 @@ Current lending index.
 
 > **lendingRate**: `bigint`
 
-Defined in: packages/client/src/modules/market/types.ts:40
+Defined in: packages/client/src/modules/market/types.ts:42
 
 Current supply APR, scaled by `rateDecimals`.
 
@@ -206,7 +216,7 @@ Maximum loan-to-value ratio in basis points.
 
 > **optimalUtilizationRate**: `bigint`
 
-Defined in: packages/client/src/modules/market/types.ts:52
+Defined in: packages/client/src/modules/market/types.ts:54
 
 Optimal utilization point, scaled by `rateDecimals`.
 
@@ -226,7 +236,7 @@ Protocol liquidation fee in basis points.
 
 > **rateDecimals**: `bigint`
 
-Defined in: packages/client/src/modules/market/types.ts:38
+Defined in: packages/client/src/modules/market/types.ts:40
 
 Decimal scale used by APR and utilization fields.
 
@@ -236,7 +246,7 @@ Decimal scale used by APR and utilization fields.
 
 > **rateSlopeAfter**: `bigint`
 
-Defined in: packages/client/src/modules/market/types.ts:56
+Defined in: packages/client/src/modules/market/types.ts:58
 
 Rate slope after optimal utilization, scaled by `rateDecimals`.
 
@@ -246,7 +256,7 @@ Rate slope after optimal utilization, scaled by `rateDecimals`.
 
 > **rateSlopeBefore**: `bigint`
 
-Defined in: packages/client/src/modules/market/types.ts:54
+Defined in: packages/client/src/modules/market/types.ts:56
 
 Rate slope before optimal utilization, scaled by `rateDecimals`.
 
@@ -266,7 +276,7 @@ Reserve factor in basis points.
 
 > **sameAssetBorrowing**: `boolean`
 
-Defined in: packages/client/src/modules/market/types.ts:62
+Defined in: packages/client/src/modules/market/types.ts:64
 
 Whether borrowing the same asset as collateral is allowed.
 
@@ -276,7 +286,7 @@ Whether borrowing the same asset as collateral is allowed.
 
 > **sameAssetBorrowingDustThreshold**: `bigint`
 
-Defined in: packages/client/src/modules/market/types.ts:64
+Defined in: packages/client/src/modules/market/types.ts:66
 
 Same-asset collateral below this base-unit amount is treated as dust.
 
@@ -316,6 +326,6 @@ Current supplied amount in base units after applying the lending index.
 
 > **utilizationRate**: `bigint`
 
-Defined in: packages/client/src/modules/market/types.ts:48
+Defined in: packages/client/src/modules/market/types.ts:50
 
 Current pool utilization, scaled by `rateDecimals`.

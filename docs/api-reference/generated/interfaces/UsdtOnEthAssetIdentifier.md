@@ -6,7 +6,7 @@
 
 # Interface: UsdtOnEthAssetIdentifier
 
-Defined in: packages/client/src/core/types.ts:135
+Defined in: packages/client/src/core/types.ts:154
 
 USDT transferred on the Ethereum chain.
 
@@ -16,7 +16,7 @@ USDT transferred on the Ethereum chain.
 
 > **asset**: `"USDT"`
 
-Defined in: packages/client/src/core/types.ts:137
+Defined in: packages/client/src/core/types.ts:156
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: packages/client/src/core/types.ts:137
 
 > **chain**: `"ETH"`
 
-Defined in: packages/client/src/core/types.ts:136
+Defined in: packages/client/src/core/types.ts:155

@@ -6,7 +6,7 @@
 
 # Interface: OutflowDetails
 
-Defined in: packages/client/src/modules/lending/types.ts:55
+Defined in: packages/client/src/modules/lending/types.ts:56
 
 Receipt for a borrow or withdrawal outflow submitted to the lending canister.
 
@@ -19,7 +19,7 @@ the protocol assigns a chain transaction id. `outflowRef` is an optional protoco
 
 > **amount**: `bigint`
 
-Defined in: packages/client/src/modules/lending/types.ts:65
+Defined in: packages/client/src/modules/lending/types.ts:66
 
 Outflow amount in the pool asset's base units.
 
@@ -29,7 +29,7 @@ Outflow amount in the pool asset's base units.
 
 > **id**: `string`
 
-Defined in: packages/client/src/modules/lending/types.ts:57
+Defined in: packages/client/src/modules/lending/types.ts:58
 
 Protocol outflow id.
 
@@ -39,7 +39,7 @@ Protocol outflow id.
 
 > `optional` **outflowRef?**: `string`
 
-Defined in: packages/client/src/modules/lending/types.ts:61
+Defined in: packages/client/src/modules/lending/types.ts:62
 
 Optional protocol outflow reference.
 
@@ -49,7 +49,7 @@ Optional protocol outflow reference.
 
 > **outflowType**: [`OutflowType`](../type-aliases/OutflowType.md)
 
-Defined in: packages/client/src/modules/lending/types.ts:59
+Defined in: packages/client/src/modules/lending/types.ts:60
 
 Borrow, withdrawal, or fee-claim discriminator.
 
@@ -59,7 +59,7 @@ Borrow, withdrawal, or fee-claim discriminator.
 
 > **receiver**: [`LiquidiumAccount`](../type-aliases/LiquidiumAccount.md)
 
-Defined in: packages/client/src/modules/lending/types.ts:67
+Defined in: packages/client/src/modules/lending/types.ts:68
 
 Outflow destination account.
 
@@ -69,6 +69,6 @@ Outflow destination account.
 
 > `optional` **txid?**: `string`
 
-Defined in: packages/client/src/modules/lending/types.ts:63
+Defined in: packages/client/src/modules/lending/types.ts:64
 
 Chain transaction id when already assigned by the protocol.

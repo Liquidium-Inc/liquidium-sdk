@@ -8,6 +8,6 @@
 
 > **AssetPrices** = `Record`\<`string`, `number`\>
 
-Defined in: packages/client/src/modules/market/types.ts:70
+Defined in: packages/client/src/modules/market/types.ts:72
 
 USD price map keyed by market asset symbol.

@@ -6,7 +6,7 @@
 
 # Interface: InflowActivity
 
-Defined in: packages/client/src/modules/activities/types.ts:56
+Defined in: packages/client/src/modules/activities/types.ts:79
 
 Deposit or repayment activity returned by the activity API.
 
@@ -20,7 +20,7 @@ Deposit or repayment activity returned by the activity API.
 
 > **amount**: `bigint`
 
-Defined in: packages/client/src/modules/activities/types.ts:49
+Defined in: packages/client/src/modules/activities/types.ts:72
 
 #### Inherited from
 
@@ -32,7 +32,7 @@ Defined in: packages/client/src/modules/activities/types.ts:49
 
 > **asset**: `string` \| `null`
 
-Defined in: packages/client/src/modules/activities/types.ts:47
+Defined in: packages/client/src/modules/activities/types.ts:70
 
 #### Inherited from
 
@@ -44,7 +44,7 @@ Defined in: packages/client/src/modules/activities/types.ts:47
 
 > **chain**: [`Chain`](../type-aliases/Chain.md) \| `null`
 
-Defined in: packages/client/src/modules/activities/types.ts:48
+Defined in: packages/client/src/modules/activities/types.ts:71
 
 #### Inherited from
 
@@ -52,11 +52,21 @@ Defined in: packages/client/src/modules/activities/types.ts:48
 
 ***
 
+### failure?
+
+> `optional` **failure?**: [`InflowActivityFailure`](InflowActivityFailure.md)
+
+Defined in: packages/client/src/modules/activities/types.ts:85
+
+Protocol rejection details when `status.state` is `failed`.
+
+***
+
 ### id
 
 > **id**: `string`
 
-Defined in: packages/client/src/modules/activities/types.ts:45
+Defined in: packages/client/src/modules/activities/types.ts:68
 
 #### Inherited from
 
@@ -68,7 +78,7 @@ Defined in: packages/client/src/modules/activities/types.ts:45
 
 > **poolId**: `string`
 
-Defined in: packages/client/src/modules/activities/types.ts:46
+Defined in: packages/client/src/modules/activities/types.ts:69
 
 #### Inherited from
 
@@ -80,7 +90,7 @@ Defined in: packages/client/src/modules/activities/types.ts:46
 
 > **status**: [`InflowActivityStatus`](../type-aliases/InflowActivityStatus.md)
 
-Defined in: packages/client/src/modules/activities/types.ts:58
+Defined in: packages/client/src/modules/activities/types.ts:81
 
 Shared consumer-facing lifecycle status.
 
@@ -90,7 +100,7 @@ Shared consumer-facing lifecycle status.
 
 > **timestampMs**: `number`
 
-Defined in: packages/client/src/modules/activities/types.ts:50
+Defined in: packages/client/src/modules/activities/types.ts:73
 
 #### Inherited from
 
@@ -102,7 +112,7 @@ Defined in: packages/client/src/modules/activities/types.ts:50
 
 > `optional` **topUp?**: [`ActivityTopUp`](ActivityTopUp.md)
 
-Defined in: packages/client/src/modules/activities/types.ts:60
+Defined in: packages/client/src/modules/activities/types.ts:83
 
 Fee top-up state when the inflow is below the current processing fee.
 
@@ -112,7 +122,7 @@ Fee top-up state when the inflow is below the current processing fee.
 
 > `optional` **txids?**: `string`[]
 
-Defined in: packages/client/src/modules/activities/types.ts:52
+Defined in: packages/client/src/modules/activities/types.ts:75
 
 Chain transaction ids associated with the activity when available.
 

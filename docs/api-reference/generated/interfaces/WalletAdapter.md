@@ -6,12 +6,12 @@
 
 # Interface: WalletAdapter
 
-Defined in: packages/client/src/core/wallet-actions.ts:108
+Defined in: packages/client/src/core/wallet-actions.ts:118
 
 Optional wallet capabilities. Implement only what your flow uses:
 
-- `signMessage` - account creation, borrow, withdraw
-- `sendBtcTransaction` / `sendEthTransaction` - automated native-asset transfer supply
+- `signMessage` - account creation, borrow, withdraw, recovery
+- `sendBtcTransaction` / `sendEthTransaction` / `sendSolTransaction` - native-asset transfer supply
 - `sendIcrcTransfer` - automated ck-ledger and ICP ledger transfer supply
 - `sendEthTransaction` - contract-interaction supply and ETH native-asset sends
 
@@ -21,7 +21,7 @@ Optional wallet capabilities. Implement only what your flow uses:
 
 > `optional` **sendBtcTransaction?**: (`request`) => `Promise`\<`string`\>
 
-Defined in: packages/client/src/core/wallet-actions.ts:114
+Defined in: packages/client/src/core/wallet-actions.ts:126
 
 Sends a BTC transaction and returns its transaction id.
 
@@ -41,7 +41,7 @@ Sends a BTC transaction and returns its transaction id.
 
 > `optional` **sendEthTransaction?**: (`request`) => `Promise`\<`string`\>
 
-Defined in: packages/client/src/core/wallet-actions.ts:112
+Defined in: packages/client/src/core/wallet-actions.ts:124
 
 Sends an EVM transaction and returns its transaction hash.
 
@@ -61,7 +61,7 @@ Sends an EVM transaction and returns its transaction hash.
 
 > `optional` **sendIcrcTransfer?**: (`request`) => `Promise`\<`string`\>
 
-Defined in: packages/client/src/core/wallet-actions.ts:116
+Defined in: packages/client/src/core/wallet-actions.ts:128
 
 Sends an ICRC ledger transfer and returns the ledger transaction reference.
 
@@ -77,13 +77,33 @@ Sends an ICRC ledger transfer and returns the ledger transaction reference.
 
 ***
 
+### sendSolTransaction?
+
+> `optional` **sendSolTransaction?**: (`request`) => `Promise`\<`string`\>
+
+Defined in: packages/client/src/core/wallet-actions.ts:120
+
+Sends native SOL and returns its case-sensitive base58 transaction signature.
+
+#### Parameters
+
+##### request
+
+[`SendSolTransactionRequest`](SendSolTransactionRequest.md)
+
+#### Returns
+
+`Promise`\<`string`\>
+
+***
+
 ### signMessage?
 
 > `optional` **signMessage?**: (`request`) => `Promise`\<`string`\>
 
-Defined in: packages/client/src/core/wallet-actions.ts:110
+Defined in: packages/client/src/core/wallet-actions.ts:122
 
-Signs an SDK plaintext message and returns the wallet signature. BTC adapters may return base64 BIP-322 or hex-encoded signature bytes.
+Signs an SDK plaintext message. BTC accepts base64 BIP-322 or hex; SOL requires 64 hex-encoded Ed25519 bytes.
 
 #### Parameters
 

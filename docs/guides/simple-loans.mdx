@@ -52,8 +52,9 @@ The SDK rejects Simple Loan collateral below the configured deposit minimum befo
 | ICP | `10_000n` e8s |
 | USDC | `1_000_000n` base units |
 | USDT | `1_000_000n` base units |
+| SOL | No fixed minimum. Quotes raise `amount` to the account-specific `minimumSendAmount` |
 
-If your UI displays or pre-checks the same minimum, use `getMinimumDepositAmount(asset)`.
+If your UI displays or pre-checks the same minimum, use `getMinimumDepositAmount(asset)`. It returns `0n` for SOL.
 
 ## Borrow minimums
 
@@ -65,6 +66,9 @@ The SDK enforces these minimum borrow amounts before creation:
 | ETH | `5_000_000_000_000_000n` wei (`0.005 ETH`) |
 | USDC | `1_000_000n` base units |
 | USDT | `1_000_000n` base units |
+| SOL | `1_000_000n` lamports (`0.001 SOL`) |
+
+Native SOL deliveries on `borrow.chain: "SOL"` must also cover the live ckSOL minter withdrawal minimum plus two ckSOL ledger fees. The SDK checks this before creation.
 
 If your UI displays or pre-checks the same minimum, use `getMinimumBorrowAmount(asset)`.
 

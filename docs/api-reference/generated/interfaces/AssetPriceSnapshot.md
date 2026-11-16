@@ -6,7 +6,7 @@
 
 # Interface: AssetPriceSnapshot
 
-Defined in: packages/client/src/modules/market/types.ts:73
+Defined in: packages/client/src/modules/market/types.ts:75
 
 Protocol prices with the time at which the SDK completed the fetch.
 
@@ -16,7 +16,7 @@ Protocol prices with the time at which the SDK completed the fetch.
 
 > **fetchedAt**: `bigint`
 
-Defined in: packages/client/src/modules/market/types.ts:77
+Defined in: packages/client/src/modules/market/types.ts:79
 
 Unix timestamp in seconds when the SDK received the price response.
 
@@ -26,6 +26,6 @@ Unix timestamp in seconds when the SDK received the price response.
 
 > **prices**: [`AssetPrices`](../type-aliases/AssetPrices.md)
 
-Defined in: packages/client/src/modules/market/types.ts:75
+Defined in: packages/client/src/modules/market/types.ts:77
 
 USD price map keyed by market asset symbol.

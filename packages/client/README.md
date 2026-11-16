@@ -60,9 +60,11 @@ Use `client.simpleLoans` for accountless borrowing. Use `client.accounts`, `clie
 
 Amounts use `bigint` values in each asset's smallest unit. Read pool decimals before converting user input.
 
-For profile repayment refunds and rejected inflows, use `client.lending.getRecoveryBalance(profileId, poolId)` and `client.lending.recover(...)`. Recovery supports linked BTC/ETH wallet signatures and authenticated ICP agents. See [Recover profile funds](https://liquidium-inc.github.io/liquidium-sdk/guides/recover-funds/).
+For profile repayment refunds and rejected inflows, use `client.lending.getRecoveryBalance(profileId, poolId)` and `client.lending.recover(...)`. Recovery supports linked BTC, ETH, or SOL wallet signatures and authenticated ICP agents. See [Recover profile funds](https://liquidium-inc.github.io/liquidium-sdk/guides/recover-funds/).
 
 `Asset.ETH` supports native ETH on `Chain.ETH` and ckETH ICRC transfers on `Chain.ICP`. Both routes use 18 decimals, so amounts are expressed in wei (`0.005 ETH` is `5_000_000_000_000_000n`). For native ETH deposits and repayments, select `mechanism: "transfer"` to send ETH to a generated deposit address or `mechanism: "contractInteraction"` to send ETH through the payable deposit helper. Transfer is the default when `mechanism` is omitted. ckETH routes use the generated ICRC target.
+
+`Asset.SOL` supports native SOL on `Chain.SOL` and ckSOL ICRC transfers on `Chain.ICP`. Both routes use 9 decimals, so amounts are expressed in lamports (`1 SOL` is `1_000_000_000n`). SOL fees and minimum sends are account-specific; see [Use SOL and ckSOL](https://liquidium-inc.github.io/liquidium-sdk/guides/solana/).
 
 Native ETH borrows and withdrawals do not support addresses with deployed contract bytecode, including smart contract wallets. The same restriction applies to Simple Loan borrow destinations and native ETH collateral refund destinations.
 

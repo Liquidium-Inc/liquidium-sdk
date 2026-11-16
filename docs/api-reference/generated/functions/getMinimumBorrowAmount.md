@@ -8,7 +8,7 @@
 
 > **getMinimumBorrowAmount**(`asset`): `bigint`
 
-Defined in: packages/client/src/core/borrow-minimums.ts:33
+Defined in: packages/client/src/core/borrow-minimums.ts:35
 
 Returns the minimum borrow amount for an asset in base units.
 

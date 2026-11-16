@@ -11,13 +11,13 @@ export interface ScanLiquidationsRequest {
 }
 
 /** Asset symbol returned for a liquidation candidate position. */
-export type LiquidationCandidateAsset = Asset | "SOL";
+export type LiquidationCandidateAsset = Asset;
 
 /** One pool position returned for a liquidatable borrower. */
 export interface LiquidationCandidatePosition {
   /** Pool principal text. */
   poolId: string;
-  /** Pool asset symbol. SOL can appear in legacy canister data. */
+  /** Pool asset symbol. */
   asset: LiquidationCandidateAsset;
   /** Chain-key ledger route or unknown asset type. */
   assetType: LiquidationAsset;

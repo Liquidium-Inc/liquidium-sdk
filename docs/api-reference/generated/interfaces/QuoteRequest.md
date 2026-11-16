@@ -18,7 +18,7 @@ Input for calculating required collateral from a target LTV.
 
 Defined in: packages/client/src/modules/quote/types.ts:4
 
-Requested borrow amount in borrow asset base units.
+Requested amount before network fees, in borrow asset base units.
 
 ***
 

@@ -6,7 +6,7 @@
 
 # Interface: LiquidiumErrorContext
 
-Defined in: packages/client/src/core/errors.ts:58
+Defined in: packages/client/src/core/errors.ts:61
 
 Optional debug identifiers attached to mapped SDK errors.
 
@@ -16,7 +16,7 @@ Optional debug identifiers attached to mapped SDK errors.
 
 > `optional` **requestId?**: `string`
 
-Defined in: packages/client/src/core/errors.ts:62
+Defined in: packages/client/src/core/errors.ts:65
 
 SDK API request id for support/debugging when available.
 
@@ -26,6 +26,6 @@ SDK API request id for support/debugging when available.
 
 > `optional` **traceId?**: `string`
 
-Defined in: packages/client/src/core/errors.ts:60
+Defined in: packages/client/src/core/errors.ts:63
 
 Backend trace id for support/debugging when available.

@@ -6,7 +6,7 @@
 
 # Interface: EthTransactionRequest
 
-Defined in: packages/client/src/core/wallet-actions.ts:23
+Defined in: packages/client/src/core/wallet-actions.ts:24
 
 EVM transaction request passed to wallet adapters.
 
@@ -16,7 +16,7 @@ EVM transaction request passed to wallet adapters.
 
 > `optional` **chainId?**: `number`
 
-Defined in: packages/client/src/core/wallet-actions.ts:31
+Defined in: packages/client/src/core/wallet-actions.ts:32
 
 Optional EVM chain id for wallet implementations that require it.
 
@@ -26,7 +26,7 @@ Optional EVM chain id for wallet implementations that require it.
 
 > `optional` **data?**: `string`
 
-Defined in: packages/client/src/core/wallet-actions.ts:27
+Defined in: packages/client/src/core/wallet-actions.ts:28
 
 Hex-encoded calldata for contract interactions.
 
@@ -36,7 +36,7 @@ Hex-encoded calldata for contract interactions.
 
 > **to**: `string`
 
-Defined in: packages/client/src/core/wallet-actions.ts:25
+Defined in: packages/client/src/core/wallet-actions.ts:26
 
 Destination address or contract address.
 
@@ -46,6 +46,6 @@ Destination address or contract address.
 
 > `optional` **value?**: `string`
 
-Defined in: packages/client/src/core/wallet-actions.ts:29
+Defined in: packages/client/src/core/wallet-actions.ts:30
 
 Native ETH value in wei, serialized as a decimal string.

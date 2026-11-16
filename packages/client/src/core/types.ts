@@ -53,7 +53,7 @@ export interface LiquidiumClientConfig {
 
 /** Pool canister principal text values grouped by pool asset. */
 export interface PoolCanisterIds {
-  /** Active SOL pool. Set explicitly until a production default is published. */
+  /** Active SOL pool canister principal. Only this pool's SOL and ckSOL targets are accepted. */
   sol?: string;
   /** BTC pool canister principal. */
   btc: string;

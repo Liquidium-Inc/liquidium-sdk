@@ -8,6 +8,6 @@
 
 > **Asset** = *typeof* [`Asset`](../variables/Asset.md)\[keyof *typeof* [`Asset`](../variables/Asset.md)\]
 
-Defined in: packages/client/src/core/types.ts:94
+Defined in: packages/client/src/core/types.ts:96
 
 Canonical asset symbol supported by state-mutating protocol flows.

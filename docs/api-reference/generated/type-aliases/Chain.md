@@ -8,6 +8,6 @@
 
 > **Chain** = *typeof* [`Chain`](../variables/Chain.md)\[keyof *typeof* [`Chain`](../variables/Chain.md)\]
 
-Defined in: packages/client/src/core/types.ts:105
+Defined in: packages/client/src/core/types.ts:108
 
 Canonical chain identifier used by wallet and protocol actions.

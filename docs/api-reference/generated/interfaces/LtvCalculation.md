@@ -6,19 +6,29 @@
 
 # Interface: LtvCalculation
 
-Defined in: packages/client/src/modules/quote/types.ts:87
+Defined in: packages/client/src/modules/quote/types.ts:91
 
 LTV calculation result for explicit borrow and collateral amounts.
 
 ## Properties
 
+### activationFeeAmount
+
+> **activationFeeAmount**: `bigint`
+
+Defined in: packages/client/src/modules/quote/types.ts:95
+
+Activation fee rounded down in borrow asset base units; zero if calculation is skipped.
+
+***
+
 ### borrowAmount
 
 > **borrowAmount**: `bigint`
 
-Defined in: packages/client/src/modules/quote/types.ts:89
+Defined in: packages/client/src/modules/quote/types.ts:93
 
-Requested borrow amount in borrow asset base units.
+Requested amount before network fees, in borrow asset base units.
 
 ***
 
@@ -26,7 +36,7 @@ Requested borrow amount in borrow asset base units.
 
 > **borrowAsset**: `string`
 
-Defined in: packages/client/src/modules/quote/types.ts:105
+Defined in: packages/client/src/modules/quote/types.ts:113
 
 Borrow asset symbol.
 
@@ -36,7 +46,7 @@ Borrow asset symbol.
 
 > **borrowPoolId**: `string`
 
-Defined in: packages/client/src/modules/quote/types.ts:101
+Defined in: packages/client/src/modules/quote/types.ts:109
 
 Pool principal text for the borrow side.
 
@@ -46,9 +56,9 @@ Pool principal text for the borrow side.
 
 > **borrowUsd**: `bigint`
 
-Defined in: packages/client/src/modules/quote/types.ts:93
+Defined in: packages/client/src/modules/quote/types.ts:101
 
-Borrow value in internal USD units.
+Opening debt value, including the activation fee, in internal USD units.
 
 ***
 
@@ -56,7 +66,7 @@ Borrow value in internal USD units.
 
 > **collateralAmount**: `bigint`
 
-Defined in: packages/client/src/modules/quote/types.ts:91
+Defined in: packages/client/src/modules/quote/types.ts:99
 
 Collateral amount in collateral asset base units.
 
@@ -66,7 +76,7 @@ Collateral amount in collateral asset base units.
 
 > **collateralAsset**: `string`
 
-Defined in: packages/client/src/modules/quote/types.ts:107
+Defined in: packages/client/src/modules/quote/types.ts:115
 
 Collateral asset symbol.
 
@@ -76,7 +86,7 @@ Collateral asset symbol.
 
 > **collateralPoolId**: `string`
 
-Defined in: packages/client/src/modules/quote/types.ts:103
+Defined in: packages/client/src/modules/quote/types.ts:111
 
 Pool principal text for the collateral side.
 
@@ -86,7 +96,7 @@ Pool principal text for the collateral side.
 
 > **collateralUsd**: `bigint`
 
-Defined in: packages/client/src/modules/quote/types.ts:95
+Defined in: packages/client/src/modules/quote/types.ts:103
 
 Collateral value in internal USD units.
 
@@ -96,7 +106,7 @@ Collateral value in internal USD units.
 
 > **ltvBps**: `bigint`
 
-Defined in: packages/client/src/modules/quote/types.ts:97
+Defined in: packages/client/src/modules/quote/types.ts:105
 
 Computed LTV in basis points.
 
@@ -106,9 +116,19 @@ Computed LTV in basis points.
 
 > **maxAllowedLtvBps**: `bigint`
 
-Defined in: packages/client/src/modules/quote/types.ts:99
+Defined in: packages/client/src/modules/quote/types.ts:107
 
 Maximum allowed LTV in basis points for the collateral pool.
+
+***
+
+### openingDebtAmount
+
+> **openingDebtAmount**: `bigint`
+
+Defined in: packages/client/src/modules/quote/types.ts:97
+
+Requested amount plus activation fee in borrow asset base units; zero if calculation is skipped.
 
 ***
 
@@ -116,6 +136,6 @@ Maximum allowed LTV in basis points for the collateral pool.
 
 > **validationErrors**: [`QuoteValidationError`](QuoteValidationError.md)[]
 
-Defined in: packages/client/src/modules/quote/types.ts:109
+Defined in: packages/client/src/modules/quote/types.ts:117
 
 Blocking validation errors. Empty when the calculation is usable.

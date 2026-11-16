@@ -70,19 +70,21 @@ const client = new LiquidiumClient({
 **Config requirements:**
 
 - `environment`: sets the canister preset. Only `mainnet` is bundled; use `canisterIds` to override Liquidium canisters for custom deployments
-- `apiBaseUrl`: defaults to `https://app.liquidium.fi/api/sdk`. Override it for another Liquidium SDK API deployment. It is used by history, activities, inflow reporting, `simpleLoans.create(...)`, `simpleLoans.get(...)`, and `simpleLoans.find(...)`. Default Ethereum deposit-address target resolution does not use it. Native ETH borrow and withdrawal validation can use it for a best-effort contract-bytecode check when no suitable EVM client is configured
+- `apiBaseUrl`: defaults to `https://app.liquidium.fi/api/sdk`. Override it for another Liquidium SDK API deployment. It is used by history, activities, inflow reporting, `simpleLoans.create(...)`, `simpleLoans.get(...)`, and `simpleLoans.find(...)`. It also serves native SOL and ckSOL inflow-fee quotes, including those inside Simple Loan quotes. Default Ethereum deposit-address target resolution does not use it. Native ETH borrow and withdrawal validation can use it for a best-effort contract-bytecode check when no suitable EVM client is configured
 - `headers`: adds headers to Liquidium SDK HTTP API requests, for example app attribution or auth from a backend proxy
 - `fetch`: supplies a custom fetch implementation when the runtime needs one
 - `evmRpcUrl` / `evmPublicClient`: required for lower-level USDC/USDT contract-interaction supply planning and allowance polling. Native ETH contract interaction does not perform ERC-20 reads. Use `evmRpcHeaders` when the RPC provider authenticates with HTTP headers
 - `agent`: accepts a preconfigured ICP `Agent` and takes precedence over `identity` and `icHost`
 - `identity` / `icHost`: custom ICP agent configuration when `agent` is not supplied
-- `canisterIds`: accepts partial overrides for `lending`, `ethDeposit`, `simpleLoans`, and `pools.{btc,eth,usdt,usdc,icp}`
+- `canisterIds`: accepts partial overrides for `lending`, `ethDeposit`, `simpleLoans`, and `pools.{btc,eth,usdt,usdc,icp,sol}`
+- `canisterIds.pools.sol`: defaults to mainnet `xhh4q-qyaaa-aaaar-qci2q-cai`. `lending.supply(...)` SOL and ckSOL targets and SOL Simple Loan creation accept only this configured pool; a custom `apiBaseUrl` must quote SOL fees for the same pool. `market.findPool(...)` selects it when market results also list a retired SOL pool
 - `canisterIds.simpleLoans`: defaults to mainnet `u5rm3-niaaa-aaaar-qb7eq-cai`; override it for custom deployments
 
 Partial `canisterIds` overrides merge with mainnet defaults. For a fully custom
 deployment, provide every deployment-specific Liquidium canister ID. The public
-config does not override the ckBTC minter/ledger or the ckETH, ckUSDC, ckUSDT, and ICP
-ledger IDs; those routes currently use fixed mainnet canisters.
+config does not override the ckBTC and ckSOL minters and ledgers or the ckETH,
+ckUSDC, ckUSDT, and ICP ledger IDs; those routes currently use fixed mainnet
+canisters.
 
 For Vite example apps, expose the RPC URL through a `VITE_` variable. If using
 Infura, prefer `VITE_INFURA_API_KEY` and derive the URL in app config:
@@ -98,9 +100,10 @@ or route RPC calls through a server if the key must remain private.
 
 ## Assets and Transfer Routes
 
-The public asset symbols are `"BTC"`, `"ETH"`, `"USDC"`, `"USDT"`, and `"ICP"`.
-Chain-key assets use the underlying asset plus `chain: "ICP"`; do not pass
-`"ckBTC"`, `"ckETH"`, `"ckUSDC"`, or `"ckUSDT"` as `asset` values.
+The public asset symbols are `"BTC"`, `"ETH"`, `"USDC"`, `"USDT"`, `"ICP"`, and
+`"SOL"`. Chain-key assets use the underlying asset plus `chain: "ICP"`; do not
+pass `"ckBTC"`, `"ckETH"`, `"ckUSDC"`, `"ckUSDT"`, or `"ckSOL"` as `asset`
+values.
 
 | Asset | Chain | Transfer representation |
 | --- | --- | --- |
@@ -113,10 +116,15 @@ Chain-key assets use the underlying asset plus `chain: "ICP"`; do not pass
 | `"USDT"` | `"ETH"` | ERC-20 USDT |
 | `"USDT"` | `"ICP"` | ckUSDT |
 | `"ICP"` | `"ICP"` | Native ICP |
+| `"SOL"` | `"SOL"` | Native SOL |
+| `"SOL"` | `"ICP"` | ckSOL |
 
 Use exported `Asset`, `Chain`, `AssetIdentifier`, and `isAssetIdentifier(...)`
 when constructing or validating routes. `ICP` is a transfer chain, but not a
-`SigningChain`; profile authorization still uses a BTC or ETH wallet.
+`SigningChain`; profile authorization uses a BTC, ETH, or SOL wallet.
+
+`chain: "SOL"` carries only the SOL asset; USDC and USDT move on `"ETH"` or
+`"ICP"`.
 
 ## Module Guide
 
@@ -170,8 +178,8 @@ message signing. Read a quote from `initialDeposit.targets[chain]` or
 estimate, and a flat target with a primary `address`.
 
 Target maps are partial. BTC-backed targets can offer `"BTC"` and `"ICP"`.
-ETH, USDC, and USDT targets can offer `"ETH"` and `"ICP"`, while ICP-backed
-targets offer only `"ICP"`. Check that the selected entry exists before showing
+ETH, USDC, and USDT targets can offer `"ETH"` and `"ICP"`, SOL-backed targets
+can offer `"SOL"` and `"ICP"`, while ICP-backed targets offer only `"ICP"`. Check that the selected entry exists before showing
 or executing it.
 
 Initial-deposit quotes expose `amount` and `inflowFeeAmount`. Repayment quotes
@@ -180,6 +188,16 @@ rather than presenting every repayment fee as a live estimate.
 For native ETH, Simple Loan quotes use a `0.00025 ETH` fallback when the live
 deposit-canister estimate fails or returns a non-positive amount. Repayment
 quotes mark that fallback with `inflowFeeEstimateAvailable: false`.
+
+SOL and ckSOL quotes use account-specific fees from the SDK API and raise
+`amount` to the live `minimumSendAmount` when the fee-inclusive amount is
+smaller. A failed SOL fee lookup makes `get(...)` reject, and makes `create(...)`
+reject with `SimpleLoanCreatedError`; SOL quotes have no fallback fee. For a
+small repayment, the native `"SOL"` quote can exceed the remaining debt plus
+fees; the pool keeps that excess unless it sets a repayment refund threshold.
+The `"ICP"` (ckSOL) quote avoids the native minter minimum, so offer it for
+small repayments. The sender's Solana transaction fee is paid on top of every native
+quote.
 
 Deposit and repayment targets are distinct generated inflow targets. Select the
 quote for the chain the user will transfer on. Do not assume the addresses
@@ -245,7 +263,9 @@ can choose. Native and ck representations share a pool: for example,
 `findPool({ asset: "ETH", chain: "ICP" })` resolve to the same ETH pool. Likewise,
 `findPool({ asset: "USDT", chain: "ETH" })` and
 `findPool({ asset: "USDT", chain: "ICP" })` resolve to the same ETH-backed USDT
-pool. There are no separate ckBTC, ckETH, ckUSDC, or ckUSDT pools.
+pool, and `findPool({ asset: "SOL", chain: "SOL" })` and
+`findPool({ asset: "SOL", chain: "ICP" })` resolve to the same SOL pool. There
+are no separate ckBTC, ckETH, ckUSDC, ckUSDT, or ckSOL pools.
 
 Each pool includes `displayName`. Use `getAssetMetadata(asset)` or
 `ASSET_METADATA` when names are needed without a pool response. Asset icons are
@@ -321,21 +341,29 @@ client.lending.supply(...);
 client.lending.getEvmSupplyContext(...);
 client.lending.getDepositAddress(...);
 client.lending.estimateInflowFee({ asset: "USDT", chain: "ETH" });
+client.lending.estimateInflowFee({ ...solTarget, profileId }); // SOL and ckSOL
 client.lending.submitInflow({ txid, chain: "BTC", operation: "deposit" });
 client.lending.isBorrowingDisabled();
 ```
 
 Every `supply(...)` request requires `chain`. Valid transfer routes are BTC
-pools via `"BTC"` or `"ICP"`, ETH/USDC/USDT pools via `"ETH"` or `"ICP"`, and
-the ICP pool via `"ICP"` only. Use `mechanism: "transfer"` explicitly or omit
+pools via `"BTC"` or `"ICP"`, ETH/USDC/USDT pools via `"ETH"` or `"ICP"`, the
+SOL pool via `"SOL"` or `"ICP"`, and the ICP pool via `"ICP"` only. Use `mechanism: "transfer"` explicitly or omit
 it for the same default. `mechanism: "contractInteraction"` is valid for native
 ETH, USDC, and USDT on Ethereum.
 
 `estimateInflowFee({ asset, chain })` accepts any supported `AssetIdentifier`
-and returns `{ totalFee: bigint }`. It does not take a pool ID, profile ID, or
-supply action. BTC L1 estimates include ckBTC minter and ledger fees. Native ETH
-and ETH stablecoins use the deposit-address canister, while ICP routes use the
-relevant ledger fee.
+and returns `{ totalFee: bigint }`. Non-SOL requests take only the asset and
+chain. BTC L1 estimates include ckBTC minter and ledger fees. Native ETH and ETH
+stablecoins use the deposit-address canister, while ICP routes use the relevant
+ledger fee.
+
+SOL and ckSOL estimates are account-specific: pass `poolId`, `profileId`, and
+`action` as well, most simply by spreading the target from `supply(...)`. They
+also return `minimumSendAmount`, the smallest gross transfer that leaves a
+positive credit, and `walletTransferFee`, which the sender pays separately.
+`totalFee` is deducted from the gross transfer. Use `minimumSendAmount` as the
+floor for SOL deposits and repayments.
 
 Borrow, withdraw, and supply receipts include a required `status` using the
 shared `LiquidiumStatus` shape. A `SupplyFlow` also exposes this status before
@@ -441,21 +469,30 @@ All three methods default to 50 entries.
 
 Amount fields are `bigint` base units. Format them with the asset or pool
 `decimals`; do not display raw base-unit values as user amounts.
-BTC uses satoshis, ETH and ckETH use wei with 18 decimals, ICP uses e8s, and
-USDC/USDT use token base units according to the selected pool's `decimals`.
+BTC uses satoshis, ETH and ckETH use wei with 18 decimals, ICP uses e8s, SOL
+and ckSOL use lamports with 9 decimals, and USDC/USDT use token base units
+according to the selected pool's `decimals`. SOL amounts must be positive and
+fit in an unsigned 64-bit integer.
 Deposit minimums are `5_100n` sats for BTC/ckBTC,
 `5_000_000_000_000_000n` wei for ETH/ckETH, `10_000n` e8s for ICP, and
 `1_000_000n` base units for USDC/ckUSDC and USDT/ckUSDT. Wallet-executed
 deposits enforce these values. Manual flows must apply
 `getMinimumDepositAmount(asset)` before broadcasting and account for inflow
 fees separately. Repayments do not use deposit minimums.
+`getMinimumDepositAmount("SOL")` returns `0n`; SOL and ckSOL instead use the
+account-specific `minimumSendAmount` for deposits and repayments, which
+wallet-executed supply and Simple Loan quotes apply.
 
 Use `getMinimumBorrowAmount(asset)` and `getMinimumWithdrawAmount(asset)` before
 borrow and withdrawal calls. Borrow minimums are `5_100n` sats for BTC,
-`5_000_000_000_000_000n` wei for ETH, and `1_000_000n` base units for USDC or
-USDT. Withdrawal minimums are `5_000n` sats for BTC, the same ETH minimum, and
-`1_000_000n` base units for USDC or USDT. Assets without a configured product
-minimum return `0n`.
+`5_000_000_000_000_000n` wei for ETH, `1_000_000n` lamports for SOL, and
+`1_000_000n` base units for USDC or USDT. Withdrawal minimums are `5_000n` sats
+for BTC, the same ETH and SOL minimums, and `1_000_000n` base units for USDC or
+USDT. Assets without a configured product minimum return `0n`. Native SOL
+borrows, withdrawals, and Simple Loan borrow deliveries on `chain: "SOL"` must
+also cover the live ckSOL minter withdrawal minimum plus two ckSOL ledger fees;
+the SDK checks this before signing or creating the loan and throws
+`VALIDATION_ERROR` when the amount is too small.
 
 Rate fields such as `lendingRate`, `borrowingRate`, and `utilizationRate` are
 fixed-point values scaled by `rateDecimals`, usually `27`. Do not render raw
@@ -561,6 +598,11 @@ check failures fail open and do not block the outflow. EVM wallet and deposit
 addresses are normalized to checksum form; compare them case-insensitively or
 normalize both values. Ethereum transaction amounts above `uint256` are rejected.
 
+SOL addresses are case-sensitive base58 strings that decode to 32 bytes; other
+values throw `LiquidiumErrorCode.INVALID_ADDRESS`. Compare them exactly. SOL
+message signatures that are not 64 hex-encoded bytes throw
+`LiquidiumErrorCode.SIGNATURE_ERROR`.
+
 ## Wallet Adapter
 
 The SDK uses a `WalletAdapter` for signing and transaction execution. Implement only the methods the selected flow needs.
@@ -584,9 +626,10 @@ const walletAdapter: WalletAdapter = {
 - `signMessage`: account creation, borrow, and withdraw flows (signs a Liquidium message)
 - `sendBtcTransaction`: transfer-path supply automation for BTC targets
 - `sendEthTransaction`: transfer-path automation for ETH targets and contract-interaction supply automation
-- `sendIcrcTransfer`: transfer-path supply automation for ICP-ledger targets
+- `sendSolTransaction`: transfer-path supply automation for native SOL targets
+- `sendIcrcTransfer`: transfer-path supply automation for ICP-ledger targets, including ckSOL
 
-For ckBTC, ckETH, ckUSDC, ckUSDT, or native ICP wallet-executed supply and repayment,
+For ckBTC, ckETH, ckUSDC, ckUSDT, ckSOL, or native ICP wallet-executed supply and repayment,
 forward the SDK-provided ledger transfer and return its transaction reference:
 
 ```ts
@@ -598,6 +641,28 @@ const walletAdapter: WalletAdapter = {
 
 `transfer` contains `ledgerCanisterId`, `to`, `amount`, and optional `fee` and
 `memo` fields. Its `to` value is a normalized `IcrcAccount`.
+
+A linked SOL wallet authorizes profile actions like a BTC or ETH wallet: pass
+`chain: "SOL"` to `createProfile(...)` or `submit(...)`, and
+`signerChain: "SOL"` to `borrow(...)`, `withdraw(...)`, or `recover(...)`. Its
+`signMessage` signs the exact UTF-8 message with Ed25519 and returns the
+64-byte signature as hex, optionally `0x`-prefixed. Convert
+wallets that return base64 or raw bytes. `sendSolTransaction` receives
+`{ chain: "SOL", toAddress, amountLamports, account, actionType }`; the adapter
+picks the RPC, builds a system transfer, signs, broadcasts, and returns the
+base58 transaction signature:
+
+```ts
+const toHex = (bytes: Uint8Array) =>
+  Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+
+const walletAdapter: WalletAdapter = {
+  signMessage: async ({ message }) =>
+    toHex(await solWallet.signMessage(new TextEncoder().encode(message))),
+  sendSolTransaction: async ({ toAddress, amountLamports }) =>
+    solWallet.sendTransfer({ toAddress, lamports: amountLamports }),
+};
+```
 
 ## Flows
 
@@ -617,9 +682,9 @@ Default app sequence:
 5. Select and show the quote in `loan.initialDeposit.targets[chain]`; later reload the loan and select `loan.repayment.targets[chain]`.
 
 Expose collateral deposit, borrow delivery, and refund/withdrawal as separate
-route controls. For a backing BTC, ETH, USDC, or USDT pool, label the `"ICP"`
-option as ckBTC, ckETH, ckUSDC, or ckUSDT so users understand which asset they
-will transfer.
+route controls. For a backing BTC, ETH, USDC, USDT, or SOL pool, label the
+`"ICP"` option as ckBTC, ckETH, ckUSDC, ckUSDT, or ckSOL so users understand
+which asset they will transfer.
 
 The default Simple Loans flow does not need a wallet adapter. The user signs or
 broadcasts only the external wallet transfer to the generated deposit or repay
@@ -667,9 +732,49 @@ const initialDeposit = loan.initialDeposit.targets.BTC;
 const repayment = loan.repayment.targets.ETH;
 ```
 
+SOL collateral uses the same shape. The collateral pool must be the configured
+SOL pool, and a native SOL refund goes to the user's base58 Solana address:
+
+```ts
+const solLtv = client.quote.calculateLtv(
+  {
+    collateralPoolId: solPool.id,
+    borrowPoolId: usdcPool.id,
+    collateralAmount: 2_000_000_000n,
+    borrowAmount: 50_000_000n,
+  },
+  pools,
+  prices
+);
+
+const solLoan = await client.simpleLoans.create({
+  collateral: {
+    poolId: solPool.id,
+    asset: "SOL",
+    amount: 2_000_000_000n, // 2 SOL in lamports
+  },
+  borrow: {
+    poolId: usdcPool.id,
+    asset: "USDC",
+    amount: 50_000_000n,
+    chain: "ETH",
+    destination: "0x2222222222222222222222222222222222222222",
+  },
+  refund: {
+    chain: "SOL",
+    destination: userSolAddress,
+  },
+  ltvMaxBps: solLtv.maxAllowedLtvBps,
+  depositWindowSeconds: 3_600n,
+});
+
+const solDeposit = solLoan.initialDeposit.targets.SOL; // or .ICP for ckSOL
+```
+
 Create destinations are validated against the requested chain before the SDK
 creates a loan. Use `"BTC"` for L1 BTC, `"ETH"` for native ETH or L1 ETH
-stablecoins, and `"ICP"` for ICP-native or ck-ledger destinations.
+stablecoins, `"SOL"` for native SOL, and `"ICP"` for ICP-native or ck-ledger
+destinations.
 
 Destination families:
 
@@ -678,8 +783,9 @@ Destination families:
 | BTC L1 | `"BTC"` | BTC mainnet chain address |
 | Native ETH | `"ETH"` | EVM chain address |
 | ETH L1 USDC/USDT | `"ETH"` | EVM chain address |
+| Native SOL | `"SOL"` | Base58 Solana address |
 | ICP native | `"ICP"` | IC principal, ICRC account, or ICP account identifier |
-| ckBTC, ckETH, ckUSDC, ckUSDT | `"ICP"` | IC principal |
+| ckBTC, ckETH, ckUSDC, ckUSDT, ckSOL | `"ICP"` | IC principal |
 
 Use typed destination objects when preventing fund-loss mistakes matters:
 `{ type: "ChainAddress", address: "..." }`,
@@ -911,6 +1017,35 @@ This default flow does not require `apiBaseUrl` or an EVM RPC. Use lower-level
 `getEvmSupplyContext(...)` only if you are intentionally building the
 contract-interaction flow.
 
+SOL pools use `chain: "SOL"` for a native deposit address or `chain: "ICP"` for
+a ckSOL ICRC account. Read the account-specific fee from the returned target:
+
+```ts
+const solFlow = await client.lending.supply({
+  profileId,
+  poolId: solPoolId,
+  action: "deposit",
+  chain: "SOL",
+});
+const solFee = await client.lending.estimateInflowFee({
+  ...solFlow.target,
+  profileId,
+});
+// Ask for at least solFee.minimumSendAmount lamports; the sender also pays
+// solFee.walletTransferFee. After a manual transfer:
+await solFlow.submit({ txid: "<base58-signature>" });
+```
+
+With `amount`, `account`, and a `walletAdapter` that implements
+`sendSolTransaction`, `supply(...)` checks `minimumSendAmount`, broadcasts, and
+reports the inflow with retries. A failed report still returns the broadcast
+`txid`; track that transaction instead of sending the funds again.
+Native SOL activities use `chain: "SOL"` and ckSOL transfers use `chain: "ICP"`.
+An underfunded native SOL inflow shows `action_required` with a `topUp`: send
+`topUp.shortfallAmount`. For SOL, `topUp.depositedAmount` is the finalised
+address balance and `topUp.feeAmount` is the total balance required before
+processing.
+
 #### ETH Deposit Addresses
 
 Native ETH and ETH USDT/USDC deposit-address supply use the ETH deposit-address
@@ -994,10 +1129,10 @@ valid for ckETH because that route uses an ICRC transfer on `chain: "ICP"`.
 3. Confusing `quote.targetLtvBps` with Simple Loan `ltvMaxBps`. The quote target helps plan amounts; `ltvMaxBps` is validated by the Simple Loan LTV guards.
 4. `new LiquidiumClient({})` uses the default Liquidium service configuration. Override `apiBaseUrl` for custom service deployments. USDC/USDT contract-interaction planning also needs `evmRpcUrl` or `evmPublicClient`; native ETH contract interaction does not. Default Ethereum deposit-address supply does not use the service configuration, but native ETH borrow and withdrawal destination checks can use it as a best-effort fallback.
 5. Prepare methods return signable actions, not completed actions. `prepareCreateProfile`, `prepareBorrow`, and `prepareWithdraw` still need signing and submission.
-6. Build a wallet adapter with only the methods the selected flow needs. Avoid adding `signMessage`, `sendBtcTransaction`, `sendEthTransaction`, or `sendIcrcTransfer` unless the flow uses them.
+6. Build a wallet adapter with only the methods the selected flow needs. Avoid adding `signMessage`, `sendBtcTransaction`, `sendEthTransaction`, `sendSolTransaction`, or `sendIcrcTransfer` unless the flow uses them.
 7. Do not `await client.quote.getQuote(...)`; it is synchronous once pools and prices are available.
 8. Check `quote.validationErrors` before enabling borrow execution. Quote validation failures are returned in-band rather than thrown.
-9. `client.lending.supply(...)` routes from the selected pool, required `chain`, and optional `mechanism`. BTC supports `"BTC"`/`"ICP"`, ETH/USDC/USDT supports `"ETH"`/`"ICP"`, and ICP supports only `"ICP"`; contract interaction is available for native ETH, USDC, and USDT on `chain: "ETH"`.
+9. `client.lending.supply(...)` routes from the selected pool, required `chain`, and optional `mechanism`. BTC supports `"BTC"`/`"ICP"`, ETH/USDC/USDT supports `"ETH"`/`"ICP"`, SOL supports `"SOL"`/`"ICP"`, and ICP supports only `"ICP"`; contract interaction is available for native ETH, USDC, and USDT on `chain: "ETH"`.
 10. Handle existing profiles explicitly when account creation can race with existing state. Do not rely on `prepareCreateProfile(...)` to reject an existing profile before signing.
 11. Work from the public modules and names exported by `@liquidium/client`. Do not invent SDK methods.
 12. After `borrow(...)`, treat `outflow.id` as the user-visible reference immediately. Do not assume `outflow.txid` is set on the first response; resolve it later via activities or history if you need the chain transaction id.
@@ -1008,7 +1143,7 @@ valid for ckETH because that route uses an ICRC transfer on `chain: "ICP"`.
 17. Do not confuse deposit/supply targets with repayment targets. They are generated for different inflow actions and may be different addresses/accounts.
 18. Do not render raw `rateDecimals = 27` fixed-point values as percentages. Format scaled rates first or the UI can show scientific notation such as `3.7e+24%`.
 19. Do not model `loan.repayment` as nullable. Select the desired chain quote and check its `amount > 0n` before prompting repayment.
-20. Do not use `"ckBTC"`, `"ckETH"`, `"ckUSDC"`, or `"ckUSDT"` as asset symbols. Pair the underlying asset with `chain: "ICP"`.
+20. Do not use `"ckBTC"`, `"ckETH"`, `"ckUSDC"`, `"ckUSDT"`, or `"ckSOL"` as asset symbols. Pair the underlying asset with `chain: "ICP"`.
 21. Do not assume `Pool.chain` is the user's transfer chain or derive deposit, borrow, and refund rails from one shared selection.
 22. Do not use `mechanism: "contractInteraction"` for ckETH on `chain: "ICP"`. Use it only for native ETH, USDC, or USDT on `chain: "ETH"`.
 23. Use `client.liquidations.scan(...)` explicitly for candidate discovery. Do not add automatic approval, automatic execution, or status polling around `liquidate(...)`.
@@ -1027,7 +1162,7 @@ valid for ckETH because that route uses an ICRC transfer on `chain: "ICP"`.
 - Start with `new LiquidiumClient({})` for market reads and accountless `simpleLoans.create(...)`
 - Override `apiBaseUrl` only when the app uses a custom Liquidium service deployment
 - Add `evmRpcUrl` or `evmPublicClient` when the requested flow reads Ethereum chain state
-- Use `chain: "BTC"`, `chain: "ETH"`, or `chain: "ICP"` as required by the selected Chain + Asset pair
+- Use `chain: "BTC"`, `chain: "ETH"`, `chain: "SOL"`, or `chain: "ICP"` as required by the selected Chain + Asset pair
 - Prefer a quote-first flow for advanced profile-based borrowing
 - Prefer the BTC payment address when the wallet exposes both ordinals and payment addresses
 
@@ -1042,9 +1177,11 @@ When unsure, check these first:
 - `docs/guides/error-handling.mdx`
 - `docs/guides/liquidations.mdx`
 - `docs/guides/simple-loans.mdx`
+- `docs/guides/solana.mdx`
 - `packages/client/src/modules/simple-loans/simple-loans.ts`
 - `packages/client/src/core/types.ts`
 - `packages/client/src/core/accounts.ts`
+- `packages/client/src/core/address-validation.ts`
 - `packages/client/src/core/asset-metadata.ts`
 - `packages/client/src/core/borrow-minimums.ts`
 - `packages/client/src/core/config.ts`
@@ -1053,11 +1190,13 @@ When unsure, check these first:
 - `packages/client/src/core/wallet-actions.ts`
 - `packages/client/src/core/pool-ledger-assets.ts`
 - `packages/client/src/core/rates.ts`
+- `packages/client/src/core/sol-outflow-minimum.ts`
 - `packages/client/src/core/withdraw-minimums.ts`
 - `packages/client/src/modules/history/types.ts`
 - `packages/client/src/modules/simple-loans/types.ts`
 - `packages/client/src/modules/lending/types.ts`
 - `packages/client/src/modules/lending/_internal/supply-targets.ts`
+- `packages/client/src/modules/lending/_internal/sol-inflow-fee.ts`
 - `packages/client/src/modules/liquidations/liquidations.ts`
 - `packages/client/src/modules/liquidations/types.ts`
 - `packages/client/src/modules/quote/types.ts`
@@ -1071,6 +1210,8 @@ When unsure, check these first:
 - `examples/sdk-method-query/README.md`
 - `examples/sdk-method-query/src/lib/client.ts`
 - `examples/sdk-method-query/src/SdkMethodQueryPage.tsx`
+- `examples/sdk-method-query/src/solana-wallet.ts`
+- `examples/solana-flow.mjs`
 
 ## Useful Resources
 

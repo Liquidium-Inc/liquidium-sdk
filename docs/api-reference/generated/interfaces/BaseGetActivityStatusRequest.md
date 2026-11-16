@@ -6,7 +6,7 @@
 
 # Interface: BaseGetActivityStatusRequest
 
-Defined in: packages/client/src/modules/activities/types.ts:100
+Defined in: packages/client/src/modules/activities/types.ts:127
 
 Shared request fields for an activity status lookup.
 
@@ -21,6 +21,6 @@ Shared request fields for an activity status lookup.
 
 > **id**: `string`
 
-Defined in: packages/client/src/modules/activities/types.ts:102
+Defined in: packages/client/src/modules/activities/types.ts:129
 
 Activity or receipt id to look up.

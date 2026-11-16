@@ -6,7 +6,7 @@
 
 # Interface: EthOnIcpAssetIdentifier
 
-Defined in: packages/client/src/core/types.ts:147
+Defined in: packages/client/src/core/types.ts:166
 
 ETH transferred on the Internet Computer chain.
 
@@ -16,7 +16,7 @@ ETH transferred on the Internet Computer chain.
 
 > **asset**: `"ETH"`
 
-Defined in: packages/client/src/core/types.ts:149
+Defined in: packages/client/src/core/types.ts:168
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: packages/client/src/core/types.ts:149
 
 > **chain**: `"ICP"`
 
-Defined in: packages/client/src/core/types.ts:148
+Defined in: packages/client/src/core/types.ts:167

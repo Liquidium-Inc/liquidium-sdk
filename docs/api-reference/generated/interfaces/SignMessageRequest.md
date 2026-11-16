@@ -6,7 +6,7 @@
 
 # Interface: SignMessageRequest
 
-Defined in: packages/client/src/core/wallet-actions.ts:35
+Defined in: packages/client/src/core/wallet-actions.ts:36
 
 Message-signing request passed to wallet adapters.
 
@@ -16,7 +16,7 @@ Message-signing request passed to wallet adapters.
 
 > `optional` **account?**: `string`
 
-Defined in: packages/client/src/core/wallet-actions.ts:41
+Defined in: packages/client/src/core/wallet-actions.ts:42
 
 Optional account override for the signing wallet.
 
@@ -26,7 +26,7 @@ Optional account override for the signing wallet.
 
 > **actionType**: `string`
 
-Defined in: packages/client/src/core/wallet-actions.ts:43
+Defined in: packages/client/src/core/wallet-actions.ts:44
 
 SDK action type that produced this request.
 
@@ -36,7 +36,7 @@ SDK action type that produced this request.
 
 > **chain**: [`SigningChain`](../type-aliases/SigningChain.md)
 
-Defined in: packages/client/src/core/wallet-actions.ts:37
+Defined in: packages/client/src/core/wallet-actions.ts:38
 
 Chain for the signing wallet.
 
@@ -46,6 +46,6 @@ Chain for the signing wallet.
 
 > **message**: `string`
 
-Defined in: packages/client/src/core/wallet-actions.ts:39
+Defined in: packages/client/src/core/wallet-actions.ts:40
 
 Plaintext message to sign.

@@ -8,7 +8,7 @@
 
 > `const` **MIN\_BORROW\_AMOUNTS\_BY\_ASSET**: `object`
 
-Defined in: packages/client/src/core/borrow-minimums.ts:8
+Defined in: packages/client/src/core/borrow-minimums.ts:9
 
 Minimum borrow amounts in each asset's base units.
 
@@ -21,6 +21,10 @@ Minimum borrow amounts in each asset's base units.
 ### ETH
 
 > `readonly` **ETH**: `5000000000000000n` = `MINIMUM_ETH_BORROW_AMOUNT_WEI`
+
+### SOL
+
+> `readonly` **SOL**: `1000000n` = `MINIMUM_SOL_BORROW_AMOUNT_LAMPORTS`
 
 ### USDC
 

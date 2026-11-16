@@ -82,6 +82,10 @@ Stable string codes for [LiquidiumError](../classes/LiquidiumError.md). Use for 
 
 > `readonly` **INVALID\_TARGET\_PRINCIPAL**: `"INVALID_TARGET_PRINCIPAL"` = `"INVALID_TARGET_PRINCIPAL"`
 
+### LIQUIDATION\_APPROVAL\_FAILED
+
+> `readonly` **LIQUIDATION\_APPROVAL\_FAILED**: `"LIQUIDATION_APPROVAL_FAILED"` = `"LIQUIDATION_APPROVAL_FAILED"`
+
 ### LIQUIDATION\_NOT\_FOUND
 
 > `readonly` **LIQUIDATION\_NOT\_FOUND**: `"LIQUIDATION_NOT_FOUND"` = `"LIQUIDATION_NOT_FOUND"`
@@ -97,6 +101,10 @@ Stable string codes for [LiquidiumError](../classes/LiquidiumError.md). Use for 
 ### NO\_LIQUIDITY
 
 > `readonly` **NO\_LIQUIDITY**: `"NO_LIQUIDITY"` = `"NO_LIQUIDITY"`
+
+### NO\_OUTSTANDING\_DEBT
+
+> `readonly` **NO\_OUTSTANDING\_DEBT**: `"NO_OUTSTANDING_DEBT"` = `"NO_OUTSTANDING_DEBT"`
 
 ### NOT\_ALLOWED
 
@@ -121,6 +129,10 @@ Stable string codes for [LiquidiumError](../classes/LiquidiumError.md). Use for 
 ### PROFILE\_NOT\_FOUND
 
 > `readonly` **PROFILE\_NOT\_FOUND**: `"PROFILE_NOT_FOUND"` = `"PROFILE_NOT_FOUND"`
+
+### RECOVERY\_AMOUNT\_TOO\_LOW
+
+> `readonly` **RECOVERY\_AMOUNT\_TOO\_LOW**: `"RECOVERY_AMOUNT_TOO_LOW"` = `"RECOVERY_AMOUNT_TOO_LOW"`
 
 ### REPAYMENT\_EXCEEDS\_DEBT
 

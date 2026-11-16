@@ -8,7 +8,7 @@
 
 > `const` **Chain**: `object`
 
-Defined in: packages/client/src/core/types.ts:105
+Defined in: packages/client/src/core/types.ts:108
 
 Canonical chain identifiers used by wallet and protocol actions.
 
@@ -25,3 +25,7 @@ Canonical chain identifiers used by wallet and protocol actions.
 ### ICP
 
 > `readonly` **ICP**: `"ICP"` = `"ICP"`
+
+### SOL
+
+> `readonly` **SOL**: `"SOL"` = `"SOL"`

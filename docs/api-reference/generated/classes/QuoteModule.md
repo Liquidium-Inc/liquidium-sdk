@@ -6,7 +6,7 @@
 
 # Class: QuoteModule
 
-Defined in: packages/client/src/modules/quote/quote.ts:61
+Defined in: packages/client/src/modules/quote/quote.ts:65
 
 Pure quote helpers for LTV and required-collateral calculations.
 
@@ -26,7 +26,7 @@ Pure quote helpers for LTV and required-collateral calculations.
 
 > **calculateLtv**(`request`, `pools`, `prices`): [`LtvCalculation`](../interfaces/LtvCalculation.md)
 
-Defined in: packages/client/src/modules/quote/quote.ts:72
+Defined in: packages/client/src/modules/quote/quote.ts:76
 
 Calculates current LTV from caller-supplied borrow and collateral amounts.
 
@@ -64,7 +64,7 @@ LTV calculation plus validation errors when inputs are unusable.
 
 > **getQuote**(`request`, `pools`, `prices`): [`QuoteResult`](../interfaces/QuoteResult.md)
 
-Defined in: packages/client/src/modules/quote/quote.ts:225
+Defined in: packages/client/src/modules/quote/quote.ts:239
 
 Calculates a loan quote based on borrow amount, LTV, and pool selections.
 

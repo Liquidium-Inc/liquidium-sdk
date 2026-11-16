@@ -6,7 +6,7 @@
 
 # Interface: UsdtOnIcpAssetIdentifier
 
-Defined in: packages/client/src/core/types.ts:165
+Defined in: packages/client/src/core/types.ts:184
 
 USDT transferred on the Internet Computer chain.
 
@@ -16,7 +16,7 @@ USDT transferred on the Internet Computer chain.
 
 > **asset**: `"USDT"`
 
-Defined in: packages/client/src/core/types.ts:167
+Defined in: packages/client/src/core/types.ts:186
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: packages/client/src/core/types.ts:167
 
 > **chain**: `"ICP"`
 
-Defined in: packages/client/src/core/types.ts:166
+Defined in: packages/client/src/core/types.ts:185

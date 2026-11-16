@@ -8,7 +8,7 @@
 
 > **getAssetMetadata**(`asset`): [`AssetMetadata`](../interfaces/AssetMetadata.md)
 
-Defined in: packages/client/src/core/asset-metadata.ts:36
+Defined in: packages/client/src/core/asset-metadata.ts:37
 
 Returns stable presentation metadata for an SDK-supported asset.
 

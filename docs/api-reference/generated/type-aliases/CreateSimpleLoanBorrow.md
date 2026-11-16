@@ -33,7 +33,7 @@ borrow pool's `decimals` value before passing it here.
 
 Destination that receives the borrowed asset after the loan starts.
 
-Pass either a string shorthand or a typed destination. For BTC/ETH chain
+Pass either a string shorthand or a typed destination. For BTC/ETH/SOL chain
 outflows this is usually the user's chain address. Chain-key assets on ICP
 require an `IcPrincipal`; native ICP also accepts `IcpAccountIdentifier`
 and `IcrcAccount` destinations.

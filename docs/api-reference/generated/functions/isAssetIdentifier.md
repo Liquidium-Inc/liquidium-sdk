@@ -8,7 +8,7 @@
 
 > **isAssetIdentifier**(`identifier`): `identifier is AssetIdentifier`
 
-Defined in: packages/client/src/core/types.ts:183
+Defined in: packages/client/src/core/types.ts:204
 
 Returns whether an asset and chain form a supported SDK identifier.
 
