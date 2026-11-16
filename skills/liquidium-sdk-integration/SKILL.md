@@ -77,7 +77,7 @@ const client = new LiquidiumClient({
 - `agent`: accepts a preconfigured ICP `Agent` and takes precedence over `identity` and `icHost`
 - `identity` / `icHost`: custom ICP agent configuration when `agent` is not supplied
 - `canisterIds`: accepts partial overrides for `lending`, `ethDeposit`, `simpleLoans`, and `pools.{btc,eth,usdt,usdc,icp,sol}`
-- `canisterIds.pools.sol`: defaults to mainnet `xhh4q-qyaaa-aaaar-qci2q-cai`. SOL and ckSOL targets, fee quotes, and SOL Simple Loans accept only this configured pool, and `market.findPool(...)` selects it when market results also list a retired SOL pool
+- `canisterIds.pools.sol`: defaults to mainnet `xhh4q-qyaaa-aaaar-qci2q-cai`. `lending.supply(...)` SOL and ckSOL targets and SOL Simple Loan creation accept only this configured pool; a custom `apiBaseUrl` must quote SOL fees for the same pool. `market.findPool(...)` selects it when market results also list a retired SOL pool
 - `canisterIds.simpleLoans`: defaults to mainnet `u5rm3-niaaa-aaaar-qb7eq-cai`; override it for custom deployments
 
 Partial `canisterIds` overrides merge with mainnet defaults. For a fully custom
@@ -733,9 +733,20 @@ const repayment = loan.repayment.targets.ETH;
 ```
 
 SOL collateral uses the same shape. The collateral pool must be the configured
-SOL pool, and a native SOL refund goes to a base58 address:
+SOL pool, and a native SOL refund goes to the user's base58 Solana address:
 
 ```ts
+const solLtv = client.quote.calculateLtv(
+  {
+    collateralPoolId: solPool.id,
+    borrowPoolId: usdcPool.id,
+    collateralAmount: 2_000_000_000n,
+    borrowAmount: 50_000_000n,
+  },
+  pools,
+  prices
+);
+
 const solLoan = await client.simpleLoans.create({
   collateral: {
     poolId: solPool.id,
@@ -751,9 +762,9 @@ const solLoan = await client.simpleLoans.create({
   },
   refund: {
     chain: "SOL",
-    destination: "So11111111111111111111111111111111111111112",
+    destination: userSolAddress,
   },
-  ltvMaxBps: ltv.maxAllowedLtvBps,
+  ltvMaxBps: solLtv.maxAllowedLtvBps,
   depositWindowSeconds: 3_600n,
 });
 
@@ -1136,7 +1147,6 @@ valid for ckETH because that route uses an ICRC transfer on `chain: "ICP"`.
 21. Do not assume `Pool.chain` is the user's transfer chain or derive deposit, borrow, and refund rails from one shared selection.
 22. Do not use `mechanism: "contractInteraction"` for ckETH on `chain: "ICP"`. Use it only for native ETH, USDC, or USDT on `chain: "ETH"`.
 23. Use `client.liquidations.scan(...)` explicitly for candidate discovery. Do not add automatic approval, automatic execution, or status polling around `liquidate(...)`.
-24. Size SOL and ckSOL transfers from the account-specific `estimateInflowFee(...)` result or the Simple Loan quote `amount`. `getMinimumDepositAmount("SOL")` is `0n`, and SOL fee requests need `poolId`, `profileId`, and `action`.
 
 ## Preferred Style
 
