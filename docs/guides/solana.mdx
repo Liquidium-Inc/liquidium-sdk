@@ -19,10 +19,11 @@ pool. Retired pools can remain in market results;
 ckSOL inflow targets reject any other pool, because only the active pool's
 addresses are monitored.
 
-Use an `apiBaseUrl` with SOL support and the same pool configuration. SOL fee
-quotes use the public SDK API, not a browser RPC connection. The bundled ckSOL
-minter and ledger IDs are mainnet IDs. Override the lending and Simple Loans
-canisters when using another Liquidium deployment.
+SOL fee quotes use the SDK API, not a browser RPC connection. The default
+`apiBaseUrl` serves them for the bundled pool. A custom `apiBaseUrl` must
+support SOL and use the same pool configuration. The bundled ckSOL minter and
+ledger IDs are mainnet IDs. Override the lending and Simple Loans canisters when
+using another Liquidium deployment:
 
 ```ts
 const client = new LiquidiumClient({
