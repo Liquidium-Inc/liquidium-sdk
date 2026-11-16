@@ -6,7 +6,7 @@
 
 # Interface: SignatureInfo
 
-Defined in: packages/client/src/core/wallet-actions.ts:120
+Defined in: packages/client/src/core/wallet-actions.ts:132
 
 Signature payload submitted to a sign-message action.
 
@@ -16,7 +16,7 @@ Signature payload submitted to a sign-message action.
 
 > `optional` **account?**: `string`
 
-Defined in: packages/client/src/core/wallet-actions.ts:126
+Defined in: packages/client/src/core/wallet-actions.ts:138
 
 Account that produced the signature, when different from the action default.
 
@@ -26,7 +26,7 @@ Account that produced the signature, when different from the action default.
 
 > **chain**: [`SigningChain`](../type-aliases/SigningChain.md)
 
-Defined in: packages/client/src/core/wallet-actions.ts:124
+Defined in: packages/client/src/core/wallet-actions.ts:136
 
 Chain used to produce the signature.
 
@@ -36,6 +36,6 @@ Chain used to produce the signature.
 
 > **signature**: `string`
 
-Defined in: packages/client/src/core/wallet-actions.ts:122
+Defined in: packages/client/src/core/wallet-actions.ts:134
 
-Wallet signature over the action message. BTC signatures may be base64 BIP-322 or hex-encoded bytes.
+Wallet signature. BTC accepts base64 BIP-322 or hex; SOL requires 64 hex-encoded Ed25519 bytes.

@@ -8,7 +8,7 @@
 
 > `const` **MIN\_WITHDRAW\_AMOUNTS\_BY\_ASSET**: `object`
 
-Defined in: packages/client/src/core/withdraw-minimums.ts:8
+Defined in: packages/client/src/core/withdraw-minimums.ts:9
 
 Minimum withdraw amounts in each asset's base units.
 
@@ -21,6 +21,10 @@ Minimum withdraw amounts in each asset's base units.
 ### ETH
 
 > `readonly` **ETH**: `5000000000000000n` = `MINIMUM_ETH_WITHDRAW_AMOUNT_WEI`
+
+### SOL
+
+> `readonly` **SOL**: `1000000n` = `MINIMUM_SOL_WITHDRAW_AMOUNT_LAMPORTS`
 
 ### USDC
 

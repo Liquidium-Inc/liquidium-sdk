@@ -8,7 +8,7 @@
 
 > **BorrowOutflowDetails** = [`OutflowDetails`](../interfaces/OutflowDetails.md) & `object`
 
-Defined in: packages/client/src/modules/lending/types.ts:71
+Defined in: packages/client/src/modules/lending/types.ts:72
 
 Borrow receipt.
 

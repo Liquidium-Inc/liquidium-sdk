@@ -6,7 +6,7 @@
 
 # Class: ActivitiesModule
 
-Defined in: packages/client/src/modules/activities/activities.ts:68
+Defined in: packages/client/src/modules/activities/activities.ts:70
 
 Receipt-oriented activity list and status helpers.
 
@@ -16,7 +16,7 @@ Receipt-oriented activity list and status helpers.
 
 > **new ActivitiesModule**(`apiClient`, `canisterContext`): `ActivitiesModule`
 
-Defined in: packages/client/src/modules/activities/activities.ts:69
+Defined in: packages/client/src/modules/activities/activities.ts:71
 
 #### Parameters
 
@@ -38,7 +38,7 @@ Defined in: packages/client/src/modules/activities/activities.ts:69
 
 > **getStatus**(`request`): `Promise`\<[`GetActivityStatusResponse`](../type-aliases/GetActivityStatusResponse.md)\>
 
-Defined in: packages/client/src/modules/activities/activities.ts:103
+Defined in: packages/client/src/modules/activities/activities.ts:105
 
 Fetches the latest status for a single receipt/activity id.
 
@@ -64,7 +64,7 @@ The activity when found, otherwise `{ found: false }` with the requested id.
 
 > **list**(`request`): `Promise`\<[`Activity`](../type-aliases/Activity.md)[]\>
 
-Defined in: packages/client/src/modules/activities/activities.ts:82
+Defined in: packages/client/src/modules/activities/activities.ts:84
 
 Lists profile activities. Defaults to active activities.
 

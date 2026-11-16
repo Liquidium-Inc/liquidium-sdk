@@ -8,7 +8,7 @@
 
 > `const` **OutflowType**: `object`
 
-Defined in: packages/client/src/core/types.ts:218
+Defined in: packages/client/src/core/types.ts:242
 
 Outflow operation reported by the lending canister.
 

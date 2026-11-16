@@ -6,9 +6,9 @@
 
 # Class: LendingModule
 
-Defined in: packages/client/src/modules/lending/lending.ts:118
+Defined in: packages/client/src/modules/lending/lending.ts:131
 
-Borrow, withdraw, supply, inflow reporting, and fee-estimation helpers.
+Borrow, withdraw, recovery, supply, inflow reporting, and fee-estimation helpers.
 
 ## Constructors
 
@@ -16,7 +16,7 @@ Borrow, withdraw, supply, inflow reporting, and fee-estimation helpers.
 
 > **new LendingModule**(`canisterContext`, `apiClient`, `evmReadClient`): `LendingModule`
 
-Defined in: packages/client/src/modules/lending/lending.ts:119
+Defined in: packages/client/src/modules/lending/lending.ts:132
 
 #### Parameters
 
@@ -42,7 +42,7 @@ Defined in: packages/client/src/modules/lending/lending.ts:119
 
 > **borrow**(`params`): `Promise`\<[`BorrowOutflowDetails`](../type-aliases/BorrowOutflowDetails.md)\>
 
-Defined in: packages/client/src/modules/lending/lending.ts:501
+Defined in: packages/client/src/modules/lending/lending.ts:588
 
 Creates a borrow outflow using the provided wallet adapter.
 
@@ -83,19 +83,20 @@ poll for it. Use history or app-level polling if you need the chain transaction 
 
 > **estimateInflowFee**(`request`): `Promise`\<[`InflowFeeEstimate`](../interfaces/InflowFeeEstimate.md)\>
 
-Defined in: packages/client/src/modules/lending/lending.ts:618
+Defined in: packages/client/src/modules/lending/lending.ts:707
 
 Estimates the network/deposit fee for an inflow target.
 
 ETH-chain deposit-address estimates are served by the deposit-address
 canister. BTC estimates include the ckBTC minter deposit fee and ledger fee.
-ICP-chain estimates return the corresponding ICRC ledger fee.
+SOL and ckSOL use account-specific SDK API quotes, including minimum sends.
+Other ICP-chain estimates return the corresponding ICRC ledger fee.
 
 #### Parameters
 
 ##### request
 
-[`AssetIdentifier`](../type-aliases/AssetIdentifier.md)
+[`EstimateInflowFeeRequest`](../type-aliases/EstimateInflowFeeRequest.md)
 
 Asset and chain pair to estimate for.
 
@@ -111,7 +112,7 @@ Total fee estimate rounded up in the asset's base units.
 
 > **getDepositAddress**(`request`): `Promise`\<`string`\>
 
-Defined in: packages/client/src/modules/lending/lending.ts:558
+Defined in: packages/client/src/modules/lending/lending.ts:646
 
 Returns the read-only deposit address for an ETH-chain inflow target.
 
@@ -138,7 +139,7 @@ The EVM deposit address for the derived account.
 
 > **getEvmSupplyContext**(`request`): `Promise`\<[`EvmSupplyContext`](../interfaces/EvmSupplyContext.md)\>
 
-Defined in: packages/client/src/modules/lending/lending.ts:543
+Defined in: packages/client/src/modules/lending/lending.ts:631
 
 Fetches ERC-20 supply planning data with the configured EVM read client.
 
@@ -161,11 +162,37 @@ Locally computed [EvmSupplyContext](../interfaces/EvmSupplyContext.md) for appro
 
 ***
 
+### getRecoveryBalance()
+
+> **getRecoveryBalance**(`profileId`, `poolId`): `Promise`\<`bigint`\>
+
+Defined in: packages/client/src/modules/lending/lending.ts:143
+
+Reads the profile's live recovery balance in pool asset base units.
+Includes excess repayments and rejected inflows once refund delivery settles.
+Does not require a position, a rejection history entry, or authorization.
+
+#### Parameters
+
+##### profileId
+
+`string`
+
+##### poolId
+
+`string`
+
+#### Returns
+
+`Promise`\<`bigint`\>
+
+***
+
 ### isBorrowingDisabled()
 
 > **isBorrowingDisabled**(): `Promise`\<`boolean`\>
 
-Defined in: packages/client/src/modules/lending/lending.ts:721
+Defined in: packages/client/src/modules/lending/lending.ts:814
 
 Returns whether borrowing is currently disabled by the protocol.
 
@@ -181,7 +208,7 @@ Returns whether borrowing is currently disabled by the protocol.
 
 > **prepareBorrow**(`request`): `Promise`\<[`BorrowAction`](../interfaces/BorrowAction.md)\>
 
-Defined in: packages/client/src/modules/lending/lending.ts:328
+Defined in: packages/client/src/modules/lending/lending.ts:402
 
 Prepares a borrow action that can be signed and submitted later.
 
@@ -210,11 +237,33 @@ validation, or protocol preparation fails.
 
 ***
 
+### prepareRecovery()
+
+> **prepareRecovery**(`request`): `Promise`\<[`RecoveryAction`](../interfaces/RecoveryAction.md)\>
+
+Defined in: packages/client/src/modules/lending/lending.ts:152
+
+Prepares withdrawal of the current full recovery balance for BTC/ETH/SOL signing.
+Checks destination fees before signing and again before submission.
+The signed amount stays fixed if more funds arrive after preparation.
+
+#### Parameters
+
+##### request
+
+[`PrepareRecoveryRequest`](../interfaces/PrepareRecoveryRequest.md)
+
+#### Returns
+
+`Promise`\<[`RecoveryAction`](../interfaces/RecoveryAction.md)\>
+
+***
+
 ### prepareWithdraw()
 
 > **prepareWithdraw**(`request`): `Promise`\<[`WithdrawAction`](../interfaces/WithdrawAction.md)\>
 
-Defined in: packages/client/src/modules/lending/lending.ts:134
+Defined in: packages/client/src/modules/lending/lending.ts:196
 
 Prepares a withdraw action that can be signed and submitted later.
 
@@ -241,11 +290,35 @@ validation, or protocol preparation fails.
 
 ***
 
+### recover()
+
+> **recover**(`request`): `Promise`\<[`RecoveryResult`](../interfaces/RecoveryResult.md)\>
+
+Defined in: packages/client/src/modules/lending/lending.ts:165
+
+Withdraws the current recovery balance using a linked wallet or ICP caller.
+ICP authorization uses its agent only for the update; reads use the client's agent.
+The receipt records the recovery transfer. For pools other than ICP, final
+delivery happens later. A `CANISTER_REJECTED` error can follow an update
+that succeeded, so read the balance again before you retry.
+
+#### Parameters
+
+##### request
+
+[`RecoverRequest`](../type-aliases/RecoverRequest.md)
+
+#### Returns
+
+`Promise`\<[`RecoveryResult`](../interfaces/RecoveryResult.md)\>
+
+***
+
 ### submitInflow()
 
 > **submitInflow**(`request`): `Promise`\<[`SubmitInflowResponse`](../interfaces/SubmitInflowResponse.md)\>
 
-Defined in: packages/client/src/modules/lending/lending.ts:690
+Defined in: packages/client/src/modules/lending/lending.ts:782
 
 Submits an inflow transaction id for faster indexing.
 
@@ -276,7 +349,7 @@ request fails.
 
 > **supply**(`request`): `Promise`\<[`SupplyFlow`](../interfaces/SupplyFlow.md)\>
 
-Defined in: packages/client/src/modules/lending/lending.ts:530
+Defined in: packages/client/src/modules/lending/lending.ts:618
 
 Resolves a supply target for a deposit or repayment and optionally broadcasts it.
 
@@ -303,7 +376,8 @@ A [SupplyFlow](../interfaces/SupplyFlow.md) receipt with `type`, `target`, `subm
 #### Throws
 
 [LiquidiumError](LiquidiumError.md) If validation, transfer planning, or
-protocol submission fails.
+protocol submission fails. Repayments throw `NO_OUTSTANDING_DEBT` before
+returning a target when the profile has no debt in the pool.
 
 #### Throws
 
@@ -316,7 +390,7 @@ transaction.
 
 > **withdraw**(`params`): `Promise`\<[`WithdrawOutflowDetails`](../type-aliases/WithdrawOutflowDetails.md)\>
 
-Defined in: packages/client/src/modules/lending/lending.ts:304
+Defined in: packages/client/src/modules/lending/lending.ts:378
 
 Creates a withdraw outflow using the provided wallet adapter.
 

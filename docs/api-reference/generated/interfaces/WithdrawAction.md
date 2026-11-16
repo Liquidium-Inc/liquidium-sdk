@@ -6,7 +6,7 @@
 
 # Interface: WithdrawAction
 
-Defined in: packages/client/src/modules/lending/types.ts:147
+Defined in: packages/client/src/modules/lending/types.ts:148
 
 Prepared action for creating a withdraw outflow.
 
@@ -20,7 +20,7 @@ Prepared action for creating a withdraw outflow.
 
 > **account**: `string`
 
-Defined in: packages/client/src/core/wallet-actions.ts:138
+Defined in: packages/client/src/core/wallet-actions.ts:150
 
 Default account to pass to the wallet adapter.
 
@@ -34,7 +34,7 @@ Default account to pass to the wallet adapter.
 
 > **actionType**: `"create-withdraw"`
 
-Defined in: packages/client/src/modules/lending/types.ts:154
+Defined in: packages/client/src/modules/lending/types.ts:155
 
 Adapter-facing action type.
 
@@ -48,7 +48,7 @@ Adapter-facing action type.
 
 > **data**: [`CreateWithdrawData`](CreateWithdrawData.md)
 
-Defined in: packages/client/src/core/wallet-actions.ts:142
+Defined in: packages/client/src/core/wallet-actions.ts:154
 
 Original request data needed to submit the signed action.
 
@@ -62,7 +62,7 @@ Original request data needed to submit the signed action.
 
 > **executionKind**: `"sign-message"`
 
-Defined in: packages/client/src/modules/lending/types.ts:152
+Defined in: packages/client/src/modules/lending/types.ts:153
 
 Required wallet capability.
 
@@ -76,7 +76,7 @@ Required wallet capability.
 
 > **kind**: `"create-withdraw"`
 
-Defined in: packages/client/src/modules/lending/types.ts:150
+Defined in: packages/client/src/modules/lending/types.ts:151
 
 Protocol action kind.
 
@@ -90,7 +90,7 @@ Protocol action kind.
 
 > **message**: `string`
 
-Defined in: packages/client/src/core/wallet-actions.ts:140
+Defined in: packages/client/src/core/wallet-actions.ts:152
 
 Plaintext message that must be signed.
 
@@ -104,7 +104,7 @@ Plaintext message that must be signed.
 
 > **submit**(`signatureInfo`): `Promise`\<[`WithdrawOutflowDetails`](../type-aliases/WithdrawOutflowDetails.md)\>
 
-Defined in: packages/client/src/core/wallet-actions.ts:144
+Defined in: packages/client/src/core/wallet-actions.ts:156
 
 Submits the signature and resolves the protocol result.
 

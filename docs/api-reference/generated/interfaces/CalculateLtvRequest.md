@@ -18,7 +18,7 @@ Input for calculating LTV from explicit borrow and collateral amounts.
 
 Defined in: packages/client/src/modules/quote/types.ts:16
 
-Requested borrow amount in borrow asset base units.
+Requested amount before network fees, in borrow asset base units.
 
 ***
 

@@ -6,7 +6,7 @@
 
 # Interface: IcpOnIcpAssetIdentifier
 
-Defined in: packages/client/src/core/types.ts:153
+Defined in: packages/client/src/core/types.ts:172
 
 ICP transferred on the Internet Computer chain.
 
@@ -16,7 +16,7 @@ ICP transferred on the Internet Computer chain.
 
 > **asset**: `"ICP"`
 
-Defined in: packages/client/src/core/types.ts:155
+Defined in: packages/client/src/core/types.ts:174
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: packages/client/src/core/types.ts:155
 
 > **chain**: `"ICP"`
 
-Defined in: packages/client/src/core/types.ts:154
+Defined in: packages/client/src/core/types.ts:173

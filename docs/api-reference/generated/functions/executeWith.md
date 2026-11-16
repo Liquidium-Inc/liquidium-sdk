@@ -8,7 +8,7 @@
 
 > **executeWith**(`options`): \<`TResult`\>(`action`) => `Promise`\<`TResult`\>
 
-Defined in: packages/client/src/execute.ts:40
+Defined in: packages/client/src/execute.ts:41
 
 Returns an async function that runs a [WalletAction](../type-aliases/WalletAction.md) end-to-end.
 

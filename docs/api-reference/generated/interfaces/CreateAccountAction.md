@@ -20,7 +20,7 @@ Prepared action for creating a Liquidium profile.
 
 > **account**: `string`
 
-Defined in: packages/client/src/core/wallet-actions.ts:138
+Defined in: packages/client/src/core/wallet-actions.ts:150
 
 Default account to pass to the wallet adapter.
 
@@ -48,7 +48,7 @@ Adapter-facing action type.
 
 > **data**: [`CreateAccountData`](CreateAccountData.md)
 
-Defined in: packages/client/src/core/wallet-actions.ts:142
+Defined in: packages/client/src/core/wallet-actions.ts:154
 
 Original request data needed to submit the signed action.
 
@@ -90,7 +90,7 @@ Protocol action kind.
 
 > **message**: `string`
 
-Defined in: packages/client/src/core/wallet-actions.ts:140
+Defined in: packages/client/src/core/wallet-actions.ts:152
 
 Plaintext message that must be signed.
 
@@ -104,7 +104,7 @@ Plaintext message that must be signed.
 
 > **submit**(`signatureInfo`): `Promise`\<`string`\>
 
-Defined in: packages/client/src/core/wallet-actions.ts:144
+Defined in: packages/client/src/core/wallet-actions.ts:156
 
 Submits the signature and resolves the protocol result.
 

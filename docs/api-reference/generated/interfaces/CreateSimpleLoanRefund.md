@@ -30,7 +30,7 @@ Defined in: packages/client/src/modules/simple-loans/types.ts:86
 
 Destination that receives collateral refunds or withdrawals.
 
-Pass either a string shorthand or a typed destination. For BTC/ETH chain
+Pass either a string shorthand or a typed destination. For BTC/ETH/SOL chain
 outflows this is usually the user's chain address. Chain-key assets on ICP
 require an `IcPrincipal`; native ICP also accepts `IcpAccountIdentifier`
 and `IcrcAccount` destinations.

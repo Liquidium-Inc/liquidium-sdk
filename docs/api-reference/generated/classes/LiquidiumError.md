@@ -6,7 +6,7 @@
 
 # Class: LiquidiumError
 
-Defined in: packages/client/src/core/errors.ts:70
+Defined in: packages/client/src/core/errors.ts:73
 
 Typed error from the SDK or mapped protocol failures.
 
@@ -22,7 +22,7 @@ Prefer checking `code` over parsing `message`.
 
 > **new LiquidiumError**(`code`, `message?`, `cause?`, `context?`): `LiquidiumError`
 
-Defined in: packages/client/src/core/errors.ts:86
+Defined in: packages/client/src/core/errors.ts:89
 
 #### Parameters
 
@@ -64,7 +64,7 @@ Optional backend debug identifiers.
 
 > `readonly` `optional` **cause?**: `unknown`
 
-Defined in: packages/client/src/core/errors.ts:74
+Defined in: packages/client/src/core/errors.ts:77
 
 Original error when the SDK wraps an underlying failure.
 
@@ -78,7 +78,7 @@ Original error when the SDK wraps an underlying failure.
 
 > `readonly` **code**: [`LiquidiumErrorCode`](../type-aliases/LiquidiumErrorCode.md)
 
-Defined in: packages/client/src/core/errors.ts:72
+Defined in: packages/client/src/core/errors.ts:75
 
 Machine-readable reason; compare to [LiquidiumErrorCode](../variables/LiquidiumErrorCode.md) values.
 
@@ -112,7 +112,7 @@ Defined in: node\_modules/.pnpm/typescript@5.9.3/node\_modules/typescript/lib/li
 
 > `readonly` `optional` **requestId?**: `string`
 
-Defined in: packages/client/src/core/errors.ts:78
+Defined in: packages/client/src/core/errors.ts:81
 
 SDK API request id for support/debugging when available.
 
@@ -134,7 +134,7 @@ Defined in: node\_modules/.pnpm/typescript@5.9.3/node\_modules/typescript/lib/li
 
 > `readonly` `optional` **traceId?**: `string`
 
-Defined in: packages/client/src/core/errors.ts:76
+Defined in: packages/client/src/core/errors.ts:79
 
 Backend trace id for support/debugging when available.
 

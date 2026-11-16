@@ -6,7 +6,7 @@
 
 # Interface: ListActivitiesByShortRefRequest
 
-Defined in: packages/client/src/modules/activities/types.ts:88
+Defined in: packages/client/src/modules/activities/types.ts:115
 
 Activity list request scoped to a simple loan short reference.
 
@@ -20,7 +20,7 @@ Activity list request scoped to a simple loan short reference.
 
 > `optional` **filter?**: [`ActivityFilter`](../type-aliases/ActivityFilter.md)
 
-Defined in: packages/client/src/modules/activities/types.ts:77
+Defined in: packages/client/src/modules/activities/types.ts:104
 
 Optional lifecycle filter; defaults to `active`.
 
@@ -34,6 +34,6 @@ Optional lifecycle filter; defaults to `active`.
 
 > **shortRef**: `string`
 
-Defined in: packages/client/src/modules/activities/types.ts:91
+Defined in: packages/client/src/modules/activities/types.ts:118
 
 Simple loan short reference to list activities for.

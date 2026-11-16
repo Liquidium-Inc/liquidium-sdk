@@ -8,7 +8,7 @@
 
 > **CanisterIdOverrides** = `Omit`\<`Partial`\<[`CanisterIds`](../interfaces/CanisterIds.md)\>, `"pools"`\> & `object`
 
-Defined in: packages/client/src/core/types.ts:81
+Defined in: packages/client/src/core/types.ts:83
 
 Custom canister principal overrides accepted by client configuration.
 

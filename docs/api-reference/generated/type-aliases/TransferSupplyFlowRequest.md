@@ -8,6 +8,6 @@
 
 > **TransferSupplyFlowRequest** = [`ManualTransferSupplyFlowRequest`](../interfaces/ManualTransferSupplyFlowRequest.md) \| [`WalletTransferSupplyFlowRequest`](../interfaces/WalletTransferSupplyFlowRequest.md)
 
-Defined in: packages/client/src/modules/lending/types.ts:214
+Defined in: packages/client/src/modules/lending/types.ts:287
 
 Transfer-based supply request, either manual or wallet-executed.

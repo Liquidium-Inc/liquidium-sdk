@@ -8,7 +8,7 @@
 
 > **WithdrawOutflowDetails** = [`OutflowDetails`](../interfaces/OutflowDetails.md) & `object`
 
-Defined in: packages/client/src/modules/lending/types.ts:78
+Defined in: packages/client/src/modules/lending/types.ts:79
 
 Withdraw receipt.
 

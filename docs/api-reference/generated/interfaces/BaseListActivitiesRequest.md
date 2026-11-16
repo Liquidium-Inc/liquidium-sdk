@@ -6,7 +6,7 @@
 
 # Interface: BaseListActivitiesRequest
 
-Defined in: packages/client/src/modules/activities/types.ts:75
+Defined in: packages/client/src/modules/activities/types.ts:102
 
 Shared request fields for listing activities.
 
@@ -21,6 +21,6 @@ Shared request fields for listing activities.
 
 > `optional` **filter?**: [`ActivityFilter`](../type-aliases/ActivityFilter.md)
 
-Defined in: packages/client/src/modules/activities/types.ts:77
+Defined in: packages/client/src/modules/activities/types.ts:104
 
 Optional lifecycle filter; defaults to `active`.

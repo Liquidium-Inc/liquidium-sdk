@@ -6,7 +6,7 @@
 
 # Class: AccountsModule
 
-Defined in: packages/client/src/modules/accounts/accounts.ts:30
+Defined in: packages/client/src/modules/accounts/accounts.ts:31
 
 Profile lifecycle and linked-wallet helpers.
 
@@ -16,7 +16,7 @@ Profile lifecycle and linked-wallet helpers.
 
 > **new AccountsModule**(`canisterContext`): `AccountsModule`
 
-Defined in: packages/client/src/modules/accounts/accounts.ts:31
+Defined in: packages/client/src/modules/accounts/accounts.ts:32
 
 #### Parameters
 
@@ -34,7 +34,7 @@ Defined in: packages/client/src/modules/accounts/accounts.ts:31
 
 > **createProfile**(`params`): `Promise`\<`string`\>
 
-Defined in: packages/client/src/modules/accounts/accounts.ts:60
+Defined in: packages/client/src/modules/accounts/accounts.ts:61
 
 Creates a Liquidium profile using the provided wallet adapter.
 
@@ -69,7 +69,7 @@ fails.
 
 > **getProfileId**(`walletAddress`): `Promise`\<`string` \| `null`\>
 
-Defined in: packages/client/src/modules/accounts/accounts.ts:79
+Defined in: packages/client/src/modules/accounts/accounts.ts:80
 
 Resolves the Liquidium profile id linked to a wallet address.
 
@@ -93,7 +93,7 @@ Profile principal text, or `null` if none exists.
 
 > **getWalletNonce**(`walletAddress`): `Promise`\<`bigint`\>
 
-Defined in: packages/client/src/modules/accounts/accounts.ts:132
+Defined in: packages/client/src/modules/accounts/accounts.ts:133
 
 Returns the current nonce for a wallet address.
 
@@ -119,7 +119,7 @@ The next signing nonce as a bigint.
 
 > **listLinkedWallets**(`profileId`): `Promise`\<[`Wallet`](../interfaces/Wallet.md)[]\>
 
-Defined in: packages/client/src/modules/accounts/accounts.ts:151
+Defined in: packages/client/src/modules/accounts/accounts.ts:152
 
 Lists the wallets currently linked to a profile.
 
@@ -143,7 +143,7 @@ The wallets currently linked to the requested profile.
 
 > **prepareCreateProfile**(`options`): `Promise`\<[`CreateAccountAction`](../interfaces/CreateAccountAction.md)\>
 
-Defined in: packages/client/src/modules/accounts/accounts.ts:43
+Defined in: packages/client/src/modules/accounts/accounts.ts:44
 
 Prepares a profile-creation action that can be signed and submitted later.
 
@@ -174,7 +174,7 @@ preparation fails.
 
 > **profileExists**(`profileId`): `Promise`\<`boolean`\>
 
-Defined in: packages/client/src/modules/accounts/accounts.ts:107
+Defined in: packages/client/src/modules/accounts/accounts.ts:108
 
 Checks whether a profile is registered with the protocol.
 

@@ -6,7 +6,7 @@
 
 # Interface: BtcOnIcpAssetIdentifier
 
-Defined in: packages/client/src/core/types.ts:141
+Defined in: packages/client/src/core/types.ts:160
 
 BTC transferred on the Internet Computer chain.
 
@@ -16,7 +16,7 @@ BTC transferred on the Internet Computer chain.
 
 > **asset**: `"BTC"`
 
-Defined in: packages/client/src/core/types.ts:143
+Defined in: packages/client/src/core/types.ts:162
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: packages/client/src/core/types.ts:143
 
 > **chain**: `"ICP"`
 
-Defined in: packages/client/src/core/types.ts:142
+Defined in: packages/client/src/core/types.ts:161

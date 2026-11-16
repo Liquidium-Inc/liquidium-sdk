@@ -6,7 +6,7 @@
 
 # Class: LiquidiumClient
 
-Defined in: packages/client/src/client.ts:28
+Defined in: packages/client/src/client.ts:29
 
 Root client for Liquidium protocol integration (canister + optional HTTP API).
 
@@ -18,7 +18,7 @@ Construct with `new LiquidiumClient(config)`.
 
 > **new LiquidiumClient**(`config?`): `LiquidiumClient`
 
-Defined in: packages/client/src/client.ts:55
+Defined in: packages/client/src/client.ts:58
 
 Creates a Liquidium SDK client.
 
@@ -40,7 +40,7 @@ Runtime transport, canister, API, identity, and EVM read options.
 
 > `readonly` **accounts**: [`AccountsModule`](AccountsModule.md)
 
-Defined in: packages/client/src/client.ts:30
+Defined in: packages/client/src/client.ts:31
 
 Profile lifecycle: create, resolve, linked wallets.
 
@@ -50,7 +50,7 @@ Profile lifecycle: create, resolve, linked wallets.
 
 > `readonly` **activities**: [`ActivitiesModule`](ActivitiesModule.md)
 
-Defined in: packages/client/src/client.ts:38
+Defined in: packages/client/src/client.ts:41
 
 Receipt-oriented activity status and activity lists.
 
@@ -60,7 +60,7 @@ Receipt-oriented activity status and activity lists.
 
 > `readonly` **history**: [`HistoryModule`](HistoryModule.md)
 
-Defined in: packages/client/src/client.ts:40
+Defined in: packages/client/src/client.ts:43
 
 Pool and user history through the Liquidium SDK API.
 
@@ -70,9 +70,19 @@ Pool and user history through the Liquidium SDK API.
 
 > `readonly` **lending**: [`LendingModule`](LendingModule.md)
 
-Defined in: packages/client/src/client.ts:32
+Defined in: packages/client/src/client.ts:33
 
 Borrow, withdraw, supply, inflow reporting and tracking.
+
+***
+
+### liquidations
+
+> `readonly` **liquidations**: [`LiquidationsModule`](LiquidationsModule.md)
+
+Defined in: packages/client/src/client.ts:35
+
+Liquidation candidate scanning, execution, and status lookup.
 
 ***
 
@@ -80,7 +90,7 @@ Borrow, withdraw, supply, inflow reporting and tracking.
 
 > `readonly` **market**: [`MarketModule`](MarketModule.md)
 
-Defined in: packages/client/src/client.ts:36
+Defined in: packages/client/src/client.ts:39
 
 Pool list, prices, pool rate lookups.
 
@@ -90,7 +100,7 @@ Pool list, prices, pool rate lookups.
 
 > `readonly` **positions**: [`PositionsModule`](PositionsModule.md)
 
-Defined in: packages/client/src/client.ts:34
+Defined in: packages/client/src/client.ts:37
 
 Per-pool positions, health, aggregate stats.
 
@@ -100,7 +110,7 @@ Per-pool positions, health, aggregate stats.
 
 > `readonly` **quote**: [`QuoteModule`](QuoteModule.md)
 
-Defined in: packages/client/src/client.ts:44
+Defined in: packages/client/src/client.ts:47
 
 Pure quote helpers from market inputs.
 
@@ -110,6 +120,6 @@ Pure quote helpers from market inputs.
 
 > `readonly` **simpleLoans**: [`SimpleLoansModule`](SimpleLoansModule.md)
 
-Defined in: packages/client/src/client.ts:42
+Defined in: packages/client/src/client.ts:45
 
 Accountless Simple Loans backed by generated deposit/repay targets.

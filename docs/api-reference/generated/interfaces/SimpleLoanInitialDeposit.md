@@ -14,7 +14,7 @@ Initial collateral deposit quote returned when a simple loan is created.
 
 ### asset
 
-> **asset**: `"BTC"` \| `"ETH"` \| `"ICP"` \| `"USDC"` \| `"USDT"`
+> **asset**: `"SOL"` \| `"BTC"` \| `"ETH"` \| `"ICP"` \| `"USDC"` \| `"USDT"`
 
 Defined in: packages/client/src/modules/simple-loans/types.ts:411
 

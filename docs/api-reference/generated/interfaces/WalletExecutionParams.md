@@ -6,9 +6,13 @@
 
 # Interface: WalletExecutionParams
 
-Defined in: packages/client/src/modules/lending/types.ts:22
+Defined in: packages/client/src/modules/lending/types.ts:23
 
 Wallet execution dependencies for borrow and withdraw convenience methods.
+
+## Extended by
+
+- [`RecoverWithWalletRequest`](RecoverWithWalletRequest.md)
 
 ## Properties
 
@@ -16,7 +20,7 @@ Wallet execution dependencies for borrow and withdraw convenience methods.
 
 > **signerChain**: [`SigningChain`](../type-aliases/SigningChain.md)
 
-Defined in: packages/client/src/modules/lending/types.ts:24
+Defined in: packages/client/src/modules/lending/types.ts:25
 
 Chain used by the signing wallet.
 
@@ -26,6 +30,6 @@ Chain used by the signing wallet.
 
 > **signerWalletAdapter**: [`WalletAdapter`](WalletAdapter.md)
 
-Defined in: packages/client/src/modules/lending/types.ts:26
+Defined in: packages/client/src/modules/lending/types.ts:27
 
 Wallet adapter used to execute the prepared action.

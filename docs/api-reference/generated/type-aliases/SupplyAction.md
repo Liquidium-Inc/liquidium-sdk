@@ -8,6 +8,6 @@
 
 > **SupplyAction** = *typeof* [`SupplyAction`](../variables/SupplyAction.md)\[keyof *typeof* [`SupplyAction`](../variables/SupplyAction.md)\]
 
-Defined in: packages/client/src/core/types.ts:210
+Defined in: packages/client/src/core/types.ts:234
 
 Inflow operation performed by a supply target.

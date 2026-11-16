@@ -8,7 +8,7 @@
 
 > `const` **Asset**: `object`
 
-Defined in: packages/client/src/core/types.ts:94
+Defined in: packages/client/src/core/types.ts:96
 
 Canonical asset symbols supported by state-mutating protocol flows.
 
@@ -25,6 +25,10 @@ Canonical asset symbols supported by state-mutating protocol flows.
 ### ICP
 
 > `readonly` **ICP**: `"ICP"` = `"ICP"`
+
+### SOL
+
+> `readonly` **SOL**: `"SOL"` = `"SOL"`
 
 ### USDC
 

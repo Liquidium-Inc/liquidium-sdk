@@ -8,4 +8,4 @@
 
 > **MinimumBorrowAsset** = keyof *typeof* [`MIN_BORROW_AMOUNTS_BY_ASSET`](../variables/MIN_BORROW_AMOUNTS_BY_ASSET.md)
 
-Defined in: packages/client/src/core/borrow-minimums.ts:15
+Defined in: packages/client/src/core/borrow-minimums.ts:17

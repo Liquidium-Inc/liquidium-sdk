@@ -8,6 +8,6 @@
 
 > **SupplyFlowRequest** = [`TransferSupplyFlowRequest`](TransferSupplyFlowRequest.md) \| [`ContractInteractionSupplyFlowRequest`](../interfaces/ContractInteractionSupplyFlowRequest.md)
 
-Defined in: packages/client/src/modules/lending/types.ts:234
+Defined in: packages/client/src/modules/lending/types.ts:307
 
 Request accepted by `lending.supply(...)`.

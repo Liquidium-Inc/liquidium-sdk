@@ -18,7 +18,7 @@ Fee-inclusive collateral deposit quote for one transfer target.
 
 Defined in: packages/client/src/modules/simple-loans/types.ts:369
 
-Full amount to send to the collateral deposit target, including fee.
+Full transfer including inflow fee and any SOL minimum-send floor. Sender transaction fees are separate.
 
 ***
 

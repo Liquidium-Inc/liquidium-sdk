@@ -8,4 +8,4 @@
 
 > **MinimumWithdrawAsset** = keyof *typeof* [`MIN_WITHDRAW_AMOUNTS_BY_ASSET`](../variables/MIN_WITHDRAW_AMOUNTS_BY_ASSET.md)
 
-Defined in: packages/client/src/core/withdraw-minimums.ts:15
+Defined in: packages/client/src/core/withdraw-minimums.ts:17

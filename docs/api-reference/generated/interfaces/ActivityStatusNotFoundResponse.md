@@ -6,7 +6,7 @@
 
 # Interface: ActivityStatusNotFoundResponse
 
-Defined in: packages/client/src/modules/activities/types.ts:133
+Defined in: packages/client/src/modules/activities/types.ts:160
 
 Missing activity status lookup result.
 
@@ -16,7 +16,7 @@ Missing activity status lookup result.
 
 > **found**: `false`
 
-Defined in: packages/client/src/modules/activities/types.ts:135
+Defined in: packages/client/src/modules/activities/types.ts:162
 
 Indicates the activity was not found.
 
@@ -26,6 +26,6 @@ Indicates the activity was not found.
 
 > **id**: `string`
 
-Defined in: packages/client/src/modules/activities/types.ts:137
+Defined in: packages/client/src/modules/activities/types.ts:164
 
 Requested activity or receipt id.

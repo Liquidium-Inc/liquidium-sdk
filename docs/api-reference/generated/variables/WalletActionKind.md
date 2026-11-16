@@ -25,3 +25,7 @@ Protocol action represented by a prepared wallet action.
 ### createWithdraw
 
 > `readonly` **createWithdraw**: `"create-withdraw"` = `"create-withdraw"`
+
+### recoverFunds
+
+> `readonly` **recoverFunds**: `"recover-funds"` = `"recover-funds"`

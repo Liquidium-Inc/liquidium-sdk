@@ -6,7 +6,7 @@
 
 # Interface: ManualTransferSupplyFlowRequest
 
-Defined in: packages/client/src/modules/lending/types.ts:187
+Defined in: packages/client/src/modules/lending/types.ts:257
 
 Manual transfer-based `lending.supply` request.
 
@@ -20,7 +20,7 @@ Manual transfer-based `lending.supply` request.
 
 > `optional` **account?**: `undefined`
 
-Defined in: packages/client/src/modules/lending/types.ts:193
+Defined in: packages/client/src/modules/lending/types.ts:263
 
 Manual supply does not accept a sender account.
 
@@ -30,7 +30,7 @@ Manual supply does not accept a sender account.
 
 > **action**: [`SupplyAction`](../type-aliases/SupplyAction.md)
 
-Defined in: packages/client/src/modules/lending/types.ts:181
+Defined in: packages/client/src/modules/lending/types.ts:251
 
 #### Inherited from
 
@@ -42,7 +42,7 @@ Defined in: packages/client/src/modules/lending/types.ts:181
 
 > `optional` **amount?**: `undefined`
 
-Defined in: packages/client/src/modules/lending/types.ts:195
+Defined in: packages/client/src/modules/lending/types.ts:265
 
 Manual supply does not accept an execution amount.
 
@@ -52,7 +52,7 @@ Manual supply does not accept an execution amount.
 
 > **chain**: [`Chain`](../type-aliases/Chain.md)
 
-Defined in: packages/client/src/modules/lending/types.ts:183
+Defined in: packages/client/src/modules/lending/types.ts:253
 
 Transfer chain to use. Pass ICP for ck-ledger transfers.
 
@@ -66,7 +66,7 @@ Transfer chain to use. Pass ICP for ck-ledger transfers.
 
 > `optional` **mechanism?**: `"transfer"`
 
-Defined in: packages/client/src/modules/lending/types.ts:189
+Defined in: packages/client/src/modules/lending/types.ts:259
 
 Explicit transfer mechanism. Omit this field to use the same default.
 
@@ -76,7 +76,7 @@ Explicit transfer mechanism. Omit this field to use the same default.
 
 > **poolId**: `string`
 
-Defined in: packages/client/src/modules/lending/types.ts:180
+Defined in: packages/client/src/modules/lending/types.ts:250
 
 #### Inherited from
 
@@ -88,7 +88,7 @@ Defined in: packages/client/src/modules/lending/types.ts:180
 
 > **profileId**: `string`
 
-Defined in: packages/client/src/modules/lending/types.ts:179
+Defined in: packages/client/src/modules/lending/types.ts:249
 
 #### Inherited from
 
@@ -100,6 +100,6 @@ Defined in: packages/client/src/modules/lending/types.ts:179
 
 > `optional` **walletAdapter?**: `undefined`
 
-Defined in: packages/client/src/modules/lending/types.ts:191
+Defined in: packages/client/src/modules/lending/types.ts:261
 
 Manual supply does not broadcast through a wallet adapter.

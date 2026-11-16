@@ -6,7 +6,7 @@
 
 # Interface: PoolRate
 
-Defined in: packages/client/src/modules/market/types.ts:84
+Defined in: packages/client/src/modules/market/types.ts:86
 
 Current borrow, lend, and utilization rates for a pool.
 
@@ -16,7 +16,7 @@ Current borrow, lend, and utilization rates for a pool.
 
 > **borrowRate**: `bigint`
 
-Defined in: packages/client/src/modules/market/types.ts:88
+Defined in: packages/client/src/modules/market/types.ts:90
 
 Borrow APR scaled by `rateDecimals`.
 
@@ -26,7 +26,7 @@ Borrow APR scaled by `rateDecimals`.
 
 > **estimatedBorrowApy**: `bigint`
 
-Defined in: packages/client/src/modules/market/types.ts:90
+Defined in: packages/client/src/modules/market/types.ts:92
 
 Estimated borrow APY scaled by `rateDecimals`.
 
@@ -36,7 +36,7 @@ Estimated borrow APY scaled by `rateDecimals`.
 
 > **estimatedLendApy**: `bigint`
 
-Defined in: packages/client/src/modules/market/types.ts:94
+Defined in: packages/client/src/modules/market/types.ts:96
 
 Estimated lend APY scaled by `rateDecimals`.
 
@@ -46,7 +46,7 @@ Estimated lend APY scaled by `rateDecimals`.
 
 > **lendRate**: `bigint`
 
-Defined in: packages/client/src/modules/market/types.ts:92
+Defined in: packages/client/src/modules/market/types.ts:94
 
 Lend APR scaled by `rateDecimals`.
 
@@ -56,7 +56,7 @@ Lend APR scaled by `rateDecimals`.
 
 > **rateDecimals**: `bigint`
 
-Defined in: packages/client/src/modules/market/types.ts:86
+Defined in: packages/client/src/modules/market/types.ts:88
 
 Decimal scale used by rate fields.
 
@@ -66,6 +66,6 @@ Decimal scale used by rate fields.
 
 > **utilizationRate**: `bigint`
 
-Defined in: packages/client/src/modules/market/types.ts:96
+Defined in: packages/client/src/modules/market/types.ts:98
 
 Utilization rate scaled by `rateDecimals`.

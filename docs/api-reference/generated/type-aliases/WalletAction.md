@@ -8,7 +8,7 @@
 
 > **WalletAction**\<`TResult`\> = [`SignMessageWalletAction`](../interfaces/SignMessageWalletAction.md)\<`unknown`, `TResult`\>
 
-Defined in: packages/client/src/core/wallet-actions.ts:148
+Defined in: packages/client/src/core/wallet-actions.ts:160
 
 Any prepared action returned by SDK methods and executable by [executeWith](../functions/executeWith.md).
 

@@ -6,7 +6,7 @@
 
 # Interface: OutflowActivity
 
-Defined in: packages/client/src/modules/activities/types.ts:64
+Defined in: packages/client/src/modules/activities/types.ts:89
 
 Borrow or withdrawal activity returned by the activity API.
 
@@ -20,7 +20,7 @@ Borrow or withdrawal activity returned by the activity API.
 
 > **amount**: `bigint`
 
-Defined in: packages/client/src/modules/activities/types.ts:49
+Defined in: packages/client/src/modules/activities/types.ts:72
 
 #### Inherited from
 
@@ -32,7 +32,7 @@ Defined in: packages/client/src/modules/activities/types.ts:49
 
 > **asset**: `string` \| `null`
 
-Defined in: packages/client/src/modules/activities/types.ts:47
+Defined in: packages/client/src/modules/activities/types.ts:70
 
 #### Inherited from
 
@@ -44,7 +44,7 @@ Defined in: packages/client/src/modules/activities/types.ts:47
 
 > **chain**: [`Chain`](../type-aliases/Chain.md) \| `null`
 
-Defined in: packages/client/src/modules/activities/types.ts:48
+Defined in: packages/client/src/modules/activities/types.ts:71
 
 #### Inherited from
 
@@ -52,11 +52,21 @@ Defined in: packages/client/src/modules/activities/types.ts:48
 
 ***
 
+### failure?
+
+> `optional` **failure?**: `undefined`
+
+Defined in: packages/client/src/modules/activities/types.ts:95
+
+Outflows never carry inflow rejection details.
+
+***
+
 ### id
 
 > **id**: `string`
 
-Defined in: packages/client/src/modules/activities/types.ts:45
+Defined in: packages/client/src/modules/activities/types.ts:68
 
 #### Inherited from
 
@@ -68,7 +78,7 @@ Defined in: packages/client/src/modules/activities/types.ts:45
 
 > **poolId**: `string`
 
-Defined in: packages/client/src/modules/activities/types.ts:46
+Defined in: packages/client/src/modules/activities/types.ts:69
 
 #### Inherited from
 
@@ -80,7 +90,7 @@ Defined in: packages/client/src/modules/activities/types.ts:46
 
 > **status**: [`OutflowActivityStatus`](../type-aliases/OutflowActivityStatus.md)
 
-Defined in: packages/client/src/modules/activities/types.ts:66
+Defined in: packages/client/src/modules/activities/types.ts:91
 
 Shared consumer-facing lifecycle status.
 
@@ -90,7 +100,7 @@ Shared consumer-facing lifecycle status.
 
 > **timestampMs**: `number`
 
-Defined in: packages/client/src/modules/activities/types.ts:50
+Defined in: packages/client/src/modules/activities/types.ts:73
 
 #### Inherited from
 
@@ -102,7 +112,7 @@ Defined in: packages/client/src/modules/activities/types.ts:50
 
 > `optional` **topUp?**: `undefined`
 
-Defined in: packages/client/src/modules/activities/types.ts:68
+Defined in: packages/client/src/modules/activities/types.ts:93
 
 Outflows never carry top-up state.
 
@@ -112,7 +122,7 @@ Outflows never carry top-up state.
 
 > `optional` **txids?**: `string`[]
 
-Defined in: packages/client/src/modules/activities/types.ts:52
+Defined in: packages/client/src/modules/activities/types.ts:75
 
 Chain transaction ids associated with the activity when available.
 

@@ -8,6 +8,6 @@
 
 > **OutflowType** = *typeof* [`OutflowType`](../variables/OutflowType.md)\[keyof *typeof* [`OutflowType`](../variables/OutflowType.md)\]
 
-Defined in: packages/client/src/core/types.ts:218
+Defined in: packages/client/src/core/types.ts:242
 
 Outflow operation reported by the lending canister.

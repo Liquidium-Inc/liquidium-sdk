@@ -6,7 +6,7 @@
 
 # Interface: EvmContractTransaction
 
-Defined in: packages/client/src/modules/lending/types.ts:30
+Defined in: packages/client/src/modules/lending/types.ts:31
 
 EVM transaction payload returned by lending transaction builders.
 
@@ -16,7 +16,7 @@ EVM transaction payload returned by lending transaction builders.
 
 > **data**: `string`
 
-Defined in: packages/client/src/modules/lending/types.ts:34
+Defined in: packages/client/src/modules/lending/types.ts:35
 
 Hex-encoded calldata.
 
@@ -26,7 +26,7 @@ Hex-encoded calldata.
 
 > **to**: `string`
 
-Defined in: packages/client/src/modules/lending/types.ts:32
+Defined in: packages/client/src/modules/lending/types.ts:33
 
 Contract address to call.
 
@@ -36,6 +36,6 @@ Contract address to call.
 
 > `optional` **value?**: `string`
 
-Defined in: packages/client/src/modules/lending/types.ts:36
+Defined in: packages/client/src/modules/lending/types.ts:37
 
 Native ETH value in wei, serialized as a decimal string.
