@@ -8,6 +8,6 @@
 
 > **GetActivityStatusRequest** = [`GetActivityStatusByProfileRequest`](../interfaces/GetActivityStatusByProfileRequest.md) \| [`GetActivityStatusByShortRefRequest`](../interfaces/GetActivityStatusByShortRefRequest.md)
 
-Defined in: packages/client/src/modules/activities/types.ts:120
+Defined in: packages/client/src/modules/activities/types.ts:147
 
 Request for fetching one activity by id and owner identifier.

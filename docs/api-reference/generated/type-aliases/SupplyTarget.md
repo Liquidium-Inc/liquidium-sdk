@@ -8,7 +8,7 @@
 
 > **SupplyTarget** = [`AssetIdentifier`](AssetIdentifier.md) & `object`
 
-Defined in: packages/client/src/modules/lending/types.ts:167
+Defined in: packages/client/src/modules/lending/types.ts:237
 
 Supply destination returned by `lending.supply(...)`.
 

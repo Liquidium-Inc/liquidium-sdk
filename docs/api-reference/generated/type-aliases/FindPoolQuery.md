@@ -8,6 +8,6 @@
 
 > **FindPoolQuery** = [`AssetIdentifier`](AssetIdentifier.md)
 
-Defined in: packages/client/src/modules/market/types.ts:81
+Defined in: packages/client/src/modules/market/types.ts:83
 
 Supported Chain + Asset identifier used to find its backing lending pool.

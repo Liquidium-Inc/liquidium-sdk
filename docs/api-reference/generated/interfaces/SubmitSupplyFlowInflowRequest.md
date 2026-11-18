@@ -6,7 +6,7 @@
 
 # Interface: SubmitSupplyFlowInflowRequest
 
-Defined in: packages/client/src/modules/lending/types.ts:274
+Defined in: packages/client/src/modules/lending/types.ts:348
 
 Body for `SupplyFlow.submit`. The supply flow supplies the inflow operation.
 
@@ -18,9 +18,9 @@ Body for `SupplyFlow.submit`. The supply flow supplies the inflow operation.
 
 ### chain?
 
-> `optional` **chain?**: `"BTC"` \| `"ETH"`
+> `optional` **chain?**: `"SOL"` \| `"BTC"` \| `"ETH"`
 
-Defined in: packages/client/src/modules/lending/types.ts:278
+Defined in: packages/client/src/modules/lending/types.ts:352
 
 Chain where the transaction was broadcast, when not implied by the flow.
 
@@ -30,6 +30,6 @@ Chain where the transaction was broadcast, when not implied by the flow.
 
 > **txid**: `string`
 
-Defined in: packages/client/src/modules/lending/types.ts:276
+Defined in: packages/client/src/modules/lending/types.ts:350
 
 Broadcast transaction id or hash.

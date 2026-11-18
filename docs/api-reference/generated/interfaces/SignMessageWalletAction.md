@@ -6,7 +6,7 @@
 
 # Interface: SignMessageWalletAction\<TData, TResult\>
 
-Defined in: packages/client/src/core/wallet-actions.ts:130
+Defined in: packages/client/src/core/wallet-actions.ts:142
 
 Prepared action that requires message signing before submit.
 
@@ -14,6 +14,7 @@ Prepared action that requires message signing before submit.
 
 - [`CreateAccountAction`](CreateAccountAction.md)
 - [`BorrowAction`](BorrowAction.md)
+- [`RecoveryAction`](RecoveryAction.md)
 - [`WithdrawAction`](WithdrawAction.md)
 
 ## Type Parameters
@@ -32,7 +33,7 @@ Prepared action that requires message signing before submit.
 
 > **account**: `string`
 
-Defined in: packages/client/src/core/wallet-actions.ts:138
+Defined in: packages/client/src/core/wallet-actions.ts:150
 
 Default account to pass to the wallet adapter.
 
@@ -42,7 +43,7 @@ Default account to pass to the wallet adapter.
 
 > **actionType**: `string`
 
-Defined in: packages/client/src/core/wallet-actions.ts:136
+Defined in: packages/client/src/core/wallet-actions.ts:148
 
 Adapter-facing action type.
 
@@ -52,7 +53,7 @@ Adapter-facing action type.
 
 > **data**: `TData`
 
-Defined in: packages/client/src/core/wallet-actions.ts:142
+Defined in: packages/client/src/core/wallet-actions.ts:154
 
 Original request data needed to submit the signed action.
 
@@ -62,7 +63,7 @@ Original request data needed to submit the signed action.
 
 > **executionKind**: `"sign-message"`
 
-Defined in: packages/client/src/core/wallet-actions.ts:134
+Defined in: packages/client/src/core/wallet-actions.ts:146
 
 Wallet capability required to execute the action.
 
@@ -72,7 +73,7 @@ Wallet capability required to execute the action.
 
 > **kind**: [`WalletActionKind`](../type-aliases/WalletActionKind.md)
 
-Defined in: packages/client/src/core/wallet-actions.ts:132
+Defined in: packages/client/src/core/wallet-actions.ts:144
 
 Protocol action kind.
 
@@ -82,7 +83,7 @@ Protocol action kind.
 
 > **message**: `string`
 
-Defined in: packages/client/src/core/wallet-actions.ts:140
+Defined in: packages/client/src/core/wallet-actions.ts:152
 
 Plaintext message that must be signed.
 
@@ -92,7 +93,7 @@ Plaintext message that must be signed.
 
 > **submit**(`signatureInfo`): `Promise`\<`TResult`\>
 
-Defined in: packages/client/src/core/wallet-actions.ts:144
+Defined in: packages/client/src/core/wallet-actions.ts:156
 
 Submits the signature and resolves the protocol result.
 

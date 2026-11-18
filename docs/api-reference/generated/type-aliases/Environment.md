@@ -8,6 +8,6 @@
 
 > **Environment** = *typeof* [`Environment`](../variables/Environment.md)\[keyof *typeof* [`Environment`](../variables/Environment.md)\]
 
-Defined in: packages/client/src/core/types.ts:87
+Defined in: packages/client/src/core/types.ts:89
 
 Supported deployment environment name.

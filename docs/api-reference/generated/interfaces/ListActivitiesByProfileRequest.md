@@ -6,7 +6,7 @@
 
 # Interface: ListActivitiesByProfileRequest
 
-Defined in: packages/client/src/modules/activities/types.ts:81
+Defined in: packages/client/src/modules/activities/types.ts:108
 
 Activity list request scoped to a Liquidium profile.
 
@@ -20,7 +20,7 @@ Activity list request scoped to a Liquidium profile.
 
 > `optional` **filter?**: [`ActivityFilter`](../type-aliases/ActivityFilter.md)
 
-Defined in: packages/client/src/modules/activities/types.ts:77
+Defined in: packages/client/src/modules/activities/types.ts:104
 
 Optional lifecycle filter; defaults to `active`.
 
@@ -34,6 +34,6 @@ Optional lifecycle filter; defaults to `active`.
 
 > **profileId**: `string`
 
-Defined in: packages/client/src/modules/activities/types.ts:84
+Defined in: packages/client/src/modules/activities/types.ts:111
 
 Profile principal text to list activities for.

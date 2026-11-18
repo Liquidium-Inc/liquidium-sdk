@@ -1,5 +1,11 @@
 # @liquidium/client
 
+## 0.12.0
+
+### Minor Changes
+
+- 5ec4aec: Add native SOL and ckSOL routes, Solana wallet signing and transfers, account-specific inflow fee quotes and minimums, Simple Loan targets, and SOL recovery. Use the bundled production SOL pool and SDK API defaults without custom deployment configuration.
+
 ## 0.12.0-rc.0
 
 ### Minor Changes

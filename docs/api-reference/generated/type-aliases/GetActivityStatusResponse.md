@@ -8,6 +8,6 @@
 
 > **GetActivityStatusResponse** = [`ActivityStatusFoundResponse`](../interfaces/ActivityStatusFoundResponse.md) \| [`ActivityStatusNotFoundResponse`](../interfaces/ActivityStatusNotFoundResponse.md)
 
-Defined in: packages/client/src/modules/activities/types.ts:141
+Defined in: packages/client/src/modules/activities/types.ts:168
 
 Result of an activity status lookup.

@@ -8,7 +8,7 @@
 
 > **OutflowActivityStatus** = [`LiquidiumStatus`](../interfaces/LiquidiumStatus.md) & `object`
 
-Defined in: packages/client/src/modules/activities/types.ts:40
+Defined in: packages/client/src/modules/activities/types.ts:63
 
 ## Type Declaration
 

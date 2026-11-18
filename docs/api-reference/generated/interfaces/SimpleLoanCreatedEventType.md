@@ -22,7 +22,7 @@ Defined in: packages/client/src/modules/simple-loans/types.ts:274
 
 ### borrowAsset
 
-> **borrowAsset**: `"BTC"` \| `"ETH"` \| `"ICP"` \| `"USDC"` \| `"USDT"`
+> **borrowAsset**: `"SOL"` \| `"BTC"` \| `"ETH"` \| `"ICP"` \| `"USDC"` \| `"USDT"`
 
 Defined in: packages/client/src/modules/simple-loans/types.ts:281
 
@@ -46,7 +46,7 @@ Defined in: packages/client/src/modules/simple-loans/types.ts:280
 
 ### collateralAsset
 
-> **collateralAsset**: `"BTC"` \| `"ETH"` \| `"ICP"` \| `"USDC"` \| `"USDT"`
+> **collateralAsset**: `"SOL"` \| `"BTC"` \| `"ETH"` \| `"ICP"` \| `"USDC"` \| `"USDT"`
 
 Defined in: packages/client/src/modules/simple-loans/types.ts:273
 

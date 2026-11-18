@@ -6,7 +6,7 @@
 
 # Interface: ExecuteWithOptions
 
-Defined in: packages/client/src/execute.ts:19
+Defined in: packages/client/src/execute.ts:20
 
 Wallet wiring for [executeWith](../functions/executeWith.md).
 
@@ -19,7 +19,7 @@ message signing uses `options.account ?? action.account`.
 
 > `optional` **account?**: `string`
 
-Defined in: packages/client/src/execute.ts:25
+Defined in: packages/client/src/execute.ts:26
 
 Optional signing/sending account override.
 
@@ -29,7 +29,7 @@ Optional signing/sending account override.
 
 > `optional` **chain?**: [`SigningChain`](../type-aliases/SigningChain.md)
 
-Defined in: packages/client/src/execute.ts:23
+Defined in: packages/client/src/execute.ts:24
 
 Required for `sign-message` actions; forwarded to the adapter and submit payload.
 
@@ -39,6 +39,6 @@ Required for `sign-message` actions; forwarded to the adapter and submit payload
 
 > **walletAdapter**: [`WalletAdapter`](WalletAdapter.md)
 
-Defined in: packages/client/src/execute.ts:21
+Defined in: packages/client/src/execute.ts:22
 
 Must expose the methods required by the action's `executionKind`.

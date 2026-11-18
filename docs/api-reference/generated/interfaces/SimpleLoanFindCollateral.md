@@ -24,7 +24,7 @@ Intended credited collateral amount in base units, before inflow fees.
 
 ### asset
 
-> **asset**: `"BTC"` \| `"ETH"` \| `"ICP"` \| `"USDC"` \| `"USDT"`
+> **asset**: `"SOL"` \| `"BTC"` \| `"ETH"` \| `"ICP"` \| `"USDC"` \| `"USDT"`
 
 Defined in: packages/client/src/modules/simple-loans/types.ts:180
 

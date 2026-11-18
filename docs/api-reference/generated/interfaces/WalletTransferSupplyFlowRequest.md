@@ -6,7 +6,7 @@
 
 # Interface: WalletTransferSupplyFlowRequest
 
-Defined in: packages/client/src/modules/lending/types.ts:199
+Defined in: packages/client/src/modules/lending/types.ts:269
 
 Wallet-executed transfer-based `lending.supply` request.
 
@@ -20,7 +20,7 @@ Wallet-executed transfer-based `lending.supply` request.
 
 > **account**: `string`
 
-Defined in: packages/client/src/modules/lending/types.ts:208
+Defined in: packages/client/src/modules/lending/types.ts:281
 
 Sender wallet account.
 
@@ -30,7 +30,7 @@ Sender wallet account.
 
 > **action**: [`SupplyAction`](../type-aliases/SupplyAction.md)
 
-Defined in: packages/client/src/modules/lending/types.ts:181
+Defined in: packages/client/src/modules/lending/types.ts:251
 
 #### Inherited from
 
@@ -42,7 +42,7 @@ Defined in: packages/client/src/modules/lending/types.ts:181
 
 > **amount**: `bigint`
 
-Defined in: packages/client/src/modules/lending/types.ts:210
+Defined in: packages/client/src/modules/lending/types.ts:283
 
 Transfer amount in base units. Deposits enforce the asset product minimum.
 
@@ -52,7 +52,7 @@ Transfer amount in base units. Deposits enforce the asset product minimum.
 
 > **chain**: [`Chain`](../type-aliases/Chain.md)
 
-Defined in: packages/client/src/modules/lending/types.ts:183
+Defined in: packages/client/src/modules/lending/types.ts:253
 
 Transfer chain to use. Pass ICP for ck-ledger transfers.
 
@@ -66,7 +66,7 @@ Transfer chain to use. Pass ICP for ck-ledger transfers.
 
 > `optional` **mechanism?**: `"transfer"`
 
-Defined in: packages/client/src/modules/lending/types.ts:201
+Defined in: packages/client/src/modules/lending/types.ts:271
 
 Explicit transfer mechanism. Omit this field to use the same default.
 
@@ -76,7 +76,7 @@ Explicit transfer mechanism. Omit this field to use the same default.
 
 > **poolId**: `string`
 
-Defined in: packages/client/src/modules/lending/types.ts:180
+Defined in: packages/client/src/modules/lending/types.ts:250
 
 #### Inherited from
 
@@ -88,7 +88,7 @@ Defined in: packages/client/src/modules/lending/types.ts:180
 
 > **profileId**: `string`
 
-Defined in: packages/client/src/modules/lending/types.ts:179
+Defined in: packages/client/src/modules/lending/types.ts:249
 
 #### Inherited from
 
@@ -98,8 +98,8 @@ Defined in: packages/client/src/modules/lending/types.ts:179
 
 ### walletAdapter
 
-> **walletAdapter**: `Pick`\<[`WalletAdapter`](WalletAdapter.md), `"sendBtcTransaction"` \| `"sendEthTransaction"` \| `"sendIcrcTransfer"`\>
+> **walletAdapter**: `Pick`\<[`WalletAdapter`](WalletAdapter.md), `"sendBtcTransaction"` \| `"sendEthTransaction"` \| `"sendIcrcTransfer"` \| `"sendSolTransaction"`\>
 
-Defined in: packages/client/src/modules/lending/types.ts:203
+Defined in: packages/client/src/modules/lending/types.ts:273
 
 Wallet adapter used to broadcast the transfer.

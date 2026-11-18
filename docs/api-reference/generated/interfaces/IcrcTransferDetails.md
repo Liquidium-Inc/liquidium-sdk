@@ -6,7 +6,7 @@
 
 # Interface: IcrcTransferDetails
 
-Defined in: packages/client/src/core/wallet-actions.ts:73
+Defined in: packages/client/src/core/wallet-actions.ts:83
 
 ICRC ledger transfer payload passed to wallet adapters.
 
@@ -16,7 +16,7 @@ ICRC ledger transfer payload passed to wallet adapters.
 
 > **amount**: `bigint`
 
-Defined in: packages/client/src/core/wallet-actions.ts:79
+Defined in: packages/client/src/core/wallet-actions.ts:89
 
 Transfer amount in ledger base units.
 
@@ -26,7 +26,7 @@ Transfer amount in ledger base units.
 
 > `optional` **fee?**: `bigint`
 
-Defined in: packages/client/src/core/wallet-actions.ts:81
+Defined in: packages/client/src/core/wallet-actions.ts:91
 
 Optional ledger fee in base units.
 
@@ -36,7 +36,7 @@ Optional ledger fee in base units.
 
 > **ledgerCanisterId**: `string`
 
-Defined in: packages/client/src/core/wallet-actions.ts:75
+Defined in: packages/client/src/core/wallet-actions.ts:85
 
 Ledger canister principal that should receive the transfer call.
 
@@ -46,7 +46,7 @@ Ledger canister principal that should receive the transfer call.
 
 > `optional` **memo?**: `Uint8Array`\<`ArrayBufferLike`\>
 
-Defined in: packages/client/src/core/wallet-actions.ts:83
+Defined in: packages/client/src/core/wallet-actions.ts:93
 
 Optional ledger memo bytes.
 
@@ -56,6 +56,6 @@ Optional ledger memo bytes.
 
 > **to**: [`IcrcAccount`](IcrcAccount.md)
 
-Defined in: packages/client/src/core/wallet-actions.ts:77
+Defined in: packages/client/src/core/wallet-actions.ts:87
 
 Recipient ICRC account.

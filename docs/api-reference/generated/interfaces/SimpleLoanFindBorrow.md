@@ -14,7 +14,7 @@ Borrow leg returned by Simple Loans search.
 
 ### asset
 
-> **asset**: `"BTC"` \| `"ETH"` \| `"ICP"` \| `"USDC"` \| `"USDT"`
+> **asset**: `"SOL"` \| `"BTC"` \| `"ETH"` \| `"ICP"` \| `"USDC"` \| `"USDT"`
 
 Defined in: packages/client/src/modules/simple-loans/types.ts:190
 

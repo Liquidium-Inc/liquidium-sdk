@@ -6,7 +6,7 @@
 
 # Interface: GetActivityStatusByShortRefRequest
 
-Defined in: packages/client/src/modules/activities/types.ts:113
+Defined in: packages/client/src/modules/activities/types.ts:140
 
 Activity status lookup scoped to a simple loan short reference.
 
@@ -20,7 +20,7 @@ Activity status lookup scoped to a simple loan short reference.
 
 > **id**: `string`
 
-Defined in: packages/client/src/modules/activities/types.ts:102
+Defined in: packages/client/src/modules/activities/types.ts:129
 
 Activity or receipt id to look up.
 
@@ -34,6 +34,6 @@ Activity or receipt id to look up.
 
 > **shortRef**: `string`
 
-Defined in: packages/client/src/modules/activities/types.ts:116
+Defined in: packages/client/src/modules/activities/types.ts:143
 
 Simple loan short reference that owns the activity.

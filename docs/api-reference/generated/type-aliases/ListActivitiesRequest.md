@@ -8,6 +8,6 @@
 
 > **ListActivitiesRequest** = [`ListActivitiesByProfileRequest`](../interfaces/ListActivitiesByProfileRequest.md) \| [`ListActivitiesByShortRefRequest`](../interfaces/ListActivitiesByShortRefRequest.md)
 
-Defined in: packages/client/src/modules/activities/types.ts:95
+Defined in: packages/client/src/modules/activities/types.ts:122
 
 Request for listing activities by profile id or simple loan short reference.

@@ -16,7 +16,7 @@ Pool canister principal text values grouped by pool asset.
 
 > **btc**: `string`
 
-Defined in: packages/client/src/core/types.ts:57
+Defined in: packages/client/src/core/types.ts:59
 
 BTC pool canister principal.
 
@@ -26,7 +26,7 @@ BTC pool canister principal.
 
 > **eth**: `string`
 
-Defined in: packages/client/src/core/types.ts:59
+Defined in: packages/client/src/core/types.ts:61
 
 ETH pool canister principal.
 
@@ -36,9 +36,19 @@ ETH pool canister principal.
 
 > **icp**: `string`
 
-Defined in: packages/client/src/core/types.ts:65
+Defined in: packages/client/src/core/types.ts:67
 
 ICP pool canister principal.
+
+***
+
+### sol?
+
+> `optional` **sol?**: `string`
+
+Defined in: packages/client/src/core/types.ts:57
+
+Active SOL pool canister principal. Only this pool's SOL and ckSOL targets are accepted.
 
 ***
 
@@ -46,7 +56,7 @@ ICP pool canister principal.
 
 > **usdc**: `string`
 
-Defined in: packages/client/src/core/types.ts:63
+Defined in: packages/client/src/core/types.ts:65
 
 USDC pool canister principal.
 
@@ -56,6 +66,6 @@ USDC pool canister principal.
 
 > **usdt**: `string`
 
-Defined in: packages/client/src/core/types.ts:61
+Defined in: packages/client/src/core/types.ts:63
 
 USDT pool canister principal.

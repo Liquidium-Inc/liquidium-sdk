@@ -6,7 +6,7 @@
 
 # Interface: BtcOnBtcAssetIdentifier
 
-Defined in: packages/client/src/core/types.ts:117
+Defined in: packages/client/src/core/types.ts:136
 
 BTC transferred on the Bitcoin chain.
 
@@ -16,7 +16,7 @@ BTC transferred on the Bitcoin chain.
 
 > **asset**: `"BTC"`
 
-Defined in: packages/client/src/core/types.ts:119
+Defined in: packages/client/src/core/types.ts:138
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: packages/client/src/core/types.ts:119
 
 > **chain**: `"BTC"`
 
-Defined in: packages/client/src/core/types.ts:118
+Defined in: packages/client/src/core/types.ts:137

@@ -14,7 +14,7 @@ Current amount to send to a repayment target to close the debt.
 
 ### asset
 
-> **asset**: `"BTC"` \| `"ETH"` \| `"ICP"` \| `"USDC"` \| `"USDT"`
+> **asset**: `"SOL"` \| `"BTC"` \| `"ETH"` \| `"ICP"` \| `"USDC"` \| `"USDT"`
 
 Defined in: packages/client/src/modules/simple-loans/types.ts:399
 

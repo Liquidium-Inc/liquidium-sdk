@@ -79,7 +79,7 @@ function mapCanisterLiquidationCandidatePosition(
 function mapCanisterLiquidationCandidateAsset(
   asset: CanisterLiquidationCandidateAsset
 ): LiquidationCandidateAsset {
-  // SAFETY: the canister asset variants match the SDK asset symbols, including legacy SOL.
+  // SAFETY: the canister asset variants match the SDK asset symbols.
   return getVariantKey(asset) as LiquidationCandidateAsset;
 }
 

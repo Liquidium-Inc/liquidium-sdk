@@ -6,7 +6,7 @@
 
 # Interface: EthOnEthAssetIdentifier
 
-Defined in: packages/client/src/core/types.ts:123
+Defined in: packages/client/src/core/types.ts:142
 
 ETH transferred on the Ethereum chain.
 
@@ -16,7 +16,7 @@ ETH transferred on the Ethereum chain.
 
 > **asset**: `"ETH"`
 
-Defined in: packages/client/src/core/types.ts:125
+Defined in: packages/client/src/core/types.ts:144
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: packages/client/src/core/types.ts:125
 
 > **chain**: `"ETH"`
 
-Defined in: packages/client/src/core/types.ts:124
+Defined in: packages/client/src/core/types.ts:143

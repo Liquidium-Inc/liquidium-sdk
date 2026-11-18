@@ -18,7 +18,7 @@ Fee-inclusive repayment quote for one transfer target.
 
 Defined in: packages/client/src/modules/simple-loans/types.ts:379
 
-Full amount to send to the repayment target, including fee and interest buffer.
+Full transfer including fee, interest buffer, and any SOL minimum-send floor. Native SOL can exceed the debt plus fees for small repayments; the protocol keeps that excess as a pool fee unless the pool sets a repayment refund threshold.
 
 ***
 

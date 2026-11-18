@@ -8,7 +8,7 @@
 
 > `const` **Environment**: `object`
 
-Defined in: packages/client/src/core/types.ts:87
+Defined in: packages/client/src/core/types.ts:89
 
 Supported deployment environments with bundled canister ids.
 

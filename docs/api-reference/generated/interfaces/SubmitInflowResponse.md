@@ -6,7 +6,7 @@
 
 # Interface: SubmitInflowResponse
 
-Defined in: packages/client/src/modules/lending/types.ts:288
+Defined in: packages/client/src/modules/lending/types.ts:362
 
 Acknowledgement from the SDK API after submitting an inflow hint.
 
@@ -16,6 +16,6 @@ Acknowledgement from the SDK API after submitting an inflow hint.
 
 > **txid**: `string`
 
-Defined in: packages/client/src/modules/lending/types.ts:290
+Defined in: packages/client/src/modules/lending/types.ts:364
 
 Transaction id accepted by the SDK API.

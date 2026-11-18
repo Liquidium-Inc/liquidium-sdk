@@ -8,6 +8,6 @@
 
 > **InflowActivityOperation** = `Extract`\<[`LiquidiumOperation`](LiquidiumOperation.md), `"deposit"` \| `"repayment"`\>
 
-Defined in: packages/client/src/modules/activities/types.ts:27
+Defined in: packages/client/src/modules/activities/types.ts:50
 
 Operation emitted by deposit or repayment inflows.

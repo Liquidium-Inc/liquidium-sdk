@@ -6,7 +6,7 @@
 
 # Interface: CreateBorrowRequest
 
-Defined in: packages/client/src/modules/lending/types.ts:88
+Defined in: packages/client/src/modules/lending/types.ts:89
 
 Fields to build a borrow request. `amount` is in the borrow pool asset's base units
 (e.g. satoshis, token smallest units).
@@ -21,7 +21,7 @@ Fields to build a borrow request. `amount` is in the borrow pool asset's base un
 
 > **amount**: `bigint`
 
-Defined in: packages/client/src/modules/lending/types.ts:94
+Defined in: packages/client/src/modules/lending/types.ts:95
 
 Amount to borrow in the borrow asset's base units.
 
@@ -31,7 +31,7 @@ Amount to borrow in the borrow asset's base units.
 
 > **chain**: [`Chain`](../type-aliases/Chain.md)
 
-Defined in: packages/client/src/modules/lending/types.ts:96
+Defined in: packages/client/src/modules/lending/types.ts:97
 
 Chain where borrowed funds should arrive.
 
@@ -41,7 +41,7 @@ Chain where borrowed funds should arrive.
 
 > **poolId**: `string`
 
-Defined in: packages/client/src/modules/lending/types.ts:92
+Defined in: packages/client/src/modules/lending/types.ts:93
 
 Borrow pool principal text.
 
@@ -51,7 +51,7 @@ Borrow pool principal text.
 
 > **profileId**: `string`
 
-Defined in: packages/client/src/modules/lending/types.ts:90
+Defined in: packages/client/src/modules/lending/types.ts:91
 
 Liquidium profile principal text.
 
@@ -61,7 +61,7 @@ Liquidium profile principal text.
 
 > **receiver**: [`LiquidiumAccountInput`](../type-aliases/LiquidiumAccountInput.md)
 
-Defined in: packages/client/src/modules/lending/types.ts:98
+Defined in: packages/client/src/modules/lending/types.ts:99
 
 Destination that receives the borrowed asset.
 
@@ -71,6 +71,6 @@ Destination that receives the borrowed asset.
 
 > **signerWalletAddress**: `string`
 
-Defined in: packages/client/src/modules/lending/types.ts:100
+Defined in: packages/client/src/modules/lending/types.ts:101
 
 Wallet address that signs the borrow authorization.

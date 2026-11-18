@@ -6,7 +6,7 @@
 
 # Interface: SubmitInflowRequest
 
-Defined in: packages/client/src/modules/lending/types.ts:282
+Defined in: packages/client/src/modules/lending/types.ts:356
 
 Body for direct `lending.submitInflow`.
 
@@ -18,9 +18,9 @@ Body for direct `lending.submitInflow`.
 
 ### chain?
 
-> `optional` **chain?**: `"BTC"` \| `"ETH"`
+> `optional` **chain?**: `"SOL"` \| `"BTC"` \| `"ETH"`
 
-Defined in: packages/client/src/modules/lending/types.ts:278
+Defined in: packages/client/src/modules/lending/types.ts:352
 
 Chain where the transaction was broadcast, when not implied by the flow.
 
@@ -34,7 +34,7 @@ Chain where the transaction was broadcast, when not implied by the flow.
 
 > **operation**: [`InflowOperation`](../type-aliases/InflowOperation.md)
 
-Defined in: packages/client/src/modules/lending/types.ts:284
+Defined in: packages/client/src/modules/lending/types.ts:358
 
 Deposit or repayment operation represented by the transaction.
 
@@ -44,7 +44,7 @@ Deposit or repayment operation represented by the transaction.
 
 > **txid**: `string`
 
-Defined in: packages/client/src/modules/lending/types.ts:276
+Defined in: packages/client/src/modules/lending/types.ts:350
 
 Broadcast transaction id or hash.
 

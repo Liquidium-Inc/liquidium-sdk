@@ -6,7 +6,7 @@
 
 # Interface: UsdcOnIcpAssetIdentifier
 
-Defined in: packages/client/src/core/types.ts:159
+Defined in: packages/client/src/core/types.ts:178
 
 USDC transferred on the Internet Computer chain.
 
@@ -16,7 +16,7 @@ USDC transferred on the Internet Computer chain.
 
 > **asset**: `"USDC"`
 
-Defined in: packages/client/src/core/types.ts:161
+Defined in: packages/client/src/core/types.ts:180
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: packages/client/src/core/types.ts:161
 
 > **chain**: `"ICP"`
 
-Defined in: packages/client/src/core/types.ts:160
+Defined in: packages/client/src/core/types.ts:179

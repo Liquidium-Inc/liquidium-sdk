@@ -6,7 +6,7 @@
 
 # Interface: SendEthTransactionRequest
 
-Defined in: packages/client/src/core/wallet-actions.ts:47
+Defined in: packages/client/src/core/wallet-actions.ts:48
 
 ETH transaction-sending request passed to wallet adapters.
 
@@ -16,7 +16,7 @@ ETH transaction-sending request passed to wallet adapters.
 
 > `optional` **account?**: `string`
 
-Defined in: packages/client/src/core/wallet-actions.ts:53
+Defined in: packages/client/src/core/wallet-actions.ts:54
 
 Optional account override for the sending wallet.
 
@@ -26,7 +26,7 @@ Optional account override for the sending wallet.
 
 > **actionType**: `string`
 
-Defined in: packages/client/src/core/wallet-actions.ts:55
+Defined in: packages/client/src/core/wallet-actions.ts:56
 
 SDK action type that produced this request.
 
@@ -36,7 +36,7 @@ SDK action type that produced this request.
 
 > **chain**: `"ETH"`
 
-Defined in: packages/client/src/core/wallet-actions.ts:49
+Defined in: packages/client/src/core/wallet-actions.ts:50
 
 ETH chain discriminator.
 
@@ -46,6 +46,6 @@ ETH chain discriminator.
 
 > **transaction**: [`EthTransactionRequest`](EthTransactionRequest.md)
 
-Defined in: packages/client/src/core/wallet-actions.ts:51
+Defined in: packages/client/src/core/wallet-actions.ts:52
 
 Transaction payload to send.

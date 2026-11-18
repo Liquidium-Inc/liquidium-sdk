@@ -8,7 +8,7 @@
 
 > `const` **EvmSupplyApprovalStrategy**: `object`
 
-Defined in: packages/client/src/modules/lending/types.ts:329
+Defined in: packages/client/src/modules/lending/types.ts:420
 
 Approval strategy required before an ERC-20 deposit contract call.
 
