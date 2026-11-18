@@ -35,9 +35,9 @@ The identity's default ICRC account must hold the debt amount plus ledger fees. 
 Run it from the SDK root:
 
 ```bash
-pnpm install
-pnpm --filter @liquidium/example-liquidation-flow build
-pnpm --filter @liquidium/example-liquidation-flow start
+bun install
+bun run --filter @liquidium/example-liquidation-flow build
+bun run --filter @liquidium/example-liquidation-flow start
 ```
 
 The CLI and UI omit `buyBadDebt`, so the SDK uses its default of `false`. They execute normal collateral-backed liquidations, which allow smaller partial fills and ignore `minCollateralAmount`. The debt offer can exceed the borrower's outstanding debt; the canister limits repayment and returns unused debt assets as change, subject to transfer fees. A nonzero minimum does not guarantee a minimum receipt or force a failure. Candidate state can change after the scan, so execution can fill a smaller amount or reject a stale candidate. See [Minimum collateral and partial fills](../guides/liquidations.mdx#minimum-collateral-and-partial-fills) for bad-debt behavior.
@@ -49,7 +49,7 @@ The wallet section displays the funding principal with a Copy funding address bu
 Run the local UI with the same PEM identity:
 
 ```bash
-pnpm --filter @liquidium/example-liquidation-flow ui
+bun run --filter @liquidium/example-liquidation-flow ui
 ```
 
 Open `http://127.0.0.1:4318`. Do not expose this server through a tunnel or deploy it publicly. The PEM stays on the server; browser code cannot access its file or contents. The server binds only to loopback and checks the Host, Origin, and a session CSRF token for signing actions.

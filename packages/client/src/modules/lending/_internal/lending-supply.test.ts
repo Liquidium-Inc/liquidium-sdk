@@ -2,7 +2,7 @@ import { encodeIcrcAccount } from "@icp-sdk/canisters/ledger/icrc";
 import { Actor } from "@icp-sdk/core/agent";
 import { Principal } from "@icp-sdk/core/principal";
 import { decodeFunctionData } from "viem";
-import { afterEach, describe, expect, test, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vite-plus/test";
 import { CK_CANISTER_IDS } from "../../../core/config";
 import { CK_DEPOSIT_ABI, ERC20_ABI, MAX_UINT256 } from "../../../core/evm";
 import { encodeInflowSubaccount } from "../../../core/utils/inflow-subaccount";

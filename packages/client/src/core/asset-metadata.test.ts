@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "vite-plus/test";
 import { ASSET_METADATA, getAssetMetadata } from "./asset-metadata";
 import { Asset } from "./types";
 

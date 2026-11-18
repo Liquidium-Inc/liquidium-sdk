@@ -1,4 +1,4 @@
-import { expect, test } from "vitest";
+import { expect, test } from "vite-plus/test";
 import { Asset, Chain, LiquidiumClient } from "../packages/client/src";
 import { describeLive } from "./_internal/live";
 

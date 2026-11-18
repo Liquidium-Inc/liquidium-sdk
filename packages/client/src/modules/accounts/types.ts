@@ -30,8 +30,10 @@ export interface CreateAccountData {
 }
 
 /** Prepared action for creating a Liquidium profile. */
-export interface CreateAccountAction
-  extends SignMessageWalletAction<CreateAccountData, string> {
+export interface CreateAccountAction extends SignMessageWalletAction<
+  CreateAccountData,
+  string
+> {
   /** Protocol action kind. */
   kind: typeof WalletActionKind.createAccount;
   /** Required wallet capability. */

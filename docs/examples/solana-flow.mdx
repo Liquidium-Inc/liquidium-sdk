@@ -10,7 +10,7 @@ Build the client, then run the read-only example with an existing Liquidium
 profile and the active SOL pool for your SDK API deployment:
 
 ```sh
-pnpm --filter @liquidium/client build
+bun run --filter @liquidium/client build
 node examples/solana-flow.mjs <pool-principal> <profile-principal> \
   https://your-deployment.example/api/sdk
 ```

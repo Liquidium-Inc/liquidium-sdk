@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "vite-plus/test";
 import { intFromPublicId, publicIdFromInt } from "../ref-code";
 
 describe("simple loan reference codes", () => {

@@ -25,13 +25,13 @@ execution. Check the method, account, destination, and amount before running.
 3. Install dependencies from the SDK root:
 
 ```bash
-pnpm install
+bun install
 ```
 
 4. Run the example:
 
 ```bash
-pnpm --filter @liquidium/example-sdk-method-query dev
+bun run --filter @liquidium/example-sdk-method-query dev
 ```
 
 ## What To Look At

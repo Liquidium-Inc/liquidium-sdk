@@ -1,5 +1,5 @@
 import { Actor } from "@icp-sdk/core/agent";
-import { afterEach, describe, expect, test, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vite-plus/test";
 import { DEFAULT_API_BASE_URL } from "../../../core/config";
 import { LiquidiumClient, LiquidiumErrorCode } from "../../../index";
 import {

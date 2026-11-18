@@ -29,18 +29,19 @@ To build and test a local checkout, follow these steps:
    cd liquidium-sdk
    ```
 
-2. Install the workspace dependencies:
+2. Install the [Vite+ CLI](https://viteplus.dev/guide/), then install the workspace dependencies with Bun:
 
    ```bash
-   pnpm install
+    bun install
    ```
 
 3. Build, type-check, and test the workspace:
 
    ```bash
-   pnpm run build
-   pnpm run typecheck
-   pnpm run test
+    bun run build
+    bun run lint
+    bun run typecheck
+    bun run test
    ```
 
 The repository development tools have the following requirements:
@@ -48,4 +49,5 @@ The repository development tools have the following requirements:
 | Requirement | Notes |
 | --- | --- |
 | Node.js | 22.22.3 or later in the 22.x line, 24.x, or 26 or later |
-| pnpm | 11 or later for local development |
+| Bun | 1.4.4 or later for local development |
+| Vite+ | 1.5.0, pinned in the workspace catalog |

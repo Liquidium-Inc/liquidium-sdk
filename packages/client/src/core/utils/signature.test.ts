@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "vite-plus/test";
 import { LiquidiumErrorCode } from "../errors";
 import { Chain } from "../types";
 import { normalizeWalletSignature } from "./signature";

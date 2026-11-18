@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { describe, expect, test } from "vite-plus/test";
 import { LiquidiumErrorCode } from "../../errors";
 import type { ProtocolError, SignatureVerificationError } from "./actor";
 import {

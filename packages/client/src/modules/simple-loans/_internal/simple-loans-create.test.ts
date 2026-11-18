@@ -1,6 +1,6 @@
 import { Actor } from "@icp-sdk/core/agent";
 import { Principal } from "@icp-sdk/core/principal";
-import { afterEach, describe, expect, test, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vite-plus/test";
 import { mockDeep } from "vitest-mock-extended";
 import { encodeIcpAccountIdentifier } from "../../../core/accounts";
 import { DEFAULT_API_BASE_URL } from "../../../core/config";

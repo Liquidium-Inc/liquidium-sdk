@@ -25,11 +25,10 @@ import type {
 } from "./types";
 import { ActivityFilter } from "./types";
 
-interface ActivityTopUpWire
-  extends Omit<
-    ActivityTopUp,
-    "depositedAmount" | "feeAmount" | "shortfallAmount"
-  > {
+interface ActivityTopUpWire extends Omit<
+  ActivityTopUp,
+  "depositedAmount" | "feeAmount" | "shortfallAmount"
+> {
   depositedAmount: string;
   feeAmount: string;
   shortfallAmount: string;

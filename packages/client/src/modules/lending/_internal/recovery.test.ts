@@ -1,7 +1,7 @@
 import { IcrcLedgerCanister } from "@icp-sdk/canisters/ledger/icrc";
 import { Actor, type Agent } from "@icp-sdk/core/agent";
 import { Principal } from "@icp-sdk/core/principal";
-import { afterEach, expect, test, vi } from "vitest";
+import { afterEach, expect, test, vi } from "vite-plus/test";
 import { mockDeep } from "vitest-mock-extended";
 import type { CkSolMinterActor } from "../../../core/canisters/cksol/minter";
 import type { LendingActor } from "../../../core/canisters/lending/actor";

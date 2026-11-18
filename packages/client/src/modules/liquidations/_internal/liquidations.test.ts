@@ -4,7 +4,14 @@ import {
 } from "@icp-sdk/canisters/ledger/icrc";
 import { Actor, type ActorSubclass, HttpAgent } from "@icp-sdk/core/agent";
 import { Principal } from "@icp-sdk/core/principal";
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+} from "vite-plus/test";
 import { mockDeep } from "vitest-mock-extended";
 import type {
   FlexibleLendingActor,

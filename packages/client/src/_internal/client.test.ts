@@ -1,5 +1,5 @@
 import { type Agent, HttpAgent } from "@icp-sdk/core/agent";
-import { afterEach, describe, expect, test, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vite-plus/test";
 import { mockDeep } from "vitest-mock-extended";
 import { LiquidiumClient, LiquidiumError, LiquidiumErrorCode } from "../index";
 
