@@ -12,6 +12,7 @@ describeLive("live fee estimation e2e", () => {
       asset: Asset.BTC,
       chain: Chain.BTC,
     });
+
     const [ethFeeEstimate, usdcFeeEstimate, usdtFeeEstimate] =
       await Promise.all([
         client.lending.estimateInflowFee({
@@ -44,6 +45,7 @@ describeLive("live fee estimation e2e", () => {
       asset: Asset.BTC,
       chain: Chain.ICP,
     });
+
     const [ckEthFeeEstimate, ckUsdcFeeEstimate, ckUsdtFeeEstimate] =
       await Promise.all([
         client.lending.estimateInflowFee({
@@ -59,6 +61,7 @@ describeLive("live fee estimation e2e", () => {
           chain: Chain.ICP,
         }),
       ]);
+
     const icpFeeEstimate = await client.lending.estimateInflowFee({
       asset: Asset.ICP,
       chain: Chain.ICP,
@@ -81,6 +84,7 @@ describeLive("live fee estimation e2e", () => {
       asset: Asset.BTC,
       chain: Chain.BTC,
     });
+
     const ckBtcFeeEstimate = await client.lending.estimateInflowFee({
       asset: Asset.BTC,
       chain: Chain.ICP,

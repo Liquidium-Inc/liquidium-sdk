@@ -1,3 +1,4 @@
+import { mockActor } from "../../../_internal/mock-actor";
 import { encodeIcrcAccount } from "@icp-sdk/canisters/ledger/icrc";
 import { Actor } from "@icp-sdk/core/agent";
 import { Principal } from "@icp-sdk/core/principal";
@@ -32,13 +33,13 @@ afterEach(() => {
 });
 
 function createNoDeployedBytecodeFetch(): typeof fetch {
-  return vi.fn().mockImplementation(
+  return vi.fn<typeof fetch>().mockImplementation(
     async () =>
       new Response(JSON.stringify({ hasDeployedBytecode: false }), {
         status: 200,
         headers: { "content-type": "application/json" },
       })
-  ) as typeof fetch;
+  );
 }
 
 describe("LendingModule withdraw", () => {
@@ -46,15 +47,18 @@ describe("LendingModule withdraw", () => {
     // given
     const MINIMUM_ETH_AMOUNT_WEI = 5_000_000_000_000_000n;
     const getNonce = vi.fn().mockResolvedValue(23n);
-    vi.spyOn(Actor, "createActor").mockReturnValue({
-      list_pools: vi.fn().mockResolvedValue([createEthPoolRecord()]),
-      get_nonce: getNonce,
-    } as never);
+    vi.spyOn(Actor, "createActor").mockReturnValue(
+      mockActor({
+        list_pools: vi.fn().mockResolvedValue([createEthPoolRecord()]),
+        get_nonce: getNonce,
+      })
+    );
+
     const client = new LiquidiumClient({
       evmPublicClient: {
         getCode: vi.fn().mockResolvedValue(undefined),
         readContract: vi.fn(),
-      } as never,
+      },
       fetch: createNoDeployedBytecodeFetch(),
     });
 
@@ -83,13 +87,16 @@ describe("LendingModule withdraw", () => {
     // given
     const MINIMUM_ETH_AMOUNT_WEI = 5_000_000_000_000_000n;
     const withdraw = vi.fn();
-    vi.spyOn(Actor, "createActor").mockReturnValue({
-      list_pools: vi.fn().mockResolvedValue([createEthPoolRecord()]),
-      get_nonce: vi.fn().mockResolvedValue(23n),
-      withdraw,
-    } as never);
+    vi.spyOn(Actor, "createActor").mockReturnValue(
+      mockActor({
+        list_pools: vi.fn().mockResolvedValue([createEthPoolRecord()]),
+        get_nonce: vi.fn().mockResolvedValue(23n),
+        withdraw,
+      })
+    );
+
     const fetch = vi
-      .fn()
+      .fn<typeof globalThis.fetch>()
       .mockResolvedValueOnce(
         new Response(JSON.stringify({ hasDeployedBytecode: false }), {
           status: 200,
@@ -101,8 +108,10 @@ describe("LendingModule withdraw", () => {
           status: 200,
           headers: { "content-type": "application/json" },
         })
-      ) as typeof globalThis.fetch;
+      );
+
     const client = new LiquidiumClient({ fetch });
+
     const withdrawAction = await client.lending.prepareWithdraw({
       profileId: "aaaaa-aa",
       poolId: ETH_POOL_ID,
@@ -129,6 +138,7 @@ describe("LendingModule withdraw", () => {
     // given
     const MINIMUM_ETH_AMOUNT_WEI = 5_000_000_000_000_000n;
     const MUTATED_EVM_ADDRESS = "0xde709f2102306220921060314715629080e2fb77";
+
     const withdraw = vi.fn().mockResolvedValue({
       Ok: {
         id: "outflow-eth",
@@ -139,17 +149,22 @@ describe("LendingModule withdraw", () => {
         receiver: { External: CHECKSUM_EVM_OUTFLOW_ADDRESS },
       },
     });
-    vi.spyOn(Actor, "createActor").mockReturnValue({
-      list_pools: vi.fn().mockResolvedValue([createEthPoolRecord()]),
-      get_nonce: vi.fn().mockResolvedValue(23n),
-      withdraw,
-    } as never);
+
+    vi.spyOn(Actor, "createActor").mockReturnValue(
+      mockActor({
+        list_pools: vi.fn().mockResolvedValue([createEthPoolRecord()]),
+        get_nonce: vi.fn().mockResolvedValue(23n),
+        withdraw,
+      })
+    );
     const evmPublicClient = mockDeep<Required<EvmReadClient>>();
     evmPublicClient.chain.id = mainnet.id;
     evmPublicClient.getCode.mockResolvedValue(undefined);
+
     const client = new LiquidiumClient({
       evmPublicClient,
     });
+
     const withdrawAction = await client.lending.prepareWithdraw({
       profileId: "aaaaa-aa",
       poolId: ETH_POOL_ID,
@@ -158,11 +173,11 @@ describe("LendingModule withdraw", () => {
       receiver: LOWERCASE_EVM_OUTFLOW_ADDRESS,
       signerWalletAddress: "0xsigner",
     });
+
     const publicReceiver = withdrawAction.data.receiver;
-    if (typeof publicReceiver === "string" || !("address" in publicReceiver)) {
-      throw new Error("Expected a typed withdraw receiver");
-    }
-    publicReceiver.address = MUTATED_EVM_ADDRESS;
+
+    expect(publicReceiver).toMatchObject({ type: "ChainAddress" });
+    Object.assign(publicReceiver, { address: MUTATED_EVM_ADDRESS });
 
     // when
     await withdrawAction.submit({ signature: "0xsigned", chain: "ETH" });
@@ -182,10 +197,12 @@ describe("LendingModule withdraw", () => {
     // given
     const BELOW_MINIMUM_ETH_AMOUNT_WEI = 4_999_999_999_999_999n;
     const getNonce = vi.fn().mockResolvedValue(23n);
-    vi.spyOn(Actor, "createActor").mockReturnValue({
-      list_pools: vi.fn().mockResolvedValue([createEthPoolRecord()]),
-      get_nonce: getNonce,
-    } as never);
+    vi.spyOn(Actor, "createActor").mockReturnValue(
+      mockActor({
+        list_pools: vi.fn().mockResolvedValue([createEthPoolRecord()]),
+        get_nonce: getNonce,
+      })
+    );
     const client = new LiquidiumClient({});
 
     // when
@@ -211,10 +228,12 @@ describe("LendingModule withdraw", () => {
     // given
     const MINIMUM_ETH_AMOUNT_WEI = 5_000_000_000_000_000n;
     const getNonce = vi.fn().mockResolvedValue(23n);
-    vi.spyOn(Actor, "createActor").mockReturnValue({
-      list_pools: vi.fn().mockResolvedValue([createEthPoolRecord()]),
-      get_nonce: getNonce,
-    } as never);
+    vi.spyOn(Actor, "createActor").mockReturnValue(
+      mockActor({
+        list_pools: vi.fn().mockResolvedValue([createEthPoolRecord()]),
+        get_nonce: getNonce,
+      })
+    );
     const client = new LiquidiumClient({});
 
     // when
@@ -239,6 +258,7 @@ describe("LendingModule withdraw", () => {
     // given
     vi.setSystemTime(new Date("2026-04-01T00:00:00.000Z"));
     const getNonce = vi.fn().mockResolvedValue(23n);
+
     const withdraw = vi.fn().mockResolvedValue({
       Ok: {
         id: "outflow-2",
@@ -249,11 +269,14 @@ describe("LendingModule withdraw", () => {
         receiver: { External: VALID_BTC_OUTFLOW_ADDRESS },
       },
     });
-    vi.spyOn(Actor, "createActor").mockReturnValue({
-      list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord()]),
-      get_nonce: getNonce,
-      withdraw,
-    } as never);
+
+    vi.spyOn(Actor, "createActor").mockReturnValue(
+      mockActor({
+        list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord()]),
+        get_nonce: getNonce,
+        withdraw,
+      })
+    );
     const client = new LiquidiumClient({});
 
     // when
@@ -268,6 +291,7 @@ describe("LendingModule withdraw", () => {
       },
       signerWalletAddress: "0xsigner",
     });
+
     const outflow = await withdrawAction.submit({
       signature: "0xsigned",
       chain: "ETH",
@@ -337,6 +361,7 @@ Nonce: 23`);
   test("creates an ICP withdraw action to an account identifier destination", async () => {
     // given
     vi.setSystemTime(new Date("2026-04-01T00:00:00.000Z"));
+
     const withdraw = vi.fn().mockResolvedValue({
       Ok: {
         id: "outflow-icp-account-id",
@@ -347,11 +372,14 @@ Nonce: 23`);
         receiver: { AccountIdentifier: VALID_ICP_ACCOUNT_IDENTIFIER },
       },
     });
-    vi.spyOn(Actor, "createActor").mockReturnValue({
-      list_pools: vi.fn().mockResolvedValue([createIcpPoolRecord()]),
-      get_nonce: vi.fn().mockResolvedValue(23n),
-      withdraw,
-    } as never);
+
+    vi.spyOn(Actor, "createActor").mockReturnValue(
+      mockActor({
+        list_pools: vi.fn().mockResolvedValue([createIcpPoolRecord()]),
+        get_nonce: vi.fn().mockResolvedValue(23n),
+        withdraw,
+      })
+    );
     const client = new LiquidiumClient({});
 
     // when
@@ -366,6 +394,7 @@ Nonce: 23`);
       },
       signerWalletAddress: "0xsigner",
     });
+
     await withdrawAction.submit({ signature: "0xsigned", chain: "ETH" });
 
     // then
@@ -382,15 +411,19 @@ Nonce: 23`);
   test("rejects a BTC withdraw receiver that uses an ICRC account before fetching a nonce", async () => {
     // given
     const ICRC_SUBACCOUNT = new Uint8Array(32).fill(6);
+
     const ICRC_ACCOUNT = encodeIcrcAccount({
       owner: Principal.fromText(VALID_IC_PRINCIPAL),
       subaccount: ICRC_SUBACCOUNT,
     });
+
     const getNonce = vi.fn().mockResolvedValue(23n);
-    vi.spyOn(Actor, "createActor").mockReturnValue({
-      list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord()]),
-      get_nonce: getNonce,
-    } as never);
+    vi.spyOn(Actor, "createActor").mockReturnValue(
+      mockActor({
+        list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord()]),
+        get_nonce: getNonce,
+      })
+    );
     const client = new LiquidiumClient({});
 
     // when
@@ -417,15 +450,19 @@ Nonce: 23`);
   test("rejects an ETH stablecoin withdraw receiver that uses an ICRC account before fetching a nonce", async () => {
     // given
     const ICRC_SUBACCOUNT = new Uint8Array(32).fill(7);
+
     const ICRC_ACCOUNT = encodeIcrcAccount({
       owner: Principal.fromText(VALID_IC_PRINCIPAL),
       subaccount: ICRC_SUBACCOUNT,
     });
+
     const getNonce = vi.fn().mockResolvedValue(23n);
-    vi.spyOn(Actor, "createActor").mockReturnValue({
-      list_pools: vi.fn().mockResolvedValue([createUsdtPoolRecord()]),
-      get_nonce: getNonce,
-    } as never);
+    vi.spyOn(Actor, "createActor").mockReturnValue(
+      mockActor({
+        list_pools: vi.fn().mockResolvedValue([createUsdtPoolRecord()]),
+        get_nonce: getNonce,
+      })
+    );
     const client = new LiquidiumClient({});
 
     // when
@@ -451,20 +488,22 @@ Nonce: 23`);
 
   test("creates and executes a withdraw request directly", async () => {
     // given
-    vi.spyOn(Actor, "createActor").mockReturnValue({
-      list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord()]),
-      get_nonce: vi.fn().mockResolvedValue(37n),
-      withdraw: vi.fn().mockResolvedValue({
-        Ok: {
-          id: "outflow-4",
-          txid: [],
-          outflow_type: { Withdraw: null },
-          outflow_ref: [],
-          amount: 8_000n,
-          receiver: { External: VALID_BTC_OUTFLOW_ADDRESS },
-        },
-      }),
-    } as never);
+    vi.spyOn(Actor, "createActor").mockReturnValue(
+      mockActor({
+        list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord()]),
+        get_nonce: vi.fn().mockResolvedValue(37n),
+        withdraw: vi.fn().mockResolvedValue({
+          Ok: {
+            id: "outflow-4",
+            txid: [],
+            outflow_type: { Withdraw: null },
+            outflow_ref: [],
+            amount: 8_000n,
+            receiver: { External: VALID_BTC_OUTFLOW_ADDRESS },
+          },
+        }),
+      })
+    );
     const signMessage = vi.fn().mockResolvedValue("0xsigned");
     const client = new LiquidiumClient({});
 
@@ -492,13 +531,15 @@ Nonce: 23`);
 
   test("maps protocol errors for withdraw submission", async () => {
     // given
-    vi.spyOn(Actor, "createActor").mockReturnValue({
-      list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord()]),
-      get_nonce: vi.fn().mockResolvedValue(29n),
-      withdraw: vi.fn().mockResolvedValue({
-        Err: { InsufficientFunds: null },
-      }),
-    } as never);
+    vi.spyOn(Actor, "createActor").mockReturnValue(
+      mockActor({
+        list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord()]),
+        get_nonce: vi.fn().mockResolvedValue(29n),
+        withdraw: vi.fn().mockResolvedValue({
+          Err: { InsufficientFunds: null },
+        }),
+      })
+    );
     const BTC_SIGNATURE_BASE64 = "AQID/v8=";
     const client = new LiquidiumClient({});
 
@@ -577,10 +618,12 @@ Nonce: 23`);
   test("rejects a BTC withdraw below the asset minimum before signing", async () => {
     // given
     const getNonce = vi.fn().mockResolvedValue(17n);
-    vi.spyOn(Actor, "createActor").mockReturnValue({
-      list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord()]),
-      get_nonce: getNonce,
-    } as never);
+    vi.spyOn(Actor, "createActor").mockReturnValue(
+      mockActor({
+        list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord()]),
+        get_nonce: getNonce,
+      })
+    );
     const client = new LiquidiumClient({});
 
     // when
@@ -604,10 +647,12 @@ Nonce: 23`);
   test("allows a BTC withdraw equal to the asset minimum", async () => {
     // given
     const getNonce = vi.fn().mockResolvedValue(17n);
-    vi.spyOn(Actor, "createActor").mockReturnValue({
-      list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord()]),
-      get_nonce: getNonce,
-    } as never);
+    vi.spyOn(Actor, "createActor").mockReturnValue(
+      mockActor({
+        list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord()]),
+        get_nonce: getNonce,
+      })
+    );
     const client = new LiquidiumClient({});
 
     // when
@@ -628,10 +673,12 @@ Nonce: 23`);
   test("rejects an ETH stablecoin withdraw below the asset minimum before signing", async () => {
     // given
     const getNonce = vi.fn().mockResolvedValue(17n);
-    vi.spyOn(Actor, "createActor").mockReturnValue({
-      list_pools: vi.fn().mockResolvedValue([createUsdtPoolRecord()]),
-      get_nonce: getNonce,
-    } as never);
+    vi.spyOn(Actor, "createActor").mockReturnValue(
+      mockActor({
+        list_pools: vi.fn().mockResolvedValue([createUsdtPoolRecord()]),
+        get_nonce: getNonce,
+      })
+    );
     const client = new LiquidiumClient({});
 
     // when
@@ -655,15 +702,18 @@ Nonce: 23`);
   test("allows an ETH stablecoin withdraw equal to the asset minimum", async () => {
     // given
     const getNonce = vi.fn().mockResolvedValue(17n);
-    vi.spyOn(Actor, "createActor").mockReturnValue({
-      list_pools: vi.fn().mockResolvedValue([createUsdtPoolRecord()]),
-      get_nonce: getNonce,
-    } as never);
+    vi.spyOn(Actor, "createActor").mockReturnValue(
+      mockActor({
+        list_pools: vi.fn().mockResolvedValue([createUsdtPoolRecord()]),
+        get_nonce: getNonce,
+      })
+    );
+
     const client = new LiquidiumClient({
       evmPublicClient: {
         getCode: vi.fn().mockResolvedValue(undefined),
         readContract: vi.fn(),
-      } as never,
+      },
       fetch: createNoDeployedBytecodeFetch(),
     });
 
@@ -685,10 +735,12 @@ Nonce: 23`);
   test("rejects a BTC L1 withdraw receiver for an ICP pool before fetching a nonce", async () => {
     // given
     const getNonce = vi.fn().mockResolvedValue(17n);
-    vi.spyOn(Actor, "createActor").mockReturnValue({
-      list_pools: vi.fn().mockResolvedValue([createIcpPoolRecord()]),
-      get_nonce: getNonce,
-    } as never);
+    vi.spyOn(Actor, "createActor").mockReturnValue(
+      mockActor({
+        list_pools: vi.fn().mockResolvedValue([createIcpPoolRecord()]),
+        get_nonce: getNonce,
+      })
+    );
     const client = new LiquidiumClient({});
 
     // when
@@ -715,10 +767,12 @@ Nonce: 23`);
   test("rejects an ETH L1 withdraw receiver for an ICP pool before fetching a nonce", async () => {
     // given
     const getNonce = vi.fn().mockResolvedValue(17n);
-    vi.spyOn(Actor, "createActor").mockReturnValue({
-      list_pools: vi.fn().mockResolvedValue([createIcpPoolRecord()]),
-      get_nonce: getNonce,
-    } as never);
+    vi.spyOn(Actor, "createActor").mockReturnValue(
+      mockActor({
+        list_pools: vi.fn().mockResolvedValue([createIcpPoolRecord()]),
+        get_nonce: getNonce,
+      })
+    );
     const client = new LiquidiumClient({});
 
     // when
@@ -745,10 +799,12 @@ Nonce: 23`);
   test("rejects a withdraw with an invalid EVM receiver address", async () => {
     // given
     const getNonce = vi.fn().mockResolvedValue(17n);
-    vi.spyOn(Actor, "createActor").mockReturnValue({
-      list_pools: vi.fn().mockResolvedValue([createUsdtPoolRecord()]),
-      get_nonce: getNonce,
-    } as never);
+    vi.spyOn(Actor, "createActor").mockReturnValue(
+      mockActor({
+        list_pools: vi.fn().mockResolvedValue([createUsdtPoolRecord()]),
+        get_nonce: getNonce,
+      })
+    );
     const client = new LiquidiumClient({});
 
     // when
@@ -772,10 +828,12 @@ Nonce: 23`);
   test("rejects a withdraw with an invalid BTC receiver address", async () => {
     // given
     const getNonce = vi.fn().mockResolvedValue(17n);
-    vi.spyOn(Actor, "createActor").mockReturnValue({
-      list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord()]),
-      get_nonce: getNonce,
-    } as never);
+    vi.spyOn(Actor, "createActor").mockReturnValue(
+      mockActor({
+        list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord()]),
+        get_nonce: getNonce,
+      })
+    );
     const client = new LiquidiumClient({});
 
     // when

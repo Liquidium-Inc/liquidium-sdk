@@ -83,6 +83,7 @@ describe("QuoteModule", () => {
     // given
     const BORROW_AMOUNT_USDT_BASE_UNITS = 100_000_000n;
     const COLLATERAL_AMOUNT_SATS = 200_000n;
+
     const request = {
       borrowAmount: BORROW_AMOUNT_USDT_BASE_UNITS,
       borrowPoolId: usdtPool.id,
@@ -148,6 +149,7 @@ describe("QuoteModule", () => {
     const COLLATERAL_AMOUNT_SATS = 10_000n;
     const ACTIVATION_FEE_BPS = 50n;
     const TARGET_LTV_BPS = 5_000n;
+
     const feePool = {
       ...btcPool,
       activationFee: ACTIVATION_FEE_BPS,
@@ -165,6 +167,7 @@ describe("QuoteModule", () => {
       [feePool],
       prices
     );
+
     const collateralQuote = quoteModule.getQuote(
       {
         borrowAmount: BORROW_AMOUNT_SATS,
@@ -191,6 +194,7 @@ describe("QuoteModule", () => {
   test("should return validation errors when LTV inputs cannot be valued", () => {
     // given
     const pricesWithoutUsdt: AssetPrices = { BTC: 100000 };
+
     const request = {
       borrowAmount: 100_000_000n,
       borrowPoolId: usdtPool.id,
@@ -246,6 +250,7 @@ describe("QuoteModule", () => {
         sameAssetBorrowing: true,
         sameAssetBorrowingDustThreshold: SAME_ASSET_DUST_THRESHOLD_SATS,
       };
+
       const request = {
         borrowAmount: 10_000n,
         borrowPoolId: sameAssetPool.id,
@@ -323,6 +328,7 @@ describe("QuoteModule", () => {
     // given
     const TOKEN_BASE_UNITS = 1_000_000_000_000_000_000n;
     const ACTIVATION_FEE_BPS = 50n;
+
     const highPrecisionUsdcPool: Pool = {
       ...usdtPool,
       id: "eeee-usdc-pool",
@@ -330,12 +336,14 @@ describe("QuoteModule", () => {
       decimals: 18n,
       activationFee: ACTIVATION_FEE_BPS,
     };
+
     const request = {
       borrowAmount: TOKEN_BASE_UNITS,
       borrowPoolId: highPrecisionUsdcPool.id,
       collateralPoolId: btcPool.id,
       targetLtvBps: 5_000n,
     };
+
     const pricesWithUsdc: AssetPrices = {
       ...prices,
       USDC: 2_500,
@@ -471,6 +479,7 @@ describe("QuoteModule", () => {
       ...btcPool,
       id: "bbbbb-btc-pool",
     };
+
     const request = {
       borrowAmount: 100000000n,
       borrowPoolId: "bbbbb-btc-pool",
@@ -519,6 +528,7 @@ describe("QuoteModule", () => {
       id: "bbbbb-btc-pool",
       sameAssetBorrowing: true,
     };
+
     const request = {
       borrowAmount: 100000000n,
       borrowPoolId: enabledBtcBorrowPool.id,
@@ -626,6 +636,7 @@ describe("QuoteModule", () => {
       asset: "USDC",
       chain: "ETH",
     };
+
     const request = {
       borrowAmount: 100000000n,
       borrowPoolId: usdcPool.id,
@@ -646,6 +657,7 @@ describe("QuoteModule", () => {
   test("returns error when borrow price is zero or negative", () => {
     // given
     const zeroPrices: AssetPrices = { BTC: 100000, USDT: 0 };
+
     const request = {
       borrowAmount: 100000000n,
       borrowPoolId: "xxxxx-usdt-pool",

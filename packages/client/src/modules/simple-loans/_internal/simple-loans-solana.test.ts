@@ -1,3 +1,4 @@
+import { mockActor } from "../../../_internal/mock-actor";
 import { Actor } from "@icp-sdk/core/agent";
 import { Principal } from "@icp-sdk/core/principal";
 import { afterEach, expect, test, vi } from "vite-plus/test";
@@ -26,6 +27,7 @@ test("hydrates SOL and ckSOL quotes with separate actions and native minimums", 
   // given
   mockSolLoan();
   const fetch = quoteFetch();
+
   const client = new LiquidiumClient({
     fetch,
     canisterIds: { pools: { sol: SOL_POOL_ID } },
@@ -53,9 +55,11 @@ test("hydrates SOL and ckSOL quotes with separate actions and native minimums", 
   expect(loan.repayment.targets.ICP?.amount).toBe(
     DEBT_LAMPORTS + LEDGER_FEE_LAMPORTS
   );
+
   const feeRequests = fetch.mock.calls
-    .map(([url]) => String(url))
+    .map(([url]) => new Request(url).url)
     .filter((url) => url.includes("inflow-fee"));
+
   expect(feeRequests).toHaveLength(4);
   expect(
     feeRequests.every(
@@ -72,6 +76,7 @@ test("hydrates SOL and ckSOL quotes with separate actions and native minimums", 
 test("rejects unavailable SOL repayment quotes instead of showing zero fees", async () => {
   // given
   mockSolLoan();
+
   const client = new LiquidiumClient({
     fetch: quoteFetch(true),
     canisterIds: { pools: { sol: SOL_POOL_ID } },
@@ -90,6 +95,7 @@ function mockSolLoan() {
     asset: { SOL: null },
     chain: { SOL: null },
   });
+
   const loan = createSimpleLoan({
     lend_asset: { SOL: null },
     borrow_asset: { SOL: null },
@@ -99,6 +105,7 @@ function mockSolLoan() {
     borrow_destination: { External: SOL_ADDRESS },
     refund_destination: { External: SOL_ADDRESS },
   });
+
   const position = createSimpleLoanPosition(
     SOL_POOL_ID,
     { BTC: null },
@@ -108,6 +115,7 @@ function mockSolLoan() {
       debt_native_now: DEBT_LAMPORTS,
     }
   );
+
   const actor = {
     get_loan: vi.fn().mockResolvedValue({ Ok: loan }),
     list_pools: vi.fn().mockResolvedValue([pool]),
@@ -118,23 +126,28 @@ function mockSolLoan() {
       .mockResolvedValueOnce(SOL_ADDRESS)
       .mockResolvedValueOnce(REPAY_ADDRESS),
   };
-  vi.spyOn(Actor, "createActor").mockReturnValue(actor as never);
+
+  vi.spyOn(Actor, "createActor").mockReturnValue(mockActor(actor));
 }
 
 function quoteFetch(failRepayment = false) {
   return vi.fn<typeof globalThis.fetch>().mockImplementation(async (input) => {
-    const url = new URL(String(input));
+    const url = new URL(new Request(input).url);
+
     if (url.pathname.endsWith("/collateral-hint"))
       return Response.json({
         success: true,
         collateralAmountHint: COLLATERAL_LAMPORTS.toString(),
       });
+
     if (url.pathname.endsWith("/activities"))
       return Response.json({ activities: [] });
+
     if (url.pathname.endsWith("/solana/inflow-fee")) {
       if (failRepayment && url.searchParams.get("operation") === "repayment")
         return Response.json({ error: "Fee unavailable" }, { status: 503 });
       const isNative = url.searchParams.get("chain") === "SOL";
+
       return Response.json({
         totalFee: (isNative
           ? NATIVE_FEE_LAMPORTS
@@ -147,6 +160,7 @@ function quoteFetch(failRepayment = false) {
         walletTransferFee: LEDGER_FEE_LAMPORTS.toString(),
       });
     }
+
     throw new Error(`Unexpected request: ${url}`);
   });
 }

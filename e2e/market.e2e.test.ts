@@ -22,6 +22,7 @@ describeLive("live market e2e", () => {
 
     for (const pool of pools) {
       expectPoolFieldsToBePopulated(pool);
+
       if (!pool.frozen) {
         expect(assetPrices[pool.asset]).toBeGreaterThan(0);
       }
@@ -58,7 +59,7 @@ function expectPoolFieldsToBePopulated(pool: Pool): void {
   expect(pool.asset).toBeTruthy();
   expect(pool.chain).toBeTruthy();
   expect(pool.decimals).toBeGreaterThan(0n);
-  expect(typeof pool.frozen).toBe("boolean");
+  expect(pool.frozen).toBeTypeOf("boolean");
   expect(pool.totalSupply).toBeGreaterThanOrEqual(0n);
   expect(pool.totalDebt).toBeGreaterThanOrEqual(0n);
   expect(pool.availableLiquidity).toBeGreaterThanOrEqual(0n);

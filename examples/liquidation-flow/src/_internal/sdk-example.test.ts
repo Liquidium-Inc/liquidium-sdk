@@ -12,7 +12,7 @@ import {
   findLiquidationCandidate,
 } from "../sdk-example.js";
 
-test("selects positive debt below the offer cap and submits the configured offer", async () => {
+void test("selects positive debt below the offer cap and submits the configured offer", async () => {
   // given
   const offerAmountBaseUnits = 1_000_000n;
   const outstandingDebtBaseUnits = 900_000n;

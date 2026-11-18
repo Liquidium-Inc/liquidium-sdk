@@ -234,6 +234,7 @@ export const SupplyPlanType = {
   contractInteraction: "contractInteraction",
   transfer: "transfer",
 } as const;
+
 /** Supply execution plan selected by the SDK. */
 export type SupplyPlanType =
   (typeof SupplyPlanType)[keyof typeof SupplyPlanType];
@@ -426,6 +427,7 @@ export const EvmSupplyApprovalStrategy = {
   none: "none",
   resetThenApproveMax: "reset-then-approve-max",
 } as const;
+
 /** Approval strategy required before an ERC-20 deposit contract call. */
 export type EvmSupplyApprovalStrategy =
   (typeof EvmSupplyApprovalStrategy)[keyof typeof EvmSupplyApprovalStrategy];

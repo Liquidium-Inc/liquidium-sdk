@@ -9,6 +9,7 @@ import {
   beforeEach,
   describe,
   expect,
+  type MockInstance,
   test,
   vi,
 } from "vite-plus/test";
@@ -108,13 +109,17 @@ const BASE_REQUEST: ExecuteLiquidationRequest = {
 };
 
 let debtLedger: ReturnType<typeof createMockDebtLedger>;
+let createDebtLedger: MockInstance<typeof IcrcLedgerCanister.create>;
+let getPrincipal: MockInstance<HttpAgent["getPrincipal"]>;
 
 beforeEach(() => {
   debtLedger = createMockDebtLedger();
-  vi.spyOn(IcrcLedgerCanister, "create").mockReturnValue(debtLedger);
-  vi.spyOn(HttpAgent.prototype, "getPrincipal").mockResolvedValue(
-    Principal.fromText(VALID_IC_PRINCIPAL)
-  );
+  createDebtLedger = vi
+    .spyOn(IcrcLedgerCanister, "create")
+    .mockReturnValue(debtLedger);
+  getPrincipal = vi
+    .spyOn(HttpAgent.prototype, "getPrincipal")
+    .mockResolvedValue(Principal.fromText(VALID_IC_PRINCIPAL));
   vi.spyOn(Date, "now").mockReturnValue(NOW_MILLISECONDS);
 });
 
@@ -555,7 +560,7 @@ describe("automatic liquidation allowance", () => {
 
     // then
     expect(getPool).toHaveBeenCalledWith(Principal.fromText(USDT_POOL_ID));
-    expect(IcrcLedgerCanister.create).toHaveBeenCalledWith(
+    expect(createDebtLedger).toHaveBeenCalledWith(
       expect.objectContaining({
         canisterId: Principal.fromText(DEBT_LEDGER_ID),
       })
@@ -852,9 +857,7 @@ describe("automatic liquidation allowance", () => {
   test("rejects anonymous callers before reading or approving a ledger", async () => {
     // given
     const { client, getPool, liquidateWithSlippage } = mockExecution();
-    vi.mocked(HttpAgent.prototype.getPrincipal).mockResolvedValue(
-      Principal.anonymous()
-    );
+    getPrincipal.mockResolvedValue(Principal.anonymous());
 
     // when
     const result = client.liquidations.liquidate(BASE_REQUEST);

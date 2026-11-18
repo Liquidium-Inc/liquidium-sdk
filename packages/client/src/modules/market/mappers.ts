@@ -22,10 +22,13 @@ export function mapDecodedPoolToPool(
   rate: PoolRateTuple
 ): Pool {
   const assetMetadata = getAssetMetadata(pool.asset);
+
   const totalSupply =
     (pool.total_supply_at_last_sync * pool.lending_index) / RATE_SCALE;
+
   const totalDebt =
     (pool.total_debt_at_last_sync * pool.borrow_index) / RATE_SCALE;
+
   const availableLiquidity =
     totalSupply > totalDebt ? totalSupply - totalDebt : 0n;
 
@@ -74,6 +77,7 @@ export function mapGetPricesResponseToAssetPrices(
       formatPrice(price, decimals),
     ])
   );
+
   const assetPrices: AssetPrices = {};
 
   for (const [pairName, pairPrice] of pairPricesByName) {

@@ -27,6 +27,7 @@ import type {
 } from "./types";
 
 const ZERO_POOL_RATE: PoolRateTuple = [0n, 0n, 0n];
+
 const BACKING_POOL_CHAIN_BY_ASSET = {
   [Asset.SOL]: Chain.SOL,
   [Asset.BTC]: Chain.BTC,
@@ -98,6 +99,7 @@ export class MarketModule {
       const prices = mapGetPricesResponseToAssetPrices(
         await createLendingActor(this.canisterContext).get_prices()
       );
+
       const fetchedAtUnixSeconds = getCurrentUnixTimestampSeconds();
 
       return {
@@ -138,6 +140,7 @@ export class MarketModule {
 
     const pools = await this.listPools();
     const backingPoolChain = BACKING_POOL_CHAIN_BY_ASSET[identifier.asset];
+
     const matchedPools = pools.filter(
       (pool) =>
         pool.asset === identifier.asset &&

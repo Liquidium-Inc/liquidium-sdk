@@ -7,6 +7,7 @@ import type {
 } from "@liquidium/client";
 import { Chain, isAssetIdentifier } from "@liquidium/client";
 import { useEffect, useState } from "react";
+import { parseSelectedOption } from "../../_shared/input";
 import { formatConfig } from "./client";
 import {
   formatAmount,
@@ -53,9 +54,11 @@ export function App() {
   const [selectedBorrowPoolId, setSelectedBorrowPoolId] = useState("");
   const [collateralAmount, setCollateralAmount] = useState("0.0002");
   const [borrowAmount, setBorrowAmount] = useState("9");
+
   const [collateralDepositChain, setCollateralDepositChain] = useState<Chain>(
     DEFAULT_TRANSFER_CHAIN
   );
+
   const [borrowChain, setBorrowChain] = useState<Chain>(DEFAULT_TRANSFER_CHAIN);
   const [refundChain, setRefundChain] = useState<Chain>(DEFAULT_TRANSFER_CHAIN);
   const [maxLtv, setMaxLtv] = useState("30");
@@ -63,20 +66,25 @@ export function App() {
   const [borrowDestination, setBorrowDestination] = useState("");
   const [refundDestination, setRefundDestination] = useState("");
   const [loanResult, setLoanResult] = useState("No loan created yet.");
+
   const [recentLoanRefs, setRecentLoanRefs] = useState<string[]>(() =>
     getRecentLoanRefs()
   );
+
   const [status, setStatus] = useState("Ready.");
 
   useEffect(() => {
     void run(async () => {
       setStatus("Loading pools...");
+
       const { pools: loadedPools, assetPrices: loadedAssetPrices } =
         await loadMarketData();
+
       const defaultCollateralPool = findPoolByAsset(
         loadedPools,
         DEFAULT_COLLATERAL_ASSET
       );
+
       const defaultBorrowPool = findPoolByAsset(
         loadedPools,
         DEFAULT_BORROW_ASSET
@@ -108,12 +116,15 @@ export function App() {
 
   async function loadPools(): Promise<void> {
     setStatus("Loading pools...");
+
     const { pools: loadedPools, assetPrices: loadedAssetPrices } =
       await loadMarketData();
+
     const defaultCollateralPool = findPoolByAsset(
       loadedPools,
       DEFAULT_COLLATERAL_ASSET
     );
+
     const defaultBorrowPool = findPoolByAsset(
       loadedPools,
       DEFAULT_BORROW_ASSET
@@ -143,19 +154,24 @@ export function App() {
   async function createSimpleLoanFromForm(): Promise<void> {
     const collateralPool = getSelectedPool(pools, selectedCollateralPoolId);
     const borrowPool = getSelectedPool(pools, selectedBorrowPoolId);
+
     const parsedCollateralAmount = parseAmountToBaseUnits(
       collateralAmount,
       collateralPool.decimals
     );
+
     const parsedBorrowAmount = parseAmountToBaseUnits(
       borrowAmount,
       borrowPool.decimals
     );
+
     const ltvMaxBps = parsePercentToBps(maxLtv);
+
     const parsedDepositWindowSeconds = parsePositiveBigInt(
       depositWindowSeconds,
       "Deposit window seconds"
     );
+
     const trimmedBorrowDestination = borrowDestination.trim();
     const trimmedRefundDestination = refundDestination.trim();
 
@@ -200,7 +216,9 @@ export function App() {
       ltvMaxBps,
       depositWindowSeconds: parsedDepositWindowSeconds,
     });
+
     const loanTargetOptions = getLoanTargetOptions(loan);
+
     const selectedInitialDepositTarget =
       loan.initialDeposit.targets[collateralDepositChain];
 
@@ -348,7 +366,14 @@ export function App() {
           id="collateral-deposit-chain-select"
           value={collateralDepositChain}
           onChange={(event) =>
-            setCollateralDepositChain(event.target.value as Chain)
+            setCollateralDepositChain(
+              parseSelectedOption(
+                event.target.value,
+                getChainOptions(
+                  pools.find((pool) => pool.id === selectedCollateralPoolId)
+                )
+              )
+            )
           }
         >
           {getChainOptions(
@@ -388,7 +413,12 @@ export function App() {
           onChange={(event) =>
             setSelectedDestinationChain({
               pool: pools.find((pool) => pool.id === selectedBorrowPoolId),
-              transferChain: event.target.value as Chain,
+              transferChain: parseSelectedOption(
+                event.target.value,
+                getChainOptions(
+                  pools.find((pool) => pool.id === selectedBorrowPoolId)
+                )
+              ),
               setChain: setBorrowChain,
               setDestination: setBorrowDestination,
             })
@@ -468,7 +498,12 @@ export function App() {
           onChange={(event) =>
             setSelectedDestinationChain({
               pool: pools.find((pool) => pool.id === selectedCollateralPoolId),
-              transferChain: event.target.value as Chain,
+              transferChain: parseSelectedOption(
+                event.target.value,
+                getChainOptions(
+                  pools.find((pool) => pool.id === selectedCollateralPoolId)
+                )
+              ),
               setChain: setRefundChain,
               setDestination: setRefundDestination,
             })
@@ -552,15 +587,19 @@ export function App() {
     try {
       const collateralPool = getSelectedPool(pools, selectedCollateralPoolId);
       const borrowPool = getSelectedPool(pools, selectedBorrowPoolId);
+
       const parsedCollateralAmount = parseAmountToBaseUnits(
         collateralAmount,
         collateralPool.decimals
       );
+
       const parsedBorrowAmount = parseAmountToBaseUnits(
         borrowAmount,
         borrowPool.decimals
       );
+
       const ltvMaxBps = parsePercentToBps(maxLtv);
+
       const ltvCalculation = calculateLoanLtv({
         borrowAmount: parsedBorrowAmount,
         borrowPoolId: borrowPool.id,
@@ -624,7 +663,7 @@ function setSelectedDestinationChain(params: {
 }
 
 function getDefaultChain(pool: Pool | undefined): Chain {
-  return (pool?.chain as Chain | undefined) ?? DEFAULT_TRANSFER_CHAIN;
+  return pool?.chain ?? DEFAULT_TRANSFER_CHAIN;
 }
 
 function getSupportedChain(
@@ -709,6 +748,7 @@ function formatInitialDepositTargetOption(
   }
 
   const initialDeposit = targetOption.initialDeposit;
+
   const collateralAmount =
     initialDeposit.amount - initialDeposit.inflowFeeAmount;
 
@@ -794,7 +834,7 @@ function getSelectedPool(pools: Pool[], poolId: string): Pool {
 }
 
 function formatUsdPrice(price: number | undefined): string {
-  if (typeof price !== "number" || !Number.isFinite(price) || price <= 0) {
+  if (price === undefined || !Number.isFinite(price) || price <= 0) {
     return "unavailable";
   }
 

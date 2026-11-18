@@ -25,6 +25,7 @@ describe("AssetIdentifier", () => {
       { chain: Chain.ICP, asset: Asset.USDC },
       { chain: Chain.ICP, asset: Asset.USDT },
     ];
+
     const unsupportedIdentifiers = [
       { chain: Chain.BTC, asset: Asset.USDT },
       { chain: Chain.ETH, asset: Asset.BTC },
@@ -35,6 +36,7 @@ describe("AssetIdentifier", () => {
     // when
     const areSupportedIdentifiersValid =
       supportedIdentifiers.every(isAssetIdentifier);
+
     const areUnsupportedIdentifiersInvalid = unsupportedIdentifiers.every(
       (identifier) => !isAssetIdentifier(identifier)
     );
@@ -61,10 +63,12 @@ describe("AssetIdentifier", () => {
       chain: "ICP";
       asset: "ETH";
     };
+
     type ValidUsdtIdentifier = {
       chain: "ICP";
       asset: "USDT";
     };
+
     type InvalidBtcIdentifier = {
       chain: "ETH";
       asset: "BTC";

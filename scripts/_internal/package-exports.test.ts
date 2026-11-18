@@ -6,6 +6,7 @@ import { expect, test } from "vite-plus/test";
 test("should build loadable ESM and CommonJS package exports", () => {
   // given
   const packageDirectory = new URL("../../packages/client/", import.meta.url);
+
   const expectedOutputPaths = [
     "dist/index.js",
     "dist/index.cjs",
@@ -17,6 +18,7 @@ test("should build loadable ESM and CommonJS package exports", () => {
   const outputFilesExist = expectedOutputPaths.map((outputPath) =>
     existsSync(new URL(outputPath, packageDirectory))
   );
+
   const exportNames = execFileSync(
     process.execPath,
     [

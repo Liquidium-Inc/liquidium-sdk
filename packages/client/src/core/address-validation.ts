@@ -32,8 +32,10 @@ export function normalizeExternalAddress(
         ADDRESS_CHAIN_MISMATCH_ERROR
       );
     }
+
     return validateSolAddress(params.address);
   }
+
   if (params.asset === Asset.BTC) {
     if (params.chain !== Chain.BTC) {
       throw new LiquidiumError(
@@ -83,7 +85,7 @@ export function normalizeAndValidateEvmAddress(
     throw new LiquidiumError(LiquidiumErrorCode.INVALID_ADDRESS, errorMessage);
   }
 
-  return getAddress(address) as EvmAddress;
+  return getAddress(address);
 }
 
 export function validateSolAddress(address: string): string {
@@ -94,6 +96,7 @@ export function validateSolAddress(address: string): string {
     ) {
       throw new Error("Invalid SOL address size");
     }
+
     return address;
   } catch (cause) {
     throw new LiquidiumError(

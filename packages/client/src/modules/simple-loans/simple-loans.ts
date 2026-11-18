@@ -1,6 +1,8 @@
 import { Principal } from "@icp-sdk/core/principal";
+import { z } from "zod";
 import {
   decodeIcrcAccountAddress,
+  isUnhintedAccountInput,
   mapCanisterAccountToLiquidiumAccount,
   normalizeIcpAccountIdentifier,
 } from "../../core/accounts";
@@ -46,7 +48,6 @@ import {
   parseUnsignedApiBigint,
 } from "../../core/utils/api-response-parsers";
 import { getAssetNativeDecimals } from "../../core/utils/asset-decimals";
-import { getVariantKey } from "../../core/utils/variant";
 import type { ActivitiesModule, Activity } from "../activities";
 import { ActivityFilter } from "../activities";
 import {
@@ -100,6 +101,7 @@ const ETH_STABLECOIN_INFLOW_FEE_FALLBACK = 1_500_000n;
 const SIMPLE_LOAN_MIN_SLIPPAGE_BUFFER_BPS = 200n;
 const SIMPLE_LOAN_FIND_QUERY_MAX_LENGTH = 256;
 const SIMPLE_LOAN_WIRE_CONTEXT = "simple loan";
+
 const SIMPLE_LOAN_ASSETS = [
   CoreAsset.SOL,
   CoreAsset.BTC,
@@ -108,6 +110,7 @@ const SIMPLE_LOAN_ASSETS = [
   CoreAsset.USDC,
   CoreAsset.USDT,
 ] as const satisfies readonly SimpleLoanAsset[];
+
 const SIMPLE_LOAN_CHAINS = [
   CoreChain.SOL,
   CoreChain.BTC,
@@ -360,12 +363,14 @@ export class SimpleLoansModule {
    */
   async create(request: CreateSimpleLoanRequest): Promise<SimpleLoan> {
     validateCreateRequest(request);
+
     // Hydration needs SOL targets after the POST; fail before creating the loan.
     for (const leg of [request.collateral, request.borrow]) {
       if (leg.asset === CoreAsset.SOL) {
         assertConfiguredSolPool(this.canisterContext, leg.poolId);
       }
     }
+
     const borrowDestination = resolveSimpleLoanDestination({
       destination: request.borrow.destination,
       asset: request.borrow.asset,
@@ -373,6 +378,7 @@ export class SimpleLoansModule {
       chain: request.borrow.chain,
       normalizeExternalDestination: validateSimpleLoanBorrowDestination,
     });
+
     const refundDestination = resolveSimpleLoanDestination({
       destination: request.refund.destination,
       asset: request.collateral.asset,
@@ -380,6 +386,7 @@ export class SimpleLoansModule {
       chain: request.refund.chain,
       normalizeExternalDestination: validateSimpleLoanRefundDestination,
     });
+
     const apiClient = this.requireApi("Simple loan creation");
 
     await this.validateSimpleLoanLtvPolicy(request);
@@ -418,6 +425,7 @@ export class SimpleLoansModule {
           label: "collateral amount",
         }
       );
+
       const record = await this.getLoanRecord(loanId);
 
       return await this.mapLoanRecord(record, collateralAmount, {
@@ -590,6 +598,7 @@ export class SimpleLoansModule {
     query: string
   ): Promise<SimpleLoanFindCandidate[]> {
     const apiClient = this.requireApi("Simple loan find");
+
     const response = await apiClient.get<SimpleLoanFindResponseWire>(
       buildSimpleLoanFindPath({ query })
     );
@@ -613,6 +622,7 @@ export class SimpleLoansModule {
       }
 
       const decoded = decodeFlexibleSimpleLoanRecord(result.Ok);
+
       if (!decoded) {
         throw new LiquidiumError(
           LiquidiumErrorCode.POOL_NOT_FOUND,
@@ -636,10 +646,12 @@ export class SimpleLoansModule {
     chainOptions: SimpleLoanHydrationChainOptions = {}
   ): Promise<SimpleLoan> {
     const borrowDestination = accountFromCanister(record.borrow_destination);
+
     const collateralAsset = parseSimpleLoanAsset(
       record.lend_asset,
       "collateral asset"
     );
+
     const borrowAsset = parseSimpleLoanAsset(
       record.borrow_asset,
       "borrow asset"
@@ -674,6 +686,7 @@ export class SimpleLoansModule {
 
   private async getCollateralAmountHint(loanId: bigint): Promise<bigint> {
     const apiClient = this.requireApi("Simple loan collateral hint");
+
     const response =
       await apiClient.get<V1SimpleLoanCollateralHintResponseWire>(
         buildSimpleLoanCollateralHintPath({ loanId })
@@ -719,6 +732,7 @@ export class SimpleLoansModule {
     ]);
 
     const totalDebtAmount = calculateTotalDebtAmount(borrowPosition);
+
     const interestBufferAmount = calculateInterestBufferAmount(
       borrowPosition,
       borrowPoolRate.borrowRate
@@ -727,12 +741,15 @@ export class SimpleLoansModule {
     const currentCollateralAmount = collateralPosition?.deposited ?? 0n;
 
     const collateralAmount = input.collateralAmount;
+
     const collateralDecimals =
       collateralPosition?.depositedDecimals ??
       getAssetNativeDecimals(collateralAsset);
+
     const collateralInterestAmount = collateralPosition?.earnedInterest ?? 0n;
 
     const borrowedAmount = borrowPosition?.borrowed ?? 0n;
+
     const borrowedDecimals =
       borrowPosition?.borrowedDecimals ?? getAssetNativeDecimals(borrowAsset);
 
@@ -772,6 +789,7 @@ export class SimpleLoansModule {
       asset: borrowAsset,
       targets: repaymentTargets,
     };
+
     const borrowIdentifier = getSimpleLoanAssetIdentifier(
       borrowAsset,
       input.borrowChain,
@@ -823,6 +841,7 @@ export class SimpleLoansModule {
 
     for (const chain of SIMPLE_LOAN_CHAINS) {
       const target = input.targets[chain];
+
       if (!target) continue;
       assertTargetAsset(target, input.asset);
 
@@ -830,6 +849,7 @@ export class SimpleLoansModule {
         target,
         input.profileId
       );
+
       targets[chain] = {
         amount: applyMinimumSend(
           input.collateralAmount + inflowFee.totalFee,
@@ -859,6 +879,7 @@ export class SimpleLoansModule {
       const fee = await this.lending.estimateInflowFee(
         target.asset === CoreAsset.SOL ? { ...target, profileId } : target
       );
+
       if (shouldUseNativeEthInflowFeeFallback(target, fee.totalFee)) {
         return {
           totalFee: getRepaymentInflowFeeFallback(target.asset, target.chain),
@@ -884,18 +905,22 @@ export class SimpleLoansModule {
       this.canisterContext,
       request.poolId
     );
+
     const baseRequest = {
       profileId: request.profileId,
       poolId: request.poolId,
       action: request.action,
       mechanism: SupplyPlanType.transfer,
     };
+
     const poolChainTarget = await resolveSupplyTargetForPool(
       this.canisterContext,
       baseRequest,
       selectedPool
     );
+
     const poolChain = poolChainTarget.chain;
+
     const targets: Partial<Record<Chain, SupplyTarget>> = {
       [poolChain]: poolChainTarget,
     };
@@ -911,6 +936,7 @@ export class SimpleLoansModule {
     );
 
     targets[CoreChain.ICP] = icpTarget;
+
     return { targets };
   }
 
@@ -921,6 +947,7 @@ export class SimpleLoansModule {
 
     for (const chain of SIMPLE_LOAN_CHAINS) {
       const target = input.targets[chain];
+
       if (!target) continue;
       assertTargetAsset(target, input.asset);
 
@@ -952,6 +979,7 @@ export class SimpleLoansModule {
       const fee = await this.lending.estimateInflowFee(
         target.asset === CoreAsset.SOL ? { ...target, profileId } : target
       );
+
       if (shouldUseNativeEthInflowFeeFallback(target, fee.totalFee)) {
         return {
           totalFee: getRepaymentInflowFeeFallback(target.asset, target.chain),
@@ -962,6 +990,7 @@ export class SimpleLoansModule {
       return { ...fee, estimateAvailable: true };
     } catch (error) {
       if (target.asset === CoreAsset.SOL) throw error;
+
       return {
         totalFee: getRepaymentInflowFeeFallback(target.asset, target.chain),
         estimateAvailable: false,
@@ -1007,9 +1036,11 @@ export class SimpleLoansModule {
       this.positions.market.listPools(),
       this.positions.market.getAssetPrices(),
     ]);
+
     const collateralPool = pools.find(
       (pool) => pool.id === request.collateral.poolId
     );
+
     const borrowPool = pools.find((pool) => pool.id === request.borrow.poolId);
 
     if (collateralPool && collateralPool.asset !== request.collateral.asset) {
@@ -1076,7 +1107,9 @@ function applyMinimumSend(
     fee.minimumSendAmount !== undefined && amount < fee.minimumSendAmount
       ? fee.minimumSendAmount
       : amount;
+
   if (asset === CoreAsset.SOL && sendAmount > 0n) validateSolAmount(sendAmount);
+
   return sendAmount;
 }
 
@@ -1110,6 +1143,7 @@ function calculateInterestBufferAmount(
   annualBorrowRate: bigint
 ): bigint {
   const totalDebtAmount = calculateTotalDebtAmount(borrowPosition);
+
   if (totalDebtAmount <= 0n || annualBorrowRate <= 0n) {
     return 0n;
   }
@@ -1134,6 +1168,7 @@ function deriveSimpleLoanStatus(
   input: DeriveSimpleLoanStatusInput
 ): LiquidiumStatus {
   const activeActivityStatus = deriveActiveSimpleLoanActivityStatus(input);
+
   if (activeActivityStatus) {
     return activeActivityStatus;
   }
@@ -1190,6 +1225,7 @@ function deriveActiveSimpleLoanActivityStatus(
     input.activeActivities,
     "borrow"
   );
+
   if (borrowStatus) {
     return borrowStatus;
   }
@@ -1239,6 +1275,7 @@ function deriveDepositExpiryTimestamp(
 function validateCreateRequest(request: CreateSimpleLoanRequest): void {
   if (request.borrow.asset === CoreAsset.SOL)
     validateSolAmount(request.borrow.amount);
+
   if (request.collateral.asset === CoreAsset.SOL)
     validateSolAmount(request.collateral.amount);
   getSimpleLoanAssetIdentifier(
@@ -1258,10 +1295,12 @@ function validateCreateRequest(request: CreateSimpleLoanRequest): void {
       "Simple loan collateral amount must be greater than zero"
     );
   }
+
   const collateralMinimumError = getDepositAmountMinimumValidationError({
     amount: request.collateral.amount,
     asset: request.collateral.asset,
   });
+
   if (collateralMinimumError) {
     throw new LiquidiumError(
       LiquidiumErrorCode.VALIDATION_ERROR,
@@ -1275,12 +1314,14 @@ function validateCreateRequest(request: CreateSimpleLoanRequest): void {
       "Simple loan borrow amount must be greater than zero"
     );
   }
+
   if (request.ltvMaxBps <= 0n) {
     throw new LiquidiumError(
       LiquidiumErrorCode.VALIDATION_ERROR,
       "Simple loan max LTV must be greater than zero"
     );
   }
+
   if (request.depositWindowSeconds <= 0n) {
     throw new LiquidiumError(
       LiquidiumErrorCode.VALIDATION_ERROR,
@@ -1311,6 +1352,7 @@ function inferSimpleLoanDeliveryChain(
   if (asset === CoreAsset.BTC) {
     return CoreChain.BTC;
   }
+
   if (asset === CoreAsset.SOL) return CoreChain.SOL;
 
   if (
@@ -1329,7 +1371,7 @@ function resolveSimpleLoanDestination(
 ): SimpleLoanApiAccountType {
   getSimpleLoanAssetIdentifier(params.asset, params.chain, params.role);
 
-  if (typeof params.destination === "string") {
+  if (isUnhintedAccountInput(params.destination)) {
     return resolveSimpleLoanStringDestination({
       destination: params.destination,
       asset: params.asset,
@@ -1422,6 +1464,7 @@ function getSimpleLoanAssetIdentifier(
   role: SimpleLoanOutflowRole
 ): AssetIdentifier {
   const identifier = { asset, chain };
+
   if (isAssetIdentifier(identifier)) {
     return identifier;
   }
@@ -1584,6 +1627,7 @@ function mapSimpleLoanEventType(
 ): SimpleLoanEventType {
   if ("LoanCreated" in eventType) {
     const event = eventType.LoanCreated;
+
     return {
       type: "LoanCreated",
       loanId: event.loan_id,
@@ -1608,6 +1652,7 @@ function mapSimpleLoanEventType(
 
   if ("FullLendWithdrawalRequested" in eventType) {
     const event = eventType.FullLendWithdrawalRequested;
+
     return {
       type: "FullLendWithdrawalRequested",
       loanId: event.loan_id,
@@ -1618,6 +1663,7 @@ function mapSimpleLoanEventType(
 
   if ("BorrowRequested" in eventType) {
     const event = eventType.BorrowRequested;
+
     return {
       type: "BorrowRequested",
       loanId: event.loan_id,
@@ -1636,6 +1682,7 @@ function mapSimpleLoanEventType(
 
   if ("StuckFundsWithdrawalRequested" in eventType) {
     const event = eventType.StuckFundsWithdrawalRequested;
+
     return {
       type: "StuckFundsWithdrawalRequested",
       leg: legFromCanister(event.leg),
@@ -1648,6 +1695,7 @@ function mapSimpleLoanEventType(
 
   if ("ProfileWarmed" in eventType) {
     const event = eventType.ProfileWarmed;
+
     return {
       type: "ProfileWarmed",
       derivationIndex: event.derivation_index,
@@ -1659,6 +1707,7 @@ function mapSimpleLoanEventType(
 
   if ("IcpProfileWarmed" in eventType) {
     const event = eventType.IcpProfileWarmed;
+
     return {
       type: "IcpProfileWarmed",
       subaccount: event.subaccount,
@@ -1710,7 +1759,14 @@ function authorizationFromCanister(
 }
 
 function legFromCanister(leg: SimpleLoanCanisterLeg): SimpleLoanLeg {
-  return getVariantKey(leg) as SimpleLoanLeg;
+  if ("Lend" in leg) return "Lend";
+
+  if ("Borrow" in leg) return "Borrow";
+
+  throw new LiquidiumError(
+    LiquidiumErrorCode.INTERNAL,
+    "Unsupported simple loan leg"
+  );
 }
 
 function decodeRef(ref: string): bigint {
@@ -1725,21 +1781,25 @@ function decodeRef(ref: string): bigint {
   }
 }
 
-function validateSimpleLoanFindQuery(query: unknown): string {
-  if (typeof query !== "string") {
+function validateSimpleLoanFindQuery(query: string): string {
+  const queryResult = z.string().safeParse(query);
+
+  if (!queryResult.success) {
     throw new LiquidiumError(
       LiquidiumErrorCode.VALIDATION_ERROR,
       "Simple loan find query must be a string"
     );
   }
 
-  const trimmedQuery = query.trim();
+  const trimmedQuery = queryResult.data.trim();
+
   if (!trimmedQuery) {
     throw new LiquidiumError(
       LiquidiumErrorCode.VALIDATION_ERROR,
       "Simple loan find query must be non-empty"
     );
   }
+
   if (trimmedQuery.length > SIMPLE_LOAN_FIND_QUERY_MAX_LENGTH) {
     throw new LiquidiumError(
       LiquidiumErrorCode.VALIDATION_ERROR,
@@ -1821,7 +1881,7 @@ function parseSimpleLoanAsset(value: string, label: string): SimpleLoanAsset {
 function mapSimpleLoansErrorToLiquidiumError(
   error: SimpleLoansCanisterError
 ): LiquidiumError {
-  const [key, payload] = Object.entries(error)[0] as [string, unknown];
+  const [key, payload] = Object.entries(error)[0] ?? ["Unknown", undefined];
 
   switch (key) {
     case "LoanNotFound":
@@ -1866,14 +1926,20 @@ function mapSimpleLoansErrorToLiquidiumError(
   }
 }
 
-function stringifyErrorPayload(payload: unknown): string | undefined {
-  if (payload === null || payload === undefined) return undefined;
-  if (typeof payload === "string") return payload;
+function stringifyErrorPayload(cause: unknown): string | undefined {
+  if (cause === null || cause === undefined) return undefined;
 
-  return JSON.stringify(payload, (_key, value) => {
-    if (typeof value === "bigint") return value.toString();
-    if (value && typeof value === "object" && "toText" in value) {
-      return (value as { toText: () => string }).toText();
+  const messageResult = z.string().safeParse(cause);
+
+  if (messageResult.success) return messageResult.data;
+
+  return JSON.stringify(cause, (_key, value) => {
+    const bigintResult = z.bigint().safeParse(value);
+
+    if (bigintResult.success) return bigintResult.data.toString();
+
+    if (z.object({ toText: z.function() }).safeParse(value).success) {
+      return value.toText();
     }
 
     return value;

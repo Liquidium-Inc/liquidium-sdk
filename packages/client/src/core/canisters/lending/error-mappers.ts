@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { LiquidiumError, LiquidiumErrorCode } from "../../errors";
 import type { ProtocolError, SignatureVerificationError } from "./actor";
 
@@ -103,13 +104,13 @@ const LENDING_CANISTER_SIGNATURE_VERIFICATION_ERROR_MAP = {
 export function mapLendingProtocolErrorToLiquidiumError(
   error: ProtocolError
 ): LiquidiumError {
-  const [key, payload] = getVariantEntry(error);
-
-  if (key === "SignatureError") {
+  if ("SignatureError" in error) {
     return mapLendingSignatureVerificationErrorToLiquidiumError(
-      payload as SignatureVerificationError
+      error.SignatureError
     );
   }
+
+  const [key, payload] = getVariantEntry(error);
 
   return mapVariantToLiquidiumError(
     LENDING_CANISTER_PROTOCOL_RESULT_ERROR_MAP[key],
@@ -144,22 +145,28 @@ export function mapCanisterCallErrorToLiquidiumError(
 function getVariantEntry<T extends Record<string, unknown>>(
   variant: T
 ): [VariantKey<T>, unknown] {
-  const [entry] = Object.entries(variant) as [
-    [VariantKey<T>, unknown],
-    ...Array<[VariantKey<T>, unknown]>,
-  ];
+  const [entry] = Object.entries(variant);
 
-  return entry;
+  if (!entry) {
+    throw new LiquidiumError(
+      LiquidiumErrorCode.INTERNAL,
+      "Unexpected empty canister variant"
+    );
+  }
+
+  // SAFETY: Candid decodes one declared key from the canister variant type.
+  return entry as [VariantKey<T>, unknown];
 }
 
 function mapVariantToLiquidiumError(
   mapping: ErrorMapping,
-  payload: unknown
+  cause: unknown
 ): LiquidiumError {
-  const message =
-    typeof payload === "string"
-      ? payload
-      : (mapping.fallbackMessage ?? humanizeErrorCode(mapping.code));
+  const messageResult = z.string().safeParse(cause);
+
+  const message = messageResult.success
+    ? messageResult.data
+    : (mapping.fallbackMessage ?? humanizeErrorCode(mapping.code));
 
   return new LiquidiumError(mapping.code, message);
 }

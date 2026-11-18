@@ -28,6 +28,7 @@ const CK_STABLECOIN_TRANSFER_AMOUNT_BASE_UNITS = 1_000_000n;
 const VALID_ETH_L1_ADDRESS = "0x52908400098527886E0F7030069857D2E4169EE7";
 const VALID_BTC_L1_ADDRESS = "1BoatSLRHtKNngkdXEeobR76b53LETtpyT";
 const TEST_PROFILE_ID = "aaaaa-aa";
+
 const ETHEREUM_MAINNET_RPC_URL =
   process.env.LIQUIDIUM_E2E_EVM_RPC_URL ??
   "https://ethereum-rpc.publicnode.com";
@@ -102,6 +103,7 @@ describeLive("live lending e2e", () => {
       walletAdapter: {
         sendIcrcTransfer: async (request) => {
           capturedTransferRequest = request;
+
           return FAKE_ICP_TXID;
         },
       },
@@ -143,6 +145,7 @@ describeLive("live lending e2e", () => {
       walletAdapter: {
         sendIcrcTransfer: async (request) => {
           capturedTransferRequest = request;
+
           return FAKE_CK_BTC_TXID;
         },
       },
@@ -186,6 +189,7 @@ describeLive("live lending e2e", () => {
         walletAdapter: {
           sendIcrcTransfer: async (request) => {
             capturedTransferRequest = request;
+
             return FAKE_CK_STABLECOIN_TXID;
           },
         },
@@ -297,6 +301,7 @@ describeLive("live lending e2e", () => {
     const client = new LiquidiumClient({
       evmRpcUrl: ETHEREUM_MAINNET_RPC_URL,
     });
+
     const pools = await client.market.listPools();
     const ethPool = selectEthPool(pools);
 
@@ -323,6 +328,7 @@ describeLive("live lending e2e", () => {
     const client = new LiquidiumClient({
       evmRpcUrl: ETHEREUM_MAINNET_RPC_URL,
     });
+
     const pools = await client.market.listPools();
     const ethPool = selectEthPool(pools);
 
@@ -400,7 +406,7 @@ describeLive("live lending e2e", () => {
     const isBorrowingDisabled = await client.lending.isBorrowingDisabled();
 
     // then
-    expect(typeof isBorrowingDisabled).toBe("boolean");
+    expect(isBorrowingDisabled).toBeTypeOf("boolean");
   });
 });
 

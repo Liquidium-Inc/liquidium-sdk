@@ -11,6 +11,7 @@
     "scripts/**/*",
     "apps/docs/**/*.js",
     "examples/**/*.mjs",
+    "examples/_shared/**/*.ts",
     "examples/liquidation-flow/ui/*.js"
   ]
 }

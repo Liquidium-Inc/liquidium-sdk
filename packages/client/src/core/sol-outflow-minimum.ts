@@ -31,6 +31,7 @@ export async function guardSolNativeOutflowMinimum(
       ledgerName: "ckSOL",
     }).icrc1_fee(),
   ]);
+
   const minimum =
     info.minimum_withdrawal_amount +
     ledgerFee * SOL_NATIVE_OUTFLOW_LEDGER_FEE_COUNT;

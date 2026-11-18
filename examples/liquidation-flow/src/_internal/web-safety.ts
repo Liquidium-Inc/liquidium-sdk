@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 const MAX_BASE_UNIT_AMOUNT = 2n ** 256n - 1n;
 
 const MAX_AMOUNT_DIGITS = 78;
@@ -6,8 +8,16 @@ const MAX_ASSET_DECIMALS = 18n;
 
 const MAX_ASSET_AMOUNT_LENGTH = 100;
 
+// Invalid amount fields retain the asset-specific validation message below.
+export const actionBodySchema = z.object({
+  debtAmount: z.string().nullish().catch(null),
+  minCollateralAmount: z.string().nullish().catch(null),
+});
+
+export type ActionBody = z.output<typeof actionBodySchema>;
+
 export function parseAssetAmountToBaseUnits(
-  value: unknown,
+  value: string | null | undefined,
   decimals: bigint,
   asset: string,
   maximumBaseUnits = MAX_BASE_UNIT_AMOUNT
@@ -17,7 +27,8 @@ export function parseAssetAmountToBaseUnits(
   }
 
   if (
-    typeof value !== "string" ||
+    value === null ||
+    value === undefined ||
     value.length > MAX_ASSET_AMOUNT_LENGTH ||
     !/^\d+(\.\d+)?$/.test(value)
   ) {
@@ -51,12 +62,13 @@ export function parseAssetAmountToBaseUnits(
 }
 
 export function parseBaseUnitAmount(
-  value: unknown,
+  value: string | null | undefined,
   minimumBaseUnits: bigint,
   maximumBaseUnits = MAX_BASE_UNIT_AMOUNT
 ): bigint {
   if (
-    typeof value !== "string" ||
+    value === null ||
+    value === undefined ||
     value.length > MAX_AMOUNT_DIGITS ||
     !/^\d+$/.test(value)
   ) {

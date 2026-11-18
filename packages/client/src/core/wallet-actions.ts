@@ -5,6 +5,7 @@ import type { Asset, SigningChain } from "./types";
 export const WalletExecutionKind = {
   signMessage: "sign-message",
 } as const;
+
 /** Wallet capability required to execute a prepared SDK action. */
 export type WalletExecutionKind =
   (typeof WalletExecutionKind)[keyof typeof WalletExecutionKind];
@@ -16,6 +17,7 @@ export const WalletActionKind = {
   createWithdraw: "create-withdraw",
   recoverFunds: "recover-funds",
 } as const;
+
 /** Protocol action represented by a prepared wallet action. */
 export type WalletActionKind =
   (typeof WalletActionKind)[keyof typeof WalletActionKind];

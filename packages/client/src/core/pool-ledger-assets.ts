@@ -6,6 +6,7 @@ export type PoolLedgerTransferAsset = Extract<
   Asset,
   "BTC" | "ETH" | "ICP" | "SOL" | "USDC" | "USDT"
 >;
+
 export type PoolLedgerTransferChain = Chain;
 
 export interface PoolLedgerAssetRoute {
@@ -31,6 +32,7 @@ export function getPoolLedgerAssetRoute(params: {
       chain: params.chain,
     };
   }
+
   if (
     params.asset === Asset.BTC &&
     (params.chain === Chain.BTC || params.chain === Chain.ICP)
@@ -95,6 +97,7 @@ export function isPoolLedgerAsset(params: {
 }): boolean {
   try {
     getPoolLedgerAssetRoute(params);
+
     return true;
   } catch (error) {
     if (error instanceof LiquidiumError) {

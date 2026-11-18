@@ -17,13 +17,6 @@ interface DynamicBitcoinWalletWithAdditionalAddresses {
   additionalAddresses?: DynamicBitcoinAddress[];
 }
 
-interface DynamicBitcoinWalletWithAddressTypeSigning {
-  signMessage(
-    message: string,
-    options?: { addressType: typeof BITCOIN_PAYMENT_ADDRESS_TYPE }
-  ): Promise<string | undefined>;
-}
-
 export function getOptionalConnectedBitcoinAddress(
   primaryWallet: PrimaryWallet
 ): string {
@@ -54,9 +47,7 @@ export function createDynamicBitcoinWalletAdapter(
 
   return {
     signMessage: async (request) => {
-      const signature = await (
-        wallet as DynamicBitcoinWalletWithAddressTypeSigning
-      ).signMessage(request.message, {
+      const signature = await wallet.signMessage(request.message, {
         addressType: BITCOIN_PAYMENT_ADDRESS_TYPE,
       });
 

@@ -165,12 +165,14 @@ const flexibleSimpleLoansIdlFactory: IDL.InterfaceFactory = ({ IDL }) => {
     owner: IDL.Principal,
     subaccount: IDL.Opt(IDL.Vec(IDL.Nat8)),
   });
+
   const AccountType = IDL.Variant({
     Icrc: IcrcAccount,
     Native: IDL.Principal,
     AccountIdentifier: IDL.Text,
     External: IDL.Text,
   });
+
   const SignatureVerificationError = IDL.Variant({
     InvalidEthSignature: IDL.Null,
     UnsupportedChain: IDL.Null,
@@ -183,6 +185,7 @@ const flexibleSimpleLoansIdlFactory: IDL.InterfaceFactory = ({ IDL }) => {
     InvalidIcpSubaccount: IDL.Null,
     IcpCallerMismatch: IDL.Null,
   });
+
   const ProtocolError = IDL.Variant({
     PositionNotFound: IDL.Null,
     Internal: IDL.Text,
@@ -211,6 +214,7 @@ const flexibleSimpleLoansIdlFactory: IDL.InterfaceFactory = ({ IDL }) => {
     CannotRemoveSoleAccount: IDL.Null,
     InsufficientFunds: IDL.Null,
   });
+
   const SimpleLoansError = IDL.Variant({
     BorrowAmountRequired: IDL.Null,
     AnonymousPrincipalNotAllowed: IDL.Null,
@@ -254,6 +258,7 @@ const flexibleSimpleLoansIdlFactory: IDL.InterfaceFactory = ({ IDL }) => {
     }),
     SigningFailed: IDL.Record({ reason: IDL.Text }),
   });
+
   const CreateLoanRequest = IDL.Record({
     borrow_destination: AccountType,
     lend_asset: IDL.Unknown,
@@ -265,15 +270,19 @@ const flexibleSimpleLoansIdlFactory: IDL.InterfaceFactory = ({ IDL }) => {
     borrow_asset: IDL.Unknown,
     ltv_timer_s: IDL.Nat64,
   });
+
   const CreateLoanResponse = IDL.Record({
     loan_id: IDL.Nat,
     lending_profile: IDL.Principal,
   });
+
   const CreateLoanResult = IDL.Variant({
     Ok: CreateLoanResponse,
     Err: SimpleLoansError,
   });
+
   const LoanLeg = IDL.Variant({ Lend: IDL.Null, Borrow: IDL.Null });
+
   const HeadlessLoanEventType = IDL.Variant({
     LoanCreated: IDL.Record({
       loan_id: IDL.Nat,
@@ -324,12 +333,14 @@ const flexibleSimpleLoansIdlFactory: IDL.InterfaceFactory = ({ IDL }) => {
       timestamp: IDL.Nat64,
     }),
   });
+
   const HeadlessLoanEvent = IDL.Record({
     id: IDL.Nat,
     schema_version: IDL.Nat16,
     timestamp: IDL.Nat64,
     event_type: HeadlessLoanEventType,
   });
+
   const AuthorisationType = IDL.Variant({
     EthSignature: IDL.Record({
       derivation_index: IDL.Vec(IDL.Nat8),
@@ -340,6 +351,7 @@ const flexibleSimpleLoansIdlFactory: IDL.InterfaceFactory = ({ IDL }) => {
       subaccount: IDL.Vec(IDL.Nat8),
     }),
   });
+
   const Loan = IDL.Record({
     id: IDL.Nat,
     authorisation: AuthorisationType,
@@ -359,10 +371,13 @@ const flexibleSimpleLoansIdlFactory: IDL.InterfaceFactory = ({ IDL }) => {
     borrow_asset: IDL.Unknown,
     deposit_detected_ts: IDL.Opt(IDL.Nat64),
   });
+
   const LoanResult = IDL.Variant({ Ok: Loan, Err: SimpleLoansError });
+
   const HeadlessLoansConfig = IDL.Record({
     lending_canister: IDL.Principal,
   });
+
   const WarmedProfile = IDL.Record({
     id: IDL.Nat,
     authorisation: AuthorisationType,
@@ -460,7 +475,7 @@ export function decodeFlexibleHeadlessLoanEvent(
     id: event.id,
     schema_version: event.schema_version,
     timestamp: event.timestamp,
-    event_type: event.event_type as DecodedHeadlessLoanEventType,
+    event_type: event.event_type,
   };
 }
 
@@ -468,6 +483,7 @@ function decodeLoanCreatedEvent(
   payload: FlexibleHeadlessLoanCreatedEventPayload
 ): DecodedHeadlessLoanEventType | null {
   const lend_asset = extractVariantTag(payload.lend_asset, KNOWN_ASSET_TAGS);
+
   const borrow_asset = extractVariantTag(
     payload.borrow_asset,
     KNOWN_ASSET_TAGS

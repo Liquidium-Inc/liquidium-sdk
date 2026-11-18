@@ -44,6 +44,7 @@ export function getBorrowAmountMinimumValidationError(
   params: BorrowAmountMinimumValidationParams
 ): BorrowAmountMinimumValidationError | null {
   const minimumAmount = getMinimumBorrowAmount(params.asset);
+
   if (minimumAmount <= 0n || params.amount >= minimumAmount) {
     return null;
   }

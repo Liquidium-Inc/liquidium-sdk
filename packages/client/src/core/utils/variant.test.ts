@@ -33,7 +33,7 @@ describe("getVariantKey", () => {
       throw new Error("Expected getVariantKey to throw");
     } catch (error) {
       expect(error).toBeInstanceOf(LiquidiumError);
-      expect((error as LiquidiumError).code).toBe(LiquidiumErrorCode.INTERNAL);
+      expect(error).toMatchObject({ code: LiquidiumErrorCode.INTERNAL });
     }
   });
 });

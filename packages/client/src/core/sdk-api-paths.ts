@@ -60,6 +60,7 @@ export function buildHistoryUserTransactionsPath(
 ): string {
   const base = `${HISTORY_USERS}/${encodeURIComponent(profileId)}/transactions`;
   const qs = query.toString();
+
   return qs ? `${base}?${qs}` : base;
 }
 
@@ -69,11 +70,13 @@ export function buildHistoryUserLiquidationsPath(
 ): string {
   const base = `${HISTORY_USERS}/${encodeURIComponent(profileId)}/liquidations`;
   const qs = query.toString();
+
   return qs ? `${base}?${qs}` : base;
 }
 
 export function buildProtocolActivityPath(query: URLSearchParams): string {
   const qs = query.toString();
+
   return qs ? `${HISTORY_ACTIVITIES}?${qs}` : HISTORY_ACTIVITIES;
 }
 
@@ -83,6 +86,7 @@ export function buildActivitiesPath(
   const query = new URLSearchParams({
     [SdkApiQueryParam.profileId]: request.profileId,
   });
+
   if (request.filter) {
     query.set(SdkApiQueryParam.filter, request.filter);
   }
@@ -106,6 +110,7 @@ export function buildSimpleLoanFindPath(
   request: BuildSimpleLoanFindPathRequest
 ): string {
   const query = new URLSearchParams({ query: request.query });
+
   return `${SIMPLE_LOANS}/find?${query.toString()}`;
 }
 

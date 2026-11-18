@@ -1,5 +1,6 @@
 import { getAddress } from "viem";
 import { mainnet } from "viem/chains";
+import { z } from "zod";
 import { LiquidiumError, LiquidiumErrorCode } from "./errors";
 import { buildEthereumAddressBytecodePath } from "./sdk-api-paths";
 import type { ApiClient } from "./transports/api-client";
@@ -7,8 +8,10 @@ import { Asset, Chain, type EvmReadClient } from "./types";
 
 const EMPTY_EVM_BYTECODE = "0x";
 const LAST_ETHEREUM_MAINNET_PRECOMPILE_ADDRESS = 0x11n;
+
 const CONTRACT_DESTINATION_UNSUPPORTED_MESSAGE =
   "Contract addresses are not supported for native ETH withdrawals or borrowing";
+
 const RESERVED_DESTINATION_MESSAGE =
   "Ethereum outflow destination must not be the zero address or a precompile";
 
@@ -50,6 +53,7 @@ export async function guardEthereumOutflowDestination({
   }
 
   const normalizedAddress = getAddress(address);
+
   if (BigInt(normalizedAddress) <= LAST_ETHEREUM_MAINNET_PRECOMPILE_ADDRESS) {
     throw new LiquidiumError(
       LiquidiumErrorCode.INVALID_ADDRESS,
@@ -63,6 +67,7 @@ export async function guardEthereumOutflowDestination({
 
   if (evmReadClient?.chain?.id === mainnet.id && evmReadClient.getCode) {
     let bytecode: unknown;
+
     try {
       bytecode = await evmReadClient.getCode({
         address: normalizedAddress,
@@ -75,10 +80,12 @@ export async function guardEthereumOutflowDestination({
       return;
     }
 
-    if (
-      typeof bytecode !== "string" ||
-      !/^0x(?:[0-9a-fA-F]{2})*$/.test(bytecode)
-    ) {
+    const bytecodeResult = z
+      .string()
+      .regex(/^0x(?:[0-9a-fA-F]{2})*$/)
+      .safeParse(bytecode);
+
+    if (!bytecodeResult.success) {
       return;
     }
 
@@ -93,6 +100,7 @@ export async function guardEthereumOutflowDestination({
   }
 
   let response: unknown;
+
   try {
     response = await apiClient.get<EthereumAddressBytecodeResponseWire>(
       buildEthereumAddressBytecodePath({ address: normalizedAddress })
@@ -101,16 +109,15 @@ export async function guardEthereumOutflowDestination({
     return;
   }
 
-  if (
-    !response ||
-    typeof response !== "object" ||
-    !("hasDeployedBytecode" in response) ||
-    typeof response.hasDeployedBytecode !== "boolean"
-  ) {
+  const responseResult = z
+    .object({ hasDeployedBytecode: z.boolean() })
+    .safeParse(response);
+
+  if (!responseResult.success) {
     return;
   }
 
-  if (response.hasDeployedBytecode) {
+  if (responseResult.data.hasDeployedBytecode) {
     throw new LiquidiumError(
       LiquidiumErrorCode.CONTRACT_DESTINATION_UNSUPPORTED,
       CONTRACT_DESTINATION_UNSUPPORTED_MESSAGE

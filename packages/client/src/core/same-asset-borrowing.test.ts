@@ -104,6 +104,7 @@ describe("guardSameAssetBorrowing", () => {
 
     // when
     let result: unknown;
+
     try {
       guardSameAssetBorrowing(params);
     } catch (error) {

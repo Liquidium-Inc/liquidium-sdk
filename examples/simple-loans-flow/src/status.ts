@@ -24,9 +24,11 @@ const loanIdInput = getElement<HTMLInputElement>("loan-id-input");
 const loadLoanButton = getElement<HTMLButtonElement>("load-loan-button");
 const loanOutput = getElement<HTMLDivElement>("loan-output");
 const activityIdInput = getElement<HTMLInputElement>("activity-id-input");
+
 const loadActivityButton = getElement<HTMLButtonElement>(
   "load-activity-button"
 );
+
 const activityOutput = getElement<HTMLDivElement>("activity-output");
 const queryInput = getElement<HTMLInputElement>("query-input");
 const findLoansButton = getElement<HTMLButtonElement>("find-loans-button");
@@ -35,11 +37,15 @@ const recentLoansList = getElement<HTMLDivElement>("recent-loans-list");
 const statusLog = getElement<HTMLPreElement>("status-log");
 
 sdkConfig.textContent = formatConfig();
+
 prefillRefFromUrl();
+
 refreshRecentLoans();
 
 loadLoanButton.addEventListener("click", () => run(loadLoan));
+
 loadActivityButton.addEventListener("click", () => run(loadActivityStatus));
+
 findLoansButton.addEventListener("click", () => run(findLoansByQuery));
 
 async function loadLoan(): Promise<void> {
@@ -112,6 +118,7 @@ async function findLoansByQuery(): Promise<void> {
   if (results.length === 0) {
     candidatesOutput.textContent = "No loans found for this query.";
     setStatus("No loans found.");
+
     return;
   }
 
@@ -140,6 +147,7 @@ function refreshRecentLoans(): void {
 
   if (refs.length === 0) {
     recentLoansList.textContent = "No recent loans stored in this browser.";
+
     return;
   }
 
@@ -149,6 +157,7 @@ function refreshRecentLoans(): void {
       link.href = `/status.html?ref=${encodeURIComponent(ref)}`;
       link.textContent = ref;
       link.className = "recent-loan-link";
+
       return link;
     })
   );

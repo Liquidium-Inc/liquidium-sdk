@@ -200,43 +200,53 @@ export class LendingModule {
       receiver: request.receiver,
       errorMessage: "Withdraw requires a custom outflow account",
     });
+
     const signerAccount = normalizeEvmAddress(
       request.signerWalletAddress.trim()
     );
+
     if (!signerAccount) {
       throw new LiquidiumError(
         LiquidiumErrorCode.VALIDATION_ERROR,
         "Withdraw requires a signer account"
       );
     }
+
     if (request.amount <= 0n) {
       throw new LiquidiumError(
         LiquidiumErrorCode.VALIDATION_ERROR,
         "Withdraw amount must be greater than 0"
       );
     }
+
     const selectedPool = await getPoolById(
       this.canisterContext,
       request.poolId
     );
+
     const selectedAsset = selectedPool.asset;
+
     if (selectedAsset === Asset.SOL) validateSolAmount(request.amount);
+
     const minimumWithdrawAmountError = getWithdrawAmountMinimumValidationError({
       amount: request.amount,
       asset: selectedAsset,
     });
+
     if (minimumWithdrawAmountError) {
       throw new LiquidiumError(
         LiquidiumErrorCode.VALIDATION_ERROR,
         minimumWithdrawAmountError.message
       );
     }
+
     const receiver = parseOutflowDestination({
       destination,
       asset: selectedAsset,
       poolChain: selectedPool.chain,
       destinationChain: request.chain,
     });
+
     await guardEthereumOutflowDestination({
       address: receiver.address,
       apiClient: this.apiClient,
@@ -255,6 +265,7 @@ export class LendingModule {
     try {
       const expiryTimestamp = computeExpiryTimestampFromNow();
       const nonce = await lendingActor.get_nonce(signerAccount);
+
       const withdrawActionData: OutflowActionData = {
         profileId: request.profileId,
         poolId: request.poolId,
@@ -267,6 +278,7 @@ export class LendingModule {
         signerWalletAddress: signerAccount,
         expiryTimestamp,
       };
+
       const withdrawSubmissionData: OutflowSubmissionData = {
         ...withdrawActionData,
         asset: selectedAsset,
@@ -404,43 +416,53 @@ export class LendingModule {
       receiver: request.receiver,
       errorMessage: "Borrow requires a custom outflow account",
     });
+
     const signerAccount = normalizeEvmAddress(
       request.signerWalletAddress.trim()
     );
+
     if (!signerAccount) {
       throw new LiquidiumError(
         LiquidiumErrorCode.VALIDATION_ERROR,
         "Borrow requires a signer account"
       );
     }
+
     if (request.amount <= 0n) {
       throw new LiquidiumError(
         LiquidiumErrorCode.VALIDATION_ERROR,
         "Borrow amount must be greater than 0"
       );
     }
+
     const selectedPool = await getPoolById(
       this.canisterContext,
       request.poolId
     );
+
     const selectedAsset = selectedPool.asset;
+
     if (selectedAsset === Asset.SOL) validateSolAmount(request.amount);
+
     const minimumBorrowAmountError = getBorrowAmountMinimumValidationError({
       amount: request.amount,
       asset: selectedAsset,
     });
+
     if (minimumBorrowAmountError) {
       throw new LiquidiumError(
         LiquidiumErrorCode.VALIDATION_ERROR,
         minimumBorrowAmountError.message
       );
     }
+
     const receiver = parseOutflowDestination({
       destination,
       asset: selectedAsset,
       poolChain: selectedPool.chain,
       destinationChain: request.chain,
     });
+
     await guardEthereumOutflowDestination({
       address: receiver.address,
       apiClient: this.apiClient,
@@ -463,6 +485,7 @@ export class LendingModule {
     try {
       const expiryTimestamp = computeExpiryTimestampFromNow();
       const nonce = await lendingActor.get_nonce(signerAccount);
+
       const borrowActionData: OutflowActionData = {
         profileId: request.profileId,
         poolId: request.poolId,
@@ -475,6 +498,7 @@ export class LendingModule {
         signerWalletAddress: signerAccount,
         expiryTimestamp,
       };
+
       const borrowSubmissionData: OutflowSubmissionData = {
         ...borrowActionData,
         asset: selectedAsset,
@@ -515,6 +539,7 @@ export class LendingModule {
     signatureInfo: SignatureInfo
   ): Promise<BorrowOutflowDetails> {
     validateSigningAccount(request.signerWalletAddress, signatureInfo.chain);
+
     if (request.asset === Asset.SOL) validateSolAmount(request.amount);
     await guardEthereumOutflowDestination({
       address: request.receiverAddress,
@@ -658,6 +683,7 @@ export class LendingModule {
       this.canisterContext,
       request.poolId
     );
+
     if (
       selectedPool.asset !== request.asset ||
       selectedPool.chain !== Chain.ETH
@@ -710,8 +736,10 @@ export class LendingModule {
     if (request.asset === Asset.SOL) {
       return estimateSolInflowFee(this.requireApi(), request);
     }
+
     if (request.chain === Chain.ICP) {
       const ledgerFee = await this.estimateIcrcLedgerFee(request);
+
       return {
         totalFee: roundInflowFeeEstimate(request, ledgerFee),
       };
@@ -737,6 +765,7 @@ export class LendingModule {
 
     if (request.asset === Asset.BTC && request.chain === Chain.BTC) {
       const estimate = await this.estimateBtcInflowFee();
+
       return {
         totalFee: roundInflowFeeEstimate(request, estimate.totalFee),
       };
@@ -856,12 +885,14 @@ export class LendingModule {
     params: GuardBorrowSameAssetPolicyParams
   ): Promise<void> {
     const sameAssetBorrowing = params.pool.same_asset_borrowing[0] ?? false;
+
     if (sameAssetBorrowing) {
       return;
     }
 
     const lendingActor = createFlexibleLendingActor(this.canisterContext);
     let positionResult: Awaited<ReturnType<typeof lendingActor.get_position>>;
+
     try {
       positionResult = await lendingActor.get_position(
         Principal.fromText(params.profileId),
@@ -870,6 +901,7 @@ export class LendingModule {
     } catch (error) {
       throw mapCanisterCallErrorToLiquidiumError("get_position", error);
     }
+
     const position = positionResult[0]
       ? decodeFlexiblePositionView(positionResult[0])
       : null;
@@ -927,11 +959,12 @@ function mapExpectedOutflowDetails(
 
   return {
     ...details,
+    outflowType: expectedOutflowType,
     status: createLiquidiumStatus({
       operation: mapOutflowTypeToStatusOperation(expectedOutflowType),
       state: details.txid ? "confirming" : "processing",
     }),
-  } as BorrowOutflowDetails | WithdrawOutflowDetails;
+  };
 }
 
 function mapOutflowTypeToStatusOperation(

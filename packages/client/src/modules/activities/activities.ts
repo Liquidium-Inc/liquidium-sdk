@@ -83,6 +83,7 @@ export class ActivitiesModule {
   async list(request: ListActivitiesRequest): Promise<Activity[]> {
     const apiClient = this.requireApi();
     const profileId = await this.resolveProfileId(request);
+
     const response = await apiClient.get<ListActivitiesResponseWire>(
       buildActivitiesPath({
         profileId,
@@ -106,6 +107,7 @@ export class ActivitiesModule {
   ): Promise<GetActivityStatusResponse> {
     const apiClient = this.requireApi();
     const profileId = await this.resolveProfileId(request);
+
     const response = await apiClient.get<ActivityStatusResponseWire>(
       buildActivityStatusPath({ id: request.id, profileId })
     );
@@ -139,6 +141,7 @@ export class ActivitiesModule {
     }
 
     let loanId: bigint;
+
     try {
       loanId = intFromPublicId(request.shortRef.trim());
     } catch (error) {
@@ -191,7 +194,7 @@ function mapSimpleLoanLookupError(
 function mapActivity(wire: ActivityWire): Activity {
   const amount = parseBigInt(wire.amount, "activity amount");
 
-  if (isInflowOperation(wire.status.operation)) {
+  if (isInflowStatus(wire.status)) {
     const activity: InflowActivity = {
       id: wire.id,
       poolId: wire.poolId,
@@ -199,7 +202,7 @@ function mapActivity(wire: ActivityWire): Activity {
       chain: wire.chain,
       amount,
       timestampMs: wire.timestampMs,
-      status: wire.status as InflowActivityStatus,
+      status: wire.status,
     };
 
     if (wire.txids) {
@@ -217,7 +220,7 @@ function mapActivity(wire: ActivityWire): Activity {
     return activity;
   }
 
-  if (isOutflowOperation(wire.status.operation)) {
+  if (isOutflowStatus(wire.status)) {
     const activity: OutflowActivity = {
       id: wire.id,
       poolId: wire.poolId,
@@ -225,7 +228,7 @@ function mapActivity(wire: ActivityWire): Activity {
       chain: wire.chain,
       amount,
       timestampMs: wire.timestampMs,
-      status: wire.status as OutflowActivityStatus,
+      status: wire.status,
     };
 
     if (wire.txids) {
@@ -241,12 +244,16 @@ function mapActivity(wire: ActivityWire): Activity {
   );
 }
 
-function isInflowOperation(operation: LiquidiumStatus["operation"]): boolean {
-  return operation === "deposit" || operation === "repayment";
+function isInflowStatus(
+  status: LiquidiumStatus
+): status is InflowActivityStatus {
+  return status.operation === "deposit" || status.operation === "repayment";
 }
 
-function isOutflowOperation(operation: LiquidiumStatus["operation"]): boolean {
-  return operation === "borrow" || operation === "withdrawal";
+function isOutflowStatus(
+  status: LiquidiumStatus
+): status is OutflowActivityStatus {
+  return status.operation === "borrow" || status.operation === "withdrawal";
 }
 
 function mapActivityTopUp(wire: ActivityTopUpWire): ActivityTopUp {

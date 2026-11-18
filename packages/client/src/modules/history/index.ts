@@ -1,4 +1,5 @@
 export { HistoryModule } from "./history";
+
 export type {
   PaginatedResponse,
   ProtocolActivityEntry,

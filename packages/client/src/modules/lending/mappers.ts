@@ -2,6 +2,7 @@ import { Principal } from "@icp-sdk/core/principal";
 import {
   type CanisterLiquidiumAccount,
   decodeIcrcAccountAddress,
+  isUnhintedAccountInput,
   type LiquidiumAccountInput,
   type LiquidiumAccountType,
   mapCanisterAccountToLiquidiumAccount,
@@ -93,8 +94,10 @@ export function resolveOutflowDestinationInput(
   params: ResolveOutflowDestinationInputParams
 ): LiquidiumAccountInput {
   const receiver = params.receiver;
-  const address =
-    typeof receiver === "string" ? receiver.trim() : receiver.address.trim();
+
+  const address = isUnhintedAccountInput(receiver)
+    ? receiver.trim()
+    : receiver.address.trim();
 
   if (!address) {
     throw new LiquidiumError(
@@ -103,7 +106,7 @@ export function resolveOutflowDestinationInput(
     );
   }
 
-  if (typeof receiver === "string") {
+  if (isUnhintedAccountInput(receiver)) {
     return address;
   }
 
@@ -117,6 +120,7 @@ export function parseOutflowDestination(
   params: ParseOutflowDestinationParams
 ): ParsedOutflowDestination {
   const destination = normalizeOutflowDestinationInput(params.destination);
+
   const parsedAccount = destination.type
     ? parseOutflowDestinationWithHint(destination)
     : parseOutflowDestinationAutomatically(destination.address);
@@ -184,7 +188,7 @@ export function mapWalletChainToLendingChain(
 function normalizeOutflowDestinationInput(
   destination: LiquidiumAccountInput
 ): NormalizedOutflowDestinationInput {
-  if (typeof destination === "string") {
+  if (isUnhintedAccountInput(destination)) {
     return { address: destination, type: null };
   }
 

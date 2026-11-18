@@ -1,9 +1,12 @@
 /** Fixed-point scale used by protocol rate values. */
 export const RATE_SCALE = 1_000_000_000_000_000_000_000_000_000n;
+
 /** Number of decimal places represented by {@link RATE_SCALE}. */
 export const RATE_DECIMALS = BigInt(RATE_SCALE.toString().length - 1);
+
 /** Number of seconds in the protocol's 365-day interest year. */
 export const INTEREST_YEAR_365_DAYS_SECONDS = 31_536_000n;
+
 /** Scheduled interval used for estimated supply APY compounding. */
 export const SUPPLY_COMPOUNDING_INTERVAL_15_SECONDS = 15n;
 
@@ -46,8 +49,10 @@ function estimateCompoundedApy(
 
   const periodsPerYear =
     INTEREST_YEAR_365_DAYS_SECONDS / compoundingIntervalSeconds;
+
   const ratePerPeriod =
     (apr * compoundingIntervalSeconds) / INTEREST_YEAR_365_DAYS_SECONDS;
+
   const annualGrowth = fixedPointPow(
     RATE_SCALE + ratePerPeriod,
     periodsPerYear

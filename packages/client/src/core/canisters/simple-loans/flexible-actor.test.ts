@@ -1,5 +1,6 @@
 import { idlLabelToId } from "@icp-sdk/core/candid";
 import type { Principal } from "@icp-sdk/core/principal";
+import { mockDeep } from "vitest-mock-extended";
 import { assert, describe, expect, test } from "vite-plus/test";
 import {
   decodeFlexibleHeadlessLoanEvent,
@@ -8,13 +9,13 @@ import {
   type FlexibleSimpleLoanCanisterRecord,
 } from "./flexible-actor";
 
-const POOL_PRINCIPAL = {
+const POOL_PRINCIPAL = mockDeep<Principal>({
   toString: () => "pool-1",
-} as unknown as Principal;
+});
 
-const PROFILE_PRINCIPAL = {
+const PROFILE_PRINCIPAL = mockDeep<Principal>({
   toString: () => "profile-1",
-} as unknown as Principal;
+});
 
 const AUTHORISATION = {
   EthSignature: {
@@ -92,6 +93,7 @@ describe("decodeFlexibleSimpleLoanRecord", () => {
   test("should preserve ICP caller authorization", () => {
     // given
     const subaccount = new Uint8Array(32).fill(7);
+
     const record = createFlexibleSimpleLoanRecord({
       authorisation: { IcpCaller: { subaccount } },
     });
@@ -106,6 +108,7 @@ describe("decodeFlexibleSimpleLoanRecord", () => {
   test("should decode native ETH from known and hashed asset tags", () => {
     // given
     const ethHash = idlLabelToId("ETH");
+
     const record = createFlexibleSimpleLoanRecord({
       lend_asset: { ETH: null },
       borrow_asset: { [`_${ethHash}_`]: null },
@@ -124,6 +127,7 @@ describe("decodeFlexibleSimpleLoanRecord", () => {
     // given
     const lendHash = idlLabelToId("USDT");
     const borrowHash = idlLabelToId("USDT");
+
     const record = createFlexibleSimpleLoanRecord({
       lend_asset: { [`_${lendHash}_`]: null },
       borrow_asset: { [`_${borrowHash}_`]: null },
@@ -201,6 +205,7 @@ describe("decodeFlexibleHeadlessLoanEvent", () => {
     expect(decoded).not.toBeNull();
     const eventType = decoded?.event_type;
     expect(eventType).toBeDefined();
+
     if (eventType && "LoanCreated" in eventType) {
       expect(eventType.LoanCreated.lend_asset).toBe("BTC");
       expect(eventType.LoanCreated.borrow_asset).toBe("USDC");
@@ -210,6 +215,7 @@ describe("decodeFlexibleHeadlessLoanEvent", () => {
   test("should decode native ETH in a LoanCreated event", () => {
     // given
     const ethHash = idlLabelToId("ETH");
+
     const event = createFlexibleHeadlessLoanEvent({
       event_type: {
         LoanCreated: {
@@ -243,6 +249,7 @@ describe("decodeFlexibleHeadlessLoanEvent", () => {
     // given
     const lendHash = idlLabelToId("USDT");
     const borrowHash = idlLabelToId("USDT");
+
     const event = createFlexibleHeadlessLoanEvent({
       event_type: {
         LoanCreated: {
@@ -268,6 +275,7 @@ describe("decodeFlexibleHeadlessLoanEvent", () => {
     expect(decoded).not.toBeNull();
     const eventType = decoded?.event_type;
     expect(eventType).toBeDefined();
+
     if (eventType && "LoanCreated" in eventType) {
       expect(eventType.LoanCreated.lend_asset).toBe("USDT");
       expect(eventType.LoanCreated.borrow_asset).toBe("USDT");
@@ -322,6 +330,7 @@ describe("decodeFlexibleHeadlessLoanEvent", () => {
   test("should pass through ICP profile warmed events", () => {
     // given
     const subaccount = new Uint8Array(32).fill(7);
+
     const event = createFlexibleHeadlessLoanEvent({
       event_type: {
         IcpProfileWarmed: {

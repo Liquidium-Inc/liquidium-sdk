@@ -1,4 +1,5 @@
 import { isEthereumWallet } from "@dynamic-labs/ethereum";
+import type { EthereumWalletConnector } from "@dynamic-labs/ethereum";
 import type { useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import type { WalletAdapter } from "@liquidium/client";
 
@@ -8,36 +9,28 @@ const ETH_MAINNET_NETWORK_NAME = "Ethereum";
 
 type PrimaryWallet = ReturnType<typeof useDynamicContext>["primaryWallet"];
 
-type DynamicWalletClient = {
-  signMessage?(request: {
-    account: `0x${string}`;
-    message: string;
-  }): Promise<`0x${string}`>;
-  sendTransaction(request: {
-    account: `0x${string}`;
-    to: `0x${string}`;
-    data?: `0x${string}`;
-    value?: bigint;
-  }): Promise<`0x${string}`>;
-};
+type DynamicWalletClient = NonNullable<
+  ReturnType<EthereumWalletConnector["getWalletClient"]>
+>;
 
 type DynamicEvmConnector = {
   getWalletClient?(
     chainId?: string
   ): DynamicWalletClient | Promise<DynamicWalletClient | undefined> | undefined;
-  signMessage?(messageToSign: string): Promise<string | undefined>;
-  getNetwork?(): Promise<number | undefined>;
-  supportsNetworkSwitching?(): boolean;
-  switchNetwork?(request: {
-    networkChainId: number;
-    networkName?: string;
-  }): Promise<void>;
+  signMessage?: EthereumWalletConnector["signMessage"];
+  getNetwork?: EthereumWalletConnector["getNetwork"];
+  supportsNetworkSwitching?: EthereumWalletConnector["supportsNetworkSwitching"];
+  switchNetwork?: EthereumWalletConnector["switchNetwork"];
 };
 
 type DynamicEthereumWallet = {
   connector?: DynamicEvmConnector;
   getWalletClient?: DynamicEvmConnector["getWalletClient"];
 };
+
+type DynamicTransactionRequest = Parameters<
+  DynamicWalletClient["sendTransaction"]
+>[0];
 
 export function getConnectedWalletAddress(
   primaryWallet: PrimaryWallet
@@ -60,8 +53,9 @@ export function getConnectedWalletAddress(
 export function createDynamicWalletAdapter(
   primaryWallet: PrimaryWallet
 ): WalletAdapter {
+  // SAFETY: Dynamic supplies an EVM address after the Ethereum wallet guard.
   const account = getConnectedWalletAddress(primaryWallet) as `0x${string}`;
-  const connector = primaryWallet?.connector as DynamicEvmConnector | undefined;
+  const connector = getDynamicEthereumWallet(primaryWallet).connector;
 
   return {
     signMessage: async (request) => {
@@ -93,14 +87,22 @@ export function createDynamicWalletAdapter(
 
       const walletClient = await getDynamicWalletClient(primaryWallet);
 
-      return await walletClient.sendTransaction({
+      // SAFETY: SDK Ethereum transactions provide hex addresses and calldata.
+      const transactionRequest: DynamicTransactionRequest = {
         account,
         to: transaction.to as `0x${string}`,
-        ...(transaction.data
-          ? { data: transaction.data as `0x${string}` }
-          : {}),
-        ...(transaction.value ? { value: BigInt(transaction.value) } : {}),
-      });
+      };
+
+      if (transaction.data) {
+        // SAFETY: SDK Ethereum calldata is a 0x-prefixed encoded call.
+        transactionRequest.data = transaction.data as `0x${string}`;
+      }
+
+      if (transaction.value) {
+        transactionRequest.value = BigInt(transaction.value);
+      }
+
+      return await walletClient.sendTransaction(transactionRequest);
     },
   };
 }
@@ -139,6 +141,7 @@ async function getDynamicWalletClient(
   primaryWallet: PrimaryWallet
 ): Promise<DynamicWalletClient> {
   const dynamicWallet = getDynamicEthereumWallet(primaryWallet);
+
   const walletClient = dynamicWallet.getWalletClient
     ? await dynamicWallet.getWalletClient(ETH_MAINNET_CHAIN_ID_STRING)
     : await dynamicWallet.connector?.getWalletClient?.(
@@ -157,5 +160,11 @@ async function getDynamicWalletClient(
 function getDynamicEthereumWallet(
   primaryWallet: PrimaryWallet
 ): DynamicEthereumWallet {
+  if (!primaryWallet || !isEthereumWallet(primaryWallet)) {
+    throw new Error("Connect an Ethereum wallet first.");
+  }
+
+  // SAFETY: The EVM guard establishes Dynamic's wallet contract; this view keeps
+  // connector/client methods optional, with a guard before each call.
   return primaryWallet as DynamicEthereumWallet;
 }

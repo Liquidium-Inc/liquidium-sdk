@@ -56,7 +56,8 @@
     "@icp-sdk/core": "^5.4.0",
     "@scure/base": "^2.2.0",
     "bitcoin-address-validation": "^3.0.0",
-    "viem": "^2.55.10"
+    "viem": "^2.55.10",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "typescript": "^5.9.3",

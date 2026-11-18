@@ -81,7 +81,7 @@ describe("ceilDivBigint", () => {
     try {
       callCeilDivWithZero();
     } catch (error) {
-      expect((error as LiquidiumError).code).toBe(LiquidiumErrorCode.INTERNAL);
+      expect(error).toMatchObject({ code: LiquidiumErrorCode.INTERNAL });
     }
   });
 });
@@ -117,7 +117,7 @@ describe("parseBigInt", () => {
       throw new Error("Expected parseBigInt to throw");
     } catch (error) {
       expect(error).toBeInstanceOf(LiquidiumError);
-      expect((error as LiquidiumError).code).toBe(LiquidiumErrorCode.INTERNAL);
+      expect(error).toMatchObject({ code: LiquidiumErrorCode.INTERNAL });
     }
   });
 });

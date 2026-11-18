@@ -6,14 +6,14 @@ export function resolveLiquidiumClientConfig(): LiquidiumClientConfig {
   const configuredEvmRpcUrl = normalizeOptionalValue(
     import.meta.env.VITE_EVM_RPC_URL
   );
+
   const infuraApiKey = normalizeOptionalValue(
     import.meta.env.VITE_INFURA_API_KEY
   );
+
   const evmRpcUrl = resolveEvmRpcUrl(configuredEvmRpcUrl, infuraApiKey);
 
-  return {
-    ...(evmRpcUrl ? { evmRpcUrl } : {}),
-  };
+  return evmRpcUrl ? { evmRpcUrl } : {};
 }
 
 function resolveEvmRpcUrl(

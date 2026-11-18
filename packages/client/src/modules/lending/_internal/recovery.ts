@@ -148,6 +148,7 @@ export async function prepareRecovery(
     },
     submit: async (signature) => {
       validateSigningAccount(signerAccount, signature.chain);
+
       return submitTransfer(
         context,
         transfer,
