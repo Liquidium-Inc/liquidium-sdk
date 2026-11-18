@@ -33,11 +33,12 @@ The client exposes: `simpleLoans`, `accounts`, `lending`, `liquidations`, `posit
 
 ## Setup
 
-Install the client package:
+Identify the host app's package manager from its lockfile, then use the matching
+installation command. These commands are alternatives:
 
 ```bash
 npm install @liquidium/client
-bun add @liquidium/client
+pnpm add @liquidium/client
 bun add @liquidium/client
 ```
 
