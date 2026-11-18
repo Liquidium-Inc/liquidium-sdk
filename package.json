@@ -20,7 +20,7 @@
     "architecture:serve": "env -u OPENAI_API_KEY -u OPENROUTER_API_KEY -u ANTHROPIC_API_KEY -u GEMINI_API_KEY -u OLLAMA_HOST likec4 serve docs/c4 --title \"Liquidium SDK Architecture\" --use-hash-history",
     "architecture:validate": "likec4 validate docs/c4",
     "architecture:build": "likec4 build docs/c4 -o docs/c4/dist --title \"Liquidium SDK Architecture\" --use-hash-history",
-    "test": "vp test run",
+    "test": "vp run @liquidium/client#build && vp test run",
     "test:e2e": "LIQUIDIUM_LIVE_E2E=1 vp test run --project client-e2e",
     "typecheck": "vp run @liquidium/client#build && vp run -r typecheck",
     "release:version": "bun run changeset version && bun run docs:changelog",
