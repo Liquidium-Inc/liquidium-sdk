@@ -218,6 +218,10 @@ If `create(...)` throws `SimpleLoanCreatedError`, the loan was already created.
 Use the error's `loanId` or `ref` with `get(...)`; do not call `create(...)`
 again, because that can create a duplicate loan.
 
+If `create(...)` throws `VALIDATION_ERROR` because the loaded loan does not match
+the request (pools, assets, borrow amount, destinations, max LTV or deposit
+window), do not fund or recover that loan.
+
 Status-returning methods use the shared `LiquidiumStatus` shape:
 `{ operation, state, confirmations, requiredConfirmations }`. `operation` is one
 of `deposit`, `borrow`, `repayment`, `withdrawal`, or `liquidation`. `state` is
