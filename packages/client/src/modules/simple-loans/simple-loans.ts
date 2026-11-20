@@ -207,13 +207,8 @@ interface V1SimpleLoanCreateResponseWire {
   loan: SimpleLoanWire;
 }
 
-interface SimpleLoanWireCollateral {
-  amountHint: string;
-}
-
 interface SimpleLoanWire {
   loanId: string;
-  collateral: SimpleLoanWireCollateral;
 }
 
 interface SimpleLoanHydrationInput {
@@ -355,7 +350,8 @@ export class SimpleLoansModule {
    * @param request - Collateral, borrow, refund, LTV limit, timeout, and inflow options.
    * @returns Hydrated loan state plus generated initial-deposit and repayment quote targets.
    * @throws {@link LiquidiumError} If request validation, API transport, or
-   * protocol validation fails before creation.
+   * protocol validation fails before creation, or with `VALIDATION_ERROR` if
+   * the canister loan behind the API's loan ID does not match the request.
    * @throws {@link SimpleLoanCreatedError} If the remote loan is created but
    * the SDK cannot load its hydrated state.
    */
@@ -411,17 +407,25 @@ export class SimpleLoansModule {
       label: "loan ID",
     });
 
+    let record: DecodedSimpleLoanCanisterRecord;
     try {
-      const collateralAmount = parseUnsignedApiBigint(
-        response.loan.collateral.amountHint,
-        {
-          context: SIMPLE_LOAN_WIRE_CONTEXT,
-          label: "collateral amount",
-        }
-      );
-      const record = await this.getLoanRecord(loanId);
+      record = await this.getLoanRecord(loanId);
+    } catch (cause) {
+      throw new SimpleLoanCreatedError(loanId, cause);
+    }
 
-      return await this.mapLoanRecord(record, collateralAmount, {
+    // The API picks the loan ID. Only hand back funding targets for a canister
+    // loan that has exactly the destinations and terms this call asked for.
+    // A mismatch is not a recoverable SimpleLoanCreatedError: recovering it
+    // with get() would show the other loan's targets.
+    assertCreatedLoanMatchesRequest(record, {
+      request,
+      borrowDestination,
+      refundDestination,
+    });
+
+    try {
+      return await this.mapLoanRecord(record, request.collateral.amount, {
         borrowChain: request.borrow.chain,
       });
     } catch (cause) {
@@ -1288,6 +1292,85 @@ function validateCreateRequest(request: CreateSimpleLoanRequest): void {
       "Simple loan deposit window must be greater than zero seconds"
     );
   }
+}
+
+const EVM_ADDRESS_PATTERN = /^0x[0-9a-fA-F]{40}$/;
+
+function assertCreatedLoanMatchesRequest(
+  record: DecodedSimpleLoanCanisterRecord,
+  expected: {
+    request: CreateSimpleLoanRequest;
+    borrowDestination: SimpleLoanApiAccountType;
+    refundDestination: SimpleLoanApiAccountType;
+  }
+): void {
+  const { request } = expected;
+  const checks: [string, boolean][] = [
+    [
+      "collateral pool",
+      record.lend_pool_id.toText() === request.collateral.poolId,
+    ],
+    ["collateral asset", record.lend_asset === request.collateral.asset],
+    ["borrow pool", record.borrow_pool_id.toText() === request.borrow.poolId],
+    ["borrow asset", record.borrow_asset === request.borrow.asset],
+    ["borrow amount", record.borrow_amount === request.borrow.amount],
+    [
+      "borrow destination",
+      canisterAccountMatches(
+        record.borrow_destination,
+        expected.borrowDestination
+      ),
+    ],
+    [
+      "refund destination",
+      canisterAccountMatches(
+        record.refund_destination,
+        expected.refundDestination
+      ),
+    ],
+    ["max LTV", record.ltv_max_bps === request.ltvMaxBps],
+    ["deposit window", record.ltv_timer_s === request.depositWindowSeconds],
+    [
+      "new loan state",
+      !record.started && record.deposit_detected_ts.length === 0,
+    ],
+  ];
+  const mismatches = checks.filter(([, matches]) => !matches);
+
+  if (mismatches.length > 0) {
+    throw new LiquidiumError(
+      LiquidiumErrorCode.VALIDATION_ERROR,
+      `Simple loan ${record.id.toString()} returned by the SDK API does not match the creation request (${mismatches
+        .map(([field]) => field)
+        .join(", ")}). Do not fund it.`
+    );
+  }
+}
+
+function canisterAccountMatches(
+  stored: DecodedSimpleLoanCanisterRecord["borrow_destination"],
+  sent: SimpleLoanApiAccountType
+): boolean {
+  const account = accountFromCanister(stored);
+
+  if ("External" in sent) {
+    if (account.type !== "ChainAddress") return false;
+    // EVM addresses are case-insensitive; other chain addresses are not.
+    return EVM_ADDRESS_PATTERN.test(sent.External)
+      ? account.address.toLowerCase() === sent.External.toLowerCase()
+      : account.address === sent.External;
+  }
+  if ("Native" in sent) {
+    return account.type === "IcPrincipal" && account.address === sent.Native;
+  }
+  if ("AccountIdentifier" in sent) {
+    return (
+      account.type === "IcpAccountIdentifier" &&
+      account.address.toLowerCase() === sent.AccountIdentifier
+    );
+  }
+
+  return account.type === "IcrcAccount" && account.address === sent.Icrc;
 }
 
 function throwLtvCalculationError(
