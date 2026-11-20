@@ -1294,6 +1294,8 @@ function validateCreateRequest(request: CreateSimpleLoanRequest): void {
   }
 }
 
+const EVM_ADDRESS_PATTERN = /^0x[0-9a-fA-F]{40}$/;
+
 function assertCreatedLoanMatchesRequest(
   record: DecodedSimpleLoanCanisterRecord,
   expected: {
@@ -1328,6 +1330,10 @@ function assertCreatedLoanMatchesRequest(
     ],
     ["max LTV", record.ltv_max_bps === request.ltvMaxBps],
     ["deposit window", record.ltv_timer_s === request.depositWindowSeconds],
+    [
+      "new loan state",
+      !record.started && record.deposit_detected_ts.length === 0,
+    ],
   ];
   const mismatches = checks.filter(([, matches]) => !matches);
 
@@ -1348,7 +1354,11 @@ function canisterAccountMatches(
   const account = accountFromCanister(stored);
 
   if ("External" in sent) {
-    return account.type === "ChainAddress" && account.address === sent.External;
+    if (account.type !== "ChainAddress") return false;
+    // EVM addresses are case-insensitive; other chain addresses are not.
+    return EVM_ADDRESS_PATTERN.test(sent.External)
+      ? account.address.toLowerCase() === sent.External.toLowerCase()
+      : account.address === sent.External;
   }
   if ("Native" in sent) {
     return account.type === "IcPrincipal" && account.address === sent.Native;

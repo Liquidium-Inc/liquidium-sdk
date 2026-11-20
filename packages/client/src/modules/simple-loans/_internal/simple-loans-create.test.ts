@@ -723,6 +723,8 @@ describe("SimpleLoansModule create", () => {
       field: "deposit window",
       record: { ltv_timer_s: DEFAULT_DEPOSIT_WINDOW_SECONDS + 1n },
     },
+    { field: "new loan state", record: { started: true } },
+    { field: "new loan state", record: { deposit_detected_ts: [1n] } },
   ])(
     "rejects an API-selected loan whose $field differs from the request",
     async ({ field, record }) => {
@@ -786,6 +788,28 @@ describe("SimpleLoansModule create", () => {
     await expect(result).rejects.toMatchObject({
       code: LiquidiumErrorCode.VALIDATION_ERROR,
       message: expect.stringContaining("(borrow destination)"),
+    });
+  });
+
+  test("accepts a stored EVM destination that differs only in case", async () => {
+    // given
+    mockSimpleLoanCreatePost({ amountHint: "10000000" });
+    mockSimpleLoanCreateHydrationActors({
+      getLoan: getLoanMatchingCreatePost({
+        borrow_destination: { External: LOWERCASE_EVM_BORROW_ADDRESS },
+      }),
+      btcMinterDepositFee: 2_000n,
+      icrc1Fee: 10n,
+    });
+    const client = new LiquidiumClient({});
+
+    // when
+    const loan = await client.simpleLoans.create(createSimpleLoanRequest());
+
+    // then
+    expect(loan.borrow.destination).toMatchObject({
+      type: "ChainAddress",
+      address: LOWERCASE_EVM_BORROW_ADDRESS,
     });
   });
 

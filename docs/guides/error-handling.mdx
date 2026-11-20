@@ -60,7 +60,9 @@ If your UI needs different messages for timeout, transport, validation, or proto
 
 `SimpleLoanCreatedError` means the remote loan was created but response hydration failed. Recover with the error's `loanId` or `ref` through `client.simpleLoans.get(...)`. Do not call `create(...)` again because that can create a duplicate loan.
 
-`simpleLoans.create(...)` checks the canister loan behind the API's loan ID against the request: pools, assets, borrow amount, borrow and refund destinations, max LTV and deposit window. If any differ, it throws `VALIDATION_ERROR` and returns no deposit target. Do not fund that loan or recover it with `get(...)`.
+`simpleLoans.create(...)` checks the canister loan behind the API's loan ID against the request: pools, assets, borrow amount, borrow and refund destinations, max LTV and deposit window. It also rejects a loan that has already started or already seen a deposit. If any check fails, it throws `VALIDATION_ERROR` and returns no deposit target. Do not fund that loan or recover it with `get(...)`.
+
+When you recover from `SimpleLoanCreatedError` with `get(...)`, the SDK could not run these checks. Before you show deposit targets, compare the recovered loan's `collateral`, `borrow`, `refundDestination` and `terms` with your request, and show the collateral amount you requested.
 
 Wallet-executed deposit, borrow, and withdraw amounts below SDK minimums throw or return validation errors before state-changing calls. To show the minimum next to an amount input, use `getMinimumDepositAmount(asset)`, `getMinimumBorrowAmount(asset)`, or `getMinimumWithdrawAmount(asset)`. Manual deposit-address flows do not accept an amount, so callers must apply the deposit minimum before broadcasting.
 

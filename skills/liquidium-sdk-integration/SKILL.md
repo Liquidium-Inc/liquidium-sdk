@@ -220,7 +220,9 @@ again, because that can create a duplicate loan.
 
 If `create(...)` throws `VALIDATION_ERROR` because the loaded loan does not match
 the request (pools, assets, borrow amount, destinations, max LTV or deposit
-window), do not fund or recover that loan.
+window) or has already started, do not fund or recover that loan. After
+recovering from `SimpleLoanCreatedError`, compare the recovered loan's pools,
+destinations and terms with the request before showing deposit targets.
 
 Status-returning methods use the shared `LiquidiumStatus` shape:
 `{ operation, state, confirmations, requiredConfirmations }`. `operation` is one
