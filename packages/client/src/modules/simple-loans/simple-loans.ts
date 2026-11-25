@@ -355,39 +355,39 @@ export class SimpleLoansModule {
    * @throws {@link SimpleLoanCreatedError} If the remote loan is created but
    * the SDK cannot load its hydrated state.
    */
-  async create(input: CreateSimpleLoanRequest): Promise<SimpleLoan> {
+  async create(request: CreateSimpleLoanRequest): Promise<SimpleLoan> {
     // Work from a copy so caller edits during the POST cannot change what is
     // validated, sent, checked or quoted.
-    const request = snapshotCreateRequest(input);
-    validateCreateRequest(request);
+    const snapshot = snapshotCreateRequest(request);
+    validateCreateRequest(snapshot);
     // Hydration needs SOL targets after the POST; fail before creating the loan.
-    for (const leg of [request.collateral, request.borrow]) {
+    for (const leg of [snapshot.collateral, snapshot.borrow]) {
       if (leg.asset === CoreAsset.SOL) {
         assertConfiguredSolPool(this.canisterContext, leg.poolId);
       }
     }
-    const destinations = resolveCreateDestinations(request);
+    const destinations = resolveCreateDestinations(snapshot);
     const apiClient = this.requireApi("Simple loan creation");
 
-    await this.validateSimpleLoanLtvPolicy(request);
+    await this.validateSimpleLoanLtvPolicy(snapshot);
     await guardSolNativeOutflowMinimum(this.canisterContext, {
-      asset: request.borrow.asset,
-      destinationChain: request.borrow.chain,
-      amount: request.borrow.amount,
+      asset: snapshot.borrow.asset,
+      destinationChain: snapshot.borrow.chain,
+      amount: snapshot.borrow.amount,
     });
 
     const response = await apiClient.post<
       V1SimpleLoanCreateResponseWire,
       SimpleLoanCreateRequestWire
     >(SdkApiPath.simpleLoans, {
-      collateralPoolId: request.collateral.poolId,
-      borrowPoolId: request.borrow.poolId,
-      collateralAsset: request.collateral.asset,
-      borrowAsset: request.borrow.asset,
-      collateralAmount: request.collateral.amount.toString(),
-      borrowAmount: request.borrow.amount.toString(),
-      ltvMaxBps: request.ltvMaxBps.toString(),
-      depositWindowSeconds: request.depositWindowSeconds.toString(),
+      collateralPoolId: snapshot.collateral.poolId,
+      borrowPoolId: snapshot.borrow.poolId,
+      collateralAsset: snapshot.collateral.asset,
+      borrowAsset: snapshot.borrow.asset,
+      collateralAmount: snapshot.collateral.amount.toString(),
+      borrowAmount: snapshot.borrow.amount.toString(),
+      ltvMaxBps: snapshot.ltvMaxBps.toString(),
+      depositWindowSeconds: snapshot.depositWindowSeconds.toString(),
       borrowDestination: destinations.borrowDestination,
       refundDestination: destinations.refundDestination,
     });
@@ -408,10 +408,13 @@ export class SimpleLoansModule {
     // loan that has exactly the destinations and terms this call asked for.
     // A mismatch is not a recoverable SimpleLoanCreatedError: recovering it
     // would show the other loan's targets.
-    assertCreatedLoanMatchesRequest(record, { request, ...destinations });
+    assertCreatedLoanMatchesRequest(record, {
+      request: snapshot,
+      ...destinations,
+    });
 
     try {
-      return await this.mapCreatedLoanRecord(record, request);
+      return await this.mapCreatedLoanRecord(record, snapshot);
     } catch (cause) {
       throw new SimpleLoanCreatedError(loanId, cause);
     }
