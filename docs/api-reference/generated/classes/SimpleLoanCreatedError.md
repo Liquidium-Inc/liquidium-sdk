@@ -6,7 +6,7 @@
 
 # Class: SimpleLoanCreatedError
 
-Defined in: packages/client/src/modules/simple-loans/simple-loans.ts:307
+Defined in: packages/client/src/modules/simple-loans/simple-loans.ts:312
 
 A loan was created remotely, but the SDK could not load its enriched state.
 Retry with `simpleLoans.get({ loanId })`; do not create the loan again.
@@ -21,7 +21,7 @@ Retry with `simpleLoans.get({ loanId })`; do not create the loan again.
 
 > **new SimpleLoanCreatedError**(`loanId`, `cause`): `SimpleLoanCreatedError`
 
-Defined in: packages/client/src/modules/simple-loans/simple-loans.ts:313
+Defined in: packages/client/src/modules/simple-loans/simple-loans.ts:318
 
 #### Parameters
 
@@ -47,7 +47,7 @@ Defined in: packages/client/src/modules/simple-loans/simple-loans.ts:313
 
 > `readonly` **cause**: `unknown`
 
-Defined in: packages/client/src/modules/simple-loans/simple-loans.ts:311
+Defined in: packages/client/src/modules/simple-loans/simple-loans.ts:316
 
 #### Overrides
 
@@ -59,7 +59,7 @@ Defined in: packages/client/src/modules/simple-loans/simple-loans.ts:311
 
 > `readonly` **code**: `"SIMPLE_LOAN_HYDRATION_FAILED"`
 
-Defined in: packages/client/src/modules/simple-loans/simple-loans.ts:308
+Defined in: packages/client/src/modules/simple-loans/simple-loans.ts:313
 
 ***
 
@@ -67,7 +67,7 @@ Defined in: packages/client/src/modules/simple-loans/simple-loans.ts:308
 
 > `readonly` **loanId**: `bigint`
 
-Defined in: packages/client/src/modules/simple-loans/simple-loans.ts:309
+Defined in: packages/client/src/modules/simple-loans/simple-loans.ts:314
 
 ***
 
@@ -99,7 +99,7 @@ Defined in: node\_modules/.pnpm/typescript@5.9.3/node\_modules/typescript/lib/li
 
 > `readonly` **ref**: `string`
 
-Defined in: packages/client/src/modules/simple-loans/simple-loans.ts:310
+Defined in: packages/client/src/modules/simple-loans/simple-loans.ts:315
 
 ***
 

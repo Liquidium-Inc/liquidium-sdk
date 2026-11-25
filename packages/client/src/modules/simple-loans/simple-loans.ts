@@ -1296,13 +1296,16 @@ function validateCreateRequest(request: CreateSimpleLoanRequest): void {
 
 const EVM_ADDRESS_PATTERN = /^0x[0-9a-fA-F]{40}$/;
 
+/** The creation request and the destinations `create()` sent for it. */
+interface SimpleLoanCreateExpectation {
+  request: CreateSimpleLoanRequest;
+  borrowDestination: SimpleLoanApiAccountType;
+  refundDestination: SimpleLoanApiAccountType;
+}
+
 function assertCreatedLoanMatchesRequest(
   record: DecodedSimpleLoanCanisterRecord,
-  expected: {
-    request: CreateSimpleLoanRequest;
-    borrowDestination: SimpleLoanApiAccountType;
-    refundDestination: SimpleLoanApiAccountType;
-  }
+  expected: SimpleLoanCreateExpectation
 ): void {
   const { request } = expected;
   const checks: [string, boolean][] = [

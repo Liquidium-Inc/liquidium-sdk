@@ -39,7 +39,10 @@ try {
   return loan;
 } catch (error) {
   if (error instanceof SimpleLoanCreatedError) {
-    return client.simpleLoans.get({ loanId: error.loanId });
+    const recovered = await client.simpleLoans.get({ loanId: error.loanId });
+    // Compare recovered.collateral, borrow, refundDestination and terms with
+    // `request` before showing deposit targets.
+    return recovered;
   }
 
   if (error instanceof LiquidiumError) {
