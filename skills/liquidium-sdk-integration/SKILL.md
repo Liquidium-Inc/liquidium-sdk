@@ -222,7 +222,8 @@ duplicate loan. Do not use `get(...)` for this: it skips the checks below.
 
 `create(...)` and `recoverCreated(...)` throw `VALIDATION_ERROR` when the loaded
 loan does not match the request (pools, assets, borrow amount, destinations,
-max LTV or deposit window) or has already started. Do not fund that loan. Both
+max LTV or deposit window), has already started, or has already seen a
+deposit. Do not fund that loan. Both
 build the initial deposit from the requested collateral amount. `create(...)`
 can throw this, a timeout, or a transport error after the API created a loan.
 The API creates the loan before it is searchable, so an empty `find(...)` on
