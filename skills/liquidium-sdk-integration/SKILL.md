@@ -139,6 +139,7 @@ debt exists.
 client.simpleLoans.create(...);
 client.simpleLoans.get({ ref });
 client.simpleLoans.get({ loanId });
+client.simpleLoans.recoverCreated({ loanId }, request); // after SimpleLoanCreatedError
 client.simpleLoans.find(query);
 client.simpleLoans.getConfig();
 client.simpleLoans.getEvent(eventId);
@@ -215,15 +216,17 @@ Reload with `client.simpleLoans.get({ ref })` before displaying repayment
 instructions so the app uses the canonical repayment amount and target.
 
 If `create(...)` throws `SimpleLoanCreatedError`, the loan was already created.
-Use the error's `loanId` or `ref` with `get(...)`; do not call `create(...)`
-again, because that can create a duplicate loan.
+Recover with `recoverCreated({ loanId: error.loanId }, request)`, passing the
+same request; do not call `create(...)` again, because that can create a
+duplicate loan. Do not use `get(...)` for this: it skips the checks below.
 
-If `create(...)` throws `VALIDATION_ERROR` because the loaded loan does not match
-the request (pools, assets, borrow amount, destinations, max LTV or deposit
-window) or has already started, do not fund or recover that loan. After
-recovering from `SimpleLoanCreatedError`, compare the recovered loan's pools,
-assets, borrow amount, destinations and terms with the request before showing
-deposit targets.
+`create(...)` and `recoverCreated(...)` throw `VALIDATION_ERROR` when the loaded
+loan does not match the request (pools, assets, borrow amount, destinations,
+max LTV or deposit window) or has already started. Do not fund that loan. Both
+build the initial deposit from the requested collateral amount. Because
+`create(...)` can throw this after the API created a loan, look for the first
+submission with `find(...)` on the borrow or refund address before submitting
+the same request again.
 
 Status-returning methods use the shared `LiquidiumStatus` shape:
 `{ operation, state, confirmations, requiredConfirmations }`. `operation` is one
@@ -567,7 +570,11 @@ try {
   return await client.simpleLoans.create(request);
 } catch (error) {
   if (error instanceof SimpleLoanCreatedError) {
-    return await client.simpleLoans.get({ loanId: error.loanId });
+    // Same checks as create(); throws VALIDATION_ERROR on a mismatched loan.
+    return await client.simpleLoans.recoverCreated(
+      { loanId: error.loanId },
+      request
+    );
   }
 
   if (error instanceof LiquidiumError) {
@@ -588,8 +595,9 @@ are returned in `validationErrors`; do not rely on thrown errors for normal quot
 invalidity.
 
 `SimpleLoanCreatedError` means creation succeeded remotely but hydration failed.
-Recover through `simpleLoans.get(...)` with its `loanId` or `ref`; never retry
-`create(...)`, because that can create a duplicate loan.
+Recover through `simpleLoans.recoverCreated(...)` with its `loanId` or `ref` and
+the original request; never retry `create(...)`, because that can create a
+duplicate loan.
 
 Native ETH borrows and withdrawals do not support destinations with deployed
 contract bytecode, including smart contract wallets. The same restriction

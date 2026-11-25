@@ -355,7 +355,10 @@ export class SimpleLoansModule {
    * @throws {@link SimpleLoanCreatedError} If the remote loan is created but
    * the SDK cannot load its hydrated state.
    */
-  async create(request: CreateSimpleLoanRequest): Promise<SimpleLoan> {
+  async create(input: CreateSimpleLoanRequest): Promise<SimpleLoan> {
+    // Work from a copy so caller edits during the POST cannot change what is
+    // validated, sent, checked or quoted.
+    const request = snapshotCreateRequest(input);
     validateCreateRequest(request);
     // Hydration needs SOL targets after the POST; fail before creating the loan.
     for (const leg of [request.collateral, request.borrow]) {
@@ -363,20 +366,7 @@ export class SimpleLoansModule {
         assertConfiguredSolPool(this.canisterContext, leg.poolId);
       }
     }
-    const borrowDestination = resolveSimpleLoanDestination({
-      destination: request.borrow.destination,
-      asset: request.borrow.asset,
-      role: "borrow",
-      chain: request.borrow.chain,
-      normalizeExternalDestination: validateSimpleLoanBorrowDestination,
-    });
-    const refundDestination = resolveSimpleLoanDestination({
-      destination: request.refund.destination,
-      asset: request.collateral.asset,
-      role: "refund",
-      chain: request.refund.chain,
-      normalizeExternalDestination: validateSimpleLoanRefundDestination,
-    });
+    const destinations = resolveCreateDestinations(request);
     const apiClient = this.requireApi("Simple loan creation");
 
     await this.validateSimpleLoanLtvPolicy(request);
@@ -398,8 +388,8 @@ export class SimpleLoansModule {
       borrowAmount: request.borrow.amount.toString(),
       ltvMaxBps: request.ltvMaxBps.toString(),
       depositWindowSeconds: request.depositWindowSeconds.toString(),
-      borrowDestination,
-      refundDestination,
+      borrowDestination: destinations.borrowDestination,
+      refundDestination: destinations.refundDestination,
     });
 
     const loanId = parseUnsignedApiBigint(response.loan.loanId, {
@@ -417,20 +407,48 @@ export class SimpleLoansModule {
     // The API picks the loan ID. Only hand back funding targets for a canister
     // loan that has exactly the destinations and terms this call asked for.
     // A mismatch is not a recoverable SimpleLoanCreatedError: recovering it
-    // with get() would show the other loan's targets.
-    assertCreatedLoanMatchesRequest(record, {
-      request,
-      borrowDestination,
-      refundDestination,
-    });
+    // would show the other loan's targets.
+    assertCreatedLoanMatchesRequest(record, { request, ...destinations });
 
     try {
-      return await this.mapLoanRecord(record, request.collateral.amount, {
-        borrowChain: request.borrow.chain,
-      });
+      return await this.mapCreatedLoanRecord(record, request);
     } catch (cause) {
       throw new SimpleLoanCreatedError(loanId, cause);
     }
+  }
+
+  /**
+   * Loads a loan after `create(...)` threw {@link SimpleLoanCreatedError} and
+   * returns funding targets only if it still matches the creation request.
+   *
+   * Runs the same checks as `create(...)`: pools, assets, borrow amount,
+   * borrow and refund destinations, max LTV, deposit window, and that the
+   * loan has not started or seen a deposit. The initial deposit uses
+   * `request.collateral.amount`. Pass the same request you passed to
+   * `create(...)`. Use `get(...)` to follow a loan after it has been funded.
+   *
+   * @param target - The error's `loanId` or `ref`.
+   * @param request - The request passed to the `create(...)` call that threw.
+   * @returns Hydrated loan state plus generated initial-deposit and repayment quote targets.
+   * @throws {@link LiquidiumError} With `VALIDATION_ERROR` if the loan does not
+   * match the request or has already started; do not fund it. Lookup failures
+   * throw their own error and can be retried.
+   */
+  async recoverCreated(
+    target: SimpleLoanGetRequest,
+    request: CreateSimpleLoanRequest
+  ): Promise<SimpleLoan> {
+    const snapshot = snapshotCreateRequest(request);
+    const loanId = "loanId" in target ? target.loanId : decodeRef(target.ref);
+    const destinations = resolveCreateDestinations(snapshot);
+    const record = await this.getLoanRecord(loanId);
+
+    assertCreatedLoanMatchesRequest(record, {
+      request: snapshot,
+      ...destinations,
+    });
+
+    return await this.mapCreatedLoanRecord(record, snapshot);
   }
 
   /**
@@ -985,6 +1003,15 @@ export class SimpleLoansModule {
     return this.apiClient;
   }
 
+  private async mapCreatedLoanRecord(
+    record: DecodedSimpleLoanCanisterRecord,
+    request: CreateSimpleLoanRequest
+  ): Promise<SimpleLoan> {
+    return await this.mapLoanRecord(record, request.collateral.amount, {
+      borrowChain: request.borrow.chain,
+    });
+  }
+
   private async validateSimpleLoanLtvPolicy(
     request: CreateSimpleLoanRequest
   ): Promise<void> {
@@ -1296,11 +1323,66 @@ function validateCreateRequest(request: CreateSimpleLoanRequest): void {
 
 const EVM_ADDRESS_PATTERN = /^0x[0-9a-fA-F]{40}$/;
 
-/** The creation request and the destinations `create()` sent for it. */
-interface SimpleLoanCreateExpectation {
-  request: CreateSimpleLoanRequest;
+/** Canister-format destinations `create()` sends for a request. */
+interface SimpleLoanCreateDestinations {
   borrowDestination: SimpleLoanApiAccountType;
   refundDestination: SimpleLoanApiAccountType;
+}
+
+/** The creation request and the destinations `create()` sent for it. */
+interface SimpleLoanCreateExpectation extends SimpleLoanCreateDestinations {
+  request: CreateSimpleLoanRequest;
+}
+
+function resolveCreateDestinations(
+  request: CreateSimpleLoanRequest
+): SimpleLoanCreateDestinations {
+  return {
+    borrowDestination: resolveSimpleLoanDestination({
+      destination: request.borrow.destination,
+      asset: request.borrow.asset,
+      role: "borrow",
+      chain: request.borrow.chain,
+      normalizeExternalDestination: validateSimpleLoanBorrowDestination,
+    }),
+    refundDestination: resolveSimpleLoanDestination({
+      destination: request.refund.destination,
+      asset: request.collateral.asset,
+      role: "refund",
+      chain: request.refund.chain,
+      normalizeExternalDestination: validateSimpleLoanRefundDestination,
+    }),
+  };
+}
+
+function snapshotCreateRequest(
+  request: CreateSimpleLoanRequest
+): CreateSimpleLoanRequest {
+  return {
+    collateral: {
+      poolId: request.collateral.poolId,
+      asset: request.collateral.asset,
+      amount: request.collateral.amount,
+    },
+    borrow: {
+      ...request.borrow,
+      destination: snapshotDestination(request.borrow.destination),
+    },
+    refund: {
+      chain: request.refund.chain,
+      destination: snapshotDestination(request.refund.destination),
+    },
+    ltvMaxBps: request.ltvMaxBps,
+    depositWindowSeconds: request.depositWindowSeconds,
+  };
+}
+
+function snapshotDestination(
+  destination: SimpleLoanDestination
+): SimpleLoanDestination {
+  return typeof destination === "string"
+    ? destination
+    : { address: destination.address, type: destination.type };
 }
 
 function assertCreatedLoanMatchesRequest(
@@ -1343,7 +1425,7 @@ function assertCreatedLoanMatchesRequest(
   if (mismatches.length > 0) {
     throw new LiquidiumError(
       LiquidiumErrorCode.VALIDATION_ERROR,
-      `Simple loan ${record.id.toString()} returned by the SDK API does not match the creation request (${mismatches
+      `Simple loan ${record.id.toString()} does not match the creation request (${mismatches
         .map(([field]) => field)
         .join(", ")}). Do not fund it.`
     );

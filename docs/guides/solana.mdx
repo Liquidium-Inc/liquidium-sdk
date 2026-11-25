@@ -49,7 +49,7 @@ pool sets a repayment refund threshold, so it is not refunded by default. Select
 the ckSOL quote to avoid this native minimum.
 The sender's own transaction fee is additional. Failed SOL fee lookups throw;
 the SDK does not substitute a zero fee. After `SimpleLoanCreatedError`, recover
-with `get(...)` rather than creating another loan.
+with `recoverCreated(...)` rather than creating another loan.
 
 ## Profile deposits and repayments
 

@@ -132,6 +132,7 @@ function requirePool(
 
 Save `loan.ref`. Use it for refreshes, status pages, and support links.
 
-If `create(...)` throws `SimpleLoanCreatedError`, recover the loan with the
-error's `loanId` or `ref`. Do not call `create(...)` again. For recovery code,
+If `create(...)` throws `SimpleLoanCreatedError`, recover the loan with
+`recoverCreated(...)`, the error's `loanId` or `ref`, and the same request. Do
+not call `create(...)` again. For recovery code,
 see [Handle SDK errors](../guides/error-handling.mdx#handle-sdk-errors).
