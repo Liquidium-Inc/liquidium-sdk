@@ -302,7 +302,8 @@ interface ResolveSimpleLoanDestinationParams {
 
 /**
  * A loan was created remotely, but the SDK could not load its enriched state.
- * Retry with `simpleLoans.get({ loanId })`; do not create the loan again.
+ * Retry with `simpleLoans.recoverCreated({ loanId }, request)`, passing the
+ * original `create(...)` request; do not create the loan again.
  */
 export class SimpleLoanCreatedError extends Error {
   readonly code = "SIMPLE_LOAN_HYDRATION_FAILED" as const;
@@ -397,27 +398,15 @@ export class SimpleLoansModule {
       label: "loan ID",
     });
 
-    let record: DecodedSimpleLoanCanisterRecord;
-    try {
-      record = await this.getLoanRecord(loanId);
-    } catch (cause) {
-      throw new SimpleLoanCreatedError(loanId, cause);
-    }
-
     // The API picks the loan ID. Only hand back funding targets for a canister
     // loan that has exactly the destinations and terms this call asked for.
     // A mismatch is not a recoverable SimpleLoanCreatedError: recovering it
     // would show the other loan's targets.
-    assertCreatedLoanMatchesRequest(record, {
-      request: snapshot,
-      ...destinations,
-    });
-
-    try {
-      return await this.mapCreatedLoanRecord(record, snapshot);
-    } catch (cause) {
-      throw new SimpleLoanCreatedError(loanId, cause);
-    }
+    return await this.hydrateCreatedLoan(
+      loanId,
+      { request: snapshot, ...destinations },
+      (cause) => new SimpleLoanCreatedError(loanId, cause)
+    );
   }
 
   /**
@@ -444,14 +433,11 @@ export class SimpleLoansModule {
     const snapshot = snapshotCreateRequest(request);
     const loanId = "loanId" in target ? target.loanId : decodeRef(target.ref);
     const destinations = resolveCreateDestinations(snapshot);
-    const record = await this.getLoanRecord(loanId);
 
-    assertCreatedLoanMatchesRequest(record, {
+    return await this.hydrateCreatedLoan(loanId, {
       request: snapshot,
       ...destinations,
     });
-
-    return await this.mapCreatedLoanRecord(record, snapshot);
   }
 
   /**
@@ -1006,13 +992,43 @@ export class SimpleLoansModule {
     return this.apiClient;
   }
 
-  private async mapCreatedLoanRecord(
-    record: DecodedSimpleLoanCanisterRecord,
-    request: CreateSimpleLoanRequest
+  /**
+   * Loads a just-created loan and returns funding targets only while the
+   * canister record matches `expected` and has no deposit. `wrapLoadError`
+   * wraps lookup and hydration failures; mismatches are thrown as-is.
+   */
+  private async hydrateCreatedLoan(
+    loanId: bigint,
+    expected: SimpleLoanCreateExpectation,
+    wrapLoadError: (cause: unknown) => unknown = (cause) => cause
   ): Promise<SimpleLoan> {
-    return await this.mapLoanRecord(record, request.collateral.amount, {
-      borrowChain: request.borrow.chain,
-    });
+    const load = async <T>(work: () => Promise<T>): Promise<T> => {
+      try {
+        return await work();
+      } catch (cause) {
+        throw wrapLoadError(cause);
+      }
+    };
+    const { request } = expected;
+
+    const record = await load(() => this.getLoanRecord(loanId));
+    assertCreatedLoanMatchesRequest(record, expected);
+
+    const loan = await load(() =>
+      this.mapLoanRecord(record, request.collateral.amount, {
+        borrowChain: request.borrow.chain,
+      })
+    );
+
+    // A deposit can land while targets and fees load, which would leave the
+    // initial deposit quote above stale. Check the record again before
+    // handing the targets back.
+    assertCreatedLoanMatchesRequest(
+      await load(() => this.getLoanRecord(loanId)),
+      expected
+    );
+
+    return loan;
   }
 
   private async validateSimpleLoanLtvPolicy(

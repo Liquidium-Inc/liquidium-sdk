@@ -942,6 +942,51 @@ describe("SimpleLoansModule create", () => {
     }
   );
 
+  test.each(["create", "recoverCreated"] as const)(
+    "%s rejects a loan that sees a deposit while its targets load",
+    async (method) => {
+      // given
+      mockSimpleLoanCreatePost({ amountHint: "10000000" });
+      const getLoan = getLoanMatchingCreatePost();
+      const deposited = getLoanMatchingCreatePost({
+        deposit_detected_ts: [1n],
+      }).getMockImplementation();
+      mockSimpleLoanCreateHydrationActors({
+        getLoan,
+        btcMinterDepositFee: 2_000n,
+        icrc1Fee: 10n,
+      });
+      const respond = vi.mocked(globalThis.fetch).getMockImplementation();
+      vi.mocked(globalThis.fetch).mockImplementation(async (input, init) => {
+        // Hydration reads activities after the first record check.
+        if (input.toString().includes("/activities?")) {
+          getLoan.mockImplementation(deposited as never);
+        }
+        return await (respond as typeof fetch)(input, init);
+      });
+      const client = new LiquidiumClient({});
+      const request = createSimpleLoanRequest();
+      if (method === "recoverCreated") {
+        getLoan.mockRejectedValueOnce(new Error("canister query timed out"));
+        await expect(client.simpleLoans.create(request)).rejects.toBeInstanceOf(
+          SimpleLoanCreatedError
+        );
+      }
+
+      // when
+      const result =
+        method === "create"
+          ? client.simpleLoans.create(request)
+          : client.simpleLoans.recoverCreated({ loanId: LOAN_ID }, request);
+
+      // then
+      await expect(result).rejects.toMatchObject({
+        code: LiquidiumErrorCode.VALIDATION_ERROR,
+        message: expect.stringContaining("(new loan state)"),
+      });
+    }
+  );
+
   test("rejects an invalid ICP borrow destination before creating the loan", async () => {
     // given
     const fetchSpy = vi.spyOn(globalThis, "fetch");

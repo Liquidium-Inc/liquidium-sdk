@@ -64,7 +64,7 @@ If your UI needs different messages for timeout, transport, validation, or proto
 
 `simpleLoans.create(...)` and `simpleLoans.recoverCreated(...)` check the canister loan against the request: pools, assets, borrow amount, borrow and refund destinations, max LTV and deposit window. They also reject a loan that has already started or already seen a deposit. If any check fails, they throw `VALIDATION_ERROR` and return no deposit target. Do not fund that loan. Both build the initial deposit from the collateral amount in your request. Do not use `get(...)` to show deposit targets after `SimpleLoanCreatedError`: it skips these checks.
 
-`create(...)` can throw that `VALIDATION_ERROR` after the API has created a loan. Before you submit the same request again, look for the first submission with `client.simpleLoans.find(...)` on your borrow or refund address.
+`create(...)` can throw that `VALIDATION_ERROR`, a timeout, or a transport error after the API has created a loan. The API creates the loan before it adds it to the search index, so an empty `client.simpleLoans.find(...)` result right after one of these errors does not prove that no loan exists. Do not resubmit automatically. Check `find(...)` on your borrow or refund address again later, and submit the same request again only after the user confirms.
 
 Wallet-executed deposit, borrow, and withdraw amounts below SDK minimums throw or return validation errors before state-changing calls. To show the minimum next to an amount input, use `getMinimumDepositAmount(asset)`, `getMinimumBorrowAmount(asset)`, or `getMinimumWithdrawAmount(asset)`. Manual deposit-address flows do not accept an amount, so callers must apply the deposit minimum before broadcasting.
 
@@ -77,7 +77,7 @@ Use the error type and the operation type before you retry:
 | Read-only request fails with `NETWORK_ERROR`, `SERVICE_UNAVAILABLE`, or `REQUEST_TIMEOUT` | Retry with your app's bounded backoff policy |
 | State-changing request times out | Reload the related loan, activity, position, or history before you decide whether to submit another request |
 | Request fails with `VALIDATION_ERROR` or a protocol error | Correct the input or wait for the protocol state to change before you retry |
-| `simpleLoans.create(...)` fails with `VALIDATION_ERROR`, a timeout, or a transport error | A loan may already exist. Check with `client.simpleLoans.find(...)` on your borrow or refund address before you call `create(...)` again |
+| `simpleLoans.create(...)` fails with `VALIDATION_ERROR`, a timeout, or a transport error | A loan may already exist, even if `client.simpleLoans.find(...)` returns nothing yet. Do not resubmit automatically; check `find(...)` on your borrow or refund address again later and call `create(...)` again only after the user confirms |
 | `SimpleLoanCreatedError` is thrown | Recover with `client.simpleLoans.recoverCreated(...)`; do not create another loan |
 | `LIQUIDATION_APPROVAL_FAILED` is thrown | Liquidation was not submitted. Inspect `cause` and check the ledger allowance if approval may have succeeded before deciding to retry |
 | `recover(...)` or a recovery `submit(...)` fails with `CANISTER_REJECTED` | The update may have succeeded. Read `getRecoveryBalance(...)` before you prepare another recovery |

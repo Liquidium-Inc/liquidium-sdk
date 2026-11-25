@@ -223,10 +223,12 @@ duplicate loan. Do not use `get(...)` for this: it skips the checks below.
 `create(...)` and `recoverCreated(...)` throw `VALIDATION_ERROR` when the loaded
 loan does not match the request (pools, assets, borrow amount, destinations,
 max LTV or deposit window) or has already started. Do not fund that loan. Both
-build the initial deposit from the requested collateral amount. Because
-`create(...)` can throw this after the API created a loan, look for the first
-submission with `find(...)` on the borrow or refund address before submitting
-the same request again.
+build the initial deposit from the requested collateral amount. `create(...)`
+can throw this, a timeout, or a transport error after the API created a loan.
+The API creates the loan before it is searchable, so an empty `find(...)` on
+the borrow or refund address does not prove no loan exists. Never resubmit
+automatically; check `find(...)` again later and resubmit only after the user
+confirms.
 
 Status-returning methods use the shared `LiquidiumStatus` shape:
 `{ operation, state, confirmations, requiredConfirmations }`. `operation` is one
