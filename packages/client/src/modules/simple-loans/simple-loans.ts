@@ -207,13 +207,8 @@ interface V1SimpleLoanCreateResponseWire {
   loan: SimpleLoanWire;
 }
 
-interface SimpleLoanWireCollateral {
-  amountHint: string;
-}
-
 interface SimpleLoanWire {
   loanId: string;
-  collateral: SimpleLoanWireCollateral;
 }
 
 interface SimpleLoanHydrationInput {
@@ -307,7 +302,8 @@ interface ResolveSimpleLoanDestinationParams {
 
 /**
  * A loan was created remotely, but the SDK could not load its enriched state.
- * Retry with `simpleLoans.get({ loanId })`; do not create the loan again.
+ * Retry with `simpleLoans.recoverCreated({ loanId }, request)`, passing the
+ * original `create(...)` request; do not create the loan again.
  */
 export class SimpleLoanCreatedError extends Error {
   readonly code = "SIMPLE_LOAN_HYDRATION_FAILED" as const;
@@ -355,55 +351,46 @@ export class SimpleLoansModule {
    * @param request - Collateral, borrow, refund, LTV limit, timeout, and inflow options.
    * @returns Hydrated loan state plus generated initial-deposit and repayment quote targets.
    * @throws {@link LiquidiumError} If request validation, API transport, or
-   * protocol validation fails before creation.
+   * protocol validation fails before creation, or with `VALIDATION_ERROR` if
+   * the canister loan behind the API's loan ID does not match the request.
    * @throws {@link SimpleLoanCreatedError} If the remote loan is created but
    * the SDK cannot load its hydrated state.
    */
   async create(request: CreateSimpleLoanRequest): Promise<SimpleLoan> {
-    validateCreateRequest(request);
+    // Work from a copy so caller edits during the POST cannot change what is
+    // validated, sent, checked or quoted.
+    const snapshot = snapshotCreateRequest(request);
+    validateCreateRequest(snapshot);
     // Hydration needs SOL targets after the POST; fail before creating the loan.
-    for (const leg of [request.collateral, request.borrow]) {
+    for (const leg of [snapshot.collateral, snapshot.borrow]) {
       if (leg.asset === CoreAsset.SOL) {
         assertConfiguredSolPool(this.canisterContext, leg.poolId);
       }
     }
-    const borrowDestination = resolveSimpleLoanDestination({
-      destination: request.borrow.destination,
-      asset: request.borrow.asset,
-      role: "borrow",
-      chain: request.borrow.chain,
-      normalizeExternalDestination: validateSimpleLoanBorrowDestination,
-    });
-    const refundDestination = resolveSimpleLoanDestination({
-      destination: request.refund.destination,
-      asset: request.collateral.asset,
-      role: "refund",
-      chain: request.refund.chain,
-      normalizeExternalDestination: validateSimpleLoanRefundDestination,
-    });
+    const destinations = resolveCreateDestinations(snapshot);
     const apiClient = this.requireApi("Simple loan creation");
 
-    await this.validateSimpleLoanLtvPolicy(request);
+    await this.validateSimpleLoanLtvPolicy(snapshot);
     await guardSolNativeOutflowMinimum(this.canisterContext, {
-      asset: request.borrow.asset,
-      destinationChain: request.borrow.chain,
-      amount: request.borrow.amount,
+      asset: snapshot.borrow.asset,
+      destinationChain: snapshot.borrow.chain,
+      amount: snapshot.borrow.amount,
     });
 
     const response = await apiClient.post<
       V1SimpleLoanCreateResponseWire,
       SimpleLoanCreateRequestWire
     >(SdkApiPath.simpleLoans, {
-      collateralPoolId: request.collateral.poolId,
-      borrowPoolId: request.borrow.poolId,
-      collateralAsset: request.collateral.asset,
-      borrowAsset: request.borrow.asset,
-      collateralAmount: request.collateral.amount.toString(),
-      borrowAmount: request.borrow.amount.toString(),
-      ltvMaxBps: request.ltvMaxBps.toString(),
-      depositWindowSeconds: request.depositWindowSeconds.toString(),
-      borrowDestination,
-      refundDestination,
+      collateralPoolId: snapshot.collateral.poolId,
+      borrowPoolId: snapshot.borrow.poolId,
+      collateralAsset: snapshot.collateral.asset,
+      borrowAsset: snapshot.borrow.asset,
+      collateralAmount: snapshot.collateral.amount.toString(),
+      borrowAmount: snapshot.borrow.amount.toString(),
+      ltvMaxBps: snapshot.ltvMaxBps.toString(),
+      depositWindowSeconds: snapshot.depositWindowSeconds.toString(),
+      borrowDestination: destinations.borrowDestination,
+      refundDestination: destinations.refundDestination,
     });
 
     const loanId = parseUnsignedApiBigint(response.loan.loanId, {
@@ -411,22 +398,46 @@ export class SimpleLoansModule {
       label: "loan ID",
     });
 
-    try {
-      const collateralAmount = parseUnsignedApiBigint(
-        response.loan.collateral.amountHint,
-        {
-          context: SIMPLE_LOAN_WIRE_CONTEXT,
-          label: "collateral amount",
-        }
-      );
-      const record = await this.getLoanRecord(loanId);
+    // The API picks the loan ID. Only hand back funding targets for a canister
+    // loan that has exactly the destinations and terms this call asked for.
+    // A mismatch is not a recoverable SimpleLoanCreatedError: recovering it
+    // would show the other loan's targets.
+    return await this.hydrateCreatedLoan(
+      loanId,
+      { request: snapshot, ...destinations },
+      (cause) => new SimpleLoanCreatedError(loanId, cause)
+    );
+  }
 
-      return await this.mapLoanRecord(record, collateralAmount, {
-        borrowChain: request.borrow.chain,
-      });
-    } catch (cause) {
-      throw new SimpleLoanCreatedError(loanId, cause);
-    }
+  /**
+   * Loads a loan after `create(...)` threw {@link SimpleLoanCreatedError} and
+   * returns funding targets only if it still matches the creation request.
+   *
+   * Runs the same checks as `create(...)`: pools, assets, borrow amount,
+   * borrow and refund destinations, max LTV, deposit window, and that the
+   * loan has not started or seen a deposit. The initial deposit uses
+   * `request.collateral.amount`. Pass the same request you passed to
+   * `create(...)`. Use `get(...)` to follow a loan after it has been funded.
+   *
+   * @param target - The error's `loanId` or `ref`.
+   * @param request - The request passed to the `create(...)` call that threw.
+   * @returns Hydrated loan state plus generated initial-deposit and repayment quote targets.
+   * @throws {@link LiquidiumError} With `VALIDATION_ERROR` if the loan does not
+   * match the request or has already started; do not fund it. Lookup failures
+   * throw their own error and can be retried.
+   */
+  async recoverCreated(
+    target: SimpleLoanGetRequest,
+    request: CreateSimpleLoanRequest
+  ): Promise<SimpleLoan> {
+    const snapshot = snapshotCreateRequest(request);
+    const loanId = "loanId" in target ? target.loanId : decodeRef(target.ref);
+    const destinations = resolveCreateDestinations(snapshot);
+
+    return await this.hydrateCreatedLoan(loanId, {
+      request: snapshot,
+      ...destinations,
+    });
   }
 
   /**
@@ -981,6 +992,45 @@ export class SimpleLoansModule {
     return this.apiClient;
   }
 
+  /**
+   * Loads a just-created loan and returns funding targets only while the
+   * canister record matches `expected` and has no deposit. `wrapLoadError`
+   * wraps lookup and hydration failures; mismatches are thrown as-is.
+   */
+  private async hydrateCreatedLoan(
+    loanId: bigint,
+    expected: SimpleLoanCreateExpectation,
+    wrapLoadError: (cause: unknown) => unknown = (cause) => cause
+  ): Promise<SimpleLoan> {
+    const load = async <T>(work: () => Promise<T>): Promise<T> => {
+      try {
+        return await work();
+      } catch (cause) {
+        throw wrapLoadError(cause);
+      }
+    };
+    const { request } = expected;
+
+    const record = await load(() => this.getLoanRecord(loanId));
+    assertCreatedLoanMatchesRequest(record, expected);
+
+    const loan = await load(() =>
+      this.mapLoanRecord(record, request.collateral.amount, {
+        borrowChain: request.borrow.chain,
+      })
+    );
+
+    // A deposit can land while targets and fees load, which would leave the
+    // initial deposit quote above stale. Check the record again before
+    // handing the targets back.
+    assertCreatedLoanMatchesRequest(
+      await load(() => this.getLoanRecord(loanId)),
+      expected
+    );
+
+    return loan;
+  }
+
   private async validateSimpleLoanLtvPolicy(
     request: CreateSimpleLoanRequest
   ): Promise<void> {
@@ -1288,6 +1338,143 @@ function validateCreateRequest(request: CreateSimpleLoanRequest): void {
       "Simple loan deposit window must be greater than zero seconds"
     );
   }
+}
+
+const EVM_ADDRESS_PATTERN = /^0x[0-9a-fA-F]{40}$/;
+
+/** Canister-format destinations `create()` sends for a request. */
+interface SimpleLoanCreateDestinations {
+  borrowDestination: SimpleLoanApiAccountType;
+  refundDestination: SimpleLoanApiAccountType;
+}
+
+/** The creation request and the destinations `create()` sent for it. */
+interface SimpleLoanCreateExpectation extends SimpleLoanCreateDestinations {
+  request: CreateSimpleLoanRequest;
+}
+
+function resolveCreateDestinations(
+  request: CreateSimpleLoanRequest
+): SimpleLoanCreateDestinations {
+  return {
+    borrowDestination: resolveSimpleLoanDestination({
+      destination: request.borrow.destination,
+      asset: request.borrow.asset,
+      role: "borrow",
+      chain: request.borrow.chain,
+      normalizeExternalDestination: validateSimpleLoanBorrowDestination,
+    }),
+    refundDestination: resolveSimpleLoanDestination({
+      destination: request.refund.destination,
+      asset: request.collateral.asset,
+      role: "refund",
+      chain: request.refund.chain,
+      normalizeExternalDestination: validateSimpleLoanRefundDestination,
+    }),
+  };
+}
+
+function snapshotCreateRequest(
+  request: CreateSimpleLoanRequest
+): CreateSimpleLoanRequest {
+  return {
+    collateral: {
+      poolId: request.collateral.poolId,
+      asset: request.collateral.asset,
+      amount: request.collateral.amount,
+    },
+    borrow: {
+      ...request.borrow,
+      destination: snapshotDestination(request.borrow.destination),
+    },
+    refund: {
+      chain: request.refund.chain,
+      destination: snapshotDestination(request.refund.destination),
+    },
+    ltvMaxBps: request.ltvMaxBps,
+    depositWindowSeconds: request.depositWindowSeconds,
+  };
+}
+
+function snapshotDestination(
+  destination: SimpleLoanDestination
+): SimpleLoanDestination {
+  return typeof destination === "string"
+    ? destination
+    : { address: destination.address, type: destination.type };
+}
+
+function assertCreatedLoanMatchesRequest(
+  record: DecodedSimpleLoanCanisterRecord,
+  expected: SimpleLoanCreateExpectation
+): void {
+  const { request } = expected;
+  const checks: [string, boolean][] = [
+    [
+      "collateral pool",
+      record.lend_pool_id.toText() === request.collateral.poolId,
+    ],
+    ["collateral asset", record.lend_asset === request.collateral.asset],
+    ["borrow pool", record.borrow_pool_id.toText() === request.borrow.poolId],
+    ["borrow asset", record.borrow_asset === request.borrow.asset],
+    ["borrow amount", record.borrow_amount === request.borrow.amount],
+    [
+      "borrow destination",
+      canisterAccountMatches(
+        record.borrow_destination,
+        expected.borrowDestination
+      ),
+    ],
+    [
+      "refund destination",
+      canisterAccountMatches(
+        record.refund_destination,
+        expected.refundDestination
+      ),
+    ],
+    ["max LTV", record.ltv_max_bps === request.ltvMaxBps],
+    ["deposit window", record.ltv_timer_s === request.depositWindowSeconds],
+    [
+      "new loan state",
+      !record.started && record.deposit_detected_ts.length === 0,
+    ],
+  ];
+  const mismatches = checks.filter(([, matches]) => !matches);
+
+  if (mismatches.length > 0) {
+    throw new LiquidiumError(
+      LiquidiumErrorCode.VALIDATION_ERROR,
+      `Simple loan ${record.id.toString()} does not match the creation request (${mismatches
+        .map(([field]) => field)
+        .join(", ")}). Do not fund it.`
+    );
+  }
+}
+
+function canisterAccountMatches(
+  stored: DecodedSimpleLoanCanisterRecord["borrow_destination"],
+  sent: SimpleLoanApiAccountType
+): boolean {
+  const account = accountFromCanister(stored);
+
+  if ("External" in sent) {
+    if (account.type !== "ChainAddress") return false;
+    // EVM addresses are case-insensitive; other chain addresses are not.
+    return EVM_ADDRESS_PATTERN.test(sent.External)
+      ? account.address.toLowerCase() === sent.External.toLowerCase()
+      : account.address === sent.External;
+  }
+  if ("Native" in sent) {
+    return account.type === "IcPrincipal" && account.address === sent.Native;
+  }
+  if ("AccountIdentifier" in sent) {
+    return (
+      account.type === "IcpAccountIdentifier" &&
+      account.address.toLowerCase() === sent.AccountIdentifier
+    );
+  }
+
+  return account.type === "IcrcAccount" && account.address === sent.Icrc;
 }
 
 function throwLtvCalculationError(

@@ -2,7 +2,11 @@ import { Actor } from "@icp-sdk/core/agent";
 import { Principal } from "@icp-sdk/core/principal";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { mockDeep } from "vitest-mock-extended";
-import { encodeIcpAccountIdentifier } from "../../../core/accounts";
+import {
+  decodeIcrcAccountAddress,
+  encodeIcpAccountIdentifier,
+} from "../../../core/accounts";
+import type { FlexibleSimpleLoanCanisterRecord } from "../../../core/canisters/simple-loans/flexible-actor";
 import { DEFAULT_API_BASE_URL } from "../../../core/config";
 import {
   type CreateSimpleLoanRequest,
@@ -113,13 +117,7 @@ describe("SimpleLoansModule create", () => {
         });
       });
     mockSimpleLoanCreateHydrationActors({
-      getLoan: vi.fn().mockResolvedValue({
-        Ok: createSimpleLoan({
-          lend_asset: { ETH: null },
-          lend_pool_id: Principal.fromText(ETH_POOL_ID),
-          refund_destination: { External: CANISTER_EVM_BORROW_ADDRESS },
-        }),
-      }),
+      getLoan: getLoanMatchingCreatePost(),
       btcMinterDepositFee: 2_000n,
       icrc1Fee: 2_000_000_000_000n,
     });
@@ -228,14 +226,7 @@ describe("SimpleLoansModule create", () => {
         });
       });
     mockSimpleLoanCreateHydrationActors({
-      getLoan: vi.fn().mockResolvedValue({
-        Ok: createSimpleLoan({
-          borrow_asset: { ETH: null },
-          borrow_amount: MINIMUM_ETH_BORROW_AMOUNT_WEI,
-          borrow_pool_id: Principal.fromText(ETH_POOL_ID),
-          borrow_destination: { External: CANISTER_EVM_BORROW_ADDRESS },
-        }),
-      }),
+      getLoan: getLoanMatchingCreatePost(),
       btcMinterDepositFee: BTC_MINTER_DEPOSIT_FEE_SATS,
       icrc1Fee: ICRC_LEDGER_FEE_BASE_UNITS,
     });
@@ -271,8 +262,8 @@ describe("SimpleLoansModule create", () => {
     const BTC_MINTER_DEPOSIT_FEE_SATS = 2_000n;
     const CKBTC_LEDGER_FEE_SATS = 10n;
     const EXPIRY_TIMESTAMP_SECONDS = 1_775_235_600n;
-    const getLoan = vi.fn().mockResolvedValue({
-      Ok: createSimpleLoan({ expires_at: [EXPIRY_TIMESTAMP_SECONDS] }),
+    const getLoan = getLoanMatchingCreatePost({
+      expires_at: [EXPIRY_TIMESTAMP_SECONDS],
     });
     const fetchSpy = vi
       .spyOn(globalThis, "fetch")
@@ -373,7 +364,7 @@ describe("SimpleLoansModule create", () => {
     });
     expect(loan.collateral.amount).toBe(10_000_000n);
     expect(loan.terms).toEqual({
-      ltvMaxBps: 6_800n,
+      ltvMaxBps: 6_000n,
       depositWindowSeconds: 3_600n,
     });
     expect(loan.repayment).toMatchObject({
@@ -398,7 +389,7 @@ describe("SimpleLoansModule create", () => {
       chain: "ETH",
       destination: {
         type: "ChainAddress",
-        address: CANISTER_EVM_BORROW_ADDRESS,
+        address: CHECKSUM_EVM_BORROW_ADDRESS,
       },
     });
     expect(loan.initialDeposit).toMatchObject({
@@ -462,11 +453,7 @@ describe("SimpleLoansModule create", () => {
       });
 
     mockSimpleLoanCreateHydrationActors({
-      getLoan: vi.fn().mockResolvedValue({
-        Ok: createSimpleLoan({
-          borrow_destination: { Native: Principal.fromText(PROFILE_ID) },
-        }),
-      }),
+      getLoan: getLoanMatchingCreatePost(),
       btcMinterDepositFee: 2_000n,
       icrc1Fee: CKBTC_LEDGER_FEE_SATS,
     });
@@ -601,13 +588,8 @@ describe("SimpleLoansModule create", () => {
           });
         });
       mockSimpleLoanCreateHydrationActors({
-        getLoan: vi.fn().mockResolvedValue({
-          Ok: createSimpleLoan({
-            borrow_destination: canisterDestination as never,
-            borrow_amount: DEFAULT_ICP_AMOUNT_E8S,
-            borrow_pool_id: Principal.fromText(ICP_POOL_ID),
-            borrow_asset: { ICP: null },
-          }),
+        getLoan: getLoanMatchingCreatePost({
+          borrow_destination: canisterDestination as never,
         }),
         btcMinterDepositFee: 2_000n,
         icrc1Fee: 10n,
@@ -681,7 +663,7 @@ describe("SimpleLoansModule create", () => {
         });
       });
     mockSimpleLoanCreateHydrationActors({
-      getLoan: vi.fn().mockResolvedValue({ Ok: createSimpleLoan() }),
+      getLoan: getLoanMatchingCreatePost(),
       btcMinterDepositFee: 2_000n,
       icrc1Fee: 10n,
       icrc1FeeMock: icrc1Fee,
@@ -708,6 +690,302 @@ describe("SimpleLoansModule create", () => {
       fetchSpy.mock.calls.filter(([, init]) => init?.method === "POST")
     ).toHaveLength(1);
   });
+
+  test.each([
+    {
+      field: "borrow destination",
+      record: { borrow_destination: { External: CANISTER_EVM_BORROW_ADDRESS } },
+    },
+    {
+      field: "refund destination",
+      record: {
+        refund_destination: {
+          External: "bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq",
+        },
+      },
+    },
+    {
+      field: "collateral pool",
+      record: { lend_pool_id: Principal.fromText(ETH_POOL_ID) },
+    },
+    { field: "collateral asset", record: { lend_asset: { ETH: null } } },
+    {
+      field: "borrow pool",
+      record: { borrow_pool_id: Principal.fromText(ETH_POOL_ID) },
+    },
+    { field: "borrow asset", record: { borrow_asset: { ETH: null } } },
+    {
+      field: "borrow amount",
+      record: { borrow_amount: DEFAULT_BORROW_AMOUNT_BASE_UNITS + 1n },
+    },
+    { field: "max LTV", record: { ltv_max_bps: DEFAULT_LTV_MAX_BPS + 1n } },
+    {
+      field: "deposit window",
+      record: { ltv_timer_s: DEFAULT_DEPOSIT_WINDOW_SECONDS + 1n },
+    },
+    { field: "new loan state", record: { started: true } },
+    { field: "new loan state", record: { deposit_detected_ts: [1n] } },
+  ])(
+    "rejects an API-selected loan whose $field differs from the request",
+    async ({ field, record }) => {
+      // given
+      mockSimpleLoanCreatePost({ amountHint: "10000000" });
+      mockSimpleLoanCreateHydrationActors({
+        getLoan: getLoanMatchingCreatePost(record as never),
+        btcMinterDepositFee: 2_000n,
+        icrc1Fee: 10n,
+      });
+      const client = new LiquidiumClient({});
+
+      // when
+      const error = await client.simpleLoans
+        .create(createSimpleLoanRequest())
+        .catch((cause: unknown) => cause);
+
+      // then
+      expect(error).not.toBeInstanceOf(SimpleLoanCreatedError);
+      expect(error).toMatchObject({
+        code: LiquidiumErrorCode.VALIDATION_ERROR,
+        message: expect.stringContaining(`(${field})`),
+      });
+    }
+  );
+
+  test("rejects an API-selected loan whose ICRC destination has another subaccount", async () => {
+    // given
+    mockSimpleLoanCreatePost({ amountHint: "10000000" });
+    mockSimpleLoanCreateHydrationActors({
+      getLoan: getLoanMatchingCreatePost({
+        borrow_destination: {
+          Icrc: {
+            owner: Principal.fromText(PROFILE_ID),
+            subaccount: [new Uint8Array(32).fill(8)],
+          },
+        } as never,
+      }),
+      btcMinterDepositFee: 2_000n,
+      icrc1Fee: 10n,
+    });
+    const client = new LiquidiumClient({});
+
+    // when
+    const result = client.simpleLoans.create(
+      createSimpleLoanRequest({
+        borrow: {
+          poolId: ICP_POOL_ID,
+          asset: "ICP",
+          amount: DEFAULT_ICP_AMOUNT_E8S,
+          chain: "ICP",
+          destination: {
+            type: "IcrcAccount",
+            address: VALID_ICRC_DESTINATION,
+          },
+        },
+      })
+    );
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message: expect.stringContaining("(borrow destination)"),
+    });
+  });
+
+  test("accepts a stored EVM destination that differs only in case", async () => {
+    // given
+    mockSimpleLoanCreatePost({ amountHint: "10000000" });
+    mockSimpleLoanCreateHydrationActors({
+      getLoan: getLoanMatchingCreatePost({
+        borrow_destination: { External: LOWERCASE_EVM_BORROW_ADDRESS },
+      }),
+      btcMinterDepositFee: 2_000n,
+      icrc1Fee: 10n,
+    });
+    const client = new LiquidiumClient({});
+
+    // when
+    const loan = await client.simpleLoans.create(createSimpleLoanRequest());
+
+    // then
+    expect(loan.borrow.destination).toMatchObject({
+      type: "ChainAddress",
+      address: LOWERCASE_EVM_BORROW_ADDRESS,
+    });
+  });
+
+  test("uses the requested collateral amount instead of the API hint", async () => {
+    // given
+    mockSimpleLoanCreatePost({ amountHint: "1" });
+    mockSimpleLoanCreateHydrationActors({
+      getLoan: getLoanMatchingCreatePost(),
+      btcMinterDepositFee: 2_000n,
+      icrc1Fee: 10n,
+    });
+    const client = new LiquidiumClient({});
+
+    // when
+    const loan = await client.simpleLoans.create(createSimpleLoanRequest());
+
+    // then
+    expect(loan.collateral.amount).toBe(DEFAULT_COLLATERAL_AMOUNT_BASE_UNITS);
+    expect(loan.initialDeposit.collateralAmount).toBe(
+      DEFAULT_COLLATERAL_AMOUNT_BASE_UNITS
+    );
+  });
+
+  test("ignores caller edits to the request while the POST is in flight", async () => {
+    // given
+    const request = createSimpleLoanRequest();
+    const fetchSpy = mockSimpleLoanCreatePost({ amountHint: "10000000" });
+    const respond = fetchSpy.getMockImplementation();
+    fetchSpy.mockImplementation(async (input, init) => {
+      if (init?.method === "POST") {
+        request.collateral.amount = 1n;
+        request.borrow.amount = 1n;
+        request.borrow.destination = LOWERCASE_EVM_BORROW_ADDRESS.replace(
+          /.$/,
+          "0"
+        );
+      }
+      return await (respond as typeof fetch)(input, init);
+    });
+    mockSimpleLoanCreateHydrationActors({
+      getLoan: getLoanMatchingCreatePost(),
+      btcMinterDepositFee: 2_000n,
+      icrc1Fee: 10n,
+    });
+    const client = new LiquidiumClient({});
+
+    // when
+    const loan = await client.simpleLoans.create(request);
+
+    // then
+    expect(loan.collateral.amount).toBe(DEFAULT_COLLATERAL_AMOUNT_BASE_UNITS);
+    expect(loan.initialDeposit.collateralAmount).toBe(
+      DEFAULT_COLLATERAL_AMOUNT_BASE_UNITS
+    );
+    expect(loan.borrow.amount).toBe(DEFAULT_BORROW_AMOUNT_BASE_UNITS);
+  });
+
+  test("recovers a created loan with the create checks after the first lookup times out", async () => {
+    // given
+    mockSimpleLoanCreatePost({ amountHint: "1" });
+    const getLoan = getLoanMatchingCreatePost().mockRejectedValueOnce(
+      new Error("canister query timed out")
+    );
+    mockSimpleLoanCreateHydrationActors({
+      getLoan,
+      btcMinterDepositFee: 2_000n,
+      icrc1Fee: 10n,
+    });
+    const client = new LiquidiumClient({});
+    const request = createSimpleLoanRequest();
+    const error = await client.simpleLoans
+      .create(request)
+      .catch((cause: unknown) => cause);
+    expect(error).toBeInstanceOf(SimpleLoanCreatedError);
+
+    // when
+    const loan = await client.simpleLoans.recoverCreated(
+      { loanId: (error as SimpleLoanCreatedError).loanId },
+      request
+    );
+
+    // then
+    expect(loan.loanId).toBe(LOAN_ID);
+    expect(loan.initialDeposit.collateralAmount).toBe(
+      DEFAULT_COLLATERAL_AMOUNT_BASE_UNITS
+    );
+  });
+
+  test.each([
+    {
+      field: "refund destination",
+      record: {
+        refund_destination: {
+          External: "bc1qar0srrr7xfkvy5l643lydnw9re59gtzzwf5mdq",
+        },
+      },
+    },
+    { field: "borrow amount", record: { borrow_amount: 1n } },
+    { field: "new loan state", record: { deposit_detected_ts: [1n] } },
+  ])(
+    "recoverCreated rejects a loan whose $field differs from the request",
+    async ({ field, record }) => {
+      // given
+      mockSimpleLoanCreatePost({ amountHint: "10000000" });
+      const getLoan = getLoanMatchingCreatePost(
+        record as never
+      ).mockRejectedValueOnce(new Error("canister query timed out"));
+      mockSimpleLoanCreateHydrationActors({
+        getLoan,
+        btcMinterDepositFee: 2_000n,
+        icrc1Fee: 10n,
+      });
+      const client = new LiquidiumClient({});
+      const request = createSimpleLoanRequest();
+      const created = await client.simpleLoans
+        .create(request)
+        .catch((cause: unknown) => cause as SimpleLoanCreatedError);
+
+      // when
+      const result = client.simpleLoans.recoverCreated(
+        { ref: created.ref },
+        request
+      );
+
+      // then
+      await expect(result).rejects.toMatchObject({
+        code: LiquidiumErrorCode.VALIDATION_ERROR,
+        message: expect.stringContaining(`(${field})`),
+      });
+    }
+  );
+
+  test.each(["create", "recoverCreated"] as const)(
+    "%s rejects a loan that sees a deposit while its targets load",
+    async (method) => {
+      // given
+      mockSimpleLoanCreatePost({ amountHint: "10000000" });
+      const getLoan = getLoanMatchingCreatePost();
+      const deposited = getLoanMatchingCreatePost({
+        deposit_detected_ts: [1n],
+      }).getMockImplementation();
+      mockSimpleLoanCreateHydrationActors({
+        getLoan,
+        btcMinterDepositFee: 2_000n,
+        icrc1Fee: 10n,
+      });
+      const respond = vi.mocked(globalThis.fetch).getMockImplementation();
+      vi.mocked(globalThis.fetch).mockImplementation(async (input, init) => {
+        // Hydration reads activities after the first record check.
+        if (input.toString().includes("/activities?")) {
+          getLoan.mockImplementation(deposited as never);
+        }
+        return await (respond as typeof fetch)(input, init);
+      });
+      const client = new LiquidiumClient({});
+      const request = createSimpleLoanRequest();
+      if (method === "recoverCreated") {
+        getLoan.mockRejectedValueOnce(new Error("canister query timed out"));
+        await expect(client.simpleLoans.create(request)).rejects.toBeInstanceOf(
+          SimpleLoanCreatedError
+        );
+      }
+
+      // when
+      const result =
+        method === "create"
+          ? client.simpleLoans.create(request)
+          : client.simpleLoans.recoverCreated({ loanId: LOAN_ID }, request);
+
+      // then
+      await expect(result).rejects.toMatchObject({
+        code: LiquidiumErrorCode.VALIDATION_ERROR,
+        message: expect.stringContaining("(new loan state)"),
+      });
+    }
+  );
 
   test("rejects an invalid ICP borrow destination before creating the loan", async () => {
     // given
@@ -1726,4 +2004,79 @@ function mockSimpleLoanCreateHydrationActors(params: {
     icrc1_fee:
       params.icrc1FeeMock ?? vi.fn().mockResolvedValue(params.icrc1Fee),
   } as never);
+}
+
+function getLoanMatchingCreatePost(
+  overrides: Partial<FlexibleSimpleLoanCanisterRecord> = {}
+): ReturnType<typeof vi.fn> {
+  return vi.fn().mockImplementation(async () => {
+    const post = vi
+      .mocked(globalThis.fetch)
+      .mock.calls.find(([, init]) => init?.method === "POST");
+    const body = JSON.parse(post?.[1]?.body as string);
+
+    return {
+      Ok: createSimpleLoan({
+        lend_pool_id: Principal.fromText(body.collateralPoolId),
+        lend_asset: { [body.collateralAsset]: null } as never,
+        borrow_pool_id: Principal.fromText(body.borrowPoolId),
+        borrow_asset: { [body.borrowAsset]: null } as never,
+        borrow_amount: BigInt(body.borrowAmount),
+        ltv_max_bps: BigInt(body.ltvMaxBps),
+        ltv_timer_s: BigInt(body.depositWindowSeconds),
+        borrow_destination: canisterAccountFromWire(body.borrowDestination),
+        refund_destination: canisterAccountFromWire(body.refundDestination),
+        ...overrides,
+      }),
+    };
+  });
+}
+
+function canisterAccountFromWire(
+  account: Record<string, string>
+): FlexibleSimpleLoanCanisterRecord["borrow_destination"] {
+  if ("Native" in account) {
+    return { Native: Principal.fromText(account.Native as string) };
+  }
+  if ("Icrc" in account) {
+    const decoded = decodeIcrcAccountAddress(account.Icrc as string);
+    return {
+      Icrc: {
+        owner: decoded.owner,
+        subaccount: decoded.subaccount ? [decoded.subaccount] : [],
+      },
+    };
+  }
+
+  return account as never;
+}
+
+function mockSimpleLoanCreatePost(params: { amountHint: string }) {
+  return vi
+    .spyOn(globalThis, "fetch")
+    .mockImplementation(async (input, init) => {
+      if (init?.method === "POST") {
+        return new Response(
+          JSON.stringify({
+            success: true,
+            loan: {
+              loanId: LOAN_ID.toString(),
+              collateral: { amountHint: params.amountHint },
+            },
+          }),
+          { status: 200, headers: { "content-type": "application/json" } }
+        );
+      }
+      if (input.toString().includes("/activities?")) {
+        return new Response(JSON.stringify({ activities: [] }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        });
+      }
+
+      return new Response(JSON.stringify({ error: "not found" }), {
+        status: 404,
+        headers: { "content-type": "application/json" },
+      });
+    });
 }
