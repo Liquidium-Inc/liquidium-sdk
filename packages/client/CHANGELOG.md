@@ -1,5 +1,11 @@
 # @liquidium/client
 
+## 0.12.2
+
+### Patch Changes
+
+- Add optional `partner` config on `LiquidiumClient` to send `x-liquidium-partner` on SDK API requests and dispatch non-blocking best-effort partner attribution hints for ICP supply transfers, ETH stablecoin deposit-address transfers, and borrow/withdraw outflows. Require `poolId` when submitting `chain: "ICP"` inflows directly via `lending.submitInflow(...)`.
+
 ## 0.12.1
 
 ### Patch Changes
