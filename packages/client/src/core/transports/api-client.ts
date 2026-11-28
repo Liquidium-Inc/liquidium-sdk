@@ -8,9 +8,17 @@ const HTTP_METHOD_GET = "GET";
 const HTTP_METHOD_POST = "POST";
 const MIME_TYPE_APPLICATION_JSON = "application/json";
 
+export interface ApiPostOptions {
+  timeoutMs?: number;
+}
+
 export interface ApiClient {
   get<T>(path: string): Promise<T>;
-  post<TResponse, TBody>(path: string, body: TBody): Promise<TResponse>;
+  post<TResponse, TBody>(
+    path: string,
+    body: TBody,
+    options?: ApiPostOptions
+  ): Promise<TResponse>;
 }
 
 interface CreateApiClientOptions {
@@ -57,13 +65,19 @@ export function createApiClient(opts: CreateApiClientOptions): ApiClient {
     },
     async post<TResponse, TBody>(
       path: string,
-      body: TBody
+      body: TBody,
+      options?: ApiPostOptions
     ): Promise<TResponse> {
-      return await sendRequest<TResponse>(normalizedOpts, {
-        path,
-        method: HTTP_METHOD_POST,
-        body,
-      });
+      return await sendRequest<TResponse>(
+        options?.timeoutMs !== undefined
+          ? { ...normalizedOpts, timeoutMs: options.timeoutMs }
+          : normalizedOpts,
+        {
+          path,
+          method: HTTP_METHOD_POST,
+          body,
+        }
+      );
     },
   };
 }

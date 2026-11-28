@@ -1298,4 +1298,112 @@ Nonce: 17`);
       },
     });
   });
+
+  test("posts best-effort partner outflow attribution after borrow when partner is set", async () => {
+    // given
+    const OUTFLOW_ID = "outflow-partner-borrow";
+    const PARTNER = "oisy";
+    const borrowAssets = vi.fn().mockResolvedValue({
+      Ok: {
+        id: OUTFLOW_ID,
+        txid: [],
+        outflow_type: { Borrow: null },
+        outflow_ref: [],
+        amount: 10_000n,
+        receiver: { External: VALID_BTC_OUTFLOW_ADDRESS },
+      },
+    });
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord()]),
+      get_nonce: vi.fn().mockResolvedValue(17n),
+      borrow_assets: borrowAssets,
+    } as never);
+    const customFetch = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(JSON.stringify({ outflowId: OUTFLOW_ID }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      })
+    );
+    const client = new LiquidiumClient({
+      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
+      partner: PARTNER,
+      fetch: customFetch,
+    });
+
+    // when
+    const borrowAction = await client.lending.prepareBorrow({
+      profileId: "aaaaa-aa",
+      poolId: BTC_POOL_ID,
+      amount: 10_000n,
+      chain: Chain.BTC,
+      receiver: VALID_BTC_OUTFLOW_ADDRESS,
+      signerWalletAddress: "0xsigner",
+    });
+    const result = await borrowAction.submit({
+      signature: "0xsigned",
+      chain: "ETH",
+    });
+
+    // then
+    expect(result.id).toBe(OUTFLOW_ID);
+    expect(customFetch).toHaveBeenCalledWith(
+      "https://app.liquidium.fi/api/sdk/v2/outflow",
+      expect.objectContaining({
+        method: "POST",
+        headers: {
+          "x-liquidium-partner": PARTNER,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          outflowId: OUTFLOW_ID,
+          operation: "borrow",
+        }),
+      })
+    );
+  });
+
+  test("does not fail borrow when partner outflow attribution request fails", async () => {
+    // given
+    const OUTFLOW_ID = "outflow-partner-borrow-fail";
+    vi.spyOn(Actor, "createActor").mockReturnValue({
+      list_pools: vi.fn().mockResolvedValue([createBtcPoolRecord()]),
+      get_nonce: vi.fn().mockResolvedValue(17n),
+      borrow_assets: vi.fn().mockResolvedValue({
+        Ok: {
+          id: OUTFLOW_ID,
+          txid: [],
+          outflow_type: { Borrow: null },
+          outflow_ref: [],
+          amount: 10_000n,
+          receiver: { External: VALID_BTC_OUTFLOW_ADDRESS },
+        },
+      }),
+    } as never);
+    const customFetch = vi
+      .fn<typeof fetch>()
+      .mockRejectedValue(new Error("attribution unavailable"));
+    const client = new LiquidiumClient({
+      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
+      partner: "oisy",
+      fetch: customFetch,
+    });
+
+    // when
+    const borrowAction = await client.lending.prepareBorrow({
+      profileId: "aaaaa-aa",
+      poolId: BTC_POOL_ID,
+      amount: 10_000n,
+      chain: Chain.BTC,
+      receiver: VALID_BTC_OUTFLOW_ADDRESS,
+      signerWalletAddress: "0xsigner",
+    });
+    const result = await borrowAction.submit({
+      signature: "0xsigned",
+      chain: "ETH",
+    });
+
+    // then
+    expect(result.id).toBe(OUTFLOW_ID);
+    expect(customFetch).toHaveBeenCalledTimes(1);
+  });
 });

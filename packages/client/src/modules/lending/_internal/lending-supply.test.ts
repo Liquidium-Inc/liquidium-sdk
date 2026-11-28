@@ -2207,4 +2207,159 @@ describe("LendingModule supply", () => {
     });
     expect(getDepositAddress).not.toHaveBeenCalled();
   });
+
+  test("posts best-effort partner attribution on ICP flow.submit when partner is set", async () => {
+    // given
+    const PROFILE_ID = "aaaaa-aa";
+    const BLOCK_INDEX = "987654";
+    const PARTNER = "oisy";
+    vi.spyOn(Actor, "createActor").mockReturnValueOnce({
+      list_pools: vi.fn().mockResolvedValue([createIcpPoolRecord()]),
+    } as never);
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      new Response(JSON.stringify({ txid: BLOCK_INDEX }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      })
+    );
+    const client = new LiquidiumClient({
+      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
+      partner: PARTNER,
+    });
+
+    // when
+    const flow = await client.lending.supply({
+      profileId: PROFILE_ID,
+      poolId: ICP_POOL_ID,
+      action: "deposit",
+      chain: "ICP",
+    });
+    const result = await flow.submit({ txid: BLOCK_INDEX, chain: undefined });
+
+    // then
+    expect(result).toEqual({ txid: BLOCK_INDEX });
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "https://app.liquidium.fi/api/sdk/v2/inflow",
+      expect.objectContaining({
+        method: "POST",
+        headers: {
+          "x-liquidium-partner": PARTNER,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          chain: "ICP",
+          poolId: ICP_POOL_ID,
+          operation: "deposit",
+          txid: BLOCK_INDEX,
+        }),
+      })
+    );
+  });
+
+  test("swallows partner attribution errors on ICP flow.submit", async () => {
+    // given
+    const PROFILE_ID = "aaaaa-aa";
+    const BLOCK_INDEX = "987655";
+    vi.spyOn(Actor, "createActor").mockReturnValueOnce({
+      list_pools: vi.fn().mockResolvedValue([createIcpPoolRecord()]),
+    } as never);
+    vi.spyOn(globalThis, "fetch").mockRejectedValueOnce(
+      new Error("network down")
+    );
+    const client = new LiquidiumClient({
+      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
+      partner: "oisy",
+    });
+
+    // when
+    const flow = await client.lending.supply({
+      profileId: PROFILE_ID,
+      poolId: ICP_POOL_ID,
+      action: "deposit",
+      chain: "ICP",
+    });
+    const result = await flow.submit({ txid: BLOCK_INDEX, chain: undefined });
+
+    // then
+    expect(result).toEqual({ txid: BLOCK_INDEX });
+  });
+
+  test("posts best-effort partner attribution on ETH stablecoin transfer flow.submit when partner is set", async () => {
+    // given
+    const PROFILE_ID = "aaaaa-aa";
+    const TXID = `0x${"ab".repeat(32)}`;
+    const PARTNER = "plug";
+    vi.spyOn(Actor, "createActor")
+      .mockReturnValueOnce({
+        list_pools: vi.fn().mockResolvedValue([createUsdcPoolRecord()]),
+      } as never)
+      .mockReturnValueOnce({
+        get_deposit_address: vi.fn().mockResolvedValue({
+          Ok: "0x2222222222222222222222222222222222222222",
+        }),
+      } as never);
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValueOnce(
+      new Response(JSON.stringify({ txid: TXID }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      })
+    );
+    const client = new LiquidiumClient({
+      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
+      partner: PARTNER,
+    });
+
+    // when
+    const flow = await client.lending.supply({
+      profileId: PROFILE_ID,
+      poolId: USDC_POOL_ID,
+      action: "deposit",
+      chain: "ETH",
+    });
+    const result = await flow.submit({ txid: TXID });
+
+    // then
+    expect(result).toEqual({ txid: TXID });
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "https://app.liquidium.fi/api/sdk/v2/inflow",
+      expect.objectContaining({
+        method: "POST",
+        headers: {
+          "x-liquidium-partner": PARTNER,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          chain: "ETH",
+          operation: "deposit",
+          txid: TXID,
+        }),
+      })
+    );
+  });
+
+  test("does not post on ICP flow.submit when no partner is configured", async () => {
+    // given
+    const PROFILE_ID = "aaaaa-aa";
+    const BLOCK_INDEX = "987656";
+    vi.spyOn(Actor, "createActor").mockReturnValueOnce({
+      list_pools: vi.fn().mockResolvedValue([createIcpPoolRecord()]),
+    } as never);
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    const client = new LiquidiumClient({
+      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
+    });
+
+    // when
+    const flow = await client.lending.supply({
+      profileId: PROFILE_ID,
+      poolId: ICP_POOL_ID,
+      action: "deposit",
+      chain: "ICP",
+    });
+    const result = await flow.submit({ txid: BLOCK_INDEX, chain: undefined });
+
+    // then
+    expect(result).toEqual({ txid: BLOCK_INDEX });
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
 });

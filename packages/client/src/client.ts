@@ -21,6 +21,13 @@ import { PositionsModule } from "./modules/positions";
 import { QuoteModule } from "./modules/quote";
 import { SimpleLoansModule } from "./modules/simple-loans";
 
+const PARTNER_HEADER_NAME = "x-liquidium-partner";
+
+interface ResolvedApiHeaders {
+  headers: Record<string, string> | undefined;
+  hasPartnerAttribution: boolean;
+}
+
 /**
  * Root client for Liquidium protocol integration (canister + optional HTTP API).
  *
@@ -67,9 +74,14 @@ export class LiquidiumClient {
       canisterIds,
     });
 
+    const { headers: apiHeaders, hasPartnerAttribution } = resolveApiHeaders(
+      config.headers,
+      config.partner
+    );
+
     this.apiClient = createApiClient({
       baseUrl: config.apiBaseUrl ?? DEFAULT_API_BASE_URL,
-      headers: config.headers,
+      headers: apiHeaders,
       fetchFn: config.fetch,
       timeoutMs,
     });
@@ -80,7 +92,8 @@ export class LiquidiumClient {
     this.lending = new LendingModule(
       this.canisterContext,
       this.apiClient,
-      this.evmReadClient
+      this.evmReadClient,
+      hasPartnerAttribution
     );
     this.liquidations = new LiquidationsModule(this.canisterContext);
     this.market = new MarketModule(this.canisterContext);
@@ -120,4 +133,61 @@ function resolveEvmReadClient(
         : undefined,
     }),
   });
+}
+
+function resolveApiHeaders(
+  headers: Record<string, string> | undefined,
+  partner: string | undefined
+): ResolvedApiHeaders {
+  const existingPartnerHeader = getPartnerHeaderEntry(headers);
+  const normalizedPartner = partner?.trim() || undefined;
+
+  if (existingPartnerHeader && existingPartnerHeader.value.length > 0) {
+    return {
+      headers,
+      hasPartnerAttribution: true,
+    };
+  }
+
+  if (!normalizedPartner) {
+    return {
+      headers,
+      hasPartnerAttribution: false,
+    };
+  }
+
+  const nextHeaders: Record<string, string> = {};
+  if (headers) {
+    for (const [key, value] of Object.entries(headers)) {
+      if (key.toLowerCase() !== PARTNER_HEADER_NAME) {
+        nextHeaders[key] = value;
+      }
+    }
+  }
+  nextHeaders[PARTNER_HEADER_NAME] = normalizedPartner;
+
+  return {
+    headers: nextHeaders,
+    hasPartnerAttribution: true,
+  };
+}
+
+function getPartnerHeaderEntry(
+  headers: Record<string, string> | undefined
+): { key: string; value: string } | undefined {
+  if (!headers) {
+    return undefined;
+  }
+
+  let match: { key: string; value: string } | undefined;
+  for (const [key, value] of Object.entries(headers)) {
+    if (key.toLowerCase() === PARTNER_HEADER_NAME) {
+      const trimmed = value.trim();
+      if (trimmed.length > 0) {
+        match = { key, value: trimmed };
+      }
+    }
+  }
+
+  return match;
 }

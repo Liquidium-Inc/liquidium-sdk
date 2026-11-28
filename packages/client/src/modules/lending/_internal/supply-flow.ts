@@ -78,8 +78,12 @@ type AllowanceExpectation = "zero" | "sufficient";
 interface SupplyFlowExecutorParams {
   canisterContext: CanisterContext;
   evmReadClient: EvmReadClient | undefined;
+  hasPartnerAttribution: boolean;
   requireApi(): void;
   submitInflow(request: SubmitInflowRequest): Promise<SubmitInflowResponse>;
+  submitPartnerInflowHint(
+    request: SubmitInflowRequest
+  ): Promise<SubmitInflowResponse>;
   estimateInflowFee(
     request: EstimateInflowFeeRequest
   ): Promise<InflowFeeEstimate>;
@@ -161,6 +165,7 @@ interface ApprovalStrategyParams {
 interface DefaultSubmitInflowRequestParams {
   action: SupplyAction;
   chain: string;
+  poolId: string;
 }
 
 interface ValidateDepositMinimumParams {
@@ -234,6 +239,7 @@ export class SupplyFlowExecutor {
       action: request.action,
       chain:
         mechanism === PlanType.contractInteraction ? Chain.ETH : target.chain,
+      poolId: target.poolId,
     });
 
     let txid: string | undefined;
@@ -478,6 +484,19 @@ export class SupplyFlowExecutor {
         // The transfer is already broadcast and cannot be rolled back.
         // Return the txid so callers can track it even if the indexing hint fails.
       }
+    } else if (
+      this.params.hasPartnerAttribution &&
+      defaultSubmitInflowRequest
+    ) {
+      try {
+        await this.params.submitPartnerInflowHint({
+          txid,
+          ...defaultSubmitInflowRequest,
+        });
+      } catch {
+        // Partner attribution for ICP and ETH stablecoin transfers is
+        // best-effort and must not fail already-broadcast transfers.
+      }
     }
 
     return txid;
@@ -487,6 +506,23 @@ export class SupplyFlowExecutor {
     params: SubmitSupplyFlowInflowParams
   ): Promise<SubmitInflowResponse> {
     if (!shouldSubmitInflow(params)) {
+      if (
+        this.params.hasPartnerAttribution &&
+        params.defaultSubmitInflowRequest
+      ) {
+        try {
+          await this.params.submitPartnerInflowHint(
+            buildSupplyFlowSubmitRequest(
+              params.defaultSubmitInflowRequest,
+              params.submitRequest
+            )
+          );
+        } catch {
+          // Partner attribution for ICP and ETH stablecoin transfers is
+          // best-effort and must not fail already-broadcast transfers.
+        }
+      }
+
       return {
         txid: params.submitRequest.txid,
       };
@@ -500,10 +536,12 @@ export class SupplyFlowExecutor {
       );
     }
 
-    return await this.params.submitInflow({
-      ...defaultSubmitInflowRequest,
-      ...params.submitRequest,
-    });
+    return await this.params.submitInflow(
+      buildSupplyFlowSubmitRequest(
+        defaultSubmitInflowRequest,
+        params.submitRequest
+      )
+    );
   }
 
   private async executeContractSupply(
@@ -954,9 +992,45 @@ function getUnknownErrorMessage(error: unknown): string | null {
   return null;
 }
 
+function buildSupplyFlowSubmitRequest(
+  defaults: SubmitInflowDefaults,
+  submitRequest: SubmitSupplyFlowInflowRequest
+): SubmitInflowRequest {
+  const chain = submitRequest.chain ?? defaults.chain;
+  if (chain === Chain.ICP && defaults.poolId) {
+    return {
+      chain,
+      poolId: defaults.poolId,
+      operation: defaults.operation,
+      txid: submitRequest.txid,
+    };
+  }
+
+  if (chain !== undefined) {
+    return {
+      chain,
+      operation: defaults.operation,
+      txid: submitRequest.txid,
+    };
+  }
+
+  return {
+    operation: defaults.operation,
+    txid: submitRequest.txid,
+  };
+}
+
 function getDefaultSubmitInflowRequest(
   params: DefaultSubmitInflowRequestParams
 ): SubmitInflowDefaults | null {
+  if (params.chain === Chain.ICP) {
+    return {
+      chain: Chain.ICP,
+      poolId: params.poolId,
+      operation: mapSupplyActionToStatusOperation(params.action),
+    };
+  }
+
   if (
     params.chain !== Chain.BTC &&
     params.chain !== Chain.ETH &&

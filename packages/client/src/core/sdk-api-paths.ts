@@ -44,6 +44,7 @@ const ACTIVITIES = `${SDK_API_V2_PATH}/activities`;
 const HISTORY_ACTIVITIES = `${SDK_API_V2_PATH}/history/activities`;
 const HISTORY_USERS = `${SDK_API_V2_PATH}/history/users`;
 const INFLOW = `${SDK_API_V2_PATH}/inflow`;
+const OUTFLOW = `${SDK_API_V2_PATH}/outflow`;
 const SIMPLE_LOANS = `${SDK_API_V1_PATH}/instant-loans`;
 
 export function buildEthereumAddressBytecodePath(
@@ -120,5 +121,6 @@ export function buildSimpleLoanCollateralHintPath(
 export const SdkApiPath = {
   solInflowFee: `${SDK_API_V2_PATH}/solana/inflow-fee`,
   inflow: INFLOW,
+  outflow: OUTFLOW,
   simpleLoans: SIMPLE_LOANS,
 } as const;

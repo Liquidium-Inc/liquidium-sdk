@@ -38,6 +38,7 @@ The client accepts the following configuration fields:
 | `identity` | Sends signed canister calls with a caller identity. |
 | `apiBaseUrl` | Overrides the Liquidium SDK HTTP API root. The default is `https://app.liquidium.fi/api/sdk`. |
 | `headers` | Adds headers to SDK HTTP API requests. |
+| `partner` | Optional allowlisted partner identifier sent as `x-liquidium-partner` on SDK API requests for attribution (an explicit `x-liquidium-partner` header takes precedence). When configured, the SDK also sends best-effort attribution hints for ICP supply transfers, ETH stablecoin deposit-address transfers, and borrow/withdraw outflows. |
 | `canisterIds` | Partially overrides `lending`, `ethDeposit`, `simpleLoans`, or `pools.{btc,eth,usdt,usdc,icp,sol}` for custom deployments. The bundled mainnet SOL pool is `xhh4q-qyaaa-aaaar-qci2q-cai`. |
 | `fetch` | Provides a custom fetch implementation. |
 | `timeoutMs` | Sets the SDK API request timeout in milliseconds. The default is `30_000`. |

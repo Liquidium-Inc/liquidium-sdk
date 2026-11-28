@@ -320,7 +320,8 @@ export type SupplyFlowRequest =
  * - `submit` registers a broadcast txid with the SDK API when needed. ICP
  *   ledger transfers are detected by the pool canister and ETH stablecoin
  *   deposit-address transfers are indexed from ERC-20 transfer logs, so for
- *   those `submit` returns the txid without posting it to the inflow endpoint.
+ *   those `submit` returns the txid without posting unless partner attribution
+ *   is configured (in which case it sends a best-effort attribution hint).
  *
  * The SDK does not poll inflow status. When you have a `txid`, it is your
  * responsibility to track confirmation state with your own polling.
@@ -346,16 +347,18 @@ export type InflowOperation = Extract<
 
 /** Body for `SupplyFlow.submit`. The supply flow supplies the inflow operation. */
 export interface SubmitSupplyFlowInflowRequest {
-  /** Broadcast transaction id or hash. */
+  /** Broadcast transaction id, hash, or ICRC block index. */
   txid: string;
   /** Chain where the transaction was broadcast, when not implied by the flow. */
-  chain?: Extract<Chain, "BTC" | "ETH" | "SOL">;
+  chain?: Extract<Chain, "BTC" | "ETH" | "SOL" | "ICP">;
 }
 
 /** Body for direct `lending.submitInflow`. */
 export interface SubmitInflowRequest extends SubmitSupplyFlowInflowRequest {
   /** Deposit or repayment operation represented by the transaction. */
   operation: InflowOperation;
+  /** Pool canister principal text. Required when `chain` is `"ICP"`. */
+  poolId?: string;
 }
 
 /** Acknowledgement from the SDK API after submitting an inflow hint. */

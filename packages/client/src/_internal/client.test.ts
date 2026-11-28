@@ -79,6 +79,71 @@ describe("LiquidiumClient", () => {
       expect.objectContaining({ method: "GET" })
     );
   });
+
+  test("sends x-liquidium-partner header when partner is configured", async () => {
+    // given
+    const API_BASE_URL = "https://api.example.com/sdk";
+    const QUERY = "loan-ref";
+    const PARTNER = "oisy";
+    const customFetch = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(JSON.stringify({ success: true, candidates: [] }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      })
+    );
+    const client = new LiquidiumClient({
+      apiBaseUrl: API_BASE_URL,
+      partner: `  ${PARTNER}  `,
+      fetch: customFetch,
+    });
+
+    // when
+    await client.simpleLoans.find(QUERY);
+
+    // then
+    expect(customFetch).toHaveBeenCalledWith(
+      `${API_BASE_URL}/v1/instant-loans/find?query=${QUERY}`,
+      expect.objectContaining({
+        method: "GET",
+        headers: {
+          "x-liquidium-partner": PARTNER,
+        },
+      })
+    );
+  });
+
+  test("preserves an explicit x-liquidium-partner header over partner config", async () => {
+    // given
+    const API_BASE_URL = "https://api.example.com/sdk";
+    const QUERY = "loan-ref";
+    const EXPLICIT_PARTNER = "plug";
+    const customFetch = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(JSON.stringify({ success: true, candidates: [] }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      })
+    );
+    const client = new LiquidiumClient({
+      apiBaseUrl: API_BASE_URL,
+      partner: "oisy",
+      headers: { "X-Liquidium-Partner": EXPLICIT_PARTNER },
+      fetch: customFetch,
+    });
+
+    // when
+    await client.simpleLoans.find(QUERY);
+
+    // then
+    expect(customFetch).toHaveBeenCalledWith(
+      `${API_BASE_URL}/v1/instant-loans/find?query=${QUERY}`,
+      expect.objectContaining({
+        method: "GET",
+        headers: {
+          "X-Liquidium-Partner": EXPLICIT_PARTNER,
+        },
+      })
+    );
+  });
 });
 
 describe("LiquidiumError", () => {
