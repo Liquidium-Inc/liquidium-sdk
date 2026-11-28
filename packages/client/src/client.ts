@@ -21,6 +21,13 @@ import { PositionsModule } from "./modules/positions";
 import { QuoteModule } from "./modules/quote";
 import { SimpleLoansModule } from "./modules/simple-loans";
 
+const PARTNER_HEADER_NAME = "x-liquidium-partner";
+
+interface ResolvedApiHeaders {
+  headers: Record<string, string> | undefined;
+  hasPartnerAttribution: boolean;
+}
+
 /**
  * Root client for Liquidium protocol integration (canister + optional HTTP API).
  *
@@ -67,9 +74,14 @@ export class LiquidiumClient {
       canisterIds,
     });
 
+    const { headers: apiHeaders, hasPartnerAttribution } = resolveApiHeaders(
+      config.headers,
+      config.partner
+    );
+
     this.apiClient = createApiClient({
       baseUrl: config.apiBaseUrl ?? DEFAULT_API_BASE_URL,
-      headers: config.headers,
+      headers: apiHeaders,
       fetchFn: config.fetch,
       timeoutMs,
     });
@@ -80,7 +92,8 @@ export class LiquidiumClient {
     this.lending = new LendingModule(
       this.canisterContext,
       this.apiClient,
-      this.evmReadClient
+      this.evmReadClient,
+      hasPartnerAttribution
     );
     this.liquidations = new LiquidationsModule(this.canisterContext);
     this.market = new MarketModule(this.canisterContext);
@@ -120,4 +133,50 @@ function resolveEvmReadClient(
         : undefined,
     }),
   });
+}
+
+function resolveApiHeaders(
+  headers: Record<string, string> | undefined,
+  partner: string | undefined
+): ResolvedApiHeaders {
+  const nextHeaders: Record<string, string> = {};
+  let hasExplicitPartnerHeader = false;
+  let explicitPartnerValue: string | undefined;
+
+  if (headers) {
+    for (const [key, value] of Object.entries(headers)) {
+      if (key.toLowerCase() === PARTNER_HEADER_NAME) {
+        hasExplicitPartnerHeader = true;
+        const trimmed = value.trim();
+        explicitPartnerValue = trimmed.length > 0 ? trimmed : undefined;
+      } else {
+        nextHeaders[key] = value;
+      }
+    }
+  }
+
+  const resolvedPartner = hasExplicitPartnerHeader
+    ? explicitPartnerValue
+    : partner?.trim() || undefined;
+
+  if (!resolvedPartner) {
+    if (!hasExplicitPartnerHeader) {
+      return {
+        headers,
+        hasPartnerAttribution: false,
+      };
+    }
+
+    return {
+      headers: Object.keys(nextHeaders).length > 0 ? nextHeaders : undefined,
+      hasPartnerAttribution: false,
+    };
+  }
+
+  nextHeaders[PARTNER_HEADER_NAME] = resolvedPartner;
+
+  return {
+    headers: nextHeaders,
+    hasPartnerAttribution: true,
+  };
 }

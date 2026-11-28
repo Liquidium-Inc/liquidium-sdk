@@ -37,6 +37,14 @@ export interface LiquidiumClientConfig {
   apiBaseUrl?: string;
   /** Extra headers sent with every SDK API request. */
   headers?: Record<string, string>;
+  /**
+   * Optional allowlisted partner identifier sent as `x-liquidium-partner` on
+   * SDK API requests for channel attribution (an explicit `x-liquidium-partner`
+   * entry in `headers` takes precedence). When configured, the SDK also sends
+   * best-effort attribution hints for ICP supply transfers, ETH stablecoin
+   * deposit-address transfers, and borrow/withdraw outflows.
+   */
+  partner?: string;
   /** Override individual canister principals for custom deployments. */
   canisterIds?: CanisterIdOverrides;
   /** Custom `fetch` implementation for SDK API requests. */

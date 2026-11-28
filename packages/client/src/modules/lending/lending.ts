@@ -127,12 +127,20 @@ interface GuardBorrowSameAssetPolicyParams {
   pool: DecodedPool;
 }
 
+interface SubmitOutflowAttributionRequest {
+  outflowId: string;
+  operation: Extract<LiquidiumOperation, "borrow" | "withdrawal">;
+}
+
+const PARTNER_ATTRIBUTION_TIMEOUT_MS = 3_000;
+
 /** Borrow, withdraw, recovery, supply, inflow reporting, and fee-estimation helpers. */
 export class LendingModule {
   constructor(
     private readonly canisterContext: CanisterContext,
     private readonly apiClient: ApiClient | undefined,
-    private readonly evmReadClient: EvmReadClient | undefined
+    private readonly evmReadClient: EvmReadClient | undefined,
+    private readonly hasPartnerAttribution = false
   ) {}
 
   /**
@@ -350,11 +358,16 @@ export class LendingModule {
         throw mapLendingProtocolErrorToLiquidiumError(result.Err);
       }
 
-      return mapExpectedOutflowDetails(
+      const details = mapExpectedOutflowDetails(
         mapCanisterOutflowDetails(result.Ok),
         OutflowType.withdrawal,
         "withdraw"
       );
+      this.notifyOutflowAttribution({
+        outflowId: details.id,
+        operation: OutflowType.withdrawal,
+      });
+      return details;
     } catch (error) {
       if (error instanceof LiquidiumError) {
         throw error;
@@ -555,11 +568,16 @@ export class LendingModule {
         throw mapLendingProtocolErrorToLiquidiumError(result.Err);
       }
 
-      return mapExpectedOutflowDetails(
+      const details = mapExpectedOutflowDetails(
         mapCanisterOutflowDetails(result.Ok),
         OutflowType.borrow,
         "borrow_assets"
       );
+      this.notifyOutflowAttribution({
+        outflowId: details.id,
+        operation: OutflowType.borrow,
+      });
+      return details;
     } catch (error) {
       if (error instanceof LiquidiumError) {
         throw error;
@@ -770,23 +788,32 @@ export class LendingModule {
   }
 
   /**
-   * Submits an inflow transaction id for faster indexing.
+   * Submits an inflow transaction id for faster indexing or partner attribution.
    *
-   * Uses the Liquidium SDK API.
+   * Uses the Liquidium SDK API. For `chain: "ICP"`, pass the ICRC block index
+   * in `txid` and the target pool principal in `poolId`.
    *
-   * @param request - Broadcast `txid` plus inflow `operation` and optional `chain`.
+   * @param request - Broadcast `txid` plus inflow `operation`, optional `chain`, and `poolId` (required for `ICP`).
    * @returns Acknowledgement including the submitted `txid`.
-   * @throws {@link LiquidiumError} If the chain is unsupported or the API
-   * request fails.
+   * @throws {@link LiquidiumError} If the chain is unsupported, `poolId` is
+   * missing for `ICP`, or the API request fails.
    */
   async submitInflow(
     request: SubmitInflowRequest
+  ): Promise<SubmitInflowResponse> {
+    return await this.postInflow(request);
+  }
+
+  private async postInflow(
+    request: SubmitInflowRequest,
+    timeoutMs?: number
   ): Promise<SubmitInflowResponse> {
     if (
       request.chain !== undefined &&
       request.chain !== Chain.BTC &&
       request.chain !== Chain.ETH &&
-      request.chain !== Chain.SOL
+      request.chain !== Chain.SOL &&
+      request.chain !== Chain.ICP
     ) {
       throw new LiquidiumError(
         LiquidiumErrorCode.VALIDATION_ERROR,
@@ -794,12 +821,38 @@ export class LendingModule {
       );
     }
 
+    let payload: SubmitInflowRequest = request;
+
+    if (request.chain === Chain.ICP) {
+      const poolId = request.poolId?.trim();
+      if (!poolId) {
+        throw new LiquidiumError(
+          LiquidiumErrorCode.VALIDATION_ERROR,
+          "ICP inflow submission requires poolId"
+        );
+      }
+      payload = {
+        ...request,
+        poolId,
+      };
+    } else if ("poolId" in request) {
+      const { poolId: _ignoredPoolId, ...rest } = request as Record<
+        string,
+        unknown
+      >;
+      payload = rest as SubmitInflowRequest;
+    }
+
     const apiClient = this.requireApi();
 
     const response = await apiClient.post<
       SubmitInflowResponse,
       SubmitInflowRequest
-    >(SdkApiPath.inflow, request);
+    >(
+      SdkApiPath.inflow,
+      payload,
+      timeoutMs !== undefined ? { timeoutMs } : undefined
+    );
 
     return {
       txid: response.txid,
@@ -843,13 +896,47 @@ export class LendingModule {
     return new SupplyFlowExecutor({
       canisterContext: this.canisterContext,
       evmReadClient: this.evmReadClient,
+      hasPartnerAttribution: this.hasPartnerAttribution,
       requireApi: () => {
         this.requireApi();
       },
       submitInflow: async (request) => await this.submitInflow(request),
+      submitPartnerInflowHint: (request) => {
+        this.notifyInflowAttribution(request);
+      },
       estimateInflowFee: async (request) =>
         await this.estimateInflowFee(request),
     });
+  }
+
+  private notifyInflowAttribution(request: SubmitInflowRequest): void {
+    if (!this.hasPartnerAttribution || !this.apiClient) {
+      return;
+    }
+
+    void this.postInflow(request, PARTNER_ATTRIBUTION_TIMEOUT_MS).catch(() => {
+      // Partner attribution for ICP and ETH stablecoin transfers is
+      // best-effort and must never affect a completed supply.
+    });
+  }
+
+  private notifyOutflowAttribution(
+    request: SubmitOutflowAttributionRequest
+  ): void {
+    if (!this.hasPartnerAttribution || !this.apiClient) {
+      return;
+    }
+
+    void this.apiClient
+      .post<unknown, SubmitOutflowAttributionRequest>(
+        SdkApiPath.outflow,
+        request,
+        { timeoutMs: PARTNER_ATTRIBUTION_TIMEOUT_MS }
+      )
+      .catch(() => {
+        // Outflow attribution is best-effort and must never affect a completed
+        // borrow or withdrawal.
+      });
   }
 
   private async guardBorrowSameAssetPolicy(

@@ -124,7 +124,7 @@ export interface WalletAdapter {
   sendEthTransaction?: (request: SendEthTransactionRequest) => Promise<string>;
   /** Sends a BTC transaction and returns its transaction id. */
   sendBtcTransaction?: (request: SendBtcTransactionRequest) => Promise<string>;
-  /** Sends an ICRC ledger transfer and returns the ledger transaction reference. */
+  /** Sends an ICRC ledger transfer and returns the decimal ledger block index string (used for ICP inflow attribution). */
   sendIcrcTransfer?: (request: SendIcrcTransferRequest) => Promise<string>;
 }
 

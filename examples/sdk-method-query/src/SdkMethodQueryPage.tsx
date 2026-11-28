@@ -711,10 +711,23 @@ const SDK_METHODS: MethodDefinition[] = [
       '{\n  "txid": "replace-with-txid",\n  "chain": "BTC",\n  "operation": "deposit"\n}',
     execute: async (client, input) => {
       const args = expectObject(input);
+      const txid = expectNonEmptyString(args.txid, "txid");
+      const chain = expectOptionalInflowChain(args.chain, "chain");
+      const operation = expectInflowOperation(args.operation, "operation");
+
+      if (chain === "ICP") {
+        return await client.lending.submitInflow({
+          txid,
+          chain,
+          poolId: expectNonEmptyString(args.poolId, "poolId"),
+          operation,
+        });
+      }
+
       return await client.lending.submitInflow({
-        txid: expectNonEmptyString(args.txid, "txid"),
-        chain: expectOptionalInflowChain(args.chain, "chain"),
-        operation: expectInflowOperation(args.operation, "operation"),
+        txid,
+        chain,
+        operation,
       });
     },
   },
@@ -1431,12 +1444,12 @@ function expectSimpleLoanAccount(
 function expectOptionalInflowChain(
   value: unknown,
   fieldName: string
-): SigningChain | undefined {
+): Chain | undefined {
   if (value === undefined || value === null) {
     return undefined;
   }
 
-  return expectSigningChain(value, fieldName);
+  return expectChain(value, fieldName);
 }
 
 function expectSupplyAction(

@@ -72,14 +72,25 @@ const SUBMIT_INFLOW_INITIAL_RETRY_DELAY_MS = 1_500;
 const SUBMIT_INFLOW_RETRY_BACKOFF_MULTIPLIER = 2;
 const ETH_APPROVAL_POLL_INTERVAL_MS = 2_000;
 const ETH_APPROVAL_MAX_POLLS = 30;
-type SubmitInflowDefaults = Omit<SubmitInflowRequest, "txid">;
+type SubmitInflowDefaults =
+  | {
+      chain?: Extract<Chain, "BTC" | "ETH" | "SOL">;
+      operation: InflowOperation;
+    }
+  | {
+      chain: typeof Chain.ICP;
+      poolId: string;
+      operation: InflowOperation;
+    };
 type AllowanceExpectation = "zero" | "sufficient";
 
 interface SupplyFlowExecutorParams {
   canisterContext: CanisterContext;
   evmReadClient: EvmReadClient | undefined;
+  hasPartnerAttribution: boolean;
   requireApi(): void;
   submitInflow(request: SubmitInflowRequest): Promise<SubmitInflowResponse>;
+  submitPartnerInflowHint(request: SubmitInflowRequest): void;
   estimateInflowFee(
     request: EstimateInflowFeeRequest
   ): Promise<InflowFeeEstimate>;
@@ -161,6 +172,7 @@ interface ApprovalStrategyParams {
 interface DefaultSubmitInflowRequestParams {
   action: SupplyAction;
   chain: string;
+  poolId: string;
 }
 
 interface ValidateDepositMinimumParams {
@@ -234,6 +246,7 @@ export class SupplyFlowExecutor {
       action: request.action,
       chain:
         mechanism === PlanType.contractInteraction ? Chain.ETH : target.chain,
+      poolId: target.poolId,
     });
 
     let txid: string | undefined;
@@ -478,6 +491,14 @@ export class SupplyFlowExecutor {
         // The transfer is already broadcast and cannot be rolled back.
         // Return the txid so callers can track it even if the indexing hint fails.
       }
+    } else if (
+      this.params.hasPartnerAttribution &&
+      defaultSubmitInflowRequest
+    ) {
+      this.params.submitPartnerInflowHint({
+        txid,
+        ...defaultSubmitInflowRequest,
+      });
     }
 
     return txid;
@@ -487,6 +508,18 @@ export class SupplyFlowExecutor {
     params: SubmitSupplyFlowInflowParams
   ): Promise<SubmitInflowResponse> {
     if (!shouldSubmitInflow(params)) {
+      if (
+        this.params.hasPartnerAttribution &&
+        params.defaultSubmitInflowRequest
+      ) {
+        this.params.submitPartnerInflowHint(
+          buildSupplyFlowSubmitRequest(
+            params.defaultSubmitInflowRequest,
+            params.submitRequest
+          )
+        );
+      }
+
       return {
         txid: params.submitRequest.txid,
       };
@@ -500,10 +533,12 @@ export class SupplyFlowExecutor {
       );
     }
 
-    return await this.params.submitInflow({
-      ...defaultSubmitInflowRequest,
-      ...params.submitRequest,
-    });
+    return await this.params.submitInflow(
+      buildSupplyFlowSubmitRequest(
+        defaultSubmitInflowRequest,
+        params.submitRequest
+      )
+    );
   }
 
   private async executeContractSupply(
@@ -954,9 +989,52 @@ function getUnknownErrorMessage(error: unknown): string | null {
   return null;
 }
 
+function buildSupplyFlowSubmitRequest(
+  defaults: SubmitInflowDefaults,
+  submitRequest: SubmitSupplyFlowInflowRequest
+): SubmitInflowRequest {
+  const chain = submitRequest.chain ?? defaults.chain;
+  if (chain === Chain.ICP) {
+    if (defaults.chain !== Chain.ICP) {
+      throw new LiquidiumError(
+        LiquidiumErrorCode.VALIDATION_ERROR,
+        "ICP inflow submission requires poolId"
+      );
+    }
+
+    return {
+      chain,
+      poolId: defaults.poolId,
+      operation: defaults.operation,
+      txid: submitRequest.txid,
+    };
+  }
+
+  if (chain !== undefined) {
+    return {
+      chain,
+      operation: defaults.operation,
+      txid: submitRequest.txid,
+    };
+  }
+
+  return {
+    operation: defaults.operation,
+    txid: submitRequest.txid,
+  };
+}
+
 function getDefaultSubmitInflowRequest(
   params: DefaultSubmitInflowRequestParams
 ): SubmitInflowDefaults | null {
+  if (params.chain === Chain.ICP) {
+    return {
+      chain: Chain.ICP,
+      poolId: params.poolId,
+      operation: mapSupplyActionToStatusOperation(params.action),
+    };
+  }
+
   if (
     params.chain !== Chain.BTC &&
     params.chain !== Chain.ETH &&

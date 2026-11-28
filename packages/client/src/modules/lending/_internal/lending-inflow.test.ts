@@ -156,13 +156,13 @@ describe("LendingModule inflow", () => {
     );
   });
 
-  test("rejects ICP inflow submission before calling the HTTP API", async () => {
+  test("rejects unsupported chain inflow submission before calling the HTTP API", async () => {
     // given
     const fetchSpy = vi.spyOn(globalThis, "fetch");
     const client = new LiquidiumClient({});
     const invalidRequest = {
-      txid: "icp-ledger-index",
-      chain: "ICP",
+      txid: "unsupported-txid",
+      chain: "DOGE",
       operation: "deposit",
     } as never;
 
@@ -172,9 +172,79 @@ describe("LendingModule inflow", () => {
     // then
     await expect(result).rejects.toMatchObject({
       code: LiquidiumErrorCode.VALIDATION_ERROR,
-      message: "Inflow submission is not supported for ICP",
+      message: "Inflow submission is not supported for DOGE",
     });
     expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  test("rejects ICP inflow submission without poolId before calling the HTTP API", async () => {
+    // given
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    const client = new LiquidiumClient({});
+
+    // when
+    const result = client.lending.submitInflow({
+      txid: "123456",
+      chain: "ICP",
+      poolId: "   ",
+      operation: "deposit",
+    });
+
+    // then
+    await expect(result).rejects.toMatchObject({
+      code: LiquidiumErrorCode.VALIDATION_ERROR,
+      message: "ICP inflow submission requires poolId",
+    });
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  test("submits an ICP inflow block index with poolId through the sdk api", async () => {
+    // given
+    const BLOCK_INDEX = "123456";
+    const POOL_ID = ETH_POOL_ID;
+    const PARTNER = "oisy";
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ txid: BLOCK_INDEX }), {
+        status: 200,
+        headers: {
+          "content-type": "application/json",
+        },
+      })
+    );
+    const client = new LiquidiumClient({
+      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
+      partner: PARTNER,
+    });
+
+    // when
+    const result = await client.lending.submitInflow({
+      txid: BLOCK_INDEX,
+      chain: "ICP",
+      poolId: POOL_ID,
+      operation: "deposit",
+    });
+
+    // then
+    expect(result).toEqual({
+      txid: BLOCK_INDEX,
+    });
+    expect(fetchSpy).toHaveBeenCalledWith(
+      "https://app.liquidium.fi/api/sdk/v2/inflow",
+      {
+        method: "POST",
+        headers: {
+          "x-liquidium-partner": PARTNER,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          txid: BLOCK_INDEX,
+          chain: "ICP",
+          poolId: POOL_ID,
+          operation: "deposit",
+        }),
+        signal: expect.any(AbortSignal),
+      }
+    );
   });
 
   test("estimates eth usdt inflow fee by rounding up", async () => {
