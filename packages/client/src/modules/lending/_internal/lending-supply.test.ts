@@ -2362,4 +2362,62 @@ describe("LendingModule supply", () => {
     expect(result).toEqual({ txid: BLOCK_INDEX });
     expect(fetchSpy).not.toHaveBeenCalled();
   });
+
+  test("does not post on ICP flow.submit when explicit blank partner header opts out", async () => {
+    // given
+    const PROFILE_ID = "aaaaa-aa";
+    const BLOCK_INDEX = "987657";
+    vi.spyOn(Actor, "createActor").mockReturnValueOnce({
+      list_pools: vi.fn().mockResolvedValue([createIcpPoolRecord()]),
+    } as never);
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    const client = new LiquidiumClient({
+      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
+      partner: "oisy",
+      headers: { "X-Liquidium-Partner": "" },
+    });
+
+    // when
+    const flow = await client.lending.supply({
+      profileId: PROFILE_ID,
+      poolId: ICP_POOL_ID,
+      action: "deposit",
+      chain: "ICP",
+    });
+    const result = await flow.submit({ txid: BLOCK_INDEX });
+
+    // then
+    expect(result).toEqual({ txid: BLOCK_INDEX });
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  test("does not block ICP flow.submit when partner hint fetch never settles", async () => {
+    // given
+    const PROFILE_ID = "aaaaa-aa";
+    const BLOCK_INDEX = "987658";
+    vi.spyOn(Actor, "createActor").mockReturnValueOnce({
+      list_pools: vi.fn().mockResolvedValue([createIcpPoolRecord()]),
+    } as never);
+    const hangingFetch = vi.fn<typeof fetch>(
+      () => new Promise<Response>(() => {})
+    );
+    const client = new LiquidiumClient({
+      apiBaseUrl: "https://app.liquidium.fi/api/sdk",
+      partner: "oisy",
+      fetch: hangingFetch,
+    });
+
+    // when
+    const flow = await client.lending.supply({
+      profileId: PROFILE_ID,
+      poolId: ICP_POOL_ID,
+      action: "deposit",
+      chain: "ICP",
+    });
+    const result = await flow.submit({ txid: BLOCK_INDEX });
+
+    // then
+    expect(result).toEqual({ txid: BLOCK_INDEX });
+    expect(hangingFetch).toHaveBeenCalledTimes(1);
+  });
 });

@@ -354,12 +354,25 @@ export interface SubmitSupplyFlowInflowRequest {
 }
 
 /** Body for direct `lending.submitInflow`. */
-export interface SubmitInflowRequest extends SubmitSupplyFlowInflowRequest {
-  /** Deposit or repayment operation represented by the transaction. */
-  operation: InflowOperation;
-  /** Pool canister principal text. Required when `chain` is `"ICP"`. */
-  poolId?: string;
-}
+export type SubmitInflowRequest =
+  | {
+      /** Broadcast transaction id or hash. */
+      txid: string;
+      /** Chain where the transaction was broadcast, when not implied by the transaction id. */
+      chain?: Extract<Chain, "BTC" | "ETH" | "SOL">;
+      /** Deposit or repayment operation represented by the transaction. */
+      operation: InflowOperation;
+    }
+  | {
+      /** Decimal ICRC ledger block index returned by the transfer. */
+      txid: string;
+      /** Must be `"ICP"` for ICP and ck-token inflows. */
+      chain: typeof Chain.ICP;
+      /** Pool canister principal text. */
+      poolId: string;
+      /** Deposit or repayment operation represented by the transaction. */
+      operation: InflowOperation;
+    };
 
 /** Acknowledgement from the SDK API after submitting an inflow hint. */
 export interface SubmitInflowResponse {

@@ -835,9 +835,12 @@ export class LendingModule {
         ...request,
         poolId,
       };
-    } else if (request.poolId !== undefined) {
-      const { poolId: _ignoredPoolId, ...rest } = request;
-      payload = rest;
+    } else if ("poolId" in request) {
+      const { poolId: _ignoredPoolId, ...rest } = request as Record<
+        string,
+        unknown
+      >;
+      payload = rest as SubmitInflowRequest;
     }
 
     const apiClient = this.requireApi();
@@ -898,10 +901,22 @@ export class LendingModule {
         this.requireApi();
       },
       submitInflow: async (request) => await this.submitInflow(request),
-      submitPartnerInflowHint: async (request) =>
-        await this.postInflow(request, PARTNER_ATTRIBUTION_TIMEOUT_MS),
+      submitPartnerInflowHint: (request) => {
+        this.notifyInflowAttribution(request);
+      },
       estimateInflowFee: async (request) =>
         await this.estimateInflowFee(request),
+    });
+  }
+
+  private notifyInflowAttribution(request: SubmitInflowRequest): void {
+    if (!this.hasPartnerAttribution || !this.apiClient) {
+      return;
+    }
+
+    void this.postInflow(request, PARTNER_ATTRIBUTION_TIMEOUT_MS).catch(() => {
+      // Partner attribution for ICP and ETH stablecoin transfers is
+      // best-effort and must never affect a completed supply.
     });
   }
 

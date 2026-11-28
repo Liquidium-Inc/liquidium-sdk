@@ -139,55 +139,44 @@ function resolveApiHeaders(
   headers: Record<string, string> | undefined,
   partner: string | undefined
 ): ResolvedApiHeaders {
-  const existingPartnerHeader = getPartnerHeaderEntry(headers);
-  const normalizedPartner = partner?.trim() || undefined;
-
-  if (existingPartnerHeader && existingPartnerHeader.value.length > 0) {
-    return {
-      headers,
-      hasPartnerAttribution: true,
-    };
-  }
-
-  if (!normalizedPartner) {
-    return {
-      headers,
-      hasPartnerAttribution: false,
-    };
-  }
-
   const nextHeaders: Record<string, string> = {};
+  let hasExplicitPartnerHeader = false;
+  let explicitPartnerValue: string | undefined;
+
   if (headers) {
     for (const [key, value] of Object.entries(headers)) {
-      if (key.toLowerCase() !== PARTNER_HEADER_NAME) {
+      if (key.toLowerCase() === PARTNER_HEADER_NAME) {
+        hasExplicitPartnerHeader = true;
+        const trimmed = value.trim();
+        explicitPartnerValue = trimmed.length > 0 ? trimmed : undefined;
+      } else {
         nextHeaders[key] = value;
       }
     }
   }
-  nextHeaders[PARTNER_HEADER_NAME] = normalizedPartner;
+
+  const resolvedPartner = hasExplicitPartnerHeader
+    ? explicitPartnerValue
+    : partner?.trim() || undefined;
+
+  if (!resolvedPartner) {
+    if (!hasExplicitPartnerHeader) {
+      return {
+        headers,
+        hasPartnerAttribution: false,
+      };
+    }
+
+    return {
+      headers: Object.keys(nextHeaders).length > 0 ? nextHeaders : undefined,
+      hasPartnerAttribution: false,
+    };
+  }
+
+  nextHeaders[PARTNER_HEADER_NAME] = resolvedPartner;
 
   return {
     headers: nextHeaders,
     hasPartnerAttribution: true,
   };
-}
-
-function getPartnerHeaderEntry(
-  headers: Record<string, string> | undefined
-): { key: string; value: string } | undefined {
-  if (!headers) {
-    return undefined;
-  }
-
-  let match: { key: string; value: string } | undefined;
-  for (const [key, value] of Object.entries(headers)) {
-    if (key.toLowerCase() === PARTNER_HEADER_NAME) {
-      const trimmed = value.trim();
-      if (trimmed.length > 0) {
-        match = { key, value: trimmed };
-      }
-    }
-  }
-
-  return match;
 }

@@ -72,7 +72,16 @@ const SUBMIT_INFLOW_INITIAL_RETRY_DELAY_MS = 1_500;
 const SUBMIT_INFLOW_RETRY_BACKOFF_MULTIPLIER = 2;
 const ETH_APPROVAL_POLL_INTERVAL_MS = 2_000;
 const ETH_APPROVAL_MAX_POLLS = 30;
-type SubmitInflowDefaults = Omit<SubmitInflowRequest, "txid">;
+type SubmitInflowDefaults =
+  | {
+      chain?: Extract<Chain, "BTC" | "ETH" | "SOL">;
+      operation: InflowOperation;
+    }
+  | {
+      chain: typeof Chain.ICP;
+      poolId: string;
+      operation: InflowOperation;
+    };
 type AllowanceExpectation = "zero" | "sufficient";
 
 interface SupplyFlowExecutorParams {
@@ -81,9 +90,7 @@ interface SupplyFlowExecutorParams {
   hasPartnerAttribution: boolean;
   requireApi(): void;
   submitInflow(request: SubmitInflowRequest): Promise<SubmitInflowResponse>;
-  submitPartnerInflowHint(
-    request: SubmitInflowRequest
-  ): Promise<SubmitInflowResponse>;
+  submitPartnerInflowHint(request: SubmitInflowRequest): void;
   estimateInflowFee(
     request: EstimateInflowFeeRequest
   ): Promise<InflowFeeEstimate>;
@@ -488,15 +495,10 @@ export class SupplyFlowExecutor {
       this.params.hasPartnerAttribution &&
       defaultSubmitInflowRequest
     ) {
-      try {
-        await this.params.submitPartnerInflowHint({
-          txid,
-          ...defaultSubmitInflowRequest,
-        });
-      } catch {
-        // Partner attribution for ICP and ETH stablecoin transfers is
-        // best-effort and must not fail already-broadcast transfers.
-      }
+      this.params.submitPartnerInflowHint({
+        txid,
+        ...defaultSubmitInflowRequest,
+      });
     }
 
     return txid;
@@ -510,17 +512,12 @@ export class SupplyFlowExecutor {
         this.params.hasPartnerAttribution &&
         params.defaultSubmitInflowRequest
       ) {
-        try {
-          await this.params.submitPartnerInflowHint(
-            buildSupplyFlowSubmitRequest(
-              params.defaultSubmitInflowRequest,
-              params.submitRequest
-            )
-          );
-        } catch {
-          // Partner attribution for ICP and ETH stablecoin transfers is
-          // best-effort and must not fail already-broadcast transfers.
-        }
+        this.params.submitPartnerInflowHint(
+          buildSupplyFlowSubmitRequest(
+            params.defaultSubmitInflowRequest,
+            params.submitRequest
+          )
+        );
       }
 
       return {
@@ -997,7 +994,14 @@ function buildSupplyFlowSubmitRequest(
   submitRequest: SubmitSupplyFlowInflowRequest
 ): SubmitInflowRequest {
   const chain = submitRequest.chain ?? defaults.chain;
-  if (chain === Chain.ICP && defaults.poolId) {
+  if (chain === Chain.ICP) {
+    if (defaults.chain !== Chain.ICP) {
+      throw new LiquidiumError(
+        LiquidiumErrorCode.VALIDATION_ERROR,
+        "ICP inflow submission requires poolId"
+      );
+    }
+
     return {
       chain,
       poolId: defaults.poolId,

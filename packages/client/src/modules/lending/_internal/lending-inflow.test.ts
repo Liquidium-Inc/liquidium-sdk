@@ -186,6 +186,7 @@ describe("LendingModule inflow", () => {
     const result = client.lending.submitInflow({
       txid: "123456",
       chain: "ICP",
+      poolId: "   ",
       operation: "deposit",
     });
 
